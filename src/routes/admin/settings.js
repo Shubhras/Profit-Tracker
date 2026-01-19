@@ -1,9 +1,9 @@
 import React, { lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
 
-const Overview = lazy(() => import('../../container/settings/Overview'));
-const ProductConfiguration = lazy(() => import('../../container/settings/ProductConfiguration'));
-const FinanceConfiguration = lazy(() => import('../../container/settings/FinanceConfiguration'));
+const Overview = lazy(() => import('../../container/settings/product-settings/Overview'));
+const ProductConfiguration = lazy(() => import('../../container/settings/product-settings/ProductConfiguration'));
+const FinanceConfiguration = lazy(() => import('../../container/settings/product-settings/FinanceConfiguration'));
 const AccountSettings = lazy(() => import('../../container/settings/AccountSettings'));
 const MarketPlaceSettings = lazy(() => import('../../container/settings/MarketPlaceSettings'));
 const UserManagement = lazy(() => import('../../container/settings/UserManagement'));
