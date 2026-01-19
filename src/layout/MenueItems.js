@@ -188,20 +188,20 @@ function MenuItems({ toggleCollapsed }) {
     ]),
 
     getItem(t('reconcile'), 'reconcile', !topMenu && <UilCreateDashboard />, [
-      // OS Payment
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/os-payment`}>
-          {t('osPayment')}
-        </NavLink>,
-        'os-payment',
-      ),
-
       // Summary
       getItem(
         <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/summary`}>
           {t('summary')}
         </NavLink>,
         'reconcile-summary',
+      ),
+
+      // OS Payment
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/os-payment`}>
+          {t('osPayment')}
+        </NavLink>,
+        'os-payment',
       ),
 
       /* ================= B2C Reconciliation ================= */
@@ -252,9 +252,9 @@ function MenuItems({ toggleCollapsed }) {
 
         getItem(
           <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2b-reconciliation/customer-ledger`}>
-            {t('customerLedger')}
+            {t('custLedger')}
           </NavLink>,
-          'customer-ledger',
+          'custLedger',
         ),
       ]),
 
@@ -269,9 +269,9 @@ function MenuItems({ toggleCollapsed }) {
       // Min Settlement Leak
       getItem(
         <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/min-settlement-leaks`}>
-          {t('minSettLeak')}
+          {t('minSettLeaks')}
         </NavLink>,
-        'min-sett-leak',
+        'minSettLeaks',
       ),
       /* ================= Returns ================= */
       getItem(t('returns'), 'returns', null, [

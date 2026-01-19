@@ -106,7 +106,7 @@ const invoiceColumns = [
 
 export default function Avcp() {
   const PageRoutes = [
-    { path: 'index', breadcrumbName: 'Reconcile' },
+    { path: '', breadcrumbName: 'Reconcile' },
     { path: '', breadcrumbName: 'B2B Reconciliation' },
     { path: '', breadcrumbName: 'AVCP' },
   ];
@@ -119,9 +119,9 @@ export default function Avcp() {
         className="flex justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 sm:pb-[30px] bg-transparent sm:flex-col"
       />
 
-      <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-4 md:px-8 xl:px-[15px] pb-[30px] bg-transparent space-y-6">
+      <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-4 md:px-8 xl:px-[15px] pb-[30px] bg-transparent space-y-5">
         {/* Top Summary Cards */}
-        <div className="grid grid-cols-4 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+        <div className="grid grid-cols-4 sm:grid-cols-2 lg:grid-cols-1 gap-5">
           {[
             'PO Invoice Outstanding',
             'DF Invoice Outstanding',
