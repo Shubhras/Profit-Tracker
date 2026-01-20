@@ -55,7 +55,7 @@ export default function Overview() {
       />
 
       <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-8 xl:px-[15px] pb-[30px] bg-transparent">
-        <Tabs activeKey={activeTab} onChange={setActiveTab} className="bg-white rounded-lg p-4" tabBarGutter={24}>
+        <Tabs activeKey={activeTab} onChange={setActiveTab} className="bg-white rounded-lg" tabBarGutter={24}>
           <TabPane tab="Product" key="product" />
           <TabPane tab="B2B Product" key="b2b" />
           <TabPane tab="Standard Cost" key="standardCost" />
@@ -63,7 +63,7 @@ export default function Overview() {
           <TabPane tab="Recent Updates" key="updates" />
         </Tabs>
 
-        <div className="mt-4 bg-white rounded-lg p-4 min-h-[300px]">
+        <div className="mt-4 bg-white rounded-lg p-4">
           <Spin spinning={loading}>{renderTabContent()}</Spin>
         </div>
       </main>
