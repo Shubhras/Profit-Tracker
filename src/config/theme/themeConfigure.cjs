@@ -2,8 +2,8 @@
 module.exports = {
   default: {
     lightMode: {
-      primary: '#8231D3',
-      'primary-color-rgb': '130, 49, 211',
+      primary: '#22C55E',
+      'primary-color-rgb': '34, 197, 94',
       'main-background': '#F8F9FB',
       'main-background-light': '#F8F9FB',
       'dark-background': '#EFF0F3',
@@ -12,8 +12,8 @@ module.exports = {
       'general-background': '#F4F5F7',
       'brand-background': '#FFFFFF',
       'status-background': '#F8F9FB',
-      'primary-background': '#8231D3',
-      'primary-transparent': '#F2EAFB',
+      'primary-background': '#22C55E',
+      'primary-transparent': '#F0FDF4',
       'light-background': '#F8F9FB',
       'light-border': '#F1F2F6',
       'white-text': '#ffffff',
@@ -30,8 +30,8 @@ module.exports = {
       'border-color-secondary': '#E3E6EF',
       'border-color-deep': '#C6D0DC',
       'menu-icon-color': '#A0A0A0',
-      'menu-active': '#8231D3',
-      'menu-active-bg': '#F2EAFB',
+      'menu-active': '#22C55E',
+      'menu-active-bg': '#F0FDF4',
       'scroll-bg': '#E3E6EF',
       'chat-bg': '#F4F5F7',
       'chat-reply-bg': '#404040',
@@ -39,7 +39,7 @@ module.exports = {
       'input-bg': '#ffffff',
     },
     darkMode: {
-      primary: '#8231D3',
+      primary: '#22C55E',
       'main-background': '#010413',
       'main-background-light': '#282B37',
       'dark-background': '#282B37',

@@ -3,9 +3,9 @@ const themes = require('./themeConfigure.cjs');
 
 const { lightMode, darkMode } = themes.default || themes || {};
 
-const primaryColor = '#8231D3';
-const primaryColorRgb = '130, 49, 211';
-const primaryHover = '#6726A8';
+const primaryColor = '#22C55E';
+const primaryColorRgb = '34, 197, 94';
+const primaryHover = '#16a34a';
 const secondaryColor = '#5840FF';
 const secondaryHover = '#3520C8';
 const linkColor = '#1890ff';
@@ -39,7 +39,7 @@ const bgGrayLight = '#F8F9FB';
 const bgGrayNormal = '#F4F5F7';
 const bgGrayDeep = '#EFF0F3';
 const lightGrayColor = '#868EAE';
-const sliderRailColor = 'rgba(130,49,211,.20)';
+const sliderRailColor = 'rgba(34,197,94,.20)';
 const graySolid = '#9299b8';
 const pinkColor = '#F63178';
 const textColor = '#666D92';

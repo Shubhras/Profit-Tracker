@@ -74,7 +74,7 @@
     "xlsx": "^0.17.5",
     "yet-another-react-lightbox": "^3.19.0"
   },
-  "homepage": "/hexadash-tailwind",
+  "homepage": "/",
   "resolutions": {
     "autoprefixer": "10.4.5"
   },

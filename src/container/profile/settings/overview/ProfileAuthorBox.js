@@ -1,12 +1,12 @@
 import { React, useState } from 'react';
-import { Upload } from 'antd';
-import UilCamera from '@iconscout/react-unicons/icons/uil-camera';
-import UilSetting from '@iconscout/react-unicons/icons/uil-setting';
-import UilBell from '@iconscout/react-unicons/icons/uil-bell';
+// import { Upload } from 'antd';
+// import UilCamera from '@iconscout/react-unicons/icons/uil-camera';
+// import UilSetting from '@iconscout/react-unicons/icons/uil-setting';
+// import UilBell from '@iconscout/react-unicons/icons/uil-bell';
 import UilUser from '@iconscout/react-unicons/icons/uil-user';
-import UilUsersAlt from '@iconscout/react-unicons/icons/uil-users-alt';
-import { Link, NavLink } from 'react-router-dom';
-import Heading from '../../../../components/heading/heading';
+// import UilUsersAlt from '@iconscout/react-unicons/icons/uil-users-alt';
+import { NavLink } from 'react-router-dom';
+// import Heading from '../../../../components/heading/heading';
 
 function AuthorBox() {
   const path = '/admin/pages/settings';
@@ -16,7 +16,7 @@ function AuthorBox() {
   return (
     <>
       <div className="bg-white dark:bg-white10 rounded-[10px]">
-        <div className="-mx-3 px-5 pt-[25px] pb-5 text-center border-b border-regular dark:border-white10">
+        {/* <div className="-mx-3 px-5 pt-[25px] pb-5 text-center border-b border-regular dark:border-white10">
           <figure className="relative max-w-[120px] mx-auto mb-6">
             <img className="mx-auto" src={require('../../../../static/img/users/1.png')} alt="" />
             <Upload className="absolute right-0 -bottom-2 flex items-center justify-center bg-white dark:bg-white10 w-10 h-10 rounded-full">
@@ -31,7 +31,7 @@ function AuthorBox() {
             </Heading>
             <p className="mb-0 text-light dark:text-white60 text-15">UI/UX Designer</p>
           </figcaption>
-        </div>
+        </div> */}
         <nav className="px-[25px] pt-8 pb-5">
           <ul className="mb-0">
             <li>
@@ -50,7 +50,7 @@ function AuthorBox() {
                 Edit Profile
               </NavLink>
             </li>
-            <li>
+            {/* <li>
               <NavLink
                 to={`${path}/account`}
                 onClick={() => {
@@ -65,7 +65,7 @@ function AuthorBox() {
                 <UilSetting className="w-4 h-4 ltr:mr-3 rtl:ml-3 mb-0.5" />
                 Account Settings
               </NavLink>
-            </li>
+            </li> */}
             <li>
               <NavLink
                 to={`${path}/password`}
@@ -95,7 +95,7 @@ function AuthorBox() {
                 Change Password
               </NavLink>
             </li>
-            <li>
+            {/* <li>
               <NavLink
                 to={`${path}/social`}
                 onClick={() => {
@@ -110,8 +110,8 @@ function AuthorBox() {
                 <UilUsersAlt className="w-4 h-4 ltr:mr-3 rtl:ml-3 mb-0.5" />
                 Social Profile
               </NavLink>
-            </li>
-            <li>
+            </li> */}
+            {/* <li>
               <NavLink
                 to={`${path}/notification`}
                 onClick={() => {
@@ -126,7 +126,7 @@ function AuthorBox() {
                 <UilBell className="w-4 h-4 ltr:mr-3 rtl:ml-3 mb-0.5" />
                 Notification
               </NavLink>
-            </li>
+            </li> */}
           </ul>
         </nav>
       </div>

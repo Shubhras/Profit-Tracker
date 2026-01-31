@@ -1,14 +1,14 @@
 import UilAngleDown from '@iconscout/react-unicons/icons/uil-angle-down';
-import UilBell from '@iconscout/react-unicons/icons/uil-bell';
+// import UilBell from '@iconscout/react-unicons/icons/uil-bell';
 import UilDollarSign from '@iconscout/react-unicons/icons/uil-dollar-sign';
-import UilSetting from '@iconscout/react-unicons/icons/uil-setting';
+// import UilSetting from '@iconscout/react-unicons/icons/uil-setting';
 import UilSignout from '@iconscout/react-unicons/icons/uil-signout';
 import UilUser from '@iconscout/react-unicons/icons/uil-user';
-import UilUsersAlt from '@iconscout/react-unicons/icons/uil-users-alt';
+// import UilUsersAlt from '@iconscout/react-unicons/icons/uil-users-alt';
 import { Avatar } from 'antd';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import Search from './Search';
 import Message from './Message';
@@ -17,10 +17,14 @@ import Settings from './settings';
 import { Popover } from '../../popup/popup';
 import Heading from '../../heading/heading';
 import { Dropdown } from '../../dropdown/dropdown';
-import { logOut } from '../../../redux/authentication/actionCreator';
+import { logOut, getProfile } from '../../../redux/authentication/actionCreator';
 
 const AuthInfo = React.memo(() => {
   const dispatch = useDispatch();
+
+  // ✅ Get Profile from Redux Store
+  const { profile } = useSelector((state) => state.auth);
+
   const [state, setState] = useState({
     flag: 'en',
   });
@@ -33,35 +37,42 @@ const AuthInfo = React.memo(() => {
     dispatch(logOut(() => navigate('/')));
   };
 
+  // ✅ Call API on Page Load (via Redux) if profile is missing
+  useEffect(() => {
+    if (!profile) {
+      dispatch(getProfile());
+    }
+  }, [dispatch, profile]);
+
   const userContent = (
     <div>
       <div className="min-w-[280px] sm:min-w-full pt-4">
         <figure className="flex items-center text-sm rounded-[8px] bg-section dark:bg-white10 py-[20px] px-[25px] mb-[12px]">
           <img className="ltr:mr-4 rtl:ml-4" src={require('../../../static/img/avatar/chat-auth.png')} alt="" />
           <figcaption>
-            <Heading className="text-dark dark:text-white87 mb-0.5 text-sm" as="h5">
-              Abdullah Bin Talha
+            <Heading className="text-dark dark:text-white87 mb-0.5 text-sm capitalize" as="h5">
+              {profile?.name || 'Loading...'}
             </Heading>
-            <p className="mb-0 text-xs text-body dark:text-white60">UI Expert</p>
+            <p className="mb-0 text-xs text-body dark:text-white60"> {profile?.business_name || ''}</p>
           </figcaption>
         </figure>
         <ul className="mb-0">
           <li>
             <Link
-              to="#"
+              to="/admin/pages/settings/profile"
               className="inline-flex items-center hover:bg-shadow-transparent text-light dark:text-white60 dark:hover:text-white hover:text-primary dark:hover:bg-white10 dark:rounded-4 hover:pl-6 w-full px-2.5 py-3 text-sm transition-all ease-in-out delay-150"
             >
               <UilUser className="w-4 h-4 ltr:mr-3 rtl:ml-3" /> Profile
             </Link>
           </li>
-          <li>
+          {/* <li>
             <Link
               to="#"
               className="inline-flex items-center hover:bg-shadow-transparent text-light dark:text-white60 dark:hover:text-white hover:text-primary dark:hover:bg-white10 dark:rounded-4 hover:pl-6 w-full px-2.5 py-3 text-sm transition-all ease-in-out delay-150"
             >
               <UilSetting className="w-4 h-4 ltr:mr-3 rtl:ml-3" /> Settings
             </Link>
-          </li>
+          </li> */}
           <li>
             <Link
               to="#"
@@ -70,7 +81,7 @@ const AuthInfo = React.memo(() => {
               <UilDollarSign className="w-4 h-4 ltr:mr-3 rtl:ml-3" /> Billing
             </Link>
           </li>
-          <li>
+          {/* <li>
             <Link
               to="#"
               className="inline-flex items-center hover:bg-shadow-transparent text-light dark:text-white60 dark:hover:text-white hover:text-primary dark:hover:bg-white10 dark:rounded-4 hover:pl-6 w-full px-2.5 py-3 text-sm transition-all ease-in-out delay-150"
@@ -85,7 +96,7 @@ const AuthInfo = React.memo(() => {
             >
               <UilBell className="w-4 h-4 ltr:mr-3 rtl:ml-3" /> Help
             </Link>
-          </li>
+          </li> */}
         </ul>
         <Link
           to="#"
@@ -156,7 +167,7 @@ const AuthInfo = React.memo(() => {
           <Link to="#" className="flex items-center text-light whitespace-nowrap">
             <Avatar src="https://cdn0.iconfinder.com/data/icons/user-pictures/100/matureman1-512.png" />
             <span className="ltr:mr-1.5 rtl:ml-1.5 ltr:ml-2.5 rtl:mr-2.5 text-body dark:text-white60 text-sm font-medium md:hidden">
-              Md. Rafiq
+              {profile?.name}
             </span>
             <UilAngleDown className="w-4 h-4 ltr:md:ml-[5px] rtl:md:mr-[5px]" />
           </Link>

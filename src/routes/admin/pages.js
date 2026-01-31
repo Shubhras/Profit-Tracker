@@ -24,6 +24,7 @@ const Download = lazy(() => import('../../container/pages/Download'));
 function PagesRoute() {
   return (
     <Routes>
+      <Route index element={<ActionsRequired />} />
       <Route path="actionsrequired" element={<ActionsRequired />} />
       <Route path="download" element={<Download />} />
       <Route path="changelog" element={<ChangeLog />} />

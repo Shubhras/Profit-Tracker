@@ -143,7 +143,7 @@ const ThemeLayout = (WrappedComponent) => {
                         alt=""
                       />
                     </Link> */}
-                    <Link className="flex items-center gap-1 cursor-pointer" to="/admin/pages/actionsrequired">
+                    <Link className="flex items-center gap-1 cursor-pointer" to="/admin/profit/summary">
                       <HiOutlineChartBar className="text-green-600" size={20} />
                       <p className="text-2xl font-semibold text-gray-900 mb-0">Profit-Tracker</p>
                     </Link>

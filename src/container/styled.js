@@ -576,10 +576,10 @@ const TestimonialStyleWrapper = Styled.div`
       .swiper-pagination-bullet {
         width: 10px;
         height: 10px;
-        background-color: rgb(220, 221, 250);
+        background-color: rgb(220, 252, 231);
         opacity: 1;
         &.swiper-pagination-bullet-active {
-          background-color: rgb(130, 49, 211);
+          background-color: rgb(34, 197, 94);
         }
       }
     }

@@ -6,10 +6,10 @@ import { PageHeader } from '../../../components/page-headers/page-headers';
 const Profile = lazy(() => import('./overview/Profile'));
 const Account = lazy(() => import('./overview/Account'));
 const Password = lazy(() => import('./overview/Passwoard'));
-const SocialProfiles = lazy(() => import('./overview/SocialProfile'));
-const Notification = lazy(() => import('./overview/Notification'));
+// const SocialProfiles = lazy(() => import('./overview/SocialProfile'));
+// const Notification = lazy(() => import('./overview/Notification'));
 const AuthorBox = lazy(() => import('./overview/ProfileAuthorBox'));
-const CoverSection = lazy(() => import('../overview/CoverSection'));
+// const CoverSection = lazy(() => import('../overview/CoverSection'));
 
 function Settings() {
   const PageRoutes = [
@@ -52,9 +52,9 @@ function Settings() {
                   </div>
                 }
               >
-                <div className="mb-[35px] md:mt-[25px]">
+                {/* <div className="mb-[35px] md:mt-[25px]">
                   <CoverSection />
-                </div>
+                </div> */}
               </Suspense>
               <Suspense
                 fallback={
@@ -68,8 +68,8 @@ function Settings() {
                   <Route path="profile" element={<Profile />} />
                   <Route path="account" element={<Account />} />
                   <Route path="password" element={<Password />} />
-                  <Route path="social" element={<SocialProfiles />} />
-                  <Route path="notification" element={<Notification />} />
+                  {/* <Route path="social" element={<SocialProfiles />} /> */}
+                  {/* <Route path="notification" element={<Notification />} /> */}
                 </Routes>
               </Suspense>
             </>
