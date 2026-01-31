@@ -29,6 +29,7 @@ const login = (values, callback) => {
       if (response.data.status === true) {
         Cookies.set('access_token', response.data.data.access);
         Cookies.set('refresh_token', response.data.data.refresh);
+        Cookies.set('logedIn', 'true'); // Set logedIn cookie for persistence
 
         dispatch(loginSuccess(true));
 
@@ -167,6 +168,8 @@ const logOut = (callback) => {
     try {
       // Cookies.remove('loggedIn');
       Cookies.remove('access_token');
+      Cookies.remove('refresh_token');
+      Cookies.remove('logedIn'); // Clear logedIn cookie
       dispatch(logoutSuccess(false));
       callback();
     } catch (err) {
@@ -176,14 +179,22 @@ const logOut = (callback) => {
 };
 
 const getProfile = () => {
-  return async (dispatch) => {
+  return async (dispatch, getState) => {
+    // Check if profile is already loading or already loaded to prevent duplicate calls
+    const { profileLoading, profile } = getState().auth;
+    if (profileLoading || profile) {
+      return;
+    }
+
     try {
+      dispatch(actions.profileLoading(true));
       const response = await DataService.get('/user/profile/');
       if (response.data.status === true) {
         dispatch(actions.setUserProfile(response.data.data));
       }
     } catch (err) {
       console.log('Get Profile Failed:', err);
+      dispatch(actions.profileLoading(false));
     }
   };
 };

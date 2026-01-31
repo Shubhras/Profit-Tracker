@@ -144,7 +144,7 @@ import { useDispatch } from 'react-redux';
 import { Button } from '../../../../components/buttons/buttons';
 import Heading from '../../../../components/heading/heading';
 import { GlobalUtilityStyle } from '../../../styled';
-import { getProfile } from '../../../../redux/authentication/actionCreator';
+import { setUserProfile } from '../../../../redux/authentication/actionCreator';
 import { DataService } from '../../../../config/dataService/dataService';
 
 function Profile() {
@@ -165,8 +165,8 @@ function Profile() {
       console.log('Profile Response:', response.data);
 
       if (response.data.status === true) {
-        // Update Redux state as well
-        dispatch(getProfile());
+        // Update Redux state with the data we already have
+        dispatch(setUserProfile(response.data.data));
 
         form.setFieldsValue({
           name: response.data.data.name,
@@ -207,7 +207,7 @@ function Profile() {
       if (response.data.status === true) {
         message.success('Profile updated successfully!');
         // ✅ Automatically refresh profile in Redux store (updates Header/Info)
-        dispatch(getProfile());
+        dispatch(setUserProfile(response.data.data));
       } else {
         message.error(response.data.message || 'Failed to update profile');
       }

@@ -199,5 +199,6 @@
   "accountSettings":"Account Settings",
   "marketPlaceSettings":"MarketPlace Settings",
   "userManagement":"User Management",
-  "profit":"Profit"
+  "profit":"Profit",
+  "billing":"Billing"
 }

@@ -71,9 +71,9 @@ function Navbar() {
                 </div>
               )}
             </div> */}
-            <Link to="/" className="text-gray-700 font-medium hover:text-gray-900">
+            {/* <Link to="/" className="text-gray-700 font-medium hover:text-gray-900">
               Products
-            </Link>
+            </Link> */}
             <Link to="/integrations" className="text-gray-700 font-medium hover:text-gray-900">
               Integrations
             </Link>
