@@ -1662,9 +1662,10 @@ function MenuItems({ toggleCollapsed }) {
       defaultSelectedKeys={
         !topMenu
           ? [
-            `${mainPathSplit.length === 1 ? 'home' : mainPathSplit.length === 2 ? mainPathSplit[1] : mainPathSplit[2]
-            }`,
-          ]
+              `${
+                mainPathSplit.length === 1 ? 'home' : mainPathSplit.length === 2 ? mainPathSplit[1] : mainPathSplit[2]
+              }`,
+            ]
           : []
       }
       defaultOpenKeys={!topMenu ? [`${mainPathSplit.length > 2 ? mainPathSplit[1] : 'dashboard'}`] : []}
