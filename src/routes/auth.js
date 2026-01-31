@@ -5,6 +5,7 @@ import AuthLayout from '../container/profile/authentication/Index';
 const Login = lazy(() => import('../container/profile/authentication/overview/SignIn'));
 const SignUp = lazy(() => import('../container/profile/authentication/overview/Signup'));
 const ForgotPass = lazy(() => import('../container/profile/authentication/overview/ForgotPassword'));
+const ResetPassword = lazy(() => import('../container/profile/authentication/overview/ResetPassword'));
 
 function AuthRoot() {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ const FrontendRoutes = React.memo(function FrontendRoutes() {
       <Route path="login" element={<Login />} />
       <Route path="forgotPassword" element={<ForgotPass />} />
       <Route path="register" element={<SignUp />} />
+      <Route path="resetPassword" element={<ResetPassword />} />
       <Route path="*" element={<AuthRoot />} />
     </Routes>
   );

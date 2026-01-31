@@ -21,6 +21,8 @@ function SignIn() {
   const dispatch = useDispatch();
   const isLoading = useSelector((state) => state.auth.loading);
   const [form] = Form.useForm();
+  const error = useSelector((state) => state.auth.error);
+
   // const [state, setState] = useState({
   //   checked: null,
   // });
@@ -36,7 +38,7 @@ function SignIn() {
 
   const handleSubmit = useCallback(
     (values) => {
-      dispatch(login(values, () => navigate('/admin/pages/actionsrequired')));
+      dispatch(login(values, () => navigate('/admin/profit/summary')));
     },
     [navigate, dispatch],
   );
@@ -70,8 +72,8 @@ function SignIn() {
             <Form name="login" form={form} onFinish={handleSubmit} layout="vertical">
               <Form.Item
                 name="email"
+                initialValue="raja@gmail.com"
                 rules={[{ message: 'Please input your username or Email!', required: true }]}
-                initialValue="hexadash@dm.com"
                 label="Username or Email Address"
                 className="[&>div>div>label]:text-sm [&>div>div>label]:text-dark dark:[&>div>div>label]:text-white60 [&>div>div>label]:font-medium"
               >
@@ -79,7 +81,7 @@ function SignIn() {
               </Form.Item>
               <Form.Item
                 name="password"
-                initialValue="123456"
+                initialValue="Raja@123"
                 label="Password"
                 className="[&>div>div>label]:text-sm [&>div>div>label]:text-dark dark:[&>div>div>label]:text-white60 [&>div>div>label]:font-medium"
               >
@@ -93,6 +95,8 @@ function SignIn() {
                   Forgot password?
                 </NavLink>
               </div>
+              {error && <p style={{ color: 'red' }}>{error}</p>}
+
               <Form.Item>
                 <Button
                   className="w-full h-12 p-0 mt-6 text-sm font-medium bg-[linear-gradient(111deg,#22C55E_18%,#10B981_100%)] text-white"
