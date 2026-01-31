@@ -6,43 +6,43 @@ import UilSignout from '@iconscout/react-unicons/icons/uil-signout';
 import UilUser from '@iconscout/react-unicons/icons/uil-user';
 // import UilUsersAlt from '@iconscout/react-unicons/icons/uil-users-alt';
 import { Avatar } from 'antd';
-import React, { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useEffect } from 'react';
+// import { useTranslation} from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import Search from './Search';
-import Message from './Message';
-import Notification from './Notification';
-import Settings from './settings';
+// import Message from './Message';
+// import Notification from './Notification';
+// import Settings from './settings';
 import { Popover } from '../../popup/popup';
 import Heading from '../../heading/heading';
-import { Dropdown } from '../../dropdown/dropdown';
+// import { Dropdown } from '../../dropdown/dropdown';
 import { logOut, getProfile } from '../../../redux/authentication/actionCreator';
 
 const AuthInfo = React.memo(() => {
   const dispatch = useDispatch();
 
-  // ✅ Get Profile from Redux Store
-  const { profile } = useSelector((state) => state.auth);
+  // ✅ Get Profile and profileLoading from Redux Store
+  const { profile, profileLoading } = useSelector((state) => state.auth);
 
-  const [state, setState] = useState({
-    flag: 'en',
-  });
+  // const [state, setState] = useState({
+  //   flag: 'en',
+  // });
   const navigate = useNavigate();
-  const { i18n } = useTranslation();
-  const { flag } = state;
+  // const { i18n } = useTranslation();
+  // const { flag } = state;
 
   const SignOut = (e) => {
     e.preventDefault();
     dispatch(logOut(() => navigate('/')));
   };
 
-  // ✅ Call API on Page Load (via Redux) if profile is missing
+  // ✅ Call API on Page Load (via Redux) if profile is missing and not already loading
   useEffect(() => {
-    if (!profile) {
+    if (!profile && !profileLoading) {
       dispatch(getProfile());
     }
-  }, [dispatch, profile]);
+  }, [dispatch, profile, profileLoading]);
 
   const userContent = (
     <div>
@@ -75,7 +75,7 @@ const AuthInfo = React.memo(() => {
           </li> */}
           <li>
             <Link
-              to="#"
+              to="/admin/pages/billing"
               className="inline-flex items-center hover:bg-shadow-transparent text-light dark:text-white60 dark:hover:text-white hover:text-primary dark:hover:bg-white10 dark:rounded-4 hover:pl-6 w-full px-2.5 py-3 text-sm transition-all ease-in-out delay-150"
             >
               <UilDollarSign className="w-4 h-4 ltr:mr-3 rtl:ml-3" /> Billing
@@ -109,50 +109,50 @@ const AuthInfo = React.memo(() => {
     </div>
   );
 
-  const onFlagChangeHandle = (value, e) => {
-    e.preventDefault();
-    setState({
-      ...state,
-      flag: value,
-    });
-    i18n.changeLanguage(value);
-  };
+  // const onFlagChangeHandle = (value, e) => {
+  //   e.preventDefault();
+  //   setState({
+  //     ...state,
+  //     flag: value,
+  //   });
+  //   i18n.changeLanguage(value);
+  // };
 
-  const country = (
-    <div className="block bg-white dark:bg-[#1b1d2a]">
-      <Link
-        to="#"
-        onClick={(e) => onFlagChangeHandle('en', e)}
-        className="flex items-center bg-white dark:bg-white10 hover:bg-primary-transparent px-3 py-1.5 text-sm text-dark dark:text-white60"
-      >
-        <img className="w-3.5 h-3.5 ltr:mr-2 rtl:ml-2" src={require('../../../static/img/flag/en.png')} alt="" />
-        <span>English</span>
-      </Link>
-      <Link
-        to="#"
-        onClick={(e) => onFlagChangeHandle('en', e)}
-        className="flex items-center bg-white dark:bg-white10 hover:bg-primary-transparent px-3 py-1.5 text-sm text-dark dark:text-white60"
-      >
-        <img className="w-3.5 h-3.5 ltr:mr-2 rtl:ml-2" src={require('../../../static/img/flag/esp.png')} alt="" />
-        <span>Spanish</span>
-      </Link>
-      <Link
-        to="#"
-        onClick={(e) => onFlagChangeHandle('en', e)}
-        className="flex items-center bg-white dark:bg-white10 hover:bg-primary-transparent px-3 py-1.5 text-sm text-dark dark:text-white60"
-      >
-        <img className="w-3.5 h-3.5 ltr:mr-2 rtl:ml-2" src={require('../../../static/img/flag/ar.png')} alt="" />
-        <span>Arabic</span>
-      </Link>
-    </div>
-  );
+  // const country = (
+  //   <div className="block bg-white dark:bg-[#1b1d2a]">
+  //     <Link
+  //       to="#"
+  //       onClick={(e) => onFlagChangeHandle('en', e)}
+  //       className="flex items-center bg-white dark:bg-white10 hover:bg-primary-transparent px-3 py-1.5 text-sm text-dark dark:text-white60"
+  //     >
+  //       <img className="w-3.5 h-3.5 ltr:mr-2 rtl:ml-2" src={require('../../../static/img/flag/en.png')} alt="" />
+  //       <span>English</span>
+  //     </Link>
+  //     <Link
+  //       to="#"
+  //       onClick={(e) => onFlagChangeHandle('en', e)}
+  //       className="flex items-center bg-white dark:bg-white10 hover:bg-primary-transparent px-3 py-1.5 text-sm text-dark dark:text-white60"
+  //     >
+  //       <img className="w-3.5 h-3.5 ltr:mr-2 rtl:ml-2" src={require('../../../static/img/flag/esp.png')} alt="" />
+  //       <span>Spanish</span>
+  //     </Link>
+  //     <Link
+  //       to="#"
+  //       onClick={(e) => onFlagChangeHandle('en', e)}
+  //       className="flex items-center bg-white dark:bg-white10 hover:bg-primary-transparent px-3 py-1.5 text-sm text-dark dark:text-white60"
+  //     >
+  //       <img className="w-3.5 h-3.5 ltr:mr-2 rtl:ml-2" src={require('../../../static/img/flag/ar.png')} alt="" />
+  //       <span>Arabic</span>
+  //     </Link>
+  //   </div>
+  // );
 
   return (
     <div className="flex items-center justify-end flex-auto">
       <div className="md:hidden">
         <Search />
       </div>
-      <Message />
+      {/* <Message />
       <Notification />
       <Settings />
       <div className="flex mx-3">
@@ -161,7 +161,7 @@ const AuthInfo = React.memo(() => {
             <img src={require(`../../../static/img/flag/${flag}.png`)} alt="" />
           </Link>
         </Dropdown>
-      </div>
+      </div> */}
       <div className="flex ltr:ml-3 rtl:mr-3 ltr:mr-4 rtl:ml-4 ssm:mr-0 ssm:rtl:ml-0">
         <Popover placement="bottomRight" content={userContent} action="click">
           <Link to="#" className="flex items-center text-light whitespace-nowrap">

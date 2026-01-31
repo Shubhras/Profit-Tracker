@@ -20,6 +20,7 @@ const Banners = lazy(() => import('../../container/pages/Banners'));
 const Testimonials = lazy(() => import('../../container/pages/Testimonials'));
 const ActionsRequired = lazy(() => import('../../container/pages/ActionsRequired'));
 const Download = lazy(() => import('../../container/pages/Download'));
+const Billing = lazy(() => import('../../container/pages/Billing'));
 
 function PagesRoute() {
   return (
@@ -29,6 +30,7 @@ function PagesRoute() {
       <Route path="download" element={<Download />} />
       <Route path="changelog" element={<ChangeLog />} />
       <Route path="settings/*" element={<Settings />} />
+      <Route path="billing" element={<Billing />} />
       <Route path="Pricing" element={<Pricing />} />
       <Route path="banners" element={<Banners />} />
       <Route path="testimonials" element={<Testimonials />} />

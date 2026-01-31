@@ -18,6 +18,7 @@ const {
   UPDATE_PROFILE_SUCCESS,
   UPDATE_PROFILE_ERR,
   SET_USER_PROFILE,
+  PROFILE_LOADING,
 } = actions;
 
 const initState = {
@@ -25,6 +26,7 @@ const initState = {
   loading: false,
   error: null,
   profile: null, // ✅ Add profile state
+  profileLoading: false, // ✅ Track profile API loading state
 };
 
 /**
@@ -144,6 +146,13 @@ const AuthReducer = (state = initState, action) => {
       return {
         ...state,
         profile: data,
+        profileLoading: false,
+      };
+
+    case PROFILE_LOADING:
+      return {
+        ...state,
+        profileLoading: data,
       };
 
     default:

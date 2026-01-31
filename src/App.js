@@ -82,7 +82,7 @@ function ProviderConfig() {
 
 function App() {
   return (
-    <Provider store={store}>
+    <Provider store={store} stabilityCheck="never">
       <ProviderConfig />
     </Provider>
   );

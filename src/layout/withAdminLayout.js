@@ -11,9 +11,9 @@ import { Link } from 'react-router-dom';
 import { ThemeProvider } from 'styled-components';
 import { HiOutlineChartBar } from 'react-icons/hi2';
 import MenueItems from './MenueItems';
-import CustomizerWrap from './overview/Customizer';
+// import CustomizerWrap from './overview/Customizer';
 import { FooterStyle, LayoutContainer, SmallScreenAuthInfo, TopMenuSearch } from './Style';
-import TopMenu from './TopMenu';
+// import TopMenu from './TopMenu';
 import Search from '../components/utilities/auth-info/Search';
 import AuthInfo from '../components/utilities/auth-info/info';
 import { ReactComponent as MySVG } from '../static/img/icon/left-bar.svg';
@@ -143,28 +143,29 @@ const ThemeLayout = (WrappedComponent) => {
                         alt=""
                       />
                     </Link> */}
-                    <Link className="flex items-center gap-1 cursor-pointer" to="/admin/profit/summary">
-                      <HiOutlineChartBar className="text-green-600" size={20} />
-                      <p className="text-2xl font-semibold text-gray-900 mb-0">Profit-Tracker</p>
-                    </Link>
+
                     {!topMenu || window.innerWidth <= 991 ? (
                       <Button
                         type="link"
-                        className="p-0 bg-transparent border-none dark:border-transparent dark:bg-transparent dark:text-white60 dark:hover:text-primary text-[#525768] hover:text-primary"
+                        className="p-0 bg-transparent border-none dark:border-transparent dark:bg-transparent dark:text-white60 dark:hover:text-primary text-[#525768] hover:text-primary pr-2"
                         onClick={toggleCollapsed}
                       >
                         <MySVG />
                       </Button>
                     ) : null}
+                    <Link className="flex items-center gap-1 cursor-pointer" to="/admin/profit/summary">
+                      <HiOutlineChartBar className="text-green-600" size={20} />
+                      <p className="text-2xl font-semibold text-gray-900 mb-0">Profit-Tracker</p>
+                    </Link>
                   </div>
                 </div>
-                <div className="flex items-center justify-between flex-auto ltr:mr-[10px] rtl:ml-[10px] [&>div:first-child]:flex [&>div]:items-center ">
-                  {topMenu && window.innerWidth > 991 ? <TopMenu /> : <CustomizerWrap rtl={rtl} />}
+                <div className="flex items-center justify-end flex-auto ltr:mr-[10px] rtl:ml-[10px]">
+                  {/* CustomizerWrap removed - keep right-side elements on the right */}
+                  {/* {topMenu && window.innerWidth > 991 ? <TopMenu /> : null} */}
                   <div className="flex flex-row  items-center md:hidden">
                     {topMenu && window.innerWidth > 991 ? (
                       <TopMenuSearch>
                         <div className="flex top-right-wrap">
-                          <CustomizerWrap rtl={rtl} />
                           <AuthInfo />
                         </div>
                       </TopMenuSearch>
@@ -175,6 +176,7 @@ const ThemeLayout = (WrappedComponent) => {
                 </div>
                 <div className="hidden md:flex items-center ltr:pr-[25px] rtl:pl-[25px] ltr:ssm:pr-[10px] rtl:ssm:pl-[10px]">
                   <Search />
+                  {/* <AuthInfo /> */}
                   <Link className="inline-flex text-light dark:text-white60" onClick={onShowHide} to="#">
                     <UilEllipsisV className="w-[18px] h-[18px]" />
                   </Link>
