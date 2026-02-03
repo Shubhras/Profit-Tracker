@@ -8,7 +8,7 @@ export default function Download() {
 
   const PageRoutes = [
     {
-      path: 'index',
+      path: '',
       breadcrumbName: 'Download',
     },
   ];

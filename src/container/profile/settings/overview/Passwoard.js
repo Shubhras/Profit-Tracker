@@ -93,7 +93,7 @@ function Password() {
     <div className="bg-white mb-[25px] rounded-10 relative">
       <div className="py-[18px] px-[25px] border-b">
         <Heading as="h4" className="mb-0 text-lg font-medium">
-          Password Settings
+          Change Password
         </Heading>
       </div>
 

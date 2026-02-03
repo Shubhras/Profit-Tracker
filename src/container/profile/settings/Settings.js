@@ -4,9 +4,9 @@ import { Routes, Route } from 'react-router-dom';
 import { PageHeader } from '../../../components/page-headers/page-headers';
 
 const Profile = lazy(() => import('./overview/Profile'));
-const Account = lazy(() => import('./overview/Account'));
+// const Account = lazy(() => import('./overview/Account'));
 const Password = lazy(() => import('./overview/Passwoard'));
-const Billing = lazy(() => import('./overview/Billing'));
+// const Billing = lazy(() => import('./overview/Billing'));
 // const SocialProfiles = lazy(() => import('./overview/SocialProfile'));
 // const Notification = lazy(() => import('./overview/Notification'));
 const AuthorBox = lazy(() => import('./overview/ProfileAuthorBox'));
@@ -14,10 +14,10 @@ const AuthorBox = lazy(() => import('./overview/ProfileAuthorBox'));
 
 function Settings() {
   const PageRoutes = [
-    {
-      path: '/admin',
-      breadcrumbName: 'Dashboard',
-    },
+    // {
+    //   path: '/admin',
+    //   breadcrumbName: 'Dashboard',
+    // },
     {
       path: '',
       breadcrumbName: 'My Profile',
@@ -67,9 +67,9 @@ function Settings() {
                 <Routes>
                   <Route index element={<Profile />} />
                   <Route path="profile" element={<Profile />} />
-                  <Route path="account" element={<Account />} />
+                  {/* <Route path="account" element={<Account />} /> */}
                   <Route path="password" element={<Password />} />
-                  <Route path="billing" element={<Billing />} />
+                  {/* <Route path="billing" element={<Billing />} /> */}
                   {/* <Route path="social" element={<SocialProfiles />} /> */}
                   {/* <Route path="notification" element={<Notification />} /> */}
                 </Routes>
