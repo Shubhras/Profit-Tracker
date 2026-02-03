@@ -7,10 +7,6 @@ const BillingContent = lazy(() => import('../profile/settings/overview/Billing')
 function BillingPage() {
   const PageRoutes = [
     {
-      path: '/admin',
-      breadcrumbName: 'Dashboard',
-    },
-    {
       path: '',
       breadcrumbName: 'Billing',
     },

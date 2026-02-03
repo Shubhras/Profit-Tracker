@@ -9,7 +9,7 @@ const OverviewDataList = lazy(() => import('../dashboard/overview/demoTwo/Overvi
 function ActionsRequired() {
   const PageRoutes = [
     {
-      path: 'index',
+      path: '',
       breadcrumbName: 'Actions Required',
     },
   ];
