@@ -19,10 +19,12 @@ const {
   UPDATE_PROFILE_ERR,
   SET_USER_PROFILE,
   PROFILE_LOADING,
+  SET_HAS_SUBSCRIPTION,
 } = actions;
 
 const initState = {
   login: Cookies.get('logedIn'),
+  hasSubscription: Cookies.get('hasSubscription') === 'true',
   loading: false,
   error: null,
   profile: null, // ✅ Add profile state
@@ -64,6 +66,7 @@ const AuthReducer = (state = initState, action) => {
       return {
         ...state,
         login: data,
+        hasSubscription: false, // ✅ Clear subscription status on logout
         profile: null, // ✅ Clear profile on logout
         loading: false,
         error: null,
@@ -153,6 +156,12 @@ const AuthReducer = (state = initState, action) => {
       return {
         ...state,
         profileLoading: data,
+      };
+
+    case SET_HAS_SUBSCRIPTION:
+      return {
+        ...state,
+        hasSubscription: data,
       };
 
     default:

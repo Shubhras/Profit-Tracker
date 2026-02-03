@@ -56,7 +56,7 @@ export default function Download() {
   const dataSource = [];
 
   const handleRefresh = () => {
-    console.log('refresh');
+    // console.log('refresh');
     setLoading(true);
 
     // simulate API call

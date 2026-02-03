@@ -162,7 +162,7 @@ function Profile() {
 
       const response = await DataService.get('/user/profile/');
 
-      console.log('Profile Response:', response.data);
+      // console.log('Profile Response:', response.data);
 
       if (response.data.status === true) {
         // Update Redux state with the data we already have
@@ -195,14 +195,14 @@ function Profile() {
 
   // ✅ Update Profile Submit
   const handleSubmit = async (values) => {
-    console.log('Updated Values:', values);
+    // console.log('Updated Values:', values);
 
     try {
       setUpdateLoading(true);
 
       const response = await DataService.patch('/user/update-profile/', values);
 
-      console.log('Update Response:', response.data);
+      // console.log('Update Response:', response.data);
 
       if (response.data.status === true) {
         message.success('Profile updated successfully!');

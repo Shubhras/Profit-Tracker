@@ -24,16 +24,27 @@ const login = (values, callback) => {
     try {
       const response = await DataService.post('/user/login/', values);
 
-      console.log('Login Success:', response.data);
+      // console.log('Login Success:', response.data);
 
       if (response.data.status === true) {
+        // Store tokens
         Cookies.set('access_token', response.data.data.access);
         Cookies.set('refresh_token', response.data.data.refresh);
         Cookies.set('logedIn', 'true'); // Set logedIn cookie for persistence
 
-        dispatch(loginSuccess(true));
+        // Store user email for display purposes
+        Cookies.set('userEmail', values.email);
 
-        callback();
+        // Get subscription status from response
+        const hasSubscription = response.data.data.has_subscription === true;
+        Cookies.set('hasSubscription', hasSubscription ? 'true' : 'false');
+
+        // Dispatch login success and subscription status
+        dispatch(loginSuccess(true));
+        dispatch(actions.setHasSubscription(hasSubscription));
+
+        // Pass subscription status to callback for redirect logic
+        callback(hasSubscription);
       }
     } catch (err) {
       console.log('Login Failed:', err.response?.data);
@@ -69,7 +80,7 @@ const register = (values, callback) => {
     try {
       const response = await DataService.post('/user/register/', values);
 
-      console.log('Register Success:', response.data);
+      // console.log('Register Success:', response.data);
       if (response.data.status === true) {
         dispatch(loginSuccess(false)); // user not logged in yet
         callback(); // redirect to login page
@@ -95,7 +106,7 @@ const forgotPassword = (values, callback) => {
     try {
       const response = await DataService.post('/user/forgot-password/', values);
 
-      console.log('Forgot Password Success:', response.data);
+      // console.log('Forgot Password Success:', response.data);
 
       if (response.data.status === true) {
         dispatch(forgotSuccess(response.data.message));
@@ -122,7 +133,7 @@ const resetPassword = (values, callback) => {
     try {
       const response = await DataService.post('/user/reset-password/', values);
 
-      console.log('Reset Password Success:', response.data);
+      // console.log('Reset Password Success:', response.data);
 
       if (response.data.status === true) {
         dispatch(forgotSuccess(response.data.message));
@@ -137,6 +148,7 @@ const resetPassword = (values, callback) => {
     }
   };
 };
+
 const changePassword = (values, callback) => {
   return async (dispatch) => {
     dispatch(passwordBegin());
@@ -144,7 +156,7 @@ const changePassword = (values, callback) => {
     try {
       const response = await DataService.post('/user/change-password/', values);
 
-      console.log('Change Password Success:', response.data);
+      // console.log('Change Password Success:', response.data);
 
       if (response.data.status === true) {
         dispatch(passwordSuccess(response.data.message));
@@ -170,6 +182,8 @@ const logOut = (callback) => {
       Cookies.remove('access_token');
       Cookies.remove('refresh_token');
       Cookies.remove('logedIn'); // Clear logedIn cookie
+      Cookies.remove('hasSubscription'); // Clear subscription status cookie
+      Cookies.remove('userEmail'); // Clear user email cookie
       dispatch(logoutSuccess(false));
       callback();
     } catch (err) {

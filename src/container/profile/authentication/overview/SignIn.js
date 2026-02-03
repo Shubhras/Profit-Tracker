@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Form, Input, Button, Row, Col } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 // eslint-disable-next-line import/no-extraneous-dependencies
@@ -18,10 +18,15 @@ import { login } from '../../../../redux/authentication/actionCreator';
 
 function SignIn() {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const isLoading = useSelector((state) => state.auth.loading);
   const [form] = Form.useForm();
   const error = useSelector((state) => state.auth.error);
+
+  // Check if there's a redirect destination (e.g., from pricing page)
+  const redirectTo = location.state?.redirectTo;
+  const planFromState = location.state?.plan;
 
   // const [state, setState] = useState({
   //   checked: null,
@@ -38,9 +43,36 @@ function SignIn() {
 
   const handleSubmit = useCallback(
     (values) => {
-      dispatch(login(values, () => navigate('/admin/profit/summary')));
+      dispatch(
+        login(values, (hasSubscription) => {
+          // If user doesn't have a subscription, redirect to pricing
+          if (!hasSubscription) {
+            // Clean up any previously selected plan
+            sessionStorage.removeItem('selectedPlan');
+            navigate('/pricing');
+            return;
+          }
+
+          // User has subscription - handle redirect
+          // Check if we need to redirect to checkout with a plan (in case they selected a new plan)
+          if (redirectTo === '/checkout') {
+            // Get plan from location state or sessionStorage
+            const plan = planFromState || JSON.parse(sessionStorage.getItem('selectedPlan') || 'null');
+            if (plan) {
+              sessionStorage.removeItem('selectedPlan'); // Clean up
+              navigate('/checkout', { state: { plan } });
+            } else {
+              navigate('/admin/profit/summary');
+            }
+          } else if (redirectTo) {
+            navigate(redirectTo);
+          } else {
+            navigate('/admin/profit/summary');
+          }
+        }),
+      );
     },
-    [navigate, dispatch],
+    [navigate, dispatch, redirectTo, planFromState],
   );
 
   // const onChange = (checked) => {
@@ -72,7 +104,6 @@ function SignIn() {
             <Form name="login" form={form} onFinish={handleSubmit} layout="vertical">
               <Form.Item
                 name="email"
-                initialValue="raja@gmail.com"
                 rules={[{ message: 'Please input your username or Email!', required: true }]}
                 label="Username or Email Address"
                 className="[&>div>div>label]:text-sm [&>div>div>label]:text-dark dark:[&>div>div>label]:text-white60 [&>div>div>label]:font-medium"
@@ -81,7 +112,6 @@ function SignIn() {
               </Form.Item>
               <Form.Item
                 name="password"
-                initialValue="Raja@123"
                 label="Password"
                 className="[&>div>div>label]:text-sm [&>div>div>label]:text-dark dark:[&>div>div>label]:text-white60 [&>div>div>label]:font-medium"
               >
@@ -103,6 +133,7 @@ function SignIn() {
                   htmlType="submit"
                   // type="danger"
                   size="large"
+                  loading={isLoading}
                 >
                   {isLoading ? 'Loading...' : 'Sign In'}
                 </Button>

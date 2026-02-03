@@ -15,6 +15,8 @@ const actions = {
   PASSWORD_SUCCESS: 'PASSWORD_SUCCESS',
   PASSWORD_ERR: 'PASSWORD_ERR',
 
+  SET_HAS_SUBSCRIPTION: 'SET_HAS_SUBSCRIPTION',
+
   loginBegin: () => {
     return {
       type: actions.LOGIN_BEGIN,
@@ -126,6 +128,13 @@ const actions = {
     return {
       type: actions.PROFILE_LOADING,
       data: isLoading,
+    };
+  },
+
+  setHasSubscription: (hasSubscription) => {
+    return {
+      type: actions.SET_HAS_SUBSCRIPTION,
+      data: hasSubscription,
     };
   },
 };

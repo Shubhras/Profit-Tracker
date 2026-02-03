@@ -1,4 +1,4 @@
-import React, { lazy } from 'react';
+import React from 'react';
 import { Provider, useSelector } from 'react-redux';
 import { ThemeProvider } from 'styled-components';
 // import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
@@ -13,8 +13,6 @@ import config from './config/config';
 import ProtectedRoute from './components/utilities/protectedRoute';
 import 'antd/dist/antd.less';
 import PublicRoutes from './routes/public';
-
-const NotFound = lazy(() => import('./container/pages/404'));
 
 const { theme } = config;
 
@@ -63,16 +61,14 @@ function ProviderConfig() {
 
         <Router basename={process.env.PUBLIC_URL}>
           <Routes>
-            {/* 1️⃣ PUBLIC ROUTES (NO LAYOUT) */}
-            <Route path="/*" element={<PublicRoutes />} />
-
-            {/* 2️⃣ AUTH ROUTES */}
-            {/* {!isLoggedIn && <Route path="/*" element={<Auth />} />} */}
+            {/* 1️⃣ AUTH ROUTES - Must come before catch-all */}
             {!isLoggedIn && <Route path="/auth/*" element={<Auth />} />}
 
-            {/* 3️⃣ ADMIN ROUTES */}
+            {/* 2️⃣ ADMIN ROUTES - Protected */}
             {isLoggedIn && <Route path="/admin/*" element={<ProtectedRoute Component={Admin} />} />}
-            <Route path="*" element={<NotFound />} />
+
+            {/* 3️⃣ PUBLIC ROUTES (includes home, pricing, checkout, etc.) */}
+            <Route path="/*" element={<PublicRoutes />} />
           </Routes>
         </Router>
       </ThemeProvider>
