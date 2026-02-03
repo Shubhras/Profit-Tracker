@@ -10,7 +10,7 @@ import { register } from '../../../../redux/authentication/actionCreator';
 function SignUp() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const error = useSelector((state) => state.auth.error);
+  const { loading, error } = useSelector((state) => state.auth);
 
   const [checked, setChecked] = useState(false);
 
@@ -193,6 +193,7 @@ function SignUp() {
                   className="w-full h-12 mt-6 text-sm font-medium bg-[linear-gradient(111deg,#22C55E_18%,#10B981_100%)] text-white"
                   htmlType="submit"
                   size="large"
+                  loading={loading}
                   disabled={!checked} // ✅ Disable button until checked
                 >
                   REGISTER

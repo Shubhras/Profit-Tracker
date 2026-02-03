@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import Cookies from 'js-cookie';
 import { Row, Col, Skeleton, Modal, Tag, Empty, Alert } from 'antd';
 import {
   CreditCardOutlined,
@@ -11,8 +14,12 @@ import {
 import { Button } from '../../../../components/buttons/buttons';
 import Heading from '../../../../components/heading/heading';
 import { DataService } from '../../../../config/dataService/dataService';
+import authActions from '../../../../redux/authentication/actions';
 
 function Billing() {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
   const [subscription, setSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -24,7 +31,7 @@ function Billing() {
     setLoading(true);
     setError(null);
     try {
-      const response = await DataService.get('/subscription/current/');
+      const response = await DataService.get('/my-subscription/');
       if (response.data.status && response.data.data) {
         setSubscription(response.data.data);
       } else {
@@ -51,10 +58,15 @@ function Billing() {
   const handleCancelSubscription = async () => {
     setCancelLoading(true);
     try {
-      await DataService.post('/subscription/cancel/');
+      await DataService.post('/cancel-subscription/');
       setCancelModalVisible(false);
-      // Refresh subscription data
-      fetchSubscription();
+
+      // Update subscription status in cookie and Redux
+      Cookies.set('hasSubscription', 'false');
+      dispatch(authActions.setHasSubscription(false));
+
+      // Redirect to pricing page since user no longer has subscription
+      navigate('/pricing');
     } catch (err) {
       console.error('Error cancelling subscription:', err);
       setError(err.response?.data?.message || 'Failed to cancel subscription');
@@ -63,26 +75,77 @@ function Billing() {
     }
   };
 
-  // Format date helper
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
+  // Format date from timestamp or ISO string
+  const formatDate = (dateValue) => {
+    if (!dateValue) return 'N/A';
+    // Handle Unix timestamp (in seconds)
+    if (typeof dateValue === 'number') {
+      return new Date(dateValue * 1000).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    }
+    // Handle ISO string
+    return new Date(dateValue).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
     });
   };
 
+  // Format amount from paise to rupees
+  const formatAmount = (amountInPaise, currencySymbol = '₹') => {
+    if (!amountInPaise && amountInPaise !== 0) return 'N/A';
+    const amount = amountInPaise / 100;
+    return `${currencySymbol}${amount.toLocaleString('en-IN')}`;
+  };
+
+  // Get plan name from subscription history
+  const getPlanName = () => {
+    if (subscription?.history?.[0]?.line_items?.[0]?.name) {
+      return subscription.history[0].line_items[0].name;
+    }
+    return 'Subscription Plan';
+  };
+
+  // Get plan price from history
+  const getPlanPrice = () => {
+    if (subscription?.history?.[0]?.amount) {
+      const currencySymbol = subscription.history[0].currency_symbol || '₹';
+      return formatAmount(subscription.history[0].amount, currencySymbol);
+    }
+    return 'N/A';
+  };
+
+  // Get next billing date from history
+  const getNextBillingDate = () => {
+    if (subscription?.history?.[0]?.billing_end) {
+      return formatDate(subscription.history[0].billing_end);
+    }
+    return 'N/A';
+  };
+
+  // Get payment method from history
+  const getPaymentMethod = () => {
+    if (subscription?.history?.[0]?.customer_details?.customer_email) {
+      return subscription.history[0].customer_details.customer_email;
+    }
+    return 'N/A';
+  };
+
   // Get status tag color
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case 'active':
+      case 'paid':
         return 'success';
       case 'cancelled':
         return 'error';
       case 'expired':
         return 'warning';
       case 'pending':
+      case 'created':
         return 'processing';
       default:
         return 'default';
@@ -217,15 +280,9 @@ function Billing() {
                 </div>
 
                 <div className="mb-4">
-                  <h3 className="text-2xl font-bold text-dark dark:text-white87 mb-1">
-                    {subscription?.plan_name || 'Free Plan'}
-                  </h3>
+                  <h3 className="text-2xl font-bold text-dark dark:text-white87 mb-1">{getPlanName()}</h3>
                   <p className="text-light dark:text-white60 mb-0">
-                    {subscription?.billing_cycle === 'monthly'
-                      ? 'Billed Monthly'
-                      : subscription?.billing_cycle === 'yearly'
-                      ? 'Billed Yearly'
-                      : subscription?.billing_cycle || 'Free Forever'}
+                    {subscription?.active ? 'Active Subscription' : 'Subscription'}
                   </p>
                 </div>
 
@@ -262,7 +319,7 @@ function Billing() {
                   >
                     Upgrade Plan
                   </Button>
-                  {subscription?.status === 'active' && subscription?.plan_name?.toLowerCase() !== 'free' && (
+                  {subscription?.status === 'active' && subscription?.active && (
                     <Button type="default" danger className="rounded-md" onClick={() => setCancelModalVisible(true)}>
                       Cancel Subscription
                     </Button>
@@ -282,32 +339,24 @@ function Billing() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center py-2 border-b border-regular dark:border-white10">
                     <span className="text-light dark:text-white60">Plan Price</span>
-                    <span className="text-dark dark:text-white87 font-medium">
-                      {subscription?.price === 0
-                        ? 'Free'
-                        : `$${subscription?.price || 0}/${subscription?.billing_cycle || 'month'}`}
-                    </span>
+                    <span className="text-dark dark:text-white87 font-medium">{getPlanPrice()}/month</span>
                   </div>
 
                   <div className="flex justify-between items-center py-2 border-b border-regular dark:border-white10">
                     <span className="text-light dark:text-white60">Start Date</span>
                     <span className="text-dark dark:text-white87 font-medium">
-                      {formatDate(subscription?.start_date)}
+                      {formatDate(subscription?.created_at)}
                     </span>
                   </div>
 
                   <div className="flex justify-between items-center py-2 border-b border-regular dark:border-white10">
                     <span className="text-light dark:text-white60">Next Billing Date</span>
-                    <span className="text-dark dark:text-white87 font-medium">
-                      {subscription?.billing_cycle === 'free' ? 'Never' : formatDate(subscription?.next_billing_date)}
-                    </span>
+                    <span className="text-dark dark:text-white87 font-medium">{getNextBillingDate()}</span>
                   </div>
 
                   <div className="flex justify-between items-center py-2 border-b border-regular dark:border-white10">
-                    <span className="text-light dark:text-white60">Payment Method</span>
-                    <span className="text-dark dark:text-white87 font-medium">
-                      {subscription?.payment_method || 'N/A'}
-                    </span>
+                    <span className="text-light dark:text-white60">Email</span>
+                    <span className="text-dark dark:text-white87 font-medium">{getPaymentMethod()}</span>
                   </div>
 
                   {subscription?.subscription_id && (
@@ -330,7 +379,7 @@ function Billing() {
                   Recent Payment History
                 </h5>
 
-                {subscription?.payment_history && subscription.payment_history.length > 0 ? (
+                {subscription?.history && subscription.history.length > 0 ? (
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
@@ -342,17 +391,22 @@ function Billing() {
                         </tr>
                       </thead>
                       <tbody>
-                        {subscription.payment_history.map((payment, index) => (
-                          <tr key={index} className="border-b border-regular dark:border-white10 last:border-b-0">
-                            <td className="py-3 px-2 text-dark dark:text-white87">{formatDate(payment.date)}</td>
+                        {subscription.history.map((invoice, index) => (
+                          <tr
+                            key={invoice.id || index}
+                            className="border-b border-regular dark:border-white10 last:border-b-0"
+                          >
                             <td className="py-3 px-2 text-dark dark:text-white87">
-                              {payment.description || 'Subscription Payment'}
+                              {formatDate(invoice.paid_at || invoice.created_at)}
                             </td>
-                            <td className="py-3 px-2 text-dark dark:text-white87 font-medium">${payment.amount}</td>
+                            <td className="py-3 px-2 text-dark dark:text-white87">
+                              {invoice.line_items?.[0]?.name || 'Subscription Payment'}
+                            </td>
+                            <td className="py-3 px-2 text-dark dark:text-white87 font-medium">
+                              {formatAmount(invoice.amount_paid || invoice.amount, invoice.currency_symbol)}
+                            </td>
                             <td className="py-3 px-2">
-                              <Tag color={payment.status === 'success' ? 'success' : 'error'}>
-                                {payment.status?.toUpperCase()}
-                              </Tag>
+                              <Tag color={getStatusColor(invoice.status)}>{invoice.status?.toUpperCase()}</Tag>
                             </td>
                           </tr>
                         ))}
@@ -378,6 +432,7 @@ function Billing() {
             Cancel Subscription
           </div>
         }
+        centered
         open={cancelModalVisible}
         onCancel={() => setCancelModalVisible(false)}
         footer={[

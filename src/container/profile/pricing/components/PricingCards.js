@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Skeleton, Alert } from 'antd';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 import { List } from '../../../../components/pricing/pricing';
 import { Button } from '../../../../components/buttons/buttons';
 import Heading from '../../../../components/heading/heading';
 import { DataService } from '../../../../config/dataService/dataService';
+import { selectPlan } from '../../../../redux/subscription/actionCreator';
 
 // Skeleton Card Component for loading state
 function PricingCardSkeleton() {
@@ -38,9 +40,29 @@ function PricingCardSkeleton() {
 }
 
 function PricingCards() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const isLoggedIn = useSelector((state) => state.auth.login);
+
   const [pricingPlans, setPricingPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Handle plan selection
+  const handlePlanSelect = (plan) => {
+    // Store plan in redux
+    dispatch(selectPlan(plan));
+
+    if (isLoggedIn) {
+      // If logged in, go directly to checkout with plan data
+      navigate('/checkout', { state: { plan } });
+    } else {
+      // If not logged in, store plan and redirect to login
+      // Store plan in sessionStorage for persistence through login
+      sessionStorage.setItem('selectedPlan', JSON.stringify(plan));
+      navigate('/auth/login', { state: { redirectTo: '/checkout', plan } });
+    }
+  };
 
   // Map API response to component format
   const mapApiPlanToComponent = (apiPlan, index) => {
@@ -95,7 +117,7 @@ function PricingCards() {
       },
       title: apiPlan.price === 0 ? apiPlan.name : apiPlan.price.toString(),
       subtitle: `For ${apiPlan.users_limit} ${apiPlan.users_limit === 1 ? 'User' : 'Users'}`,
-      price: apiPlan.price === 0 ? null : '$',
+      price: apiPlan.price === 0 ? null : '₹',
       perMonth: apiPlan.billing_cycle === 'free' ? null : 'Per month',
       features,
       button: {
@@ -113,7 +135,7 @@ function PricingCards() {
       setError(null);
 
       try {
-        const response = await DataService.get('/subscription/plans/');
+        const response = await DataService.get('/subscription-plans/');
 
         if (response.data.status && response.data.data && response.data.data.plans) {
           const mappedPlans = response.data.data.plans.map((plan, index) => mapApiPlanToComponent(plan, index));
@@ -230,11 +252,14 @@ function PricingCards() {
               </div>
 
               {/* Button */}
-              <Link to="/auth/login">
-                <Button size="default" type={plan.button.type} className={plan.button.className}>
-                  {plan.button.text}
-                </Button>
-              </Link>
+              <Button
+                size="default"
+                type={plan.button.type}
+                className={plan.button.className}
+                onClick={() => handlePlanSelect(plan)}
+              >
+                {plan.button.text}
+              </Button>
             </div>
           </Col>
         ))}

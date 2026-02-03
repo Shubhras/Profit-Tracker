@@ -1,18 +1,54 @@
 import React, { useEffect, useRef, useState } from 'react';
-// import { FiTrendingUp } from 'react-icons/fi';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import Cookies from 'js-cookie';
 import { HiOutlineChartBar } from 'react-icons/hi2';
-import { HiOutlineMenuAlt3, HiOutlineX } from 'react-icons/hi';
-
-// import { RiLineChartLine } from 'react-icons/ri';
-// import { MdTrackChanges } from 'react-icons/md';
-// import logo from '../../../../assets/images/home/Profit-Tracker-logo.png';
+import { HiOutlineMenuAlt3, HiOutlineX, HiOutlineUser, HiOutlineLogout } from 'react-icons/hi';
+import { logOut } from '../../../../redux/authentication/actionCreator';
 
 function Navbar() {
-  // const [open, setOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const menuRef = useRef(null);
   const buttonRef = useRef(null);
+  const userDropdownRef = useRef(null);
+
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  // Get auth state from Redux
+  const isLoggedIn = useSelector((state) => state.auth.login);
+  const hasSubscription = useSelector((state) => state.auth.hasSubscription);
+  const profile = useSelector((state) => state.auth.profile);
+
+  // Get email from cookie (fallback to profile)
+  const userEmail = Cookies.get('userEmail') || profile?.email || '';
+
+  // Handle logout
+  const handleLogout = () => {
+    dispatch(
+      logOut(() => {
+        setUserDropdownOpen(false);
+        navigate('/');
+      }),
+    );
+  };
+
+  // Get display name from email (extract part before @)
+  const getDisplayName = () => {
+    if (userEmail) {
+      return userEmail.split('@')[0];
+    }
+    if (profile?.name) return profile.name;
+    if (profile?.first_name) return `${profile.first_name} ${profile.last_name || ''}`.trim();
+    return 'User';
+  };
+
+  // Get initials for avatar
+  const getInitials = () => {
+    const name = getDisplayName();
+    return name.substring(0, 2).toUpperCase();
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -24,23 +60,24 @@ function Navbar() {
       ) {
         setMobileOpen(false);
       }
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
+        setUserDropdownOpen(false);
+      }
     };
-    if (mobileOpen) {
+    if (mobileOpen || userDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [mobileOpen]);
+  }, [mobileOpen, userDropdownOpen]);
 
   return (
-    <header className="w-full bg-white relative z-50">
+    <header className="w-full bg-white relative z-50  shadow-md">
       <div className="px-[3%]">
         <div className="flex items-center justify-between h-20 text-lg">
           {/* LEFT: LOGO */}
-          {/* <img src={logo} alt="Profit-Tracker" className="h-10" /> */}
-          {/* MOBILE MENU BUTTON */}
           <div className="flex items-center gap-1">
             <Link className="flex items-center gap-1 cursor-pointer" to="/">
               <HiOutlineChartBar className="text-green-600" size={24} />
@@ -48,32 +85,6 @@ function Navbar() {
             </Link>
           </div>
           <nav className="flex lg:hidden items-center gap-6">
-            {/* Products Dropdown */}
-            {/* <div className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
-              <button type="button" className="flex items-center gap-1 text-gray-700 font-medium hover:text-gray-900">
-                Products
-                <svg className="w-4 h-4 mt-[2px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {open && (
-                <div className="absolute left-0 top-8 z-50 w-64 bg-white rounded-xl shadow-xl border border-gray-100 ">
-                  <Link className="block px-5 py-3 hover:bg-gray-50 text-gray-700 " to="#">
-                    Profit Analytics
-                  </Link>
-                  <Link className="block px-5 py-3 hover:bg-gray-50 text-gray-700 " to="#">
-                    Payments Reconciliation
-                  </Link>
-                  <Link className="block px-5 py-3 hover:bg-gray-50 text-gray-700 " to="#">
-                    Inventory Planning
-                  </Link>
-                </div>
-              )}
-            </div> */}
-            {/* <Link to="/" className="text-gray-700 font-medium hover:text-gray-900">
-              Products
-            </Link> */}
             <Link to="/integrations" className="text-gray-700 font-medium hover:text-gray-900">
               Integrations
             </Link>
@@ -87,17 +98,67 @@ function Navbar() {
 
           {/* RIGHT: AUTH */}
           <div className="lg:hidden flex items-center lg:gap-3 gap-6">
-            <Link to="/auth/login" className="text-gray-800 font-medium hover:text-gray-900">
-              Login
-            </Link>
+            {isLoggedIn ? (
+              // Logged in - show user dropdown
+              <div className="relative" ref={userDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setUserDropdownOpen((prev) => !prev)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-full bg-gray-100 hover:bg-gray-200 transition"
+                >
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 flex items-center justify-center text-white font-semibold text-sm">
+                    {getInitials()}
+                  </div>
+                  <span className="text-gray-800 font-medium hidden sm:block">{getDisplayName()}</span>
+                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
 
-            <Link
-              to="/auth/register"
-              className="px-5 py-1 rounded-full bg-[linear-gradient(111deg,#22C55E_18%,#10B981_100%)]
-             shadow-lg hover:opacity-90 transition text-white font-semibold"
-            >
-              Sign Up
-            </Link>
+                {userDropdownOpen && (
+                  <div className="absolute right-0 top-12 z-50 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2">
+                    <div className="px-4 py-2 border-b border-gray-100">
+                      <p className="text-sm font-medium text-gray-900 mb-0">{getDisplayName()}</p>
+                      <p className="text-xs text-gray-500 mb-0">{userEmail}</p>
+                    </div>
+                    {/* Only show Dashboard link if user has subscription */}
+                    {hasSubscription && (
+                      <Link
+                        to="/admin/profit/summary"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50"
+                      >
+                        <HiOutlineUser className="w-4 h-4" />
+                        Dashboard
+                      </Link>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50"
+                    >
+                      <HiOutlineLogout className="w-4 h-4" />
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Not logged in - show login/signup
+              <>
+                <Link to="/auth/login" className="text-gray-800 font-medium hover:text-gray-900">
+                  Login
+                </Link>
+
+                <Link
+                  to="/auth/register"
+                  className="px-5 py-1 rounded-full bg-[linear-gradient(111deg,#22C55E_18%,#10B981_100%)]
+                 shadow-lg hover:opacity-90 transition text-white font-semibold"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
           <button
             type="button"
@@ -123,9 +184,9 @@ function Navbar() {
   `}
         >
           <nav className="flex flex-col px-[5%] py-5 gap-4 text-base">
-            <Link to="/" onClick={() => setMobileOpen(false)} className="text-gray-700 font-medium">
+            {/* <Link to="/" onClick={() => setMobileOpen(false)} className="text-gray-700 font-medium">
               Products
-            </Link>
+            </Link> */}
 
             <Link to="/integrations" onClick={() => setMobileOpen(false)} className="text-gray-700 font-medium">
               Integrations
@@ -141,19 +202,57 @@ function Navbar() {
 
             <div className="h-px bg-gray-200 my-2" />
 
-            <Link to="/auth/login" onClick={() => setMobileOpen(false)} className="text-gray-800 font-medium">
-              Login
-            </Link>
+            {isLoggedIn ? (
+              // Mobile: Logged in state
+              <>
+                <div className="flex items-center gap-3 py-2">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 flex items-center justify-center text-white font-semibold">
+                    {getInitials()}
+                  </div>
+                  <div>
+                    <p className="text-gray-900 font-medium mb-0">{getDisplayName()}</p>
+                    <p className="text-gray-500 text-sm mb-0">{userEmail}</p>
+                  </div>
+                </div>
+                {/* Only show Dashboard link if user has subscription */}
+                {hasSubscription && (
+                  <Link
+                    to="/admin/profit/summary"
+                    onClick={() => setMobileOpen(false)}
+                    className="text-gray-700 font-medium"
+                  >
+                    Dashboard
+                  </Link>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileOpen(false);
+                    handleLogout();
+                  }}
+                  className="text-left text-red-600 font-medium"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              // Mobile: Not logged in state
+              <>
+                <Link to="/auth/login" onClick={() => setMobileOpen(false)} className="text-gray-800 font-medium">
+                  Login
+                </Link>
 
-            <Link
-              to="/auth/register"
-              onClick={() => setMobileOpen(false)}
-              className="inline-flex justify-center px-5 py-2 rounded-full
+                <Link
+                  to="/auth/register"
+                  onClick={() => setMobileOpen(false)}
+                  className="inline-flex justify-center px-5 py-2 rounded-full
       bg-[linear-gradient(111deg,#22C55E_18%,#10B981_100%)]
       text-white font-semibold"
-            >
-              Sign Up
-            </Link>
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </nav>
         </div>
       )}

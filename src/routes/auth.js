@@ -18,13 +18,15 @@ function AuthRoot() {
 }
 const FrontendRoutes = React.memo(function FrontendRoutes() {
   return (
-    <Routes>
-      <Route path="login" element={<Login />} />
-      <Route path="forgotPassword" element={<ForgotPass />} />
-      <Route path="register" element={<SignUp />} />
-      <Route path="resetPassword" element={<ResetPassword />} />
-      <Route path="*" element={<AuthRoot />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="login" element={<Login />} />
+        <Route path="forgotPassword" element={<ForgotPass />} />
+        <Route path="register" element={<SignUp />} />
+        <Route path="resetPassword" element={<ResetPassword />} />
+        <Route path="*" element={<AuthRoot />} />
+      </Routes>
+    </>
   );
 });
 
