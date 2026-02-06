@@ -45,65 +45,54 @@ const AuthInfo = React.memo(() => {
   }, [dispatch, profile, profileLoading]);
 
   const userContent = (
-    <div>
-      <div className="min-w-[280px] sm:min-w-full pt-4">
-        <figure className="flex items-center text-sm rounded-[8px] bg-section dark:bg-white10 py-[20px] px-[25px] mb-[12px]">
-          <img className="ltr:mr-4 rtl:ml-4" src={require('../../../static/img/avatar/chat-auth.png')} alt="" />
-          <figcaption>
-            <Heading className="text-dark dark:text-white87 mb-0.5 text-sm capitalize" as="h5">
+    <div className="min-w-sm w-full bg-white dark:bg-[#1b1e2b] rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] overflow-hidden">
+      <div className="p-2 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600">
+        <figure className="flex items-center gap-3 mb-0 relative z-10">
+          <img
+            className="w-12 h-12 rounded-full border-2 border-white/30 p-0.5"
+            src={require('../../../static/img/avatar/chat-auth.png')}
+            alt=""
+          />
+          <figcaption className="text-white">
+            <Heading className="text-white mb-0.5 text-base font-semibold" as="h5">
               {profile?.name || 'Loading...'}
             </Heading>
-            <p className="mb-0 text-xs text-body dark:text-white60"> {profile?.business_name || ''}</p>
+            <p className="mb-0 text-xs text-white/80 font-medium opacity-90">{profile?.business_name || ''}</p>
           </figcaption>
         </figure>
-        <ul className="mb-0">
+      </div>
+
+      <div className="p-2">
+        <ul className="mb-0 flex flex-col gap-1">
           <li>
             <Link
               to="/admin/pages/settings/profile"
-              className="inline-flex items-center hover:bg-shadow-transparent text-light dark:text-white60 dark:hover:text-white hover:text-primary dark:hover:bg-white10 dark:rounded-4 hover:pl-6 w-full px-2.5 py-3 text-sm transition-all ease-in-out delay-150"
+              className="group flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-white10 dark:hover:text-white transition-all duration-200"
             >
-              <UilUser className="w-4 h-4 ltr:mr-3 rtl:ml-3" /> Profile
+              <UilUser className="w-4 h-4 ltr:mr-3 rtl:ml-3 text-gray-400 group-hover:text-emerald-500 transition-colors" />
+              Profile
             </Link>
           </li>
-          {/* <li>
-            <Link
-              to="#"
-              className="inline-flex items-center hover:bg-shadow-transparent text-light dark:text-white60 dark:hover:text-white hover:text-primary dark:hover:bg-white10 dark:rounded-4 hover:pl-6 w-full px-2.5 py-3 text-sm transition-all ease-in-out delay-150"
-            >
-              <UilSetting className="w-4 h-4 ltr:mr-3 rtl:ml-3" /> Settings
-            </Link>
-          </li> */}
           <li>
             <Link
               to="/admin/pages/billing"
-              className="inline-flex items-center hover:bg-shadow-transparent text-light dark:text-white60 dark:hover:text-white hover:text-primary dark:hover:bg-white10 dark:rounded-4 hover:pl-6 w-full px-2.5 py-3 text-sm transition-all ease-in-out delay-150"
+              className="group flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-white10 dark:hover:text-white transition-all duration-200"
             >
-              <UilDollarSign className="w-4 h-4 ltr:mr-3 rtl:ml-3" /> Billing
+              <UilDollarSign className="w-4 h-4 ltr:mr-3 rtl:ml-3 text-gray-400 group-hover:text-emerald-500 transition-colors" />
+              Billing
             </Link>
           </li>
-          {/* <li>
-            <Link
-              to="#"
-              className="inline-flex items-center hover:bg-shadow-transparent text-light dark:text-white60 dark:hover:text-white hover:text-primary dark:hover:bg-white10 dark:rounded-4 hover:pl-6 w-full px-2.5 py-3 text-sm transition-all ease-in-out delay-150"
-            >
-              <UilUsersAlt className="w-4 h-4 ltr:mr-3 rtl:ml-3" /> Activity
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="#"
-              className="inline-flex items-center hover:bg-shadow-transparent text-light dark:text-white60 dark:hover:text-white hover:text-primary dark:hover:bg-white10 dark:rounded-4 hover:pl-6 w-full px-2.5 py-3 text-sm transition-all ease-in-out delay-150"
-            >
-              <UilBell className="w-4 h-4 ltr:mr-3 rtl:ml-3" /> Help
-            </Link>
-          </li> */}
         </ul>
+
+        <div className="h-px bg-gray-100 dark:bg-white10 my-2 mx-2" />
+
         <Link
           to="#"
           onClick={SignOut}
-          className="flex items-center justify-center text-sm font-medium bg-[#f4f5f7] dark:bg-[#32333f] h-[50px] text-light hover:text-primary dark:hover:text-white60 dark:text-white87 mx-[-15px] mb-[-15px] rounded-b-6"
+          className="group flex items-center w-full px-3 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-all duration-200"
         >
-          <UilSignout className="w-4 h-4 ltr:mr-3 rtl:ml-3" /> Sign Out
+          <UilSignout className="w-4 h-4 ltr:mr-3 rtl:ml-3 text-red-400 group-hover:text-red-500" />
+          Sign Out
         </Link>
       </div>
     </div>

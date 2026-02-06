@@ -7,6 +7,10 @@ const Contact = lazy(() => import('../container/profile/contactus/Index'));
 const Pricing = lazy(() => import('../container/profile/pricing/Index'));
 const Integrations = lazy(() => import('../container/profile/Integrations/Index'));
 const Checkout = lazy(() => import('../container/pages/Checkout'));
+const About = lazy(() => import('../container/profile/about/Index'));
+const Testimonials = lazy(() => import('../container/profile/testimonials/Index'));
+const PrivacyPolicy = lazy(() => import('../container/profile/legal/PrivacyPolicy'));
+const TermsConditions = lazy(() => import('../container/profile/legal/TermsConditions'));
 
 function PublicRoutes() {
   return (
@@ -23,6 +27,10 @@ function PublicRoutes() {
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/testimonials" element={<Testimonials />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsConditions />} />
       </Routes>
     </Suspense>
   );

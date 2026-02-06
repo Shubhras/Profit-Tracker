@@ -110,7 +110,7 @@ const ProfitGrowth = React.memo(() => {
                     stepSize: Math.max(...profitGrowthData.orders) / 5,
                     font: {
                       size: 13,
-                      family: "'Jost', sans-serif",
+                      family: "'Figtree', sans-serif",
                     },
                     padding: 10,
                     color: '#747474',
@@ -132,7 +132,7 @@ const ProfitGrowth = React.memo(() => {
                     beginAtZero: true,
                     font: {
                       size: 13,
-                      family: "'Jost', sans-serif",
+                      family: "'Figtree', sans-serif",
                     },
                     color: '#747474',
                     min: 0,

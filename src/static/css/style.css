@@ -17,6 +17,16 @@
   }
 }
 
+@layer base {
+  * {
+    font-family: 'Figtree', sans-serif;
+  }
+
+  body {
+    font-family: 'Figtree', sans-serif;
+  }
+}
+
 h1,
 h2,
 h3,

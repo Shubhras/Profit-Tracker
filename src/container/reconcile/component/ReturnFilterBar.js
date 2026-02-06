@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useState } from 'react';
 import { Select, Button } from 'antd';
 import { DownOutlined, CloseOutlined, CheckOutlined } from '@ant-design/icons';

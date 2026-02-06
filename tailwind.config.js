@@ -134,7 +134,10 @@ module.exports = {
         10: '10px',
       },
       fontFamily: {
-        Jost: ['Jost', 'sans-serif'],
+        Jost: ['Figtree', 'sans-serif'],
+        Figtree: ['Figtree', 'sans-serif'],
+        Poppins: ['Poppins', 'sans-serif'],
+        sans: ['Figtree', 'sans-serif'],
         Awesome: ['FontAwesome'],
       },
       fontSize: {

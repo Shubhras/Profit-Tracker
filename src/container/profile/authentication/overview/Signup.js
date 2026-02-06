@@ -1,9 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Row, Col, Form, Input, Button, message } from 'antd';
-import { HiOutlineChartBar } from 'react-icons/hi2';
+import { Form, Input, Button, message } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
-import { AuthFormWrap } from './style';
 import { Checkbox } from '../../../../components/checkbox/checkbox';
 import { register } from '../../../../redux/authentication/actionCreator';
 
@@ -48,172 +46,147 @@ function SignUp() {
   );
 
   return (
-    <Row justify="center">
-      <Col xxl={10} xl={10} md={18} sm={18} xs={24}>
-        <AuthFormWrap className="bg-white rounded-md shadow-regular">
-          {/* Header */}
-          <div className="px-5 py-4 text-center border-b border-gray-200">
-            <Link to="/" className="text-xl font-semibold text-gray-900 flex items-center justify-center gap-1">
-              Sign Up <HiOutlineChartBar className="text-green-600" size={24} />
-              Profit-Tracker
-            </Link>
+    <div className="w-full mt-14 min-md:mt-0">
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Create Account</h2>
+        <p className="text-gray-500">Join Profit-Tracker and start growing today</p>
+      </div>
+
+      <Form name="register" onFinish={handleSubmit} layout="vertical">
+        <div className="grid grid-cols-1 min-md:grid-cols-2 gap-x-2">
+          <Form.Item
+            label={<span className="font-medium text-gray-700">Name</span>}
+            name="name"
+            rules={[{ required: true, message: 'Please enter your name' }]}
+          >
+            <Input className="rounded-lg py-2" placeholder="Full Name" />
+          </Form.Item>
+
+          <Form.Item
+            label={<span className="font-medium text-gray-700">Business Name</span>}
+            name="businessName"
+            rules={[{ required: true, message: 'Please enter business name' }]}
+          >
+            <Input className="rounded-lg py-2" placeholder="Business Name" />
+          </Form.Item>
+
+          <Form.Item
+            label={<span className="font-medium text-gray-700">Email Address</span>}
+            name="email"
+            rules={[{ required: true, type: 'email', message: 'Enter valid email' }]}
+          >
+            <Input className="rounded-lg py-2" placeholder="Email Address" />
+          </Form.Item>
+
+          <Form.Item
+            label={<span className="font-medium text-gray-700">Mobile Number</span>}
+            name="mobile"
+            rules={[{ required: true, message: 'Please enter mobile number' }]}
+          >
+            <Input className="rounded-lg py-2" placeholder="Mobile Number" />
+          </Form.Item>
+
+          <Form.Item
+            label={<span className="font-medium text-gray-700">Password</span>}
+            name="password"
+            rules={[{ required: true, message: 'Please enter password' }]}
+          >
+            <Input.Password className="rounded-lg py-2" placeholder="Password" />
+          </Form.Item>
+
+          <Form.Item
+            label={<span className="font-medium text-gray-700">Confirm Password</span>}
+            name="confirmPassword"
+            dependencies={['password']}
+            rules={[
+              { required: true, message: 'Please confirm password' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue('password') === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error('Passwords do not match'));
+                },
+              }),
+            ]}
+          >
+            <Input.Password className="rounded-lg py-2" placeholder="Confirm Password" />
+          </Form.Item>
+
+          <Form.Item label={<span className="font-medium text-gray-700">GST Number (Optional)</span>} name="gst">
+            <Input className="rounded-lg py-2" placeholder="GST Number" />
+          </Form.Item>
+
+          <Form.Item
+            label={<span className="font-medium text-gray-700">Address</span>}
+            name="address"
+            rules={[{ required: true, message: 'Please enter address' }]}
+          >
+            <Input className="rounded-lg py-2" placeholder="Address" />
+          </Form.Item>
+
+          <Form.Item
+            label={<span className="font-medium text-gray-700">City</span>}
+            name="city"
+            rules={[{ required: true, message: 'Please enter city' }]}
+          >
+            <Input className="rounded-lg py-2" placeholder="City" />
+          </Form.Item>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Form.Item
+              label={<span className="font-medium text-gray-700">State</span>}
+              name="state"
+              rules={[{ required: true, message: 'Please enter state' }]}
+            >
+              <Input className="rounded-lg py-2" placeholder="State" />
+            </Form.Item>
+
+            <Form.Item
+              label={<span className="font-medium text-gray-700">Pin Code</span>}
+              name="pincode"
+              rules={[{ required: true, message: 'Please enter pin code' }]}
+            >
+              <Input className="rounded-lg py-2" placeholder="Pin Code" />
+            </Form.Item>
           </div>
+        </div>
 
-          {/* Form */}
-          <div className="px-8 py-10">
-            <Form name="register" onFinish={handleSubmit} layout="vertical">
-              <Row gutter={16}>
-                {/* Name */}
-                <Col md={12} xs={24}>
-                  <Form.Item label="Name" name="name" rules={[{ required: true, message: 'Please enter your name' }]}>
-                    <Input placeholder="Name" />
-                  </Form.Item>
-                </Col>
+        <div className="mt-2 mb-6">
+          <Checkbox checked={checked} onChange={(value) => setChecked(value)}>
+            <span className="text-gray-600">
+              I accept the{' '}
+              <a href="/terms" className="text-emerald-600 underline">
+                Terms & Conditions
+              </a>
+            </span>
+          </Checkbox>
+        </div>
 
-                {/* Business Name */}
-                <Col md={12} xs={24}>
-                  <Form.Item
-                    label="Business Name"
-                    name="businessName"
-                    rules={[{ required: true, message: 'Please enter business name' }]}
-                  >
-                    <Input placeholder="Business Name" />
-                  </Form.Item>
-                </Col>
+        {error && (
+          <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-600 text-sm border border-red-100">{error}</div>
+        )}
 
-                {/* Email */}
-                <Col md={12} xs={24}>
-                  <Form.Item
-                    label="Email Id"
-                    name="email"
-                    rules={[{ required: true, type: 'email', message: 'Enter valid email' }]}
-                  >
-                    <Input placeholder="Email Id" />
-                  </Form.Item>
-                </Col>
+        <Form.Item>
+          <Button
+            className="w-full h-12 text-base font-semibold bg-gradient-to-r from-emerald-500 to-teal-600 border-0 rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            type="primary"
+            htmlType="submit"
+            loading={loading}
+            disabled={!checked}
+          >
+            Create Account
+          </Button>
+        </Form.Item>
+      </Form>
 
-                {/* Mobile */}
-                <Col md={12} xs={24}>
-                  <Form.Item
-                    label="Mobile Number"
-                    name="mobile"
-                    rules={[{ required: true, message: 'Please enter mobile number' }]}
-                  >
-                    <Input placeholder="Mobile Number" />
-                  </Form.Item>
-                </Col>
-
-                {/* Password */}
-                <Col md={12} xs={24}>
-                  <Form.Item
-                    label="Password"
-                    name="password"
-                    rules={[{ required: true, message: 'Please enter password' }]}
-                  >
-                    <Input.Password placeholder="Password" />
-                  </Form.Item>
-                </Col>
-
-                {/* Confirm Password */}
-                <Col md={12} xs={24}>
-                  <Form.Item
-                    label="Confirm Password"
-                    name="confirmPassword"
-                    dependencies={['password']}
-                    rules={[
-                      { required: true, message: 'Please confirm password' },
-                      ({ getFieldValue }) => ({
-                        validator(_, value) {
-                          if (!value || getFieldValue('password') === value) {
-                            return Promise.resolve();
-                          }
-                          return Promise.reject(new Error('Passwords do not match'));
-                        },
-                      }),
-                    ]}
-                  >
-                    <Input.Password placeholder="Confirm Password" />
-                  </Form.Item>
-                </Col>
-
-                {/* GST (Optional) */}
-                <Col md={12} xs={24}>
-                  <Form.Item label="GST Number (Optional)" name="gst">
-                    <Input placeholder="GST Number" />
-                  </Form.Item>
-                </Col>
-
-                {/* Address */}
-                <Col md={12} xs={24}>
-                  <Form.Item
-                    label="Address"
-                    name="address"
-                    rules={[{ required: true, message: 'Please enter address' }]}
-                  >
-                    <Input placeholder="Address" />
-                  </Form.Item>
-                </Col>
-
-                {/* City */}
-                <Col md={12} xs={24}>
-                  <Form.Item label="City" name="city" rules={[{ required: true, message: 'Please enter city' }]}>
-                    <Input placeholder="City" />
-                  </Form.Item>
-                </Col>
-
-                {/* State */}
-                <Col md={12} xs={24}>
-                  <Form.Item label="State" name="state" rules={[{ required: true, message: 'Please enter state' }]}>
-                    <Input placeholder="State" />
-                  </Form.Item>
-                </Col>
-
-                {/* Pin Code */}
-                <Col md={12} xs={24}>
-                  <Form.Item
-                    label="Pin code"
-                    name="pincode"
-                    rules={[{ required: true, message: 'Please enter pin code' }]}
-                  >
-                    <Input placeholder="Pin code" />
-                  </Form.Item>
-                </Col>
-              </Row>
-
-              {/* Terms Checkbox */}
-              <div className="flex items-center justify-between mt-2">
-                <Checkbox checked={checked} onChange={(value) => setChecked(value)}>
-                  Accept Terms & Conditions
-                </Checkbox>
-              </div>
-              {error && <p style={{ color: 'red' }}>{error}</p>}
-              {/* Register Button */}
-              <Form.Item>
-                <Button
-                  className="w-full h-12 mt-6 text-sm font-medium bg-[linear-gradient(111deg,#22C55E_18%,#10B981_100%)] text-white"
-                  htmlType="submit"
-                  size="large"
-                  loading={loading}
-                  disabled={!checked} // ✅ Disable button until checked
-                >
-                  REGISTER
-                </Button>
-              </Form.Item>
-            </Form>
-          </div>
-
-          {/* Footer */}
-          <div className="p-6 text-center bg-gray-100 rounded-b-md">
-            <p className="mb-0 text-sm font-medium">
-              Already have an account?
-              <Link to="/auth/login" className="ml-1.5 text-primary">
-                Sign In
-              </Link>
-            </p>
-          </div>
-        </AuthFormWrap>
-      </Col>
-    </Row>
+      <div className="mt-6 text-center text-sm text-gray-500">
+        Already have an account?{' '}
+        <Link to="/auth/login" className="font-semibold text-emerald-600 hover:text-emerald-500 hover:underline">
+          Sign In
+        </Link>
+      </div>
+    </div>
   );
 }
 

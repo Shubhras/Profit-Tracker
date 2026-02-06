@@ -183,7 +183,7 @@ const SalesReport = React.memo(({ title }) => {
                     beginAtZero: true,
                     font: {
                       size: 13,
-                      family: "'Jost', sans-serif",
+                      family: "'Figtree', sans-serif",
                     },
                     color: '#747474',
                     max: 80,
@@ -210,7 +210,7 @@ const SalesReport = React.memo(({ title }) => {
                   ticks: {
                     font: {
                       size: 13,
-                      family: "'Jost', sans-serif",
+                      family: "'Figtree', sans-serif",
                     },
                     color: '#747474',
                   },

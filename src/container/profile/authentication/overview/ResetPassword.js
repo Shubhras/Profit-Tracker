@@ -1,9 +1,8 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Form, Input, Button, Row, Col, message } from 'antd';
+import { Form, Input, Button, message } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { AuthFormWrap } from './style';
 import { resetPassword } from '../../../../redux/authentication/actionCreator';
 
 function ResetPassword() {
@@ -24,68 +23,54 @@ function ResetPassword() {
   };
 
   return (
-    <Row justify="center">
-      <Col xxl={8} xl={8} md={12} sm={18} xs={24}>
-        <AuthFormWrap className="mt-6 bg-white rounded-md shadow-regular">
-          {/* Form */}
-          <Form name="resetPass" onFinish={handleSubmit} layout="vertical">
-            {/* Header */}
-            <div className="px-5 py-4 text-center border-b border-gray-200">
-              <h2 className="mb-0 text-xl font-semibold">Reset Password</h2>
-            </div>
+    <div className="w-full">
+      <div className="text-center mb-10">
+        <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Reset Password</h2>
+        <p className="text-gray-500">Enter your reset token and new password</p>
+      </div>
 
-            {/* Body */}
-            <div className="px-10 pt-8 pb-6">
-              <p className="mb-4 text-gray-600">Enter your reset token and create a new password.</p>
+      <Form name="resetPass" onFinish={handleSubmit} layout="vertical">
+        <Form.Item
+          label={<span className="font-medium text-gray-700">Reset Token</span>}
+          name="token"
+          rules={[{ required: true, message: 'Please enter reset token!' }]}
+        >
+          <Input className="rounded-lg py-2.5" placeholder="Enter token here" />
+        </Form.Item>
 
-              {/* Token Field */}
-              <Form.Item
-                label="Reset Token"
-                name="token"
-                rules={[{ required: true, message: 'Please enter reset token!' }]}
-              >
-                <Input placeholder="Enter token here" />
-              </Form.Item>
+        <Form.Item
+          label={<span className="font-medium text-gray-700">New Password</span>}
+          name="new_password"
+          rules={[
+            { required: true, message: 'Please enter new password!' },
+            { min: 6, message: 'Password must be at least 6 characters' },
+          ]}
+        >
+          <Input.Password className="rounded-lg py-2.5" placeholder="Enter new password" />
+        </Form.Item>
 
-              {/* New Password Field */}
-              <Form.Item
-                label="New Password"
-                name="new_password"
-                rules={[
-                  { required: true, message: 'Please enter new password!' },
-                  { min: 6, message: 'Password must be at least 6 characters' },
-                ]}
-              >
-                <Input.Password placeholder="Enter new password" />
-              </Form.Item>
-              {/* ✅ Show Error */}
-              {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
-              {/* Submit Button */}
-              <Form.Item>
-                <Button
-                  className="block w-full h-12 text-sm font-medium bg-[linear-gradient(111deg,#22C55E_18%,#10B981_100%)] text-white"
-                  htmlType="submit"
-                  size="large"
-                  loading={loading} // ✅ Loader
-                >
-                  Reset Password
-                </Button>
-              </Form.Item>
-            </div>
+        {error && (
+          <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-600 text-sm border border-red-100">{error}</div>
+        )}
 
-            {/* Footer */}
-            <div className="p-6 text-center bg-gray-100 rounded-b-md">
-              <p className="mb-0 text-sm font-medium">
-                Back to
-                <Link to="/auth/login" className="ml-1.5 text-primary hover:text-primary">
-                  Sign In
-                </Link>
-              </p>
-            </div>
-          </Form>
-        </AuthFormWrap>
-      </Col>
-    </Row>
+        <Form.Item>
+          <Button
+            className="w-full h-12 text-base font-semibold bg-gradient-to-r from-emerald-500 to-teal-600 border-0 rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all"
+            htmlType="submit"
+            loading={loading}
+          >
+            Reset Password
+          </Button>
+        </Form.Item>
+      </Form>
+
+      <div className="mt-8 text-center text-sm text-gray-500">
+        Back to{' '}
+        <Link to="/auth/login" className="font-semibold text-emerald-600 hover:text-emerald-500 hover:underline">
+          Sign In
+        </Link>
+      </div>
+    </div>
   );
 }
 

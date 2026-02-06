@@ -1,18 +1,18 @@
 import React from 'react';
-import IntegrationBanner from './components/IntegrationBanner';
-import IntegrationChannel from './components/IntegrationChannel';
+import AboutSection from './components/AboutSection';
 import Navbar from '../home/components/Navbar';
 import Footer from '../home/components/Footer';
 import ScrollToTopButton from '../home/components/ScrollToTopButton';
 
-export default function Integrations() {
+function About() {
   return (
     <>
       <Navbar />
-      <IntegrationBanner />
-      <IntegrationChannel />
+      <AboutSection />
       <Footer />
       <ScrollToTopButton />
     </>
   );
 }
+
+export default About;

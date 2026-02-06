@@ -1,76 +1,157 @@
 import React from 'react';
-import { FiMessageSquare, FiBarChart2, FiBell } from 'react-icons/fi';
+import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import {
+  BulbOutlined,
+  RocketOutlined,
+  SafetyOutlined,
+  ThunderboltOutlined,
+  DashboardOutlined,
+  SyncOutlined,
+} from '@ant-design/icons';
+
+const features = [
+  {
+    icon: <ThunderboltOutlined />,
+    title: 'Lightning-Fast Reconciliation',
+    description: 'Automate order reconciliation across 50+ platforms in seconds, not hours.',
+    color: 'from-yellow-400 to-orange-500',
+    delay: 0.1,
+  },
+  {
+    icon: <DashboardOutlined />,
+    title: 'Real-Time Dashboard',
+    description: 'Monitor profits, inventory, and cash flow with live data synced every minute.',
+    color: 'from-emerald-400 to-teal-500',
+    delay: 0.2,
+  },
+  {
+    icon: <BulbOutlined />,
+    title: 'AI-Powered Insights',
+    description: 'Get actionable recommendations to boost margins and reduce waste.',
+    color: 'from-purple-400 to-pink-500',
+    delay: 0.3,
+  },
+  {
+    icon: <SyncOutlined />,
+    title: 'Seamless Integrations',
+    description: 'Connect with Shopify, WooCommerce, and 25+ other platforms instantly.',
+    color: 'from-blue-400 to-cyan-500',
+    delay: 0.4,
+  },
+  {
+    icon: <SafetyOutlined />,
+    title: 'Bank-Grade Security',
+    description: 'Your data is encrypted with AES-256 and SOC 2 Type II certified infrastructure.',
+    color: 'from-green-400 to-emerald-500',
+    delay: 0.5,
+  },
+  {
+    icon: <RocketOutlined />,
+    title: 'Scale Without Limits',
+    description: 'Handle millions of transactions without breaking a sweat or your budget.',
+    color: 'from-red-400 to-rose-500',
+    delay: 0.6,
+  },
+];
 
 function ShiftToAISection() {
+  const navigate = useNavigate();
   return (
-    <section className="w-full py-20 px-[3%] bg-white">
-      <div className="w-full">
-        {/* Heading */}
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-3xl font-extrabold text-gray-900">
-            Shift From Dashboard <span className="mx-2">→</span> AI
+    <section className="relative py-10 min-lg:py-28 bg-gradient-to-b from-white via-gray-50 to-white overflow-hidden">
+      {/* Decorative Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 -left-20 w-80 h-80 bg-emerald-200/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-teal-200/20 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#10b98108_1px,transparent_1px)] bg-[size:48px_48px]" />
+        </div>
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-[3%]">
+        {/* Section Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16 max-w-3xl mx-auto"
+        >
+          <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full bg-gradient-to-r from-emerald-100 to-teal-100 border border-emerald-200">
+            <span className="text-emerald-700 text-sm font-bold">WHY CHOOSE US</span>
+          </div>
+          <h2 className="text-4xl min-md:text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
+            Everything You Need to{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600">
+              Supercharge Growth
+            </span>
           </h2>
-          <p className="mt-4 max-w-3xl mx-auto text-lg text-gray-700">
-            Transform complex financial queries into instant, actionable insights with natural language processing and
-            AI-powered analysis
+          <p className="text-xl text-gray-600 leading-relaxed">
+            From reconciliation to AI insights, we have built the complete toolkit for modern finance teams
           </p>
+        </motion.div>
+
+        {/* Features Grid - Asymmetric Bento Layout */}
+        <div className="grid grid-cols-1 min-md:grid-cols-2 min-lg:grid-cols-3 gap-6">
+          {features.map((feature, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: feature.delay, duration: 0.6 }}
+              whileHover={{ y: -8, scale: 1.02 }}
+              className="group relative bg-white rounded-3xl p-8 border-2 border-gray-100 hover:border-emerald-200 shadow-sm hover:shadow-2xl transition-all duration-500 "
+            >
+              {/* Gradient Background on Hover */}
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 via-teal-50/30 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+              {/* Icon */}
+              <div className="relative z-10 mb-6">
+                <div
+                  className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} text-white shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-500`}
+                >
+                  <span className="text-2xl">{feature.icon}</span>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="relative z-10">
+                <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-emerald-600 transition-colors duration-300">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-600 leading-relaxed">{feature.description}</p>
+              </div>
+
+              {/* Decorative Corner */}
+              <div className="absolute top-6 right-6 w-20 h-20 bg-gradient-to-br from-emerald-100/30 to-transparent rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            </motion.div>
+          ))}
         </div>
 
-        {/* Cards */}
-        <div className="grid grid-cols-3 md:grid-cols-1 gap-8">
-          {/* Card 1 */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm hover:shadow-md transition">
-            <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gray-900 text-white">
-              <FiMessageSquare size={24} />
+        {/* Bottom CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.8, duration: 0.6 }}
+          className="mt-16 text-center"
+        >
+          <div className="inline-flex flex-col sm:flex-row items-center gap-4 p-8 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-3xl shadow-2xl shadow-emerald-500/30">
+            <div className="flex-1 text-left sm:text-left text-white">
+              <p className="text-2xl font-bold mb-1">Ready to transform your finance operations?</p>
+              {/* <p className="text-emerald-100">Start your free 14-day trial. No credit card required.</p> */}
             </div>
-
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">Ask In Natural Language</h3>
-
-            <p className="text-lg text-gray-700">Get answers instantly without menu hunting</p>
-
-            {/* Optional UI hint */}
-            <div className="mt-6 inline-flex items-center gap-3 bg-blue-600 text-white px-4 py-2 rounded-full text-sm">
-              Hey, What’s the profit this month?
-              <span className="h-5 w-5 rounded-full border border-white" />
-            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-8 py-4 bg-white text-emerald-600 font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+              onClick={() => navigate('/pricing')}
+            >
+              See Plans →
+            </motion.button>
           </div>
-
-          {/* Card 2 */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm hover:shadow-md transition">
-            <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gray-900 text-white">
-              <FiBarChart2 size={24} />
-            </div>
-
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">AI Creates Custom Views</h3>
-
-            <p className="text-lg text-gray-700">See your data exactly the way you want</p>
-
-            {/* Chart icon illustration */}
-            <div className="mx-auto flex items-end justify-center gap-2 h-20">
-              <span className="w-3 h-10 bg-blue-500 rounded" />
-              <span className="w-3 h-14 bg-amber-400 rounded" />
-              <span className="w-3 h-8 bg-teal-500 rounded" />
-              <span className="w-3 h-16 bg-blue-600 rounded" />
-            </div>
-          </div>
-
-          {/* Card 3 */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm hover:shadow-md transition">
-            <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-gray-900 text-white">
-              <FiBell size={24} />
-            </div>
-
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">Acts Proactively</h3>
-
-            <p className="text-lg text-gray-700">Alerts before you lose money or stock runs out</p>
-
-            {/* Gauge illustration */}
-            <div className="relative mx-auto w-40 h-20">
-              <div className="absolute inset-0 rounded-t-full border-4 border-transparent border-t-green-500 border-r-yellow-400 border-l-red-500" />
-              <div className="absolute bottom-0 left-1/2 h-14 w-1 bg-gray-800 origin-bottom rotate-[20deg]" />
-            </div>
-          </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

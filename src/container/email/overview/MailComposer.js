@@ -72,7 +72,7 @@ function MailComposer({ onChange, onSend, defaultTag, replay, text }) {
           placeholder="Type your message..."
           value={state.value}
           onChange={onChanges}
-          className="bg-white dark:bg-[#1b1d2a] min-md:min-h-[400px] md:min-h-[200px] border-none [&>div]:border-regular dark:[&>div]:border-white10 [&>div>.DraftEditor-root]:font-Jost [&>div>.DraftEditor-root]:text-sm [&>div>div>div>button]:bg-none [&>div>div>div>button]:border-none [&>div>div>div>button]:py-0 [&>div>div>span>span]:border-none [&>div>div>.public-DraftEditorPlaceholder-root]:pt-5 [&>div>div>div>.public-DraftEditor-content]:pt-5 [&>div>div>div>.public-DraftEditor-content]:text-sm [&>div>div>div>.public-DraftEditor-content]:text-dark dark:[&>div>div>div>.public-DraftEditor-content]:text-white87 [&>div>div>div>.public-DraftEditor-content]:font-medium"
+          className="bg-white dark:bg-[#1b1d2a] min-md:min-h-[400px] md:min-h-[200px] border-none [&>div]:border-regular dark:[&>div]:border-white10 [&>div>.DraftEditor-root]:font-Figtree [&>div>.DraftEditor-root]:text-sm [&>div>div>div>button]:bg-none [&>div>div>div>button]:border-none [&>div>div>div>button]:py-0 [&>div>div>span>span]:border-none [&>div>div>.public-DraftEditorPlaceholder-root]:pt-5 [&>div>div>div>.public-DraftEditor-content]:pt-5 [&>div>div>div>.public-DraftEditor-content]:text-sm [&>div>div>div>.public-DraftEditor-content]:text-dark dark:[&>div>div>div>.public-DraftEditor-content]:text-white87 [&>div>div>div>.public-DraftEditor-content]:font-medium"
         />
       </div>
       {!text && (

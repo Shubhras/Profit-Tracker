@@ -117,7 +117,7 @@ const MonthlyEarning = React.memo(({ title }) => {
                     beginAtZero: true,
                     font: {
                       size: 13,
-                      family: "'Jost', sans-serif",
+                      family: "'Figtree', sans-serif",
                     },
                     color: '#747474',
                     max: 80,
@@ -145,7 +145,7 @@ const MonthlyEarning = React.memo(({ title }) => {
                     beginAtZero: true,
                     font: {
                       size: 13,
-                      family: "'Jost', sans-serif",
+                      family: "'Figtree', sans-serif",
                     },
                     color: '#747474',
                   },

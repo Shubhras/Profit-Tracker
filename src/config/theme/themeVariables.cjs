@@ -81,7 +81,7 @@ const theme = {
   'dash-color': dashColor,
   'extra-light-color': extraLightColor,
   'extra-light-hover': extraLightHover,
-  'font-family': "'Jost', sans-serif",
+  'font-family': "'Figtree', sans-serif",
   'font-size-base': '15px',
   'heading-color': headingColor,
   'text-color': textColor,

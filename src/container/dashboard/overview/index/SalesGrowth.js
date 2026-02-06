@@ -170,7 +170,7 @@ const SalesGrowth = React.memo(() => {
                         stepSize: Math.max(...salesGrowthData[sellingTab].orders) / 5,
                         font: {
                           size: 13,
-                          family: "'Jost', sans-serif",
+                          family: "'Figtree', sans-serif",
                         },
                         padding: 10,
                         color: '#747474',
@@ -192,7 +192,7 @@ const SalesGrowth = React.memo(() => {
                         beginAtZero: true,
                         font: {
                           size: 12,
-                          family: "'Jost', sans-serif",
+                          family: "'Figtree', sans-serif",
                         },
                         color: '#747474',
                         min: 0,
