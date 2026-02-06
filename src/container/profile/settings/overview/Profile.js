@@ -220,91 +220,148 @@ function Profile() {
   };
 
   return (
-    <div className="bg-white m-0 p-0 mb-[25px] rounded-10 relative">
-      {/* Header */}
-      <div className="py-[18px] px-[25px] border-b">
-        <Heading as="h4" className="mb-0 text-lg font-medium">
-          Edit Profile
-        </Heading>
-        <span className="text-light text-13">Update your personal information</span>
+    <div className="relative mb-[25px]">
+      {/* Unique Cover Photo Background */}
+      <div className="h-48 w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-t-2xl relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150" />
+        <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
       </div>
 
-      {/* Body */}
-      <div className="p-[25px]">
+      <div className="bg-white px-8 pb-8 rounded-b-2xl shadow-sm border border-gray-100 relative -mt-5 mx-0 z-10">
         <GlobalUtilityStyle>
           <Spin spinning={fetchLoading} tip="Loading profile...">
-            <Row justify="center">
-              <Col xxl={12} lg={16} xs={24}>
-                <Form form={form} layout="vertical" onFinish={handleSubmit}>
-                  {/* Name */}
-                  <Form.Item label="Name" name="name">
-                    <Input />
-                  </Form.Item>
-
-                  {/* Business Name */}
-                  <Form.Item label="Business Name" name="business_name">
-                    <Input />
-                  </Form.Item>
-
-                  {/* Email */}
-                  <Form.Item label="Email" name="email">
-                    <Input disabled />
-                  </Form.Item>
-
-                  {/* Mobile */}
-                  <Form.Item label="Mobile Number" name="mobile_number">
-                    <Input />
-                  </Form.Item>
-
-                  {/* GST */}
-                  <Form.Item label="GST Number" name="gst_number">
-                    <Input />
-                  </Form.Item>
-
-                  {/* Address */}
-                  <Form.Item label="Address" name="address">
-                    <Input />
-                  </Form.Item>
-
-                  {/* City */}
-                  <Form.Item label="City" name="city">
-                    <Input />
-                  </Form.Item>
-
-                  {/* State */}
-                  <Form.Item label="State" name="state">
-                    <Input />
-                  </Form.Item>
-
-                  {/* Pin Code */}
-                  <Form.Item label="Pin Code" name="pin_code">
-                    <Input />
-                  </Form.Item>
-
-                  {/* Buttons */}
-                  <div className="mt-8 flex gap-3">
-                    <Button
-                      size="default"
-                      htmlType="submit"
-                      type="primary"
-                      loading={updateLoading}
-                      disabled={fetchLoading}
-                      className="h-11 px-[20px] font-semibold"
-                    >
-                      Update Profile
-                    </Button>
-
-                    <Button
-                      size="default"
-                      type="light"
-                      onClick={() => fetchProfile()}
-                      disabled={fetchLoading || updateLoading}
-                      className="h-11 px-[20px]"
-                    >
-                      Reset
-                    </Button>
+            <Row gutter={[30, 0]}>
+              {/* Left Side: Avatar & Intro */}
+              <Col xs={24} lg={8} xl={6}>
+                <div className="pt-4 text-center lg:text-left mb-8 lg:mb-0">
+                  <div className="">
+                    <h2 className="text-2xl font-bold text-gray-900 m-0">{form.getFieldValue('name') || 'User'}</h2>
+                    <p className="text-gray-500 text-sm mt-1">
+                      {form.getFieldValue('business_name') || 'Business Owner'}
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-2 justify-center lg:justify-start">
+                      <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full border border-emerald-100">
+                        Verified
+                      </span>
+                      <span className="px-3 py-1 bg-gray-50 text-gray-600 text-xs font-semibold rounded-full border border-gray-200">
+                        Pro Plan
+                      </span>
+                    </div>
                   </div>
-                </Form>
+                </div>
+              </Col>
+
+              {/* Right Side: Form */}
+              <Col xs={24} lg={16} xl={18}>
+                <div className="pt-8">
+                  <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
+                    <Heading as="h4" className="mb-0 text-xl font-bold text-gray-800">
+                      Personal Information
+                    </Heading>
+                    {/* <Button size="small" type="default" className="text-gray-500">View Public Profile</Button> */}
+                  </div>
+
+                  <Form form={form} layout="vertical" onFinish={handleSubmit} className="profile-form-unique">
+                    <Row gutter={24}>
+                      <Col xs={24} md={12}>
+                        <Form.Item label={<span className="font-semibold text-gray-700">Full Name</span>} name="name">
+                          <Input className="h-11 rounded-xl bg-gray-50 border-gray-200 focus:bg-white transition-all" />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={12}>
+                        <Form.Item
+                          label={<span className="font-semibold text-gray-700">Business Name</span>}
+                          name="business_name"
+                        >
+                          <Input className="h-11 rounded-xl bg-gray-50 border-gray-200 focus:bg-white transition-all" />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={12}>
+                        <Form.Item
+                          label={<span className="font-semibold text-gray-700">Email Address</span>}
+                          name="email"
+                        >
+                          <Input
+                            disabled
+                            className="h-11 rounded-xl bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed"
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={12}>
+                        <Form.Item
+                          label={<span className="font-semibold text-gray-700">Phone Number</span>}
+                          name="mobile_number"
+                        >
+                          <Input className="h-11 rounded-xl bg-gray-50 border-gray-200 focus:bg-white transition-all" />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24}>
+                        <div className="my-4 pt-4 border-t border-gray-100">
+                          <h5 className="text-md font-bold text-gray-800 mb-4">Billing Address</h5>
+                        </div>
+                      </Col>
+
+                      <Col xs={24}>
+                        <Form.Item
+                          label={<span className="font-semibold text-gray-700">Street Address</span>}
+                          name="address"
+                        >
+                          <Input className="h-11 rounded-xl bg-gray-50 border-gray-200 focus:bg-white transition-all" />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={8}>
+                        <Form.Item label={<span className="font-semibold text-gray-700">City</span>} name="city">
+                          <Input className="h-11 rounded-xl bg-gray-50 border-gray-200 focus:bg-white transition-all" />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={8}>
+                        <Form.Item label={<span className="font-semibold text-gray-700">State</span>} name="state">
+                          <Input className="h-11 rounded-xl bg-gray-50 border-gray-200 focus:bg-white transition-all" />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={8}>
+                        <Form.Item
+                          label={<span className="font-semibold text-gray-700">Pin Code</span>}
+                          name="pin_code"
+                        >
+                          <Input className="h-11 rounded-xl bg-gray-50 border-gray-200 focus:bg-white transition-all" />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={12}>
+                        <Form.Item
+                          label={<span className="font-semibold text-gray-700">GST Number</span>}
+                          name="gst_number"
+                        >
+                          <Input className="h-11 rounded-xl bg-gray-50 border-gray-200 focus:bg-white transition-all" />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+
+                    <div className="mt-8 flex gap-4 pt-4 border-t border-gray-100">
+                      <Button
+                        size="large"
+                        htmlType="submit"
+                        type="primary"
+                        loading={updateLoading}
+                        disabled={fetchLoading}
+                        className="h-12 px-8 rounded-xl font-bold bg-gradient-to-r from-emerald-500 to-teal-600 border-0 shadow-lg shadow-emerald-500/30"
+                      >
+                        Save Changes
+                      </Button>
+
+                      <Button
+                        size="large"
+                        type="text"
+                        onClick={() => fetchProfile()}
+                        disabled={fetchLoading || updateLoading}
+                        className="h-12 px-8 rounded-xl font-semibold text-gray-500 hover:bg-gray-50"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </Form>
+                </div>
               </Col>
             </Row>
           </Spin>

@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { Form, Input, Button, Row, Col } from 'antd';
+import { Form, Input, Button } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 // eslint-disable-next-line import/no-extraneous-dependencies
 // import { ReactSVG } from 'react-svg';
@@ -8,7 +8,6 @@ import { useDispatch, useSelector } from 'react-redux';
 // import UilTwitter from '@iconscout/react-unicons/icons/uil-twitter';
 // import UilGithub from '@iconscout/react-unicons/icons/uil-github';
 // import { Auth0Lock } from 'auth0-lock';
-import { HiOutlineChartBar } from 'react-icons/hi2';
 import { login } from '../../../../redux/authentication/actionCreator';
 // import { Checkbox } from '../../../../components/checkbox/checkbox';
 // import { auth0options } from '../../../../config/auth0';
@@ -91,115 +90,59 @@ function SignIn() {
   // });
 
   return (
-    <Row justify="center">
-      <Col xxl={8} xl={8} md={12} sm={18} xs={24}>
-        <div className="bg-white rounded-md dark:bg-white10 shadow-regular dark:shadow-none">
-          <div className="px-5 py-4 text-center border-b border-gray-200 dark:border-white10">
-            {/* <h2 className="mb-0 text-xl font-semibold text-dark dark:text-white87">Sign in Profit-Tracker</h2> */}
-            <Link to="/" className="text-xl font-semibold text-gray-900 mb-0 flex items-center justify-center gap-1">
-              Sign in <HiOutlineChartBar className="text-green-600" size={24} /> Profit-Tracker
-            </Link>
-          </div>
-          <div className="px-8 py-10">
-            <Form name="login" form={form} onFinish={handleSubmit} layout="vertical">
-              <Form.Item
-                name="email"
-                rules={[{ message: 'Please input your username or Email!', required: true }]}
-                label="Username or Email Address"
-                className="[&>div>div>label]:text-sm [&>div>div>label]:text-dark dark:[&>div>div>label]:text-white60 [&>div>div>label]:font-medium"
-              >
-                <Input placeholder="name@example.com" />
-              </Form.Item>
-              <Form.Item
-                name="password"
-                label="Password"
-                className="[&>div>div>label]:text-sm [&>div>div>label]:text-dark dark:[&>div>div>label]:text-white60 [&>div>div>label]:font-medium"
-              >
-                <Input.Password placeholder="Password" />
-              </Form.Item>
-              <div className="flex flex-wrap items-center justify-end gap-[10px]">
-                {/* <Checkbox onChange={onChange} checked={state.checked} className="text-xs text-light dark:text-white60">
-                  Keep me logged in
-                </Checkbox> */}
-                <NavLink className=" text-primary text-13" to="/auth/forgotPassword">
-                  Forgot password?
-                </NavLink>
-              </div>
-              {error && <p style={{ color: 'red' }}>{error}</p>}
+    <div className="w-full">
+      <div className="text-center mb-10">
+        <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Welcome Back</h2>
+        <p className="text-gray-500">Enter your details to access your account</p>
+      </div>
 
-              <Form.Item>
-                <Button
-                  className="w-full h-12 p-0 mt-6 text-sm font-medium bg-[linear-gradient(111deg,#22C55E_18%,#10B981_100%)] text-white"
-                  htmlType="submit"
-                  // type="danger"
-                  size="large"
-                  loading={isLoading}
-                >
-                  {isLoading ? 'Loading...' : 'Sign In'}
-                </Button>
-              </Form.Item>
-              {/* <p className="relative text-body dark:text-white60 -mt-2.5 mb-6 text-center text-13 font-medium before:absolute before:w-full before:h-px ltr:before:left-0 rtl:before:right-0 before:top-1/2 before:-translate-y-1/2 before:z-10 before:bg-gray-200 dark:before:bg-white10">
-                <span className="relative z-20 px-4 bg-white dark:bg-[#1b1d2a]">Or</span>
-              </p>
-              <ul className="flex items-center justify-center mb-0">
-                <li className="px-1.5 pt-3 pb-2.5">
-                  <Link
-                    to="#"
-                    className="flex items-center justify-center h-12 px-4 rounded-md google-social group bg-google-plus-transparent hover:bg-google-plus text-google-plus hover:text-white"
-                  >
-                    <ReactSVG
-                      className="[&>div>svg>path]:fill-google-plus group-hover:[&>div>svg>path]:fill-white"
-                      src={require(`../../../../static/img/icon/google-plus.svg`).default}
-                    />
-                  </Link>
-                </li>
-                <li className="px-1.5 pt-3 pb-2.5">
-                  <Link
-                    to="#"
-                    className="flex items-center justify-center h-12 px-4 rounded-md facebook-social bg-facebook-transparent hover:bg-facebook text-facebook hover:text-white"
-                  >
-                    <UilFacebook />
-                  </Link>
-                </li>
-                <li className="px-1.5 pt-3 pb-2.5">
-                  <Link
-                    to="#"
-                    className="flex items-center justify-center h-12 px-4 rounded-md twitter-social bg-twitter-transparent hover:bg-twitter text-twitter hover:text-white"
-                  >
-                    <UilTwitter />
-                  </Link>
-                </li>
-                <li className="px-1.5 pt-3 pb-2.5">
-                  <Link
-                    to="#"
-                    className="flex items-center justify-center h-12 px-4 rounded-md github-social bg-github-transparent hover:bg-github text-github hover:text-white"
-                  >
-                    <UilGithub />
-                  </Link>
-                </li>
-              </ul>
-              <div className="flex flex-wrap justify-center">
-                <Link
-                  to="#"
-                  className="inline-flex items-center bg-gray-100 dark:bg-white10 text-gray-500 dark:text-white87 h-12 px-6 m-1.5 font-medium rounded-md"
-                  // onClick={() => lock.show()}
-                >
-                  Sign In with Auth0
-                </Link>
-              </div> */}
-            </Form>
-          </div>
-          <div className="p-6 text-center bg-gray-100 dark:bg-white10 rounded-b-md">
-            <p className="mb-0 text-sm font-medium text-body dark:text-white60">
-              Don`t have an account?
-              <Link to="/auth/register" className="ltr:ml-1.5 rtl:mr-1.5 text-primary hover:text-primary">
-                Sign up
-              </Link>
-            </p>
-          </div>
+      <Form name="login" form={form} onFinish={handleSubmit} layout="vertical">
+        <Form.Item
+          name="email"
+          rules={[{ message: 'Please input your Email!', required: true }]}
+          label={<span className="font-medium text-gray-700">Email Address</span>}
+        >
+          <Input className="rounded-lg py-2.5" placeholder="name@example.com" />
+        </Form.Item>
+
+        <Form.Item
+          name="password"
+          label={<span className="font-medium text-gray-700">Password</span>}
+          rules={[{ required: true, message: 'Please enter password' }]}
+          className="mb-6"
+        >
+          <Input.Password className="rounded-lg py-2.5" placeholder="Enter your password" />
+        </Form.Item>
+
+        <div className="flex items-center justify-between mb-8">
+          <NavLink className="text-emerald-600 hover:text-emerald-700 font-medium text-sm" to="/auth/forgotPassword">
+            Forgot password?
+          </NavLink>
         </div>
-      </Col>
-    </Row>
+
+        {error && (
+          <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-600 text-sm border border-red-100">{error}</div>
+        )}
+
+        <Form.Item>
+          <Button
+            className="w-full h-12 rounded-xl text-base font-semibold bg-gradient-to-r from-emerald-500 to-teal-600 border-0 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all"
+            type="primary"
+            htmlType="submit"
+            loading={isLoading}
+          >
+            {isLoading ? 'Signing In...' : 'Sign In'}
+          </Button>
+        </Form.Item>
+      </Form>
+
+      <div className="mt-8 text-center text-sm text-gray-500">
+        Don&apos;t have an account?{' '}
+        <Link to="/auth/register" className="font-semibold text-emerald-600 hover:text-emerald-500 hover:underline">
+          Sign up for free
+        </Link>
+      </div>
+    </div>
   );
 }
 

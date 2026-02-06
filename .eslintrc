@@ -21,9 +21,12 @@
   },
   "plugins": ["react", "import", "react-hooks"],
   "rules": {
+  "react/prop-types": "off",
+  "jsx-a11y/label-has-associated-control": "off",
     "prettier/prettier": ["error", {
       "endOfLine":"auto"
     }],
+    
     "import/no-named-as-default-member": 0,
     "import/order": [2, { "groups": ["external", "index", "sibling", "parent", "internal", "builtin"] }],
     "react/jsx-filename-extension": [

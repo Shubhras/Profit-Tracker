@@ -107,7 +107,7 @@ function DashboardChart({
               bodyColor: '#525768',
               bodyFontSize: 11,
               bodyFontStyle: 'normal',
-              bodyFontFamily: "'Jost', sans-serif",
+              bodyFontFamily: "'Figtree', sans-serif",
               borderColor: '#F1F2F6',
               usePointStyle: true,
               borderWidth: 1,
@@ -194,7 +194,7 @@ DashboardChart.defaultProps = {
         beginAtZero: true,
         font: {
           size: 14,
-          family: "'Jost', sans-serif",
+          family: "'Figtree', sans-serif",
         },
         color: '#747474',
         max: 80,
@@ -221,7 +221,7 @@ DashboardChart.defaultProps = {
         beginAtZero: true,
         font: {
           size: 13,
-          family: "'Jost', sans-serif",
+          family: "'Figtree', sans-serif",
         },
         color: '#747474',
       },

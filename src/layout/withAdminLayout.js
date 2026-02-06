@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable react/prop-types */
-import UilEllipsisV from '@iconscout/react-unicons/icons/uil-ellipsis-v';
+// import UilEllipsisV from '@iconscout/react-unicons/icons/uil-ellipsis-v';
 import { Button, Col, Layout, Row } from 'antd';
 import propTypes from 'prop-types';
 import { Component } from 'react';
@@ -67,11 +67,11 @@ const ThemeLayout = (WrappedComponent) => {
         }
       };
 
-      const onShowHide = () => {
-        this.setState({
-          hide: !hide,
-        });
-      };
+      // const onShowHide = () => {
+      //   this.setState({
+      //     hide: !hide,
+      //   });
+      // };
 
       const SideBarStyle = {
         margin: '63px 0 0 0',
@@ -126,43 +126,41 @@ const ThemeLayout = (WrappedComponent) => {
                 width: '100%',
                 top: 0,
                 [!rtl ? 'left' : 'right']: 0,
+                height: '80px', // Increased height slightly
+                background: 'rgba(255, 255, 255, 0.85)',
+                backdropFilter: 'blur(12px)',
+                borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
+                zIndex: 998,
               }}
-              className="p-0 flex items-center justify-between bg-white dark:bg-[#1b1e2b] dark:shadow-[0_5px_20px_rgba(160,160,160,.02)] h-[72px] z-998"
+              className="p-0 flex items-center justify-between shadow-sm transition-all duration-300"
             >
-              <div className="flex flex-row items-center flex-1 h-full">
-                <div className=" rtl:ssm:pr-[15px] ltr:pr-5 rtl:pl-5 ltr:ssm:pl-[15px] ltr:ssm:pr-[15px] rtl:ssm::pl:[15px] ltr:pl-[30px] rtl:pr-[30px] xs:ltr:pl-[20px] xs:rtl:pr-[20px] min-w-[280px] ssm:min-w-[220px] xs:min-w-[170px] h-full grid align-middle dark:bg-[#323541]">
-                  <div className="flex items-center justify-between">
-                    {/* <Link to="/admin">
-                      <img
-                        className="w-full max-w-[120px] xs:max-w-[100px]"
-                        src={
-                          layoutMode === 'lightMode'
-                            ? require(`../static/img/logo_dark.svg`).default
-                            : require(`../static/img/logo_white.svg`).default
-                        }
-                        alt=""
-                      />
-                    </Link> */}
+              <div className="flex flex-row items-center flex-1 h-full px-[3%]">
+                {/* Logo Area */}
+                <div className="flex items-center gap-4 min-w-[200px]">
+                  {!topMenu || window.innerWidth <= 991 ? (
+                    <Button
+                      type="link"
+                      className="p-2 mb-0 bg-gray-50 hover:bg-emerald-50 text-gray-500 hover:text-emerald-600 rounded-lg border border-gray-100 transition-all"
+                      onClick={toggleCollapsed}
+                    >
+                      <MySVG className="w-5 h-5" />
+                    </Button>
+                  ) : null}
 
-                    {!topMenu || window.innerWidth <= 991 ? (
-                      <Button
-                        type="link"
-                        className="p-0 bg-transparent border-none dark:border-transparent dark:bg-transparent dark:text-white60 dark:hover:text-primary text-[#525768] hover:text-primary pr-2"
-                        onClick={toggleCollapsed}
-                      >
-                        <MySVG />
-                      </Button>
-                    ) : null}
-                    <Link className="flex items-center gap-1 cursor-pointer" to="/admin/profit/summary">
-                      <HiOutlineChartBar className="text-green-600" size={20} />
-                      <p className="text-2xl font-semibold text-gray-900 mb-0">Profit-Tracker</p>
-                    </Link>
-                  </div>
+                  <Link className="flex items-center gap-2 cursor-pointer group" to="/admin/profit/summary">
+                    <div className="w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform">
+                      <HiOutlineChartBar className="text-white" size={20} />
+                    </div>
+                    <p className="hidden min-md:block text-xl font-bold text-gray-800 mb-0 tracking-tight group-hover:text-emerald-600 transition-colors">
+                      Profit-Tracker
+                    </p>
+                  </Link>
                 </div>
-                <div className="flex items-center justify-end flex-auto ltr:mr-[10px] rtl:ml-[10px]">
-                  {/* CustomizerWrap removed - keep right-side elements on the right */}
-                  {/* {topMenu && window.innerWidth > 991 ? <TopMenu /> : null} */}
-                  <div className="flex flex-row  items-center md:hidden">
+
+                {/* Right Side Actions */}
+                <div className="flex items-center justify-end flex-auto">
+                  {/* Mobile Auth Info */}
+                  <div className="flex flex-row items-center md:hidden">
                     {topMenu && window.innerWidth > 991 ? (
                       <TopMenuSearch>
                         <div className="flex top-right-wrap">
@@ -173,13 +171,17 @@ const ThemeLayout = (WrappedComponent) => {
                       <AuthInfo />
                     )}
                   </div>
-                </div>
-                <div className="hidden md:flex items-center ltr:pr-[25px] rtl:pl-[25px] ltr:ssm:pr-[10px] rtl:ssm:pl-[10px]">
-                  <Search />
-                  {/* <AuthInfo /> */}
-                  <Link className="inline-flex text-light dark:text-white60" onClick={onShowHide} to="#">
-                    <UilEllipsisV className="w-[18px] h-[18px]" />
-                  </Link>
+
+                  {/* Desktop Actions */}
+                  <div className="hidden md:flex items-center gap-2">
+                    <div className="relative">
+                      <Search />
+                    </div>
+                    {/* <div className="h-8 w-[1px] bg-gray-200 mx-2" /> Divider */}
+                    {/* <AuthInfo /> - Assuming AuthInfo contains the user dropdown */}
+                    {/* Re-adding AuthInfo here as it was commented out in original file but typically needed */}
+                    <AuthInfo />
+                  </div>
                 </div>
               </div>
             </Header>

@@ -506,14 +506,14 @@ const TestimonialStyleWrapper = Styled.div`
     .swiper-button-prev{
       left: 0;
       &:before{
-        font-family: 'Jost', sans-serif;
+        font-family: 'Figtree', sans-serif;
         content: url('${require('../static/img/icon/arrow-left.png')}');
       }
     }
     .swiper-button-next{
       right: 0;
       &:before{
-        font-family: 'Jost', sans-serif;
+        font-family: 'Figtree', sans-serif;
         content: url('${require('../static/img/icon/arrow-right.png')}');
       }
     }
@@ -1250,7 +1250,7 @@ const CalendarWrapperPage = Styled.div`
       }
     }
     .react-calendar{
-        font-family: 'Jost', sans-serif;
+        font-family: 'Figtree', sans-serif;
         width: 100%;
         border-radius: 10px;
         border: 0 none;

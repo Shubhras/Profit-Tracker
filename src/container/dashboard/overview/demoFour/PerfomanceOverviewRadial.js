@@ -38,7 +38,7 @@ const dataSets = {
           },
           value: {
             fontSize: '24px',
-            fontFamily: '"Jost", sans-serif',
+            fontFamily: '"Figtree", sans-serif',
             fontWeight: 600,
             offsetY: -21,
           },
@@ -46,7 +46,7 @@ const dataSets = {
             show: true,
             label: 'Completed',
             fontSize: '16px',
-            fontFamily: '"Jost", sans-serif',
+            fontFamily: '"Figtree", sans-serif',
             fontWeight: 400,
             color: '#404040',
             formatter() {

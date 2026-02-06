@@ -1,90 +1,259 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Button, Input } from 'antd';
+import {
+  SearchOutlined,
+  AppstoreOutlined,
+  ShopOutlined,
+  // RocketOutlined,
+  ThunderboltOutlined,
+  BankOutlined,
+  ArrowRightOutlined,
+  CheckCircleFilled,
+} from '@ant-design/icons';
 
-const marketplaces = [
+const categories = [
   {
-    name: 'Amazon',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg',
+    id: 'marketplaces',
+    name: 'Marketplaces',
+    icon: <ShopOutlined />,
+    platforms: [
+      {
+        name: 'Flipkart',
+        logo: 'https://logos-world.net/wp-content/uploads/2020/11/Flipkart-Logo.png',
+        status: 'coming',
+      },
+      {
+        name: 'Myntra',
+        logo: 'https://logos-world.net/wp-content/uploads/2020/04/Myntra-Logo.png',
+        status: 'coming',
+      },
+      {
+        name: 'Meesho',
+        logo: 'https://logos-world.net/wp-content/uploads/2022/02/Meesho-Logo.png',
+        status: 'coming',
+      },
+      {
+        name: 'Ajio',
+        logo: 'https://logos-world.net/wp-content/uploads/2021/02/AJIO-Logo.png',
+        status: 'coming',
+      },
+      {
+        name: 'Nykaa',
+        logo: 'https://logos-world.net/wp-content/uploads/2021/02/Nykaa-Logo.png',
+        status: 'coming',
+      },
+    ],
   },
   {
-    name: 'Flipkart',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/1/1e/Flipkart_logo.svg',
+    id: 'd2c',
+    name: 'D2C Platforms',
+    icon: <AppstoreOutlined />,
+    platforms: [
+      {
+        name: 'Shopify',
+        logo: 'https://cdn.worldvectorlogo.com/logos/shopify.svg',
+        status: 'coming',
+      },
+      {
+        name: 'WooCommerce',
+        logo: 'https://cdn.worldvectorlogo.com/logos/woocommerce.svg',
+        status: 'coming',
+      },
+      {
+        name: 'Magento',
+        logo: 'https://cdn.worldvectorlogo.com/logos/magento.svg',
+        status: 'coming',
+      },
+    ],
   },
   {
-    name: 'Myntra',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Myntra_logo.png',
+    id: 'quick',
+    name: 'Quick Commerce',
+    icon: <ThunderboltOutlined />,
+    platforms: [
+      {
+        name: 'Blinkit',
+        logo: 'https://logos-world.net/wp-content/uploads/2022/02/Blinkit-Logo.png',
+        status: 'coming',
+      },
+      {
+        name: 'Zepto',
+        logo: 'https://logos-world.net/wp-content/uploads/2022/07/Zepto-Logo.png',
+        status: 'coming',
+      },
+      {
+        name: 'Swiggy Instamart',
+        logo: 'https://logos-world.net/wp-content/uploads/2020/11/Swiggy-Logo.png',
+        status: 'coming',
+      },
+    ],
   },
   {
-    name: 'Meesho',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/8/80/Meesho_Logo_Full.png',
-  },
-  {
-    name: 'Ajio',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/3/3a/Ajio-Logo.svg',
-  },
-  {
-    name: 'Nykaa',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2b/Nykaa_Logo.png',
-  },
-  {
-    name: 'Snapdeal',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/8/8f/Snapdeal_Logo.svg',
-  },
-  {
-    name: 'Tata Cliq',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/3/3a/Tata_CLiQ_Logo.svg',
-  },
-  {
-    name: 'JioMart',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/6/6c/JioMart_logo.png',
-  },
-  {
-    name: 'Pepperfry',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/6/6b/Pepperfry_logo.png',
-  },
-  {
-    name: 'FirstCry',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2b/FirstCry_Logo.png',
-  },
-  {
-    name: 'Shopify',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/0/0e/Shopify_logo_2018.svg',
-  },
-  {
-    name: 'WooCommerce',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/7/7e/WooCommerce_logo.svg',
+    id: 'accounting',
+    name: 'Accounting',
+    icon: <BankOutlined />,
+    platforms: [
+      {
+        name: 'Tally',
+        logo: 'https://logos-world.net/wp-content/uploads/2020/09/Tally-Logo.png',
+        status: 'coming',
+      },
+      {
+        name: 'Zoho Books',
+        logo: 'https://cdn.worldvectorlogo.com/logos/zoho-books.svg',
+        status: 'coming',
+      },
+    ],
   },
 ];
 
-export default function IntegrationChannel() {
+// Combine all platforms for "All" view
+const allPlatforms = categories.flatMap((cat) => cat.platforms.map((p) => ({ ...p, category: cat.name })));
+
+function IntegrationCard({ platform }) {
+  const isLive = platform.status === 'live';
+
   return (
-    <section className="w-full bg-white pb-10">
-      <div className="px-[5%]">
-        <div className="grid md:grid-cols-1 grid-cols-[200px_1fr] gap-10">
-          {/* LEFT PANEL */}
-          <div className="flex items-center md:justify-center justify-start">
-            <div className="w-full px-5 py-4 rounded-2xl border border-gray-200 flex items-center justify-center">
-              <h2 className="text-xl font-semibold text-gray-900 mb-0">Marketplace</h2>
-            </div>
-          </div>
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      transition={{ duration: 0.2 }}
+      className={`group relative flex items-center p-5 bg-white rounded-2xl border border-gray-100 hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300 ${
+        !isLive && 'opacity-70'
+      }`}
+    >
+      {/* Logo Section */}
+      <div className="flex-shrink-0 w-16 h-16 p-2 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center mr-5 group-hover:scale-105 transition-transform duration-300">
+        {platform.logo ? (
+          <img
+            src={platform.logo}
+            alt={platform.name}
+            className={`max-w-full max-h-full object-contain ${!isLive ? 'grayscale' : ''}`}
+          />
+        ) : (
+          <div className="text-2xl font-bold text-gray-300">{platform.name.charAt(0)}</div>
+        )}
+      </div>
 
-          {/* RIGHT PANEL */}
-          <div className="relative pl-8">
-            {/* Vertical Divider */}
-            <span className="md:hidden block absolute left-0 top-0 h-full w-px bg-gray-200" />
+      {/* Content Section */}
+      <div className="flex-grow min-w-0">
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="text-lg font-bold text-gray-900 truncate pr-2">{platform.name}</h3>
+          {isLive && <CheckCircleFilled className="text-emerald-500 text-sm" />}
+        </div>
+        <p className="text-xs text-gray-500 font-medium truncate">{isLive ? 'Full Sync Active' : 'Adding Soon'}</p>
+      </div>
 
-            {/* Logos Grid */}
-            <div className="grid grid-cols-8 xl:grid-cols-8 md:grid-cols-4 lg:grid-cols-5 sm:grid-cols-3  gap-10">
-              {marketplaces.map((item) => (
-                <div key={item.name} className="group flex flex-col items-center gap-3">
-                  <div className="w-20 h-20 rounded-xl border border-gray-200 bg-white flex items-center justify-center shadow-sm transition-transform duration-300 group-hover:-translate-y-1 group-hover:shadow-md p-1">
-                    <img src={item.logo} alt={item.name} className="max-h-10 object-contain" />
-                  </div>
-                  <p className="text-base font-medium text-gray-700 uppercase">{item.name}</p>
-                </div>
+      {/* Action (Visible on Hover for Desktop, always for Mobile?) */}
+      <div className="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block">
+        <Button
+          type="primary"
+          shape="circle"
+          icon={<ArrowRightOutlined />}
+          className={isLive ? 'bg-emerald-500 border-emerald-500' : 'bg-gray-300 border-gray-300'}
+          disabled={!isLive}
+        />
+      </div>
+    </motion.div>
+  );
+}
+
+export default function IntegrationChannel() {
+  const [activeTab, setActiveTab] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filtering Logic
+  const getDisplayPlatforms = () => {
+    let baseList = [];
+    if (activeTab === 'all') {
+      baseList = allPlatforms;
+    } else {
+      const category = categories.find((c) => c.id === activeTab);
+      baseList = category ? category.platforms.map((p) => ({ ...p, category: category.name })) : [];
+    }
+
+    if (searchQuery) {
+      return baseList.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    }
+    return baseList;
+  };
+
+  const displayPlatforms = getDisplayPlatforms();
+
+  return (
+    <section className="w-full bg-gray-50 py-20 px-[3%]">
+      <div className="max-w-7xl mx-auto">
+        {/* Controls Header */}
+        <div className="flex flex-col min-lg:flex-row items-start lg:items-center justify-between gap-6 mb-12">
+          {/* Tabs Scrollable */}
+          <div className="flex-1 overflow-x-auto pb-2 w-full min-lg:w-auto -mx-4 px-4 min-lg:mx-0 min-lg:px-0">
+            <div className="flex space-x-2">
+              <Button
+                onClick={() => setActiveTab('all')}
+                className={`px-5 py-2.5 flex items-center justify-center rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300 mt-0 ${
+                  activeTab === 'all'
+                    ? '!bg-gray-900 !text-white shadow-lg shadow-gray-900/20 focus:!text-white'
+                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                All Apps
+              </Button>
+              {categories.map((cat) => (
+                <Button
+                  type="text"
+                  onClick={() => setActiveTab(cat.id)}
+                  className={`px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap flex items-center gap-2 transition-all duration-300 !shadow-none ${
+                    activeTab === cat.id
+                      ? '!bg-gray-900 !text-white !border-none active:!text-white focus:!text-white'
+                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  {cat.icon}
+                  {cat.name}
+                </Button>
               ))}
             </div>
           </div>
+
+          {/* Search */}
+          <div className="w-full min-lg:w-72">
+            <Input
+              placeholder="Search integrations..."
+              prefix={<SearchOutlined className="text-gray-400" />}
+              className="rounded-full py-2.5 px-4 border-gray-200 hover:border-emerald-500 focus:border-emerald-500 shadow-sm"
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
+
+        {/* Content Grid - Horizontal Cards */}
+        <motion.div layout className="grid grid-cols-1 min-md:grid-cols-2 min-lg:grid-cols-3 min-xl:grid-cols-4 gap-5">
+          <AnimatePresence mode="popLayout">
+            {displayPlatforms.map((platform) => (
+              <IntegrationCard key={platform.name} platform={platform} />
+            ))}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Empty State */}
+        {displayPlatforms.length === 0 && (
+          <div className="text-center py-20">
+            <div className="text-6xl mb-4">🔍</div>
+            <h3 className="text-xl font-bold text-gray-900">No integration found</h3>
+            <p className="text-gray-500">Try adjusting your search or category filter.</p>
+          </div>
+        )}
+
+        {/* CTA Footer */}
+        {/* <div className="mt-20 pt-10 border-t border-gray-200 text-center">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Can&apos;t find what you need?</h3>
+          <Button className="text-emerald-600 font-bold hover:underline flex items-center justify-center gap-2 mx-auto">
+            <RocketOutlined /> Request a Custom Integration
+          </Button>
+        </div> */}
       </div>
     </section>
   );

@@ -1,3 +1,4 @@
+import React from 'react';
 import FinanceEngineSection from './components/FinanceEngineSection';
 import Footer from './components/Footer';
 import HeroSection from './components/HeroSection';
@@ -6,6 +7,7 @@ import Marque from './components/Marque';
 import Navbar from './components/Navbar';
 import ScrollToTopButton from './components/ScrollToTopButton';
 import ShiftToAISection from './components/ShiftToAISection';
+import TestimonialsSection from './components/TestimonialsSection';
 
 function Home() {
   return (
@@ -15,6 +17,7 @@ function Home() {
       <Marque />
       <ShiftToAISection />
       <FinanceEngineSection />
+      <TestimonialsSection />
       <ImpactStats />
       <Footer />
       <ScrollToTopButton />

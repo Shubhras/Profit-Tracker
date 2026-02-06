@@ -555,7 +555,7 @@ function DashboardBase() {
                   headless
                   title={
                     <span className='className="text-dark dark:text-white87 font-semibold text-[20px] leading-[24px] mb-[15px]'>
-                      Typography <span className="text-primary">Jost</span>
+                      Typography <span className="text-primary">Figtree</span>
                     </span>
                   }
                   size="large"

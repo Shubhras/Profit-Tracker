@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Row, Col, Spin, Modal, Result } from 'antd';
+import { Spin, Modal, Result } from 'antd';
 import {
   CreditCardOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
   SafetyCertificateOutlined,
   LockOutlined,
+  GiftOutlined,
+  ArrowLeftOutlined,
 } from '@ant-design/icons';
 import { HiOutlineChartBar } from 'react-icons/hi2';
-import { PageHeader } from '../../components/page-headers/page-headers';
 import { Button } from '../../components/buttons/buttons';
 import { createSubscription, verifyPayment, clearPlan } from '../../redux/subscription/actionCreator';
 
@@ -19,14 +20,10 @@ function Checkout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Check authentication
   const isLoggedIn = useSelector((state) => state.auth.login);
-
-  // Get plan data from location state or redux or sessionStorage
   const planFromState = location.state?.plan;
   const { selectedPlan, loading, error } = useSelector((state) => state.subscription);
 
-  // Try to get plan from sessionStorage if not in state
   const planFromSession = React.useMemo(() => {
     try {
       const stored = sessionStorage.getItem('selectedPlan');
@@ -38,27 +35,10 @@ function Checkout() {
 
   const plan = planFromState || selectedPlan || planFromSession;
 
-  // Modal states
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
 
-  //   const PageRoutes = [
-  //     {
-  //       path: '/',
-  //       breadcrumbName: 'Home',
-  //     },
-  //     {
-  //       path: '/pricing',
-  //       breadcrumbName: 'Pricing',
-  //     },
-  //     {
-  //       path: '',
-  //       breadcrumbName: 'Checkout',
-  //     },
-  //   ];
-
-  // Redirect if no plan selected or if not logged in
   useEffect(() => {
     if (!plan) {
       navigate('/pricing');
@@ -66,13 +46,11 @@ function Checkout() {
     }
 
     if (!isLoggedIn) {
-      // Store plan and redirect to login
       sessionStorage.setItem('selectedPlan', JSON.stringify(plan));
       navigate('/auth/login', { state: { redirectTo: '/checkout', plan } });
     }
   }, [plan, isLoggedIn, navigate]);
 
-  // Load Razorpay script
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
       if (window.Razorpay) {
@@ -87,7 +65,6 @@ function Checkout() {
     });
   };
 
-  // Handle Razorpay payment
   const handleRazorpayPayment = async (subscriptionInfo) => {
     const scriptLoaded = await loadRazorpayScript();
 
@@ -103,7 +80,6 @@ function Checkout() {
       name: 'Profit-Tracker',
       description: `${plan?.badge?.text || plan?.name} Subscription`,
       handler(response) {
-        // Payment successful - verify with backend
         const paymentData = {
           razorpay_payment_id: response.razorpay_payment_id,
           razorpay_subscription_id: response.razorpay_subscription_id,
@@ -115,7 +91,6 @@ function Checkout() {
             setProcessingPayment(false);
             setSuccessModalVisible(true);
             dispatch(clearPlan());
-            // Clear sessionStorage after successful payment
             sessionStorage.removeItem('selectedPlan');
           }),
         );
@@ -126,7 +101,7 @@ function Checkout() {
         contact: '',
       },
       theme: {
-        color: '#22C55E',
+        color: '#10B981',
       },
       modal: {
         ondismiss() {
@@ -140,41 +115,33 @@ function Checkout() {
     razorpay.open();
   };
 
-  // Handle subscription creation
   const handleSubscribe = () => {
     if (!plan?.plan_id) {
       console.error('Plan ID not found');
       return;
     }
-
     setProcessingPayment(true);
-
     dispatch(
       createSubscription(plan.plan_id, (subscriptionInfo) => {
-        // Open Razorpay with the subscription data
         handleRazorpayPayment(subscriptionInfo);
       }),
     );
   };
 
-  // Handle success modal close
   const handleSuccessClose = () => {
     setSuccessModalVisible(false);
     navigate('/admin/profit/summary');
   };
 
-  // Handle cancel modal close
   const handleCancelClose = () => {
     setCancelModalVisible(false);
   };
 
-  // Handle retry payment
   const handleRetryPayment = () => {
     setCancelModalVisible(false);
     handleSubscribe();
   };
 
-  // Handle go back to pricing
   const handleBackToPricing = () => {
     setCancelModalVisible(false);
     navigate('/pricing');
@@ -182,7 +149,7 @@ function Checkout() {
 
   if (!plan || !isLoggedIn) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <Spin size="large" />
       </div>
     );
@@ -190,206 +157,155 @@ function Checkout() {
 
   return (
     <>
-      <div className="relative min-h-screen overflow-hidden bg-green-50">
-        <div className="pointer-events-none select-none">
-          <div className="fixed -right-[300px] top-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-green-100/30" />
-          <div className="fixed -right-[270px] top-1/2 -translate-y-1/2 w-[540px] h-[540px] rounded-full border border-green-200/30" />
-          <div className="fixed -right-[240px] top-1/2 -translate-y-1/2 w-[480px] h-[480px] rounded-full border border-green-200/40" />
-          <div className="fixed -right-[210px] top-1/2 -translate-y-1/2 w-[420px] h-[420px] rounded-full border border-green-300/40" />
-          <div className="fixed -right-[180px] top-1/2 -translate-y-1/2 w-[360px] h-[360px] rounded-full border border-green-400/40" />
-          <div className="fixed -right-[150px] top-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full border border-green-500/40" />
-          <div className="fixed -right-[120px] top-1/2 -translate-y-1/2 w-[240px] h-[240px] rounded-full border border-green-600/40" />
-          <div className="fixed -right-[90px] top-1/2 -translate-y-1/2 w-[180px] h-[180px] rounded-full border border-green-700/40" />
-          <div className="fixed -right-[60px] top-1/2 -translate-y-1/2 w-[120px] h-[120px] rounded-full border border-green-800/40" />
-          <div className="fixed -right-[30px] top-1/2 -translate-y-1/2 w-[60px] h-[60px] rounded-full border border-green-900/40" />
-        </div>
-
-        <div className="pointer-events-none select-none">
-          <div className="fixed -left-[300px] top-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-green-100/30" />
-          <div className="fixed -left-[270px] top-1/2 -translate-y-1/2 w-[540px] h-[540px] rounded-full border border-green-200/30" />
-          <div className="fixed -left-[240px] top-1/2 -translate-y-1/2 w-[480px] h-[480px] rounded-full border border-green-200/40" />
-          <div className="fixed -left-[210px] top-1/2 -translate-y-1/2 w-[420px] h-[420px] rounded-full border border-green-300/40" />
-          <div className="fixed -left-[180px] top-1/2 -translate-y-1/2 w-[360px] h-[360px] rounded-full border border-green-400/40" />
-          <div className="fixed -left-[150px] top-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full border border-green-500/40" />
-          <div className="fixed -left-[120px] top-1/2 -translate-y-1/2 w-[240px] h-[240px] rounded-full border border-green-600/40" />
-          <div className="fixed -left-[90px] top-1/2 -translate-y-1/2 w-[180px] h-[180px] rounded-full border border-green-700/40" />
-          <div className="fixed -left-[60px] top-1/2 -translate-y-1/2 w-[120px] h-[120px] rounded-full border border-green-800/40" />
-          <div className="fixed -left-[30px] top-1/2 -translate-y-1/2 w-[60px] h-[60px] rounded-full border border-green-900/40" />
-        </div>
+      <div className="min-h-screen bg-gray-50 font-sans pb-20">
         {/* Header */}
-        <div className="bg-white dark:bg-dark shadow-sm">
-          <div className="px-8 xl:px-[15px] py-4">
-            <div className="flex items-center justify-between">
-              <Link to="/" className="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-white">
-                <HiOutlineChartBar className="text-green-600" size={28} />
-                <span>Profit-Tracker</span>
-              </Link>
-              <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                <LockOutlined />
-                <span className="text-sm">Secure Checkout</span>
+        <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50 px-[3%]">
+          <div className="h-20 max-w-7xl mx-auto flex items-center justify-between">
+            <Link className="flex items-center gap-2 cursor-pointer" to="/">
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl flex items-center justify-center">
+                <HiOutlineChartBar className="text-white" size={22} />
               </div>
+              <p className="text-2xl font-bold text-gray-900 mb-0">Profit-Tracker</p>
+            </Link>
+            <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full text-xs font-bold border border-emerald-100">
+              <LockOutlined /> SECURE CHECKOUT
             </div>
           </div>
-        </div>
+        </header>
 
-        <PageHeader
-          // routes={PageRoutes}
-          // title="Complete Your Purchase"
-          className="flex justify-between items-center px-8 xl:px-[15px] pt-6 pb-6 bg-transparent sm:flex-col"
-        />
+        <main className="max-w-6xl mx-auto px-4 py-12">
+          <div className="bg-white rounded-3xl shadow-xl overflow-hidden grid grid-cols-1 min-lg:grid-cols-2 min-h-[600px] border border-gray-100">
+            {/* Left Column: Summary (Light) */}
+            <div className="lg:col-span-5 bg-slate-50 p-8 lg:p-10 text-gray-900 relative flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-gray-200">
+              {/* Background FX - Subtle for light mode */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-[80px] pointer-events-none translate-x-1/2 -translate-y-1/2" />
 
-        <main className="min-h-[715px] lg:min-h-[580px] bg-transparent px-8 xl:px-[15px] pb-[50px]">
-          <div className="max-w-4xl mx-auto">
-            <Row gutter={[24, 24]}>
-              {/* Order Summary */}
-              <Col xs={24} lg={14}>
-                <div className="bg-white dark:bg-white10 rounded-xl shadow-lg overflow-hidden">
-                  <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-6">
-                    <h3 className="text-white text-xl font-bold mb-1">Order Summary</h3>
-                    <p className="text-emerald-100 text-sm">Review your subscription details</p>
-                  </div>
+              <div className="relative z-10">
+                <h2 className="text-lg min-md:text-xl font-medium text-gray-900 mb-8">Order Summary</h2>
 
-                  <div className="p-6">
-                    {/* Plan Info */}
-                    <div className="flex items-start justify-between pb-6 border-b border-gray-200 dark:border-gray-700">
-                      <div>
-                        <div className="flex items-center gap-3 mb-2">
-                          <span
-                            className={`inline-block h-8 px-4 py-1.5 text-sm font-medium rounded-full ${
-                              plan.badge?.className || 'bg-primary-transparent text-primary'
-                            }`}
-                          >
-                            {plan.badge?.text || plan.name}
-                          </span>
-                        </div>
-                        <p className="text-gray-600 dark:text-gray-400 text-sm">{plan.subtitle}</p>
-                      </div>
-                      <div className="text-right">
-                        {plan.price ? (
-                          <div className="text-3xl font-bold text-gray-900 dark:text-white">
-                            <span className="text-lg text-gray-500">$</span>
-                            {plan.title}
-                            <span className="text-sm font-normal text-gray-500 dark:text-gray-400">/mo</span>
-                          </div>
-                        ) : (
-                          <div className="text-2xl font-bold text-gray-900 dark:text-white">Free</div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Features */}
-                    <div className="py-6 border-b border-gray-200 dark:border-gray-700">
-                      <h4 className="text-gray-900 dark:text-white font-semibold mb-4">What&apos;s included:</h4>
-                      <ul className="space-y-3">
-                        {plan.features?.map((feature, index) => (
-                          <li key={index} className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
-                            <CheckCircleOutlined className="text-green-500" />
-                            <span>{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    {/* Total */}
-                    <div className="pt-6">
-                      <div className="flex items-center justify-between text-lg">
-                        <span className="text-gray-600 dark:text-gray-400">Total (Billed Monthly)</span>
-                        <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                          {plan.price ? `$${plan.title}/mo` : 'Free'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                <div className="flex items-baseline gap-1 mb-2">
+                  <span className="text-xl min-md:text-2xl font-bold text-gray-500">₹</span>
+                  <span className="text-4xl min-md:text-5xl font-extrabold text-gray-900 tracking-tight">
+                    {plan.title}
+                  </span>
+                  <span className="text-gray-500 font-medium">/mo</span>
                 </div>
-              </Col>
+                <div className="inline-block px-3 py-1 rounded-md bg-white text-emerald-600 text-sm font-bold border border-gray-200 shadow-sm mb-8">
+                  {plan.badge?.text || `${plan.name} Plan`}
+                </div>
 
-              {/* Payment Section */}
-              <Col xs={24} lg={10}>
-                <div className="bg-white dark:bg-white10 rounded-xl shadow-lg p-6">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center">
-                      <CreditCardOutlined className="text-emerald-600 text-xl" />
+                <div className="space-y-4">
+                  {plan.features?.slice(0, 5).map((feature, i) => (
+                    <div key={i} className="flex gap-3 text-sm text-gray-600">
+                      <CheckCircleOutlined className="text-emerald-500 mt-0.5 shrink-0" />
+                      <span>{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="relative z-10 mt-12 pt-8 border-t border-gray-200">
+                <div className="flex justify-between items-center text-sm mb-2">
+                  <span className="text-gray-500">Subtotal</span>
+                  <span className="font-semibold text-gray-900">₹{plan.title}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm mb-4">
+                  <span className="text-gray-500">Tax</span>
+                  <span className="font-semibold text-gray-900">₹0.00</span>
+                </div>
+                <div className="flex justify-between items-center text-lg font-bold">
+                  <span className="text-gray-900">Total Due</span>
+                  <span className="text-emerald-600">₹{plan.title}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Payment (White) */}
+            <div className="lg:col-span-7 p-8 lg:p-12 relative">
+              <div className="max-w-md mx-auto h-full flex flex-col justify-center">
+                <div className="mb-8">
+                  <h2 className="text-xl min-md:text-2xl font-bold text-gray-900 mb-2">Select Payment Method</h2>
+                  <p className="text-gray-500 text-sm">Choose how you&apos;d like to pay for your subscription.</p>
+                </div>
+
+                {error && (
+                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+                    <CloseCircleOutlined className="text-red-500 mt-0.5" />
+                    <p className="text-red-600 text-sm">{error}</p>
+                  </div>
+                )}
+
+                <div className="space-y-4 mb-8">
+                  <div className="border-2 border-emerald-500 bg-emerald-50/20 p-5 rounded-xl cursor-pointer relative shadow-sm hover:shadow-md transition-all group">
+                    <div className="absolute top-4 right-4 w-5 h-5 rounded-full border-2 border-emerald-500 bg-white flex items-center justify-center">
+                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600">
+                        <CreditCardOutlined className="text-2xl" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-gray-900">Credit / Debit Card</h4>
+                        <p className="text-xs text-gray-500">Secure payment via Razorpay</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border border-gray-200 bg-gray-50 p-5 rounded-xl cursor-not-allowed opacity-60 flex items-center gap-4 grayscale">
+                    <div className="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center text-gray-500">
+                      <GiftOutlined className="text-2xl" />
                     </div>
                     <div>
-                      <h4 className="text-gray-900 dark:text-white font-semibold">Payment</h4>
-                      <p className="text-gray-500 dark:text-gray-400 text-sm">Secure payment via Razorpay</p>
+                      <h4 className="font-bold text-gray-900">Gift Card / Voucher</h4>
+                      <p className="text-xs text-gray-500">Not available for this plan</p>
                     </div>
                   </div>
+                </div>
 
-                  {/* Error Display */}
-                  {error && (
-                    <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                      <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
-                    </div>
+                <Button
+                  type="primary"
+                  size="large"
+                  className="w-full h-14 text-lg font-bold rounded-xl 
+    bg-gradient-to-r from-emerald-500 to-teal-600 
+    border-0 shadow-lg shadow-emerald-500/30 
+    hover:shadow-emerald-500/50 
+    hover:from-emerald-600 hover:to-teal-700
+    flex items-center justify-center gap-2 
+    transform transition-all active:scale-[0.99]"
+                  onClick={handleSubscribe}
+                  loading={loading || processingPayment}
+                  disabled={loading || processingPayment}
+                >
+                  {loading || processingPayment ? (
+                    'Processing...'
+                  ) : (
+                    <>
+                      Pay ₹{plan.title} <ArrowLeftOutlined className="rotate-180" />
+                    </>
                   )}
+                </Button>
 
-                  {/* Subscribe Button */}
+                <div className="mt-6 flex items-center justify-center gap-2 text-gray-400 text-xs">
+                  <SafetyCertificateOutlined className="text-emerald-500" />
+                  <span>Payments are SSL encrypted & secured.</span>
+                </div>
+
+                <div className="mt-8 pt-8 border-t border-gray-100 text-center">
                   <Button
-                    type="primary"
-                    size="large"
-                    className="w-full h-14 text-base font-semibold rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 border-0"
-                    onClick={handleSubscribe}
-                    loading={loading || processingPayment}
-                    disabled={loading || processingPayment}
+                    type="text"
+                    onClick={handleBackToPricing}
+                    className="text-gray-500 hover:text-gray-900 font-medium text-sm flex items-center gap-2 mx-auto"
                   >
-                    {loading || processingPayment
-                      ? 'Processing...'
-                      : `Get ${plan.badge?.text || plan.name} - Subscribe Now`}
+                    <ArrowLeftOutlined /> Choose a different plan
                   </Button>
-
-                  {/* Security Badge */}
-                  <div className="mt-6 flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400">
-                    <SafetyCertificateOutlined />
-                    <span className="text-xs">256-bit SSL Secure Payment</span>
-                  </div>
-
-                  {/* Payment Methods */}
-                  <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <p className="text-center text-xs text-gray-500 dark:text-gray-400 mb-3">
-                      Accepted Payment Methods
-                    </p>
-                    <div className="flex items-center justify-center gap-4">
-                      <div className="px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded text-xs font-medium text-gray-600 dark:text-gray-400">
-                        Cards
-                      </div>
-                      <div className="px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded text-xs font-medium text-gray-600 dark:text-gray-400">
-                        UPI
-                      </div>
-                      <div className="px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded text-xs font-medium text-gray-600 dark:text-gray-400">
-                        NetBanking
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Money Back Guarantee */}
-                  <div className="mt-6 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <CheckCircleOutlined className="text-emerald-600 text-lg" />
-                      <div>
-                        <p className="text-emerald-800 dark:text-emerald-300 font-medium text-sm">
-                          30-Day Money Back Guarantee
-                        </p>
-                        <p className="text-emerald-600 dark:text-emerald-400 text-xs">
-                          Not satisfied? Get a full refund within 30 days.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
                 </div>
-
-                {/* Back to Pricing Link */}
-                <div className="mt-4 text-center">
-                  <Link to="/pricing" className="text-primary hover:underline text-sm">
-                    ← Back to pricing plans
-                  </Link>
-                </div>
-              </Col>
-            </Row>
+              </div>
+            </div>
           </div>
         </main>
       </div>
 
-      {/* Success Modal */}
+      {/* Success & Cancel Modals remain unchanged */}
       <Modal
         open={successModalVisible}
         onCancel={handleSuccessClose}
@@ -401,13 +317,13 @@ function Checkout() {
         <Result
           status="success"
           icon={
-            <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full flex items-center justify-center">
-              <CheckCircleOutlined className="text-white text-4xl" />
+            <div className="w-20 h-20 mx-auto mb-4 bg-emerald-100 rounded-full flex items-center justify-center">
+              <CheckCircleOutlined className="text-emerald-600 text-4xl" />
             </div>
           }
-          title={<span className="text-2xl font-bold text-gray-900 dark:text-white">Payment Successful!</span>}
+          title={<span className="text-2xl font-bold text-gray-900">Payment Successful!</span>}
           subTitle={
-            <span className="text-gray-600 dark:text-gray-400">
+            <span className="text-gray-500">
               Welcome to {plan?.badge?.text || plan?.name}! Your subscription is now active.
             </span>
           }
@@ -416,7 +332,7 @@ function Checkout() {
               key="dashboard"
               type="primary"
               size="large"
-              className="w-full h-12 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 border-0 font-semibold"
+              className="w-full h-12 rounded-xl border-0 font-bold bg-gradient-to-r from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all"
               onClick={handleSuccessClose}
             >
               Go to Dashboard
@@ -425,26 +341,18 @@ function Checkout() {
         />
       </Modal>
 
-      {/* Cancel/Failed Modal */}
-      <Modal
-        open={cancelModalVisible}
-        onCancel={handleCancelClose}
-        footer={null}
-        centered
-        width={480}
-        className="payment-cancel-modal"
-      >
+      <Modal open={cancelModalVisible} onCancel={handleCancelClose} footer={null} centered width={480}>
         <Result
           status="warning"
           icon={
-            <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-r from-orange-400 to-red-500 rounded-full flex items-center justify-center">
-              <CloseCircleOutlined className="text-white text-4xl" />
+            <div className="w-20 h-20 mx-auto mb-4 bg-orange-100 rounded-full flex items-center justify-center">
+              <CloseCircleOutlined className="text-orange-500 text-4xl" />
             </div>
           }
-          title={<span className="text-2xl font-bold text-gray-900 dark:text-white">Payment Cancelled</span>}
+          title={<span className="text-2xl font-bold text-gray-900">Payment Cancelled</span>}
           subTitle={
-            <span className="text-gray-600 dark:text-gray-400">
-              Your payment was not completed. Don&apos;t worry, you can try again or choose a different plan.
+            <span className="text-gray-500">
+              Your payment was not completed. You can try again or choose a different plan.
             </span>
           }
           extra={[
@@ -452,7 +360,7 @@ function Checkout() {
               <Button
                 type="primary"
                 size="large"
-                className="w-full h-12 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 border-0 font-semibold"
+                className="w-full h-12 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all font-bold"
                 onClick={handleRetryPayment}
                 loading={loading}
               >
@@ -461,7 +369,7 @@ function Checkout() {
               <Button
                 type="default"
                 size="large"
-                className="w-full h-12 rounded-lg font-semibold"
+                className="w-full h-12 rounded-xl font-semibold"
                 onClick={handleBackToPricing}
               >
                 Choose Different Plan
