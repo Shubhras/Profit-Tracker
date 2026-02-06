@@ -140,7 +140,16 @@ function Checkout() {
     setProcessingPayment(true);
     dispatch(
       createSubscription(plan.plan_id, (subscriptionInfo) => {
-        handleRazorpayPayment(subscriptionInfo);
+        if (subscriptionInfo.isFreePlan) {
+          // Free plan: No payment needed, show success immediately
+          setProcessingPayment(false);
+          setSuccessModalVisible(true);
+          dispatch(clearPlan());
+          sessionStorage.removeItem('selectedPlan');
+        } else {
+          // Paid plan: Open Razorpay
+          handleRazorpayPayment(subscriptionInfo);
+        }
       }),
     );
   };

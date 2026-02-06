@@ -92,10 +92,10 @@ function Password() {
   return (
     <div className="relative space-y-8">
       {/* Header Section */}
-      <div className="flex flex-col gap-2">
+      {/* <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold text-gray-900 m-0">Security Settings</h1>
         <p className="text-gray-500 m-0">Manage your account security and password preferences.</p>
-      </div>
+      </div> */}
 
       {/* Main Card */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">

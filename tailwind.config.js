@@ -154,6 +154,15 @@ module.exports = {
         998: '998',
         99998: '99998',
       },
+      animation: {
+        marquee: 'marquee 40s linear infinite',
+      },
+      keyframes: {
+        marquee: {
+          '0%': { transform: 'translateX(0%)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
+      },
     },
     screens: {
       '4xl': { max: '1699px' },

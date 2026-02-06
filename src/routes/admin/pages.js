@@ -1,5 +1,6 @@
 import React, { lazy } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import SubscriptionGate from '../../components/utilities/SubscriptionGate';
 
 const NotFound = lazy(() => import('../../container/pages/404'));
 const Pricing = lazy(() => import('../../container/pages/PricingTable'));
@@ -25,25 +26,158 @@ const Billing = lazy(() => import('../../container/pages/Billing'));
 function PagesRoute() {
   return (
     <Routes>
-      <Route index element={<ActionsRequired />} />
-      <Route path="actionsrequired" element={<ActionsRequired />} />
-      <Route path="download" element={<Download />} />
-      <Route path="changelog" element={<ChangeLog />} />
-      <Route path="settings/*" element={<Settings />} />
-      <Route path="billing" element={<Billing />} />
-      <Route path="Pricing" element={<Pricing />} />
-      <Route path="banners" element={<Banners />} />
-      <Route path="testimonials" element={<Testimonials />} />
-      <Route path="faq" element={<Faq />} />
-      <Route path="search" element={<Search />} />
-      <Route path="starter" element={<BlankPage />} />
-      <Route path="comingSoon" element={<ComingSoon />} />
-      <Route path="termCondition" element={<TermsCondition />} />
-      <Route path="wizards/*" element={<Wizards />} />
-      <Route path="blog/blogone" element={<BlogOne />} />
-      <Route path="blog/blogtwo" element={<BlogTwo />} />
-      <Route path="blog/blogthree" element={<BlogThree />} />
-      <Route path="blog/details" element={<BlogDetails />} />
+      <Route
+        index
+        element={
+          <SubscriptionGate>
+            <ActionsRequired />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="actionsrequired"
+        element={
+          <SubscriptionGate>
+            <ActionsRequired />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="download"
+        element={
+          <SubscriptionGate>
+            <Download />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="changelog"
+        element={
+          <SubscriptionGate>
+            <ChangeLog />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="settings/*"
+        element={
+          <SubscriptionGate allowFree>
+            <Settings />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="billing"
+        element={
+          <SubscriptionGate allowFree>
+            <Billing />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="Pricing"
+        element={
+          <SubscriptionGate allowFree>
+            <Pricing />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="banners"
+        element={
+          <SubscriptionGate>
+            <Banners />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="testimonials"
+        element={
+          <SubscriptionGate>
+            <Testimonials />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="faq"
+        element={
+          <SubscriptionGate>
+            <Faq />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="search"
+        element={
+          <SubscriptionGate>
+            <Search />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="starter"
+        element={
+          <SubscriptionGate>
+            <BlankPage />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="comingSoon"
+        element={
+          <SubscriptionGate>
+            <ComingSoon />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="termCondition"
+        element={
+          <SubscriptionGate>
+            <TermsCondition />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="wizards/*"
+        element={
+          <SubscriptionGate>
+            <Wizards />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="blog/blogone"
+        element={
+          <SubscriptionGate>
+            <BlogOne />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="blog/blogtwo"
+        element={
+          <SubscriptionGate>
+            <BlogTwo />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="blog/blogthree"
+        element={
+          <SubscriptionGate>
+            <BlogThree />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="blog/details"
+        element={
+          <SubscriptionGate>
+            <BlogDetails />
+          </SubscriptionGate>
+        }
+      />
       <Route path="*" element={<NotFound />} />
       <Route path="maintenance" element={<Maintenance />} />
     </Routes>

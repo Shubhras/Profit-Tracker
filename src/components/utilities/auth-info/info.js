@@ -54,10 +54,12 @@ const AuthInfo = React.memo(() => {
             alt=""
           />
           <figcaption className="text-white">
-            <Heading className="text-white mb-0.5 text-base font-semibold" as="h5">
-              {profile?.name || 'Loading...'}
+            <Heading className="text-white mb-0.5 text-base font-semibold capitalize" as="h5">
+              {profile?.name || 'User...'}
             </Heading>
-            <p className="mb-0 text-xs text-white/80 font-medium opacity-90">{profile?.business_name || ''}</p>
+            <p className="mb-0 text-xs text-white/80 font-medium opacity-90 capitalize">
+              {profile?.business_name || ''}
+            </p>
           </figcaption>
         </figure>
       </div>

@@ -31,7 +31,6 @@ function Navbar() {
 
   // Get auth state from Redux
   const isLoggedIn = useSelector((state) => state.auth.login);
-  const hasSubscription = useSelector((state) => state.auth.hasSubscription);
   const profile = useSelector((state) => state.auth.profile);
 
   // Get email from cookie (fallback to profile)
@@ -154,7 +153,7 @@ function Navbar() {
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 flex items-center justify-center text-white font-semibold text-base">
                     {getInitials()}
                   </div>
-                  <span className="text-gray-800 font-medium hidden sm:block">{getDisplayName()}</span>
+                  <span className="text-gray-800 font-medium hidden sm:block capitalize">{getDisplayName()}</span>
                   <motion.svg
                     animate={{ rotate: userDropdownOpen ? 180 : 0 }}
                     className="w-4 h-4 text-gray-600"
@@ -176,20 +175,18 @@ function Navbar() {
                       className="absolute right-0 top-14 z-50 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 overflow-hidden"
                     >
                       <div className="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-teal-50">
-                        <p className="text-base font-semibold text-gray-900 mb-0">{getDisplayName()}</p>
+                        <p className="text-base font-semibold text-gray-900 mb-0 capitalize">{getDisplayName()}</p>
                         <p className="text-sm text-gray-500 mb-0 truncate">{userEmail}</p>
                       </div>
                       {/* Only show Dashboard link if user has subscription */}
-                      {hasSubscription && (
-                        <Link
-                          to="/admin/profit/summary"
-                          onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                          <HiOutlineUser className="w-5 h-5 text-gray-400" />
-                          <span className="font-medium">Dashboard</span>
-                        </Link>
-                      )}
+                      <Link
+                        to="/admin/profit/summary"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <HiOutlineUser className="w-5 h-5 text-gray-400" />
+                        <span className="font-medium">Dashboard</span>
+                      </Link>
                       <button
                         type="button"
                         onClick={handleLogout}
@@ -308,20 +305,20 @@ function Navbar() {
                       {getInitials()}
                     </div>
                     <div>
-                      <p className="text-gray-900 font-semibold mb-0">{getDisplayName()}</p>
+                      <p className="text-gray-900 font-semibold mb-0 capitalize">{getDisplayName()}</p>
                       <p className="text-gray-500 text-sm mb-0">{userEmail}</p>
                     </div>
                   </motion.div>
                   {/* Only show Dashboard link if user has subscription */}
-                  {hasSubscription && (
-                    <Link
-                      to="/admin/profit/summary"
-                      onClick={() => setMobileOpen(false)}
-                      className="block py-3 px-4 rounded-xl text-gray-700 font-medium hover:bg-gray-50"
-                    >
-                      Dashboard
-                    </Link>
-                  )}
+
+                  <Link
+                    to="/admin/profit/summary"
+                    onClick={() => setMobileOpen(false)}
+                    className="block py-3 px-4 rounded-xl text-gray-700 font-medium hover:bg-gray-50"
+                  >
+                    Dashboard
+                  </Link>
+
                   <button
                     type="button"
                     onClick={() => {
