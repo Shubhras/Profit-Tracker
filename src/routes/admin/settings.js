@@ -1,5 +1,6 @@
 import React, { lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
+import SubscriptionGate from '../../components/utilities/SubscriptionGate';
 
 const Overview = lazy(() => import('../../container/settings/product-settings/Overview'));
 const ProductConfiguration = lazy(() => import('../../container/settings/product-settings/ProductConfiguration'));
@@ -13,13 +14,62 @@ const NotFound = lazy(() => import('../../container/pages/404'));
 function SettingsRoutes() {
   return (
     <Routes>
-      <Route path="product-setting/overview" element={<Overview />} />
-      <Route path="product-setting/product-configuration" element={<ProductConfiguration />} />
-      <Route path="product-setting/finance-configuration" element={<FinanceConfiguration />} />
-      <Route path="user-setting/account-settings" element={<AccountSettings />} />
-      <Route path="user-setting/marketplace-settings" element={<MarketPlaceSettings />} />
-      <Route path="user-setting/marketplace-connection" element={<MarketplaceConnection />} />
-      <Route path="user-setting/user-management" element={<UserManagement />} />
+      <Route
+        path="product-setting/overview"
+        element={
+          <SubscriptionGate>
+            <Overview />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="product-setting/product-configuration"
+        element={
+          <SubscriptionGate>
+            <ProductConfiguration />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="product-setting/finance-configuration"
+        element={
+          <SubscriptionGate>
+            <FinanceConfiguration />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="user-setting/account-settings"
+        element={
+          <SubscriptionGate allowFree>
+            <AccountSettings />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="user-setting/marketplace-settings"
+        element={
+          <SubscriptionGate>
+            <MarketPlaceSettings />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="user-setting/marketplace-connection"
+        element={
+          <SubscriptionGate>
+            <MarketplaceConnection />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="user-setting/user-management"
+        element={
+          <SubscriptionGate>
+            <UserManagement />
+          </SubscriptionGate>
+        }
+      />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

@@ -13,6 +13,7 @@ import ProfitRoutes from './profit';
 import ReconcileRoutes from './reconcile';
 import SettingsRoutes from './settings';
 import withAdminLayout from '../../layout/withAdminLayout';
+import SubscriptionGate from '../../components/utilities/SubscriptionGate';
 
 const Charts = lazy(() => import('./charts'));
 const KnowledgeBase = lazy(() => import('../../container/pages/knowledgeBase/Index'));
@@ -61,48 +62,343 @@ const Admin = React.memo(() => {
       }
     >
       <Routes>
-        <Route index path="/*" element={<Dashboard />} />
-        <Route path="profit/*" element={<ProfitRoutes />} />
-        <Route path="reconcile/*" element={<ReconcileRoutes />} />
-        <Route path="settings/*" element={<SettingsRoutes />} />
-        <Route path="pages/*" element={<Pages />} />
-        <Route path="gallery/*" element={<Gallery />} />
-        <Route path="all-articles" element={<AllArticle />} />
-        <Route path="knowledgeBase/*" element={<KnowledgeBase />} />
-        <Route path="knowledgebaseSingle/:id" element={<KnowledgeSingle />} />
-        <Route path="components/*" element={<Components />} />
-        <Route path="charts/*" element={<Charts />} />
-        <Route path="app/task/*" element={<Task />} />
-        <Route path="users/*" element={<Users />} />
-        <Route path="app/support/tickets/*" element={<Tickets />} />
-        <Route path="app/support/tickets/add" element={<AddTicket />} />
-        <Route path="app/support/ticketDetails/:id" element={<TicketDetails />} />
-        <Route path="app/course/courseDetails/:id" element={<CourseDetails />} />
-        <Route path="app/course/*" element={<Courses />} />
-        <Route path="contact/list" element={<Contact />} />
-        <Route path="contact/grid" element={<ContactGrid />} />
-        <Route path="contact/addNew" element={<ContactAddNew />} />
-        <Route path="app/calendar/*" element={<Calendars />} />
-        <Route path="importExport/import" element={<Import />} />
-        <Route path="importExport/export" element={<Export />} />
-        <Route path="app/to-do" element={<ToDo />} />
-        <Route path="app/note/*" element={<Note />} />
-        <Route path="features/*" element={<Features />} />
-        <Route path="axios/*" element={<Axios />} />
-        <Route path="firestore/*" element={<Firebase />} />
-        <Route path="project/*" element={<Projects />} />
-        <Route path="profile/myProfile/*" element={<Myprofile />} />
-        <Route path="ecommerce/*" element={<Ecommerce />} />
-        <Route path="main/chat/*" element={<Chat />} />
-        <Route path="email/*" element={<Inbox />} />
-        <Route path="maps/*" element={<Maps />} />
-        <Route path="editor" element={<Editors />} />
-        <Route path="icons/*" element={<Icons />} />
-        <Route path="tables/*" element={<Tables />} />
-        <Route path="app/jobs/*" element={<Jobs />} />
-        <Route path="app/job/apply" element={<JobApply />} />
-        <Route path="app/jobDetails/:id" element={<JobDetails />} />
-        <Route path="widgets/*" element={<Widgets />} />
+        <Route
+          index
+          path="/*"
+          element={
+            <SubscriptionGate allowFree>
+              <Dashboard />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="profit/*"
+          element={
+            <SubscriptionGate allowFree>
+              <ProfitRoutes />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="reconcile/*"
+          element={
+            <SubscriptionGate>
+              <ReconcileRoutes />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="settings/*"
+          element={
+            <SubscriptionGate allowFree>
+              <SettingsRoutes />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="pages/*"
+          element={
+            <SubscriptionGate allowFree>
+              <Pages />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="gallery/*"
+          element={
+            <SubscriptionGate>
+              <Gallery />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="all-articles"
+          element={
+            <SubscriptionGate>
+              <AllArticle />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="knowledgeBase/*"
+          element={
+            <SubscriptionGate>
+              <KnowledgeBase />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="knowledgebaseSingle/:id"
+          element={
+            <SubscriptionGate>
+              <KnowledgeSingle />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="components/*"
+          element={
+            <SubscriptionGate>
+              <Components />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="charts/*"
+          element={
+            <SubscriptionGate>
+              <Charts />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="app/task/*"
+          element={
+            <SubscriptionGate>
+              <Task />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="users/*"
+          element={
+            <SubscriptionGate>
+              <Users />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="app/support/tickets/*"
+          element={
+            <SubscriptionGate>
+              <Tickets />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="app/support/tickets/add"
+          element={
+            <SubscriptionGate>
+              <AddTicket />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="app/support/ticketDetails/:id"
+          element={
+            <SubscriptionGate>
+              <TicketDetails />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="app/course/courseDetails/:id"
+          element={
+            <SubscriptionGate>
+              <CourseDetails />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="app/course/*"
+          element={
+            <SubscriptionGate>
+              <Courses />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="contact/list"
+          element={
+            <SubscriptionGate>
+              <Contact />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="contact/grid"
+          element={
+            <SubscriptionGate>
+              <ContactGrid />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="contact/addNew"
+          element={
+            <SubscriptionGate>
+              <ContactAddNew />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="app/calendar/*"
+          element={
+            <SubscriptionGate>
+              <Calendars />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="importExport/import"
+          element={
+            <SubscriptionGate>
+              <Import />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="importExport/export"
+          element={
+            <SubscriptionGate>
+              <Export />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="app/to-do"
+          element={
+            <SubscriptionGate>
+              <ToDo />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="app/note/*"
+          element={
+            <SubscriptionGate>
+              <Note />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="features/*"
+          element={
+            <SubscriptionGate>
+              <Features />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="axios/*"
+          element={
+            <SubscriptionGate>
+              <Axios />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="firestore/*"
+          element={
+            <SubscriptionGate>
+              <Firebase />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="project/*"
+          element={
+            <SubscriptionGate>
+              <Projects />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="profile/myProfile/*"
+          element={
+            <SubscriptionGate allowFree>
+              <Myprofile />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="ecommerce/*"
+          element={
+            <SubscriptionGate>
+              <Ecommerce />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="main/chat/*"
+          element={
+            <SubscriptionGate>
+              <Chat />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="email/*"
+          element={
+            <SubscriptionGate>
+              <Inbox />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="maps/*"
+          element={
+            <SubscriptionGate>
+              <Maps />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="editor"
+          element={
+            <SubscriptionGate>
+              <Editors />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="icons/*"
+          element={
+            <SubscriptionGate>
+              <Icons />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="tables/*"
+          element={
+            <SubscriptionGate>
+              <Tables />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="app/jobs/*"
+          element={
+            <SubscriptionGate>
+              <Jobs />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="app/job/apply"
+          element={
+            <SubscriptionGate>
+              <JobApply />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="app/jobDetails/:id"
+          element={
+            <SubscriptionGate>
+              <JobDetails />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="widgets/*"
+          element={
+            <SubscriptionGate>
+              <Widgets />
+            </SubscriptionGate>
+          }
+        />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>

@@ -1,5 +1,6 @@
 import React, { lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
+import SubscriptionGate from '../../components/utilities/SubscriptionGate';
 
 const Summary = lazy(() => import('../../container/profit/Summary'));
 const SalesTrend = lazy(() => import('../../container/profit/SalesTrend'));
@@ -11,11 +12,46 @@ const NotFound = lazy(() => import('../../container/pages/404'));
 function ProfitRoutes() {
   return (
     <Routes>
-      <Route path="summary" element={<Summary />} />
-      <Route path="salestrend" element={<SalesTrend />} />
-      <Route path="profittableview" element={<ProfitTableView />} />
-      <Route path="profitmonthlyview" element={<ProfitMonthlyView />} />
-      <Route path="canvasmyor" element={<CanvasMYOR />} />
+      <Route
+        path="summary"
+        element={
+          <SubscriptionGate allowFree>
+            <Summary />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="salestrend"
+        element={
+          <SubscriptionGate>
+            <SalesTrend />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="profittableview"
+        element={
+          <SubscriptionGate>
+            <ProfitTableView />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="profitmonthlyview"
+        element={
+          <SubscriptionGate>
+            <ProfitMonthlyView />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="canvasmyor"
+        element={
+          <SubscriptionGate>
+            <CanvasMYOR />
+          </SubscriptionGate>
+        }
+      />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

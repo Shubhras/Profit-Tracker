@@ -58,7 +58,7 @@ const features = [
 function ShiftToAISection() {
   const navigate = useNavigate();
   return (
-    <section className="relative py-10 min-lg:py-28 bg-gradient-to-b from-white via-gray-50 to-white overflow-hidden">
+    <section className="relative py-10 min-lg:py-20 bg-gradient-to-b from-white via-gray-50 to-white overflow-hidden">
       {/* Decorative Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 -left-20 w-80 h-80 bg-emerald-200/20 rounded-full blur-3xl" />

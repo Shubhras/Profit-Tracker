@@ -23,10 +23,16 @@ const createSubscription = (planId, callback) => {
       const response = await DataService.post('/create-subscription/', { plan_id: planId });
 
       if (response.data.status === true) {
+        // Check if it's a free plan (payment_required is false)
+        const isFreePlan = response.data.data.payment_required === false;
+
         const subscriptionData = {
-          subscription_id: response.data.data.subscription_id,
-          subscription_status: response.data.data.subscription_status,
-          razorpay_key: response.data.data.razorpay_key,
+          // If free, we might not have subscription_id or razorpay_key, or strict structure
+          subscription_id: response.data.data.subscription_id || 'FREE_PLAN',
+          subscription_status: response.data.data.subscription_status || 'active',
+          razorpay_key: response.data.data.razorpay_key || null,
+          isFreePlan, // Flag to help the callback decide
+          ...response.data.data, // Include all other data like plan_id, active, etc.
         };
 
         dispatch(createSubscriptionSuccess(subscriptionData));

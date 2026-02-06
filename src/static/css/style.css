@@ -1397,3 +1397,8 @@ hr {
 .ant-btn:not(.ant-btn-primary):not(.ant-btn-link):not(.ant-btn-text):not(.ant-btn-danger):not([disabled]):focus {
   @apply border-primary text-theme-gray dark:text-white87 !important;
 }
+/* Custom Utilities */
+.fade-mask-x {
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
