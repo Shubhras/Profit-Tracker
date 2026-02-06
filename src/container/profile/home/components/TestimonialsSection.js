@@ -117,8 +117,8 @@ function Testimonials() {
                     />
                   </div>
                   <div>
-                    <p className="text-gray-900 font-bold text-lg">{testimonial.author}</p>
-                    <p className="text-gray-500 text-sm">
+                    <p className="text-gray-900 font-bold text-lg mb-0">{testimonial.author}</p>
+                    <p className="text-gray-500 text-sm mb-0">
                       {testimonial.role} at {testimonial.company}
                     </p>
                   </div>

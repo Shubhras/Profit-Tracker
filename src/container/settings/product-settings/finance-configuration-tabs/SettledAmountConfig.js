@@ -8,7 +8,7 @@ export default function SettledAmountConfig() {
   const dataSource = [
     {
       key: '1',
-      channel: 'Amazon',
+      channel: 'Ajio',
       matchType: 'SKU',
       matchValue: 'SKU-001',
       start: '2024-01-01',

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Table, Switch, Input, Button, Form, Row, Col, Card } from 'antd';
-import amazonIcon from '../../../../assets/icons/amazon.svg';
+import ajioIcon from '../../../../assets/icons/ajio.png';
 
 export default function InventoryConfig() {
   const [form] = Form.useForm();
@@ -8,7 +8,7 @@ export default function InventoryConfig() {
   const [tableData] = useState([
     {
       key: '1',
-      channel: 'Amazon',
+      channel: 'Ajio',
       storageMaster: 100,
       idealDIO: 30,
       moq: 10,
@@ -35,7 +35,7 @@ export default function InventoryConfig() {
       width: 40,
       render: (text) => (
         <div className="flex justify-center">
-          {text === 'Amazon' && <img src={amazonIcon} alt="Amazon" style={{ width: 20, height: 20 }} />}
+          {text === 'Ajio' && <img src={ajioIcon} alt="Ajio" style={{ width: 20, height: 20 }} />}
         </div>
       ),
     },
@@ -106,24 +106,24 @@ export default function InventoryConfig() {
             {/* Right Column: Switches (Right side) */}
             <Col xs={24} md={8}>
               <Form.Item
-                name="amazonWorkingInbound"
-                label="Amazon Working Inbound"
+                name="ajioWorkingInbound"
+                label="Ajio Working Inbound"
                 valuePropName="checked"
                 labelAlign="left"
               >
                 <Switch />
               </Form.Item>
               <Form.Item
-                name="amazonReservedQuantity"
-                label="Amazon Reserved Quantity"
+                name="ajioReservedQuantity"
+                label="Ajio Reserved Quantity"
                 valuePropName="checked"
                 labelAlign="left"
               >
                 <Switch />
               </Form.Item>
               <Form.Item
-                name="amazonShippedInbound"
-                label="Amazon Shipped Inbound"
+                name="ajioShippedInbound"
+                label="Ajio Shipped Inbound"
                 valuePropName="checked"
                 labelAlign="left"
               >

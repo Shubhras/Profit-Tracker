@@ -6,7 +6,7 @@ export default function Rule() {
   const dataSource = [
     {
       key: '1',
-      channel: 'Amazon',
+      channel: 'Ajio',
       exceptionRule: 'Price Mismatch',
       is: 'Yes',
       target: 100,

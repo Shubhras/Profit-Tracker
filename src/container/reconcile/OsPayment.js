@@ -19,7 +19,7 @@ export default function OsPayment() {
       key: '1',
       label: 'Settled Not Paid',
       total: '₹3,47,429',
-      amazon: '₹1,76,662',
+      ajio: '₹1,76,662',
       flipkart: '₹58,097',
       meesho: '₹1,12,670',
     },
@@ -27,7 +27,7 @@ export default function OsPayment() {
       key: '2',
       label: 'Settled Adjustment',
       total: '-₹14,168',
-      amazon: '-₹3,590',
+      ajio: '-₹3,590',
       flipkart: '₹433',
       meesho: '-₹11,012',
     },
@@ -35,7 +35,7 @@ export default function OsPayment() {
       key: '3',
       label: 'Unsettled Not Paid',
       total: '₹3,78,931',
-      amazon: '₹3,73,130',
+      ajio: '₹3,73,130',
       flipkart: '₹5,800',
       meesho: '₹0',
     },
@@ -43,7 +43,7 @@ export default function OsPayment() {
       key: '4',
       label: 'Cashback Pending',
       total: '₹0',
-      amazon: '₹0',
+      ajio: '₹0',
       flipkart: '₹0',
       meesho: '₹0',
     },
@@ -51,7 +51,7 @@ export default function OsPayment() {
       key: '5',
       label: 'Last Payment Date',
       total: '-',
-      amazon: '12-01-2026',
+      ajio: '12-01-2026',
       flipkart: '14-01-2026',
       meesho: '14-01-2026',
     },
@@ -59,7 +59,7 @@ export default function OsPayment() {
       key: '6',
       label: <strong>Total</strong>,
       total: <strong>₹7,12,192</strong>,
-      amazon: <strong>₹5,46,202</strong>,
+      ajio: <strong>₹5,46,202</strong>,
       flipkart: <strong>₹64,331</strong>,
       meesho: <strong>₹1,01,658</strong>,
     },
@@ -67,7 +67,7 @@ export default function OsPayment() {
       key: '7',
       label: 'Current Reserve',
       total: '',
-      amazon: '₹0',
+      ajio: '₹0',
       flipkart: '',
       meesho: '',
     },
@@ -75,7 +75,7 @@ export default function OsPayment() {
       key: '8',
       label: 'Cashback Discrepancy',
       total: '',
-      amazon: '₹0',
+      ajio: '₹0',
       flipkart: '₹0',
       meesho: '₹0',
     },
@@ -84,21 +84,21 @@ export default function OsPayment() {
   const tableColumns = [
     { title: '', dataIndex: 'label' },
     { title: 'Total', dataIndex: 'total' },
-    { title: 'Amazon', dataIndex: 'amazon' },
+    { title: 'Ajio', dataIndex: 'ajio' },
     { title: 'Flipkart', dataIndex: 'flipkart' },
     { title: 'Meesho', dataIndex: 'meesho' },
   ];
 
   const unsettledChartData = [
-    { date: '25/10', Amazon: 370000, Flipkart: 8000 },
-    { date: '25/11', Amazon: 3700, Flipkart: 800 },
-    { date: '25/12', Amazon: 37000, Flipkart: 80 },
-    { date: '26/01', Amazon: 370000, Flipkart: 80000 },
+    { date: '25/10', Ajio: 370000, Flipkart: 8000 },
+    { date: '25/11', Ajio: 3700, Flipkart: 800 },
+    { date: '25/12', Ajio: 37000, Flipkart: 80 },
+    { date: '26/01', Ajio: 370000, Flipkart: 80000 },
   ];
 
   const settledChartData = [
-    { date: '26/01', Amazon: 150000, Flipkart: 60000, Meesho: 110000 },
-    { date: '25/12', Amazon: 30000, Flipkart: 0, Meesho: 5000 },
+    { date: '26/01', Ajio: 150000, Flipkart: 60000, Meesho: 110000 },
+    { date: '25/12', Ajio: 30000, Flipkart: 0, Meesho: 5000 },
   ];
 
   return (
@@ -124,7 +124,7 @@ export default function OsPayment() {
                   <Tooltip />
                   <Legend />
                   <Bar dataKey="Flipkart" stackId="a" fill="#86efac" />
-                  <Bar dataKey="Amazon" stackId="a" fill="#fca5a5" />
+                  <Bar dataKey="Ajio" stackId="a" fill="#fca5a5" />
                 </BarChart>
               </ResponsiveContainer>
             </Card>
@@ -139,9 +139,9 @@ export default function OsPayment() {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="Meesho" stackId="a" fill="#a5b4fc" />
+                  <Bar dataKey="Ajio" stackId="a" fill="#a5b4fc" />
                   <Bar dataKey="Flipkart" stackId="a" fill="#86efac" />
-                  <Bar dataKey="Amazon" stackId="a" fill="#fca5a5" />
+                  <Bar dataKey="Meesho" stackId="a" fill="#fca5a5" />
                 </BarChart>
               </ResponsiveContainer>
             </Card>

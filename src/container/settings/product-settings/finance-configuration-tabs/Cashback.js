@@ -7,7 +7,7 @@ export default function Cashback() {
   const dataSource = [
     {
       key: '1',
-      channel: 'Amazon',
+      channel: 'Ajio',
       product: 'Mobile',
       sku: 'SKU-001',
       start: '2024-01-01',

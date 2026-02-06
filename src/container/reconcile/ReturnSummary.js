@@ -12,7 +12,7 @@ export default function ReturnSummary() {
 
   // Table Data
   const returnsData = [
-    { key: 1, channel: 'Amazon-India', yetToReceive: 0, receivedNotInHand: 113, resolvedClaimed: 542 },
+    { key: 1, channel: 'Ajio', yetToReceive: 0, receivedNotInHand: 113, resolvedClaimed: 542 },
     { key: 2, channel: 'Flipkart', yetToReceive: 33, receivedNotInHand: 51, resolvedClaimed: 3 },
     { key: 3, channel: 'Meesho', yetToReceive: 110, receivedNotInHand: 204, resolvedClaimed: 64 },
   ];
@@ -26,35 +26,35 @@ export default function ReturnSummary() {
 
   // Charts Data
   const yetToReceiveChartData = [
-    { date: 'Jan-25', Flipkart: 1, Meesho: 5, 'Amazon-India': 0 },
-    { date: 'Feb-25', Flipkart: 1, Meesho: 5, 'Amazon-India': 0 },
-    { date: 'Mar-25', Flipkart: 3, Meesho: 4, 'Amazon-India': 1 },
-    { date: 'Apr-25', Flipkart: 2, Meesho: 5, 'Amazon-India': 0 },
-    { date: 'May-25', Flipkart: 2, Meesho: 15, 'Amazon-India': 2 },
-    { date: 'Jun-25', Flipkart: 2, Meesho: 40, 'Amazon-India': 8 },
-    { date: 'Jul-25', Flipkart: 1, Meesho: 50, 'Amazon-India': 2 },
-    { date: 'Aug-25', Flipkart: 2, Meesho: 20, 'Amazon-India': 4 },
-    { date: 'Sep-25', Flipkart: 2, Meesho: 18, 'Amazon-India': 4 },
-    { date: 'Oct-25', Flipkart: 1, Meesho: 12, 'Amazon-India': 2 },
-    { date: 'Nov-25', Flipkart: 5, Meesho: 12, 'Amazon-India': 3 },
-    { date: 'Dec-25', Flipkart: 20, Meesho: 25, 'Amazon-India': 5 },
-    { date: 'Jan-26', Flipkart: 20, Meesho: 50, 'Amazon-India': 10 },
+    { date: 'Jan-25', Flipkart: 1, Meesho: 5, Ajio: 0 },
+    { date: 'Feb-25', Flipkart: 1, Meesho: 5, Ajio: 0 },
+    { date: 'Mar-25', Flipkart: 3, Meesho: 4, Ajio: 1 },
+    { date: 'Apr-25', Flipkart: 2, Meesho: 5, Ajio: 0 },
+    { date: 'May-25', Flipkart: 2, Meesho: 15, Ajio: 2 },
+    { date: 'Jun-25', Flipkart: 2, Meesho: 40, Ajio: 8 },
+    { date: 'Jul-25', Flipkart: 1, Meesho: 50, Ajio: 2 },
+    { date: 'Aug-25', Flipkart: 2, Meesho: 20, Ajio: 4 },
+    { date: 'Sep-25', Flipkart: 2, Meesho: 18, Ajio: 4 },
+    { date: 'Oct-25', Flipkart: 1, Meesho: 12, Ajio: 2 },
+    { date: 'Nov-25', Flipkart: 5, Meesho: 12, Ajio: 3 },
+    { date: 'Dec-25', Flipkart: 20, Meesho: 25, Ajio: 5 },
+    { date: 'Jan-26', Flipkart: 20, Meesho: 50, Ajio: 10 },
   ];
 
   const receivedNotInHandChartData = [
-    { date: 'Jan-25', 'Amazon-India': 3, Meesho: 8, Flipkart: 4 },
-    { date: 'Feb-25', 'Amazon-India': 3, Meesho: 8, Flipkart: 4 },
-    { date: 'Mar-25', 'Amazon-India': 2, Meesho: 5, Flipkart: 12 },
-    { date: 'Apr-25', 'Amazon-India': 1, Meesho: 7, Flipkart: 3 },
-    { date: 'May-25', 'Amazon-India': 3, Meesho: 12, Flipkart: 4 },
-    { date: 'Jun-25', 'Amazon-India': 8, Meesho: 45, Flipkart: 7 },
-    { date: 'Jul-25', 'Amazon-India': 2, Meesho: 50, Flipkart: 5 },
-    { date: 'Aug-25', 'Amazon-India': 3, Meesho: 18, Flipkart: 2 },
-    { date: 'Sep-25', 'Amazon-India': 3, Meesho: 15, Flipkart: 5 },
-    { date: 'Oct-25', 'Amazon-India': 2, Meesho: 12, Flipkart: 4 },
-    { date: 'Nov-25', 'Amazon-India': 3, Meesho: 15, Flipkart: 7 },
-    { date: 'Dec-25', 'Amazon-India': 5, Meesho: 20, Flipkart: 15 },
-    { date: 'Jan-26', 'Amazon-India': 10, Meesho: 22, Flipkart: 30 },
+    { date: 'Jan-25', Ajio: 3, Meesho: 8, Flipkart: 4 },
+    { date: 'Feb-25', Ajio: 3, Meesho: 8, Flipkart: 4 },
+    { date: 'Mar-25', Ajio: 2, Meesho: 5, Flipkart: 12 },
+    { date: 'Apr-25', Ajio: 1, Meesho: 7, Flipkart: 3 },
+    { date: 'May-25', Ajio: 3, Meesho: 12, Flipkart: 4 },
+    { date: 'Jun-25', Ajio: 8, Meesho: 45, Flipkart: 7 },
+    { date: 'Jul-25', Ajio: 2, Meesho: 50, Flipkart: 5 },
+    { date: 'Aug-25', Ajio: 3, Meesho: 18, Flipkart: 2 },
+    { date: 'Sep-25', Ajio: 3, Meesho: 15, Flipkart: 5 },
+    { date: 'Oct-25', Ajio: 2, Meesho: 12, Flipkart: 4 },
+    { date: 'Nov-25', Ajio: 3, Meesho: 15, Flipkart: 7 },
+    { date: 'Dec-25', Ajio: 5, Meesho: 20, Flipkart: 15 },
+    { date: 'Jan-26', Ajio: 10, Meesho: 22, Flipkart: 30 },
   ];
 
   return (
@@ -98,7 +98,7 @@ export default function ReturnSummary() {
                 <Legend />
                 <Bar dataKey="Meesho" stackId="a" fill="#86efac" />
                 <Bar dataKey="Flipkart" stackId="a" fill="#fca5a5" />
-                <Bar dataKey="Amazon-India" stackId="a" fill="#a5b4fc" />
+                <Bar dataKey="Ajio" stackId="a" fill="#a5b4fc" />
               </BarChart>
             </ResponsiveContainer>
           </Card>
@@ -112,7 +112,7 @@ export default function ReturnSummary() {
               <YAxis />
               <RechartsTooltip />
               <Legend />
-              <Bar dataKey="Amazon-India" stackId="a" fill="#fca5a5" />
+              <Bar dataKey="Ajio" stackId="a" fill="#fca5a5" />
               <Bar dataKey="Meesho" stackId="a" fill="#86efac" />
               <Bar dataKey="Flipkart" stackId="a" fill="#a5b4fc" />
             </BarChart>

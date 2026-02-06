@@ -229,7 +229,7 @@ function Profile() {
 
       <div className="bg-white px-8 pb-8 rounded-b-2xl shadow-sm border border-gray-100 relative -mt-5 mx-0 z-10">
         <GlobalUtilityStyle>
-          <Spin spinning={fetchLoading} tip="Loading profile...">
+          <Spin spinning={fetchLoading}>
             <Row gutter={[30, 0]}>
               {/* Left Side: Avatar & Intro */}
               <Col xs={24} lg={8} xl={6}>

@@ -8,7 +8,7 @@ export default function FeeWaiverConfig() {
   const dataSource = [
     // {
     //   key: '1',
-    //   channel: 'Amazon',
+    //   channel: 'Ajio',
     //   matchType: 'SKU',
     //   matchValue: 'SKU-001',
     //   warehouse: 'WH-1',

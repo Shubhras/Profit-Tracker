@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, Table, Tabs, Button, Spin } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import { PageHeader } from '../../components/page-headers/page-headers';
-import amazonIcon from '../../assets/icons/amazon.svg';
+import meeshoIcon from '../../assets/icons/meesho.png';
 import flipkartIcon from '../../assets/icons/flipkart.svg';
 
 const { TabPane } = Tabs;
@@ -22,7 +22,7 @@ export default function InvoiceReconciliation() {
       breadcrumbName: 'Invoice Reconciliation',
     },
   ];
-  const [activeTab, setActiveTab] = useState('amazon');
+  const [activeTab, setActiveTab] = useState('meesho');
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState([]);
 
@@ -31,7 +31,7 @@ export default function InvoiceReconciliation() {
     setLoading(true);
 
     setTimeout(() => {
-      if (channel === 'amazon') {
+      if (channel === 'meesho') {
         setData([
           {
             key: 'jan',
@@ -164,11 +164,11 @@ export default function InvoiceReconciliation() {
           {/* -------------------- TABS -------------------- */}
           <Tabs activeKey={activeTab} onChange={setActiveTab} className="mb-4">
             <TabPane
-              key="amazon"
+              key="meesho"
               tab={
                 <span className="flex items-center gap-2 text-sm font-medium">
-                  <img src={amazonIcon} alt="Amazon" className="w-4 h-4" />
-                  Amazon-India
+                  <img src={meeshoIcon} alt="Meesho" className="w-4 h-4" />
+                  Meesho
                 </span>
               }
             />

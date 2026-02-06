@@ -1,6 +1,6 @@
 import React from 'react';
 import { Table, Card, Tooltip } from 'antd';
-import amazon from '../../assets/icons/amazon.svg';
+import ajio from '../../assets/icons/ajio.png';
 import flipkart from '../../assets/icons/flipkart.svg';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
@@ -25,8 +25,8 @@ export default function UnsettledOrder() {
       dataIndex: 'channel',
       width: 50,
       render: (value) =>
-        value === 'amazon' ? (
-          <img src={amazon} alt="amazon" className="w-5" />
+        value === 'ajio' ? (
+          <img src={ajio} alt="ajio" className="w-5" />
         ) : (
           <img src={flipkart} alt="flipkart" className="w-5" />
         ),
@@ -90,7 +90,7 @@ export default function UnsettledOrder() {
   const data = [
     {
       key: 1,
-      channel: 'amazon',
+      channel: 'ajio',
       order: '2026-01-18 / 01 - SLIP - SKU...',
       qty: 1,
       invoice: 399,
