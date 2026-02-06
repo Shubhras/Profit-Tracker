@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircleOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { Link } from 'react-router-dom';
 
 const workflows = [
   {
@@ -100,14 +101,16 @@ function FinanceEngineSection() {
             </div>
 
             {/* CTA Button */}
-            <motion.button
-              whileHover={{ scale: 1.05, x: 5 }}
-              whileTap={{ scale: 0.95 }}
-              className="group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/50 transition-all duration-300"
-            >
-              See It In Action
-              <ArrowRightOutlined className="group-hover:translate-x-1 transition-transform duration-300" />
-            </motion.button>
+            <Link to="/pricing">
+              <motion.button
+                whileHover={{ scale: 1.05, x: 5 }}
+                whileTap={{ scale: 0.95 }}
+                className="group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/50 transition-all duration-300"
+              >
+                See Plans
+                <ArrowRightOutlined className="group-hover:translate-x-1 transition-transform duration-300" />
+              </motion.button>
+            </Link>
           </motion.div>
 
           {/* Right Column - Workflow Steps */}

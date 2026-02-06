@@ -8,7 +8,7 @@ import { PageHeader } from '../../components/page-headers/page-headers';
 
 /* ================= MOCK DATA ================= */
 const channelSummaryData = [
-  { channel: 'Amazon-India', rto: 17, cret: 218, total: 235, yet: 59, received: 152, notInHand: 24 },
+  { channel: 'Ajio', rto: 17, cret: 218, total: 235, yet: 59, received: 152, notInHand: 24 },
   { channel: 'Flipkart', rto: 22, cret: 5, total: 27, yet: 16, received: 5, notInHand: 6 },
   { channel: 'Meesho', rto: 32, cret: 31, total: 63, yet: 47, received: 11, notInHand: 5 },
 ];
@@ -34,7 +34,7 @@ const waterfallData = [
 const invoiceData = [
   {
     key: '1',
-    channel: 'Amazon',
+    channel: 'Ajio',
     orderId: 'OD43645435886535100',
     orderItemId: 'ITEM-101',
     orderDate: '06-01-2026',
@@ -42,7 +42,7 @@ const invoiceData = [
     returnDelDate: '16-01-2026',
     returnMarkedDate: '10-01-2026',
     returnStatus: 'RTO TRANSIT',
-    fulfillmentChannel: 'Amazon FC',
+    fulfillmentChannel: 'Ajio',
     productId: 'PID-889',
     sku: 'cami-Black-White',
     qty: 1,

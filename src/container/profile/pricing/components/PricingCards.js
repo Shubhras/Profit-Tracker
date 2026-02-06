@@ -227,47 +227,65 @@ function PricingCards() {
 
   // Map API response to component format
   const mapApiPlanToComponent = (apiPlan) => {
-    // Build features array
-    const features = [apiPlan.file_space, `${apiPlan.active_projects} Projects`, apiPlan.boards, ...apiPlan.features];
+    const isFree = apiPlan.price === 0;
+    const isCustom = apiPlan.price === null;
+
+    const features = [
+      `${apiPlan.sync_frequency} Sync`,
+      `${apiPlan.order_volume} Orders`,
+      `${apiPlan.integrations} Integrations`,
+      ...apiPlan.features,
+    ];
 
     return {
       badge: {
         text: apiPlan.name,
       },
-      title: apiPlan.price === 0 ? apiPlan.name : apiPlan.price.toString(),
-      subtitle: `For ${apiPlan.users_limit} ${apiPlan.users_limit === 1 ? 'User' : 'Users'}`,
-      price: apiPlan.price === 0 ? null : '₹',
-      perMonth: apiPlan.billing_cycle === 'free' ? null : 'month',
+
+      // Title logic
+      title: isFree ? apiPlan.name : isCustom ? 'Custom' : apiPlan.price.toString(),
+
+      // Subtitle
+      subtitle: isCustom ? 'Tailored for large teams' : `For ${apiPlan.order_volume} Orders`,
+
+      // Price symbol
+      price: isFree || isCustom ? null : '₹',
+
+      // Billing text
+      perMonth: apiPlan.billing_cycle === 'yearly' ? 'year' : apiPlan.billing_cycle === 'monthly' ? 'month' : null,
+
       features,
+
       button: {
-        text: apiPlan.billing_cycle === 'free' ? 'Current Plan' : 'Subscribe Now',
+        text: isFree ? 'Current Plan' : isCustom ? 'Contact Sales' : 'Subscribe Now',
       },
+
       plan_id: apiPlan.plan_id,
     };
   };
 
-  useEffect(() => {
-    const fetchPricingPlans = async () => {
-      setLoading(true);
-      setError(null);
+  const fetchPricingPlans = async () => {
+    setLoading(true);
+    setError(null);
 
-      try {
-        const response = await DataService.get('/subscription-plans/');
+    try {
+      const response = await DataService.get('/subscription-plans/');
 
-        if (response.data.status && response.data.data && response.data.data.plans) {
-          const mappedPlans = response.data.data.plans.map((plan) => mapApiPlanToComponent(plan));
-          setPricingPlans(mappedPlans);
-        } else {
-          setError('Invalid response format');
-        }
-      } catch (err) {
-        console.error('Error fetching pricing plans:', err);
-        setError(err.response?.data?.message || err.message || 'Failed to load pricing plans. Please try again later.');
-      } finally {
-        setLoading(false);
+      if (response.data.status && response.data.data?.plans) {
+        const mappedPlans = response.data.data.plans.map(mapApiPlanToComponent);
+        setPricingPlans(mappedPlans);
+      } else {
+        setError('Invalid response format');
       }
-    };
+    } catch (err) {
+      console.error('Error fetching pricing plans:', err);
+      setError(err.response?.data?.message || err.message || 'Failed to load pricing plans. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchPricingPlans();
   }, []);
 
@@ -280,10 +298,10 @@ function PricingCards() {
          grid gap-6
         grid-cols-1
         min-md:grid-cols-2
-        min-lg:grid-cols-3
+        min-lg:grid-cols-4
         "
         >
-          {[1, 2, 3].map((item) => (
+          {[1, 2, 3, 4].map((item) => (
             <PricingCardSkeleton key={item} />
           ))}
         </div>
@@ -303,7 +321,7 @@ function PricingCards() {
             showIcon
             className="rounded-xl"
             action={
-              <Button type="primary" size="small" onClick={() => window.location.reload()} className="rounded-lg">
+              <Button type="primary" size="small" onClick={fetchPricingPlans} className="rounded-lg">
                 Retry
               </Button>
             }
@@ -339,7 +357,7 @@ function PricingCards() {
         grid gap-6
         grid-cols-1
         min-md:grid-cols-2
-        min-lg:grid-cols-3
+        min-lg:grid-cols-4
       "
       >
         <AnimatePresence>

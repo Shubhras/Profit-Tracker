@@ -328,12 +328,12 @@ function MenuItems({ toggleCollapsed }) {
       ]),
 
       getItem(t('userSettings'), 'userSettings', null, [
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/settings/user-setting/account-settings`}>
-            {t('accountSettings')}
-          </NavLink>,
-          'accountSettings',
-        ),
+        // getItem(
+        //   <NavLink onClick={toggleCollapsed} to={`${path}/settings/user-setting/account-settings`}>
+        //     {t('accountSettings')}
+        //   </NavLink>,
+        //   'accountSettings',
+        // ),
         getItem(
           <NavLink onClick={toggleCollapsed} to={`${path}/settings/user-setting/marketplace-settings`}>
             {t('marketPlaceSettings')}

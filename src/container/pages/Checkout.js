@@ -13,7 +13,12 @@ import {
 } from '@ant-design/icons';
 import { HiOutlineChartBar } from 'react-icons/hi2';
 import { Button } from '../../components/buttons/buttons';
-import { createSubscription, verifyPayment, clearPlan } from '../../redux/subscription/actionCreator';
+import {
+  createSubscription,
+  verifyPayment,
+  clearPlan,
+  resetSubscription,
+} from '../../redux/subscription/actionCreator';
 
 function Checkout() {
   const dispatch = useDispatch();
@@ -50,6 +55,18 @@ function Checkout() {
       navigate('/auth/login', { state: { redirectTo: '/checkout', plan } });
     }
   }, [plan, isLoggedIn, navigate]);
+
+  useEffect(() => {
+    if (error) {
+      setProcessingPayment(false);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    return () => {
+      dispatch(resetSubscription());
+    };
+  }, [dispatch]);
 
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {

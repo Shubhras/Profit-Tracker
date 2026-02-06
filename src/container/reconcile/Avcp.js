@@ -115,7 +115,7 @@ export default function Avcp() {
     <>
       <PageHeader
         routes={PageRoutes}
-        title="AmazonVCP Reconciliation"
+        title="VCP Reconciliation"
         className="flex justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 sm:pb-[30px] bg-transparent sm:flex-col"
       />
 

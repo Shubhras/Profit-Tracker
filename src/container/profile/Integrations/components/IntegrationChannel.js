@@ -11,6 +11,22 @@ import {
   ArrowRightOutlined,
   CheckCircleFilled,
 } from '@ant-design/icons';
+import flipkartLogo from '../../../../assets/icons/flipkart.png';
+import myntraLogo from '../../../../assets/icons/myntra.png';
+import meeshoLogo from '../../../../assets/icons/meesho.png';
+import ajioLogo from '../../../../assets/icons/ajio.png';
+import nykaaLogo from '../../../../assets/icons/nykaa.png';
+
+import shopifyLogo from '../../../../assets/icons/shopify.png';
+import wooLogo from '../../../../assets/icons/woo.png';
+import magentoLogo from '../../../../assets/icons/magento.png';
+
+import blinkitLogo from '../../../../assets/icons/blinkit.png';
+import zeptoLogo from '../../../../assets/icons/zepto.png';
+import swiggyLogo from '../../../../assets/icons/swiggy.png';
+
+import tallyLogo from '../../../../assets/icons/tally.png';
+import zohoLogo from '../../../../assets/icons/zoho.png';
 
 const categories = [
   {
@@ -18,31 +34,11 @@ const categories = [
     name: 'Marketplaces',
     icon: <ShopOutlined />,
     platforms: [
-      {
-        name: 'Flipkart',
-        logo: 'https://logos-world.net/wp-content/uploads/2020/11/Flipkart-Logo.png',
-        status: 'coming',
-      },
-      {
-        name: 'Myntra',
-        logo: 'https://logos-world.net/wp-content/uploads/2020/04/Myntra-Logo.png',
-        status: 'coming',
-      },
-      {
-        name: 'Meesho',
-        logo: 'https://logos-world.net/wp-content/uploads/2022/02/Meesho-Logo.png',
-        status: 'coming',
-      },
-      {
-        name: 'Ajio',
-        logo: 'https://logos-world.net/wp-content/uploads/2021/02/AJIO-Logo.png',
-        status: 'coming',
-      },
-      {
-        name: 'Nykaa',
-        logo: 'https://logos-world.net/wp-content/uploads/2021/02/Nykaa-Logo.png',
-        status: 'coming',
-      },
+      { name: 'Flipkart', logo: flipkartLogo, status: 'coming' },
+      { name: 'Myntra', logo: myntraLogo, status: 'coming' },
+      { name: 'Meesho', logo: meeshoLogo, status: 'coming' },
+      { name: 'Ajio', logo: ajioLogo, status: 'coming' },
+      { name: 'Nykaa', logo: nykaaLogo, status: 'coming' },
     ],
   },
   {
@@ -50,21 +46,9 @@ const categories = [
     name: 'D2C Platforms',
     icon: <AppstoreOutlined />,
     platforms: [
-      {
-        name: 'Shopify',
-        logo: 'https://cdn.worldvectorlogo.com/logos/shopify.svg',
-        status: 'coming',
-      },
-      {
-        name: 'WooCommerce',
-        logo: 'https://cdn.worldvectorlogo.com/logos/woocommerce.svg',
-        status: 'coming',
-      },
-      {
-        name: 'Magento',
-        logo: 'https://cdn.worldvectorlogo.com/logos/magento.svg',
-        status: 'coming',
-      },
+      { name: 'Shopify', logo: shopifyLogo, status: 'coming' },
+      { name: 'WooCommerce', logo: wooLogo, status: 'coming' },
+      { name: 'Magento', logo: magentoLogo, status: 'coming' },
     ],
   },
   {
@@ -72,21 +56,9 @@ const categories = [
     name: 'Quick Commerce',
     icon: <ThunderboltOutlined />,
     platforms: [
-      {
-        name: 'Blinkit',
-        logo: 'https://logos-world.net/wp-content/uploads/2022/02/Blinkit-Logo.png',
-        status: 'coming',
-      },
-      {
-        name: 'Zepto',
-        logo: 'https://logos-world.net/wp-content/uploads/2022/07/Zepto-Logo.png',
-        status: 'coming',
-      },
-      {
-        name: 'Swiggy Instamart',
-        logo: 'https://logos-world.net/wp-content/uploads/2020/11/Swiggy-Logo.png',
-        status: 'coming',
-      },
+      { name: 'Blinkit', logo: blinkitLogo, status: 'coming' },
+      { name: 'Zepto', logo: zeptoLogo, status: 'coming' },
+      { name: 'Swiggy Instamart', logo: swiggyLogo, status: 'coming' },
     ],
   },
   {
@@ -94,16 +66,8 @@ const categories = [
     name: 'Accounting',
     icon: <BankOutlined />,
     platforms: [
-      {
-        name: 'Tally',
-        logo: 'https://logos-world.net/wp-content/uploads/2020/09/Tally-Logo.png',
-        status: 'coming',
-      },
-      {
-        name: 'Zoho Books',
-        logo: 'https://cdn.worldvectorlogo.com/logos/zoho-books.svg',
-        status: 'coming',
-      },
+      { name: 'Tally', logo: tallyLogo, status: 'coming' },
+      { name: 'Zoho Books', logo: zohoLogo, status: 'coming' },
     ],
   },
 ];

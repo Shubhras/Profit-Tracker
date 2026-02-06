@@ -137,8 +137,8 @@ function ShiftToAISection() {
           transition={{ delay: 0.8, duration: 0.6 }}
           className="mt-16 text-center"
         >
-          <div className="inline-flex flex-col sm:flex-row items-center gap-4 p-8 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-3xl shadow-2xl shadow-emerald-500/30">
-            <div className="flex-1 text-left sm:text-left text-white">
+          <div className="inline-flex flex-col items-center gap-4 p-8 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-3xl shadow-2xl shadow-emerald-500/30">
+            <div className="flex-1 text-left text-white">
               <p className="text-2xl font-bold mb-1">Ready to transform your finance operations?</p>
               {/* <p className="text-emerald-100">Start your free 14-day trial. No credit card required.</p> */}
             </div>
