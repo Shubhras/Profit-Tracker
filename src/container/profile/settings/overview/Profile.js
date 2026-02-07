@@ -222,12 +222,13 @@ function Profile() {
   return (
     <div className="relative mb-[25px]">
       {/* Unique Cover Photo Background */}
-      <div className="h-48 w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-t-2xl relative overflow-hidden">
+      {/* <div className="h-2 w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-t-2xl relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150" />
         <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-      </div>
+      </div> */}
 
-      <div className="bg-white px-8 pb-8 rounded-b-2xl shadow-sm border border-gray-100 relative -mt-5 mx-0 z-10">
+      <div className="bg-white px-6 pb-8 rounded-b-2xl shadow-sm border border-gray-100 relative z-10">
+        <div className="h-1 w-full rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500" />
         <GlobalUtilityStyle>
           <Spin spinning={fetchLoading}>
             <Row gutter={[30, 0]}>

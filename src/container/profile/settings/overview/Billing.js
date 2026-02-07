@@ -392,9 +392,9 @@ function Billing() {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center">
             <h3 className="text-lg font-bold text-gray-800 m-0">Invoice History</h3>
-            <Button type="link" className="p-0 text-emerald-600 font-medium hover:text-emerald-700">
+            {/* <Button type="link" className="p-0 text-emerald-600 font-medium hover:text-emerald-700">
               View All
-            </Button>
+            </Button> */}
           </div>
 
           <div className="overflow-x-auto">
@@ -413,9 +413,9 @@ function Billing() {
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  {/* <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Invoice
-                  </th>
+                  </th> */}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -446,7 +446,7 @@ function Billing() {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    {/* <td className="px-6 py-4 text-right">
                       <Button
                         type="default"
                         size="small"
@@ -454,7 +454,7 @@ function Billing() {
                       >
                         Download
                       </Button>
-                    </td>
+                    </td> */}
                   </tr>
                 )) || (
                   <tr>

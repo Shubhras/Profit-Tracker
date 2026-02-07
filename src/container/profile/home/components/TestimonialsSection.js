@@ -5,7 +5,7 @@ import { FaStar, FaQuoteLeft } from 'react-icons/fa';
 const testimonials = [
   {
     quote:
-      "Profit-Tracker saved us 30+ hours every week on reconciliation alone. The AI insights helped us identify a 15% margin leak we didn't even know existed!",
+      "TrackMyProfit saved us 30+ hours every week on reconciliation alone. The AI insights helped us identify a 15% margin leak we didn't even know existed!",
     author: 'Rahul Sharma',
     role: 'Founder & CEO',
     company: 'BoldCare',
@@ -15,7 +15,7 @@ const testimonials = [
   },
   {
     quote:
-      "We scaled from ₹1Lakh to ₹10Lakh ARR without adding a single finance person. Profit-Tracker's automation is truly game-changing for D2C brands.",
+      "We scaled from ₹1Lakh to ₹10Lakh ARR without adding a single finance person. TrackMyProfit's automation is truly game-changing for D2C brands.",
     author: 'Priya Mehta',
     role: 'COO',
     company: 'AboutSpace',

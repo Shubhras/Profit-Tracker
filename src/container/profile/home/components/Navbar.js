@@ -111,7 +111,7 @@ function Navbar() {
               <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl flex items-center justify-center">
                 <HiOutlineChartBar className="text-white" size={22} />
               </div>
-              <p className="text-2xl font-bold text-gray-900 mb-0">Profit-Tracker</p>
+              <p className="text-2xl font-bold text-gray-900 mb-0">TrackMyProfit</p>
             </Link>
           </motion.div>
 

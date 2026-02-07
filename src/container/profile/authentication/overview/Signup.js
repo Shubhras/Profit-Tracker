@@ -49,7 +49,7 @@ function SignUp() {
     <div className="w-full mt-14 min-md:mt-0">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Create Account</h2>
-        <p className="text-gray-500">Join Profit-Tracker and start growing today</p>
+        <p className="text-gray-500">Join TrackMyProfit and start growing today</p>
       </div>
 
       <Form name="register" onFinish={handleSubmit} layout="vertical">
@@ -152,13 +152,24 @@ function SignUp() {
           </div>
         </div>
 
-        <div className="mt-2 mb-6">
+        {/* <div className="mt-2 mb-6">
           <Checkbox checked={checked} onChange={(value) => setChecked(value)}>
             <span className="text-gray-600">
               I accept the{' '}
               <a href="/terms" className="text-emerald-600 underline">
                 Terms & Conditions
               </a>
+            </span>
+          </Checkbox>
+        </div> */}
+
+        <div className="mt-2 mb-6">
+          <Checkbox checked={checked} onChange={(value) => setChecked(value)}>
+            <span className="text-gray-600">
+              I accept the{' '}
+              <Link to="/terms" target="_blank" className="text-emerald-600 underline">
+                Terms & Conditions
+              </Link>
             </span>
           </Checkbox>
         </div>

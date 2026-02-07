@@ -31,7 +31,7 @@ const footerLinks = {
 const socialLinks = [
   // { icon: <LinkedinOutlined />, label: 'LinkedIn', href: '#' },
   { icon: <PhoneOutlined />, label: 'Phone', href: '#' },
-  { icon: <MailOutlined />, label: 'Email', href: 'mailto:hello@profit-tracker.in' },
+  { icon: <MailOutlined />, label: 'Email', href: 'mailto:hello@trackmyprofit.com' },
 ];
 
 function FooterLink({ to, children }) {
@@ -99,7 +99,7 @@ function Footer() {
                 <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl flex items-center justify-center">
                   <HiOutlineChartBar className="text-white text-xl" />
                 </div>
-                <span>Profit-Tracker</span>
+                <span>TrackMyProfit</span>
               </Link>
 
               <Text className="block text-gray-400 text-sm leading-relaxed mb-6 max-w-sm">
@@ -224,7 +224,7 @@ function Footer() {
           transition={{ delay: 0.5 }}
           className="flex flex-wrap justify-between items-center gap-4"
         >
-          <Text className="text-gray-500 text-sm">© 2026 Profit-Tracker.in. All rights reserved.</Text>
+          <Text className="text-gray-500 text-sm">© 2026 TrackMyProfit.in. All rights reserved.</Text>
           <Text className="text-gray-500 text-sm flex items-center gap-1">
             Made with <HeartFilled className="text-red-500" /> in India
           </Text>

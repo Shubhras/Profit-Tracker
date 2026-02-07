@@ -152,7 +152,7 @@ const ThemeLayout = (WrappedComponent) => {
                       <HiOutlineChartBar className="text-white" size={20} />
                     </div>
                     <p className="hidden min-md:block text-xl font-bold text-gray-800 mb-0 tracking-tight group-hover:text-emerald-600 transition-colors">
-                      Profit-Tracker
+                      TrackMyProfit
                     </p>
                   </Link>
                 </div>
@@ -224,8 +224,8 @@ const ThemeLayout = (WrappedComponent) => {
                       <Col md={12} xs={24}>
                         <span className="inline-block w-full font-medium admin-footer__copyright md:text-center text-theme-gray dark:text-white60 md:mb-[10px]">
                           © 2025
-                          <Link className="mx-[4px] text-primary" to="#">
-                            Profit-Tracker
+                          <Link className="mx-[4px] text-primary" to="/admin/profit/summary">
+                            TrackMyProfit
                           </Link>
                         </span>
                       </Col>

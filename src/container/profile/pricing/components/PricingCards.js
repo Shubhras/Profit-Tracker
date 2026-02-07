@@ -226,9 +226,33 @@ function PricingCards() {
   };
 
   // Map API response to component format
+  // const mapApiPlanToComponent = (apiPlan) => {
+  //   const isFree = apiPlan.price === 0;
+  //   const isCustom = apiPlan.price === null;
+  //   const features = [
+  //     `${apiPlan.sync_frequency} Sync`,
+  //     `${apiPlan.order_volume} Orders`,
+  //     `${apiPlan.integrations} Integrations`,
+  //     ...apiPlan.features,
+  //   ];
+  //   return {
+  //     badge: {
+  //       text: apiPlan.name,
+  //     },
+  //     title: isFree ? apiPlan.name : isCustom ? 'Custom' : apiPlan.price.toString(),
+  //     subtitle: isCustom ? 'Tailored for large teams' : `For ${apiPlan.order_volume} Orders`,
+  //     price: isFree || isCustom ? null : '₹',
+  //     perMonth: apiPlan.billing_cycle === 'yearly' ? 'year' : apiPlan.billing_cycle === 'monthly' ? 'month' : null,
+  //     features,
+  //     button: {
+  //       text: isFree ? 'Current Plan' : isCustom ? 'Contact Sales' : 'Subscribe Now',
+  //     },
+  //     plan_id: apiPlan.plan_id,
+  //   };
+  // };
   const mapApiPlanToComponent = (apiPlan) => {
-    const isFree = apiPlan.price === 0;
-    const isCustom = apiPlan.price === null;
+    const isFree = apiPlan.plan_id === 'FREE' || apiPlan.price === 0;
+    const isEnterprise = apiPlan.contact_sales === true || apiPlan.billing_cycle === 'custom';
 
     const features = [
       `${apiPlan.sync_frequency} Sync`,
@@ -242,22 +266,22 @@ function PricingCards() {
         text: apiPlan.name,
       },
 
-      // Title logic
-      title: isFree ? apiPlan.name : isCustom ? 'Custom' : apiPlan.price.toString(),
+      // Title
+      title: isFree ? 'Free' : isEnterprise ? 'Custom' : apiPlan.price.toString(),
 
       // Subtitle
-      subtitle: isCustom ? 'Tailored for large teams' : `For ${apiPlan.order_volume} Orders`,
+      subtitle: isEnterprise ? 'For large businesses & enterprises' : `Up to ${apiPlan.order_volume} Orders`,
 
       // Price symbol
-      price: isFree || isCustom ? null : '₹',
+      price: isFree || isEnterprise ? null : '₹',
 
-      // Billing text
+      // Billing cycle text
       perMonth: apiPlan.billing_cycle === 'yearly' ? 'year' : apiPlan.billing_cycle === 'monthly' ? 'month' : null,
 
       features,
 
       button: {
-        text: isFree ? 'Current Plan' : isCustom ? 'Contact Sales' : 'Subscribe Now',
+        text: isFree ? 'Current Plan' : isEnterprise ? 'Contact Sales' : 'Subscribe Now',
       },
 
       plan_id: apiPlan.plan_id,

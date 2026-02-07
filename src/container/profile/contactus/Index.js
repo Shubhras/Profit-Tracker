@@ -19,7 +19,7 @@ const contactInfo = [
   {
     icon: <MailOutlined />,
     title: 'Email',
-    details: ['sales@profit-tracker.in', 'support@profit-tracker.in'],
+    details: ['sales@trackmyprofit.com', 'support@trackmyprofit.com'],
     color: 'blue',
   },
   {

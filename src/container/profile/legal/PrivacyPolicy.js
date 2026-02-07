@@ -11,9 +11,9 @@ function PrivacyPolicy() {
         <div className="prose prose-lg text-gray-600">
           <p className="mb-4">Last Updated: February 2026</p>
           <p className="mb-6">
-            Welcome to Profit-Tracker. We are committed to protecting your personal information and your right to
+            Welcome to TrackMyProfit. We are committed to protecting your personal information and your right to
             privacy. If you have any questions or concerns about this privacy notice, or our practices with regards to
-            your personal information, please contact us at hello@profit-tracker.in.
+            your personal information, please contact us at hello@trackmyprofit.com.
           </p>
 
           <h2 className="text-2xl min-md:text-3xl font-semibold text-gray-800 mt-8 mb-4">1. Information We Collect</h2>

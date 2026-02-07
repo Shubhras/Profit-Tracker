@@ -14,7 +14,7 @@ const workflows = [
   {
     step: '02',
     title: 'Automated Data Sync',
-    description: 'Watch as Profit-Tracker automatically pulls and reconciles data from all sources in real-time.',
+    description: 'Watch as TrackMyProfit automatically pulls and reconciles data from all sources in real-time.',
     icon: '⚡',
   },
   {
