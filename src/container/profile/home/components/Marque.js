@@ -82,7 +82,7 @@ function Marque() {
           <h2 className="text-3xl min-md:text-4xl font-bold text-gray-900">
             Join 25+ Brands Growing with{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">
-              Profit-Tracker
+              TrackMyProfit
             </span>
           </h2>
         </motion.div>

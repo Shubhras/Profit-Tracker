@@ -12,8 +12,8 @@ function TermsConditions() {
           <p className="mb-4">Last Updated: February 2026</p>
           <p className="mb-6">
             These Terms and Conditions constitute a legally binding agreement made between you, whether personally or on
-            behalf of an entity (“you”) and Profit-Tracker (“we,” “us” or “our”), concerning your access to and use of
-            the Profit-Tracker website as well as any other media form, media channel, mobile website or mobile
+            behalf of an entity (“you”) and TrackMyProfit (“we,” “us” or “our”), concerning your access to and use of
+            the TrackMyProfit website as well as any other media form, media channel, mobile website or mobile
             application related, linked, or otherwise connected thereto (collectively, the “Site”).
           </p>
 

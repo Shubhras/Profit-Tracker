@@ -161,7 +161,7 @@ function AboutSection() {
                 broken formulas, and delayed reporting were the norm.
               </p>
               <p>
-                Profit-Tracker changes that. We built a platform that ingests millions of rows of data, reconciles them
+                TrackMyProfit changes that. We built a platform that ingests millions of rows of data, reconciles them
                 instantly, and gives you actionable insights in plain English.
               </p>
             </div>

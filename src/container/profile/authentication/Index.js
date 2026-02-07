@@ -26,7 +26,7 @@ const AuthLayout = (WraperContent) => {
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
                 <HiOutlineChartBar className="text-white" size={24} />
               </div>
-              Profit-Tracker
+              TrackMyProfit
             </Link>
           </div>
 
@@ -47,7 +47,7 @@ const AuthLayout = (WraperContent) => {
                 ))}
               </div>
               <p className="text-lg min-xl:text-2xl text-gray-700 font-medium leading-relaxed mb-6 font-serif italic">
-                &quot;Profit-Tracker completely transformed how we handle reconciliation. We save 40+ hours every single
+                &quot;TrackMyProfit completely transformed how we handle reconciliation. We save 20+ hours every single
                 week.&quot;
               </p>
               <div className="flex items-center gap-4">
@@ -94,7 +94,7 @@ const AuthLayout = (WraperContent) => {
               {/* <div className="lg:hidden mb-10 text-center">
                 <Link to="/" className="inline-flex items-center gap-2 text-gray-900 text-2xl font-bold">
                   <HiOutlineChartBar className="text-emerald-600" size={32} />
-                  Profit-Tracker
+                  TrackMyProfit
                 </Link>
               </div> */}
 

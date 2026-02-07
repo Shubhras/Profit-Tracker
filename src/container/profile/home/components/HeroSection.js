@@ -66,7 +66,7 @@ function HeroSection() {
               className="text-lg min-md:text-xl text-gray-600 mb-10 max-w-2xl mx-auto min-lg:mx-0 leading-relaxed"
             >
               Automate reconciliation, forecast inventory, and boost profit margins with AI-driven insights. Join 25+
-              brands growing with Profit-Tracker.
+              brands growing with TrackMyProfit.
             </motion.p>
 
             {/* CTA Buttons */}

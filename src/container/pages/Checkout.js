@@ -94,7 +94,7 @@ function Checkout() {
     const options = {
       key: subscriptionInfo.razorpay_key,
       subscription_id: subscriptionInfo.subscription_id,
-      name: 'Profit-Tracker',
+      name: 'TrackMyProfit',
       description: `${plan?.badge?.text || plan?.name} Subscription`,
       handler(response) {
         const paymentData = {
@@ -191,7 +191,7 @@ function Checkout() {
               <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl flex items-center justify-center">
                 <HiOutlineChartBar className="text-white" size={22} />
               </div>
-              <p className="text-2xl font-bold text-gray-900 mb-0">Profit-Tracker</p>
+              <p className="text-2xl font-bold text-gray-900 mb-0">TrackMyProfit</p>
             </Link>
             <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full text-xs font-bold border border-emerald-100">
               <LockOutlined /> SECURE CHECKOUT
