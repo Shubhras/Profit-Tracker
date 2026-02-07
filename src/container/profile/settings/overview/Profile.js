@@ -139,11 +139,11 @@
 // export default Profile;
 
 import React, { useEffect, useState } from 'react';
-import { Row, Col, Form, Input, Spin, message } from 'antd';
+import { Button, Form, Input, Spin, message } from 'antd';
 import { useDispatch } from 'react-redux';
-import { Button } from '../../../../components/buttons/buttons';
-import Heading from '../../../../components/heading/heading';
-import { GlobalUtilityStyle } from '../../../styled';
+// import UilUser from '@iconscout/react-unicons/icons/uil-user';
+// import UilMapMarker from '@iconscout/react-unicons/icons/uil-map-marker'
+// import UilBill from '@iconscout/react-unicons/icons/uil-bill';
 import { setUserProfile } from '../../../../redux/authentication/actionCreator';
 import { DataService } from '../../../../config/dataService/dataService';
 
@@ -151,23 +151,18 @@ function Profile() {
   const [form] = Form.useForm();
   const dispatch = useDispatch();
 
-  // ✅ Separate loading states for fetch and update
+  // Loading states
   const [fetchLoading, setFetchLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
 
-  // ✅ Fetch Profile API
+  // Fetch Profile API
   const fetchProfile = async () => {
     try {
       setFetchLoading(true);
-
       const response = await DataService.get('/user/profile/');
 
-      // console.log('Profile Response:', response.data);
-
       if (response.data.status === true) {
-        // Update Redux state with the data we already have
         dispatch(setUserProfile(response.data.data));
-
         form.setFieldsValue({
           name: response.data.data.name,
           business_name: response.data.data.business_name,
@@ -188,25 +183,19 @@ function Profile() {
     }
   };
 
-  // ✅ Call API on Page Load
+  // Call API on Page Load
   useEffect(() => {
     fetchProfile();
   }, []);
 
-  // ✅ Update Profile Submit
+  // Update Profile Submit
   const handleSubmit = async (values) => {
-    // console.log('Updated Values:', values);
-
     try {
       setUpdateLoading(true);
-
       const response = await DataService.patch('/user/update-profile/', values);
-
-      // console.log('Update Response:', response.data);
 
       if (response.data.status === true) {
         message.success('Profile updated successfully!');
-        // ✅ Automatically refresh profile in Redux store (updates Header/Info)
         dispatch(setUserProfile(response.data.data));
       } else {
         message.error(response.data.message || 'Failed to update profile');
@@ -220,153 +209,145 @@ function Profile() {
   };
 
   return (
-    <div className="relative mb-[25px]">
-      {/* Unique Cover Photo Background */}
-      {/* <div className="h-2 w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-t-2xl relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150" />
-        <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-      </div> */}
+    <div className="w-full rounded-2xl overflow-hidden mx-auto">
+      <div className="h-1 w-full bg-gradient-to-r from-emerald-500 to-teal-500" />
+      <div className="bg-white dark:bg-[#202531] shadow-sm border border-slate-200 dark:border-white/5 p-4">
+        <div className="mb-8 pb-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">General Settings</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">Update your personal and business details.</p>
+          </div>
+        </div>
 
-      <div className="bg-white px-6 pb-8 rounded-b-2xl shadow-sm border border-gray-100 relative z-10">
-        <div className="h-1 w-full rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500" />
-        <GlobalUtilityStyle>
-          <Spin spinning={fetchLoading}>
-            <Row gutter={[30, 0]}>
-              {/* Left Side: Avatar & Intro */}
-              <Col xs={24} lg={8} xl={6}>
-                <div className="pt-4 text-center lg:text-left mb-8 lg:mb-0">
-                  <div className="">
-                    <h2 className="text-2xl font-bold text-gray-900 m-0">{form.getFieldValue('name') || 'User'}</h2>
-                    <p className="text-gray-500 text-sm mt-1">
-                      {form.getFieldValue('business_name') || 'Business Owner'}
-                    </p>
-                    <div className="mt-4 flex flex-wrap gap-2 justify-center lg:justify-start">
-                      <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full border border-emerald-100">
-                        Verified
-                      </span>
-                      <span className="px-3 py-1 bg-gray-50 text-gray-600 text-xs font-semibold rounded-full border border-gray-200">
-                        Pro Plan
-                      </span>
-                    </div>
-                  </div>
+        <Spin spinning={fetchLoading}>
+          <Form form={form} layout="vertical" onFinish={handleSubmit} requiredMark={false}>
+            {/* Personal Information */}
+            <div className="mb-10">
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-6">
+                Personal Information
+              </h3>
+              <div className="grid grid-cols-1 min-md:grid-cols-2 gap-x-4 gap-y-2">
+                <Form.Item
+                  label={<span className="font-medium text-slate-700 dark:text-slate-300">Full Name</span>}
+                  name="name"
+                  rules={[{ required: true, message: 'Required' }]}
+                >
+                  <Input
+                    className="h-11 rounded-lg border-slate-300 focus:border-primary focus:shadow-none hover:border-slate-400"
+                    placeholder="John Doe"
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  label={<span className="font-medium text-slate-700 dark:text-slate-300">Email Address</span>}
+                  name="email"
+                >
+                  <Input disabled className="h-11 rounded-lg border-slate-200 bg-slate-50 text-slate-500" />
+                </Form.Item>
+
+                <Form.Item
+                  label={<span className="font-medium text-slate-700 dark:text-slate-300">Phone Number</span>}
+                  name="mobile_number"
+                >
+                  <Input
+                    className="h-11 rounded-lg border-slate-300 focus:border-primary focus:shadow-none hover:border-slate-400"
+                    placeholder="+1 234 567 890"
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  label={<span className="font-medium text-slate-700 dark:text-slate-300">Business Name</span>}
+                  name="business_name"
+                >
+                  <Input
+                    className="h-11 rounded-lg border-slate-300 focus:border-primary focus:shadow-none hover:border-slate-400"
+                    placeholder="Business Ltd."
+                  />
+                </Form.Item>
+              </div>
+            </div>
+
+            {/* Address Information */}
+            <div className="mb-8">
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-6">
+                Address Details
+              </h3>
+              <div className="grid grid-cols-1 min-md:grid-cols-2 gap-x-4 gap-y-2">
+                <div className="col-span-1 min-md:col-span-2">
+                  <Form.Item
+                    label={<span className="font-medium text-slate-700 dark:text-slate-300">Street Address</span>}
+                    name="address"
+                  >
+                    <Input
+                      className="h-11 rounded-lg border-slate-300 focus:border-primary focus:shadow-none hover:border-slate-400"
+                      placeholder="123 Main St"
+                    />
+                  </Form.Item>
                 </div>
-              </Col>
 
-              {/* Right Side: Form */}
-              <Col xs={24} lg={16} xl={18}>
-                <div className="pt-8">
-                  <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
-                    <Heading as="h4" className="mb-0 text-xl font-bold text-gray-800">
-                      Personal Information
-                    </Heading>
-                    {/* <Button size="small" type="default" className="text-gray-500">View Public Profile</Button> */}
-                  </div>
+                <Form.Item
+                  label={<span className="font-medium text-slate-700 dark:text-slate-300">City</span>}
+                  name="city"
+                >
+                  <Input
+                    className="h-11 rounded-lg border-slate-300 focus:border-primary focus:shadow-none hover:border-slate-400"
+                    placeholder="New York"
+                  />
+                </Form.Item>
 
-                  <Form form={form} layout="vertical" onFinish={handleSubmit} className="profile-form-unique">
-                    <Row gutter={24}>
-                      <Col xs={24} md={12}>
-                        <Form.Item label={<span className="font-semibold text-gray-700">Full Name</span>} name="name">
-                          <Input className="h-11 rounded-xl bg-gray-50 border-gray-200 focus:bg-white transition-all" />
-                        </Form.Item>
-                      </Col>
-                      <Col xs={24} md={12}>
-                        <Form.Item
-                          label={<span className="font-semibold text-gray-700">Business Name</span>}
-                          name="business_name"
-                        >
-                          <Input className="h-11 rounded-xl bg-gray-50 border-gray-200 focus:bg-white transition-all" />
-                        </Form.Item>
-                      </Col>
-                      <Col xs={24} md={12}>
-                        <Form.Item
-                          label={<span className="font-semibold text-gray-700">Email Address</span>}
-                          name="email"
-                        >
-                          <Input
-                            disabled
-                            className="h-11 rounded-xl bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed"
-                          />
-                        </Form.Item>
-                      </Col>
-                      <Col xs={24} md={12}>
-                        <Form.Item
-                          label={<span className="font-semibold text-gray-700">Phone Number</span>}
-                          name="mobile_number"
-                        >
-                          <Input className="h-11 rounded-xl bg-gray-50 border-gray-200 focus:bg-white transition-all" />
-                        </Form.Item>
-                      </Col>
+                <Form.Item
+                  label={<span className="font-medium text-slate-700 dark:text-slate-300">State</span>}
+                  name="state"
+                >
+                  <Input
+                    className="h-11 rounded-lg border-slate-300 focus:border-primary focus:shadow-none hover:border-slate-400"
+                    placeholder="NY"
+                  />
+                </Form.Item>
 
-                      <Col xs={24}>
-                        <div className="my-4 pt-4 border-t border-gray-100">
-                          <h5 className="text-md font-bold text-gray-800 mb-4">Billing Address</h5>
-                        </div>
-                      </Col>
+                <Form.Item
+                  label={<span className="font-medium text-slate-700 dark:text-slate-300">Zip Code</span>}
+                  name="pin_code"
+                >
+                  <Input
+                    className="h-11 rounded-lg border-slate-300 focus:border-primary focus:shadow-none hover:border-slate-400"
+                    placeholder="10001"
+                  />
+                </Form.Item>
 
-                      <Col xs={24}>
-                        <Form.Item
-                          label={<span className="font-semibold text-gray-700">Street Address</span>}
-                          name="address"
-                        >
-                          <Input className="h-11 rounded-xl bg-gray-50 border-gray-200 focus:bg-white transition-all" />
-                        </Form.Item>
-                      </Col>
-                      <Col xs={24} md={8}>
-                        <Form.Item label={<span className="font-semibold text-gray-700">City</span>} name="city">
-                          <Input className="h-11 rounded-xl bg-gray-50 border-gray-200 focus:bg-white transition-all" />
-                        </Form.Item>
-                      </Col>
-                      <Col xs={24} md={8}>
-                        <Form.Item label={<span className="font-semibold text-gray-700">State</span>} name="state">
-                          <Input className="h-11 rounded-xl bg-gray-50 border-gray-200 focus:bg-white transition-all" />
-                        </Form.Item>
-                      </Col>
-                      <Col xs={24} md={8}>
-                        <Form.Item
-                          label={<span className="font-semibold text-gray-700">Pin Code</span>}
-                          name="pin_code"
-                        >
-                          <Input className="h-11 rounded-xl bg-gray-50 border-gray-200 focus:bg-white transition-all" />
-                        </Form.Item>
-                      </Col>
-                      <Col xs={24} md={12}>
-                        <Form.Item
-                          label={<span className="font-semibold text-gray-700">GST Number</span>}
-                          name="gst_number"
-                        >
-                          <Input className="h-11 rounded-xl bg-gray-50 border-gray-200 focus:bg-white transition-all" />
-                        </Form.Item>
-                      </Col>
-                    </Row>
+                <Form.Item
+                  label={<span className="font-medium text-slate-700 dark:text-slate-300">GST Number</span>}
+                  name="gst_number"
+                >
+                  <Input
+                    className="h-11 rounded-lg border-slate-300 focus:border-primary focus:shadow-none hover:border-slate-400"
+                    placeholder="Tax ID"
+                  />
+                </Form.Item>
+              </div>
+            </div>
 
-                    <div className="mt-8 flex gap-4 pt-4 border-t border-gray-100">
-                      <Button
-                        size="large"
-                        htmlType="submit"
-                        type="primary"
-                        loading={updateLoading}
-                        disabled={fetchLoading}
-                        className="h-12 px-8 rounded-xl font-bold bg-gradient-to-r from-emerald-500 to-teal-600 border-0 shadow-lg shadow-emerald-500/30"
-                      >
-                        Save Changes
-                      </Button>
-
-                      <Button
-                        size="large"
-                        type="text"
-                        onClick={() => fetchProfile()}
-                        disabled={fetchLoading || updateLoading}
-                        className="h-12 px-8 rounded-xl font-semibold text-gray-500 hover:bg-gray-50"
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </Form>
-                </div>
-              </Col>
-            </Row>
-          </Spin>
-        </GlobalUtilityStyle>
+            {/* Action Buttons */}
+            <div className="flex flex-col-reverse min-sm:flex-row gap-3 pt-4">
+              <Button
+                size="large"
+                className="w-full rounded-xl h-12 border-gray-200 text-gray-600 hover:text-gray-800 hover:border-gray-300 hover:bg-gray-50 font-medium"
+                onClick={() => form.resetFields()}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={updateLoading}
+                disabled={fetchLoading}
+                className="w-full rounded-xl h-12 bg-gradient-to-r from-emerald-500 to-teal-600 border-0 shadow-lg shadow-emerald-500/30 font-semibold"
+              >
+                Save Changes
+              </Button>
+            </div>
+          </Form>
+        </Spin>
       </div>
     </div>
   );

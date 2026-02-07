@@ -69,15 +69,15 @@ const AuthLayout = (WraperContent) => {
           {/* Footer Stats similar to Hero */}
           <div className="relative z-10 grid grid-cols-3 gap-8 max-w-2xl mt-auto pt-12 border-t border-gray-200">
             <div>
-              <h3 className="text-2xl min-xl:text-3xl font-bold text-gray-900">99.9%</h3>
+              <h3 className="text-2xl min-xl:text-3xl font-bold text-gray-900 mb-0">99.9%</h3>
               <p className="text-gray-500 text-xs min-xl:text-sm mt-1">Uptime SLA</p>
             </div>
             <div>
-              <h3 className="text-2xl min-xl:text-3xl font-bold text-gray-900">$1M+</h3>
+              <h3 className="text-2xl min-xl:text-3xl font-bold text-gray-900 mb-0">$1M+</h3>
               <p className="text-gray-500 text-xs min-xl:text-sm mt-1">Transaction Volume</p>
             </div>
             <div>
-              <h3 className="text-2xl min-xl:text-3xl font-bold text-gray-900">25+</h3>
+              <h3 className="text-2xl min-xl:text-3xl font-bold text-gray-900 mb-0">25+</h3>
               <p className="text-gray-500 text-xs min-xl:text-sm mt-1">Global Companies</p>
             </div>
           </div>

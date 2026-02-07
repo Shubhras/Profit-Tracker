@@ -102,7 +102,7 @@ function Password() {
         {/* Decorative Top Gradient */}
         <div className="h-1 w-full bg-gradient-to-r from-emerald-500 to-teal-500" />
 
-        <div className="p-8 md:p-12 max-w-2xl mx-auto">
+        <div className="p-4 max-w-2xl mx-auto">
           <div className="text-center mb-10">
             <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
@@ -148,7 +148,7 @@ function Password() {
                 className="mb-4"
               >
                 <Input.Password
-                  className="rounded-xl px-4 py-2.5 border-gray-200 hover:border-emerald-300 focus:border-emerald-500 focus:shadow-emerald-500/10"
+                  className="rounded-lg px-4 py-2.5 border-gray-200 hover:border-emerald-300 focus:border-emerald-500 focus:shadow-emerald-500/10"
                   placeholder="Enter current password"
                 />
               </Form.Item>
@@ -164,7 +164,7 @@ function Password() {
                 className="mb-2"
               >
                 <Input.Password
-                  className="rounded-xl px-4 py-2.5 border-gray-200 hover:border-emerald-300 focus:border-emerald-500 focus:shadow-emerald-500/10"
+                  className="rounded-lg px-4 py-2.5 border-gray-200 hover:border-emerald-300 focus:border-emerald-500 focus:shadow-emerald-500/10"
                   placeholder="Enter new password"
                 />
               </Form.Item>

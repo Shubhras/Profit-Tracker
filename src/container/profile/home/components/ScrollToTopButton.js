@@ -35,7 +35,7 @@ function ScrollToTopButton() {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={handleScrollToTop}
-          className="fixed bottom-8 right-8 z-50 w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xl shadow-emerald-500/40 flex items-center justify-center transition-all duration-300 hover:shadow-2xl hover:shadow-emerald-500/50 group"
+          className="fixed bottom-8 right-8 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xl shadow-emerald-500/40 flex items-center justify-center transition-all duration-300 hover:shadow-2xl hover:shadow-emerald-500/50 group"
           type="button"
         >
           {/* Progress Ring */}
@@ -47,7 +47,7 @@ function ScrollToTopButton() {
               r="26"
               fill="none"
               stroke="rgba(255,255,255,0.9)"
-              strokeWidth="2"
+              strokeWidth="3"
               strokeLinecap="round"
               strokeDasharray={163}
               strokeDashoffset={163 - (163 * scrollProgress) / 100}
@@ -56,7 +56,11 @@ function ScrollToTopButton() {
           </svg>
 
           {/* Arrow Icon */}
-          <motion.div animate={{ y: [0, -3, 0] }} transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}>
+          <motion.div
+            animate={{ y: [0, -3, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+            className="flex items-center justify-center"
+          >
             <ArrowUpOutlined className="text-xl" />
           </motion.div>
         </motion.button>
