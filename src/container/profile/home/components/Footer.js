@@ -27,11 +27,19 @@ const footerLinks = {
     // { label: 'Refund Policy', to: '#' },
   ],
 };
-
 const socialLinks = [
-  // { icon: <LinkedinOutlined />, label: 'LinkedIn', href: '#' },
-  { icon: <PhoneOutlined />, label: 'Phone', href: '#' },
-  { icon: <MailOutlined />, label: 'Email', href: 'mailto:hello@trackmyprofit.com' },
+  {
+    icon: <PhoneOutlined />,
+    label: 'Phone',
+    href: 'tel:+919876543210', // replace with your number
+    newTab: true,
+  },
+  {
+    icon: <MailOutlined />,
+    label: 'Email',
+    href: 'mailto:hello@trackmyprofit.com',
+    newTab: true,
+  },
 ];
 
 function FooterLink({ to, children }) {
@@ -110,7 +118,7 @@ function Footer() {
               {/* Social Icons */}
               <div className="flex gap-3">
                 {socialLinks.map((social, index) => (
-                  <SocialIcon key={index} icon={social.icon} href={social.href} />
+                  <SocialIcon key={index} icon={social.icon} href={social.href} newTab={social.newTab} />
                 ))}
               </div>
             </motion.div>
