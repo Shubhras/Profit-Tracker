@@ -102,7 +102,7 @@ function Password() {
         {/* Decorative Top Gradient */}
         <div className="h-1 w-full bg-gradient-to-r from-emerald-500 to-teal-500" />
 
-        <div className="p-4 max-w-2xl mx-auto">
+        <div className="p-4 max-w-xl mx-auto">
           <div className="text-center mb-10">
             <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
