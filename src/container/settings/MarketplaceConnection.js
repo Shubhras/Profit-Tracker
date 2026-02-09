@@ -78,10 +78,10 @@ export default function MarketplaceConnection() {
       />
       <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-8 xl:px-[15px] pb-[30px] bg-transparent">
         {/* Main Content Area */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 min-h-[400px] relative">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 min-h-[400px]">
           {/* Top Right Action Button - Visible mainly when connected, but good to have always accessible if needed */}
           {isConnected && (
-            <div className="absolute top-8 right-8">
+            <div className="flex justify-end items-center">
               <Button
                 type="primary"
                 className="bg-blue-800 hover:bg-blue-900 border-none font-bold flex items-center gap-2 h-10 px-6 rounded-md shadow-sm"
