@@ -316,7 +316,7 @@ function PricingCards() {
   // Loading state - show skeleton cards
   if (loading) {
     return (
-      <main className="px-[3%] pb-20 min-lg:pb-10 max-w-7xl mx-auto">
+      <main className="px-[3%] pt-10 min-lg:pt-20 pb-10 min-lg:pb-20 max-w-7xl mx-auto">
         <div
           className="
          grid gap-6
@@ -336,7 +336,7 @@ function PricingCards() {
   // Error state
   if (error) {
     return (
-      <main className="px-[3%] pb-20 min-lg:pb-10 max-w-7xl mx-auto">
+      <main className="px-[3%] pt-10 min-lg:pt-20 pb-10 min-lg:pb-20 max-w-7xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <Alert
             message="Error Loading Pricing Plans"
@@ -358,7 +358,7 @@ function PricingCards() {
   // Empty state
   if (pricingPlans.length === 0) {
     return (
-      <main className="px-[3%] pb-20 min-lg:pb-10 max-w-7xl mx-auto">
+      <main className="px-[3%] pt-10 min-lg:pt-20 pb-10 min-lg:pb-20max-w-7xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <Alert
             message="No Pricing Plans Available"
@@ -374,7 +374,7 @@ function PricingCards() {
 
   // Success state - render pricing cards
   return (
-    <main className="px-[3%] pb-20 min-lg:pb-10 max-w-7xl mx-auto">
+    <main className="px-[3%] pt-10 min-lg:pt-20 pb-10 min-lg:pb-20 max-w-7xl mx-auto">
       {/* Pricing Cards Grid */}
       <div
         className="

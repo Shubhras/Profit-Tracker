@@ -208,7 +208,7 @@ const getProfile = () => {
       }
     } catch (err) {
       console.log('Get Profile Failed:', err);
-      dispatch(actions.profileLoading(false));
+      dispatch(actions.profileErr(err));
     }
   };
 };

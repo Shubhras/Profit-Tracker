@@ -205,18 +205,20 @@ function Navbar() {
                 <Link to="/auth/login">
                   <Button
                     type="text"
-                    icon={<LoginOutlined />}
-                    className="h-10 px-5 font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl"
+                    // icon={<LoginOutlined />}
+                    className="h-10 px-5 font-medium text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl flex items-center justify-center"
                   >
+                    <LoginOutlined />
                     Login
                   </Button>
                 </Link>
                 <Link to="/auth/register">
                   <Button
                     type="primary"
-                    icon={<UserAddOutlined />}
-                    className="h-10 px-5 font-semibold bg-gradient-to-r from-emerald-500 to-teal-600 border-0 rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50"
+                    // icon={<UserAddOutlined />}
+                    className="flex items-center justify-center h-10 px-5 font-semibold bg-gradient-to-r from-emerald-500 to-teal-600 border-0 rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50"
                   >
+                    <UserAddOutlined />
                     Sign Up
                   </Button>
                 </Link>
@@ -339,7 +341,8 @@ function Navbar() {
                   className="flex flex-col gap-3 mt-2"
                 >
                   <Link to="/auth/login" onClick={() => setMobileOpen(false)}>
-                    <Button block size="large" icon={<LoginOutlined />} className="h-12 font-medium rounded-xl">
+                    <Button block size="large" className="flex items-center justify-center h-12 font-medium rounded-xl">
+                      <LoginOutlined />
                       Login
                     </Button>
                   </Link>
@@ -348,9 +351,10 @@ function Navbar() {
                       block
                       type="primary"
                       size="large"
-                      icon={<UserAddOutlined />}
-                      className="h-12 font-semibold bg-gradient-to-r from-emerald-500 to-teal-600 border-0 rounded-x "
+                      // icon={<UserAddOutlined />}
+                      className="flex items-center justify-center h-12 font-semibold bg-gradient-to-r from-emerald-500 to-teal-600 border-0 rounded-x "
                     >
+                      <UserAddOutlined />
                       Sign Up
                     </Button>
                   </Link>

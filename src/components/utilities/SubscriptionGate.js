@@ -39,10 +39,11 @@ function SubscriptionGate({ children, allowFree = false }) {
           <Button
             type="primary"
             size="large"
-            icon={<RocketOutlined />}
+            // icon={<RocketOutlined />}
             onClick={() => navigate('/pricing')}
-            className="w-full h-12 text-lg font-bold rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 border-0 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:-translate-y-0.5 transition-all"
+            className="flex items-center justify-center w-full h-12 text-lg font-bold rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 border-0 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:-translate-y-0.5 transition-all"
           >
+            <RocketOutlined />
             Upgrade Now
           </Button>
         </div>

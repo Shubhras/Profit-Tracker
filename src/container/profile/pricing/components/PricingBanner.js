@@ -1,13 +1,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Typography } from 'antd';
-import { CrownOutlined, CheckCircleFilled } from '@ant-design/icons';
+import { CrownOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
 function PricingBanner() {
   return (
-    <div className="relative px-[3%] pt-24 pb-12 min-lg:pt-32 min-lg:pb-16 bg-white overflow-hidden">
+    <div className="relative px-[3%] pt-24 pb-8 min-lg:pt-32 min-lg:pb-12 bg-white overflow-hidden">
       {/* Background Blobs - Light & Fresh */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full overflow-hidden pointer-events-none z-0">
         <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-emerald-100/40 blur-[120px]" />
@@ -49,7 +49,7 @@ function PricingBanner() {
         </motion.div>
 
         {/* Trust Pills */}
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
@@ -64,7 +64,7 @@ function PricingBanner() {
               <CheckCircleFilled className="text-emerald-500" /> {text}
             </motion.div>
           ))}
-        </motion.div>
+        </motion.div> */}
       </div>
     </div>
   );
