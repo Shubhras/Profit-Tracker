@@ -79,7 +79,7 @@ function HeroSection() {
               <Button
                 type="primary"
                 size="large"
-                className="h-14 px-8 text-base font-semibold bg-gradient-to-r from-emerald-500 to-teal-600 border-0 rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all group"
+                className="flex items-center justify-center h-14 px-8 text-base font-semibold bg-gradient-to-r from-emerald-500 to-teal-600 border-0 rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all group"
                 onClick={() => navigate('/pricing')}
               >
                 See Plans

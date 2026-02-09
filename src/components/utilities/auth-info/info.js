@@ -23,7 +23,7 @@ const AuthInfo = React.memo(() => {
   const dispatch = useDispatch();
 
   // ✅ Get Profile and profileLoading from Redux Store
-  const { profile, profileLoading } = useSelector((state) => state.auth);
+  const { profile, profileLoading, profileError } = useSelector((state) => state.auth);
 
   // const [state, setState] = useState({
   //   flag: 'en',
@@ -39,20 +39,25 @@ const AuthInfo = React.memo(() => {
 
   // ✅ Call API on Page Load (via Redux) if profile is missing and not already loading
   useEffect(() => {
-    if (!profile && !profileLoading) {
+    if (!profile && !profileLoading && !profileError) {
       dispatch(getProfile());
     }
-  }, [dispatch, profile, profileLoading]);
+  }, [dispatch, profile, profileLoading, profileError]);
 
   const userContent = (
-    <div className="min-w-sm w-full bg-white dark:bg-[#1b1e2b] rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] overflow-hidden">
+    <div className="min-w-md w-full bg-white dark:bg-[#1b1e2b] rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] overflow-hidden">
       <div className="p-2 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600">
         <figure className="flex items-center gap-3 mb-0 relative z-10">
-          <img
+          {/* <img
             className="w-12 h-12 rounded-full border-2 border-white/30 p-0.5"
             src={require('../../../static/img/avatar/chat-auth.png')}
             alt=""
+          /> */}
+          <Avatar
+            src="https://cdn0.iconfinder.com/data/icons/user-pictures/100/matureman1-512.png"
+            className="w-12 h-12 rounded-full border-2 border-white/30 p-0.5"
           />
+
           <figcaption className="text-white">
             <Heading className="text-white mb-0.5 text-base font-semibold capitalize" as="h5">
               {profile?.name || 'User...'}

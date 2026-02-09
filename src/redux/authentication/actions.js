@@ -96,6 +96,7 @@ const actions = {
   UPDATE_PROFILE_ERR: 'UPDATE_PROFILE_ERR',
   SET_USER_PROFILE: 'SET_USER_PROFILE',
   PROFILE_LOADING: 'PROFILE_LOADING',
+  PROFILE_ERR: 'PROFILE_ERR',
 
   updateProfileBegin: () => {
     return {
@@ -128,6 +129,13 @@ const actions = {
     return {
       type: actions.PROFILE_LOADING,
       data: isLoading,
+    };
+  },
+
+  profileErr: (err) => {
+    return {
+      type: actions.PROFILE_ERR,
+      err,
     };
   },
 

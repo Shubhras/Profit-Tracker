@@ -20,6 +20,7 @@ const {
   SET_USER_PROFILE,
   PROFILE_LOADING,
   SET_HAS_SUBSCRIPTION,
+  PROFILE_ERR,
 } = actions;
 
 const initState = {
@@ -29,6 +30,7 @@ const initState = {
   error: null,
   profile: null, // ✅ Add profile state
   profileLoading: false, // ✅ Track profile API loading state
+  profileError: null, // ✅ Track profile API error state
 };
 
 /**
@@ -156,6 +158,14 @@ const AuthReducer = (state = initState, action) => {
       return {
         ...state,
         profileLoading: data,
+        profileError: null, // Reset error when loading starts
+      };
+
+    case PROFILE_ERR:
+      return {
+        ...state,
+        profileLoading: false,
+        profileError: action.err,
       };
 
     case SET_HAS_SUBSCRIPTION:

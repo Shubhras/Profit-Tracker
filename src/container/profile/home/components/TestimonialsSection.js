@@ -5,7 +5,7 @@ import { FaStar, FaQuoteLeft } from 'react-icons/fa';
 const testimonials = [
   {
     quote:
-      "TrackMyProfit saved us 30+ hours every week on reconciliation alone. The AI insights helped us identify a 15% margin leak we didn't even know existed!",
+      "TrackMyProfit saved us 20+ hours every week on reconciliation alone. The AI insights helped us identify a 15% margin leak we didn't even know existed!",
     author: 'Rahul Sharma',
     role: 'Founder & CEO',
     company: 'BoldCare',

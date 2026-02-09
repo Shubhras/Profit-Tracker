@@ -8,6 +8,7 @@ import {
   ThunderboltOutlined,
   DashboardOutlined,
   SyncOutlined,
+  ArrowRightOutlined,
 } from '@ant-design/icons';
 
 const features = [
@@ -145,10 +146,10 @@ function ShiftToAISection() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-8 py-4 bg-white text-emerald-600 font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+              className="flex items-center justify-center px-8 py-4 bg-white text-emerald-600 font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
               onClick={() => navigate('/pricing')}
             >
-              See Plans →
+              See Plans <ArrowRightOutlined className="ml-2 group-hover:translate-x-1 transition-transform" />
             </motion.button>
           </div>
         </motion.div>
