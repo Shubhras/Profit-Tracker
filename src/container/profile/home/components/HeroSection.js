@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Button } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
 // import { ArrowRightOutlined, PlayCircleOutlined } from '@ant-design/icons';
-import dashboardPreview from '../../../../assets/images/home/banner.png';
+import dashboardPreview from '../../../../assets/images/home/banner3.png';
 
 function HeroSection() {
   const navigate = useNavigate();

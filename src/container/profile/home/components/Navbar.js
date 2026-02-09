@@ -352,7 +352,7 @@ function Navbar() {
                       type="primary"
                       size="large"
                       // icon={<UserAddOutlined />}
-                      className="flex items-center justify-center h-12 font-semibold bg-gradient-to-r from-emerald-500 to-teal-600 border-0 rounded-x "
+                      className="flex items-center justify-center h-12 font-semibold bg-gradient-to-r from-emerald-500 to-teal-600 border-0 rounded-xl"
                     >
                       <UserAddOutlined />
                       Sign Up
