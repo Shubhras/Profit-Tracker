@@ -65,7 +65,7 @@ function HeroSection() {
               transition={{ delay: 0.4, duration: 0.6 }}
               className="text-lg min-md:text-xl text-gray-600 mb-10 max-w-2xl mx-auto min-lg:mx-0 leading-relaxed"
             >
-              Automate reconciliation, forecast inventory, and boost profit margins with AI-driven insights. Join 25+
+              Automate reconciliation, forecast inventory, and boost profit margins with AI-driven insights. Join 100+
               brands growing with TrackMyProfit.
             </motion.p>
 
@@ -183,7 +183,7 @@ function HeroSection() {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-gray-900 mb-0">98%</p>
+                    <p className="text-2xl font-bold text-gray-900 mb-0">99%</p>
                     <p className="text-xs text-gray-500">Accuracy</p>
                   </div>
                 </div>

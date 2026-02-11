@@ -80,7 +80,7 @@ function Marque() {
         >
           <p className="text-sm font-semibold text-emerald-600 uppercase tracking-wider mb-3">Trusted Worldwide</p>
           <h2 className="text-3xl min-md:text-4xl font-bold text-gray-900">
-            Join 25+ Brands Growing with{' '}
+            Join 100+ Brands Growing with{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">
               TrackMyProfit
             </span>

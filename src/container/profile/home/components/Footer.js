@@ -31,13 +31,13 @@ const socialLinks = [
   {
     icon: <PhoneOutlined />,
     label: 'Phone',
-    href: 'tel:+919876543210', // replace with your number
+    href: 'tel:+917014719182', // replace with your number
     newTab: true,
   },
   {
     icon: <MailOutlined />,
     label: 'Email',
-    href: 'mailto:hello@trackmyprofit.com',
+    href: 'mailto:trackmyprofit2026@gmail.com',
     newTab: true,
   },
 ];

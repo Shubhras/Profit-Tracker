@@ -136,7 +136,7 @@ function TermsConditions() {
 
           {/* 13 */}
           <h2 className="text-2xl min-md:text-3xl font-semibold text-gray-800 mt-8 mb-4">13. Contact</h2>
-          <p className="mb-2">📧 support@trackmyprofit.com</p>
+          <p className="mb-2">📧 trackmyprofit2026@gmail.com</p>
           <p>🌐 https://trackmyprofit.com</p>
         </div>
       </div>
