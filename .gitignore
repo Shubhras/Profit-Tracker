@@ -74,7 +74,6 @@ node_modules/
 npm-debug.log
 yarn-error.log
 dist/
-build/
 
 # -------------------------
 # Test & coverage
