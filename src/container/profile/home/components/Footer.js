@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Row, Col, Typography, Divider } from 'antd';
-import { PhoneOutlined, MailOutlined, HeartFilled } from '@ant-design/icons';
+import { PhoneOutlined, MailOutlined } from '@ant-design/icons';
 import { HiOutlineChartBar } from 'react-icons/hi2';
 import PropTypes from 'prop-types';
 
@@ -232,10 +232,10 @@ function Footer() {
           transition={{ delay: 0.5 }}
           className="flex flex-wrap justify-between items-center gap-4"
         >
-          <Text className="text-gray-500 text-sm">© 2026 TrackMyProfit.in. All rights reserved.</Text>
-          <Text className="text-gray-500 text-sm flex items-center gap-1">
+          <Text className="text-gray-500 text-sm">© 2026 TrackMyProfit.com. All rights reserved.</Text>
+          {/* <Text className="text-gray-500 text-sm flex items-center gap-1">
             Made with <HeartFilled className="text-red-500" /> in India
-          </Text>
+          </Text> */}
         </motion.div>
       </div>
     </motion.footer>
