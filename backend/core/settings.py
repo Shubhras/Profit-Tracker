@@ -11,7 +11,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-
+from dotenv import load_dotenv
+import os
+load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -23,9 +25,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-pkux+0mhylu3^+n5l_t%bu*89wmoz46)vg63zs64tl=31p9oj1'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ['trackmyprofit.com', 'www.trackmyprofit.com', '194.238.17.204','api.trackmyprofit.com','127.0.0.1', "localhost" ]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",
@@ -36,7 +38,11 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8001",
     "http://0.0.0.0:8000",
     "http://192.168.1.9",
-    
+    "https://trackmyprofit.com",
+    "https://www.trackmyprofit.com",
+    "https://api.trackmyprofit.com",
+    "http://localhost:3000",
+    "http://localhost:3001",
 ]
  
 CORS_ALLOW_CREDENTIALS = True
@@ -61,6 +67,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'rest_framework',
     'admin_auth',
     'user_auth',
@@ -91,10 +98,10 @@ MIDDLEWARE = [
 ]
 
 
-
-RAZORPAY_KEY_ID = "rzp_test_sg_UzaRCu08a8ROKN"
-RAZORPAY_KEY_SECRET = "4McbNltBYVyBDAJDqVwjL7vN"
-RAZORPAY_WEBHOOK_SECRET = "profittracker"
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
+RAZORPAY_WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET")
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 ROOT_URLCONF = 'core.urls'
 
@@ -162,9 +169,21 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
-
+#STATIC_URL = 'static/'
+#STATIC_ROOT = BASE_DIR / "staticfiles"
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
+
+STATIC_URL = '/static/'
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True

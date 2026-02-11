@@ -1,0 +1,12 @@
+[0;1;31m×[0m gunicorn.service - Gunicorn daemon for Django backend
+     Loaded: loaded (]8;;file://srv1351835/etc/systemd/system/gunicorn.service/etc/systemd/system/gunicorn.service]8;;; [0;1;32menabled[0m; preset: [0;1;32menabled[0m)
+     Active: [0;1;31mfailed[0m (Result: exit-code) since Wed 2026-02-11 07:10:40 UTC; 38s ago
+   Duration: 31ms
+    Process: 22683 ExecStart=/root/Profit-Tracker/backend/venv/bin/gunicorn --workers 3 --bind unix:/root/Profit-Tracker/backend/gunicorn.sock core.wsgi:application [0;1;31m(code=exited, status=200/CHDIR)[0m
+   Main PID: 22683 (code=exited, status=200/CHDIR)
+        CPU: 7ms
+
+Feb 11 07:10:40 srv1351835 systemd[1]: Started gunicorn.service - Gunicorn daemon for Django backend.
+Feb 11 07:10:40 srv1351835 (gunicorn)[22683]: [0;1;31m[0;1;39m[0;1;31mgunicorn.service: Changing to the requested working directory failed: Permission denied[0m
+Feb 11 07:10:40 srv1351835 systemd[1]: [0;1;39m[0;1;31m[0;1;39mgunicorn.service: Main process exited, code=exited, status=200/CHDIR[0m
+Feb 11 07:10:40 srv1351835 systemd[1]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185mgunicorn.service: Failed with result 'exit-code'.[0m
