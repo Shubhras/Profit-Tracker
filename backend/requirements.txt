@@ -1,62 +1,27 @@
-# ===============================
-# Core Django
-# ===============================
-Django==4.2.7
-
-# ===============================
-# Django REST Framework
-# ===============================
-djangorestframework==3.14.0
-
-# ===============================
-# Authentication (JWT)
-# ===============================
-djangorestframework-simplejwt==5.3.1
-
-# ===============================
-# CORS (React ↔ Django)
-# ===============================
-django-cors-headers==4.3.1
-
-# ===============================
-# Environment Variables
-# ===============================
-python-dotenv==1.0.1
-
-# ===============================
-# Database
-# ===============================
-# SQLite (default – no package needed)
-# PostgreSQL (uncomment if used)
-psycopg2-binary==2.9.9
-
-# ===============================
-# Security
-# ===============================
+asgiref==3.11.1
+certifi==2026.1.4
+cffi==2.0.0
+charset-normalizer==3.4.4
 cryptography==42.0.2
-
-# ===============================
-# Utilities
-# ===============================
-pytz==2024.1
-sqlparse==0.4.4
-
-# ===============================
-# HTTP Requests (if APIs used)
-# ===============================
-requests==2.31.0
-
-# ===============================
-# Django Filters (optional but common)
-# ===============================
+Django==4.2.7
+django-cors-headers==4.3.1
 django-filter==23.5
-
-# ===============================
-# Production Server (IMPORTANT)
-# ===============================
+djangorestframework==3.14.0
+djangorestframework-simplejwt==5.3.1
+drf-yasg==1.21.14
 gunicorn==21.2.0
-
-# ===============================
-# Static files (production)
-# ===============================
+idna==3.11
+inflection==0.5.1
+packaging==26.0
+psycopg2-binary==2.9.9
+pycparser==3.0
+PyJWT==2.11.0
+python-dotenv==1.0.1
+pytz==2024.1
+PyYAML==6.0.3
+razorpay==2.0.0
+requests==2.31.0
+sqlparse==0.4.4
+uritemplate==4.2.0
+urllib3==2.6.3
 whitenoise==6.6.0
