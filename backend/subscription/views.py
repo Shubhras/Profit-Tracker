@@ -116,7 +116,7 @@ class SubscriptionPlansAPIView(APIView):
                 "plan_id": "plan_SCovUd5sTXe1jt",  
                 "name": "Basic Plan",
                 "price": 1099,
-                "billing_cycle": "yearly",
+                "billing_cycle": "monthly",
                 "sync_frequency": "Weekly",
                 "order_volume": 5000,
                 "integrations": 3,
@@ -129,11 +129,11 @@ class SubscriptionPlansAPIView(APIView):
             },
 
             {
-                "plan_id": "plan_SCou9G4wA7cheq",  # Razorpay plan id
+                "plan_id": "plan_SCou9G4wA7cheq",  
                 "name": "Business Plan",
                 "price": 2099,
-                "billing_cycle": "yearly",
-                "sync_frequency": "Weekly",
+                "billing_cycle": "monthly",
+                "sync_frequency": "Daily",
                 "order_volume": 15000,
                 "integrations": 5,
                 "features": [
