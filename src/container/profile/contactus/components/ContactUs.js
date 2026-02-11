@@ -13,25 +13,25 @@ const contactInfo = [
   {
     icon: <PhoneOutlined />,
     title: 'Sales',
-    details: ['+91-93421-48885'],
+    details: ['+91-7014719182'],
     color: 'emerald',
   },
   {
     icon: <MailOutlined />,
     title: 'Email',
-    details: ['sales@trackmyprofit.com', 'support@trackmyprofit.com'],
+    details: ['trackmyprofit2026@gmail.com'],
     color: 'blue',
   },
   {
     icon: <EnvironmentOutlined />,
     title: 'Location',
-    details: ['Bangalore, India'],
+    details: ['Plot 199, Vijay Nagar, Scheme 54, PU4, Indore, Madhya Pradesh 452010'],
     color: 'purple',
   },
   {
     icon: <ClockCircleOutlined />,
     title: 'Working Hours',
-    details: ['Mon - Fri: 9AM - 6PM IST'],
+    details: ['Mon - Fri: 10AM - 6PM IST'],
     color: 'amber',
   },
 ];

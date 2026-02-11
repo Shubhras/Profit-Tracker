@@ -281,7 +281,7 @@ function PricingCards() {
       features,
 
       button: {
-        text: isFree ? 'Current Plan' : isEnterprise ? 'Contact Sales' : 'Subscribe Now',
+        text: isFree ? 'Try Now' : isEnterprise ? 'Contact Sales' : 'Subscribe Now',
       },
 
       plan_id: apiPlan.plan_id,

@@ -53,14 +53,14 @@ const AuthLayout = (WraperContent) => {
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-emerald-500/20">
                   <img
-                    src="https://i.pravatar.cc/150?u=a042581f4e29026704d"
+                    src="https://randomuser.me/api/portraits/men/75.jpg"
                     alt="CEO"
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div>
-                  <h4 className="text-gray-900 font-bold mb-0">Sarah Jenkins</h4>
-                  <p className="text-emerald-600 text-sm font-medium mb-0">CFO, TechFlow Inc.</p>
+                  <h4 className="text-gray-900 font-bold mb-0">Mr. Amul Soni</h4>
+                  <p className="text-emerald-600 text-sm font-medium mb-0">CEO, Galaxy Industry</p>
                 </div>
               </div>
             </div>
@@ -73,11 +73,11 @@ const AuthLayout = (WraperContent) => {
               <p className="text-gray-500 text-xs min-xl:text-sm mt-1">Uptime SLA</p>
             </div>
             <div>
-              <h3 className="text-2xl min-xl:text-3xl font-bold text-gray-900 mb-0">$1M+</h3>
+              <h3 className="text-2xl min-xl:text-3xl font-bold text-gray-900 mb-0">र10 M+</h3>
               <p className="text-gray-500 text-xs min-xl:text-sm mt-1">Transaction Volume</p>
             </div>
             <div>
-              <h3 className="text-2xl min-xl:text-3xl font-bold text-gray-900 mb-0">25+</h3>
+              <h3 className="text-2xl min-xl:text-3xl font-bold text-gray-900 mb-0">100+</h3>
               <p className="text-gray-500 text-xs min-xl:text-sm mt-1">Global Companies</p>
             </div>
           </div>

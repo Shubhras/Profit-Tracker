@@ -6,31 +6,31 @@ const testimonials = [
   {
     quote:
       "TrackMyProfit saved us 20+ hours every week on reconciliation alone. The AI insights helped us identify a 15% margin leak we didn't even know existed!",
-    author: 'Rahul Sharma',
-    role: 'Founder & CEO',
-    company: 'BoldCare',
+    author: 'Mr. Amul Soni',
+    role: 'CEO',
+    company: 'Galaxy Industry',
     rating: 5,
-    image: 'https://i.pravatar.cc/100?img=12',
+    image: 'https://randomuser.me/api/portraits/men/75.jpg',
     gradient: 'from-emerald-500 to-teal-500',
   },
   {
     quote:
       "We scaled from ₹1Lakh to ₹10Lakh ARR without adding a single finance person. TrackMyProfit's automation is truly game-changing for D2C brands.",
-    author: 'Priya Mehta',
-    role: 'COO',
-    company: 'AboutSpace',
+    author: 'Mr. Adhiraj',
+    role: 'CEO',
+    company: 'Excent',
     rating: 5,
-    image: 'https://i.pravatar.cc/100?img=45',
+    image: 'https://randomuser.me/api/portraits/men/32.jpg',
     gradient: 'from-teal-500 to-cyan-500',
   },
   {
     quote:
       'The real-time dashboard gives us confidence in our numbers. We make critical decisions faster and more accurately than ever before. Best investment we made!',
-    author: 'Amit Patel',
-    role: 'Finance Head',
-    company: 'TechRetail Co.',
+    author: 'Mr. Divyansh',
+    role: 'CEO',
+    company: 'Pet Parent',
     rating: 5,
-    image: 'https://i.pravatar.cc/100?img=33',
+    image: 'https://randomuser.me/api/portraits/men/61.jpg',
     gradient: 'from-cyan-500 to-blue-500',
   },
 ];
@@ -141,8 +141,8 @@ function Testimonials() {
         >
           {[
             { value: '4.9/5', label: 'Average Rating' },
-            { value: '98%', label: 'Customer Satisfaction' },
-            { value: '50+', label: 'Happy Users' },
+            { value: '99%', label: 'Customer Satisfaction' },
+            { value: '200+', label: 'Happy Users' },
           ].map((stat, index) => (
             <div key={index} className="text-center">
               <p className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500 mb-2">

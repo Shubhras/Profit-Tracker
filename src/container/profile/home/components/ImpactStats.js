@@ -34,7 +34,7 @@ function CountUp({ end, duration = 2000, suffix = '' }) {
 const stats = [
   {
     icon: <TeamOutlined />,
-    value: 50,
+    value: 200,
     suffix: '+',
     label: 'Active Users',
     description: 'Finance teams trust us',
@@ -42,9 +42,9 @@ const stats = [
   },
   {
     icon: <TrophyOutlined />,
-    value: 10,
+    value: 2,
     suffix: '+',
-    label: 'Lakh Revenue Tracked',
+    label: 'Cr Revenue Tracked',
     description: 'Processed monthly',
     gradient: 'from-purple-500 via-pink-500 to-rose-500',
   },

@@ -13,11 +13,45 @@ import {
 import { HiOutlineChartBar, HiOutlineLightBulb } from 'react-icons/hi2';
 import { Link } from 'react-router-dom';
 
+// const values = [
+//   {
+//     icon: <HiOutlineLightBulb />,
+//     title: 'Innovation First',
+//     description: 'We push boundaries with AI models that are trained on billions of transaction data points.',
+//     color: 'from-amber-400 to-orange-500',
+//     bg: 'bg-amber-50',
+//     border: 'border-amber-100',
+//   },
+//   {
+//     icon: <HeartFilled />,
+//     title: 'Customer Obsession',
+//     description: 'Every feature we build starts with a conversation. We solve real pain points, not imaginary ones.',
+//     color: 'from-rose-400 to-pink-500',
+//     bg: 'bg-rose-50',
+//     border: 'border-rose-100',
+//   },
+//   {
+//     icon: <SafetyCertificateFilled />,
+//     title: 'Bank-Grade Security',
+//     description: 'Your financial data is encrypted with AES-256. We take security as seriously as you take profit.',
+//     color: 'from-blue-400 to-indigo-500',
+//     bg: 'bg-blue-50',
+//     border: 'border-blue-100',
+//   },
+//   {
+//     icon: <ExperimentFilled />,
+//     title: 'Data Accuracy',
+//     description: 'We obsess over every decimal point. In finance, close enough is not good enough.',
+//     color: 'from-emerald-400 to-teal-500',
+//     bg: 'bg-emerald-50',
+//     border: 'border-emerald-100',
+//   },
+// ];
 const values = [
   {
     icon: <HiOutlineLightBulb />,
     title: 'Innovation First',
-    description: 'We push boundaries with AI models that are trained on billions of transaction data points.',
+    description: 'We continuously innovate with smart automation and AI-driven financial analytics.',
     color: 'from-amber-400 to-orange-500',
     bg: 'bg-amber-50',
     border: 'border-amber-100',
@@ -25,15 +59,15 @@ const values = [
   {
     icon: <HeartFilled />,
     title: 'Customer Obsession',
-    description: 'Every feature we build starts with a conversation. We solve real pain points, not imaginary ones.',
+    description: 'Every feature starts with real customer feedback. We solve real problems, not assumptions.',
     color: 'from-rose-400 to-pink-500',
     bg: 'bg-rose-50',
     border: 'border-rose-100',
   },
   {
     icon: <SafetyCertificateFilled />,
-    title: 'Bank-Grade Security',
-    description: 'Your financial data is encrypted with AES-256. We take security as seriously as you take profit.',
+    title: 'Enterprise-Grade Security',
+    description: 'Your financial data is protected with encryption and secure infrastructure best practices.',
     color: 'from-blue-400 to-indigo-500',
     bg: 'bg-blue-50',
     border: 'border-blue-100',
@@ -41,7 +75,7 @@ const values = [
   {
     icon: <ExperimentFilled />,
     title: 'Data Accuracy',
-    description: 'We obsess over every decimal point. In finance, close enough is not good enough.',
+    description: 'We obsess over precision because every decimal matters in financial reporting.',
     color: 'from-emerald-400 to-teal-500',
     bg: 'bg-emerald-50',
     border: 'border-emerald-100',
@@ -157,9 +191,10 @@ function AboutSection() {
             </h2>
             <div className="space-y-6 text-lg text-gray-600">
               <p>
-                For too long, finance teams have been stuck in &quot;Version_Final_v3.xlsx&quot;. Manual reconciliation,
-                broken formulas, and delayed reporting were the norm.
+                Finance teams have spent too long buried in spreadsheets, wasting hours on manual reconciliation, broken
+                formulas, and delayed insights.
               </p>
+
               <p>
                 TrackMyProfit changes that. We built a platform that ingests millions of rows of data, reconciles them
                 instantly, and gives you actionable insights in plain English.
@@ -169,7 +204,7 @@ function AboutSection() {
             <div className="mt-10 flex flex-wrap gap-4">
               <div className="flex items-center gap-2 px-6 py-3 bg-gray-50 rounded-xl border border-gray-100">
                 <RocketOutlined className="text-emerald-500 text-xl" />
-                <span className="font-bold text-gray-900">250% Growth</span>
+                <span className="font-bold text-gray-900">100% Growth</span>
               </div>
               <div className="flex items-center gap-2 px-6 py-3 bg-gray-50 rounded-xl border border-gray-100">
                 <TeamOutlined className="text-blue-500 text-xl" />
@@ -206,7 +241,7 @@ function AboutSection() {
                 <div className="grid grid-cols-2 gap-4 mb-8">
                   <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
                     <p className="text-gray-500 text-xs mb-1">Reconciled Today</p>
-                    <p className="text-2xl font-mono font-bold text-gray-900">$4.2M</p>
+                    <p className="text-2xl font-mono font-bold text-gray-900">र4.2M</p>
                   </div>
                   <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
                     <p className="text-gray-500 text-xs mb-1">Accuracy</p>
@@ -348,7 +383,7 @@ function AboutSection() {
                 </span>
               </h2>
               <p className="text-gray-500 text-xl mb-10 max-w-2xl mx-auto">
-                Stop reconciling manually. Start growing profitably. Join 25+ D2C brands today.
+                Stop reconciling manually. Start growing profitably. Join 100+ D2C brands today.
               </p>
               <div className="flex flex-col min-sm:flex-row justify-center gap-4">
                 <Link to="/pricing">
@@ -366,7 +401,7 @@ function AboutSection() {
                     whileTap={{ scale: 0.95 }}
                     className="w-full px-2 min-md:px-10 py-4 bg-white text-gray-700 font-bold rounded-2xl border border-gray-200 hover:bg-gray-50 transition-all text-lg shadow-sm"
                   >
-                    View Open Roles
+                    Contact Us
                   </motion.button>
                 </Link>
               </div>
