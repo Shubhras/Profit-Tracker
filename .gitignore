@@ -27,8 +27,8 @@ db.sqlite3
 db.sqlite3-journal
 
 # Django static/media collected files
-staticfiles/
-media/
+# staticfiles/
+# media/
 
 # -------------------------
 # Environment variables

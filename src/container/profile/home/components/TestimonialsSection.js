@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { FaStar, FaQuoteLeft } from 'react-icons/fa';
+import { UserOutlined } from '@ant-design/icons';
 
 const testimonials = [
   {
@@ -10,7 +11,7 @@ const testimonials = [
     role: 'CEO',
     company: 'Galaxy Industry',
     rating: 5,
-    image: 'https://randomuser.me/api/portraits/men/75.jpg',
+    icon: <UserOutlined />,
     gradient: 'from-emerald-500 to-teal-500',
   },
   {
@@ -20,7 +21,7 @@ const testimonials = [
     role: 'CEO',
     company: 'Excent',
     rating: 5,
-    image: 'https://randomuser.me/api/portraits/men/32.jpg',
+    icon: <UserOutlined />,
     gradient: 'from-teal-500 to-cyan-500',
   },
   {
@@ -30,7 +31,7 @@ const testimonials = [
     role: 'CEO',
     company: 'Pet Parent',
     rating: 5,
-    image: 'https://randomuser.me/api/portraits/men/61.jpg',
+    icon: <UserOutlined />,
     gradient: 'from-cyan-500 to-blue-500',
   },
 ];
@@ -110,12 +111,11 @@ function Testimonials() {
                 {/* Author Info */}
                 <div className="relative z-10 flex items-center gap-4">
                   <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${testimonial.gradient} p-0.5`}>
-                    <img
-                      src={testimonial.image}
-                      alt={testimonial.author}
-                      className="w-full h-full rounded-full object-cover"
-                    />
+                    <div className="w-full h-full rounded-full bg-white/20 flex items-center justify-center text-white text-2xl">
+                      {testimonial.icon}
+                    </div>
                   </div>
+
                   <div>
                     <p className="text-gray-900 font-bold text-lg mb-0">{testimonial.author}</p>
                     <p className="text-gray-500 text-sm mb-0">
