@@ -66,7 +66,7 @@ const categories = [
     name: 'Accounting',
     icon: <BankOutlined />,
     platforms: [
-      { name: 'Tally', logo: tallyLogo, status: 'coming' },
+      { name: 'Tally', logo: tallyLogo, status: 'live' },
       { name: 'Zoho Books', logo: zohoLogo, status: 'coming' },
     ],
   },
@@ -155,29 +155,31 @@ export default function IntegrationChannel() {
           {/* Tabs Scrollable */}
           <div className="flex-1 overflow-x-auto pb-2 w-full min-lg:w-auto -mx-4 px-4 min-lg:mx-0 min-lg:px-0">
             <div className="flex space-x-2">
-              <Button
+              <button
+                type="button"
                 onClick={() => setActiveTab('all')}
                 className={`px-5 py-2.5 flex items-center justify-center rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300 mt-0 ${
                   activeTab === 'all'
-                    ? '!bg-gray-900 !text-white shadow-lg shadow-gray-900/20 focus:!text-white'
+                    ? '!bg-gray-900 !text-white hover:!text-white focus:!text-white focus-visible:!text-white active:!text-white hover:!bg-gray-900'
                     : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                 }`}
               >
                 All Apps
-              </Button>
+              </button>
               {categories.map((cat) => (
-                <Button
-                  type="text"
+                <button
+                  type="button"
+                  // type="text"
                   onClick={() => setActiveTab(cat.id)}
                   className={`px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap flex items-center gap-2 transition-all duration-300 !shadow-none ${
                     activeTab === cat.id
-                      ? '!bg-gray-900 !text-white !border-none active:!text-white focus:!text-white'
+                      ? '!bg-gray-900 !text-white !border-none hover:!text-white focus:!text-white focus-visible:!text-white active:!text-white hover:!bg-gray-900'
                       : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                   }`}
                 >
                   {cat.icon}
                   {cat.name}
-                </Button>
+                </button>
               ))}
             </div>
           </div>

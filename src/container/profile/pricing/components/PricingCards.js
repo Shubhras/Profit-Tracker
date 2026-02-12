@@ -276,7 +276,7 @@ function PricingCards() {
       price: isFree || isEnterprise ? null : '₹',
 
       // Billing cycle text
-      perMonth: apiPlan.billing_cycle === 'yearly' ? 'year' : apiPlan.billing_cycle === 'monthly' ? 'month' : null,
+      perMonth: apiPlan.billing_cycle === 'yearly' ? 'Year' : apiPlan.billing_cycle === 'monthly' ? 'Month' : null,
 
       features,
 

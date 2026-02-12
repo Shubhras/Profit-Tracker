@@ -2,6 +2,7 @@ import { Spin } from 'antd';
 import React, { Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { HiOutlineChartBar } from 'react-icons/hi2';
+import { UserOutlined } from '@ant-design/icons';
 import { FaStar } from 'react-icons/fa';
 import Navbar from '../home/components/Navbar';
 import Footer from '../home/components/Footer';
@@ -51,12 +52,18 @@ const AuthLayout = (WraperContent) => {
                 week.&quot;
               </p>
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-emerald-500/20">
+                {/* <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-emerald-500/20">
                   <img
                     src="https://randomuser.me/api/portraits/men/75.jpg"
                     alt="CEO"
                     className="w-full h-full object-cover"
                   />
+                  <UserOutlined />
+                </div> */}
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br p-0.5">
+                  <div className="w-full h-full rounded-full bg-white/20 flex items-center justify-center text-white text-2xl bg-gradient-to-r from-emerald-500 to-teal-600">
+                    <UserOutlined />
+                  </div>
                 </div>
                 <div>
                   <h4 className="text-gray-900 font-bold mb-0">Mr. Amul Soni</h4>
