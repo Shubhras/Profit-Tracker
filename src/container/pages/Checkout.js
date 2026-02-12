@@ -193,16 +193,17 @@ function Checkout() {
               </div>
               <p className="text-2xl font-bold text-gray-900 mb-0">TrackMyProfit</p>
             </Link>
-            <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full text-xs font-bold border border-emerald-100">
-              <LockOutlined /> SECURE CHECKOUT
+            <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50 px-3 py-2 rounded-full text-xs font-bold border border-emerald-100">
+              <LockOutlined />
+              <span className="min-md:block hidden">SECURE CHECKOUT</span>
             </div>
           </div>
         </header>
 
-        <main className="max-w-6xl mx-auto px-4 py-12">
+        <main className="max-w-6xl mx-auto px-[3%] py-12">
           <div className="bg-white rounded-3xl shadow-xl overflow-hidden grid grid-cols-1 min-lg:grid-cols-2 min-h-[600px] border border-gray-100">
             {/* Left Column: Summary (Light) */}
-            <div className="lg:col-span-5 bg-slate-50 p-8 lg:p-10 text-gray-900 relative flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-gray-200">
+            <div className="lg:col-span-5 bg-slate-50 p-4 min-lg:p-10 text-gray-900 relative flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-gray-200">
               {/* Background FX - Subtle for light mode */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-[80px] pointer-events-none translate-x-1/2 -translate-y-1/2" />
 
@@ -247,7 +248,7 @@ function Checkout() {
             </div>
 
             {/* Right Column: Payment (White) */}
-            <div className="lg:col-span-7 p-8 lg:p-12 relative">
+            <div className="lg:col-span-7 p-4 min-lg:p-12 relative">
               <div className="max-w-md mx-auto h-full flex flex-col justify-center">
                 <div className="mb-8">
                   <h2 className="text-xl min-md:text-2xl font-bold text-gray-900 mb-2">Select Payment Method</h2>
