@@ -66,7 +66,7 @@ const categories = [
     name: 'Accounting',
     icon: <BankOutlined />,
     platforms: [
-      { name: 'Tally', logo: tallyLogo, status: 'live' },
+      { name: 'Tally', logo: tallyLogo, status: 'coming' },
       { name: 'Zoho Books', logo: zohoLogo, status: 'coming' },
     ],
   },
