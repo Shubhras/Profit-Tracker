@@ -19,7 +19,7 @@ const contactInfo = [
   {
     icon: <MailOutlined />,
     title: 'Email',
-    details: ['trackmyprofit2026@gmail.com'],
+    details: ['letstalk@trackmyprofit.com'],
     color: 'blue',
   },
   {
@@ -46,10 +46,10 @@ function ContactUs() {
   };
 
   return (
-    <>
+    <div className="overflow-x-hidden">
       <Navbar />
       {/* Hero Section */}
-      <section className="px-[3%] pt-24 pb-12 min-lg:pt-32 min-lg:pb-16 bg-gradient-to-b from-emerald-50/50 to-white overflow-hidden">
+      <section className="px-[3%] pt-24 min-lg:pt-32 bg-gradient-to-b from-emerald-50/50 to-white overflow-hidden">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -282,7 +282,7 @@ function ContactUs() {
       </motion.section> */}
       <Footer />
       <ScrollToTopButton />
-    </>
+    </div>
   );
 }
 

@@ -37,7 +37,7 @@ const socialLinks = [
   {
     icon: <MailOutlined />,
     label: 'Email',
-    href: 'mailto:trackmyprofit2026@gmail.com',
+    href: 'mailto:letstalk@trackmyprofit.com',
     newTab: true,
   },
 ];

@@ -12,7 +12,7 @@ const AuthLayout = (WraperContent) => {
     return (
       <div className="min-h-screen w-full flex overflow-hidden bg-white">
         {/* Left Side - Responsive Split (1/2 MD, 2/3 XL) */}
-        <div className="hidden min-md:flex min-md:w-1/2 min-xl:w-2/3 h-screen bg-slate-50 relative flex-col justify-between p-10 min-xl:p-18 overflow-hidden sticky top-0">
+        <div className="hidden min-md:flex min-md:w-1/2 min-xl:w-2/3 h-screen bg-slate-50 relative flex-col justify-between p-10 min-xl:p-18 overflow-hidden">
           {/* Background Effects */}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-emerald-100/40 via-slate-50 to-slate-50" />
           <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none translate-x-1/3 -translate-y-1/3" />
@@ -32,7 +32,7 @@ const AuthLayout = (WraperContent) => {
           </div>
 
           {/* Hero Content */}
-          <div className="relative z-10 max-w-3xl mt-12">
+          <div className="relative z-10 max-w-3xl">
             <h1 className="text-4xl min-xl:text-6xl font-bold text-gray-900 leading-tight mb-8 tracking-tight">
               Turn Your Data Into <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">
@@ -74,7 +74,7 @@ const AuthLayout = (WraperContent) => {
           </div>
 
           {/* Footer Stats similar to Hero */}
-          <div className="relative z-10 grid grid-cols-3 gap-8 max-w-2xl mt-auto pt-12 border-t border-gray-200">
+          <div className="relative z-10 grid grid-cols-3 gap-8 max-w-2xl pt-2 border-t border-gray-200">
             <div>
               <h3 className="text-2xl min-xl:text-3xl font-bold text-gray-900 mb-0">99.9%</h3>
               <p className="text-gray-500 text-xs min-xl:text-sm mt-1">Uptime SLA</p>

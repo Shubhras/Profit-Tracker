@@ -166,8 +166,9 @@ export default function IntegrationChannel() {
               >
                 All Apps
               </button>
-              {categories.map((cat) => (
+              {categories.map((cat, index) => (
                 <button
+                  key={index}
                   type="button"
                   // type="text"
                   onClick={() => setActiveTab(cat.id)}

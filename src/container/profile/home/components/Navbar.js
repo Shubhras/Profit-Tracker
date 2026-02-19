@@ -98,8 +98,8 @@ function Navbar() {
   }, [mobileOpen, userDropdownOpen]);
 
   return (
-    <motion.header
-      className={`w-full fixed top-0 left-0 z-50 transition-all duration-300 ${
+    <header
+      className={`w-full fixed top-0 left-0 z-50 transition-[background-color,box-shadow,backdrop-filter] duration-300 ${
         scrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-white shadow-md'
       }`}
     >
@@ -238,7 +238,7 @@ function Navbar() {
               {mobileOpen ? (
                 <motion.div
                   key="close"
-                  initial={{ rotate: -90, opacity: 0 }}
+                  initial={{ rotate: 90, opacity: 0 }}
                   animate={{ rotate: 0, opacity: 1 }}
                   exit={{ rotate: 90, opacity: 0 }}
                   transition={{ duration: 0.2 }}
@@ -248,7 +248,7 @@ function Navbar() {
               ) : (
                 <motion.div
                   key="menu"
-                  initial={{ rotate: 90, opacity: 0 }}
+                  initial={{ rotate: -90, opacity: 0 }}
                   animate={{ rotate: 0, opacity: 1 }}
                   exit={{ rotate: -90, opacity: 0 }}
                   transition={{ duration: 0.2 }}
@@ -364,7 +364,7 @@ function Navbar() {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.header>
+    </header>
   );
 }
 
