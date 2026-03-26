@@ -39,5 +39,7 @@ urlpatterns = [
     path('api/', include('subscription.urls')),
     path('api/admin/', include('admin_auth.urls')),
     path('api/user/', include('user_auth.urls')),
+    path('api/myntra/', include('myntra.urls')),
+    path("api/amazon/", include("amazon.urls")),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]
