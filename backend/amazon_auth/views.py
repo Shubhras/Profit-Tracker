@@ -14,7 +14,7 @@ from django.shortcuts import redirect, render
 AMAZON_APP_CLIENT_ID = os.getenv("AMAZON_APP_CLIENT_ID")
 AMAZON_APP_CLIENT_SECRET = os.getenv("AMAZON_APP_CLIENT_SECRET")
 AMAZON_APP_ID = os.getenv("AMAZON_APP_ID")
-REDIRECT_URI = os.getenv("AMAZON_REDIRECT_URI", "https://trackmyprofit.com/api/amazon/callback")
+REDIRECT_URI = "https://trackmyprofit.com/api/amazon/callback"
 
 # @login_required
 def amazon_connect(request):
@@ -33,19 +33,7 @@ def amazon_connect(request):
 
     return redirect(auth_url)
 
-# def amazon_auth_login(request):
-#     callback_uri = request.GET.get("amazon_callback_uri")
-#     state = request.GET.get("amazon_state")
-#     seller_id = request.GET.get("selling_partner_id")
 
-#     # If coming from Amazon → redirect
-#     if callback_uri and state and seller_id:
-#         return redirect(
-#             f"/api/amazon/login/?amazon_callback_uri={callback_uri}&amazon_state={state}&selling_partner_id={seller_id}"
-#         )
-
-#     # Otherwise show login page
-#     return HttpResponse("Auth login endpoint working")
 
 def amazon_auth_login(request):
     callback_uri = request.GET.get("amazon_callback_uri")
@@ -120,8 +108,8 @@ def amazon_callback(request):
                 "seller_central_id": seller_id,
                 "app_client_id": AMAZON_APP_CLIENT_ID,
                 "app_client_secret": AMAZON_APP_CLIENT_SECRET,
-                "region": "EU",
-                "marketplace_id": "A21TJRUUN4KGV"
+                "region": os.getenv("AMAZON_REGION", "EU"),
+                "marketplace_id": os.getenv("AMAZON_MARKETPLACE_ID", "A21TJRUUN4KGV")
             }
         )
         # Store the encrypted refresh token using the model's method
