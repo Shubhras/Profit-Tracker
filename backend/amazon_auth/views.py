@@ -13,7 +13,7 @@ from django.shortcuts import redirect, render
 AMAZON_APP_CLIENT_ID = os.getenv("AMAZON_APP_CLIENT_ID")
 AMAZON_APP_CLIENT_SECRET = os.getenv("AMAZON_APP_CLIENT_SECRET")
 AMAZON_APP_ID = os.getenv("AMAZON_APP_ID")
-# REDIRECT_URI = os.getenv("AMAZON_REDIRECT_URI")
+
 REDIRECT_URI = "https://trackmyprofit.com/api/amazon/callback"
 
 # @login_required
@@ -29,10 +29,7 @@ def amazon_connect(request):
         f"&version=beta"
 
     )
-    # print("Redirecting to Amazon Auth URL:", auth_url)
-
     return redirect(auth_url)
-
 
 def amazon_auth_login(request):
     callback_uri = request.GET.get("amazon_callback_uri")
