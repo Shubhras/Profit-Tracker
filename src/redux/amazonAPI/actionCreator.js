@@ -8,8 +8,9 @@ const amazonAction = (params, callback) => {
     dispatch(amazonActionBegin());
     try {
       const queryString = new URLSearchParams(params).toString();
-      console.log('aaaaaaaaaaaaaaaaa', queryString);
+      //console.log('aaaaaaaaaaaaaaaaa', params);
       const response = await DataService.get(`/amazon/callback/?${queryString}`);
+      console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', response);
       if (response.data.status === true) {
         dispatch(amazonActionSuccess(response.data.data));
         if (callback) callback(response.data.data);
@@ -17,7 +18,7 @@ const amazonAction = (params, callback) => {
         dispatch(amazonActionErr(response.data.message || 'Something went wrong'));
       }
     } catch (err) {
-      console.error(err);
+      console.error('errerrerrerrerrerrerrerrerrerrerrerrerr', err);
       dispatch(amazonActionErr(err.response?.data?.message || err.message));
     }
   };
