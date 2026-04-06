@@ -26,16 +26,16 @@ export default function Summary() {
   );
 
   const connectAmazon = () => {
-    window.location.href = 'http://192.168.1.10:8000/amazon/connect';
+    window.location.href = 'https://api.trackmyprofit.com/api/amazon/connect';
   };
 
-  const getAuthCodAmazon = () => {
-    const callbackUri = encodeURIComponent('http://localhost:3001/admin/profit/summary'); // your frontend callback
-    const state = Math.random().toString(36).substring(2); // random state for security
-    const sellingPartnerId = '1234567'; // replace with actual seller ID if needed
-    window.location.href = `http://192.168.1.10:8000/amazon/login/?amazon_callback_uri=${callbackUri}&amazon_state=${state}&selling_partner_id=${sellingPartnerId}`;
-    // window.location.href = `http://192.168.1.10:8000/api/amazon/login/?amazon_callback_uri=${callbackUri}&amazon_state=${state}&selling_partner_id=${sellingPartnerId}`;
-  };
+  // const getAuthCodAmazon = () => {
+  //   const callbackUri = encodeURIComponent('http://localhost:3001/admin/profit/summary'); // your frontend callback
+  //   const state = Math.random().toString(36).substring(2); // random state for security
+  //   const sellingPartnerId = '1234567'; // replace with actual seller ID if needed
+  //   window.location.href = `http://192.168.1.29:8000/api/amazon/login/?amazon_callback_uri=${callbackUri}&amazon_state=${state}&selling_partner_id=${sellingPartnerId}`;
+  //   // window.location.href = `http://192.168.1.29:8000/api/amazon/login/?amazon_callback_uri=${callbackUri}&amazon_state=${state}&selling_partner_id=${sellingPartnerId}`;
+  // };
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -56,8 +56,10 @@ export default function Summary() {
       // console.log('Selling Partner ID:', sellingPartnerId);
     }
 
-    if (amazonState && stateNew && spapiOauthCode) {
-      loginAmazon({ state: stateNew, spapi_oauth_code: spapiOauthCode });
+    // if (amazonState && stateNew && spapiOauthCode) {
+    if (stateNew && spapiOauthCode) {
+      loginAmazon({ spapi_oauth_code: spapiOauthCode, state: stateNew, selling_partner_id: sellingPartnerId });
+      console.log('dddddddddddddddddddddddddddd');
     }
   }, [location, loginAmazon]);
 
@@ -114,11 +116,11 @@ export default function Summary() {
                 Connect Amazon
               </Button>
             </Col>
-            <Col>
+            {/* <Col>
               <Button type="primary" onClick={getAuthCodAmazon}>
                 Login Amazon
               </Button>
-            </Col>
+            </Col> */}
           </Row>
         </Card>
 
