@@ -1,12 +1,67 @@
-import React, { useState } from 'react';
-import { Row, Col, Card, Statistic, Tag, Select, Divider, Checkbox } from 'antd';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Row, Col, Card, Statistic, Tag, Select, Divider, Checkbox, Button } from 'antd';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { useLocation } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { amazonAction } from '../../redux/amazonAPI/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 const { Option } = Select;
 
 export default function Summary() {
   const [viewType, setViewType] = useState('percentage');
+  // const [amazonParams, setAmazonParams] = useState({
+  //   callbackUri: '',
+  //   state: '',
+  //   sellingPartnerId: '',
+  // });
+  const location = useLocation();
+  const dispatch = useDispatch();
+
+  const loginAmazon = useCallback(
+    (params) => {
+      dispatch(amazonAction(params));
+    },
+    [dispatch],
+  );
+
+  const connectAmazon = () => {
+    window.location.href = 'https://api.trackmyprofit.com/api/amazon/connect';
+  };
+
+  // const getAuthCodAmazon = () => {
+  //   const callbackUri = encodeURIComponent('http://localhost:3001/admin/profit/summary'); // your frontend callback
+  //   const state = Math.random().toString(36).substring(2); // random state for security
+  //   const sellingPartnerId = '1234567'; // replace with actual seller ID if needed
+  //   window.location.href = `http://192.168.1.29:8000/api/amazon/login/?amazon_callback_uri=${callbackUri}&amazon_state=${state}&selling_partner_id=${sellingPartnerId}`;
+  //   // window.location.href = `http://192.168.1.29:8000/api/amazon/login/?amazon_callback_uri=${callbackUri}&amazon_state=${state}&selling_partner_id=${sellingPartnerId}`;
+  // };
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const amazonCallbackUri = searchParams.get('amazon_callback_uri');
+    const amazonState = searchParams.get('amazon_state');
+    const sellingPartnerId = searchParams.get('selling_partner_id');
+    const stateNew = searchParams.get('state');
+    const spapiOauthCode = searchParams.get('spapi_oauth_code');
+
+    if (amazonCallbackUri || amazonState || sellingPartnerId) {
+      // setAmazonParams({
+      //   callbackUri: amazonCallbackUri || '',
+      //   state: amazonState || '',
+      //   sellingPartnerId: sellingPartnerId || '',
+      // });
+      // console.log('Amazon Callback URI:', amazonCallbackUri);
+      // console.log('Amazon State:', amazonState);
+      // console.log('Selling Partner ID:', sellingPartnerId);
+    }
+
+    // if (amazonState && stateNew && spapiOauthCode) {
+    if (stateNew && spapiOauthCode) {
+      loginAmazon({ spapi_oauth_code: spapiOauthCode, state: stateNew, selling_partner_id: sellingPartnerId });
+      console.log('dddddddddddddddddddddddddddd');
+    }
+  }, [location, loginAmazon]);
 
   const PageRoutes = [
     { path: 'index', breadcrumbName: 'Profit' },
@@ -56,6 +111,16 @@ export default function Summary() {
             <Col>
               <Checkbox defaultChecked>With Expenses</Checkbox>
             </Col>
+            <Col>
+              <Button type="primary" onClick={connectAmazon}>
+                Connect Amazon
+              </Button>
+            </Col>
+            {/* <Col>
+              <Button type="primary" onClick={getAuthCodAmazon}>
+                Login Amazon
+              </Button>
+            </Col> */}
           </Row>
         </Card>
 
