@@ -5,12 +5,17 @@ import UilDollarSign from '@iconscout/react-unicons/icons/uil-dollar-sign';
 import UilSignout from '@iconscout/react-unicons/icons/uil-signout';
 import UilUser from '@iconscout/react-unicons/icons/uil-user';
 // import UilUsersAlt from '@iconscout/react-unicons/icons/uil-users-alt';
-import { Avatar } from 'antd';
-import React, { useEffect } from 'react';
+import { Avatar, DatePicker } from 'antd';
+import React, { useEffect, useState } from 'react';
 // import { useTranslation} from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
+import UilTimes from '@iconscout/react-unicons/icons/uil-times';
+// import { DateRange } from 'react-date-range';
+// import 'react-date-range/dist/styles.css';
+// import 'react-date-range/dist/theme/default.css';
 import Search from './Search';
+import FilterDropdown from './FilterDropdown';
 // import Message from './Message';
 // import Notification from './Notification';
 // import Settings from './settings';
@@ -21,6 +26,81 @@ import { logOut, getProfile } from '../../../redux/authentication/actionCreator'
 
 const AuthInfo = React.memo(() => {
   const dispatch = useDispatch();
+  const { RangePicker } = DatePicker;
+  // const dateRef = React.useRef(null);
+  const [dateRange, setDateRange] = useState(null);
+  const [open, setOpen] = useState(false);
+  // const [dateRange, setDateRange] = React.useState([
+  //   {
+  //     startDate: new Date(),
+  //     endDate: new Date(),
+  //     key: 'selection',
+  //   },
+  // ]);
+  // const [openDate, setOpenDate] = React.useState(false);
+  // const handlePreset = (type) => {
+  //   const today = new Date();
+
+  //   let start = new Date();
+  //   let end = new Date();
+
+  //   if (type === 'Today') {
+  //     start = today;
+  //     end = today;
+  //   }
+
+  //   if (type === 'Yesterday') {
+  //     const y = new Date();
+  //     y.setDate(today.getDate() - 1);
+  //     start = y;
+  //     end = y;
+  //   }
+
+  //   if (type === 'This Week') {
+  //     const day = today.getDay(); // 0 = Sunday
+  //     const diff = today.getDate() - day + (day === 0 ? -6 : 1); // Monday
+  //     start = new Date(today.setDate(diff));
+  //     end = new Date(start);
+  //     end.setDate(start.getDate() + 6);
+  //   }
+
+  //   if (type === 'Last Week') {
+  //     const day = today.getDay();
+  //     const diff = today.getDate() - day - 6; // last week Monday
+  //     start = new Date(today.setDate(diff));
+  //     end = new Date(start);
+  //     end.setDate(start.getDate() + 6);
+  //   }
+
+  //   if (type === 'This Month') {
+  //     start = new Date(today.getFullYear(), today.getMonth(), 1);
+  //     end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  //   }
+
+  //   if (type === 'Last Month') {
+  //     start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+  //     end = new Date(today.getFullYear(), today.getMonth(), 0);
+  //   }
+
+  //   setDateRange([
+  //     {
+  //       startDate: start,
+  //       endDate: end,
+  //       key: 'selection',
+  //       label: type,
+  //     },
+  //   ]);
+  // };
+  // useEffect(() => {
+  //   const handleClickOutside = (e) => {
+  //     if (dateRef.current && !dateRef.current.contains(e.target)) {
+  //       setOpenDate(false);
+  //     }
+  //   };
+
+  //   document.addEventListener('mousedown', handleClickOutside);
+  //   return () => document.removeEventListener('mousedown', handleClickOutside);
+  // }, []);
 
   // ✅ Get Profile and profileLoading from Redux Store
   const { profile, profileLoading, profileError } = useSelector((state) => state.auth);
@@ -145,8 +225,176 @@ const AuthInfo = React.memo(() => {
 
   return (
     <div className="flex items-center justify-end flex-auto">
-      <div className="md:hidden">
+      <div className="md:hidden flex items-center gap-2">
         <Search />
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="px-3 py-1 border rounded-md text-sm bg-white flex items-center gap-2"
+          >
+            {/* DATE TEXT */}
+            <span>
+              {dateRange
+                ? `${dateRange[0].format('DD/MM/YYYY')} - ${dateRange[1].format('DD/MM/YYYY')}`
+                : 'Select Date'}
+            </span>
+
+            {dateRange && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDateRange(null);
+                }}
+                className="text-gray-400 hover:text-red-500 flex items-center"
+              >
+                <UilTimes className="w-4 h-4" />
+              </button>
+            )}
+          </button>
+
+          <RangePicker
+            open={open}
+            onOpenChange={(val) => setOpen(val)}
+            value={dateRange}
+            onChange={(val) => {
+              setDateRange(val);
+              setOpen(false);
+            }}
+            style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
+          />
+        </div>
+        {/* <div ref={dateRef} className="relative">
+          <button
+            type="button"
+            onClick={() => setOpenDate(!openDate)}
+            className="px-3 py-1 border rounded-md text-sm bg-white shadow-sm hover:border-blue-400"
+          >
+            {dateRange[0].startDate && dateRange[0].endDate
+              ? `${dateRange[0].startDate.toLocaleDateString('en-GB')} - ${dateRange[0].endDate.toLocaleDateString(
+                  'en-GB',
+                )}`
+              : 'Select Date'}
+          </button>
+
+          {openDate && (
+            <div className="absolute top-10 right-0 z-50 bg-white shadow-xl rounded-lg flex min-w-[700px]">
+              <div className="w-45 border-r p-2 text-sm flex flex-col justify-between">
+                <div>
+                  {['Today', 'Yesterday', 'This Week', 'Last Week', 'This Month', 'Last Month'].map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => handlePreset(item)}
+                      className={`w-full text-left px-3 py-2 rounded-md mb-1 transition
+          ${dateRange[0].label === item ? 'bg-blue-100 text-blue-600 font-medium' : 'hover:bg-gray-100 text-gray-700'}`}
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex gap-2 mt-3">
+                  <button
+                    type="button"
+                    className="text-white px-3 py-1.5 rounded-md text-sm"
+                    onClick={() => setOpenDate(false)}
+                    style={{ background: 'linear-gradient(135deg, rgb(16, 185, 129) 0%, rgb(15, 118, 110) 100%)' }}
+                  >
+                    Submit
+                  </button>
+
+                  <button
+                    type="button"
+                    className="border border-gray-300 px-3 py-1.5 rounded-md text-sm"
+                    onClick={() => setOpenDate(false)}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    className="border border-gray-300 px-3 py-1.5 rounded-md text-sm"
+                    onClick={() =>
+                      setDateRange([
+                        {
+                          startDate: new Date(),
+                          endDate: new Date(),
+                          key: 'selection',
+                        },
+                      ])
+                    }
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <style>
+                  {`
+  .rdrDateDisplayWrapper {
+    padding: 4px 10px;
+  }
+
+  .rdrDateDisplayItem {
+    height: 34px !important;   
+    min-width: 150px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .rdrDateDisplayItem input {
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .rdrMonth {
+    width: 300px !important; 
+  }
+
+  .rdrCalendarWrapper {
+    width: 100% !important;
+  }
+.rdrMonthAndYearPickers {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.rdrMonthAndYearPickers select {
+ padding: 9px 7px 9px 4px !important;
+  font-size: 13px;
+  line-height: normal;
+  appearance: auto; 
+}
+
+.rdrMonthAndYearPickers select:hover {
+  background-color: rgba(59,130,246,0.08) !important;
+  border-radius: 4px;
+}
+    
+`}
+                </style>
+                <DateRange
+                  ranges={dateRange}
+                  onChange={(item) => {
+                    setDateRange([item.selection]);
+                  }}
+                  moveRangeOnFirstSelection={false}
+                  editableDateInputs
+                  months={2}
+                  direction="horizontal"
+                  minDate={new Date(2022, 0, 1)}
+                  maxDate={new Date(2026, 11, 31)}
+                />
+              </div>
+            </div>
+          )}
+        </div> */}
+        <FilterDropdown />
       </div>
       {/* <Message />
       <Notification />

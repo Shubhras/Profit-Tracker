@@ -11,6 +11,7 @@ const About = lazy(() => import('../container/profile/about/Index'));
 const Testimonials = lazy(() => import('../container/profile/testimonials/Index'));
 const PrivacyPolicy = lazy(() => import('../container/profile/legal/PrivacyPolicy'));
 const TermsConditions = lazy(() => import('../container/profile/legal/TermsConditions'));
+const AmazonCallback = lazy(() => import('../container/profit/AmazonCallback'));
 
 function PublicRoutes() {
   return (
@@ -23,6 +24,7 @@ function PublicRoutes() {
     >
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/api/amazon/callback" element={<AmazonCallback />} />
         <Route path="/integrations" element={<Integrations />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/contact" element={<Contact />} />
