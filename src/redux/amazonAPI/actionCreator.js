@@ -8,7 +8,6 @@ const amazonAction = (params, callback) => {
     dispatch(amazonActionBegin());
     try {
       const queryString = new URLSearchParams(params).toString();
-      //console.log('aaaaaaaaaaaaaaaaa', params);
       const response = await DataService.get(`/amazon/callback/?${queryString}`);
       console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', response);
       if (response.data.status === true) {
