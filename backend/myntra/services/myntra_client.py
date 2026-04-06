@@ -1,3 +1,6 @@
+from datetime import date, timedelta
+import base64
+
 import requests
 from django.conf import settings
 
@@ -130,35 +133,56 @@ from django.conf import settings
 
 #     def download_csv(self, url):
 #         return requests.get(url).content
-
-
-
-import requests
-from django.conf import settings
-
-
 class MyntraClient:
 
     BASE_URL = "https://api-integration.myntra.com"
 
+    def __init__(self, basic_token=None, access_token=None, base_url=None):
+        self.basic_token = basic_token
+        self.access_token = access_token
+        self.base_url = base_url or getattr(settings, "MYNTRA_BASE_URL", self.BASE_URL)
+
+    @staticmethod
+    def build_basic_token(merchant_id, secret_key):
+        basic_auth = f"{merchant_id}:{secret_key}"
+        return base64.b64encode(basic_auth.encode()).decode()
+
     def headers(self):
-        return {
+        headers = {
             "Accept": "application/json",
             "Content-Type": "application/json",
-            "Authorization": f"Basic {settings.MYNTRA_BASIC_TOKEN}",
-            "access_token": settings.MYNTRA_ACCESS_TOKEN
         }
+        basic_token = self.basic_token or getattr(settings, "MYNTRA_BASIC_TOKEN", None)
+        if basic_token:
+            headers["Authorization"] = f"Basic {basic_token}"
 
-    def schedule_orders_report(self):
+        access_token = self.access_token or getattr(settings, "MYNTRA_ACCESS_TOKEN", None)
+        if access_token:
+            headers["access_token"] = access_token
 
-        url = f"{self.BASE_URL}/partner/v4/portal/report/SJIT_Orders_Report"
+        return headers
+
+    def _default_date_range(self):
+        today = date.today()
+        from_date = today - timedelta(days=30)
+        return from_date.isoformat(), today.isoformat()
+
+    def schedule_orders_report(self, from_date=None, to_date=None, partner_type=None):
+
+        url = f"{self.base_url}/partner/v4/portal/report/SJIT_Orders_Report"
+
+        if not from_date or not to_date:
+            default_from, default_to = self._default_date_range()
+            from_date = from_date or default_from
+            to_date = to_date or default_to
 
         payload = {
-            "fromDate": "2025-03-01",
-            "toDate": "2025-03-20",
-            "partnerType": settings.MYNTRA_PARTNER_TYPE
+            "fromDate": from_date,
+            "toDate": to_date,
+            "partnerType": partner_type or settings.MYNTRA_PARTNER_TYPE,
         }
 
+        last_error = None
         for attempt in range(3):
             try:
                 response = requests.post(
@@ -168,27 +192,29 @@ class MyntraClient:
                     timeout=10
                 )
 
-                data = response.json()
+                try:
+                    data = response.json()
+                except ValueError:
+                    data = {"error": "Invalid JSON response", "details": response.text}
 
                 print("Attempt:", attempt + 1, data)
 
-                if data.get("statusType") == "SUCCESS":
+                if response.ok and data.get("statusType") == "SUCCESS":
                     return data
+                last_error = data
 
             except Exception as e:
+                last_error = {"error": "Request failed", "details": str(e)}
                 print("Error:", str(e))
 
-        return {"error": "Failed after retries"}
+        return last_error or {"error": "Failed after retries"}
 
     def fetch_report(self, job_id):
 
-        url = f"{self.BASE_URL}/partner/v4/portal/report/download/{job_id}"
+        url = f"{self.base_url}/partner/v4/portal/report/download/{job_id}"
 
-        headers = {
-            "Content-Type": "application/json",
-            "access_token": settings.MYNTRA_ACCESS_TOKEN,
-            "x-partner-store": "omni"
-        }
+        headers = self.headers()
+        headers["x-partner-store"] = "omni"
 
         try:
             response = requests.get(url, headers=headers, timeout=10)

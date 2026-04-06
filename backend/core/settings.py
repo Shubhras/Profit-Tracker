@@ -36,31 +36,27 @@ MYNTRA_PARTNER_TYPE = os.getenv("MYNTRA_PARTNER_TYPE")
 # MYNTRA_BASIC_AUTH = "OEJWREdGQ0s6b0VjNHN1WkhlSmtyZjBvdGdCZ2hOQTZ5REhDM29DR1ViQktFZ0Q="
 MYNTRA_BASE_URL = "https://api-integration.myntra.com"
 # print("MYNTRA ID:", MYNTRA_MERCHANT_ID)
-MYNTRA_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzZl9pZCI6IjcwMDAwMDEiLCJyZXRhaWxlcl9pZCI6IjY4ZDNiNDAxOTgwOWY5YjAyMzJhMzQyNCIsInBhcnRuZXJfaWQiOiI1NzkyMCIsIm1lcmNoYW50X2lkIjoiOEJWREdGQ0siLCJyZXRhaWxlcl9uYW1lIjoiTGliZXJldHRlIENyZWF0aW9ucyIsInNlbGxlcl9pZCI6IjU3OTIwIiwicEJhcmNvZGUiOiJNWU5UUkEtVHJhY2tNeVByb2ZpdC1MTlJOVEEiLCJvcmlnaW4iOiIiLCJpZ25vcmVFeHBpcmF0aW9uIjpmYWxzZSwiaWF0IjoxNzcyNzc2NDgzLCJleHAiOjE3NzUzNjg0ODN9.uDGkDeZ-9RNglySvO-Y34XKaoF8_Pb1Fe1pWUEUEyGw"
-basic_auth = f"{MYNTRA_MERCHANT_ID}:{MYNTRA_SECRET_KEY}"
-MYNTRA_BASIC_TOKEN = base64.b64encode(basic_auth.encode()).decode()
+MYNTRA_ACCESS_TOKEN = os.getenv("MYNTRA_ACCESS_TOKEN")
+
+MYNTRA_BASIC_TOKEN = None
+if MYNTRA_MERCHANT_ID and MYNTRA_SECRET_KEY:
+    basic_auth = f"{MYNTRA_MERCHANT_ID}:{MYNTRA_SECRET_KEY}"
+    MYNTRA_BASIC_TOKEN = base64.b64encode(basic_auth.encode()).decode()
 
 
+#Amazon Credentials
+AMAZON_CLIENT_ID = os.getenv("AMAZON_CLIENT_ID")
+AMAZON_CLIENT_SECRET = os.getenv("AMAZON_CLIENT_SECRET")
+AMAZON_APP_ID = os.getenv("AMAZON_APP_ID")
+AMAZON_REDIRECT_URI = os.getenv("AMAZON_REDIRECT_URI")
 
-#Amazon
-LWA_APP_ID = os.getenv("LWA_APP_ID")
-LWA_CLIENT_SECRET = os.getenv("LWA_CLIENT_SECRET")
-SP_API_REFRESH_TOKEN = os.getenv("SP_API_REFRESH_TOKEN")
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-AWS_ROLE_ARN = os.getenv("AWS_ROLE_ARN")
 
-ALLOWED_HOSTS = ['trackmyprofit.com', 'www.trackmyprofit.com', '194.238.17.204','api.trackmyprofit.com','127.0.0.1', "localhost" ]
+# ALLOWED_HOSTS = ['trackmyprofit.com', 'www.trackmyprofit.com', '194.238.17.204','api.trackmyprofit.com','127.0.0.1', "localhost" ]
+
+ALLOWED_HOSTS=["*"]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8000",
-    "http://192.168.1.9",
-    "http://192.168.1.9:8000",
-    "http://192.168.1.9:8000",
-    "http://localhost:8000",
-    "http://localhost:8001",
-    "http://0.0.0.0:8000",
-    "http://192.168.1.9",
+
     "https://trackmyprofit.com",
     "https://www.trackmyprofit.com",
     "https://api.trackmyprofit.com",
@@ -97,7 +93,8 @@ INSTALLED_APPS = [
     'drf_yasg',
     'subscription',
     'myntra', 
-    'amazon',
+    'amazon_auth',
+  
 
 ]
 

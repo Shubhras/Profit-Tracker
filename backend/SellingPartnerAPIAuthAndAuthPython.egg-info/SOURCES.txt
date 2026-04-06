@@ -1,0 +1,16 @@
+README.md
+setup.py
+./auth/LwaRequest.py
+./auth/__init__.py
+./auth/credentials.py
+./spapi/__init__.py
+./spapi/spapiclient.py
+SellingPartnerAPIAuthAndAuthPython.egg-info/PKG-INFO
+SellingPartnerAPIAuthAndAuthPython.egg-info/SOURCES.txt
+SellingPartnerAPIAuthAndAuthPython.egg-info/dependency_links.txt
+SellingPartnerAPIAuthAndAuthPython.egg-info/top_level.txt
+auth/LwaRequest.py
+auth/__init__.py
+auth/credentials.py
+spapi/__init__.py
+spapi/spapiclient.py
