@@ -53,7 +53,7 @@ AMAZON_REDIRECT_URI = os.getenv("AMAZON_REDIRECT_URI")
 
 # ALLOWED_HOSTS = ['trackmyprofit.com', 'www.trackmyprofit.com', '194.238.17.204','api.trackmyprofit.com','127.0.0.1', "localhost" ]
 
-ALLOWED_HOSTS=["*"]
+ALLOWED_HOSTS=["*","192.168.1.29"]
 
 CORS_ALLOWED_ORIGINS = [
 
