@@ -93,3 +93,4 @@ pytest_cache/
 # Build files
 # -------------------------
 # build/
+.env 
