@@ -14,31 +14,49 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 from dotenv import load_dotenv
 import os
-load_dotenv()
+import base64
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-
+ROOT_DIR = BASE_DIR.parent   # this points to Profit-Tracker
+load_dotenv(ROOT_DIR / ".env")
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-pkux+0mhylu3^+n5l_t%bu*89wmoz46)vg63zs64tl=31p9oj1'
+# # SECURITY WARNING: keep the secret key used in production secret!
+# SECRET_KEY = 'django-insecure-pkux+0mhylu3^+n5l_t%bu*89wmoz46)vg63zs64tl=31p9oj1'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+# # SECURITY WARNING: don't run with debug turned on in production!
+# DEBUG = False
+DEBUG = os.getenv("DEBUG") == "True"
 
-ALLOWED_HOSTS = ['trackmyprofit.com', 'www.trackmyprofit.com', '194.238.17.204','api.trackmyprofit.com','127.0.0.1', "localhost" ]
+MYNTRA_MERCHANT_ID = os.getenv("MYNTRA_MERCHANT_ID")
+MYNTRA_SECRET_KEY = os.getenv("MYNTRA_SECRET_KEY")
+MYNTRA_WAREHOUSE_CODE = os.getenv("MYNTRA_WAREHOUSE_CODE")
+MYNTRA_PARTNER_TYPE = os.getenv("MYNTRA_PARTNER_TYPE")
+
+MYNTRA_BASE_URL = "https://api-integration.myntra.com"
+# print("MYNTRA ID:", MYNTRA_MERCHANT_ID)
+MYNTRA_ACCESS_TOKEN = os.getenv("MYNTRA_ACCESS_TOKEN")
+
+MYNTRA_BASIC_TOKEN = None
+if MYNTRA_MERCHANT_ID and MYNTRA_SECRET_KEY:
+    basic_auth = f"{MYNTRA_MERCHANT_ID}:{MYNTRA_SECRET_KEY}"
+    MYNTRA_BASIC_TOKEN = base64.b64encode(basic_auth.encode()).decode()
+
+
+#Amazon Credentials
+AMAZON_CLIENT_ID = os.getenv("AMAZON_CLIENT_ID")
+AMAZON_CLIENT_SECRET = os.getenv("AMAZON_CLIENT_SECRET")
+AMAZON_APP_ID = os.getenv("AMAZON_APP_ID")
+AMAZON_REDIRECT_URI = os.getenv("AMAZON_REDIRECT_URI")
+
+
+# ALLOWED_HOSTS = ['trackmyprofit.com', 'www.trackmyprofit.com', '194.238.17.204','api.trackmyprofit.com','127.0.0.1', "localhost" ]
+
+ALLOWED_HOSTS=["*","192.168.1.29"]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8000",
-    "http://192.168.1.9",
-    "http://192.168.1.9:8000",
-    "http://192.168.1.9:8000",
-    "http://localhost:8000",
-    "http://localhost:8001",
-    "http://0.0.0.0:8000",
-    "http://192.168.1.9",
+
     "https://trackmyprofit.com",
     "https://www.trackmyprofit.com",
     "https://api.trackmyprofit.com",
@@ -74,6 +92,10 @@ INSTALLED_APPS = [
     'user_auth',
     'drf_yasg',
     'subscription',
+    'myntra', 
+    'amazon_auth',
+  
+
 ]
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -99,10 +121,12 @@ MIDDLEWARE = [
 ]
 
 
-RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
-RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
-RAZORPAY_WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET")
-SECRET_KEY = os.getenv("SECRET_KEY")
+# RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
+# RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
+# RAZORPAY_WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET")
+# #SECRET_KEY = os.getenv("SECRET_KEY")
+# SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-key")
+
 
 ROOT_URLCONF = 'core.urls'
 
