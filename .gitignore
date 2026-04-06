@@ -88,3 +88,8 @@ pytest_cache/
 *.bak
 *.backup
 
+
+# -------------------------
+# Build files
+# -------------------------
+# build/
