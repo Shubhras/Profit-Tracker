@@ -74,6 +74,7 @@ INSTALLED_APPS = [
     'user_auth',
     'drf_yasg',
     'subscription',
+    'amazon_auth',
 ]
 
 AUTH_PASSWORD_VALIDATORS = [
