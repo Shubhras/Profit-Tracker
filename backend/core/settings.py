@@ -29,19 +29,19 @@ load_dotenv(ROOT_DIR / ".env")
 # DEBUG = False
 DEBUG = os.getenv("DEBUG") == "True"
 
-MYNTRA_MERCHANT_ID = os.getenv("MYNTRA_MERCHANT_ID")
-MYNTRA_SECRET_KEY = os.getenv("MYNTRA_SECRET_KEY")
-MYNTRA_WAREHOUSE_CODE = os.getenv("MYNTRA_WAREHOUSE_CODE")
-MYNTRA_PARTNER_TYPE = os.getenv("MYNTRA_PARTNER_TYPE")
+# MYNTRA_MERCHANT_ID = os.getenv("MYNTRA_MERCHANT_ID")
+# MYNTRA_SECRET_KEY = os.getenv("MYNTRA_SECRET_KEY")
+# MYNTRA_WAREHOUSE_CODE = os.getenv("MYNTRA_WAREHOUSE_CODE")
+# MYNTRA_PARTNER_TYPE = os.getenv("MYNTRA_PARTNER_TYPE")
 
-MYNTRA_BASE_URL = "https://api-integration.myntra.com"
-# print("MYNTRA ID:", MYNTRA_MERCHANT_ID)
-MYNTRA_ACCESS_TOKEN = os.getenv("MYNTRA_ACCESS_TOKEN")
+# MYNTRA_BASE_URL = "https://api-integration.myntra.com"
+# # print("MYNTRA ID:", MYNTRA_MERCHANT_ID)
+# MYNTRA_ACCESS_TOKEN = os.getenv("MYNTRA_ACCESS_TOKEN")
 
-MYNTRA_BASIC_TOKEN = None
-if MYNTRA_MERCHANT_ID and MYNTRA_SECRET_KEY:
-    basic_auth = f"{MYNTRA_MERCHANT_ID}:{MYNTRA_SECRET_KEY}"
-    MYNTRA_BASIC_TOKEN = base64.b64encode(basic_auth.encode()).decode()
+# MYNTRA_BASIC_TOKEN = None
+# if MYNTRA_MERCHANT_ID and MYNTRA_SECRET_KEY:
+#     basic_auth = f"{MYNTRA_MERCHANT_ID}:{MYNTRA_SECRET_KEY}"
+#     MYNTRA_BASIC_TOKEN = base64.b64encode(basic_auth.encode()).decode()
 
 
 #Amazon Credentials
@@ -92,7 +92,7 @@ INSTALLED_APPS = [
     'user_auth',
     'drf_yasg',
     'subscription',
-    'myntra', 
+
     'amazon_auth',
   
 
@@ -121,12 +121,12 @@ MIDDLEWARE = [
 ]
 
 
-# RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
-# RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
-# RAZORPAY_WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET")
-# #SECRET_KEY = os.getenv("SECRET_KEY")
-# SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-key")
-
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
+RAZORPAY_WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET")
+#SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-key")
+SECRET_KEY = 'django-insecure-1234567890'
 
 ROOT_URLCONF = 'core.urls'
 
