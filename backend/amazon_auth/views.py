@@ -58,13 +58,13 @@ def amazon_callback(request):
     print("CODE:", code)
     print("SELLER:", seller_id)
  
-    # ✅ Validate state
-    session_state = request.session.get("amazon_state")
+    # # ✅ Validate state
+    # session_state = request.session.get("amazon_state")
  
-    if not session_state or state != session_state:
-        return JsonResponse({
-            "error": "Invalid state parameter. Possible CSRF attack."
-        }, status=400)
+    # if not session_state or state != session_state:
+    #     return JsonResponse({
+    #         "error": "Invalid state parameter. Possible CSRF attack."
+    #     }, status=400)
  
     # ✅ Validate code
     if not code:
