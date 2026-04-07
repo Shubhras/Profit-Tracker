@@ -4,7 +4,6 @@ import requests
 import json
 from django.shortcuts import redirect   
 from django.http import JsonResponse, HttpResponseRedirect, HttpResponse
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
 from .models import AmazonAccount
@@ -46,7 +45,7 @@ def amazon_connect(request):
 # =========================================
 # 2. CALLBACK → Handle Amazon response
 # =========================================
-@login_required
+
 def amazon_callback(request):
     print("FULL URL:", request.get_full_path())
     print("GET DATA:", request.GET)
