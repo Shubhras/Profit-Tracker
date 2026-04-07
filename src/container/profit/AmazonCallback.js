@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { Spin, Card, Row, Col } from 'antd';
+import { Spin, Card, Row, Col, message } from 'antd';
 import { amazonAction } from '../../redux/amazonAPI/actionCreator';
 
 function AmazonCallback() {
@@ -25,6 +25,7 @@ function AmazonCallback() {
             selling_partner_id: sellingPartnerId,
           },
           () => {
+            message.success('Amazon connected successfully');
             navigate('/admin/profit/summary');
           },
         ),
