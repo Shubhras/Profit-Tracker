@@ -24,7 +24,7 @@ function PublicRoutes() {
     >
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/amazon/callback" element={<AmazonCallback />} />
+        <Route path="/api/amazon/callback" element={<AmazonCallback />} />
         <Route path="/integrations" element={<Integrations />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/contact" element={<Contact />} />
