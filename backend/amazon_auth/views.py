@@ -23,7 +23,7 @@ def amazon_connect(request):
 
     auth_url = (
         "https://sellercentral.amazon.com/apps/authorize/consent"
-        f"?application_id={AMAZON_APP_ID}"
+        f"?application_id=amzn1.sp.solution.bcc1eed5-4c1f-4c2f-a85c-fe8c756f013d"
         f"&state={state}"
         f"&redirect_uri={REDIRECT_URI}"
         f"&version=beta"
