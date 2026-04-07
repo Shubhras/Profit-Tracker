@@ -23,7 +23,7 @@ REDIRECT_URI = os.getenv("REDIRECT_URI")
 # =========================================
 # 1. CONNECT → Redirect to Amazon
 # =========================================
-# @login_required
+
 def amazon_connect(request):
     state = secrets.token_hex(16)
  
@@ -46,7 +46,7 @@ def amazon_connect(request):
 # =========================================
 # 2. CALLBACK → Handle Amazon response
 # =========================================
-# @login_required
+@login_required
 def amazon_callback(request):
     print("FULL URL:", request.get_full_path())
     print("GET DATA:", request.GET)
