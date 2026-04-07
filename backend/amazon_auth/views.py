@@ -104,27 +104,27 @@ def amazon_callback(request):
         # SAVE IN DATABASE
         # =========================================
         # Check if user already has an Amazon account
-        if hasattr(request.user, 'amazon_account'):
-            account = request.user.amazon_account
-            # Update existing account with new seller info
-            account.seller_central_id = seller_id
-            account.app_client_id = AMAZON_APP_CLIENT_ID
-            account.app_client_secret = AMAZON_APP_CLIENT_SECRET
-            account.region = "FE"
-            account.marketplace_id = "A21TJRUUN4KGV"
-        else:
-            # Create new account for user
-            account = AmazonAccount(
-                user=request.user,
-                seller_central_id=seller_id,
-                app_client_id=AMAZON_APP_CLIENT_ID,
-                app_client_secret=AMAZON_APP_CLIENT_SECRET,
-                region="FE",
-                marketplace_id="A21TJRUUN4KGV"
-            )
+        # if hasattr(request.user, 'amazon_account'):
+        #     account = request.user.amazon_account
+        #     # Update existing account with new seller info
+        #     account.seller_central_id = seller_id
+        #     account.app_client_id = AMAZON_APP_CLIENT_ID
+        #     account.app_client_secret = AMAZON_APP_CLIENT_SECRET
+        #     account.region = "FE"
+        #     account.marketplace_id = "A21TJRUUN4KGV"
+        # else:
+        #     # Create new account for user
+        #     account = AmazonAccount(
+        #         user=request.user,
+        #         seller_central_id=seller_id,
+        #         app_client_id=AMAZON_APP_CLIENT_ID,
+        #         app_client_secret=AMAZON_APP_CLIENT_SECRET,
+        #         region="FE",
+        #         marketplace_id="A21TJRUUN4KGV"
+        #     )
 
-        account.set_refresh_token(refresh_token)
-        account.save()
+        # account.set_refresh_token(refresh_token)
+        # account.save()
  
         return JsonResponse({
             "status": "success",
