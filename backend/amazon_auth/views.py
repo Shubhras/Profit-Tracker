@@ -23,7 +23,7 @@ REDIRECT_URI = os.getenv("REDIRECT_URI")
 # =========================================
 # 1. CONNECT → Redirect to Amazon
 # =========================================
-@login_required
+
 def amazon_connect(request):
     state = secrets.token_hex(16)
  
