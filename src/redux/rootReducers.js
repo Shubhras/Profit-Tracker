@@ -6,7 +6,6 @@ import authReducer from './authentication/reducers';
 import ChangeLayoutMode from './themeLayout/reducers';
 import { teamReducer } from './team/reducers';
 import { userReducer, userGroupReducer } from './users/reducers';
-import { sellersReducer } from './sellers/reducers';
 import { headerSearchReducer } from './headerSearch/reducers';
 import orderReducer from './orders/reducers';
 import galleryReducer from './gallary/reducers';
@@ -37,7 +36,6 @@ const rootReducers = combineReducers({
   message: readMessageReducer,
   notification: readNotificationReducer,
   orders: orderReducer,
-  sellers: sellersReducer,
   users: userReducer,
   userGroup: userGroupReducer,
   team: teamReducer,
