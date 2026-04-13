@@ -29,6 +29,7 @@ import dataTable from './data-filter/reducers';
 import subscriptionReducer from './subscription/reducers';
 import amazonReducer from './amazonAPI/reducers';
 import dashboardReducer from './dashboard/reducers';
+import reconcilePaymentReducer from './reconcilePayment/reducers';
 
 const rootReducers = combineReducers({
   themeUsers: themeUsersReducer,
@@ -69,6 +70,7 @@ const rootReducers = combineReducers({
   subscription: subscriptionReducer,
   amazonAPI: amazonReducer,
   dashboard: dashboardReducer,
+  reconcilePayment: reconcilePaymentReducer,
 });
 
 export default rootReducers;
