@@ -29,6 +29,7 @@ import jobs from './jobs/reducers';
 import dataTable from './data-filter/reducers';
 import subscriptionReducer from './subscription/reducers';
 import amazonReducer from './amazonAPI/reducers';
+import dashboardReducer from './dashboard/reducers';
 
 const rootReducers = combineReducers({
   themeUsers: themeUsersReducer,
@@ -69,6 +70,7 @@ const rootReducers = combineReducers({
   SingleAxiosCrud: axiosSingleCrudReducer,
   subscription: subscriptionReducer,
   amazonAPI: amazonReducer,
+  dashboard: dashboardReducer,
 });
 
 export default rootReducers;

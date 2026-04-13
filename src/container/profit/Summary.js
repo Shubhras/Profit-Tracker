@@ -2,14 +2,16 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Row, Col, Card, Statistic, Tag, Select, Divider, Checkbox, Button } from 'antd';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useLocation } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { amazonAction } from '../../redux/amazonAPI/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
+import { getDashboard } from '../../redux/dashboard/actionCreator';
 
 const { Option } = Select;
 
 export default function Summary() {
   const [viewType, setViewType] = useState('percentage');
+  const { data } = useSelector((state) => state.dashboard);
   // const [amazonParams, setAmazonParams] = useState({
   //   callbackUri: '',
   //   state: '',
@@ -17,6 +19,9 @@ export default function Summary() {
   // });
   const location = useLocation();
   const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(getDashboard());
+  }, [dispatch]);
 
   const loginAmazon = useCallback(
     (params) => {
@@ -26,16 +31,16 @@ export default function Summary() {
   );
 
   const connectAmazon = () => {
-    window.location.href = 'https://api.trackmyprofit.com/api/amazon/connect';
+    window.location.href = 'http://192.168.1.10:8000/amazon/connect';
   };
 
-  // const getAuthCodAmazon = () => {
-  //   const callbackUri = encodeURIComponent('http://localhost:3001/admin/profit/summary'); // your frontend callback
-  //   const state = Math.random().toString(36).substring(2); // random state for security
-  //   const sellingPartnerId = '1234567'; // replace with actual seller ID if needed
-  //   window.location.href = `http://192.168.1.29:8000/api/amazon/login/?amazon_callback_uri=${callbackUri}&amazon_state=${state}&selling_partner_id=${sellingPartnerId}`;
-  //   // window.location.href = `http://192.168.1.29:8000/api/amazon/login/?amazon_callback_uri=${callbackUri}&amazon_state=${state}&selling_partner_id=${sellingPartnerId}`;
-  // };
+  const getAuthCodAmazon = () => {
+    const callbackUri = encodeURIComponent('http://localhost:3001/admin/profit/summary'); // your frontend callback
+    const state = Math.random().toString(36).substring(2); // random state for security
+    const sellingPartnerId = '1234567'; // replace with actual seller ID if needed
+    window.location.href = `http://192.168.1.10:8000/amazon/login/?amazon_callback_uri=${callbackUri}&amazon_state=${state}&selling_partner_id=${sellingPartnerId}`;
+    // window.location.href = `http://192.168.1.10:8000/api/amazon/login/?amazon_callback_uri=${callbackUri}&amazon_state=${state}&selling_partner_id=${sellingPartnerId}`;
+  };
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -56,10 +61,8 @@ export default function Summary() {
       // console.log('Selling Partner ID:', sellingPartnerId);
     }
 
-    // if (amazonState && stateNew && spapiOauthCode) {
-    if (stateNew && spapiOauthCode) {
-      loginAmazon({ spapi_oauth_code: spapiOauthCode, state: stateNew, selling_partner_id: sellingPartnerId });
-      console.log('dddddddddddddddddddddddddddd');
+    if (amazonState && stateNew && spapiOauthCode) {
+      loginAmazon({ state: stateNew, spapi_oauth_code: spapiOauthCode });
     }
   }, [location, loginAmazon]);
 
@@ -69,23 +72,35 @@ export default function Summary() {
   ];
 
   /* ---------- RIGHT STACKED CHART ---------- */
-  const stackedData = [
-    { date: '01/01', cancelled: 0, rto: 0, returned: 0 },
-    { date: '02/01', cancelled: 0, rto: 0, returned: 0 },
-    { date: '03/01', cancelled: 0, rto: 0, returned: 0 },
-    { date: '04/01', cancelled: 0, rto: 0, returned: 0 },
-    { date: '05/01', cancelled: 0, rto: 0, returned: 0 },
-    { date: '06/01', cancelled: 0, rto: 0, returned: 0 },
-    { date: '07/01', cancelled: 0, rto: 0, returned: 0 },
-  ];
+  // const stackedData = [
+  //   { date: '01/01', cancelled: 0, rto: 0, returned: 0 },
+  //   { date: '02/01', cancelled: 0, rto: 0, returned: 0 },
+  //   { date: '03/01', cancelled: 0, rto: 0, returned: 0 },
+  //   { date: '04/01', cancelled: 0, rto: 0, returned: 0 },
+  //   { date: '05/01', cancelled: 0, rto: 0, returned: 0 },
+  //   { date: '06/01', cancelled: 0, rto: 0, returned: 0 },
+  //   { date: '07/01', cancelled: 0, rto: 0, returned: 0 },
+  // ];
 
-  /* ---------- BOTTOM CHART DATA ---------- */
-  const bottomChartData = [
-    { name: 'North', value: 0 },
-    { name: 'South', value: 0 },
-    { name: 'East', value: 0 },
-    { name: 'West', value: 0 },
-  ];
+  // const bottomChartData = [
+  //   { name: 'North', value: 0 },
+  //   { name: 'South', value: 0 },
+  //   { name: 'East', value: 0 },
+  //   { name: 'West', value: 0 },
+  // ];
+  const stackedData =
+    data?.trends?.map((item) => ({
+      date: item.date,
+      cancelled: 0,
+      rto: 0,
+      returned: 0,
+    })) || [];
+
+  const bottomChartData =
+    data?.geography?.slice(0, 4).map((item) => ({
+      name: item.state || 'Unknown',
+      value: Number(item.sales),
+    })) || [];
 
   return (
     <>
@@ -116,11 +131,11 @@ export default function Summary() {
                 Connect Amazon
               </Button>
             </Col>
-            {/* <Col>
+            <Col>
               <Button type="primary" onClick={getAuthCodAmazon}>
                 Login Amazon
               </Button>
-            </Col> */}
+            </Col>
           </Row>
         </Card>
 
@@ -129,9 +144,9 @@ export default function Summary() {
           {/* SALES */}
           <Col xs={24} lg={6}>
             <Card>
-              <Statistic title="Sales" value={0} prefix="₹" />
+              <Statistic title="Sales" value={data?.header_metrics?.sales || 0} prefix="₹" />
               <Tag color="blue" className="mt-2">
-                Units: 0
+                Units: {data?.breakdown_table?.gross?.qty || 0}
               </Tag>
 
               <Divider />
