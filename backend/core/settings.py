@@ -18,7 +18,7 @@ import base64
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 ROOT_DIR = BASE_DIR.parent   # this points to Profit-Tracker
-load_dotenv(ROOT_DIR / ".env")
+load_dotenv(BASE_DIR / ".env")
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -27,7 +27,7 @@ load_dotenv(ROOT_DIR / ".env")
 
 # # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = False
-DEBUG = os.getenv("DEBUG") == "True"
+DEBUG = os.getenv("DEBUG", "True") == "True"
 
 # MYNTRA_MERCHANT_ID = os.getenv("MYNTRA_MERCHANT_ID")
 # MYNTRA_SECRET_KEY = os.getenv("MYNTRA_SECRET_KEY")
@@ -53,10 +53,10 @@ AMAZON_REDIRECT_URI = os.getenv("AMAZON_REDIRECT_URI")
 
 # ALLOWED_HOSTS = ['trackmyprofit.com', 'www.trackmyprofit.com', '194.238.17.204','api.trackmyprofit.com','127.0.0.1', "localhost" ]
 
-ALLOWED_HOSTS=["*","192.168.1.29"]
+ALLOWED_HOSTS=["*","192.168.1.61"]
 
 CORS_ALLOWED_ORIGINS = [
-
+    
     "https://trackmyprofit.com",
     "https://www.trackmyprofit.com",
     "https://api.trackmyprofit.com",
@@ -72,7 +72,6 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),  
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": True,
-
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
 }
@@ -92,7 +91,6 @@ INSTALLED_APPS = [
     'user_auth',
     'drf_yasg',
     'subscription',
-
     'amazon_auth',
   
 
@@ -156,6 +154,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            'timeout': 20, # Higher timeout for long-running syncs
+        }
     }
 }
 
