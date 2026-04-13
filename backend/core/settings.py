@@ -92,8 +92,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'subscription',
     'amazon_auth',
-  
-
+    'django_crontab',
 ]
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -155,7 +154,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
         'OPTIONS': {
-            'timeout': 20, # Higher timeout for long-running syncs
+            'timeout': 30, # Higher timeout for long-running syncs
         }
     }
 }
@@ -213,3 +212,10 @@ STATICFILES_DIRS = [
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
+
+# CRON JOBS CONFIGURATION
+# Format: ('minute hour day month day_of_week', 'command_to_run')
+# '0 */4 * * *' means every 4 hours
+CRONJOBS = [
+    ('0 */4 * * *', 'django.core.management.call_command', ['background_sync']),
+]

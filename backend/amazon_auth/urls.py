@@ -2,6 +2,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path('dashboard-stats/', views.get_full_dashboard, name='dashboard-stats'),
+    path('pivot-stats/', views.get_pivot_dashboard, name='pivot-stats'),
     path('', views.home, name='home'),
     path('connect/', views.amazon_connect, name='amazon_connect'),
     path('callback/', views.amazon_callback, name='amazon_callback'),
@@ -34,6 +36,6 @@ urlpatterns = [
 
     # Analytics
     path('product-analytics/', views.get_product_analytics, name='get_product_analytics'),
-    path('dashboard-stats/', views.get_full_dashboard, name='get_full_dashboard'),
-
+    path('dashboard-profitability/', views.get_amazon_data_profi_tability, name='get_amazon_data_profi_tability'),
+    path('profitability-monthwise/', views.get_profitability_monthwise, name='get_profitability_monthwise'),
 ]
