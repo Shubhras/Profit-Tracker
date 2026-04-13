@@ -1,31 +1,93 @@
+import actions from './action';
 import { DataService } from '../../config/dataService/dataService';
 
-export const dashboardBegin = () => ({
-  type: 'DASHBOARD_BEGIN',
-});
+const {
+  // dashboard
+  dashboardBegin,
+  dashboardSuccess,
+  dashboardErr,
 
-export const dashboardSuccess = (data) => ({
-  type: 'DASHBOARD_SUCCESS',
-  data,
-});
+  // pivot
+  pivotBegin,
+  pivotSuccess,
+  pivotErr,
 
-export const dashboardErr = (err) => ({
-  type: 'DASHBOARD_ERR',
-  err,
-});
-
+  // profit
+  profitBegin,
+  profitSuccess,
+  profitErr,
+} = actions;
 export const getDashboard = () => {
   return async (dispatch) => {
     dispatch(dashboardBegin());
 
     try {
-      const response = await DataService.get('/amazon/full-dashboard/');
+      const response = await DataService.get('/amazon/dashboard-stats/');
 
-      if (response.data.status === 'success') {
+      if (response.data?.status === 'success' || response.data?.status === true) {
         dispatch(dashboardSuccess(response.data));
+      } else {
+        dispatch(dashboardErr('Something went wrong'));
       }
     } catch (err) {
       dispatch(dashboardErr(err));
+    }
+  };
+};
+export const getPivotStats = (payload) => {
+  return async (dispatch) => {
+    dispatch(pivotBegin());
+
+    try {
+      const response = await DataService.post('/amazon/pivot-stats/', payload);
+
+      if (response.data?.status === true || response.data?.status === 'success') {
+        dispatch(pivotSuccess(response.data));
+      } else {
+        dispatch(pivotErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(pivotErr(err));
+    }
+  };
+};
+
+export const getProfitData = (payload) => {
+  return async (dispatch) => {
+    dispatch(profitBegin());
+
+    try {
+      const response = await DataService.post('/amazon/dashboard-profitability/', payload);
+
+      if (response.data?.status === true || response.data?.status === 'success') {
+        dispatch(profitSuccess(response.data));
+      } else {
+        dispatch(profitErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(profitErr(err));
+    }
+  };
+};
+
+const { monthwiseProfitBegin, monthwiseProfitSuccess, monthwiseProfitErr } = actions;
+
+export const getProfitMonthwise = (fromDate, endDate) => {
+  return async (dispatch) => {
+    dispatch(monthwiseProfitBegin());
+
+    try {
+      const response = await DataService.get(
+        `/amazon/profitability-monthwise/?fromDate=${fromDate}&endDate=${endDate}`,
+      );
+
+      if (response.data?.status === true || response.data?.status === 'success') {
+        dispatch(monthwiseProfitSuccess(response.data));
+      } else {
+        dispatch(monthwiseProfitErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(monthwiseProfitErr(err));
     }
   };
 };
