@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Row, Col, Card, Table, Empty, Divider } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 import { PageHeader } from '../../components/page-headers/page-headers';
+import { getReconcilePaymentSummary } from '../../redux/reconcilePayment/actionCreator';
 
 /* ================= DATA OBJECTS ================= */
 
@@ -22,36 +24,6 @@ const tableColumns = [
 
 const tableData = []; // No data as per image
 
-// const tableTotalRow = {
-//   key: 'total',
-//   channel: 'Total',
-//   skuCount: 0,
-//   receivedFees: '₹0',
-//   calculatedFees: '₹0',
-//   variance: '₹0',
-// };
-
-const cashflowData = [
-  {
-    title: 'Unsettled Not Paid',
-    orders: 1485,
-    amount: '₹3,77,757',
-    bg: 'bg-blue-50',
-  },
-  {
-    title: 'Settled Not Paid',
-    orders: 2051,
-    amount: '₹3,16,669',
-    bg: 'bg-purple-50',
-  },
-  {
-    title: 'Settled Adjustment',
-    orders: 37,
-    amount: '-117',
-    bg: 'bg-gray-50',
-  },
-];
-
 const bankWorkflowData = [
   { label: 'Remittance Amount', value: '₹4,39,527.77', highlight: true },
   { label: 'Negative Adjustment', value: '₹0.00' },
@@ -65,17 +37,86 @@ const bankWorkflowData = [
 /* ================= COMPONENT ================= */
 
 export default function ReconcileSummary() {
+  const [cashflowData, setCashflowData] = useState([
+    {
+      title: 'Unsettled Not Paid',
+      orders: 0,
+      amount: '',
+      bg: 'bg-blue-50',
+    },
+    {
+      title: 'Settled Not Paid',
+      orders: 0,
+      amount: '',
+      bg: 'bg-purple-50',
+    },
+    {
+      title: 'Settled Adjustment',
+      orders: 0,
+      amount: '',
+      bg: 'bg-gray-50',
+    },
+  ]);
+
   const PageRoutes = [
     { path: '', breadcrumbName: 'Reconcile' },
     { path: '', breadcrumbName: 'Summary' },
   ];
+
+  const dispatch = useDispatch();
+  const { reconcileData } = useSelector((state) => state.reconcilePayment);
+
+  useEffect(() => {
+    const payload = {
+      filters: {
+        channel: {
+          IN: ['Amazon-India'],
+        },
+        fromDate: '2026-03-11',
+        toDate: '2026-04-13',
+      },
+      metric: {},
+      pagination: {
+        pageNo: 0,
+        pageSize: 25,
+      },
+    };
+    dispatch(getReconcilePaymentSummary(payload));
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (reconcileData?.data && reconcileData.data.length > 0) {
+      const summary = reconcileData.data[0];
+      setCashflowData([
+        {
+          title: 'Unsettled Not Paid',
+          orders: summary.unsettledvariancecount || 0,
+          amount: summary.unsettledvarianceamount ? Number(summary.unsettledvarianceamount).toFixed(2) : '',
+          bg: 'bg-blue-50',
+        },
+        {
+          title: 'Settled Not Paid',
+          orders: summary.settledorderscount || 0,
+          amount: summary.settledordersamount ? Number(summary.settledordersamount).toFixed(2) : '',
+          bg: 'bg-purple-50',
+        },
+        {
+          title: 'Settled Adjustment',
+          orders: summary.bankvariancecount || 0,
+          amount: summary.bankvarianceamount ? Number(summary.bankvarianceamount).toFixed(2) : '',
+          bg: 'bg-gray-50',
+        },
+      ]);
+      console.log('Summary Data:', summary);
+    }
+  }, [reconcileData]);
 
   return (
     <>
       <PageHeader
         routes={PageRoutes}
         title="PAYMENT RECONCILIATION"
-        className="flex  justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 sm:pb-[30px] bg-transparent sm:flex-col"
+        className="flex justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 sm:pb-[30px] bg-transparent sm:flex-col"
       />
 
       <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-8 xl:px-[15px] pb-[30px] bg-transparent">
