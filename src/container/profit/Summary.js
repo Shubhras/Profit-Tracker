@@ -34,13 +34,13 @@ export default function Summary() {
     window.location.href = 'http://192.168.1.10:8000/amazon/connect';
   };
 
-  const getAuthCodAmazon = () => {
-    const callbackUri = encodeURIComponent('http://localhost:3001/admin/profit/summary'); // your frontend callback
-    const state = Math.random().toString(36).substring(2); // random state for security
-    const sellingPartnerId = '1234567'; // replace with actual seller ID if needed
-    window.location.href = `http://192.168.1.10:8000/amazon/login/?amazon_callback_uri=${callbackUri}&amazon_state=${state}&selling_partner_id=${sellingPartnerId}`;
-    // window.location.href = `http://192.168.1.10:8000/api/amazon/login/?amazon_callback_uri=${callbackUri}&amazon_state=${state}&selling_partner_id=${sellingPartnerId}`;
-  };
+  // const getAuthCodAmazon = () => {
+  //   const callbackUri = encodeURIComponent('http://localhost:3001/admin/profit/summary'); // your frontend callback
+  //   const state = Math.random().toString(36).substring(2); // random state for security
+  //   const sellingPartnerId = '1234567'; // replace with actual seller ID if needed
+  //   window.location.href = `http://192.168.1.10:8000/amazon/login/?amazon_callback_uri=${callbackUri}&amazon_state=${state}&selling_partner_id=${sellingPartnerId}`;
+  //   // window.location.href = `http://192.168.1.10:8000/api/amazon/login/?amazon_callback_uri=${callbackUri}&amazon_state=${state}&selling_partner_id=${sellingPartnerId}`;
+  // };
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -98,13 +98,13 @@ export default function Summary() {
 
   const bottomChartData = dashboardData?.geography?.length
     ? dashboardData.geography
-        .map((item) => ({
-          name: item.id || 'Unknown',
-          value: Number(item.revenue) || 0,
-          qty: Number(item.grossqty) || 0,
-        }))
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 4)
+      .map((item) => ({
+        name: item.id || 'Unknown',
+        value: Number(item.revenue) || 0,
+        qty: Number(item.grossqty) || 0,
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 4)
     : [];
 
   return (
@@ -136,11 +136,11 @@ export default function Summary() {
                 Connect Amazon
               </Button>
             </Col>
-            <Col>
+            {/* <Col>
               <Button type="primary" onClick={getAuthCodAmazon}>
                 Login Amazon
               </Button>
-            </Col>
+            </Col> */}
           </Row>
         </Card>
 
