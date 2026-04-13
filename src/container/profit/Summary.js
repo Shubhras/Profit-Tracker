@@ -91,16 +91,20 @@ export default function Summary() {
   const stackedData =
     data?.trends?.map((item) => ({
       date: item.date,
-      cancelled: 0,
-      rto: 0,
-      returned: 0,
+      cancelled: item.cancelled || 0,
+      rto: item.rto || 0,
+      returned: item.returned || 0,
     })) || [];
 
   const bottomChartData =
-    data?.geography?.slice(0, 4).map((item) => ({
-      name: item.state || 'Unknown',
-      value: Number(item.sales),
-    })) || [];
+    data?.geography
+      ?.map((item) => ({
+        name: item.state || 'Unknown',
+        value: Number(item.sales),
+        qty: Number(item.qty),
+      }))
+      ?.sort((a, b) => b.value - a.value)
+      ?.slice(0, 4) || [];
 
   return (
     <>
@@ -153,20 +157,20 @@ export default function Summary() {
 
               <Row justify="space-between">
                 <span>Gross</span>
-                <span>0</span>
+                <span>₹{data?.breakdown_table?.gross?.amount || 0}</span>
               </Row>
               <Row justify="space-between">
                 <span>Cancelled</span>
-                <span>0</span>
+                <span>₹{data?.breakdown_table?.cancelled?.amount || 0}</span>
               </Row>
               <Row justify="space-between">
                 <span>Returned</span>
-                <span>0</span>
+                <span>₹{data?.breakdown_table?.returned_cret?.amount || 0}</span>
               </Row>
               <Divider />
               <Row justify="space-between">
                 <strong>Net</strong>
-                <strong>0</strong>
+                <strong>₹{data?.breakdown_table?.net?.amount || 0}</strong>
               </Row>
             </Card>
           </Col>
@@ -174,24 +178,24 @@ export default function Summary() {
           {/* PROFIT */}
           <Col xs={24} lg={6}>
             <Card>
-              <Statistic title="Profit" value={0} prefix="₹" />
-              <Tag color="gold">Margin: 0%</Tag>
-              <Tag color="green">ROI: 0%</Tag>
+              <Statistic title="Profit" value={data?.header_metrics?.profit || 0} prefix="₹" />
+              <Tag color="gold">Margin: {data?.header_metrics?.margin || '0%'}</Tag>
+              <Tag color="green">ROI: {data?.header_metrics?.roi || '0%'}</Tag>
             </Card>
 
             <Row gutter={8} className="mt-3">
               <Col span={12}>
                 <Card size="small" className="bg-green-50">
                   <p className="text-green-700">Profit IDs</p>
-                  <strong>#0</strong>
-                  <p>₹0</p>
+                  <strong>#{data?.top_orders?.profitable?.length || 0}</strong>
+                  <p>₹{data?.top_orders?.profitable?.reduce((acc, cur) => acc + (cur.amount || 0), 0)}</p>
                 </Card>
               </Col>
               <Col span={12}>
                 <Card size="small" className="bg-red-50">
                   <p className="text-red-600">Loss IDs</p>
-                  <strong>#0</strong>
-                  <p>₹0</p>
+                  <strong>#{data?.top_orders?.losing?.length || 0}</strong>
+                  <p>₹{data?.top_orders?.losing?.reduce((acc, cur) => acc + (cur.amount || 0), 0)}</p>
                 </Card>
               </Col>
             </Row>
@@ -200,8 +204,8 @@ export default function Summary() {
           {/* AD SPEND */}
           <Col xs={24} lg={6}>
             <Card>
-              <Statistic title="Ad Spend" value={0} prefix="₹" />
-              <Tag color="magenta">TACOS: 0%</Tag>
+              <Statistic title="Ad Spend" value={data?.header_metrics?.ad_spend || 0} prefix="₹" />
+              <Tag color="magenta">TACOS: {data?.header_metrics?.tacos || '0%'}</Tag>
             </Card>
           </Col>
 

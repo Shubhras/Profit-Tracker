@@ -19,7 +19,7 @@ export const getDashboard = () => {
     dispatch(dashboardBegin());
 
     try {
-      const response = await DataService.get('/amazon/full-dashboard/');
+      const response = await DataService.get('/amazon/dashboard-stats/');
 
       if (response.data.status === 'success') {
         dispatch(dashboardSuccess(response.data));
