@@ -39,5 +39,6 @@ urlpatterns = [
     path('dashboard-profitability/', views.get_amazon_data_profi_tability, name='get_amazon_data_profi_tability'),
     path('profitability-monthwise/', views.get_profitability_monthwise, name='get_profitability_monthwise'),
     path('reconcile-paymentsummary/', views.get_amazon_data_reconcile_paymentsummary, name='get_amazon_data_reconcile_paymentsummary'),
+    path('outstanding-payments/', views.get_outstanding_payments, name='get_outstanding_payments'),
  
 ]

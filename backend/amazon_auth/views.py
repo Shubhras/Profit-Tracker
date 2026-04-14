@@ -2,12 +2,12 @@ import os
 import secrets
 import requests
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, date, timedelta
 from django.shortcuts import redirect, render
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, Count, Q, Min, Max
-from django.db.models.functions import TruncDate
+from django.db.models.functions import TruncDate, TruncMonth
 from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -765,7 +765,7 @@ def get_product_analytics(request):
 
     return JsonResponse({"status": "success", "products": data})
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def get_full_dashboard(request):
     """
@@ -774,23 +774,83 @@ def get_full_dashboard(request):
     """
     print(f"DEBUG: get_full_dashboard called for user {request.user}")
     user = request.user
-    start_date_str = request.GET.get('start_date')
-    end_date_str = request.GET.get('end_date')
-    is_live = request.GET.get('live', 'false').lower() == 'true'
-
-    if start_date_str:
-        start_date = timezone.make_aware(datetime.strptime(start_date_str, '%Y-%m-%d'))
-    else:
-        start_date = timezone.now() - timedelta(days=60)
+    
+    # Extract params from GET or POST
+    data_source_raw = request.data if request.method == 'POST' else request.GET
+    
+    # Advanced logic to find data even if it's a GET with a body 
+    # (Common in Postman / Fetch if not set to POST)
+    data_source = {}
+    if data_source_raw:
+        if hasattr(data_source_raw, 'dict'):
+            data_source.update(data_source_raw.dict())
+        else:
+            data_source.update(data_source_raw)
+    
+    # Try parsing raw body if still empty
+    if not data_source:
+        try:
+            import json
+            # Use underlying Django request body
+            body_data = json.loads(request._request.body)
+            if isinstance(body_data, dict):
+                data_source.update(body_data)
+        except: pass
         
-    if end_date_str:
-        end_date = timezone.make_aware(datetime.strptime(end_date_str, '%Y-%m-%d'))
-    else:
-        end_date = timezone.now()
+    # 1. FLATTEN ALL POSSIBLE INPUTS
+    search_data = {}
+    search_data.update(data_source)
+    
+    f_child = search_data.get('filters')
+    if isinstance(f_child, dict):
+        search_data.update(f_child)
+
+    # 2. KEY SEARCH
+    def find_key(keys):
+        for k in keys:
+            val = search_data.get(k)
+            # If it's a list, take first item
+            if isinstance(val, list) and len(val) > 0:
+                val = val[0]
+            if val and str(val).strip(): 
+                return str(val).strip()
+            
+            # Check lowercase
+            for sk, sv in search_data.items():
+                if sk.lower() == k.lower():
+                    if isinstance(sv, list) and len(sv) > 0: sv = sv[0]
+                    if sv and str(sv).strip(): return str(sv).strip()
+        return None
+
+    start_date_raw = find_key(['fromDate', 'start_date', 'from_date', 'startDate'])
+    end_date_raw = find_key(['toDate', 'end_date', 'to_date', 'endDate', 'toDate'])
+
+    def robust_parse(dt_str, default_days):
+        # Allow passing actual datetime objects if they exist
+        if isinstance(dt_str, (datetime, date)):
+             if timezone.is_naive(dt_str): return timezone.make_aware(dt_str)
+             return dt_str
+             
+        if not dt_str or len(str(dt_str)) < 10:
+             return timezone.now() - timedelta(days=default_days)
+        try:
+            s = str(dt_str)[:10]
+            dt = datetime.strptime(s, '%Y-%m-%d')
+            return timezone.make_aware(dt)
+        except Exception as e:
+            print(f"Date Parse Error for '{dt_str}': {e}")
+            return timezone.now() - timedelta(days=default_days)
+
+    start_date = robust_parse(start_date_raw, 30)
+    end_date = robust_parse(end_date_raw, 0)
+    
+    # Set to end of day for end_date
+    end_date = end_date.replace(hour=23, minute=59, second=59)
+    
+    print(f"FINAL DETERMINED DATES: {start_date} to {end_date}")
 
     # HYBRID SYNC LOGIC
-    # 1. Force Live if live=true
-    # 2. Smart Sync if data is older than 6 hours
+    is_live = str(find_key(['live']) or 'false').lower() == 'true'
     needs_sync = is_live
     account = AmazonAccount.objects.filter(user=user).first()
     
@@ -802,7 +862,6 @@ def get_full_dashboard(request):
 
     if needs_sync:
         try:
-            # We pass a clean mock request to sync functions
             sync_orders(request._request or request) 
             sync_finances(request._request or request)
         except Exception as e:
@@ -831,38 +890,40 @@ def get_full_dashboard(request):
     # Global Refund Calculation
     actual_refunds = abs(float(finances_qs.filter(event_type__icontains='Refund').aggregate(val=Sum('total_amount'))['val'] or 0))
 
-    # Try to get linked fees 
-    linked_finances = FinancialEvent.objects.filter(amazon_order_id__in=orders_qs.values_list('amazon_order_id', flat=True))
-    has_linked_data = linked_finances.exists()
+    # 2. Marketplace Fees (Look deeper into shipment events for negative fee components)
+    shipment_evs = finances_qs.filter(event_type__icontains='Shipment')
     
-    if has_linked_data:
-        actual_fees = abs(float(linked_finances.filter(total_amount__lt=0).aggregate(val=Sum('total_amount'))['val'] or 0))
-    else:
-        actual_fees = (total_sales_gross * real_avg_fee_pct)
+    # We estimate fees by parsing negative components from shipment events to be more accurate
+    actual_fees = 0.0
+    for s in shipment_evs:
+        try:
+           data = json.loads(s.raw_data or '{}')
+           # Sum up all Fee lists
+           for item in data.get('ShipmentItemList', []):
+               for fee in item.get('ItemFeeList', []):
+                   actual_fees += abs(float(fee.get('FeeAmount', {}).get('CurrencyAmount', 0)))
+        except: pass
+        
+    # If deep parsing failed or yielded suspicious 0, fallback to historic profiling
+    if actual_fees == 0 and total_sales_gross > 0:
+        actual_fees = total_sales_gross * real_avg_fee_pct
 
-    # REVISED CALCULATION: Real Net Profit (Income - Expenses)
-    # Income = Gross Sales (Non-Cancelled)
-    # Expenses = Refunds + Fees + Ads
-    total_expenses = actual_refunds + actual_fees
+    has_linked_data = actual_fees > 0
     
     # Ad Metrics
-    ad_events = finances_qs.filter(Q(event_type__icontains='ServiceFee') | Q(raw_data__icontains='Ad'))
+    ad_events = finances_qs.filter(Q(event_type__icontains='ServiceFee') | Q(raw_data__icontains='Ad') | Q(raw_data__icontains='Advertising'))
     ad_spend_val = abs(float(ad_events.aggregate(val=Sum('total_amount'))['val'] or 0))
     if ad_spend_val == 0 and total_sales_gross > 0:
-        historic_ads = abs(float(all_user_finances.filter(Q(event_type__icontains='ServiceFee') | Q(raw_data__icontains='Ad')).aggregate(val=Sum('total_amount'))['val'] or 0))
-        ad_pct = (historic_ads / total_historic_rev) if total_historic_rev > 0 else 0.05
-        ad_spend_val = (total_sales_gross * ad_pct)
+        ad_spend_val = (total_sales_gross * 0.05) # 5% estimate
     
-    total_expenses += ad_spend_val
+    # COGS estimate
+    cogs_val = total_sales_gross * 0.35
+
+    # FINAL PROFIT: Sales - Fees - Refunds - Ads - COGS
+    net_profit = total_sales_gross - actual_fees - actual_refunds - ad_spend_val - cogs_val
     
-    # FINAL METRIC: This is your bankable profit before buying the next stock (Gross Profit)
-    net_profit = total_sales_gross - total_expenses
-    
-    # Use 0 COGS for now as it must be user-defined for accuracy
-    cogs_est = 0 
     margin = (net_profit / total_sales_gross * 100) if total_sales_gross > 0 else 0
-    roi = 0 # Cannot calculate ROI without COGS
-    
+    roi = (net_profit / cogs_val * 100) if cogs_val > 0 else 0
     ad_spend = -ad_spend_val
     tacos = (ad_spend_val / total_sales_gross * 100) if total_sales_gross > 0 else 0
 
@@ -880,7 +941,7 @@ def get_full_dashboard(request):
         daily_fees = daily_sales * (actual_fees/total_sales_gross if total_sales_gross > 0 else real_avg_fee_pct)
         daily_profit = daily_sales - daily_fees
         trends_data.append({
-            "date": t['date'],
+            "date": t['date'].strftime('%Y-%m-%d') if hasattr(t['date'], 'strftime') else str(t['date']),
             "sales": round(daily_sales, 2),
             "qty": t['qty'],
             "estimated_profit": round(daily_profit, 2),
@@ -942,28 +1003,71 @@ def get_pivot_dashboard(request):
     # Debug: Print incoming data
     print(f"DEBUG Pivot Request: {request.data if request.method == 'POST' else request.GET}")
 
-    # Extract params
-    data_source = request.data if request.method == 'POST' else request.GET
-    from_date_str = data_source.get('fromDate')
-    end_date_str = data_source.get('endDate')
-    metric_key = data_source.get('qty', 'grossqty') 
+    # 1. EXTRACT PARAMS (Robust logic)
+    data_source_raw = request.data if request.method == 'POST' else request.GET
+    
+    data_source = {}
+    if data_source_raw:
+        if hasattr(data_source_raw, 'dict'):
+            data_source.update(data_source_raw.dict())
+        else:
+            data_source.update(data_source_raw)
+    
+    # Try parsing raw body if still empty
+    if not data_source:
+        try:
+            import json
+            body_data = json.loads(request._request.body)
+            if isinstance(body_data, dict):
+                data_source.update(body_data)
+        except: pass
+        
+    search_data = {}
+    search_data.update(data_source)
+    f_child = search_data.get('filters')
+    if isinstance(f_child, dict):
+        search_data.update(f_child)
+
+    def find_key(keys):
+        for k in keys:
+            val = search_data.get(k)
+            if isinstance(val, list) and len(val) > 0: val = val[0]
+            if val and str(val).strip(): return str(val).strip()
+            # Case-insensitive
+            for sk, sv in search_data.items():
+                if sk.lower() == k.lower():
+                    if isinstance(sv, list) and len(sv) > 0: sv = sv[0]
+                    if sv and str(sv).strip(): return str(sv).strip()
+        return None
+
+    from_date_str = find_key(['fromDate', 'start_date', 'from_date', 'startDate'])
+    end_date_str = find_key(['toDate', 'end_date', 'to_date', 'endDate', 'toDate'])
+    metric_key = find_key(['qty', 'metric']) or 'grossqty'
 
     def parse_dt(dt_str, is_end=False):
-        if not dt_str: return None
+        if not dt_str or not isinstance(dt_str, (str, bytes, date, datetime)) or len(str(dt_str)) < 10: 
+            return (timezone.now() - timedelta(days=60)) if not is_end else timezone.now()
+        
         try:
-            # Handle ISO format with T and Z
-            clean_str = dt_str.split('T')[0]
-            dt = datetime.strptime(clean_str, '%Y-%m-%d')
+            if isinstance(dt_str, (datetime, date)):
+                dt = dt_str
+            else:
+                clean_str = str(dt_str).split('T')[0]
+                dt = datetime.strptime(clean_str, '%Y-%m-%d')
+                
             if is_end:
                 dt = dt.replace(hour=23, minute=59, second=59)
-            return timezone.make_aware(dt)
+                
+            if timezone.is_naive(dt):
+                return timezone.make_aware(dt)
+            return dt
         except:
-            return None
+            return (timezone.now() - timedelta(days=60)) if not is_end else timezone.now()
 
-    start_date = parse_dt(from_date_str) or (timezone.now() - timedelta(days=60))
-    end_date = parse_dt(end_date_str, True) or timezone.now()
+    start_date = parse_dt(from_date_str)
+    end_date = parse_dt(end_date_str, True)
     
-    print(f"DEBUG Filters: Start={start_date}, End={end_date}, Metric={metric_key}")
+    print(f"DEBUG Pivot Data Range: {start_date} to {end_date} (Metric: {metric_key})")
 
     # Base query
     orders_qs = Order.objects.filter(user=user, purchase_date__range=(start_date, end_date))
@@ -978,19 +1082,27 @@ def get_pivot_dashboard(request):
     )
 
     # Convert QuerySet to a lookup map: {(marketplace, date): data}
-    data_lookup = { (t['marketplace_id'] or "Amazon-India", t['day']): t for t in db_trends }
+    data_lookup = { (t['marketplace_id'], t['day']): t for t in db_trends }
 
     # Build Continuous Periodic Results
     results_map = {}
     total_row = {"id": "total"}
     
-    # Identify unique marketplaces in the data (or default to Amazon-India)
-    mkts = orders_qs.values_list('marketplace_id', flat=True).distinct()
-    mkts = [m or "Amazon-India" for m in mkts]
-    if not mkts: mkts = ["Amazon-India"]
+    # Identify unique marketplaces in the data 
+    raw_mkts = orders_qs.values_list('marketplace_id', flat=True).distinct()
+    
+    # Marketplace mapping for readability
+    MKT_NAMES = {
+        "A21TJRUUN4KGV": "Amazon-INDIA",
+        None: "Amazon-INDIA"
+    }
 
-    for mkt in mkts:
-        results_map[mkt] = {"id": mkt}
+    # Process each marketplace
+    for raw_mkt in raw_mkts:
+        display_name = MKT_NAMES.get(raw_mkt) or raw_mkt or "Amazon-INDIA"
+        
+        if display_name not in results_map:
+            results_map[display_name] = {"id": display_name}
         
         # Iterate through EVERY day in the range
         curr = start_date.date()
@@ -998,14 +1110,13 @@ def get_pivot_dashboard(request):
         while curr <= last:
             date_label = curr.strftime('%Y %B %d')
             
-            # Get value from lookup or default to 0
-            record = data_lookup.get((mkt if mkt != "Amazon-India" else None, curr))
-            if not record and mkt == "Amazon-India": # Handle fallback for Null marketplace_id
-                record = data_lookup.get((None, curr))
-                
+            # Get value from lookup
+            record = data_lookup.get((raw_mkt, curr))
             value = float(record.get(metric_key) or 0) if record else 0.0
             
-            results_map[mkt][date_label] = value
+            # Add to marketplace row (Handle collisions if multiple IDs map to same name)
+            results_map[display_name][date_label] = results_map[display_name].get(date_label, 0) + value
+            # Add to global total
             total_row[date_label] = total_row.get(date_label, 0) + value
             
             curr += timedelta(days=1)
@@ -1093,40 +1204,81 @@ def get_amazon_data_profi_tability(request):
     Handles POST requests with filters and pagination.
     """
     user = request.user
-    payload = request.data
+    # 1. EXTRACT PARAMS (Robust logic)
+    data_source_raw = request.data if request.method == 'POST' else request.GET
     
-    filters = payload.get('filters', {})
-    metric_options = payload.get('metric', {})
-    pagination = payload.get('pagination', {})
-    summary_metric = metric_options.get('summarymetric', 'channel') # 'channel' or 'product'
+    data_source = {}
+    if data_source_raw:
+        if hasattr(data_source_raw, 'dict'):
+            data_source.update(data_source_raw.dict())
+        else:
+            data_source.update(data_source_raw)
     
-    # Date Filtering
-    from_date_str = filters.get('fromDate')
-    to_date_str = filters.get('toDate')
+    # Try parsing raw body if still empty
+    if not data_source:
+        try:
+            import json
+            body_data = json.loads(request._request.body)
+            if isinstance(body_data, dict):
+                data_source.update(body_data)
+        except: pass
+        
+    search_data = {}
+    search_data.update(data_source)
+    f_child = search_data.get('filters')
+    if isinstance(f_child, dict):
+        search_data.update(f_child)
+
+    def find_key(keys):
+        for k in keys:
+            val = search_data.get(k)
+            if isinstance(val, list) and len(val) > 0: val = val[0]
+            if val and str(val).strip(): return str(val).strip()
+            # Case-insensitive
+            for sk, sv in search_data.items():
+                if sk.lower() == k.lower():
+                    if isinstance(sv, list) and len(sv) > 0: sv = sv[0]
+                    if sv and str(sv).strip(): return str(sv).strip()
+        return None
+
+    from_date_str = find_key(['fromDate', 'start_date', 'from_date', 'startDate'])
+    to_date_str = find_key(['toDate', 'end_date', 'to_date', 'endDate', 'toDate'])
+
+    # New specific filters
+    sku_f = find_key(['SKU', 'sku', 'seller_sku'])
+    product_f = find_key(['ProductId', 'productId', 'product_id'])
+    parent_f = find_key(['ParentId', 'parentId', 'parent_id'])
+    mkt_cat_f = find_key(['MKT category', 'mkt_category', 'category'])
+    master_sku_f = find_key(['Inv MasterSku', 'master_sku', 'masterSku'])
     
+    pagination = search_data.get('pagination', {})
+    metric_options = search_data.get('metric', {})
+    summary_metric = metric_options.get('summarymetric', 'channel')
+
     def parse_iso_date(date_str, default_delta):
-        if not date_str:
+        if not date_str or not isinstance(date_str, (str, bytes, date, datetime)) or len(str(date_str)) < 10:
             return timezone.now() + default_delta
         try:
-            # Handle YYYY-MM-DD or ISO formats
-            if len(date_str) == 10:
-                dt = datetime.strptime(date_str, '%Y-%m-%d')
+            if isinstance(date_str, (datetime, date)):
+                dt = date_str
             else:
-                cleaned = date_str.replace('Z', '+00:00')
-                dt = datetime.fromisoformat(cleaned)
+                # Handle YYYY-MM-DD or ISO formats
+                s = str(date_str)[:10]
+                dt = datetime.strptime(s, '%Y-%m-%d')
             
             if timezone.is_naive(dt):
                 return timezone.make_aware(dt)
             return dt
         except Exception:
             return timezone.now() + default_delta
- 
-    # Increased default look-back to 120 days to ensure historical data is caught
-    from_date = parse_iso_date(from_date_str, timedelta(days=-120))
+  
+    from_date = parse_iso_date(from_date_str, timedelta(days=-30))
     to_date = parse_iso_date(to_date_str, timedelta(days=0))
+    if to_date:
+        to_date = to_date.replace(hour=23, minute=59, second=59)
  
     # Channel filtering
-    channels = filters.get('channel', {}).get('IN', [])
+    channels = search_data.get('channel', {}).get('IN', []) if isinstance(search_data.get('channel'), dict) else []
     # Check if Amazon is requested
     is_amazon_requested = not channels or any("Amazon" in c for c in channels)
     
@@ -1144,6 +1296,21 @@ def get_amazon_data_profi_tability(request):
     orders_qs = Order.objects.filter(user=user, purchase_date__range=(from_date, to_date))
     items_qs = OrderItem.objects.filter(order__user=user, order__purchase_date__range=(from_date, to_date))
     finances_qs = FinancialEvent.objects.filter(user=user, posted_date__range=(from_date, to_date))
+
+    # Apply product filters
+    if sku_f:
+        orders_qs = orders_qs.filter(items__seller_sku__icontains=sku_f)
+        items_qs = items_qs.filter(seller_sku__icontains=sku_f)
+    if product_f:
+        orders_qs = orders_qs.filter(items__order_item_id__icontains=product_f)
+        items_qs = items_qs.filter(order_item_id__icontains=product_f)
+    if parent_f or mkt_cat_f or master_sku_f:
+        search_term = parent_f or mkt_cat_f or master_sku_f
+        orders_qs = orders_qs.filter(items__title__icontains=search_term)
+        items_qs = items_qs.filter(title__icontains=search_term)
+    
+    # Ensure distinct orders after M2M filter
+    orders_qs = orders_qs.distinct()
  
     # Grouping Logic
     if summary_metric == 'channel':
@@ -1207,28 +1374,40 @@ def get_amazon_data_profi_tability(request):
             p_finances = finances_qs.filter(amazon_order_id__in=p_order_ids)
             id_val = sku
  
-        # Financial Calculations
+        # CORRECT FINANCIAL LOGIC
         if p_finances.exists():
-            mp_fees = float(p_finances.filter(total_amount__lt=0).exclude(event_type__icontains='Shipping').exclude(Q(event_type__icontains='Ad') | Q(raw_data__icontains='Sponsored')).aggregate(val=Sum('total_amount'))['val'] or 0)
+            shipments = p_finances.filter(event_type__icontains='Shipment')
+            refund_evs = p_finances.filter(event_type__icontains='Refund')
+            
+            settled_income = float(shipments.aggregate(val=Sum('total_amount'))['val'] or 0)
+            refunds = float(refund_evs.aggregate(val=Sum('total_amount'))['val'] or 0)
+            
+            # 2. Marketplace Fees (The difference between what customer paid and what we got in shipments)
+            # gross_sales is what customer paid (from Order model)
+            mp_fees = (settled_income - gross_sales) if settled_income > 0 else -(gross_sales * 0.18)
+            
             shipping_fees = float(p_finances.filter(event_type__icontains='Shipping').aggregate(val=Sum('total_amount'))['val'] or 0)
             ads = float(p_finances.filter(Q(event_type__icontains='Ad') | Q(raw_data__icontains='Sponsored') | Q(event_type__icontains='ServiceFee')).aggregate(val=Sum('total_amount'))['val'] or 0)
-            refunds = float(p_finances.filter(event_type__icontains='Refund').aggregate(val=Sum('total_amount'))['val'] or 0)
             storage_fees = float(p_finances.filter(event_type__icontains='Storage').aggregate(val=Sum('total_amount'))['val'] or 0)
             other_fees = float(p_finances.filter(event_type__icontains='Adjustment').aggregate(val=Sum('total_amount'))['val'] or 0)
+            return_qty = refund_evs.count()
         else:
             # Fallback estimates
-            mp_fees = -(gross_sales * 0.15)
+            mp_fees = -(gross_sales * 0.18)
             shipping_fees = -(gross_qty * 65)
-            ads = -(gross_sales * 0.08)
+            ads = -(gross_sales * 0.05)
             refunds = 0
             storage_fees = -(gross_sales * 0.01)
             other_fees = 0
- 
+            return_qty = 0
+
         # Derived Metrics
-        cogs = -(gross_sales * 0.40) # Estimate COGS as 40% of gross
+        cogs = -(gross_sales * 0.35) # Reduced estimate to 35% for better realism
         net_sales = gross_sales + refunds
+        # Profit = Gross Sales + Fees (neg) + Refunds (neg) + Ads (neg) + COGS (neg) + Storage + Other
         profit = gross_sales + mp_fees + shipping_fees + ads + cogs + refunds + storage_fees + other_fees
         profit_margin = (profit / gross_sales * 100) if gross_sales > 0 else 0
+        grossprofit = gross_sales + mp_fees + shipping_fees
         
         item = {
             "ads": f"{round(ads, 2)}",
@@ -1239,8 +1418,8 @@ def get_amazon_data_profi_tability(request):
             "drr": f"{round(gross_sales / 30, 2)}",
             "grossmrp": f"{round(gross_sales * 2.5, 2)}",
             "grossmrpdiscount": "60.0",
-            "grossprofit": round(gross_sales + mp_fees + shipping_fees, 2),
-            "grossprofitper": round(((gross_sales + mp_fees + shipping_fees) / gross_sales * 100), 2) if gross_sales > 0 else 0,
+            "grossprofit": round(grossprofit, 2),
+            "grossprofitper": round((grossprofit / gross_sales * 100), 2) if gross_sales > 0 else 0,
             "grossqty": f"{gross_qty}",
             "grosssales": f"{round(gross_sales, 2)}",
             "gsttopay": 0.0,
@@ -1266,14 +1445,14 @@ def get_amazon_data_profi_tability(request):
             "productidentifier": None,
             "producttitle": display_name,
             "profit": round(profit, 2),
-            "profit_settled_amount": f"{round(net_sales + mp_fees + shipping_fees, 2)}",
+            "profit_settled_amount": f"{round(grossprofit + refunds, 2)}",
             "profitcogs": f"{round(cogs, 2)}",
             "profitmargin": profit_margin,
             "redirecturl": None,
             "replacedqty": "0",
             "retpercent": round((abs(refunds)/gross_sales*100), 2) if gross_sales > 0 else 0,
             "returnestqty": "0",
-            "returnqty": "0",
+            "returnqty": f"{return_qty}",
             "rowcount": 1,
             "shippingfees": f"{round(shipping_fees, 2)}",
             "stdcost_missing_percentage": "0",
@@ -1282,7 +1461,7 @@ def get_amazon_data_profi_tability(request):
             "tacos": f"{round((abs(ads)/gross_sales*100), 2)}" if gross_sales > 0 else "0",
             "tcsinc": "0",
             "total_gross_gstdiff_component": 0,
-            "total_gross_profit_component": round(gross_sales + mp_fees + shipping_fees, 2),
+            "total_gross_profit_component": round(grossprofit, 2),
             "total_gstdiff_component": 0,
             "total_profit_component": round(profit, 2)
         }
@@ -1358,25 +1537,88 @@ def get_profitability_monthwise(request):
         from django.contrib.auth.models import User
         user = User.objects.first()
 
-    data_src = request.data if request.method == 'POST' else request.GET
+    # 1. EXTRACT PARAMS (Robust logic)
+    data_source_raw = request.data if request.method == 'POST' else request.GET
     
-    # Date Filtering
-    filters = data_src.get('filters', {}) if request.method == 'POST' else data_src
-    from_date_str = filters.get('fromDate')
-    to_date_str = filters.get('toDate')
+    data_source = {}
+    if data_source_raw:
+        if hasattr(data_source_raw, 'dict'):
+            data_source.update(data_source_raw.dict())
+        else:
+            data_source.update(data_source_raw)
     
-    def parse_dt(d_str, default_days):
-        if not d_str: return timezone.now() - timedelta(days=default_days)
+    # Try parsing raw body if still empty
+    if not data_source:
         try:
-             return timezone.make_aware(datetime.strptime(d_str[:10], '%Y-%m-%d'))
-        except: return timezone.now() - timedelta(days=default_days)
+            import json
+            body_data = json.loads(request._request.body)
+            if isinstance(body_data, dict):
+                data_source.update(body_data)
+        except: pass
+        
+    search_data = {}
+    search_data.update(data_source)
+    f_child = search_data.get('filters', {})
+    if isinstance(f_child, dict):
+        search_data.update(f_child)
 
-    start_date = parse_dt(from_date_str, 200)
-    end_date = parse_dt(to_date_str, 0)
+    def find_key(keys):
+        for k in keys:
+            val = search_data.get(k)
+            if isinstance(val, list) and len(val) > 0: val = val[0]
+            if val and str(val).strip(): return str(val).strip()
+            # Case-insensitive
+            for sk, sv in search_data.items():
+                if sk.lower() == k.lower():
+                    if isinstance(sv, list) and len(sv) > 0: sv = sv[0]
+                    if sv and str(sv).strip(): return str(sv).strip()
+        return None
 
+    from_date_str = find_key(['fromDate', 'start_date', 'from_date', 'startDate'])
+    to_date_str = find_key(['toDate', 'end_date', 'to_date', 'endDate', 'toDate'])
+    
+    # New specific filters
+    sku_f = find_key(['SKU', 'sku', 'seller_sku'])
+    product_f = find_key(['ProductId', 'productId', 'product_id'])
+    parent_f = find_key(['ParentId', 'parentId', 'parent_id'])
+    mkt_cat_f = find_key(['MKT category', 'mkt_category', 'category'])
+    master_sku_f = find_key(['Inv MasterSku', 'master_sku', 'masterSku'])
+
+    def parse_dt_robust(dt_str, is_end=False):
+        if not dt_str or not isinstance(dt_str, (str, bytes, date, datetime)) or len(str(dt_str)) < 10: 
+            return (timezone.now() - timedelta(days=60)) if not is_end else timezone.now()
+        try:
+            if isinstance(dt_str, (datetime, date)):
+                dt = dt_str
+            else:
+                clean_str = str(dt_str).split('T')[0]
+                dt = datetime.strptime(clean_str, '%Y-%m-%d')
+            if is_end:
+                dt = dt.replace(hour=23, minute=59, second=59)
+            if timezone.is_naive(dt):
+                return timezone.make_aware(dt)
+            return dt
+        except:
+            return (timezone.now() - timedelta(days=60)) if not is_end else timezone.now()
+
+    start_date = parse_dt_robust(from_date_str)
+    end_date = parse_dt_robust(to_date_str, True)
+    
     from django.db.models.functions import TruncMonth
+    # Base queryset for orders in the range
+    orders_qs = Order.objects.filter(user=user, purchase_date__range=(start_date, end_date))
+    
+    # Apply specific filters
+    if sku_f:
+        orders_qs = orders_qs.filter(items__seller_sku__icontains=sku_f)
+    if product_f:
+        orders_qs = orders_qs.filter(items__order_item_id__icontains=product_f)
+    if parent_f or mkt_cat_f or master_sku_f:
+        search_term = parent_f or mkt_cat_f or master_sku_f
+        orders_qs = orders_qs.filter(items__title__icontains=search_term)
+
     # Monthly aggregate for orders
-    orders_month_qs = Order.objects.filter(user=user, purchase_date__range=(start_date, end_date)).annotate(
+    orders_month_qs = orders_qs.distinct().annotate(
         month_trunc=TruncMonth('purchase_date')
     ).values('month_trunc').annotate(
         grossqty=Sum('items_shipped'),
@@ -1403,58 +1645,114 @@ def get_profitability_monthwise(request):
         # Monthly finance filters
         m_fin = fin_qs.filter(posted_date__year=curr.year, posted_date__month=curr.month)
         
-        gsales = float(m_data['grosssales'] or 0) if m_data else 0.0
-        gqty = m_data['grossqty'] or 0 if m_data else 0
+        shipment_evs = m_fin.filter(event_type__icontains='Shipment')
+        refund_evs = m_fin.filter(event_type__icontains='Refund')
         
-        # Pull real data from DB
-        refunds = float(m_fin.filter(event_type__icontains='Refund').aggregate(v=Sum('total_amount'))['v'] or 0)
-        mp_fees = float(m_fin.filter(total_amount__lt=0).exclude(event_type__icontains='Shipping').exclude(Q(event_type__icontains='Ad') | Q(raw_data__icontains='Sponsored')).aggregate(v=Sum('total_amount'))['v'] or 0)
-        ship = float(m_fin.filter(event_type__icontains='Shipping').aggregate(v=Sum('total_amount'))['v'] or 0)
-        ads = float(m_fin.filter(Q(event_type__icontains='Ad') | Q(raw_data__icontains='Sponsored') | Q(event_type__icontains='ServiceFee')).aggregate(v=Sum('total_amount'))['v'] or 0)
+        # Real Marketplace Fee Extraction (Deep Parse)
+        actual_mp_fees = 0.0
+        for s in shipment_evs:
+            try:
+                import json
+                data = json.loads(s.raw_data or '{}')
+                for item in data.get('ShipmentItemList', []):
+                    for fee in item.get('ItemFeeList', []):
+                        actual_mp_fees += abs(float(fee.get('FeeAmount', {}).get('CurrencyAmount', 0)))
+            except: pass
+            
+        # Refund fee reversals (Seller gets money back)
+        for r in refund_evs:
+            try:
+                import json
+                data = json.loads(r.raw_data or '{}')
+                for item in data.get('ShipmentItemAdjustmentList', []):
+                    for fee in item.get('ItemFeeAdjustmentList', []):
+                        actual_mp_fees -= abs(float(fee.get('FeeAmount', {}).get('CurrencyAmount', 0)))
+            except: pass
+
+        # Revenue and Qty
+        if m_data and float(m_data['grosssales'] or 0) > 0:
+            gsales = float(m_data['grosssales'] or 0)
+            gqty = m_data['grossqty'] or 0
+        else:
+            # Reconstruct from Financials
+            settled_principal = float(shipment_evs.aggregate(v=Sum('total_amount'))['v'] or 0)
+            gsales = settled_principal # No guessing
+            gqty = shipment_evs.count()
+            
+        # Actual Refund totals
+        refunds_val = abs(float(refund_evs.aggregate(v=Sum('total_amount'))['v'] or 0))
         
-        # Secondary derivation
-        cogs = -(gsales * 0.40)
-        net_sales = gsales + refunds
-        profit = gsales + mp_fees + ship + ads + cogs + refunds if gsales > 0 or refunds < 0 else 0
+        # Claims (Reimbursements)
+        claim_sales = 0.0
+        reimb_evs = m_fin.filter(Q(event_type__icontains='Adjustment') | Q(raw_data__icontains='Reimbursement'))
+        for r in reimb_evs:
+            try:
+                import json
+                data = json.loads(r.raw_data or '{}')
+                claim_sales += abs(float(data.get('AdjustmentAmount', {}).get('CurrencyAmount', 0)))
+            except: pass
+            
+        # Ads
+        ads_val = abs(float(m_fin.filter(Q(event_type__icontains='ServiceFee') | Q(raw_data__icontains='Ad') | Q(raw_data__icontains='Sponsored')).aggregate(v=Sum('total_amount'))['v'] or 0))
         
+        # Shipping
+        ship_val = abs(float(m_fin.filter(event_type__icontains='Shipping').aggregate(v=Sum('total_amount'))['v'] or 0))
+        if ship_val == 0 and gqty > 0: ship_val = (gqty * 65.0) # Estimated if missing
+
+        # COGS
+        cogs_val = (gsales * 0.35) if gsales > 0 else 0.0
+        
+        # 1. Cancellations (From Order table)
+        m_orders_all = orders_qs.filter(purchase_date__year=curr.year, purchase_date__month=curr.month)
+        cancelled_evs = m_orders_all.filter(Q(order_status='Canceled') | Q(order_status='Cancelled'))
+        can_qty = cancelled_evs.count()
+        can_sales = float(cancelled_evs.aggregate(v=Sum('total_amount'))['v'] or 0)
+        
+        # Final Profit Calculation
+        profit_val = gsales - (actual_mp_fees + refunds_val + ads_val + cogs_val + ship_val) + claim_sales
+        net_sales_val = gsales - refunds_val
+        
+        # Summary of net counts
+        net_qty = gqty - can_qty - refund_evs.count()
+        repl_qty = 0
         response_list.append({
             "month": month_key,
             "grossqty": gqty,
-            "netqty": int(gqty * 0.9),
-            "cancelledcanqty": 0,
+            "netqty": net_qty,
+            "cancelledcanqty": can_qty,
             "cancelledrtoqty": 0,
             "returnedrtoqty": 0,
-            "returnedcreturnqty": 0,
-            "claimqty": 0,
+            "returnedcreturnqty": refund_evs.count(),
+            "claimqty": reimb_evs.count() if 'reimb_evs' in locals() else 0,
             "replacedqty": 0,
             "stdcostmissingqty": 0,
             "customerdiscount": round(gsales * 0.05, 2),
             "grosssales": f"{round(gsales, 2)}",
-            "cancelledcansales": "0",
+            "cancelledcansales": f"{round(can_sales, 2)}",
             "cancelledrtosales": "0",
             "returnedrtosales": "0",
-            "returnedcreturnsales": f"{round(refunds, 2)}",
-            "claimsales": "0",
-            "netsales": f"{round(net_sales, 2)}",
-            "mpfees": f"{round(mp_fees, 2)}",
-            "shipfees": f"{round(ship, 2)}",
-            "ads": f"{round(ads, 2)}",
-            "stdcost": f"{round(cogs, 0)}",
+            "returnedcreturnsales": f"{round(refunds_val, 2)}",
+            "claimsales": f"{round(claim_sales, 2)}",
+            "netsales": f"{round(net_sales_val, 2)}",
+            "mpfees": f"{round(-actual_mp_fees, 2)}",
+            "shipfees": f"{round(-ship_val, 2)}",
+            "ads": f"{round(-ads_val, 2)}",
+            "stdcost": f"{round(-cogs_val, 0)}",
             "otherfees": "0",
             "accountcharges": "0",
-            "settledamount": f"{round(net_sales + mp_fees + ship, 2)}",
-            "profit": f"{round(profit, 2)}",
+            "settledamount": f"{round(gsales - actual_mp_fees - ship_val, 2)}",
+            "profit": f"{round(profit_val, 2)}",
             "gsttopay": 0.0,
-            "mpfees_with_claims": f"{round(mp_fees, 2)}",
+            "mpfees_with_claims": f"{round(-actual_mp_fees + claim_sales, 2)}",
             "mrp": f"{round(gsales * 2.2, 0)}",
-            "netmrpdiscount": "60.0",
-            "retpercent": f"{round(abs(refunds)/gsales*100, 2)}" if gsales > 0 else "0",
-            "tacos": f"{round(abs(ads)/gsales*100, 2)}" if gsales > 0 else "0",
-            "profitmargin": f"{round(profit/gsales*100, 2)}" if gsales > 0 else "0",
+            "netmrpdiscount": "0.0",
+            "retpercent": f"{round(abs(refunds_val)/gsales*100, 2)}" if gsales > 0 else "0",
+            "tacos": f"{round(abs(ads_val)/gsales*100, 2)}" if gsales > 0 else "0",
+            "profitmargin": f"{round(profit_val/gsales*100, 2)}" if gsales > 0 else "0",
             "grossasp": f"{round(gsales/gqty, 2)}" if gqty > 0 else "0",
             "stdcost_missing_percentage": "0.00",
-            "mrp_customer_discount": "60.0",
-            "netasp": f"{round(net_sales/gqty, 2)}" if gqty > 0 else "0"
+            "mrp_customer_discount": "0.0",
+            "netasp": f"{round(net_sales_val/gqty, 2)}" if gqty > 0 else "0"
         })
         
         # Move to next month
@@ -1583,6 +1881,160 @@ def get_amazon_data_reconcile_paymentsummary(request):
         ]
     }
     
+    return JsonResponse(result)
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def get_outstanding_payments(request):
+    """
+    Returns data for the Outstanding Payments dashboard.
+    Calculates settled vs unsettled amounts based on Order and FinancialEvent models.
+    """
+    user = request.user
+    
+    # 1. EXTRACT DATA SOURCE (Support POST JSON, POST Form, and GET)
+    data_source = {}
+    if request.method == 'POST':
+        data_source.update(request.data if isinstance(request.data, dict) else {})
+    else:
+        data_source.update(request.GET.dict())
+    
+    # Support for nested "filters" key commonly sent by the frontend
+    filters = data_source.get('filters', {})
+    if isinstance(filters, dict):
+        data_source.update(filters)
+
+    def find_key(keys):
+        for k in keys:
+            val = data_source.get(k)
+            if isinstance(val, list) and len(val) > 0: val = val[0]
+            if val and str(val).strip(): return str(val).strip()
+            # Case-insensitive
+            for sk, sv in data_source.items():
+                if sk.lower() == k.lower():
+                    if isinstance(sv, list) and len(sv) > 0: sv = sv[0]
+                    if sv and str(sv).strip(): return str(sv).strip()
+        return None
+
+    # Date Range Extraction
+    start_date_raw = find_key(['fromDate', 'start_date', 'from_date', 'startDate'])
+    end_date_raw = find_key(['toDate', 'end_date', 'to_date', 'endDate'])
+
+    def parse_dt(dt_str, is_end=False):
+        if not dt_str:
+            # Default to a wide range if no dates provided to show "real data"
+            return (timezone.now() - timedelta(days=365)) if not is_end else timezone.now()
+        try:
+            if isinstance(dt_str, (datetime, date)):
+                dt = dt_str
+            else:
+                # Remove T if present (e.g. 2024-01-01T00:00:00Z)
+                clean_str = str(dt_str).split('T')[0]
+                dt = datetime.strptime(clean_str, '%Y-%m-%d')
+            
+            if is_end:
+                dt = dt.replace(hour=23, minute=59, second=59)
+            else:
+                dt = dt.replace(hour=0, minute=0, second=0)
+            
+            return timezone.make_aware(dt) if timezone.is_naive(dt) else dt
+        except Exception as e:
+            print(f"DEBUG: Date Parse Error: {e}")
+            return (timezone.now() - timedelta(days=365)) if not is_end else timezone.now()
+
+    start_date = parse_dt(start_date_raw)
+    end_date = parse_dt(end_date_raw, True)
+
+    # 2. DATA QUERIES
+    # Total Orders in range
+    orders_qs = Order.objects.filter(user=user, purchase_date__range=(start_date, end_date))
+    # All finances linked to these orders OR within the posted date range
+    finances_qs = FinancialEvent.objects.filter(user=user, posted_date__range=(start_date, end_date))
+
+    # Real Logic for Reconciliation:
+    # 1. Settled: Orders that have at least one FinancialEvent
+    # 2. Unsettled: Shipped orders that have NO FinancialEvent
+    
+    # Get all order IDs that have been settled in the current timeframe
+    settled_ids = set(FinancialEvent.objects.filter(user=user, amazon_order_id__isnull=False).values_list('amazon_order_id', flat=True).distinct())
+    
+    # Apply filters to orders
+    settled_orders = orders_qs.filter(amazon_order_id__in=settled_ids)
+    unsettled_orders = orders_qs.exclude(amazon_order_id__in=settled_ids).exclude(order_status__icontains='Cancel')
+
+    # Aggregations
+    # Note: Using absolute values for counts and amounts as requested by the UI format
+    settled_not_paid_amount = float(settled_orders.aggregate(val=Sum('total_amount'))['val'] or 0)
+    settled_not_paid_count = settled_orders.count()
+    
+    unsettled_variance_amount = float(unsettled_orders.aggregate(val=Sum('total_amount'))['val'] or 0)
+    unsettled_variance_count = unsettled_orders.count()
+    
+    # Adjustments: Service fees, adjustments, etc (events without a specific order ID or with adj types)
+    adjustments_qs = finances_qs.filter(Q(event_type__icontains='Adjustment') | Q(event_type__icontains='ServiceFee') | Q(amazon_order_id__isnull=True))
+    settled_adj_amount = float(adjustments_qs.aggregate(val=Sum('total_amount'))['val'] or 0)
+    settled_adj_count = adjustments_qs.count()
+
+    # 3. GRAPHING DATA (Monthly)
+    def get_graph_data(qs, date_field, amount_key, count_key):
+        trends = qs.annotate(month=TruncMonth(date_field)).values('month').annotate(
+            sum_val=Sum('total_amount'),
+            cnt_val=Count('id')
+        ).order_by('month')
+        
+        return [
+            {
+                "channel": "Amazon-India",
+                "month": t['month'].strftime('%Y-%m') if t['month'] else "N/A",
+                amount_key: abs(float(t['sum_val'] or 0)),
+                count_key: t['cnt_val']
+            } for t in trends if t['month']
+        ]
+
+    adj_graph = get_graph_data(adjustments_qs, 'posted_date', 'settledadjamount', 'settledadjcount')
+    unsettled_graph = get_graph_data(unsettled_orders, 'purchase_date', 'unsettled', 'count')
+
+    # 4. FINAL RESPONSE
+    # Get the latest update date from the database for the 'date' field
+    latest_event = FinancialEvent.objects.filter(user=user).order_by('-posted_date').first()
+    update_date = latest_event.posted_date.strftime('%Y-%m-%d %H:%M:%S+00') if latest_event else "NA"
+
+    result = {
+        "status": True,
+        "message": "Success",
+        "message_code": "E1",
+        "table_response": [
+            {
+                "cashback_pending": None,
+                "channel": "zzzTotal",
+                "settledadjamount": -settled_adj_amount,
+                "settledadjcount": settled_adj_count,
+                "settlednotpaidamount": settled_not_paid_amount,
+                "settlednotpaidcount": settled_not_paid_count,
+                "unsettledvarianceamount": unsettled_variance_amount,
+                "unsettledvariancecount": unsettled_variance_count,
+                "date": "NA",
+                "discrepancy": None
+            },
+            {
+                "cashback_pending": None,
+                "channel": "Amazon-India",
+                "settledadjamount": -settled_adj_amount,
+                "settledadjcount": settled_adj_count,
+                "settlednotpaidamount": settled_not_paid_amount,
+                "settlednotpaidcount": settled_not_paid_count,
+                "unsettledvarianceamount": unsettled_variance_amount,
+                "unsettledvariancecount": unsettled_variance_count,
+                "date": update_date,
+                "discrepancy": None
+            }
+        ],
+        "cashbackgraph": None,
+        "settledadjgraph": adj_graph,
+        "current_reserve": [{"current_reserve": 0.0}],
+        "unsettled_graph": unsettled_graph
+    }
+
     return JsonResponse(result)
  
  
