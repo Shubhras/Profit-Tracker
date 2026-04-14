@@ -1,12 +1,22 @@
 import UilSearch from '@iconscout/react-unicons/icons/uil-search';
 import UilTimes from '@iconscout/react-unicons/icons/uil-times';
 import { Form, Input } from 'antd';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-// import { useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
+import actions from '../../../redux/dashboard/action';
 
 const SearchBar = React.memo(() => {
   const [form] = Form.useForm();
+  const dispatch = useDispatch();
+  const [value, setValue] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      dispatch(actions.setSearch(value));
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [value]);
 
   const [state, setState] = useState({
     openSearch: false,
@@ -43,6 +53,7 @@ const SearchBar = React.memo(() => {
             <Input
               className="bg-transparent dark:bg-transparent p-1.5 min-ssm:border-none ssm:h-[48px] ssm:px-[20px] ssm:dark:shadow-none ssm:border-1 ssm:border-regular dark:ssm:border-white10"
               placeholder="Search Here"
+              onChange={(e) => setValue(e.target.value)}
             />
           </Form.Item>
         </Form>

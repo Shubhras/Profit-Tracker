@@ -6,13 +6,14 @@ import { getProfitData } from '../../redux/dashboard/actionCreator';
 
 export default function ProfitTableView() {
   const dispatch = useDispatch();
-  const { loading, profitData } = useSelector((state) => state.dashboard);
+  const { loading, profitData, dateRange, search } = useSelector((state) => state.dashboard);
   const totals = profitData?.totals || {};
   const payload = {
     filters: {
       channel: { IN: ['Amazon-India'] },
-      fromDate: '',
-      toDate: '',
+      fromDate: dateRange?.fromDate || null,
+      toDate: dateRange?.endDate || null,
+      search,
     },
     // metric: {
     //   expense: 'withExpense',
@@ -30,7 +31,7 @@ export default function ProfitTableView() {
 
   useEffect(() => {
     dispatch(getProfitData(payload));
-  }, [dispatch]);
+  }, [dispatch, dateRange]);
 
   // console.log(data);
   const PageRoutes = [

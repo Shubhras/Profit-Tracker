@@ -27,6 +27,8 @@ const initialState = {
   profitData: null,
   monthwiseProfitData: null,
   error: null,
+  dateRange: null,
+  search: '',
 };
 
 const dashboardReducer = (state = initialState, action) => {
@@ -113,6 +115,16 @@ const dashboardReducer = (state = initialState, action) => {
         ...state,
         loading: false,
         error: action.err,
+      };
+    case 'SET_DATE_RANGE':
+      return {
+        ...state,
+        dateRange: action.payload,
+      };
+    case 'SET_SEARCH':
+      return {
+        ...state,
+        search: action.payload,
       };
 
     default:

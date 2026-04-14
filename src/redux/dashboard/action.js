@@ -14,6 +14,9 @@ const actions = {
   MONTHWISE_PROFIT_SUCCESS: 'MONTHWISE_PROFIT_SUCCESS',
   MONTHWISE_PROFIT_ERR: 'MONTHWISE_PROFIT_ERR',
 
+  SET_DATE_RANGE: 'SET_DATE_RANGE',
+  SET_SEARCH: 'SET_SEARCH',
+
   dashboardBegin: () => ({
     type: actions.DASHBOARD_BEGIN,
   }),
@@ -46,6 +49,14 @@ const actions = {
   monthwiseProfitErr: (err) => ({
     type: actions.MONTHWISE_PROFIT_ERR,
     err,
+  }),
+  setDateRange: (payload) => ({
+    type: actions.SET_DATE_RANGE,
+    payload,
+  }),
+  setSearch: (payload) => ({
+    type: actions.SET_SEARCH,
+    payload,
   }),
 };
 
