@@ -11,7 +11,7 @@ const { Option } = Select;
 
 export default function Summary() {
   const [viewType, setViewType] = useState('percentage');
-  const { dashboardData } = useSelector((state) => state.dashboard);
+  const { dashboardData, dateRange } = useSelector((state) => state.dashboard);
   // const [amazonParams, setAmazonParams] = useState({
   //   callbackUri: '',
   //   state: '',
@@ -19,9 +19,14 @@ export default function Summary() {
   // });
   const location = useLocation();
   const dispatch = useDispatch();
+  const payload = {
+    fromDate: dateRange?.fromDate,
+    toDate: dateRange?.endDate,
+  };
+
   useEffect(() => {
-    dispatch(getDashboard());
-  }, [dispatch]);
+    dispatch(getDashboard(payload));
+  }, [dispatch, dateRange]);
 
   const loginAmazon = useCallback(
     (params) => {
@@ -98,13 +103,13 @@ export default function Summary() {
 
   const bottomChartData = dashboardData?.geography?.length
     ? dashboardData.geography
-      .map((item) => ({
-        name: item.id || 'Unknown',
-        value: Number(item.revenue) || 0,
-        qty: Number(item.grossqty) || 0,
-      }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 4)
+        .map((item) => ({
+          name: item.id || 'Unknown',
+          value: Number(item.revenue) || 0,
+          qty: Number(item.grossqty) || 0,
+        }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 4)
     : [];
 
   return (

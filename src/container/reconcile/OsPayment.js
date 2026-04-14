@@ -1,104 +1,56 @@
-import React from 'react';
-import { Card, Table, Row, Col } from 'antd';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Card, Table } from 'antd';
+import { getOutstandingPayments } from '../../redux/reconcilePayment/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function OsPayment() {
+  const dispatch = useDispatch();
+  const { outstandingData, outstandingLoading } = useSelector((state) => state.reconcilePayment);
+  const apiData = outstandingData?.table_response || [];
   const PageRoutes = [
-    {
-      path: 'index',
-      breadcrumbName: 'Profit',
-    },
-    {
-      path: '',
-      breadcrumbName: 'O/s Payment',
-    },
+    { path: 'index', breadcrumbName: 'Profit' },
+    { path: '', breadcrumbName: 'O/s Payment' },
+  ];
+
+  useEffect(() => {
+    dispatch(
+      getOutstandingPayments({
+        filters: {
+          fromDate: '2026-01-01',
+          toDate: '2026-01-03',
+        },
+      }),
+    );
+  }, [dispatch]);
+  const channels = apiData.map((item) => item.channel);
+
+  const tableColumns = [
+    { title: '', dataIndex: 'label', fixed: 'left' },
+
+    ...channels.map((ch) => ({
+      title: ch === 'zzzTotal' ? 'Total' : ch,
+      dataIndex: ch,
+      align: 'center',
+      render: (val) => (val !== null && val !== undefined ? `₹${Number(val).toLocaleString('en-IN')}` : '-'),
+    })),
   ];
   const paymentTableData = [
     {
       key: '1',
       label: 'Settled Not Paid',
-      total: '₹3,47,429',
-      ajio: '₹1,76,662',
-      flipkart: '₹58,097',
-      meesho: '₹1,12,670',
+      ...Object.fromEntries(apiData.map((item) => [item.channel, item.settlednotpaidamount])),
     },
     {
       key: '2',
       label: 'Settled Adjustment',
-      total: '-₹14,168',
-      ajio: '-₹3,590',
-      flipkart: '₹433',
-      meesho: '-₹11,012',
+      ...Object.fromEntries(apiData.map((item) => [item.channel, item.settledadjamount])),
     },
     {
       key: '3',
-      label: 'Unsettled Not Paid',
-      total: '₹3,78,931',
-      ajio: '₹3,73,130',
-      flipkart: '₹5,800',
-      meesho: '₹0',
+      label: 'Unsettled Variance',
+      ...Object.fromEntries(apiData.map((item) => [item.channel, item.unsettledvarianceamount])),
     },
-    {
-      key: '4',
-      label: 'Cashback Pending',
-      total: '₹0',
-      ajio: '₹0',
-      flipkart: '₹0',
-      meesho: '₹0',
-    },
-    {
-      key: '5',
-      label: 'Last Payment Date',
-      total: '-',
-      ajio: '12-01-2026',
-      flipkart: '14-01-2026',
-      meesho: '14-01-2026',
-    },
-    {
-      key: '6',
-      label: <strong>Total</strong>,
-      total: <strong>₹7,12,192</strong>,
-      ajio: <strong>₹5,46,202</strong>,
-      flipkart: <strong>₹64,331</strong>,
-      meesho: <strong>₹1,01,658</strong>,
-    },
-    {
-      key: '7',
-      label: 'Current Reserve',
-      total: '',
-      ajio: '₹0',
-      flipkart: '',
-      meesho: '',
-    },
-    {
-      key: '8',
-      label: 'Cashback Discrepancy',
-      total: '',
-      ajio: '₹0',
-      flipkart: '₹0',
-      meesho: '₹0',
-    },
-  ];
-
-  const tableColumns = [
-    { title: '', dataIndex: 'label' },
-    { title: 'Total', dataIndex: 'total' },
-    { title: 'Ajio', dataIndex: 'ajio' },
-    { title: 'Flipkart', dataIndex: 'flipkart' },
-    { title: 'Meesho', dataIndex: 'meesho' },
-  ];
-
-  const unsettledChartData = [
-    { date: '25/10', Ajio: 370000, Flipkart: 8000 },
-    { date: '25/11', Ajio: 3700, Flipkart: 800 },
-    { date: '25/12', Ajio: 37000, Flipkart: 80 },
-    { date: '26/01', Ajio: 370000, Flipkart: 80000 },
-  ];
-
-  const settledChartData = [
-    { date: '26/01', Ajio: 150000, Flipkart: 60000, Meesho: 110000 },
-    { date: '25/12', Ajio: 30000, Flipkart: 0, Meesho: 5000 },
   ];
 
   return (
@@ -110,50 +62,14 @@ export default function OsPayment() {
       />
       <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-8 xl:px-[15px] pb-[30px] bg-transparent">
         <Card className="mb-6">
-          <Table columns={tableColumns} dataSource={paymentTableData} pagination={false} scroll={{ x: 900 }} />
-        </Card>
-        {/* ===== CHARTS ===== */}
-        <Row gutter={[16, 16]}>
-          {/* Unsettled Orders */}
-          <Col xs={24} lg={12}>
-            <Card title="Unsettled Orders - Outstanding Payments">
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={unsettledChartData}>
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="Flipkart" stackId="a" fill="#86efac" />
-                  <Bar dataKey="Ajio" stackId="a" fill="#fca5a5" />
-                </BarChart>
-              </ResponsiveContainer>
-            </Card>
-          </Col>
-
-          {/* Settled Orders */}
-          <Col xs={24} lg={12}>
-            <Card title="Settled Orders - Outstanding Payments">
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={settledChartData}>
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="Ajio" stackId="a" fill="#a5b4fc" />
-                  <Bar dataKey="Flipkart" stackId="a" fill="#86efac" />
-                  <Bar dataKey="Meesho" stackId="a" fill="#fca5a5" />
-                </BarChart>
-              </ResponsiveContainer>
-            </Card>
-          </Col>
-
-          {/* Cashback */}
-          <Col span={24}>
-            <Card title="Cashback - Outstanding Payments">
-              <div className="h-[200px] flex items-center justify-center text-gray-400">No data available</div>
-            </Card>
-          </Col>
-        </Row>{' '}
+          <Table
+            columns={tableColumns}
+            dataSource={paymentTableData}
+            loading={outstandingLoading}
+            pagination={false}
+            scroll={{ x: 'max-content' }}
+          />{' '}
+        </Card>{' '}
       </main>
     </>
   );

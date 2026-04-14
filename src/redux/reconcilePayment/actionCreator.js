@@ -1,9 +1,16 @@
 import actions from './actions';
 import { DataService } from '../../config/dataService/dataService';
 
-const { reconcilePaymentBegin, reconcilePaymentSuccess, reconcilePaymentErr } = actions;
+const {
+  reconcilePaymentBegin,
+  reconcilePaymentSuccess,
+  reconcilePaymentErr,
+  outstandingPaymentBegin,
+  outstandingPaymentSuccess,
+  outstandingPaymentErr,
+} = actions;
 
-const getReconcilePaymentSummary = (payload) => {
+export const getReconcilePaymentSummary = (payload) => {
   return async (dispatch) => {
     dispatch(reconcilePaymentBegin());
     try {
@@ -19,4 +26,20 @@ const getReconcilePaymentSummary = (payload) => {
   };
 };
 
-export { getReconcilePaymentSummary };
+export const getOutstandingPayments = (payload) => {
+  return async (dispatch) => {
+    dispatch(outstandingPaymentBegin());
+
+    try {
+      const response = await DataService.post('/amazon/outstanding-payments/', payload);
+
+      if (response.data?.status === true || response.data?.status === 'success') {
+        dispatch(outstandingPaymentSuccess(response.data));
+      } else {
+        dispatch(outstandingPaymentErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(outstandingPaymentErr(err));
+    }
+  };
+};

@@ -17,12 +17,12 @@ const {
   profitSuccess,
   profitErr,
 } = actions;
-export const getDashboard = () => {
+export const getDashboard = (payload) => {
   return async (dispatch) => {
     dispatch(dashboardBegin());
 
     try {
-      const response = await DataService.get('/amazon/dashboard-stats/');
+      const response = await DataService.post('/amazon/dashboard-stats/', payload);
 
       if (response.data?.status === 'success' || response.data?.status === true) {
         dispatch(dashboardSuccess(response.data));
@@ -72,14 +72,12 @@ export const getProfitData = (payload) => {
 
 const { monthwiseProfitBegin, monthwiseProfitSuccess, monthwiseProfitErr } = actions;
 
-export const getProfitMonthwise = (fromDate, endDate) => {
+export const getProfitMonthwise = (payload) => {
   return async (dispatch) => {
     dispatch(monthwiseProfitBegin());
 
     try {
-      const response = await DataService.get(
-        `/amazon/profitability-monthwise/?fromDate=${fromDate}&endDate=${endDate}`,
-      );
+      const response = await DataService.post('/amazon/profitability-monthwise/', payload);
 
       if (response.data?.status === true || response.data?.status === 'success') {
         dispatch(monthwiseProfitSuccess(response.data));
