@@ -3,6 +3,7 @@ import { Switch, Button } from 'antd';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 // Import Local Icons
+import amazonIcon from '../../assets/icons/amazon.svg';
 import flipkartIcon from '../../assets/icons/flipkart.png';
 import meeshoIcon from '../../assets/icons/meesho.png';
 import myntraIcon from '../../assets/icons/myntra.png';
@@ -18,6 +19,13 @@ import tallyIcon from '../../assets/icons/tally.png';
 import zohoIcon from '../../assets/icons/zoho.png';
 
 const marketplaces = [
+  {
+    id: 'amazon',
+    name: 'Amazon',
+    domain: 'amazon.com',
+    img: amazonIcon,
+    status: 'disconnected', // ya connected agar needed
+  },
   {
     id: 'flipkart',
     name: 'Flipkart',
@@ -138,6 +146,11 @@ export default function MarketPlaceSettings() {
   const filteredMarketplaces = showConnectedOnly ? marketplaces.filter((m) => m.status === 'connected') : marketplaces;
 
   const handleConnect = (market) => {
+    if (market.id === 'amazon') {
+      window.location.href = 'http://192.168.1.10:8000/amazon/connect';
+      return;
+    }
+
     // Open the dedicated connection page in a new tag
     // In a real app, you might pass the market ID as a query param, e.g. ?market=flipkart
     // For now, just opening the page as requested.

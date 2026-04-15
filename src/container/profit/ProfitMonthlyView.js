@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { Button } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { PageHeader } from '../../components/page-headers/page-headers';
@@ -87,6 +88,8 @@ export default function ProfitMonthlyView() {
     const reset = {
       SKU: '',
       ProductId: '',
+      // ParentId,
+      // mktCategory
     };
 
     setFilters(reset);
@@ -97,6 +100,8 @@ export default function ProfitMonthlyView() {
         toDate: dateRange?.endDate || null,
         SKU: '',
         ProductId: '',
+        // ParentId:'',
+        // mktCategory:''
       }),
     );
   };
@@ -119,35 +124,37 @@ export default function ProfitMonthlyView() {
               </span>
 
               <div className="ml-auto flex gap-2">
-                <button
-                  type="button"
+                <Button
+                  // type="primary"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleClear();
                   }}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-white hover:bg-gray-100"
+                  className="flex items-center gap-1"
+                  // className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 bg-white hover:bg-gray-100"
                 >
                   Clear
                   <CloseOutlined />
-                </button>
+                </Button>
 
-                <button
-                  type="button"
+                <Button
+                  type="primary"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleApply();
                   }}
-                  className="flex items-center gap-2 px-4 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="flex items-center gap-1"
+                  // className="flex items-center gap-2 px-4 py-1.5 text-sm bg-green-600 text-white hover:bg-blue-700"
                 >
                   Apply
                   <CheckOutlined />
-                </button>
+                </Button>
               </div>
             </div>
 
             <div className="flex gap-4 overflow-x-auto whitespace-nowrap">
               <div className="min-w-[200px]">
-                <label className="text-s text-gray-600 mb-1 block">SKU</label>
+                <label className="text-s text-gray-600 mb-1 block">SKU:</label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                   placeholder="SKU"
@@ -156,11 +163,27 @@ export default function ProfitMonthlyView() {
               </div>
 
               <div className="min-w-[200px]">
-                <label className="text-s text-gray-600 mb-1 block">ProductId</label>
+                <label className="text-s text-gray-600 mb-1 block">ProductId:</label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                   placeholder="ProductId"
                   onChange={(e) => handleChange('ProductId', e.target.value)}
+                />
+              </div>
+              <div className="min-w-[200px]">
+                <label className="text-s text-gray-600 mb-1 block">ParentId:</label>
+                <input
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  placeholder="ParentId"
+                  onChange={(e) => handleChange('ParentId', e.target.value)}
+                />
+              </div>
+              <div className="min-w-[200px]">
+                <label className="text-s text-gray-600 mb-1 block">MKT category:</label>
+                <input
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  placeholder="MKT category"
+                  onChange={(e) => handleChange('Mktcategory', e.target.value)}
                 />
               </div>
             </div>

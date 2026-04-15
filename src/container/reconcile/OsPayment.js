@@ -23,14 +23,31 @@ export default function OsPayment() {
       }),
     );
   }, [dispatch]);
-  const channels = apiData.map((item) => item.channel);
+  const totalChannel = apiData.find((item) => item.channel === 'zzzTotal');
+  const otherChannels = apiData.filter((item) => item.channel !== 'zzzTotal');
 
   const tableColumns = [
-    { title: '', dataIndex: 'label', fixed: 'left' },
+    {
+      title: '',
+      dataIndex: 'label',
+      fixed: 'left',
+      width: 200,
+    },
 
-    ...channels.map((ch) => ({
-      title: ch === 'zzzTotal' ? 'Total' : ch,
-      dataIndex: ch,
+    {
+      title: 'Total',
+      dataIndex: 'zzzTotal',
+      fixed: 'left',
+      width: 150,
+      align: 'center',
+      render: (val) => (val !== null && val !== undefined ? `₹${Number(val).toLocaleString('en-IN')}` : '-'),
+    },
+
+    ...otherChannels.map((item) => ({
+      title: item.channel,
+      dataIndex: item.channel,
+      key: item.channel,
+      width: 150,
       align: 'center',
       render: (val) => (val !== null && val !== undefined ? `₹${Number(val).toLocaleString('en-IN')}` : '-'),
     })),
@@ -39,17 +56,26 @@ export default function OsPayment() {
     {
       key: '1',
       label: 'Settled Not Paid',
-      ...Object.fromEntries(apiData.map((item) => [item.channel, item.settlednotpaidamount])),
+      zzzTotal: totalChannel?.settlednotpaidamount,
+      ...Object.fromEntries(otherChannels.map((item) => [item.channel, item.settlednotpaidamount])),
     },
     {
       key: '2',
       label: 'Settled Adjustment',
-      ...Object.fromEntries(apiData.map((item) => [item.channel, item.settledadjamount])),
+      zzzTotal: totalChannel?.settledadjamount,
+      ...Object.fromEntries(otherChannels.map((item) => [item.channel, item.settledadjamount])),
     },
     {
       key: '3',
       label: 'Unsettled Variance',
-      ...Object.fromEntries(apiData.map((item) => [item.channel, item.unsettledvarianceamount])),
+      zzzTotal: totalChannel?.unsettledvarianceamount,
+      ...Object.fromEntries(otherChannels.map((item) => [item.channel, item.unsettledvarianceamount])),
+    },
+    {
+      key: '4',
+      label: 'Cashback Pending',
+      zzzTotal: totalChannel?.cashback_pending,
+      ...Object.fromEntries(otherChannels.map((item) => [item.channel, item.cashback_pending])),
     },
   ];
 

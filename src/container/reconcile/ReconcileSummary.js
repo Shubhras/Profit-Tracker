@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { Row, Col, Card, Table, Empty, Divider } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 import { PageHeader } from '../../components/page-headers/page-headers';
@@ -37,6 +38,7 @@ const bankWorkflowData = [
 /* ================= COMPONENT ================= */
 
 export default function ReconcileSummary() {
+  const navigate = useNavigate();
   const [cashflowData, setCashflowData] = useState([
     {
       title: 'Unsettled Not Paid',
@@ -162,7 +164,18 @@ export default function ReconcileSummary() {
               <Row gutter={[16, 16]}>
                 {cashflowData.map((item) => (
                   <Col key={item.title} xs={24} sm={12} lg={8}>
-                    <Card className={`${item.bg} h-full`}>
+                    <Card
+                      onClick={() => {
+                        if (item.title === 'Unsettled Not Paid') {
+                          navigate('/admin/reconcile/b2c-reconciliation/unsettled-order');
+                        }
+
+                        if (item.title === 'Settled Not Paid') {
+                          navigate('/admin/reconcile/b2c-reconciliation/settled-order');
+                        }
+                      }}
+                      className={`${item.bg} h-full cursor-pointer hover:shadow-md transition`}
+                    >
                       <p className="font-semibold">{item.title}</p>
                       <Divider />
                       <p>No. of Orders</p>
