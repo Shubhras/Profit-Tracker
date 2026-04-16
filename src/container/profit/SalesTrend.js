@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { Table, Card } from 'antd';
+import { Table, Card, Button } from 'antd';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { RightOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -9,6 +10,7 @@ import { getPivotStats } from '../../redux/dashboard/actionCreator';
 export default function SalesTrend() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [showChart, setShowChart] = React.useState(false);
   const [filters, setFilters] = React.useState({
     channel: '',
     qty: 'grossqty',
@@ -18,15 +20,36 @@ export default function SalesTrend() {
     mktCategory: '',
     invMasterSku: '',
   });
-
   const { pivotData, loading, dateRange, search } = useSelector((state) => state.dashboard);
+  const graphData = React.useMemo(() => {
+    if (!pivotData?.results?.length) return [];
+
+    const row = pivotData.results[0];
+
+    return Object.keys(row)
+      .filter((key) => key !== 'id')
+      .map((key) => ({
+        date: key,
+        value: row[key],
+      }));
+  }, [pivotData]);
+
   const payload = {
-    fromDate: dateRange?.fromDate || null,
-    endDate: dateRange?.endDate || null,
-    search,
-    // qty: 'grossqty',
-    // group_id: 'channel',
-    // calender_view: 'date',
+    filer: {
+      fromDate: dateRange?.fromDate || null,
+      endDate: dateRange?.endDate || null,
+      search,
+      channel: filters.channel,
+    },
+
+    metrics: {
+      sku: filters.sku,
+      productId: filters.productId,
+      ParentId: filters.parentId,
+      mkt: filters.mktCategory,
+      qty: filters.qty,
+      invMasterSku: filters.invMasterSku,
+    },
   };
   useEffect(() => {
     dispatch(getPivotStats(payload));
@@ -162,25 +185,26 @@ export default function SalesTrend() {
 
               <span className="text-sm text-gray-500">0 Filter Selected</span>
 
-              {/* RIGHT SIDE BUTTONS */}
               <div className="ml-auto flex items-center gap-2">
-                <button
-                  type="button"
+                <Button
+                  // type="button"
                   onClick={handleClear}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-white hover:bg-gray-100 transition"
+                  className="flex items-center gap-2"
+                  // className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 bg-white hover:bg-gray-100 transition"
                 >
                   <span>Clear</span>
                   <CloseOutlined className="text-gray-500" />
-                </button>
+                </Button>
 
-                <button
-                  type="button"
+                <Button
+                  type="primary"
                   onClick={handleApply}
-                  className="flex items-center gap-2 px-4 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                  className="flex items-center gap-2"
+                  // className="flex items-center gap-2 px-4 py-1.5 text-sm bg-green-600 text-white hover:bg-blue-700 transition"
                 >
                   <span>Apply</span>
                   <CheckOutlined />
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -233,6 +257,48 @@ export default function SalesTrend() {
               </div>
             </div>
           </div>
+          <div className="flex justify-end mb-3">
+            {' '}
+            <button
+              type="button"
+              onClick={() => setShowChart(!showChart)}
+              className="border border-gray-300 rounded-lg px-3 py-1.5 bg-white hover:bg-gray-100 transition"
+            >
+              {showChart ? 'Hide Chart' : 'View Chart'}
+            </button>
+          </div>
+          {showChart && (
+            <Card className="mb-5 bg-gray-100 rounded-xl">
+              <div style={{ marginBottom: 10, fontWeight: 500 }}>Chart View - Total</div>
+
+              <ResponsiveContainer width="100%" height={260}>
+                <LineChart data={graphData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis
+                    dataKey="date"
+                    tickFormatter={(val) =>
+                      new Date(val).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: '2-digit',
+                      })
+                    }
+                  />
+                  <YAxis />
+                  <Tooltip
+                    labelFormatter={(val) =>
+                      new Date(val).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: '2-digit',
+                      })
+                    }
+                  />
+
+                  <Line type="monotone" dataKey="value" stroke="#1677ff" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </Card>
+          )}
           <Table
             columns={columns}
             dataSource={dataSource}

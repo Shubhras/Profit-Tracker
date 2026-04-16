@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
+import { Button, Modal, Checkbox } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
-import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { CheckOutlined, CloseOutlined, SettingOutlined } from '@ant-design/icons';
 import { PageHeader } from '../../components/page-headers/page-headers';
 import { getProfitMonthwise } from '../../redux/dashboard/actionCreator';
 
@@ -10,7 +11,15 @@ export default function ProfitMonthlyView() {
   const [filters, setFilters] = React.useState({
     SKU: '',
     ProductId: '',
+    gst: '',
   });
+  const handleGstChange = (value) => {
+    setFilters((prev) => ({
+      ...prev,
+      gst: prev.gst === value ? '' : value,
+    }));
+  };
+  const [openSettings, setOpenSettings] = React.useState(false);
 
   const { monthwiseProfitData, dateRange } = useSelector((state) => state.dashboard);
   const PageRoutes = [
@@ -30,6 +39,7 @@ export default function ProfitMonthlyView() {
       toDate: dateRange?.endDate || null,
       SKU: '',
       ProductId: '',
+      gst: 'with',
     };
 
     dispatch(getProfitMonthwise(payload));
@@ -66,6 +76,9 @@ export default function ProfitMonthlyView() {
     { label: 'Gross ASP', key: 'grossasp' },
     { label: 'Net ASP', key: 'netasp' },
   ];
+  const [visibleRows, setVisibleRows] = React.useState(
+    rows.map((r) => r.key), // sab initially visible
+  );
   const handleChange = (key, value) => {
     setFilters((prev) => ({
       ...prev,
@@ -87,6 +100,8 @@ export default function ProfitMonthlyView() {
     const reset = {
       SKU: '',
       ProductId: '',
+      // ParentId,
+      // mktCategory
     };
 
     setFilters(reset);
@@ -97,6 +112,8 @@ export default function ProfitMonthlyView() {
         toDate: dateRange?.endDate || null,
         SKU: '',
         ProductId: '',
+        // ParentId:'',
+        // mktCategory:''
       }),
     );
   };
@@ -114,40 +131,51 @@ export default function ProfitMonthlyView() {
             <div role="button" tabIndex={0} className="flex items-center gap-4 mb-3 cursor-pointer">
               <span className="text-sm font-medium text-gray-700">Filters :</span>
 
-              <span className="text-sm text-gray-500">
-                {filters.SKU || filters.ProductId ? 'Filters Applied' : 'No Filters'}
-              </span>
+              <div className="flex items-center gap-2">
+                {(filters.SKU || filters.ProductId) && <span className="text-sm text-gray-500">Filters Applied</span>}
+
+                {filters.gst && (
+                  <span className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-gray-100">
+                    <span
+                      className={`w-2 h-2 rounded-full ${filters.gst === 'with' ? 'bg-green-500' : 'bg-red-500'}`}
+                    />
+                    GST: {filters.gst === 'with' ? 'With' : 'Without'}
+                  </span>
+                )}
+              </div>
 
               <div className="ml-auto flex gap-2">
-                <button
-                  type="button"
+                <Button
+                  // type="primary"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleClear();
                   }}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-white hover:bg-gray-100"
+                  className="flex items-center gap-1"
+                  // className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 bg-white hover:bg-gray-100"
                 >
                   Clear
                   <CloseOutlined />
-                </button>
+                </Button>
 
-                <button
-                  type="button"
+                <Button
+                  type="primary"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleApply();
                   }}
-                  className="flex items-center gap-2 px-4 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="flex items-center gap-1"
+                  // className="flex items-center gap-2 px-4 py-1.5 text-sm bg-green-600 text-white hover:bg-blue-700"
                 >
                   Apply
                   <CheckOutlined />
-                </button>
+                </Button>
               </div>
             </div>
 
             <div className="flex gap-4 overflow-x-auto whitespace-nowrap">
               <div className="min-w-[200px]">
-                <label className="text-s text-gray-600 mb-1 block">SKU</label>
+                <label className="text-s text-gray-600 mb-1 block">SKU:</label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                   placeholder="SKU"
@@ -156,13 +184,44 @@ export default function ProfitMonthlyView() {
               </div>
 
               <div className="min-w-[200px]">
-                <label className="text-s text-gray-600 mb-1 block">ProductId</label>
+                <label className="text-s text-gray-600 mb-1 block">ProductId:</label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                   placeholder="ProductId"
                   onChange={(e) => handleChange('ProductId', e.target.value)}
                 />
               </div>
+              <div className="min-w-[200px]">
+                <label className="text-s text-gray-600 mb-1 block">ParentId:</label>
+                <input
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  placeholder="ParentId"
+                  onChange={(e) => handleChange('ParentId', e.target.value)}
+                />
+              </div>
+              <div className="min-w-[200px]">
+                <label className="text-s text-gray-600 mb-1 block">MKT category:</label>
+                <input
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  placeholder="MKT category"
+                  onChange={(e) => handleChange('Mktcategory', e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-4 mt-3 border-t pt-3">
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={filters.gst === 'with'} onChange={() => handleGstChange('with')} />
+                With GST
+              </label>
+
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={filters.gst === 'without'}
+                  onChange={() => handleGstChange('without')}
+                />
+                Without GST
+              </label>
             </div>
           </div>
           <div
@@ -173,7 +232,9 @@ export default function ProfitMonthlyView() {
                 : `200px repeat(${months.length}, 1fr)`,
             }}
           >
-            <div className="p-3 sticky left-0 bg-gray-50 z-20" />
+            <div className="p-3 sticky left-0 bg-gray-50 z-20 flex justify-center items-center">
+              <SettingOutlined onClick={() => setOpenSettings(true)} className="cursor-pointer text-gray-600" />
+            </div>
             {months.map((m, i) => (
               <div key={i} className="p-3 text-center font-semibold text-black">
                 {formatMonth(m)}
@@ -181,53 +242,103 @@ export default function ProfitMonthlyView() {
             ))}
           </div>
 
-          {rows.map((row, i) => {
-            const isHighlight = highlightRows.includes(row.key);
-            return (
-              <div
-                key={i}
-                className={`grid border-b last:border-0 ${isHighlight ? 'bg-blue-50 font-semibold' : ''}`}
-                style={{
-                  gridTemplateColumns: isScrollable
-                    ? `200px repeat(${months.length}, 150px)`
-                    : `200px repeat(${months.length}, 1fr)`,
-                }}
-              >
-                {/* LEFT LABEL */}
-                <div className={`p-3 sticky left-0 z-10 ${isHighlight ? 'bg-blue-100 font-semibold' : 'bg-gray-50'}`}>
-                  {row.label}
-                </div>{' '}
-                {/* VALUES */}
-                {data.map((item, j) => {
-                  const val = item[row.key];
+          {rows
+            .filter((row) => visibleRows.includes(row.key)) // 👈 YEH LINE ADD KARO
+            .map((row, i) => {
+              const isHighlight = highlightRows.includes(row.key);
+              return (
+                <div
+                  key={i}
+                  className={`grid border-b last:border-0 ${isHighlight ? 'bg-blue-50 font-semibold' : ''}`}
+                  style={{
+                    gridTemplateColumns: isScrollable
+                      ? `200px repeat(${months.length}, 150px)`
+                      : `200px repeat(${months.length}, 1fr)`,
+                  }}
+                >
+                  {/* LEFT LABEL */}
+                  <div className={`p-3 sticky left-0 z-10 ${isHighlight ? 'bg-blue-100 font-semibold' : 'bg-gray-50'}`}>
+                    {row.label}
+                  </div>{' '}
+                  {/* VALUES */}
+                  {data.map((item, j) => {
+                    const val = item[row.key];
 
-                  let bg = '';
-                  let text = '';
+                    let bg = '';
+                    let text = '';
 
-                  if (isHighlight) {
-                    if (val > 0) {
-                      bg = 'bg-green-100';
-                      text = 'text-green-700';
-                    } else if (val < 0) {
-                      bg = 'bg-red-100';
-                      text = 'text-red-600';
+                    if (isHighlight) {
+                      if (val > 0) {
+                        bg = 'bg-green-100';
+                        text = 'text-green-700';
+                      } else if (val < 0) {
+                        bg = 'bg-red-100';
+                        text = 'text-red-600';
+                      } else {
+                        bg = 'bg-gray-100';
+                      }
                     } else {
-                      bg = 'bg-gray-100';
+                      text = val > 0 ? 'text-green-600' : val < 0 ? 'text-red-500' : '';
                     }
-                  } else {
-                    text = val > 0 ? 'text-green-600' : val < 0 ? 'text-red-500' : '';
-                  }
 
-                  return (
-                    <div key={j} className={`p-3 text-center font-medium ${bg} ${text}`}>
-                      {val}
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
+                    return (
+                      <div key={j} className={`p-3 text-center font-medium ${bg} ${text}`}>
+                        {val}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
         </div>
+        <Modal
+          title="Customize Rows"
+          open={openSettings}
+          onCancel={() => setOpenSettings(false)}
+          footer={null}
+          width={900}
+        >
+          {/* Select All */}
+          <div className="mb-3 flex items-center gap-2">
+            <Checkbox
+              checked={visibleRows.length === rows.length}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setVisibleRows(rows.map((r) => r.key));
+                } else {
+                  setVisibleRows([]);
+                }
+              }}
+            >
+              Select All
+            </Checkbox>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-1">
+            {rows.map((row) => (
+              <div
+                key={row.key}
+                className="flex items-center justify-between gap-2 p-2 bg-gray-100 rounded whitespace-nowrap"
+              >
+                <Checkbox
+                  className="whitespace-nowrap"
+                  checked={visibleRows.includes(row.key)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setVisibleRows([...visibleRows, row.key]);
+                    } else {
+                      setVisibleRows(visibleRows.filter((r) => r !== row.key));
+                    }
+                  }}
+                >
+                  {row.label}
+                </Checkbox>
+
+                <span className="text-blue-500 text-xs cursor-pointer">i</span>
+              </div>
+            ))}
+          </div>
+        </Modal>
       </main>
     </>
   );

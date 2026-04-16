@@ -7,6 +7,10 @@ const actions = {
   OUTSTANDING_PAYMENT_SUCCESS: 'OUTSTANDING_PAYMENT_SUCCESS',
   OUTSTANDING_PAYMENT_ERR: 'OUTSTANDING_PAYMENT_ERR',
 
+  BANK_TRANSFER_BEGIN: 'BANK_TRANSFER_BEGIN',
+  BANK_TRANSFER_SUCCESS: 'BANK_TRANSFER_SUCCESS',
+  BANK_TRANSFER_ERR: 'BANK_TRANSFER_ERR',
+
   reconcilePaymentBegin: () => {
     return {
       type: actions.RECONCILE_PAYMENT_BEGIN,
@@ -37,6 +41,20 @@ const actions = {
 
   outstandingPaymentErr: (err) => ({
     type: actions.OUTSTANDING_PAYMENT_ERR,
+    err,
+  }),
+
+  bankTransferBegin: () => ({
+    type: actions.BANK_TRANSFER_BEGIN,
+  }),
+
+  bankTransferSuccess: (data) => ({
+    type: actions.BANK_TRANSFER_SUCCESS,
+    data,
+  }),
+
+  bankTransferErr: (err) => ({
+    type: actions.BANK_TRANSFER_ERR,
     err,
   }),
 };
