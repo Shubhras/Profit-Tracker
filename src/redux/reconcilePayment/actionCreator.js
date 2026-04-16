@@ -8,6 +8,9 @@ const {
   outstandingPaymentBegin,
   outstandingPaymentSuccess,
   outstandingPaymentErr,
+  bankTransferBegin,
+  bankTransferSuccess,
+  bankTransferErr,
 } = actions;
 
 export const getReconcilePaymentSummary = (payload) => {
@@ -40,6 +43,24 @@ export const getOutstandingPayments = (payload) => {
       }
     } catch (err) {
       dispatch(outstandingPaymentErr(err));
+    }
+  };
+};
+
+export const getBankTransferSummary = (payload) => {
+  return async (dispatch) => {
+    dispatch(bankTransferBegin());
+
+    try {
+      const response = await DataService.post('/amazon/bank/ransfer-summary/', payload);
+
+      if (response.data?.status === true || response.data?.status === 'success') {
+        dispatch(bankTransferSuccess(response.data));
+      } else {
+        dispatch(bankTransferErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(bankTransferErr(err.response?.data?.message || err.message));
     }
   };
 };

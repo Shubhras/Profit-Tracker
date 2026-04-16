@@ -259,6 +259,7 @@ const AuthInfo = React.memo(() => {
             open={open}
             onOpenChange={(val) => setOpen(val)}
             value={dateRange}
+            disabledDate={(current) => current && current > new Date()}
             // onChange={(val) => {
             //   setDateRange(val);
             //   setOpen(false);

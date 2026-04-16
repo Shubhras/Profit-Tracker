@@ -27,30 +27,70 @@ export default function ProfitTableView() {
     channel: '',
     sku: '',
     productId: '',
+
+    ads: '', // 'with' | 'without'
+    gst: '',
+    estimate: '',
+    expenses: '',
+    accountCharges: '',
   });
-  const payload = {
-    filters: {
-      channel: { IN: ['Amazon-India'] },
-      fromDate: dateRange?.fromDate || null,
-      toDate: dateRange?.endDate || null,
-      search,
-    },
-    // metric: {
-    //   expense: 'withExpense',
-    //   ads: 'withAds',
-    //   account_charges: 'withAccountCharges',
-    //   gst: 'withGst',
-    //   payment: 'withEstimate',
-    //   summarymetric: 'channel',
-    // },
-    pagination: {
-      pageNo: 0,
-      pageSize: 25,
-    },
+  const handlePairChange = (key, value) => {
+    setFilters((prev) => ({
+      ...prev,
+      [key]: prev[key] === value ? '' : value, // toggle bhi ho sake
+    }));
   };
 
+  const getMetricFromFilters = () => {
+    return {
+      ads: filters.ads ? (filters.ads === 'with' ? 'withAds' : 'withoutAds') : '',
+
+      gst: filters.gst ? (filters.gst === 'with' ? 'withGst' : 'withoutGst') : '',
+
+      payment: filters.estimate ? (filters.estimate === 'with' ? 'withEstimate' : 'withoutEstimate') : '',
+
+      expense: filters.expenses ? (filters.expenses === 'with' ? 'withExpense' : 'withoutExpense') : '',
+
+      account_charges: filters.accountCharges
+        ? filters.accountCharges === 'with'
+          ? 'withAccountCharges'
+          : 'withoutAccountCharges'
+        : '',
+
+      channel: 'channel',
+    };
+  };
+  const buildPayload = () => {
+    return {
+      filters: {
+        channel: { IN: ['Amazon-India'] },
+        fromDate: dateRange?.fromDate || null,
+        toDate: dateRange?.endDate || null,
+        search,
+      },
+      metric: getMetricFromFilters(),
+      pagination: {
+        pageNo: 0,
+        pageSize: 25,
+      },
+    };
+  };
   useEffect(() => {
-    dispatch(getProfitData(payload));
+    dispatch(
+      getProfitData({
+        filters: {
+          channel: { IN: ['Amazon-India'] },
+          fromDate: dateRange?.fromDate || null,
+          toDate: dateRange?.endDate || null,
+          search,
+        },
+        metric: getMetricFromFilters(),
+        pagination: {
+          pageNo: 0,
+          pageSize: 25,
+        },
+      }),
+    );
   }, [dispatch, dateRange]);
 
   // console.log(data);
@@ -281,8 +321,8 @@ export default function ProfitTableView() {
   };
 
   const handleApply = () => {
-    console.log('APPLY FILTERS:', filters);
-    // baad me API me bhej dena
+    const payload = buildPayload();
+    dispatch(getProfitData(payload));
   };
 
   const handleClear = () => {
@@ -290,6 +330,11 @@ export default function ProfitTableView() {
       channel: '',
       sku: '',
       productId: '',
+      ads: '',
+      gst: '',
+      estimate: '',
+      expenses: '',
+      accountCharges: '',
     });
   };
   return (
@@ -301,38 +346,51 @@ export default function ProfitTableView() {
       />
       <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-8 xl:px-[15px] pb-[30px] bg-transparent">
         <Card bordered={false} className="sales-table-wrapper">
-          {/* FILTER BAR */}
-          <div className="mb-4 p-4 border border-gray-200 rounded-xl bg-gray-50">
-            {/* TOP ROW */}
+          <div className="mb-4 p-4 border border-gray-200 ro  unded-xl bg-gray-50">
             <div className="flex flex-wrap items-center gap-4 mb-4">
               <select
                 className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm"
                 onChange={(e) => handleChange('channel', e.target.value)}
               >
                 <option value="">Channel</option>
-                <option value="Amazon">Amazon</option>
-                <option value="Myntra">Myntra</option>
+                {/* <option value="Amazon">Amazon</option>
+                <option value="Myntra">Myntra</option> */}
               </select>
 
-              <span className="text-sm text-gray-500">
-                {filters.sku || filters.productId ? 'Filters Applied' : 'No Filters'}
-              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                {Object.entries(filters).map(([key, value]) => {
+                  if (!value) return null;
 
-              {/* RIGHT SIDE BUTTONS */}
+                  const labelMap = {
+                    ads: 'Ads',
+                    gst: 'GST',
+                    estimate: 'Estimate',
+                    expenses: 'Expenses',
+                    accountCharges: 'Account Charges',
+                  };
+
+                  return (
+                    <span key={key} className="flex items-center gap-1">
+                      <span className={`w-2 h-2 rounded-full ${value === 'with' ? 'bg-green-500' : 'bg-red-500'}`} />
+                      {labelMap[key]}: {value === 'with' ? 'With' : 'Without'}
+                    </span>
+                  );
+                })}
+              </div>
+
               <div className="ml-auto flex items-center gap-2">
-                <Button onClick={handleClear} className="flex items-center gap-2">
+                <Button onClick={handleClear} className="flex items-center gap-1">
                   Clear
                   <CloseOutlined />
                 </Button>
 
-                <Button type="primary" onClick={handleApply} className="flex items-center gap-2">
+                <Button type="primary" onClick={handleApply} className="flex items-center gap-1">
                   Apply
                   <CheckOutlined />
                 </Button>
               </div>
             </div>
 
-            {/* BOTTOM ROW */}
             <div className="flex items-end gap-4 overflow-x-auto whitespace-nowrap pb-1">
               <div className="min-w-[180px]">
                 <label className="text-sm text-gray-600 mb-1 block">SKU</label>
@@ -344,13 +402,121 @@ export default function ProfitTableView() {
               </div>
 
               <div className="min-w-[180px]">
-                <label className="text-sm text-gray-600 mb-1 block">ProductId</label>
+                <label className="text-sm text-gray-600 mb-1 block">ProductId:</label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
                   placeholder="ProductId"
                   onChange={(e) => handleChange('productId', e.target.value)}
                 />
               </div>
+              <div className="min-w-[180px]">
+                <label className="text-sm text-gray-600 mb-1 block">ParentId:</label>
+                <input
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+                  placeholder="ProductId"
+                  onChange={(e) => handleChange('productId', e.target.value)}
+                />
+              </div>
+              <div className="min-w-[180px]">
+                <label className="text-sm text-gray-600 mb-1 block">MKt Category:</label>
+                <input
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+                  placeholder="ProductId"
+                  onChange={(e) => handleChange('productId', e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-4 mt-3 border-t pt-3">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={filters.ads === 'with'}
+                  onChange={() => handlePairChange('ads', 'with')}
+                />
+                With Ads
+              </label>
+
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={filters.ads === 'without'}
+                  onChange={() => handlePairChange('ads', 'without')}
+                />
+                Without Ads
+              </label>
+
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={filters.gst === 'with'}
+                  onChange={() => handlePairChange('gst', 'with')}
+                />
+                With Gst
+              </label>
+
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={filters.gst === 'without'}
+                  onChange={() => handlePairChange('gst', 'without')}
+                />
+                Without Gst
+              </label>
+
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={filters.estimate === 'with'}
+                  onChange={() => handlePairChange('estimate', 'with')}
+                />
+                With Estimate
+              </label>
+
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={filters.estimate === 'without'}
+                  onChange={() => handlePairChange('estimate', 'without')}
+                />
+                Without Estimate
+              </label>
+
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={filters.expenses === 'with'}
+                  onChange={() => handlePairChange('expenses', 'with')}
+                />
+                With Expenses
+              </label>
+
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={filters.expenses === 'without'}
+                  onChange={() => handlePairChange('expenses', 'without')}
+                />
+                Without Expenses
+              </label>
+
+              {/* Account Charges */}
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={filters.accountCharges === 'with'}
+                  onChange={() => handlePairChange('accountCharges', 'with')}
+                />
+                With Account Charges
+              </label>
+
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={filters.accountCharges === 'without'}
+                  onChange={() => handlePairChange('accountCharges', 'without')}
+                />
+                Without Account Charges
+              </label>
             </div>
           </div>
           <Table
@@ -406,7 +572,13 @@ export default function ProfitTableView() {
             )}
           />{' '}
         </Card>
-        <Modal title="Customize Your Columns" open={openSettings} onCancel={() => setOpenSettings(false)} footer={null}>
+        <Modal
+          title="Customize Your Columns"
+          open={openSettings}
+          onCancel={() => setOpenSettings(false)}
+          footer={null}
+          width={900}
+        >
           {/* Select All */}
           <div className="mb-3 flex items-center gap-2">
             <Checkbox
@@ -419,8 +591,12 @@ export default function ProfitTableView() {
 
           <div className="grid grid-cols-3 gap-3 max-h-[400px] overflow-y-auto pr-1">
             {allColumnsList.map((col) => (
-              <div key={col.key} className="flex items-center justify-between gap-2 p-2 bg-gray-100 rounded">
+              <div
+                key={col.key}
+                className="flex items-center justify-between gap-2 p-2 bg-gray-100 rounded whitespace-nowrap"
+              >
                 <Checkbox
+                  className="whitespace-nowrap"
                   checked={visibleColumns.includes(col.key)}
                   onChange={(e) => {
                     if (e.target.checked) {

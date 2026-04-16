@@ -1,13 +1,10 @@
 import React from 'react';
 import { Table, Card } from 'antd';
-import { RightOutlined } from '@ant-design/icons';
-import { useParams, useNavigate } from 'react-router-dom';
-
+import { useParams } from 'react-router-dom';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function ProfitDetailsView() {
-  const { id } = useParams();
-  const navigate = useNavigate();
+  const { id } = useParams(); // 👈 route se id aayegi
 
   const PageRoutes = [
     { path: 'index', breadcrumbName: 'Profit' },
@@ -142,32 +139,6 @@ export default function ProfitDetailsView() {
       dataIndex: 'settledamount',
       align: 'center',
       sorter: (a, b) => a.settledamount - b.settledamount,
-    },
-    {
-      title: '',
-      key: 'action',
-      fixed: 'right',
-      width: 60,
-      render: (_, record) => (
-        <button
-          type="button"
-          onClick={() => navigate(`../profitThirdtable/${record.key}`)}
-          style={{
-            width: 30,
-            height: 30,
-            border: '1px solid #d9d9d9',
-            borderRadius: 4,
-            background: 'rgb(202, 221, 254)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: 'auto',
-          }}
-        >
-          <RightOutlined style={{ fontSize: 12 }} />
-        </button>
-      ),
     },
   ];
 

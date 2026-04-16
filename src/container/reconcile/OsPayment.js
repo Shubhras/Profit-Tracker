@@ -1,12 +1,15 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Card, Table } from 'antd';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { getOutstandingPayments } from '../../redux/reconcilePayment/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function OsPayment() {
   const dispatch = useDispatch();
   const { outstandingData, outstandingLoading } = useSelector((state) => state.reconcilePayment);
+  const { dateRange } = useSelector((state) => state.dashboard);
+
   const apiData = outstandingData?.table_response || [];
   const PageRoutes = [
     { path: 'index', breadcrumbName: 'Profit' },
@@ -17,8 +20,8 @@ export default function OsPayment() {
     dispatch(
       getOutstandingPayments({
         filters: {
-          fromDate: '2026-01-01',
-          toDate: '2026-01-03',
+          fromDate: dateRange?.fromDate || null,
+          toDate: dateRange?.toDate || null,
         },
       }),
     );
@@ -79,6 +82,30 @@ export default function OsPayment() {
     },
   ];
 
+  const settledGraphData = outstandingData?.settledadjgraph || [];
+  const unsettledGraphData = outstandingData?.unsettled_graph || [];
+
+  const formatGraphData = (data, keyName) => {
+    const result = {};
+
+    data.forEach((item) => {
+      const key = item.month || item.date;
+
+      if (!result[key]) {
+        result[key] = { name: key };
+      }
+
+      result[key][item.channel] = item[keyName] || 0;
+    });
+
+    return Object.values(result);
+  };
+
+  const settledData = formatGraphData(settledGraphData, 'settledadjamount');
+  const unsettledData = formatGraphData(unsettledGraphData, 'unsettledvarianceamount');
+
+  const colors = ['#8884d8', '#82ca9d', '#ff7f7f', '#ffc658'];
+
   return (
     <>
       <PageHeader
@@ -96,6 +123,39 @@ export default function OsPayment() {
             scroll={{ x: 'max-content' }}
           />{' '}
         </Card>{' '}
+        <Card className="mb-6">
+          <div style={{ display: 'flex', gap: '20px' }}>
+            <div style={{ width: '50%' }}>
+              <h3>Unsettled Orders - Outstanding Payments</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={unsettledData}>
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  {otherChannels.map((item, index) => (
+                    <Bar key={item.channel} dataKey={item.channel} fill={colors[index % colors.length]} />
+                  ))}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div style={{ width: '50%' }}>
+              <h3>Settled Orders - Outstanding Payments</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={settledData}>
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  {otherChannels.map((item, index) => (
+                    <Bar key={item.channel} dataKey={item.channel} fill={colors[index % colors.length]} />
+                  ))}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </Card>
       </main>
     </>
   );

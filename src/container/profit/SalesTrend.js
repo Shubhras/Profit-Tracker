@@ -35,12 +35,21 @@ export default function SalesTrend() {
   }, [pivotData]);
 
   const payload = {
-    fromDate: dateRange?.fromDate || null,
-    endDate: dateRange?.endDate || null,
-    search,
-    // qty: 'grossqty',
-    // group_id: 'channel',
-    // calender_view: 'date',
+    filer: {
+      fromDate: dateRange?.fromDate || null,
+      endDate: dateRange?.endDate || null,
+      search,
+      channel: filters.channel,
+    },
+
+    metrics: {
+      sku: filters.sku,
+      productId: filters.productId,
+      ParentId: filters.parentId,
+      mkt: filters.mktCategory,
+      qty: filters.qty,
+      invMasterSku: filters.invMasterSku,
+    },
   };
   useEffect(() => {
     dispatch(getPivotStats(payload));
@@ -176,7 +185,6 @@ export default function SalesTrend() {
 
               <span className="text-sm text-gray-500">0 Filter Selected</span>
 
-              {/* RIGHT SIDE BUTTONS */}
               <div className="ml-auto flex items-center gap-2">
                 <Button
                   // type="button"

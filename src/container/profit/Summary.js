@@ -29,6 +29,7 @@ export default function Summary() {
     mktCategory: '',
     invMasterSku: '',
   });
+  const [appliedFilters, setAppliedFilters] = useState(filters);
   // const [amazonParams, setAmazonParams] = useState({
   //   callbackUri: '',
   //   state: '',
@@ -37,29 +38,27 @@ export default function Summary() {
   const location = useLocation();
   const dispatch = useDispatch();
   const gstLabel = filters.withGST ? 'GST Included' : 'GST Excluded';
+  const buildMetric = () => {
+    return {
+      ads: filters.withAds ? 'withAds' : 'withoutAds',
+      gst: filters.withGST ? 'withGst' : 'withoutGst',
+      expense: filters.withExpenses ? 'withExpense' : 'withoutExpense',
+      estimate: filters.withEstimate ? 'withEstimate' : 'withoutEstimate',
+    };
+  };
 
   const payload = {
-    // fromDate: dateRange?.fromDate || null,
-    // toDate: dateRange?.endDate || null,
-    // search,
     filters: {
       fromDate: dateRange?.fromDate || null,
       toDate: dateRange?.endDate || null,
       search,
-      // withAds: filters.withAds,
-      // withGST: filters.withGST,
-      // withEstimate: filters.withEstimate,
-      // withExpenses: filters.withExpenses,
     },
-    metric: {
-      ads: 'withAds',
-      expense: 'withExpense',
-    },
+    metric: buildMetric(appliedFilters),
   };
 
   useEffect(() => {
     dispatch(getDashboard(payload));
-  }, [dispatch, dateRange, filters]);
+  }, [dispatch, dateRange, appliedFilters]);
 
   const loginAmazon = useCallback(
     (params) => {
@@ -146,14 +145,37 @@ export default function Summary() {
     : [];
   const selectedFilters = [
     filters.withAds && { label: 'With Ads', color: 'green' },
-    filters.withoutAds && { label: 'Without Ads', color: 'blue' },
+    filters.withoutAds && { label: 'Without Ads', color: 'red' },
     filters.withGST && { label: 'With GST', color: 'green' },
-    filters.withoutGST && { label: 'Without GST', color: 'blue' },
+    filters.withoutGST && { label: 'Without GST', color: 'red' },
     filters.withEstimate && { label: 'With Estimate', color: 'green' },
-    filters.withoutEstimate && { label: 'Without Estimate', color: 'blue' },
+    filters.withoutEstimate && { label: 'Without Estimate', color: 'red' },
     filters.withExpenses && { label: 'With Expenses', color: 'green' },
-    filters.withoutExpenses && { label: 'Without Expenses', color: 'blue' },
+    filters.withoutExpenses && { label: 'Without Expenses', color: 'red' },
   ].filter(Boolean);
+  const handleApply = () => {
+    setAppliedFilters(filters);
+  };
+  const handleClear = () => {
+    const resetFilters = {
+      withAds: false,
+      withoutAds: true,
+      withGST: false,
+      withoutGST: true,
+      withEstimate: true,
+      withoutEstimate: false,
+      withExpenses: true,
+      withoutExpenses: false,
+      sku: '',
+      productId: '',
+      parentId: '',
+      mktCategory: '',
+      invMasterSku: '',
+    };
+
+    setFilters(resetFilters);
+    setAppliedFilters(resetFilters);
+  };
 
   return (
     <>
@@ -216,7 +238,7 @@ export default function Summary() {
 
             {selectedFilters.map((item, index) => (
               <div key={index} className="flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${item.color === 'green' ? 'bg-green-500' : 'bg-blue-500'}`} />
+                <span className={`w-2 h-2 rounded-full ${item.color === 'green' ? 'bg-green-500' : 'bg-red-500'}`} />
                 <span>{item.label}</span>
               </div>
             ))}
@@ -224,7 +246,7 @@ export default function Summary() {
             <div className="ml-auto flex items-center gap-2">
               <Button
                 // type="button"
-                // onClick={handleClear}
+                onClick={handleClear}
                 className="flex items-center gap-1"
                 // className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 bg-white hover:bg-gray-100 transition"
               >
@@ -234,7 +256,7 @@ export default function Summary() {
 
               <Button
                 type="primary"
-                // onClick={handleApply}
+                onClick={handleApply}
                 className="flex items-center gap-1"
                 // className="flex items-center gap-2 px-4 py-1.5 text-sm bg-green-600 text-white hover:bg-blue-700 transition"
               >
@@ -450,8 +472,14 @@ export default function Summary() {
               <Col span={12}>
                 <Card size="small" className="bg-green-50">
                   <p className="text-green-700">Profit IDs</p>
-                  <strong>#{dashboardData?.top_orders?.profitable?.length || 0}</strong>
-                  <p>₹{dashboardData?.top_orders?.profitable?.reduce((acc, cur) => acc + (cur.amount || 0), 0)}</p>
+                  <strong>#{dashboardData?.top_orders?.profitaget_full_dashboardble?.length || 0}</strong>
+                  <p>
+                    ₹
+                    {dashboardData?.top_orders?.profitaget_full_dashboardble?.reduce(
+                      (acc, cur) => acc + (cur.amount || 0),
+                      0,
+                    )}
+                  </p>
                 </Card>
               </Col>
               <Col span={12}>

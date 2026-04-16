@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Row, Col, Card, Table, Empty, Divider } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 import { PageHeader } from '../../components/page-headers/page-headers';
-import { getReconcilePaymentSummary } from '../../redux/reconcilePayment/actionCreator';
+import { getReconcilePaymentSummary, getBankTransferSummary } from '../../redux/reconcilePayment/actionCreator';
 
 /* ================= DATA OBJECTS ================= */
 
@@ -25,20 +25,11 @@ const tableColumns = [
 
 const tableData = []; // No data as per image
 
-const bankWorkflowData = [
-  { label: 'Remittance Amount', value: '₹4,39,527.77', highlight: true },
-  { label: 'Negative Adjustment', value: '₹0.00' },
-  { label: 'Total', value: '₹4,39,527.77', highlight: true },
-  { label: 'Orders Paid', value: '₹5,29,343.80' },
-  { label: 'Advertisement Cost', value: '-₹85,531.57', negative: true },
-  { label: 'Reserve Adjustment', value: '₹0.00' },
-  { label: 'Other Adjustment', value: '-₹4,284.46', negative: true },
-];
-
 /* ================= COMPONENT ================= */
 
 export default function ReconcileSummary() {
   const navigate = useNavigate();
+  const [bankWorkflowData, setBankWorkflowData] = useState([]);
   const [cashflowData, setCashflowData] = useState([
     {
       title: 'Unsettled Not Paid',
@@ -66,7 +57,8 @@ export default function ReconcileSummary() {
   ];
 
   const dispatch = useDispatch();
-  const { reconcileData } = useSelector((state) => state.reconcilePayment);
+  const { reconcileData, bankTransferData } = useSelector((state) => state.reconcilePayment);
+  const { dateRange } = useSelector((state) => state.dashboard);
 
   useEffect(() => {
     const payload = {
@@ -112,6 +104,67 @@ export default function ReconcileSummary() {
       console.log('Summary Data:', summary);
     }
   }, [reconcileData]);
+
+  useEffect(() => {
+    const payload = {
+      fromDate: dateRange?.fromDate || null,
+      toDate: dateRange?.endDate || null,
+    };
+
+    dispatch(getBankTransferSummary(payload));
+  }, [dispatch, dateRange]);
+  useEffect(() => {
+    if (bankTransferData?.data) {
+      const d = bankTransferData.data;
+
+      setBankWorkflowData([
+        {
+          label: 'Remittance Amount',
+          value: `₹${Number(d.remittance_amount || 0).toFixed(2)}`,
+          highlight: true,
+        },
+        {
+          label: 'Negative Adjustment',
+          value: `₹${Number(d.negative_adjustment || 0).toFixed(2)}`,
+          negative: d.negative_adjustment < 0,
+        },
+        {
+          label: 'Total',
+          value: `₹${Number(d.total || 0).toFixed(2)}`,
+          highlight: true,
+        },
+        {
+          label: 'Orders Paid',
+          value: `₹${Number(d.orders_paid || 0).toFixed(2)}`,
+        },
+        {
+          label: 'Fees',
+          value: `₹${Number(d.fees || 0).toFixed(2)}`,
+        },
+        {
+          label: 'TDS',
+          value: `₹${Number(d.tds || 0).toFixed(2)}`,
+        },
+        {
+          label: 'Promotions',
+          value: `₹${Number(d.promotions || 0).toFixed(2)}`,
+        },
+        {
+          label: 'Advertisement Cost',
+          value: `₹${Number(d.advertisement_cost || 0).toFixed(2)}`,
+        },
+        {
+          label: 'Reserve Adjustment',
+          value: `₹${Number(d.reserve_adjustment || 0).toFixed(2)}`,
+        },
+        {
+          label: 'Other Adjustment',
+          value: `₹${Number(d.other_adjustment || 0).toFixed(2)}`,
+          negative: d.other_adjustment < 0,
+        },
+      ]);
+    }
+  }, [bankTransferData]);
 
   return (
     <>

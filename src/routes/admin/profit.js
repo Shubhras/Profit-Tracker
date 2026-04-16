@@ -9,6 +9,7 @@ const ProfitMonthlyView = lazy(() => import('../../container/profit/ProfitMonthl
 const CanvasMYOR = lazy(() => import('../../container/profit/CanvasMYOR'));
 const SalesDetails = lazy(() => import('../../container/profit/SalesDetails'));
 const ProfitTableDetails = lazy(() => import('../../container/profit/ProfiteTableDetail'));
+const ProfitViewThirdTable = lazy(() => import('../../container/profit/ProfitViewThirdTable'));
 const NotFound = lazy(() => import('../../container/pages/404'));
 
 function ProfitRoutes() {
@@ -67,6 +68,14 @@ function ProfitRoutes() {
         element={
           <SubscriptionGate>
             <ProfitTableDetails />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="profitThirdtable/:id"
+        element={
+          <SubscriptionGate>
+            <ProfitViewThirdTable />
           </SubscriptionGate>
         }
       />
