@@ -57,6 +57,9 @@ class CreateSubscriptionAPIView(APIView):
         # ✅ PAID PLAN (RAZORPAY)
         # ==========================
         try:
+            if not settings.RAZORPAY_KEY_ID or not settings.RAZORPAY_KEY_SECRET:
+                return error_response("Razorpay keys are not configured in the server environment (.env)", 500)
+
             # deactivate previous subscriptions
             UserSubscription.objects.filter(user=user).update(status="inactive")
 

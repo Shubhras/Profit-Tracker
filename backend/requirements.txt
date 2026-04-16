@@ -25,3 +25,4 @@ sqlparse==0.4.4
 uritemplate==4.2.0
 urllib3==2.6.3
 whitenoise==6.6.0
+django-crontab==0.7.7

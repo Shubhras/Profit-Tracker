@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunkhexadash_tailwind=self.webpackChunkhexadash_tailwind||[]).push([[1547],{81547(a,d,s){s.d(d,{A:()=>e});s(65043);const e=s.p+"static/media/flipkart.1ab0af1c5ecd55b97f3dc34d4493db63.svg"}}]);
+//# sourceMappingURL=1547.a8ac34b2.chunk.js.map
