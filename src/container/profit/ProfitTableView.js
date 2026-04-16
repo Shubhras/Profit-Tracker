@@ -28,16 +28,16 @@ export default function ProfitTableView() {
     sku: '',
     productId: '',
 
-    ads: '', // 'with' | 'without'
-    gst: '',
-    estimate: '',
-    expenses: '',
-    accountCharges: '',
+    ads: 'without',
+    gst: 'without',
+    estimate: 'with',
+    expenses: 'with',
+    accountCharges: 'with',
   });
   const handlePairChange = (key, value) => {
     setFilters((prev) => ({
       ...prev,
-      [key]: prev[key] === value ? '' : value, // toggle bhi ho sake
+      [key]: value,
     }));
   };
 
@@ -237,7 +237,7 @@ export default function ProfitTableView() {
         <button
           type="button"
           onClick={() => setOpenSettings(true)}
-          className="flex justify-center items-center w-full cursor-pointer"
+          className="flex justify-center items-center w-full cursor-pointer text-black"
         >
           <SettingOutlined />
         </button>
@@ -414,7 +414,7 @@ export default function ProfitTableView() {
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
                   placeholder="ProductId"
-                  onChange={(e) => handleChange('productId', e.target.value)}
+                  onChange={(e) => handleChange('parentId', e.target.value)}
                 />
               </div>
               <div className="min-w-[180px]">
@@ -422,7 +422,7 @@ export default function ProfitTableView() {
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
                   placeholder="ProductId"
-                  onChange={(e) => handleChange('productId', e.target.value)}
+                  onChange={(e) => handleChange('mkt', e.target.value)}
                 />
               </div>
             </div>
@@ -610,7 +610,7 @@ export default function ProfitTableView() {
                 </Checkbox>
 
                 {/* info icon */}
-                <span className="text-blue-500 text-xs cursor-pointer">i</span>
+                {/* <span className="text-blue-500 text-xs cursor-pointer">i</span> */}
               </div>
             ))}
           </div>

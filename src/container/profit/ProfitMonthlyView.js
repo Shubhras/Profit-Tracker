@@ -232,8 +232,8 @@ export default function ProfitMonthlyView() {
                 : `200px repeat(${months.length}, 1fr)`,
             }}
           >
-            <div className="p-3 sticky left-0 bg-gray-50 z-20 flex justify-center items-center">
-              <SettingOutlined onClick={() => setOpenSettings(true)} className="cursor-pointer text-gray-600" />
+            <div className="p-3 sticky left-0 bg-gray-50 z-20 flex justify-left items-center">
+              <SettingOutlined onClick={() => setOpenSettings(true)} className="cursor-pointer text-black" />
             </div>
             {months.map((m, i) => (
               <div key={i} className="p-3 text-center font-semibold text-black">
@@ -243,7 +243,7 @@ export default function ProfitMonthlyView() {
           </div>
 
           {rows
-            .filter((row) => visibleRows.includes(row.key)) // 👈 YEH LINE ADD KARO
+            .filter((row) => visibleRows.includes(row.key))
             .map((row, i) => {
               const isHighlight = highlightRows.includes(row.key);
               return (
@@ -334,7 +334,7 @@ export default function ProfitMonthlyView() {
                   {row.label}
                 </Checkbox>
 
-                <span className="text-blue-500 text-xs cursor-pointer">i</span>
+                {/* <span className="text-blue-500 text-xs cursor-pointer">i</span> */}
               </div>
             ))}
           </div>
