@@ -889,7 +889,11 @@ def get_full_dashboard(request):
     total_cancelled_val = float(cancelled_qs.aggregate(val=Sum('total_amount'))['val'] or 0)
     
     # Real Sales (Excluding what was never paid due to cancellation)
-    total_sales_gross = total_sales_raw - total_cancelled_val
+    # total_sales_gross = total_sales_raw - total_cancelled_val
+    total_sales_gross =  total_sales_raw
+
+    # valid_orders = orders_qs.exclude(order_status__icontains='Cancel')
+    # total_sales_gross = float(valid_orders.aggregate(val=Sum('total_amount'))['val'] or 0)
     
     avg_sale_price = (total_sales_gross / orders_qs.exclude(order_status__icontains='Cancel').count()) if orders_qs.exclude(order_status__icontains='Cancel').count() > 0 else 0
 
@@ -926,7 +930,8 @@ def get_full_dashboard(request):
     cogs_val = total_sales_gross * 0.35
 
     # FINAL PROFIT: Sales - Fees - Refunds - Ads - COGS
-    net_profit = total_sales_gross - actual_fees - actual_refunds - ad_spend_val - cogs_val
+    # net_profit = total_sales_gross - actual_fees - actual_refunds - ad_spend_val - cogs_val
+    net_profit = total_sales_gross  - actual_refunds - ad_spend_val - cogs_val
     
     margin = (net_profit / total_sales_gross * 100) if total_sales_gross > 0 else 0
     roi = (net_profit / cogs_val * 100) if cogs_val > 0 else 0
@@ -997,6 +1002,166 @@ def get_full_dashboard(request):
         },
         "warnings": ["Using historical fee averages because matching settlement data is not yet available for these specific orders."] if not has_linked_data else []
     })
+
+
+# @api_view(['GET', 'POST'])
+# @permission_classes([IsAuthenticated])
+# def get_full_dashboard(request):
+#     user = request.user
+
+#     # ----------------------------
+#     # 🔹 DATE HANDLING
+#     # ----------------------------
+#     def get_param(keys, default=None):
+#         for k in keys:
+#             val = request.GET.get(k) or request.data.get(k)
+#             if val:
+#                 return val
+#         return default
+
+#     def parse_date(val, default_days):
+#         if not val:
+#             return timezone.now() - timedelta(days=default_days)
+#         try:
+#             return timezone.make_aware(datetime.strptime(val[:10], "%Y-%m-%d"))
+#         except:
+#             return timezone.now() - timedelta(days=default_days)
+
+#     start_date = parse_date(get_param(['fromDate', 'start_date']), 30)
+#     end_date = parse_date(get_param(['toDate', 'end_date']), 0).replace(hour=23, minute=59, second=59)
+
+#     # ----------------------------
+#     # 🔹 QUERYSETS
+#     # ----------------------------
+#     orders_qs = Order.objects.filter(
+#         user=user,
+#         purchase_date__range=(start_date, end_date)
+#     )
+
+#     finances_qs = FinancialEvent.objects.filter(
+#         user=user,
+#         posted_date__range=(start_date, end_date)
+#     )
+
+#     # ----------------------------
+#     # 🔹 SALES (ONLY VALID ORDERS)
+#     # ----------------------------
+#     valid_orders = orders_qs.exclude(order_status__icontains='Cancel')
+
+#     total_sales = float(orders_qs.aggregate(val=Sum('total_amount'))['val'] or 0)
+
+#     total_orders = orders_qs.count()
+
+#     # ----------------------------
+#     # 🔹 PROFIT (REAL AMAZON LOGIC)
+#     # ----------------------------
+#     net_profit = float(finances_qs.aggregate(val=Sum('total_amount'))['val'] or 0)
+
+#     # breakdown
+#     refunds = abs(float(
+#         finances_qs.filter(event_type__icontains='Refund')
+#         .aggregate(val=Sum('total_amount'))['val'] or 0
+#     ))
+
+#     fees = abs(float(
+#         finances_qs.filter(total_amount__lt=0)
+#         .exclude(event_type__icontains='Refund')
+#         .aggregate(val=Sum('total_amount'))['val'] or 0
+#     ))
+
+#     # ----------------------------
+#     # 🔹 ORDER LEVEL PROFIT
+#     # ----------------------------
+#     order_profit_map = dict(
+#         finances_qs
+#         .exclude(amazon_order_id__isnull=True)
+#         .values('amazon_order_id')
+#         .annotate(total=Sum('total_amount'))
+#         .values_list('amazon_order_id', 'total')
+#     )
+
+#     orders_with_profit = []
+
+#     for order in valid_orders:
+#         profit = float(order_profit_map.get(order.amazon_order_id, 0))
+
+#         orders_with_profit.append({
+#             "amazon_order_id": order.amazon_order_id,
+#             "sales": float(order.total_amount or 0),
+#             "profit": round(profit, 2)
+#         })
+
+#     profit_orders = [o for o in orders_with_profit if o["profit"] > 0]
+#     loss_orders = [o for o in orders_with_profit if o["profit"] < 0]
+
+#     profit_orders_sorted = sorted(profit_orders, key=lambda x: x["profit"], reverse=True)
+#     loss_orders_sorted = sorted(loss_orders, key=lambda x: x["profit"])
+
+#     # ----------------------------
+#     # 🔹 TRENDS (REAL)
+#     # ----------------------------
+#     trends = valid_orders.annotate(date=TruncDate('purchase_date')) \
+#         .values('date') \
+#         .annotate(
+#             sales=Sum('total_amount'),
+#             qty=Count('id')
+#         ).order_by('date')
+
+#     trends_data = [
+#         {
+#             "date": t['date'].strftime('%Y-%m-%d'),
+#             "sales": float(t['sales'] or 0),
+#             "qty": t['qty']
+#         }
+#         for t in trends
+#     ]
+
+#     # ----------------------------
+#     # 🔹 GEOGRAPHY
+#     # ----------------------------
+#     geo = valid_orders.values('state').annotate(
+#         revenue=Sum('total_amount'),
+#         orders=Count('id')
+#     )
+
+#     geo_data = [
+#         {
+#             "state": g['state'] or "UNKNOWN",
+#             "revenue": float(g['revenue'] or 0),
+#             "orders": g['orders']
+#         }
+#         for g in geo
+#     ]
+
+#     # ----------------------------
+#     # 🔹 RESPONSE
+#     # ----------------------------
+#     return JsonResponse({
+#         "status": "success",
+#         "currency": "INR",
+
+#         "header_metrics": {
+#             "sales": round(total_sales, 2),
+#             "profit": round(net_profit, 2),
+#             "margin": f"{round((net_profit / total_sales * 100), 2)}%" if total_sales else "0%"
+#         },
+
+#         "breakdown": {
+#             "orders": total_orders,
+#             "refunds": round(refunds, 2),
+#             "fees": round(fees, 2)
+#         },
+
+#         "top_orders": {
+#             "profit_orders_count": len(profit_orders),
+#             "loss_orders_count": len(loss_orders),
+#             "top_profit_orders": profit_orders_sorted[:5],
+#             "top_loss_orders": loss_orders_sorted[:5]
+#         },
+
+#         "trends": trends_data,
+#         "geography": geo_data
+#     })
 
 @api_view(['POST', 'GET'])
 @permission_classes([IsAuthenticated])
