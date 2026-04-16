@@ -62,6 +62,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://api.trackmyprofit.com",
     "http://localhost:3000",
     "http://localhost:3001",
+    "https://372nmlsj-8000.inc1.devtunnels.ms",
 ]
  
 CORS_ALLOW_CREDENTIALS = True
