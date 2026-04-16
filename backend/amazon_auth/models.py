@@ -18,7 +18,7 @@ def decrypt_token(encrypted_token: str) -> str:
 
 class AmazonAccount(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='amazon_accounts')
-    
+
     # Credentials for the App (Usually these are global, but stored here for flexibility)
     app_client_id = models.CharField(max_length=255)
     app_client_secret = models.CharField(max_length=255)

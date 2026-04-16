@@ -1,70 +1,92 @@
-# Getting Started with Create React App
+# 🚀 Profit-Tracker: Amazon Profit Analytics SaaS
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Profit-Tracker is a robust, production-ready SaaS application designed for Amazon Selling Partners. It provides deep financial insights, real-time profit tracking, and automated reconciliation across multiple marketplaces, starting with Amazon India.
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## 🏗️ Project Architecture
 
-### `npm start`
+The application is built using a modern decoupled architecture:
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- **Frontend:** React 18 with Tailwind CSS, Redux for state management, and Ant Design for UI components.
+- **Backend:** Django Rest Framework (DRF) serving as the API layer, integrated with Amazon SP-API.
+- **Database:** SQLite (Development) / PostgreSQL (Production ready).
+- **Authentication:** JWT (JSON Web Tokens) with secure cookie-based storage.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+---
 
-### `npm test`
+## ✨ Key Features
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### 📊 Advanced Analytics
+- **Live Dashboard:** Real-time metrics for Sales, Net Profit, Margin, and ROI.
+- **Pivot Tables:** Multi-dimensional analysis of performance by date and marketplace.
+- **Product Analysis:** SKU-level profitability tracking with automated fee estimation.
+- **Marketplace Trends:** Heatmaps and trend charts for multi-marketplace comparison.
 
-### `npm run build`
+### 🔄 Multi-Channel Sync
+- **Smart Sync:** Automatically pulls orders, finances, and reports from Amazon SP-API.
+- **Hybrid Data Fetching:** Defaults to local database for speed, but allows "Live Sync" for the latest records.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 💰 Financial Reconciliation
+- Automated settlement tracking to ensure every rupee from Amazon is accounted for.
+- Fee leak identification and return ledger management.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### 🛡️ Secure SaaS Features
+- **Subscription Management:** Multi-tier access control (Free vs. Premium).
+- **Multi-Tenant Isolation:** Secure data separation between different sellers.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+---
 
-### `npm run eject`
+## 🛠️ Technology Stack
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend** | React, Redux, Tailwind CSS, Ant Design, ApexCharts, Framer Motion |
+| **Backend** | Python, Django, Django Rest Framework, Amazon SP-API (python-amazon-sp-api) |
+| **Auth** | JWT (SimpleJWT), CORS Headers, secure cookies |
+| **Deployment** | Python-dotenv, Craco (Frontend config), Gunicorn (Production) |
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+---
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## 🚀 Getting Started
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### 1. Backend Setup
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
 
-## Learn More
+### 2. Frontend Setup
+```bash
+npm install
+npm start
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+---
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 🔗 API Documentation Summary
 
-### Code Splitting
+The backend exposes a rich set of RESTful endpoints. Detailed documentation can be found in [backend/README_API.md](./backend/README_API.md).
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Quick Reference:
+| Purpose | Endpoint | Method |
+| :--- | :--- | :--- |
+| Dashboard Data | `/api/amazon/dashboard-stats/` | `GET/POST` |
+| Pivot Analytics | `/api/amazon/pivot-stats/` | `GET/POST` |
+| Manual Order Sync | `/api/amazon/sync-orders/` | `GET` |
+| User Login | `/api/user/login/` | `POST` |
 
-### Analyzing the Bundle Size
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## 📂 Directory Structure
+- `/src`: React source code (Containers, Components, Redux logic).
+- `/backend`: Django project files (Apps: `amazon_auth`, `user_auth`, `subscription`).
+- `/public`: Static assets and icons.
+- `DOCUMENTATION.md`: Detailed frontend documentation.
 
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+---
+Developed with ❤️ by the Profit-Tracker Team.

@@ -15,6 +15,12 @@ from .spapi_manager import SPAPIManager
 from .models import AmazonAccount, Order, FinancialEvent, Report, OrderItem
 from dotenv import load_dotenv
 
+from decimal import Decimal
+from django.db.models import Sum, Case, When, Value, DecimalField, Q
+from django.db.models.functions import Coalesce
+from .utils import * 
+
+
 # Load .env file
 load_dotenv()
 
@@ -986,7 +992,7 @@ def get_full_dashboard(request):
         "trends": trends_data,
         "geography": geo_data_detailed,
         "top_orders": {
-            "profitable": list(orders_qs.order_by('-total_amount')[:5].values('amazon_order_id', 'total_amount')),
+            "profitaget_full_dashboardble": list(orders_qs.order_by('-total_amount')[:5].values('amazon_order_id', 'total_amount')),
             "losing": list(finances_qs.filter(total_amount__lt=0).order_by('total_amount')[:5].values('amazon_order_id', 'total_amount'))
         },
         "warnings": ["Using historical fee averages because matching settlement data is not yet available for these specific orders."] if not has_linked_data else []
@@ -1882,6 +1888,160 @@ def get_amazon_data_reconcile_paymentsummary(request):
     }
     
     return JsonResponse(result)
+
+
+# api for get banck trnasfer details
+
+
+# ---------------------------
+# MAIN API
+# ---------------------------
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_bank_transfer_workflow(request):
+
+    user = request.user
+    payload = request.data or {}
+    filters = payload.get('filters', {})
+
+    # ---------------------------
+    # 1. DATE PARSING
+    # ---------------------------
+    def parse_date(date_str, default_delta):
+        if not date_str:
+            return timezone.now() + default_delta
+        try:
+            dt = datetime.fromisoformat(str(date_str).replace('Z', '+00:00'))
+            if timezone.is_naive(dt):
+                dt = timezone.make_aware(dt)
+            return dt
+        except:
+            return timezone.now() + default_delta
+
+    from_date = parse_date(filters.get('fromDate'), timedelta(days=-30))
+    to_date = parse_date(filters.get('toDate'), timedelta(days=0))
+    to_date = to_date.replace(hour=23, minute=59, second=59)
+
+    # ---------------------------
+    # 2. QUERYSET
+    # ---------------------------
+    qs = FinancialEvent.objects.filter(
+        user=user,
+        posted_date__range=(from_date, to_date)
+    )
+
+    DECIMAL = DecimalField(max_digits=14, decimal_places=2)
+    ZERO = Value(Decimal('0.00'), output_field=DECIMAL)
+
+    # ---------------------------
+    # 3. DB AGGREGATION
+    # ---------------------------
+    agg = qs.aggregate(
+
+        remittance=Coalesce(
+            Sum(Case(
+                When(total_amount__gt=0, then='total_amount'),
+                default=ZERO,
+                output_field=DECIMAL
+            )), ZERO
+        ),
+
+        negremittance=Coalesce(
+            Sum(Case(
+                When(total_amount__lt=0, then='total_amount'),
+                default=ZERO,
+                output_field=DECIMAL
+            )), ZERO
+        ),
+
+        ads_cost=Coalesce(
+            Sum(Case(
+                When(
+                    Q(event_type__icontains='Ad') |
+                    Q(event_type__icontains='ServiceFee'),
+                    then='total_amount'
+                ),
+                default=ZERO,
+                output_field=DECIMAL
+            )), ZERO
+        ),
+
+        reserve_adj=Coalesce(
+            Sum(Case(
+                When(event_type__icontains='Reserve', then='total_amount'),
+                default=ZERO,
+                output_field=DECIMAL
+            )), ZERO
+        ),
+
+        other_adj=Coalesce(
+            Sum(Case(
+                When(
+                    ~(
+                        Q(event_type__icontains='Shipment') |
+                        Q(event_type__icontains='Ad') |
+                        Q(event_type__icontains='ServiceFee') |
+                        Q(event_type__icontains='Reserve')
+                    ),
+                    then='total_amount'
+                ),
+                default=ZERO,
+                output_field=DECIMAL
+            )), ZERO
+        ),
+    )
+
+    # ---------------------------
+    # 4. RAW DATA PARSING (CORRECT PLACE)
+    # ---------------------------
+    orders_paid = Decimal('0.00')
+    fees = Decimal('0.00')
+    tds = Decimal('0.00')
+    promotions = Decimal('0.00')
+    other = Decimal('0.00')
+
+    shipment_events = qs.filter(event_type__icontains='Shipment')
+
+    for event in shipment_events:
+        data = extract_financials(event.raw_data)
+
+        orders_paid += data["revenue"]
+        fees += data["fees"]
+        tds += data["tds"]
+        promotions += data["promotions"]
+        other += data["other"]
+
+    # ---------------------------
+    # 5. FINAL VALUES
+    # ---------------------------
+    remittance = round(float(agg['remittance']), 2)
+    negremittance = round(float(agg['negremittance']), 2)
+    ads_cost = round(float(agg['ads_cost']), 2)
+    reserve_adj = round(float(agg['reserve_adj']), 2)
+    other_adj = round(float(agg['other_adj']), 2)
+
+    total = round(remittance + negremittance, 2)
+
+    # ---------------------------
+    # 6. RESPONSE
+    # ---------------------------
+    return JsonResponse({
+        "status": True,
+        "message": "Success",
+        "message_code": "E1",
+        "data": {
+            "remittance_amount": remittance,
+            "negative_adjustment": negremittance,
+            "total": total,
+            "orders_paid": round(float(orders_paid), 2),
+            "fees": round(float(fees), 2),
+            "tds": round(float(tds), 2),
+            "promotions": round(float(promotions), 2),
+            "advertisement_cost": ads_cost,
+            "reserve_adjustment": reserve_adj,
+            "other_adjustment": other_adj
+        }
+    })
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
