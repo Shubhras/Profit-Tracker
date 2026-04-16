@@ -23,6 +23,7 @@ import { Popover } from '../../popup/popup';
 import Heading from '../../heading/heading';
 // import { Dropdown } from '../../dropdown/dropdown';
 import { logOut, getProfile } from '../../../redux/authentication/actionCreator';
+import action from '../../../redux/dashboard/action';
 
 const AuthInfo = React.memo(() => {
   const dispatch = useDispatch();
@@ -258,9 +259,24 @@ const AuthInfo = React.memo(() => {
             open={open}
             onOpenChange={(val) => setOpen(val)}
             value={dateRange}
+            // onChange={(val) => {
+            //   setDateRange(val);
+            //   setOpen(false);
+            // }}
             onChange={(val) => {
               setDateRange(val);
               setOpen(false);
+
+              if (val) {
+                dispatch(
+                  action.setDateRange({
+                    fromDate: val[0].format('YYYY-MM-DD'),
+                    endDate: val[1].format('YYYY-MM-DD'),
+                  }),
+                );
+              } else {
+                dispatch(action.setDateRange(null));
+              }
             }}
             style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
           />

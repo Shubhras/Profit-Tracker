@@ -2,14 +2,16 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Row, Col, Card, Statistic, Tag, Select, Divider, Checkbox, Button } from 'antd';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useLocation } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { amazonAction } from '../../redux/amazonAPI/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
+import { getDashboard } from '../../redux/dashboard/actionCreator';
 
 const { Option } = Select;
 
 export default function Summary() {
   const [viewType, setViewType] = useState('percentage');
+  const { dashboardData, dateRange } = useSelector((state) => state.dashboard);
   // const [amazonParams, setAmazonParams] = useState({
   //   callbackUri: '',
   //   state: '',
@@ -17,6 +19,14 @@ export default function Summary() {
   // });
   const location = useLocation();
   const dispatch = useDispatch();
+  const payload = {
+    fromDate: dateRange?.fromDate,
+    toDate: dateRange?.endDate,
+  };
+
+  useEffect(() => {
+    dispatch(getDashboard(payload));
+  }, [dispatch, dateRange]);
 
   const loginAmazon = useCallback(
     (params) => {
@@ -26,15 +36,15 @@ export default function Summary() {
   );
 
   const connectAmazon = () => {
-    window.location.href = 'https://api.trackmyprofit.com/api/amazon/connect';
+    window.location.href = 'http://192.168.1.10:8000/amazon/connect';
   };
 
   // const getAuthCodAmazon = () => {
   //   const callbackUri = encodeURIComponent('http://localhost:3001/admin/profit/summary'); // your frontend callback
   //   const state = Math.random().toString(36).substring(2); // random state for security
   //   const sellingPartnerId = '1234567'; // replace with actual seller ID if needed
-  //   window.location.href = `http://192.168.1.29:8000/api/amazon/login/?amazon_callback_uri=${callbackUri}&amazon_state=${state}&selling_partner_id=${sellingPartnerId}`;
-  //   // window.location.href = `http://192.168.1.29:8000/api/amazon/login/?amazon_callback_uri=${callbackUri}&amazon_state=${state}&selling_partner_id=${sellingPartnerId}`;
+  //   window.location.href = `http://192.168.1.10:8000/amazon/login/?amazon_callback_uri=${callbackUri}&amazon_state=${state}&selling_partner_id=${sellingPartnerId}`;
+  //   // window.location.href = `http://192.168.1.10:8000/api/amazon/login/?amazon_callback_uri=${callbackUri}&amazon_state=${state}&selling_partner_id=${sellingPartnerId}`;
   // };
 
   useEffect(() => {
@@ -56,10 +66,8 @@ export default function Summary() {
       // console.log('Selling Partner ID:', sellingPartnerId);
     }
 
-    // if (amazonState && stateNew && spapiOauthCode) {
-    if (stateNew && spapiOauthCode) {
-      loginAmazon({ spapi_oauth_code: spapiOauthCode, state: stateNew, selling_partner_id: sellingPartnerId });
-      console.log('dddddddddddddddddddddddddddd');
+    if (amazonState && stateNew && spapiOauthCode) {
+      loginAmazon({ state: stateNew, spapi_oauth_code: spapiOauthCode });
     }
   }, [location, loginAmazon]);
 
@@ -69,23 +77,40 @@ export default function Summary() {
   ];
 
   /* ---------- RIGHT STACKED CHART ---------- */
-  const stackedData = [
-    { date: '01/01', cancelled: 0, rto: 0, returned: 0 },
-    { date: '02/01', cancelled: 0, rto: 0, returned: 0 },
-    { date: '03/01', cancelled: 0, rto: 0, returned: 0 },
-    { date: '04/01', cancelled: 0, rto: 0, returned: 0 },
-    { date: '05/01', cancelled: 0, rto: 0, returned: 0 },
-    { date: '06/01', cancelled: 0, rto: 0, returned: 0 },
-    { date: '07/01', cancelled: 0, rto: 0, returned: 0 },
-  ];
+  // const stackedData = [
+  //   { date: '01/01', cancelled: 0, rto: 0, returned: 0 },
+  //   { date: '02/01', cancelled: 0, rto: 0, returned: 0 },
+  //   { date: '03/01', cancelled: 0, rto: 0, returned: 0 },
+  //   { date: '04/01', cancelled: 0, rto: 0, returned: 0 },
+  //   { date: '05/01', cancelled: 0, rto: 0, returned: 0 },
+  //   { date: '06/01', cancelled: 0, rto: 0, returned: 0 },
+  //   { date: '07/01', cancelled: 0, rto: 0, returned: 0 },
+  // ];
 
-  /* ---------- BOTTOM CHART DATA ---------- */
-  const bottomChartData = [
-    { name: 'North', value: 0 },
-    { name: 'South', value: 0 },
-    { name: 'East', value: 0 },
-    { name: 'West', value: 0 },
-  ];
+  // const bottomChartData = [
+  //   { name: 'North', value: 0 },
+  //   { name: 'South', value: 0 },
+  //   { name: 'East', value: 0 },
+  //   { name: 'West', value: 0 },
+  // ];
+  const stackedData =
+    dashboardData?.trends?.map((item) => ({
+      date: item.date,
+      sales: item.sales || 0,
+      qty: item.qty || 0,
+      profit: item.estimated_profit || 0,
+    })) || [];
+
+  const bottomChartData = dashboardData?.geography?.length
+    ? dashboardData.geography
+        .map((item) => ({
+          name: item.id || 'Unknown',
+          value: Number(item.revenue) || 0,
+          qty: Number(item.grossqty) || 0,
+        }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 4)
+    : [];
 
   return (
     <>
@@ -129,29 +154,29 @@ export default function Summary() {
           {/* SALES */}
           <Col xs={24} lg={6}>
             <Card>
-              <Statistic title="Sales" value={0} prefix="₹" />
+              <Statistic title="Sales" value={dashboardData?.header_metrics?.sales || 0} prefix="₹" />
               <Tag color="blue" className="mt-2">
-                Units: 0
+                Units: {dashboardData?.breakdown_table?.gross?.qty || 0}
               </Tag>
 
               <Divider />
 
               <Row justify="space-between">
                 <span>Gross</span>
-                <span>0</span>
+                <span>₹{dashboardData?.breakdown_table?.gross?.amount || 0}</span>
               </Row>
               <Row justify="space-between">
                 <span>Cancelled</span>
-                <span>0</span>
+                <span>₹{dashboardData?.breakdown_table?.cancelled?.amount || 0}</span>
               </Row>
               <Row justify="space-between">
                 <span>Returned</span>
-                <span>0</span>
+                <span>₹{dashboardData?.breakdown_table?.returned?.amount || 0}</span>
               </Row>
               <Divider />
               <Row justify="space-between">
                 <strong>Net</strong>
-                <strong>0</strong>
+                <strong>₹{dashboardData?.breakdown_table?.net?.amount || 0}</strong>
               </Row>
             </Card>
           </Col>
@@ -159,24 +184,24 @@ export default function Summary() {
           {/* PROFIT */}
           <Col xs={24} lg={6}>
             <Card>
-              <Statistic title="Profit" value={0} prefix="₹" />
-              <Tag color="gold">Margin: 0%</Tag>
-              <Tag color="green">ROI: 0%</Tag>
+              <Statistic title="Profit" value={dashboardData?.header_metrics?.profit || 0} prefix="₹" />
+              <Tag color="gold">Margin: {dashboardData?.header_metrics?.margin || '0%'}</Tag>
+              <Tag color="green">ROI: {dashboardData?.header_metrics?.roi || '0%'}</Tag>
             </Card>
 
             <Row gutter={8} className="mt-3">
               <Col span={12}>
                 <Card size="small" className="bg-green-50">
                   <p className="text-green-700">Profit IDs</p>
-                  <strong>#0</strong>
-                  <p>₹0</p>
+                  <strong>#{dashboardData?.top_orders?.profitable?.length || 0}</strong>
+                  <p>₹{dashboardData?.top_orders?.profitable?.reduce((acc, cur) => acc + (cur.amount || 0), 0)}</p>
                 </Card>
               </Col>
               <Col span={12}>
                 <Card size="small" className="bg-red-50">
                   <p className="text-red-600">Loss IDs</p>
-                  <strong>#0</strong>
-                  <p>₹0</p>
+                  <strong>#{dashboardData?.top_orders?.losing?.length || 0}</strong>
+                  <p>₹{dashboardData?.top_orders?.losing?.reduce((acc, cur) => acc + (cur.amount || 0), 0)}</p>
                 </Card>
               </Col>
             </Row>
@@ -185,8 +210,8 @@ export default function Summary() {
           {/* AD SPEND */}
           <Col xs={24} lg={6}>
             <Card>
-              <Statistic title="Ad Spend" value={0} prefix="₹" />
-              <Tag color="magenta">TACOS: 0%</Tag>
+              <Statistic title="Ad Spend" value={dashboardData?.header_metrics?.ad_spend || 0} prefix="₹" />
+              <Tag color="magenta">TACOS: {dashboardData?.header_metrics?.tacos || '0%'}</Tag>
             </Card>
           </Col>
 
@@ -199,9 +224,9 @@ export default function Summary() {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="cancelled" stackId="a" fill="#f28b82" />
-                  <Bar dataKey="rto" stackId="a" fill="#a7f3a0" />
-                  <Bar dataKey="returned" stackId="a" fill="#fbc687" />
+                  <Bar dataKey="sales" stackId="a" fill="#f28b82" />
+                  <Bar dataKey="qty" stackId="a" fill="#a7f3a0" />
+                  <Bar dataKey="profit" stackId="a" fill="#fbc687" />
                 </BarChart>
               </ResponsiveContainer>
             </Card>

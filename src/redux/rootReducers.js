@@ -6,7 +6,6 @@ import authReducer from './authentication/reducers';
 import ChangeLayoutMode from './themeLayout/reducers';
 import { teamReducer } from './team/reducers';
 import { userReducer, userGroupReducer } from './users/reducers';
-import { sellersReducer } from './sellers/reducers';
 import { headerSearchReducer } from './headerSearch/reducers';
 import orderReducer from './orders/reducers';
 import galleryReducer from './gallary/reducers';
@@ -29,6 +28,8 @@ import jobs from './jobs/reducers';
 import dataTable from './data-filter/reducers';
 import subscriptionReducer from './subscription/reducers';
 import amazonReducer from './amazonAPI/reducers';
+import dashboardReducer from './dashboard/reducers';
+import reconcilePaymentReducer from './reconcilePayment/reducers';
 
 const rootReducers = combineReducers({
   themeUsers: themeUsersReducer,
@@ -36,7 +37,6 @@ const rootReducers = combineReducers({
   message: readMessageReducer,
   notification: readNotificationReducer,
   orders: orderReducer,
-  sellers: sellersReducer,
   users: userReducer,
   userGroup: userGroupReducer,
   team: teamReducer,
@@ -69,6 +69,8 @@ const rootReducers = combineReducers({
   SingleAxiosCrud: axiosSingleCrudReducer,
   subscription: subscriptionReducer,
   amazonAPI: amazonReducer,
+  dashboard: dashboardReducer,
+  reconcilePayment: reconcilePaymentReducer,
 });
 
 export default rootReducers;
