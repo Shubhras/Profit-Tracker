@@ -1,44 +1,124 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Table, Card } from 'antd';
 import { RightOutlined } from '@ant-design/icons';
-import { useParams, useNavigate } from 'react-router-dom';
-
+import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import ProfitFilterBar from './component/ProfitFilterBar';
+import { getProfitDetails } from '../../redux/dashboard/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function ProfitDetailsView() {
-  const { id } = useParams();
+  // const { channel } = useParams();
+  // const decodedChannel = decodeURIComponent(channel);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { dateRange, channel: globalChannel, profitData } = useSelector((state) => state.dashboard);
+  const totals = profitData?.totals || {};
+  const [filters, setFilters] = React.useState({
+    channel: '',
+    sku: '',
+    productId: '',
+    parentId: '',
+    mkt: '',
+    ads: 'without',
+    gst: 'without',
+    estimate: 'with',
+    expenses: 'with',
+    accountCharges: 'with',
+  });
+  const getMetricFromFilters = () => {
+    return {
+      ads: filters.ads === 'with' ? 'withAds' : 'withoutAds',
+      gst: filters.gst === 'with' ? 'withGst' : 'withoutGst',
+      expense: filters.expenses === 'with' ? 'withExpense' : 'withoutExpense',
+    };
+  };
+  const buildPayload = () => {
+    return {
+      filters: {
+        channel: {
+          // IN: [decodedChannel],
+          IN: globalChannel,
+        },
+        fromDate: dateRange?.fromDate || null,
+        toDate: dateRange?.endDate || null,
+      },
+      metric: getMetricFromFilters(),
+      pagination: {
+        pageNo: 0,
+        pageSize: 25,
+      },
+    };
+  };
+  useEffect(() => {
+    if (globalChannel?.length > 0) {
+      dispatch(getProfitDetails(buildPayload()));
+    }
+  }, [dateRange, globalChannel]);
 
   const PageRoutes = [
     { path: 'index', breadcrumbName: 'Profit' },
     { path: '', breadcrumbName: 'Profit Details' },
   ];
 
-  // ✅ STATIC DATA (dummy)
-  const dataSource = [
-    {
-      key: 1,
-      channel: 'Amazon-India',
-      view: 50000,
-      qty: 120,
-      netQty: 100,
-      returnqty: 20,
-      returnPercent: 16,
-      netsales: 45000,
-      netasp: 450,
-      net_discount: 2000,
-      mpfees: 3000,
-      shipping: 1500,
-      adSpend: 2000,
-      gst: 2500,
-      grossprofit: 8000,
-      profit: 6000,
-      profitPercent: 12,
-      settledamount: 5500,
-    },
-  ];
+  const dataSource = React.useMemo(() => {
+    const rows =
+      profitData?.response?.map((item, index) => ({
+        key: index,
 
-  // ✅ COLUMNS (similar UI)
+        channel: item.channel || '-',
+
+        view: Number(item.grosssales) || 0,
+        // qty: Number(item.grossqty) || 0,
+        netQty: Number(item.netqty) || 0,
+        returnqty: Number(item.returnqty) || 0,
+        returnPercent: Number(item.retpercent) || 0,
+
+        netsales: Number(item.netsales) || 0,
+        // netasp: Number(item.netasp) || 0,
+        // net_discount: Number(item.net_discount) || 0,
+
+        mpfees: Number(item.mpfees) || 0,
+        shipping: Number(item.shippingfees) || 0,
+        adSpend: Number(item.ads) || 0,
+        gst: Number(item.gsttopay) || 0,
+
+        grossprofit: Number(item.grossprofit) || 0,
+        profit: Number(item.profit) || 0,
+        profitPercent: Number(item.profitmper) || 0,
+
+        // settledamount: Number(item.profit_settled_amount) || 0,
+      })) || [];
+
+    const totalRow = {
+      key: 'total',
+      channel: 'Total',
+
+      view: Number(totals.view) || 0,
+      // qty: Number(totals.grossqty) || 0,
+      netQty: Number(totals.totalqty) || 0,
+      returnqty: Number(totals.totalreturn) || 0,
+      returnPercent: Number(totals.totalper) || 0,
+
+      netsales: Number(totals.netsales) || 0,
+      // netasp: 0,
+      // net_discount: 0,
+
+      mpfees: Number(totals.mpfees) || 0,
+      shipping: Number(totals.shippingfees) || 0,
+      adSpend: Number(totals.ads) || 0,
+      gst: Number(totals.gsttopay) || 0,
+
+      grossprofit: Number(totals.grossprofit) || 0,
+      profit: Number(totals.profit) || 0,
+      profitPercent: Number(totals.profitper) || 0,
+
+      // settledamount: 0,
+    };
+
+    return [...rows, totalRow];
+  }, [profitData]);
+
   const columns = [
     {
       title: '',
@@ -52,12 +132,12 @@ export default function ProfitDetailsView() {
       align: 'center',
       sorter: (a, b) => a.view - b.view,
     },
-    {
-      title: 'Qty',
-      dataIndex: 'qty',
-      align: 'center',
-      sorter: (a, b) => a.qty - b.qty,
-    },
+    // {
+    //   title: 'Qty',
+    //   dataIndex: 'qty',
+    //   align: 'center',
+    //   sorter: (a, b) => a.qty - b.qty,
+    // },
     {
       title: 'Net Qty',
       dataIndex: 'netQty',
@@ -82,18 +162,18 @@ export default function ProfitDetailsView() {
       align: 'center',
       sorter: (a, b) => a.netsales - b.netsales,
     },
-    {
-      title: 'Net asp',
-      dataIndex: 'netasp',
-      align: 'center',
-      sorter: (a, b) => a.netasp - b.netasp,
-    },
-    {
-      title: 'Net discount',
-      dataIndex: 'net_discount',
-      align: 'center',
-      sorter: (a, b) => a.net_discount - b.net_discount,
-    },
+    // {
+    //   title: 'Net asp',
+    //   dataIndex: 'netasp',
+    //   align: 'center',
+    //   sorter: (a, b) => a.netasp - b.netasp,
+    // },
+    // {
+    //   title: 'Net discount',
+    //   dataIndex: 'net_discount',
+    //   align: 'center',
+    //   sorter: (a, b) => a.net_discount - b.net_discount,
+    // },
     {
       title: 'MP fees',
       dataIndex: 'mpfees',
@@ -137,12 +217,12 @@ export default function ProfitDetailsView() {
       align: 'center',
       sorter: (a, b) => a.profitPercent - b.profitPercent,
     },
-    {
-      title: 'Settled amount',
-      dataIndex: 'settledamount',
-      align: 'center',
-      sorter: (a, b) => a.settledamount - b.settledamount,
-    },
+    // {
+    //   title: 'Settled amount',
+    //   dataIndex: 'settledamount',
+    //   align: 'center',
+    //   sorter: (a, b) => a.settledamount - b.settledamount,
+    // },
     {
       title: '',
       key: 'action',
@@ -170,18 +250,49 @@ export default function ProfitDetailsView() {
       ),
     },
   ];
+  const handleApply = () => {
+    dispatch(getProfitDetails(buildPayload()));
+  };
+
+  const handleClear = () => {
+    setFilters({
+      channel: '',
+      sku: '',
+      productId: '',
+      parentId: '',
+      mkt: '',
+      ads: '',
+      gst: '',
+      estimate: '',
+      expenses: '',
+      accountCharges: '',
+    });
+  };
 
   return (
     <>
       <PageHeader
         routes={PageRoutes}
-        title={`Profit Details - ${id}`}
+        title="Profit Details"
         className="flex justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 bg-transparent"
       />
 
       <main className="min-h-[600px] px-8 pb-[30px]">
         <Card bordered={false}>
-          <Table columns={columns} dataSource={dataSource} pagination={false} scroll={{ x: 'max-content' }} />
+          <ProfitFilterBar
+            filters={filters}
+            setFilters={setFilters}
+            handleApply={handleApply}
+            handleClear={handleClear}
+          />
+          <Table
+            columns={columns}
+            dataSource={dataSource}
+            showSorterTooltip={false}
+            locale={{ emptyText: 'No Data Found' }}
+            pagination={false}
+            scroll={{ x: 'max-content' }}
+          />
         </Card>
       </main>
     </>

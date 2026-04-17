@@ -1,17 +1,29 @@
 import React from 'react';
 import { Table, Card } from 'antd';
 import { useParams } from 'react-router-dom';
+import ProfitFilterBar from './component/ProfitFilterBar';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function ProfitDetailsView() {
-  const { id } = useParams(); // 👈 route se id aayegi
+  const { id } = useParams();
+  const [filters, setFilters] = React.useState({
+    channel: '',
+    sku: '',
+    productId: '',
+    parentId: '',
+    mkt: '',
+    ads: 'without',
+    gst: 'without',
+    estimate: 'with',
+    expenses: 'with',
+    accountCharges: 'with',
+  });
 
   const PageRoutes = [
     { path: 'index', breadcrumbName: 'Profit' },
     { path: '', breadcrumbName: 'Profit Details' },
   ];
 
-  // ✅ STATIC DATA (dummy)
   const dataSource = [
     {
       key: 1,
@@ -35,7 +47,6 @@ export default function ProfitDetailsView() {
     },
   ];
 
-  // ✅ COLUMNS (similar UI)
   const columns = [
     {
       title: '',
@@ -141,18 +152,49 @@ export default function ProfitDetailsView() {
       sorter: (a, b) => a.settledamount - b.settledamount,
     },
   ];
+  const handleApply = () => {
+    console.log('Apply clicked', filters);
+  };
+
+  const handleClear = () => {
+    setFilters({
+      channel: '',
+      sku: '',
+      productId: '',
+      parentId: '',
+      mkt: '',
+      ads: '',
+      gst: '',
+      estimate: '',
+      expenses: '',
+      accountCharges: '',
+    });
+  };
 
   return (
     <>
       <PageHeader
         routes={PageRoutes}
-        title={`Profit Details - ${id}`}
+        title={`Profit Third Table - ${id}`}
         className="flex justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 bg-transparent"
       />
 
       <main className="min-h-[600px] px-8 pb-[30px]">
         <Card bordered={false}>
-          <Table columns={columns} dataSource={dataSource} pagination={false} scroll={{ x: 'max-content' }} />
+          <ProfitFilterBar
+            filters={filters}
+            setFilters={setFilters}
+            handleApply={handleApply}
+            handleClear={handleClear}
+          />
+
+          <Table
+            columns={columns}
+            dataSource={dataSource}
+            showSorterTooltip={false}
+            pagination={false}
+            scroll={{ x: 'max-content' }}
+          />
         </Card>
       </main>
     </>

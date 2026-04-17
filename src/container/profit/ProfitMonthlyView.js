@@ -21,7 +21,7 @@ export default function ProfitMonthlyView() {
   };
   const [openSettings, setOpenSettings] = React.useState(false);
 
-  const { monthwiseProfitData, dateRange } = useSelector((state) => state.dashboard);
+  const { monthwiseProfitData, dateRange, channel: globalChannel } = useSelector((state) => state.dashboard);
   const PageRoutes = [
     {
       path: 'index',
@@ -35,6 +35,9 @@ export default function ProfitMonthlyView() {
 
   useEffect(() => {
     const payload = {
+      channel: {
+        IN: globalChannel,
+      },
       fromDate: dateRange?.fromDate || null,
       toDate: dateRange?.endDate || null,
       SKU: '',
@@ -43,7 +46,8 @@ export default function ProfitMonthlyView() {
     };
 
     dispatch(getProfitMonthwise(payload));
-  }, [dispatch, dateRange]);
+  }, [dispatch, dateRange, globalChannel]);
+
   const formatMonth = (m) => {
     const [month, year] = m.split('-');
     const date = new Date(year, month - 1);

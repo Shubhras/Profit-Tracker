@@ -5,12 +5,13 @@ import UilDollarSign from '@iconscout/react-unicons/icons/uil-dollar-sign';
 import UilSignout from '@iconscout/react-unicons/icons/uil-signout';
 import UilUser from '@iconscout/react-unicons/icons/uil-user';
 // import UilUsersAlt from '@iconscout/react-unicons/icons/uil-users-alt';
-import { Avatar, DatePicker } from 'antd';
+import { Avatar, DatePicker, Button } from 'antd';
 import React, { useEffect, useState } from 'react';
 // import { useTranslation} from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import UilTimes from '@iconscout/react-unicons/icons/uil-times';
+import moment from 'moment';
 // import { DateRange } from 'react-date-range';
 // import 'react-date-range/dist/styles.css';
 // import 'react-date-range/dist/theme/default.css';
@@ -29,8 +30,10 @@ const AuthInfo = React.memo(() => {
   const dispatch = useDispatch();
   const { RangePicker } = DatePicker;
   // const dateRef = React.useRef(null);
-  const [dateRange, setDateRange] = useState(null);
+  // const [dateRange, setDateRange] = useState(null);
+  const [dateRange, setDateRange] = useState([moment().startOf('month'), moment()]);
   const [open, setOpen] = useState(false);
+  const [tempRange, setTempRange] = useState(dateRange);
   // const [dateRange, setDateRange] = React.useState([
   //   {
   //     startDate: new Date(),
@@ -124,6 +127,15 @@ const AuthInfo = React.memo(() => {
       dispatch(getProfile());
     }
   }, [dispatch, profile, profileLoading, profileError]);
+  useEffect(() => {
+    dispatch(
+      action.setDateRange({
+        fromDate: moment().startOf('month').format('YYYY-MM-DD'),
+
+        endDate: moment().format('YYYY-MM-DD'),
+      }),
+    );
+  }, []);
 
   const userContent = (
     <div className="min-w-md w-full bg-white dark:bg-[#1b1e2b] rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] overflow-hidden">
@@ -223,6 +235,41 @@ const AuthInfo = React.memo(() => {
   //     </Link>
   //   </div>
   // );
+  const handlePreset = (type) => {
+    let start;
+    let end;
+
+    switch (type) {
+      case 'today':
+        start = moment();
+        end = moment();
+        break;
+      case 'yesterday':
+        start = moment().subtract(1, 'day');
+        end = moment().subtract(1, 'day');
+        break;
+      case 'thisWeek':
+        start = moment().startOf('week');
+        end = moment().endOf('week');
+        break;
+      case 'lastWeek':
+        start = moment().subtract(1, 'week').startOf('week');
+        end = moment().subtract(1, 'week').endOf('week');
+        break;
+      case 'thisMonth':
+        start = moment().startOf('month');
+        end = moment().endOf('month');
+        break;
+      case 'lastMonth':
+        start = moment().subtract(1, 'month').startOf('month');
+        end = moment().subtract(1, 'month').endOf('month');
+        break;
+      default:
+        return;
+    }
+
+    setTempRange([start, end]);
+  };
 
   return (
     <div className="flex items-center justify-end flex-auto">
@@ -246,7 +293,18 @@ const AuthInfo = React.memo(() => {
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setDateRange(null);
+                  // setDateRange(null);
+                  const start = moment().startOf('month');
+                  const end = moment();
+
+                  setDateRange([start, end]);
+
+                  dispatch(
+                    action.setDateRange({
+                      fromDate: start.format('YYYY-MM-DD'),
+                      endDate: end.format('YYYY-MM-DD'),
+                    }),
+                  );
                 }}
                 className="text-gray-400 hover:text-red-500 flex items-center"
               >
@@ -258,26 +316,93 @@ const AuthInfo = React.memo(() => {
           <RangePicker
             open={open}
             onOpenChange={(val) => setOpen(val)}
-            value={dateRange}
-            disabledDate={(current) => current && current > new Date()}
+            value={tempRange}
+            panelRender={(panelNode) => (
+              <div style={{ display: 'flex' }}>
+                {/* 🔹 LEFT SIDE */}
+                <div
+                  style={{
+                    width: 180,
+                    borderRight: '1px solid #f0f0f0',
+                    padding: 10,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: 300, // important
+                  }}
+                >
+                  <div style={{ flex: 1 }}>
+                    {[
+                      { label: 'Today', type: 'today' },
+                      { label: 'Yesterday', type: 'yesterday' },
+                      { label: 'This Week', type: 'thisWeek' },
+                      { label: 'Last Week', type: 'lastWeek' },
+                      { label: 'This Month', type: 'thisMonth' },
+                      { label: 'Last Month', type: 'lastMonth' },
+                    ].map((item) => (
+                      <button
+                        key={item.type}
+                        type="button"
+                        onClick={() => handlePreset(item.type)}
+                        className="px-2.5 py-1.5 w-full text-left rounded-md mb-1 text-[13px] cursor-pointer border-none bg-transparent hover:bg-gray-100"
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <Button
+                      type="primary"
+                      onClick={() => {
+                        if (tempRange) {
+                          setDateRange(tempRange);
+
+                          dispatch(
+                            action.setDateRange({
+                              fromDate: tempRange[0].format('YYYY-MM-DD'),
+                              endDate: tempRange[1].format('YYYY-MM-DD'),
+                            }),
+                          );
+                        }
+                        setOpen(false);
+                      }}
+                    >
+                      Submit
+                    </Button>
+
+                    <Button
+                      onClick={() => {
+                        setTempRange(dateRange);
+                        setOpen(false);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+
+                <div>{panelNode}</div>
+              </div>
+            )}
+            disabledDate={(current) => current && current > moment()}
             // onChange={(val) => {
             //   setDateRange(val);
             //   setOpen(false);
             // }}
             onChange={(val) => {
-              setDateRange(val);
-              setOpen(false);
+              setTempRange(val);
+              // setOpen(false);
 
-              if (val) {
-                dispatch(
-                  action.setDateRange({
-                    fromDate: val[0].format('YYYY-MM-DD'),
-                    endDate: val[1].format('YYYY-MM-DD'),
-                  }),
-                );
-              } else {
-                dispatch(action.setDateRange(null));
-              }
+              // if (val) {
+              //   dispatch(
+              //     action.setDateRange({
+              //       fromDate: val[0].format('YYYY-MM-DD'),
+              //       endDate: val[1].format('YYYY-MM-DD'),
+              //     }),
+              //   );
+              // } else {
+              //   dispatch(action.setDateRange(null));
+              // }
             }}
             style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
           />

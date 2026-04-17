@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
-import { Table, Card, Button, Modal, Checkbox } from 'antd';
-import { RightOutlined, CheckOutlined, CloseOutlined, SettingOutlined } from '@ant-design/icons';
+import { Table, Card, Modal, Checkbox } from 'antd';
+import { RightOutlined, SettingOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import ProfitFilterBar from './component/ProfitFilterBar';
 import { PageHeader } from '../../components/page-headers/page-headers';
 import { getProfitData } from '../../redux/dashboard/actionCreator';
 
@@ -34,12 +35,6 @@ export default function ProfitTableView() {
     expenses: 'with',
     accountCharges: 'with',
   });
-  const handlePairChange = (key, value) => {
-    setFilters((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
 
   const getMetricFromFilters = () => {
     return {
@@ -108,7 +103,7 @@ export default function ProfitTableView() {
   const tableData =
     profitData?.response?.map((item, index) => ({
       key: index,
-      channel: item.channel1,
+      channel: item.channel,
       view: item.grosssales,
       qty: item.grossqty,
       netQty: item.netqty,
@@ -248,7 +243,7 @@ export default function ProfitTableView() {
       render: (_, record) => (
         <button
           type="button"
-          onClick={() => navigate(`../profittabledetails/${record.key}`)}
+          onClick={() => navigate(`../profittabledetails/${record.channel}`)}
           style={{
             width: 30,
             height: 30,
@@ -313,12 +308,12 @@ export default function ProfitTableView() {
   const filteredColumns = columns.filter(
     (col) => col.dataIndex === 'channel' || col.key === 'action' || visibleColumns.includes(col.dataIndex),
   );
-  const handleChange = (key, value) => {
-    setFilters((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
+  // const handleChange = (key, value) => {
+  //   setFilters((prev) => ({
+  //     ...prev,
+  //     [key]: value,
+  //   }));
+  // };
 
   const handleApply = () => {
     const payload = buildPayload();
@@ -346,183 +341,17 @@ export default function ProfitTableView() {
       />
       <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-8 xl:px-[15px] pb-[30px] bg-transparent">
         <Card bordered={false} className="sales-table-wrapper">
-          <div className="mb-4 p-4 border border-gray-200 ro  unded-xl bg-gray-50">
-            <div className="flex flex-wrap items-center gap-4 mb-4">
-              <select
-                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm"
-                onChange={(e) => handleChange('channel', e.target.value)}
-              >
-                <option value="">Channel</option>
-                {/* <option value="Amazon">Amazon</option>
-                <option value="Myntra">Myntra</option> */}
-              </select>
-
-              <div className="flex flex-wrap items-center gap-2">
-                {Object.entries(filters).map(([key, value]) => {
-                  if (!value) return null;
-
-                  const labelMap = {
-                    ads: 'Ads',
-                    gst: 'GST',
-                    estimate: 'Estimate',
-                    expenses: 'Expenses',
-                    accountCharges: 'Account Charges',
-                  };
-
-                  return (
-                    <span key={key} className="flex items-center gap-1">
-                      <span className={`w-2 h-2 rounded-full ${value === 'with' ? 'bg-green-500' : 'bg-red-500'}`} />
-                      {labelMap[key]}: {value === 'with' ? 'With' : 'Without'}
-                    </span>
-                  );
-                })}
-              </div>
-
-              <div className="ml-auto flex items-center gap-2">
-                <Button onClick={handleClear} className="flex items-center gap-1">
-                  Clear
-                  <CloseOutlined />
-                </Button>
-
-                <Button type="primary" onClick={handleApply} className="flex items-center gap-1">
-                  Apply
-                  <CheckOutlined />
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex items-end gap-4 overflow-x-auto whitespace-nowrap pb-1">
-              <div className="min-w-[180px]">
-                <label className="text-sm text-gray-600 mb-1 block">SKU</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
-                  placeholder="Sku"
-                  onChange={(e) => handleChange('sku', e.target.value)}
-                />
-              </div>
-
-              <div className="min-w-[180px]">
-                <label className="text-sm text-gray-600 mb-1 block">ProductId:</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
-                  placeholder="ProductId"
-                  onChange={(e) => handleChange('productId', e.target.value)}
-                />
-              </div>
-              <div className="min-w-[180px]">
-                <label className="text-sm text-gray-600 mb-1 block">ParentId:</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
-                  placeholder="ProductId"
-                  onChange={(e) => handleChange('parentId', e.target.value)}
-                />
-              </div>
-              <div className="min-w-[180px]">
-                <label className="text-sm text-gray-600 mb-1 block">MKt Category:</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
-                  placeholder="ProductId"
-                  onChange={(e) => handleChange('mkt', e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-4 mt-3 border-t pt-3">
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={filters.ads === 'with'}
-                  onChange={() => handlePairChange('ads', 'with')}
-                />
-                With Ads
-              </label>
-
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={filters.ads === 'without'}
-                  onChange={() => handlePairChange('ads', 'without')}
-                />
-                Without Ads
-              </label>
-
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={filters.gst === 'with'}
-                  onChange={() => handlePairChange('gst', 'with')}
-                />
-                With Gst
-              </label>
-
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={filters.gst === 'without'}
-                  onChange={() => handlePairChange('gst', 'without')}
-                />
-                Without Gst
-              </label>
-
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={filters.estimate === 'with'}
-                  onChange={() => handlePairChange('estimate', 'with')}
-                />
-                With Estimate
-              </label>
-
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={filters.estimate === 'without'}
-                  onChange={() => handlePairChange('estimate', 'without')}
-                />
-                Without Estimate
-              </label>
-
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={filters.expenses === 'with'}
-                  onChange={() => handlePairChange('expenses', 'with')}
-                />
-                With Expenses
-              </label>
-
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={filters.expenses === 'without'}
-                  onChange={() => handlePairChange('expenses', 'without')}
-                />
-                Without Expenses
-              </label>
-
-              {/* Account Charges */}
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={filters.accountCharges === 'with'}
-                  onChange={() => handlePairChange('accountCharges', 'with')}
-                />
-                With Account Charges
-              </label>
-
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={filters.accountCharges === 'without'}
-                  onChange={() => handlePairChange('accountCharges', 'without')}
-                />
-                Without Account Charges
-              </label>
-            </div>
-          </div>
+          <ProfitFilterBar
+            filters={filters}
+            setFilters={setFilters}
+            handleApply={handleApply}
+            handleClear={handleClear}
+          />
           <Table
             bordered
             columns={filteredColumns}
             dataSource={tableData}
+            showSorterTooltip={false}
             loading={loading}
             pagination={{
               pageSize: 10,

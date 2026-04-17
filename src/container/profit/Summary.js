@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Row, Col, Card, Statistic, Tag, Select, Divider, Checkbox, Input, Button } from 'antd';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { amazonAction } from '../../redux/amazonAPI/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
@@ -11,8 +11,10 @@ import { getDashboard } from '../../redux/dashboard/actionCreator';
 const { Option } = Select;
 
 export default function Summary() {
+  // const path = '/admin';
+  const navigate = useNavigate();
   const [viewType, setViewType] = useState('percentage');
-  const { dashboardData, dateRange, search } = useSelector((state) => state.dashboard);
+  const { dashboardData, dateRange, channel: globalChannel, search } = useSelector((state) => state.dashboard);
   const [filters, setFilters] = useState({
     withAds: false,
     withoutAds: true,
@@ -49,6 +51,9 @@ export default function Summary() {
 
   const payload = {
     filters: {
+      channel: {
+        IN: globalChannel,
+      },
       fromDate: dateRange?.fromDate || null,
       toDate: dateRange?.endDate || null,
       search,
@@ -58,7 +63,7 @@ export default function Summary() {
 
   useEffect(() => {
     dispatch(getDashboard(payload));
-  }, [dispatch, dateRange, appliedFilters]);
+  }, [dispatch, dateRange, appliedFilters, globalChannel]);
 
   const loginAmazon = useCallback(
     (params) => {
@@ -398,7 +403,11 @@ export default function Summary() {
         <Row gutter={[16, 16]}>
           {/* SALES */}
           <Col xs={24} lg={6}>
-            <Card>
+            <Card
+              onClick={() => navigate(`/admin/profit/profittabledetails/${globalChannel?.[0] || 'all'}`)}
+              hoverable
+              style={{ cursor: 'pointer' }}
+            >
               <div className="flex justify-between items-center mb-2">
                 <span className="font-medium">Sales</span>
 
