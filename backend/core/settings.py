@@ -218,5 +218,11 @@ USE_X_FORWARDED_HOST = True
 # Format: ('minute hour day month day_of_week', 'command_to_run')
 # '0 */4 * * *' means every 4 hours
 CRONJOBS = [
-    ('0 */4 * * *', 'django.core.management.call_command', ['background_sync']),
+    ('0 */2 * * *', 'django.core.management.call_command', ['background_sync']),
 ]
+
+# CRONJOBS = [
+#     ('*/2 * * * *', 'django.core.management.call_command', ['background_sync']),
+# ]
+
+
