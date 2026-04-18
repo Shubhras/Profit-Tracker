@@ -1,19 +1,29 @@
 import React, { useEffect } from 'react';
 import { Table, Card } from 'antd';
 import { RightOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import ProfitFilterBar from './component/ProfitFilterBar';
+import amazon from '../../assets/icons/amazon.svg';
+// import flipkart from "../../assets/icons/flipkart.png";
 import { getProfitDetails } from '../../redux/dashboard/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function ProfitDetailsView() {
-  // const { channel } = useParams();
-  // const decodedChannel = decodeURIComponent(channel);
+  const { channel } = useParams();
+  const decodedChannel = decodeURIComponent(channel);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { dateRange, channel: globalChannel, profitData } = useSelector((state) => state.dashboard);
+  const { dateRange, profitData } = useSelector((state) => state.dashboard);
   const totals = profitData?.totals || {};
+  const channelLogoMap = {
+    'Amazon-India': amazon,
+    // 'Flipkart-India': flipkart,
+  };
+  const [pagination, setPagination] = React.useState({
+    current: 1,
+    pageSize: 10,
+  });
   const [filters, setFilters] = React.useState({
     channel: '',
     sku: '',
@@ -37,8 +47,8 @@ export default function ProfitDetailsView() {
     return {
       filters: {
         channel: {
-          // IN: [decodedChannel],
-          IN: globalChannel,
+          IN: [decodedChannel],
+          // IN: globalChannel,
         },
         fromDate: dateRange?.fromDate || null,
         toDate: dateRange?.endDate || null,
@@ -51,10 +61,10 @@ export default function ProfitDetailsView() {
     };
   };
   useEffect(() => {
-    if (globalChannel?.length > 0) {
+    if (decodedChannel) {
       dispatch(getProfitDetails(buildPayload()));
     }
-  }, [dateRange, globalChannel]);
+  }, [dateRange, decodedChannel]);
 
   const PageRoutes = [
     { path: 'index', breadcrumbName: 'Profit' },
@@ -67,8 +77,10 @@ export default function ProfitDetailsView() {
         key: index,
 
         channel: item.channel || '-',
+        image: item.image_url,
 
-        view: Number(item.grosssales) || 0,
+        view: item.asin || 0,
+        redirecturl: item.redirecturl,
         // qty: Number(item.grossqty) || 0,
         netQty: Number(item.netqty) || 0,
         returnqty: Number(item.returnqty) || 0,
@@ -85,7 +97,8 @@ export default function ProfitDetailsView() {
 
         grossprofit: Number(item.grossprofit) || 0,
         profit: Number(item.profit) || 0,
-        profitPercent: Number(item.profitmper) || 0,
+        // profitPercent: Number(item.grossprofitper) || 0,
+        profitPercent: Math.round(Number(item.grossprofitper)) || 0,
 
         // settledamount: Number(item.profit_settled_amount) || 0,
       })) || [];
@@ -111,7 +124,7 @@ export default function ProfitDetailsView() {
 
       grossprofit: Number(totals.grossprofit) || 0,
       profit: Number(totals.profit) || 0,
-      profitPercent: Number(totals.profitper) || 0,
+      profitPercent: Math.round(Number(totals.grossprofitper)) || 0,
 
       // settledamount: 0,
     };
@@ -122,15 +135,73 @@ export default function ProfitDetailsView() {
   const columns = [
     {
       title: '',
-      dataIndex: 'channel',
-      width: 150,
+      dataIndex: 'image',
+      width: 60,
       fixed: 'left',
+      render: (value, record) => {
+        if (record.key === 'total') return null;
+
+        return value ? (
+          <img
+            src={value}
+            alt="product"
+            style={{
+              width: 32,
+              height: 32,
+              objectFit: 'cover',
+              borderRadius: 6,
+            }}
+          />
+        ) : (
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              background: '#f0f0f0',
+              borderRadius: 6,
+            }}
+          />
+        );
+      },
+    },
+    {
+      title: '',
+      dataIndex: 'channel',
+      width: 70,
+      fixed: 'left',
+      render: (value, record) => {
+        if (record.key === 'total') {
+          return <span>Total</span>;
+        }
+
+        const logo = channelLogoMap[value];
+
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {logo && <img src={logo} alt={value} style={{ width: 24, height: 24, objectFit: 'contain' }} />}
+            {/* <span>{value}</span> */}
+          </div>
+        );
+      },
     },
     {
       title: 'View',
       dataIndex: 'view',
       align: 'center',
-      sorter: (a, b) => a.view - b.view,
+      sorter: (a, b) => a.view.localeCompare(b.view),
+      render: (v, record) => {
+        if (!record.redirecturl) return <span>{v}</span>;
+
+        return (
+          <button
+            type="button"
+            onClick={() => window.open(record.redirecturl, '_blank')}
+            className="text-blue-500 hover:text-blue-600 underline font-medium bg-transparent border-none p-0 cursor-pointer"
+          >
+            {v}
+          </button>
+        );
+      },
     },
     // {
     //   title: 'Qty',
@@ -209,13 +280,18 @@ export default function ProfitDetailsView() {
       dataIndex: 'profit',
       align: 'center',
       sorter: (a, b) => a.profit - b.profit,
-      render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>₹{v}</span>,
+      // render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>₹{v}</span>,
     },
     {
       title: 'Profit %',
       dataIndex: 'profitPercent',
       align: 'center',
       sorter: (a, b) => a.profitPercent - b.profitPercent,
+      render: (v) => {
+        const value = Math.round(v || 0);
+
+        return <span style={{ color: value < 0 ? 'red' : 'green' }}>{value}%</span>;
+      },
     },
     // {
     //   title: 'Settled amount',
@@ -261,11 +337,12 @@ export default function ProfitDetailsView() {
       productId: '',
       parentId: '',
       mkt: '',
-      ads: '',
-      gst: '',
-      estimate: '',
-      expenses: '',
-      accountCharges: '',
+
+      ads: 'without',
+      gst: 'without',
+      estimate: 'with',
+      expenses: 'with',
+      accountCharges: 'with',
     });
   };
 
@@ -273,7 +350,7 @@ export default function ProfitDetailsView() {
     <>
       <PageHeader
         routes={PageRoutes}
-        title="Profit Details"
+        // title="Profit Details"
         className="flex justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 bg-transparent"
       />
 
@@ -290,7 +367,15 @@ export default function ProfitDetailsView() {
             dataSource={dataSource}
             showSorterTooltip={false}
             locale={{ emptyText: 'No Data Found' }}
-            pagination={false}
+            pagination={{
+              ...pagination,
+              showSizeChanger: true,
+              pageSizeOptions: ['10', '20', '50', '100'],
+            }}
+            onChange={(pag) => {
+              setPagination(pag);
+            }}
+            size="small"
             scroll={{ x: 'max-content' }}
           />
         </Card>

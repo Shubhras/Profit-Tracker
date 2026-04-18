@@ -16,10 +16,26 @@ function ProfitFilterBar({ filters, setFilters, handleApply, handleClear }) {
       [key]: value,
     }));
   };
+  const selectedFilters = [
+    filters.ads === 'with' && { label: 'With Ads', color: 'green' },
+    filters.ads === 'without' && { label: 'Without Ads', color: 'red' },
+
+    filters.gst === 'with' && { label: 'With GST', color: 'green' },
+    filters.gst === 'without' && { label: 'Without GST', color: 'red' },
+
+    filters.estimate === 'with' && { label: 'With Estimate', color: 'green' },
+    filters.estimate === 'without' && { label: 'Without Estimate', color: 'red' },
+
+    filters.expenses === 'with' && { label: 'With Expenses', color: 'green' },
+    filters.expenses === 'without' && { label: 'Without Expenses', color: 'red' },
+
+    filters.accountCharges === 'with' && { label: 'With Account Charges', color: 'green' },
+    filters.accountCharges === 'without' && { label: 'Without Account Charges', color: 'red' },
+  ].filter(Boolean);
 
   return (
     <div className="mb-4 p-4 border border-gray-200 rounded-xl bg-gray-50">
-      <div className="flex flex-wrap items-center gap-4 mb-4">
+      <div className="flex items-center gap-4 mb-4">
         <select
           className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm"
           onChange={(e) => handleChange('channel', e.target.value)}
@@ -27,8 +43,17 @@ function ProfitFilterBar({ filters, setFilters, handleApply, handleClear }) {
           <option value="">Channel</option>
         </select>
 
-        {/* Selected filters preview */}
         <div className="flex flex-wrap items-center gap-2">
+          {selectedFilters.map((item, i) => (
+            <span key={i} className="flex items-center gap-1 text-sm">
+              <span className={`w-2 h-2 rounded-full ${item.color === 'green' ? 'bg-green-500' : 'bg-red-500'}`} />
+              {item.label}
+            </span>
+          ))}
+        </div>
+
+        {/* Selected filters preview */}
+        {/* <div className="flex flex-wrap items-center gap-2">
           {Object.entries(filters).map(([key, value]) => {
             if (!value) return null;
 
@@ -47,9 +72,9 @@ function ProfitFilterBar({ filters, setFilters, handleApply, handleClear }) {
               </span>
             );
           })}
-        </div>
+        </div> */}
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2 shrink-0 whitespace-nowrap">
           <Button onClick={handleClear} className="flex items-center gap-1">
             Clear <CloseOutlined />
           </Button>
@@ -67,6 +92,7 @@ function ProfitFilterBar({ filters, setFilters, handleApply, handleClear }) {
             <input
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
               placeholder={field}
+              value={filters[field] || ''}
               onChange={(e) => handleChange(field, e.target.value)}
             />
           </div>

@@ -245,6 +245,7 @@ export default function SalesTrend() {
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
                   placeholder="Sku"
+                  value={filters.sku}
                   onChange={(e) => handleChange('sku', e.target.value)}
                 />
               </div>
@@ -254,6 +255,7 @@ export default function SalesTrend() {
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
                   placeholder="ProductId"
+                  value={filters.productId}
                   onChange={(e) => handleChange('productId', e.target.value)}
                 />
               </div>
@@ -263,6 +265,7 @@ export default function SalesTrend() {
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
                   placeholder="ParentId"
+                  value={filters.parentId}
                   onChange={(e) => handleChange('parentId', e.target.value)}
                 />
               </div>
@@ -272,6 +275,7 @@ export default function SalesTrend() {
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
                   placeholder="MktCategory"
+                  value={filters.mktCategory}
                   onChange={(e) => handleChange('mktCategory', e.target.value)}
                 />
               </div>
@@ -281,6 +285,7 @@ export default function SalesTrend() {
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
                   placeholder="Inv mastersku"
+                  value={filters.invMasterSku}
                   onChange={(e) => handleChange('invMasterSku', e.target.value)}
                 />
               </div>
