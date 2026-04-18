@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Row, Col, Card, Table, Empty, Divider } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
+// import { globalizeLocalizer } from 'react-big-calendar';
 import { PageHeader } from '../../components/page-headers/page-headers';
 import { getReconcilePaymentSummary, getBankTransferSummary } from '../../redux/reconcilePayment/actionCreator';
 
@@ -58,25 +59,25 @@ export default function ReconcileSummary() {
 
   const dispatch = useDispatch();
   const { reconcileData, bankTransferData } = useSelector((state) => state.reconcilePayment);
-  const { dateRange } = useSelector((state) => state.dashboard);
+  const { dateRange, channel: globalChannel } = useSelector((state) => state.dashboard);
 
   useEffect(() => {
     const payload = {
       filters: {
         channel: {
-          IN: ['Amazon-India'],
+          IN: globalChannel,
         },
-        fromDate: '2026-03-11',
-        toDate: '2026-04-13',
+        fromDate: dateRange?.fromDate || null,
+        toDate: dateRange?.endDate || null,
       },
-      metric: {},
+      // metric: {},
       pagination: {
         pageNo: 0,
         pageSize: 25,
       },
     };
     dispatch(getReconcilePaymentSummary(payload));
-  }, [dispatch]);
+  }, [dispatch, dateRange, globalChannel]);
 
   useEffect(() => {
     if (reconcileData?.data && reconcileData.data.length > 0) {
@@ -107,12 +108,17 @@ export default function ReconcileSummary() {
 
   useEffect(() => {
     const payload = {
-      fromDate: dateRange?.fromDate || null,
-      toDate: dateRange?.endDate || null,
+      filter: {
+        channel: {
+          IN: globalChannel,
+        },
+        fromDate: dateRange?.fromDate || null,
+        toDate: dateRange?.endDate || null,
+      },
     };
 
     dispatch(getBankTransferSummary(payload));
-  }, [dispatch, dateRange]);
+  }, [dispatch, dateRange, globalChannel]);
   useEffect(() => {
     if (bankTransferData?.data) {
       const d = bankTransferData.data;

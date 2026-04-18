@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Row, Col, Card, Statistic, Tag, Select, Divider, Checkbox, Input, Button } from 'antd';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { amazonAction } from '../../redux/amazonAPI/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
@@ -11,8 +11,10 @@ import { getDashboard } from '../../redux/dashboard/actionCreator';
 const { Option } = Select;
 
 export default function Summary() {
+  // const path = '/admin';
+  const navigate = useNavigate();
   const [viewType, setViewType] = useState('percentage');
-  const { dashboardData, dateRange, search } = useSelector((state) => state.dashboard);
+  const { dashboardData, dateRange, channel: globalChannel, search } = useSelector((state) => state.dashboard);
   const [filters, setFilters] = useState({
     withAds: false,
     withoutAds: true,
@@ -37,18 +39,21 @@ export default function Summary() {
   // });
   const location = useLocation();
   const dispatch = useDispatch();
-  const gstLabel = filters.withGST ? 'GST Included' : 'GST Excluded';
-  const buildMetric = () => {
+  const gstLabel = appliedFilters.withGST ? 'GST Included' : 'GST Excluded';
+  const buildMetric = (filtersData) => {
     return {
-      ads: filters.withAds ? 'withAds' : 'withoutAds',
-      gst: filters.withGST ? 'withGst' : 'withoutGst',
-      expense: filters.withExpenses ? 'withExpense' : 'withoutExpense',
-      estimate: filters.withEstimate ? 'withEstimate' : 'withoutEstimate',
+      ads: filtersData.withAds ? 'withAds' : 'withoutAds',
+      gst: filtersData.withGST ? 'withGst' : 'withoutGst',
+      expense: filtersData.withExpenses ? 'withExpense' : 'withoutExpense',
+      estimate: filtersData.withEstimate ? 'withEstimate' : 'withoutEstimate',
     };
   };
 
   const payload = {
     filters: {
+      channel: {
+        IN: globalChannel,
+      },
       fromDate: dateRange?.fromDate || null,
       toDate: dateRange?.endDate || null,
       search,
@@ -58,7 +63,7 @@ export default function Summary() {
 
   useEffect(() => {
     dispatch(getDashboard(payload));
-  }, [dispatch, dateRange, appliedFilters]);
+  }, [dispatch, dateRange, appliedFilters, globalChannel]);
 
   const loginAmazon = useCallback(
     (params) => {
@@ -397,12 +402,16 @@ export default function Summary() {
         </Card>
         <Row gutter={[16, 16]}>
           {/* SALES */}
-          <Col xs={24} lg={6}>
-            <Card>
+          <Col xs={24} lg={9}>
+            <Card
+              onClick={() => navigate(`/admin/profit/profittabledetails/${globalChannel?.[0] || 'all'}`)}
+              hoverable
+              style={{ cursor: 'pointer' }}
+            >
               <div className="flex justify-between items-center mb-2">
                 <span className="font-medium">Sales</span>
 
-                <Tag color={filters.withGST ? 'green' : 'red'}>{gstLabel}</Tag>
+                <Tag color={appliedFilters.withGST ? 'green' : 'red'}>{gstLabel}</Tag>
               </div>
               <Statistic value={dashboardData?.header_metrics?.sales || 0} prefix="₹" />{' '}
               <Tag color="blue" className="mt-2">
@@ -437,12 +446,39 @@ export default function Summary() {
                 </Col>
               </Row>
               <Row>
-                <Col span={10}>Returned</Col>
+                <Col span={10}>Returned(RTO)</Col>
                 <Col span={7} className="text-center">
                   {dashboardData?.breakdown_table?.returned?.qty || 0}
                 </Col>
                 <Col span={7} className="text-right">
                   ₹{dashboardData?.breakdown_table?.returned?.amount || 0}
+                </Col>
+              </Row>
+              <Row>
+                <Col span={10}>Cancelled(RTO)</Col>
+                <Col span={7} className="text-center">
+                  {dashboardData?.breakdown_table?.cancelledrtosummaryqty?.qty || 0}
+                </Col>
+                <Col span={7} className="text-right">
+                  ₹{dashboardData?.breakdown_table?.cancelledrtosummarysales?.amount || 0}
+                </Col>
+              </Row>
+              <Row>
+                <Col span={10}>Returned(CReF)</Col>
+                <Col span={7} className="text-center">
+                  {dashboardData?.breakdown_table?.creturnsummaryqty?.qty || 0}
+                </Col>
+                <Col span={7} className="text-right">
+                  ₹{dashboardData?.breakdown_table?.returnedcref?.amount || 0}
+                </Col>
+              </Row>
+              <Row>
+                <Col span={10}>Claimed</Col>
+                <Col span={7} className="text-center">
+                  {dashboardData?.breakdown_table?.claimqty?.qty || 0}
+                </Col>
+                <Col span={7} className="text-right">
+                  ₹{dashboardData?.breakdown_table?.claimsales?.amount || 0}
                 </Col>
               </Row>
               <Divider />
@@ -468,7 +504,7 @@ export default function Summary() {
               <Tag color="green">ROI: {dashboardData?.header_metrics?.roi || '0%'}</Tag>
             </Card>
 
-            <Row gutter={8} className="mt-3">
+            <Row gutter={8} className="mt-1">
               <Col span={12}>
                 <Card size="small" className="bg-green-50">
                   <p className="text-green-700">Profit IDs</p>
@@ -490,18 +526,36 @@ export default function Summary() {
                 </Card>
               </Col>
             </Row>
+            <Card size="small" className="mt-1 py-0">
+              {/* <div className="flex flex-col justify-between h-full"> */}
+              <div>
+                {/* <p className="text-gray-500 text-xs mb-1">Ad Spend</p> */}
+                <Statistic
+                  // className="mt-0"
+                  title="Ad Spend"
+                  value={dashboardData?.header_metrics?.ad_spend || 0}
+                  prefix="₹"
+                />
+                {/* <strong className="text-lg block">₹{dashboardData?.header_metrics?.ad_spend || 0}</strong> */}
+              </div>
+
+              <Tag color="magenta" className="mt-1 w-fit">
+                TACOS: {dashboardData?.header_metrics?.tacos || '0%'}
+              </Tag>
+              {/* </div> */}
+            </Card>
           </Col>
 
           {/* AD SPEND */}
-          <Col xs={24} lg={6}>
+          {/* <Col xs={24} lg={4}>
             <Card>
               <Statistic title="Ad Spend" value={dashboardData?.header_metrics?.ad_spend || 0} prefix="₹" />
               <Tag color="magenta">TACOS: {dashboardData?.header_metrics?.tacos || '0%'}</Tag>
             </Card>
-          </Col>
+          </Col> */}
 
           {/* STACKED BAR (RIGHT) */}
-          <Col xs={24} lg={6}>
+          <Col xs={24} lg={9}>
             <Card>
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={stackedData}>
