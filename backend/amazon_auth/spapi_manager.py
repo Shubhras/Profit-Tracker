@@ -218,6 +218,14 @@ class SPAPIManager:
         path = f"/orders/v0/orders/{order_id}/orderItems"
         params = {"NextToken": next_token} if next_token else None
         return self.request("GET", path, params=params)
+    
+    def get_catalog_item(self, asin,marketplace_id):
+        path = f"/catalog/2022-04-01/items/{asin}"
+        params = {
+            "marketplaceIds": marketplace_id,  # e.g. A21TJRUUN4KGV (India)
+            "includedData": "images"
+        }
+        return self.request("GET", path, params=params)
 
     def get_order_financial_events(self, order_id, max_results=100, next_token=None):
         """Returns all financial events for the specified order."""

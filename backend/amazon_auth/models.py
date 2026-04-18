@@ -140,10 +140,11 @@ class OrderItem(models.Model):
     order_item_id = models.CharField(max_length=50) # Amazon's unique ID for the item entry
     seller_sku = models.CharField(max_length=100)
     title = models.CharField(max_length=500, null=True, blank=True)
+    asin = models.CharField(max_length=20, null=True, blank=True) 
     
     quantity_ordered = models.IntegerField()
     quantity_shipped = models.IntegerField(null=True, blank=True)
-    
+    image_url = models.URLField(null=True, blank=True)
     # Financials per item
     item_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     item_tax = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -153,3 +154,5 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.seller_sku} in {self.order.amazon_order_id}"
+    
+    

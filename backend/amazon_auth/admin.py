@@ -1,6 +1,23 @@
 from django.contrib import admin
 from .models import AmazonAccount, Order, FinancialEvent, Report, OrderItem
 
+class OrderItemInline(admin.TabularInline):  # or StackedInline
+    model = OrderItem
+    extra = 0
+    fields = (
+        'order_item_id',
+        'seller_sku',
+        'title',
+        'quantity_ordered',
+        'quantity_shipped',
+        'item_price',
+        'item_tax',
+        'shipping_price',
+        'created_at'
+    )
+    readonly_fields = ('created_at',)
+    show_change_link = True
+
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
     list_display = ('seller_sku', 'order', 'quantity_ordered', 'item_price', 'created_at')
@@ -18,6 +35,7 @@ class OrderAdmin(admin.ModelAdmin):
     list_filter = ('amazon_account', 'order_status', 'fulfillment_channel', 'purchase_date')
     search_fields = ('amazon_order_id', 'buyer_name', 'city')
     date_hierarchy = 'purchase_date'
+    inlines = [OrderItemInline]  
 
 @admin.register(FinancialEvent)
 class FinancialEventAdmin(admin.ModelAdmin):

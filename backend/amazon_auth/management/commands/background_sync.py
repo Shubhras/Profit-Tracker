@@ -4,10 +4,18 @@ from amazon_auth.views import sync_orders, sync_finances
 from django.test import RequestFactory
 from django.contrib.auth.models import User
 
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+
 class Command(BaseCommand):
     help = 'Automatically syncs Amazon data for all connected accounts in the background'
 
     def handle(self, *args, **kwargs):
+        logger.info("CRON STARTED")
+        print("CRON STARTED")  # temp debug
         accounts = AmazonAccount.objects.all()
         self.stdout.write(f"Starting background sync for {accounts.count()} accounts...")
 
@@ -18,7 +26,8 @@ class Command(BaseCommand):
                 self.stdout.write(f"Syncing account: {account.seller_central_id} (User: {account.user.email})")
                 
                 # Create a mock request for the existing sync views
-                request = factory.get('/fake-path/')
+                # request = factory.get('/fake-path/')
+                request = factory.get('/fake-path/?sync_items=true')
                 request.user = account.user
                 
                 # 1. Sync Orders (Summary data)
