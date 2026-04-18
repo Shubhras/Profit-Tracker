@@ -1,11 +1,11 @@
 import React from 'react';
 import { Table, Card } from 'antd';
-import { useParams } from 'react-router-dom';
+// import { useParams } from 'react-router-dom';
 import ProfitFilterBar from './component/ProfitFilterBar';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function ProfitDetailsView() {
-  const { id } = useParams();
+  // const { id } = useParams();
   const [filters, setFilters] = React.useState({
     channel: '',
     sku: '',
@@ -163,11 +163,12 @@ export default function ProfitDetailsView() {
       productId: '',
       parentId: '',
       mkt: '',
-      ads: '',
-      gst: '',
-      estimate: '',
-      expenses: '',
-      accountCharges: '',
+
+      ads: 'without',
+      gst: 'without',
+      estimate: 'with',
+      expenses: 'with',
+      accountCharges: 'with',
     });
   };
 
@@ -175,7 +176,7 @@ export default function ProfitDetailsView() {
     <>
       <PageHeader
         routes={PageRoutes}
-        title={`Profit Third Table - ${id}`}
+        // title={`Profit Third Table - ${id}`}
         className="flex justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 bg-transparent"
       />
 
@@ -192,7 +193,11 @@ export default function ProfitDetailsView() {
             columns={columns}
             dataSource={dataSource}
             showSorterTooltip={false}
-            pagination={false}
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+            }}
+            size="small"
             scroll={{ x: 'max-content' }}
           />
         </Card>

@@ -6,13 +6,21 @@ import { useDispatch, useSelector } from 'react-redux';
 import ProfitFilterBar from './component/ProfitFilterBar';
 import { PageHeader } from '../../components/page-headers/page-headers';
 import { getProfitData } from '../../redux/dashboard/actionCreator';
+import amazon from '../../assets/icons/amazon.svg';
+// import flipkartLogo from '../../assets/flipkart.png';
 
 export default function ProfitTableView() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, profitData, dateRange, search } = useSelector((state) => state.dashboard);
+  const { loading, profitData, dateRange, search, channel: globalChannel } = useSelector((state) => state.dashboard);
   const totals = profitData?.totals || {};
   const [openSettings, setOpenSettings] = React.useState(false);
+
+  const getLogo = (channel) => {
+    if (channel?.includes('Amazon-India')) return amazon;
+    // if (channel?.toLowerCase().includes('flipkart')) return flipkartLogo;
+    return null;
+  };
 
   const [visibleColumns, setVisibleColumns] = React.useState([
     'view',
@@ -28,6 +36,8 @@ export default function ProfitTableView() {
     channel: '',
     sku: '',
     productId: '',
+    parentId: '',
+    mkt: '',
 
     ads: 'without',
     gst: 'without',
@@ -58,7 +68,7 @@ export default function ProfitTableView() {
   const buildPayload = () => {
     return {
       filters: {
-        channel: { IN: ['Amazon-India'] },
+        channel: { IN: globalChannel },
         fromDate: dateRange?.fromDate || null,
         toDate: dateRange?.endDate || null,
         search,
@@ -70,23 +80,27 @@ export default function ProfitTableView() {
       },
     };
   };
+  // useEffect(() => {
+  //   dispatch(
+  //     getProfitData({
+  //       filters: {
+  //         channel: { IN: ['Amazon-India'] },
+  //         fromDate: dateRange?.fromDate || null,
+  //         toDate: dateRange?.endDate || null,
+  //         search,
+  //       },
+  //       metric: getMetricFromFilters(),
+  //       pagination: {
+  //         pageNo: 0,
+  //         pageSize: 25,
+  //       },
+  //     }),
+  //   );
+  // }, [dispatch, dateRange]);
   useEffect(() => {
-    dispatch(
-      getProfitData({
-        filters: {
-          channel: { IN: ['Amazon-India'] },
-          fromDate: dateRange?.fromDate || null,
-          toDate: dateRange?.endDate || null,
-          search,
-        },
-        metric: getMetricFromFilters(),
-        pagination: {
-          pageNo: 0,
-          pageSize: 25,
-        },
-      }),
-    );
-  }, [dispatch, dateRange]);
+    const payload = buildPayload();
+    dispatch(getProfitData(payload));
+  }, [dispatch, dateRange, search, globalChannel]);
 
   // console.log(data);
   const PageRoutes = [
@@ -126,15 +140,21 @@ export default function ProfitTableView() {
     {
       title: '',
       dataIndex: 'channel',
-      width: 150,
+      width: 70,
       fixed: 'left',
-      render: (value) => <span>{value}</span>,
+      render: (value, record) => {
+        if (record.key === 'total') return null;
+
+        const logo = getLogo(value);
+
+        return logo ? <img src={logo} alt={value} style={{ width: 28, height: 28, objectFit: 'contain' }} /> : null;
+      },
     },
     {
       title: 'View',
-      dataIndex: 'view',
+      dataIndex: 'channel',
       align: 'center',
-      sorter: (a, b) => a.view - b.view,
+      sorter: (a, b) => a.channel - b.channel,
     },
     {
       title: 'Qty',
@@ -325,11 +345,14 @@ export default function ProfitTableView() {
       channel: '',
       sku: '',
       productId: '',
-      ads: '',
-      gst: '',
-      estimate: '',
-      expenses: '',
-      accountCharges: '',
+      parentId: '',
+      mkt: '',
+
+      ads: 'without',
+      gst: 'without',
+      estimate: 'with',
+      expenses: 'with',
+      accountCharges: 'with',
     });
   };
   return (
