@@ -20,7 +20,7 @@ export default function SalesTrend() {
     mktCategory: '',
     invMasterSku: '',
   });
-  const { pivotData, loading, dateRange, search } = useSelector((state) => state.dashboard);
+  const { pivotData, loading, dateRange, search, channel: globalChannel } = useSelector((state) => state.dashboard);
   const graphData = React.useMemo(() => {
     if (!pivotData?.results?.length) return [];
 
@@ -35,11 +35,13 @@ export default function SalesTrend() {
   }, [pivotData]);
 
   const payload = {
-    filer: {
+    filter: {
+      channel: {
+        IN: globalChannel,
+      },
       fromDate: dateRange?.fromDate || null,
       endDate: dateRange?.endDate || null,
       search,
-      channel: filters.channel,
     },
 
     metrics: {
@@ -53,7 +55,7 @@ export default function SalesTrend() {
   };
   useEffect(() => {
     dispatch(getPivotStats(payload));
-  }, [dispatch, dateRange, search]);
+  }, [dispatch, dateRange, search, globalChannel]);
 
   const PageRoutes = [
     {
@@ -65,26 +67,58 @@ export default function SalesTrend() {
       breadcrumbName: 'Sales Trend',
     },
   ];
+
+  const generateDates = (start, end) => {
+    const dates = [];
+    const current = new Date(start);
+    const last = new Date(end);
+
+    while (current <= last) {
+      dates.push(current.toISOString().split('T')[0]); // yyyy-mm-dd
+      current.setDate(current.getDate() + 1);
+    }
+
+    return dates;
+  };
+
   const dynamicColumns = React.useMemo(() => {
-    if (!pivotData?.results?.length) return [];
+    if (!dateRange?.fromDate || !dateRange?.endDate) return [];
 
-    const firstRow = pivotData.results[0];
+    const dates = generateDates(dateRange.fromDate, dateRange.endDate);
 
-    return Object.keys(firstRow)
-      .filter((key) => key !== 'id')
-      .map((key) => ({
-        title: new Date(key)
-          .toLocaleDateString('en-US', {
-            month: 'short',
-            day: '2-digit',
-          })
-          .replace(',', ''),
-        dataIndex: key,
-        key,
-        align: 'center',
-        sorter: (a, b) => (a[key] || 0) - (b[key] || 0),
-      }));
-  }, [pivotData]);
+    return dates.map((date) => ({
+      title: new Date(date).toLocaleDateString('en-US', {
+        month: 'short',
+        day: '2-digit',
+      }),
+      dataIndex: date,
+      key: date,
+      align: 'center',
+      sorter: (a, b) => (a[date] || 0) - (b[date] || 0),
+      render: (_, record) => record[date] || 0, // fallback
+    }));
+  }, [dateRange]);
+
+  // const dynamicColumns = React.useMemo(() => {
+  //   if (!pivotData?.results?.length) return [];
+
+  //   const firstRow = pivotData.results[0];
+
+  //   return Object.keys(firstRow)
+  //     .filter((key) => key !== 'id')
+  //     .map((key) => ({
+  //       title: new Date(key)
+  //         .toLocaleDateString('en-US', {
+  //           month: 'short',
+  //           day: '2-digit',
+  //         })
+  //         .replace(',', ''),
+  //       dataIndex: key,
+  //       key,
+  //       align: 'center',
+  //       sorter: (a, b) => (a[key] || 0) - (b[key] || 0),
+  //     }));
+  // }, [pivotData]);
   const columns = [
     {
       title: '',
@@ -164,10 +198,7 @@ export default function SalesTrend() {
       />
       <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-8 xl:px-[15px] pb-[30px] bg-transparent">
         <Card bordered={false} className="sales-table-wrapper">
-          {/* FILTER BAR */}
-          {/* FILTER BAR */}
           <div className="mb-4 p-4 border border-gray-200 rounded-xl bg-gray-50">
-            {/* TOP ROW */}
             <div className="flex flex-wrap items-center gap-4 mb-4">
               <select
                 className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none"
@@ -208,8 +239,6 @@ export default function SalesTrend() {
               </div>
             </div>
 
-            {/* BOTTOM ROW */}
-            {/* BOTTOM ROW */}
             <div className="flex items-end gap-4 overflow-x-auto whitespace-nowrap pb-1">
               <div className="min-w-[180px]">
                 <label className="text-s text-gray-600 mb-1 block">SKU</label>
@@ -302,6 +331,7 @@ export default function SalesTrend() {
           <Table
             columns={columns}
             dataSource={dataSource}
+            showSorterTooltip={false}
             loading={loading}
             pagination={{
               pageSize: 10,

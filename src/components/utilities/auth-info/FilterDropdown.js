@@ -1,24 +1,45 @@
 import React, { useState, useRef, useEffect } from 'react';
 import UilAngleDown from '@iconscout/react-unicons/icons/uil-angle-down';
 import { Checkbox } from 'antd';
+import { useDispatch, useSelector } from 'react-redux';
+import actions from '../../../redux/dashboard/action';
 
 function FilterDropdown() {
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState([]);
+  // const [selected, setSelected] = useState([]);
   const dropdownRef = useRef(null);
+  // const selected = globalChannel || [];
+  const dispatch = useDispatch();
+  const globalChannel = useSelector((state) => state.dashboard.channel);
+  const [tempSelected, setTempSelected] = useState([]);
 
   const options = ['Select All', 'Amazon-India', 'FlipKart', 'Jiomart', 'Meesho', 'Myntra', 'Snapdeal'];
   const allOptions = options.filter((item) => item !== 'Select All');
+  // const handleCheckbox = (value) => {
+  //   if (value === 'Select All') {
+  //     if (selected.length === allOptions.length) {
+  //       setSelected([]);
+  //     } else {
+  //       setSelected(allOptions);
+  //     }
+  //   } else {
+  //     setSelected((prev) => (prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]));
+  //   }
+  // };
   const handleCheckbox = (value) => {
+    let updated = [];
+
     if (value === 'Select All') {
-      if (selected.length === allOptions.length) {
-        setSelected([]);
+      if (tempSelected.length === allOptions.length) {
+        updated = [];
       } else {
-        setSelected(allOptions);
+        updated = allOptions;
       }
     } else {
-      setSelected((prev) => (prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]));
+      updated = tempSelected.includes(value) ? tempSelected.filter((item) => item !== value) : [...tempSelected, value];
     }
+
+    setTempSelected(updated);
   };
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -30,6 +51,17 @@ function FilterDropdown() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+  useEffect(() => {
+    if (!globalChannel || globalChannel.length === 0) {
+      setTempSelected(allOptions);
+      dispatch(actions.setChannel(allOptions));
+    }
+  }, []);
+  useEffect(() => {
+    if (globalChannel && globalChannel.length > 0) {
+      setTempSelected(globalChannel);
+    }
+  }, [globalChannel]);
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -38,7 +70,8 @@ function FilterDropdown() {
         onClick={() => setOpen(!open)}
         className="cursor-pointer p-2 rounded-md flex items-center justify-center"
       >
-        {selected.length > 0 && <span className="text-xs font-medium text-gray-600">{selected.length}</span>}
+        {/* {selected.length > 0 && <span className="text-xs font-medium text-gray-600">{selected.length}</span>} */}
+        {tempSelected.length > 0 && <span className="text-xs font-medium text-gray-600">{tempSelected.length}</span>}
         <UilAngleDown className="w-5 h-5" />
       </button>
 
@@ -50,7 +83,10 @@ function FilterDropdown() {
               className="flex items-center gap-2 px-2 py-3 leading-none rounded cursor-pointer hover:bg-blue-50"
             >
               <Checkbox
-                checked={item === 'Select All' ? selected.length === allOptions.length : selected.includes(item)}
+                // checked={item === 'Select All' ? selected.length === allOptions.length : selected.includes(item)}
+                checked={
+                  item === 'Select All' ? tempSelected.length === allOptions.length : tempSelected.includes(item)
+                }
                 onChange={() => handleCheckbox(item)}
                 className="!m-0"
               />{' '}
@@ -64,7 +100,7 @@ function FilterDropdown() {
             <button
               type="button"
               onClick={() => {
-                console.log('Selected:', selected);
+                dispatch(actions.setChannel(tempSelected));
                 setOpen(false);
               }}
               className="text-white text-sm px-4 py-1.5 rounded-md"

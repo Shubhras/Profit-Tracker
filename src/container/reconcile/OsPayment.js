@@ -8,7 +8,7 @@ import { PageHeader } from '../../components/page-headers/page-headers';
 export default function OsPayment() {
   const dispatch = useDispatch();
   const { outstandingData, outstandingLoading } = useSelector((state) => state.reconcilePayment);
-  const { dateRange } = useSelector((state) => state.dashboard);
+  const { dateRange, channel: globalChannel } = useSelector((state) => state.dashboard);
 
   const apiData = outstandingData?.table_response || [];
   const PageRoutes = [
@@ -20,12 +20,15 @@ export default function OsPayment() {
     dispatch(
       getOutstandingPayments({
         filters: {
+          channel: {
+            IN: globalChannel,
+          },
           fromDate: dateRange?.fromDate || null,
           toDate: dateRange?.toDate || null,
         },
       }),
     );
-  }, [dispatch]);
+  }, [dispatch, dateRange, globalChannel]);
   const totalChannel = apiData.find((item) => item.channel === 'zzzTotal');
   const otherChannels = apiData.filter((item) => item.channel !== 'zzzTotal');
 

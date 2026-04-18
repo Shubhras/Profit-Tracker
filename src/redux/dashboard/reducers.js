@@ -29,6 +29,7 @@ const initialState = {
   error: null,
   dateRange: null,
   search: '',
+  channel: [],
 };
 
 const dashboardReducer = (state = initialState, action) => {
@@ -125,6 +126,11 @@ const dashboardReducer = (state = initialState, action) => {
       return {
         ...state,
         search: action.payload,
+      };
+    case 'SET_CHANNEL':
+      return {
+        ...state,
+        channel: action.payload, // array of selected channels
       };
 
     default:
