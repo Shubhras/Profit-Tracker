@@ -1,22 +1,23 @@
 import React, { useEffect } from 'react';
 import { Button, Modal, Checkbox } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
-import { CheckOutlined, CloseOutlined, SettingOutlined } from '@ant-design/icons';
+import { CheckOutlined, CloseOutlined, SettingOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
 import { PageHeader } from '../../components/page-headers/page-headers';
 import { getProfitMonthwise } from '../../redux/dashboard/actionCreator';
 
 export default function ProfitMonthlyView() {
   const dispatch = useDispatch();
+  const [showFilters, setShowFilters] = React.useState(false);
 
   const [filters, setFilters] = React.useState({
     SKU: '',
     ProductId: '',
-    gst: '',
+    gst: 'with',
   });
   const handleGstChange = (value) => {
     setFilters((prev) => ({
       ...prev,
-      gst: prev.gst === value ? '' : value,
+      gst: value,
     }));
   };
   const [openSettings, setOpenSettings] = React.useState(false);
@@ -35,14 +36,16 @@ export default function ProfitMonthlyView() {
 
   useEffect(() => {
     const payload = {
-      channel: {
-        IN: globalChannel,
+      filter: {
+        channel: {
+          IN: globalChannel,
+        },
+        fromDate: dateRange?.fromDate || null,
+        toDate: dateRange?.endDate || null,
+        SKU: filters.SKU,
+        ProductId: filters.ProductId,
+        gst: filters.gst,
       },
-      fromDate: dateRange?.fromDate || null,
-      toDate: dateRange?.endDate || null,
-      SKU: '',
-      ProductId: '',
-      gst: 'with',
     };
 
     dispatch(getProfitMonthwise(payload));
@@ -95,7 +98,7 @@ export default function ProfitMonthlyView() {
       getProfitMonthwise({
         fromDate: dateRange?.fromDate || null,
         toDate: dateRange?.endDate || null,
-        ...filters,
+        ...filters, // ✅ gst included
       }),
     );
   };
@@ -104,8 +107,7 @@ export default function ProfitMonthlyView() {
     const reset = {
       SKU: '',
       ProductId: '',
-      // ParentId,
-      // mktCategory
+      gst: 'with',
     };
 
     setFilters(reset);
@@ -114,10 +116,7 @@ export default function ProfitMonthlyView() {
       getProfitMonthwise({
         fromDate: dateRange?.fromDate || null,
         toDate: dateRange?.endDate || null,
-        SKU: '',
-        ProductId: '',
-        // ParentId:'',
-        // mktCategory:''
+        ...reset,
       }),
     );
   };
@@ -148,7 +147,7 @@ export default function ProfitMonthlyView() {
                 )}
               </div>
 
-              <div className="ml-auto flex gap-2">
+              <div className="ml-auto flex gap-4">
                 <Button
                   // type="primary"
                   onClick={(e) => {
@@ -174,59 +173,76 @@ export default function ProfitMonthlyView() {
                   Apply
                   <CheckOutlined />
                 </Button>
+                <Button
+                  type="text"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowFilters((prev) => !prev);
+                  }}
+                  className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-300 bg-white hover:bg-gray-100 cursor-pointer transition"
+                >
+                  {showFilters ? (
+                    <UpOutlined className="text-[#0B3A6E] text-sm" />
+                  ) : (
+                    <DownOutlined className="text-[#0B3A6E] text-sm" />
+                  )}
+                </Button>
               </div>
             </div>
+            {showFilters && (
+              <>
+                <div className="flex gap-4 overflow-x-auto whitespace-nowrap">
+                  <div className="min-w-[200px]">
+                    <label className="text-s text-gray-600 mb-1 block">SKU:</label>
+                    <input
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      placeholder="SKU"
+                      onChange={(e) => handleChange('SKU', e.target.value)}
+                    />
+                  </div>
 
-            <div className="flex gap-4 overflow-x-auto whitespace-nowrap">
-              <div className="min-w-[200px]">
-                <label className="text-s text-gray-600 mb-1 block">SKU:</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  placeholder="SKU"
-                  onChange={(e) => handleChange('SKU', e.target.value)}
-                />
-              </div>
+                  <div className="min-w-[200px]">
+                    <label className="text-s text-gray-600 mb-1 block">ProductId:</label>
+                    <input
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      placeholder="ProductId"
+                      onChange={(e) => handleChange('ProductId', e.target.value)}
+                    />
+                  </div>
+                  <div className="min-w-[200px]">
+                    <label className="text-s text-gray-600 mb-1 block">ParentId:</label>
+                    <input
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      placeholder="ParentId"
+                      onChange={(e) => handleChange('ParentId', e.target.value)}
+                    />
+                  </div>
+                  <div className="min-w-[200px]">
+                    <label className="text-s text-gray-600 mb-1 block">MKT category:</label>
+                    <input
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      placeholder="MKT category"
+                      onChange={(e) => handleChange('Mktcategory', e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 mt-3 border-t pt-3">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={filters.gst === 'with'} onChange={() => handleGstChange('with')} />
+                    With GST
+                  </label>
 
-              <div className="min-w-[200px]">
-                <label className="text-s text-gray-600 mb-1 block">ProductId:</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  placeholder="ProductId"
-                  onChange={(e) => handleChange('ProductId', e.target.value)}
-                />
-              </div>
-              <div className="min-w-[200px]">
-                <label className="text-s text-gray-600 mb-1 block">ParentId:</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  placeholder="ParentId"
-                  onChange={(e) => handleChange('ParentId', e.target.value)}
-                />
-              </div>
-              <div className="min-w-[200px]">
-                <label className="text-s text-gray-600 mb-1 block">MKT category:</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  placeholder="MKT category"
-                  onChange={(e) => handleChange('Mktcategory', e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-4 mt-3 border-t pt-3">
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={filters.gst === 'with'} onChange={() => handleGstChange('with')} />
-                With GST
-              </label>
-
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={filters.gst === 'without'}
-                  onChange={() => handleGstChange('without')}
-                />
-                Without GST
-              </label>
-            </div>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={filters.gst === 'without'}
+                      onChange={() => handleGstChange('without')}
+                    />
+                    Without GST
+                  </label>
+                </div>
+              </>
+            )}
           </div>
           <div
             className="grid border-b bg-gray-50 font-semibold"

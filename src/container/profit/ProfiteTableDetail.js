@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { Table, Card } from 'antd';
-import { RightOutlined } from '@ant-design/icons';
+import { Table, Card, Modal } from 'antd';
+import { RightOutlined, EyeOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import ProfitFilterBar from './component/ProfitFilterBar';
@@ -16,6 +16,8 @@ export default function ProfitDetailsView() {
   const dispatch = useDispatch();
   const { dateRange, profitData } = useSelector((state) => state.dashboard);
   const totals = profitData?.totals || {};
+  const [previewImage, setPreviewImage] = React.useState('');
+  const [previewOpen, setPreviewOpen] = React.useState(false);
   const channelLogoMap = {
     'Amazon-India': amazon,
     // 'Flipkart-India': flipkart,
@@ -141,26 +143,27 @@ export default function ProfitDetailsView() {
       render: (value, record) => {
         if (record.key === 'total') return null;
 
-        return value ? (
-          <img
-            src={value}
-            alt="product"
-            style={{
-              width: 32,
-              height: 32,
-              objectFit: 'cover',
-              borderRadius: 6,
-            }}
-          />
-        ) : (
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              background: '#f0f0f0',
-              borderRadius: 6,
-            }}
-          />
+        return (
+          <div className="relative group w-[32px] h-[32px]">
+            {value ? (
+              <img src={value} alt="product" className="w-full h-full object-cover rounded" />
+            ) : (
+              <div className="w-full h-full bg-gray-200 rounded" />
+            )}
+
+            {value && (
+              <button
+                type="button"
+                onClick={() => {
+                  setPreviewImage(value);
+                  setPreviewOpen(true);
+                }}
+                className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 rounded transition"
+              >
+                <EyeOutlined style={{ color: '#fff', fontSize: 16 }} />
+              </button>
+            )}
+          </div>
         );
       },
     },
@@ -380,6 +383,9 @@ export default function ProfitDetailsView() {
           />
         </Card>
       </main>
+      <Modal open={previewOpen} footer={null} onCancel={() => setPreviewOpen(false)} centered>
+        <img src={previewImage} alt="preview" style={{ width: '100%', borderRadius: 8 }} />
+      </Modal>
     </>
   );
 }
