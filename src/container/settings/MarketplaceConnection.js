@@ -40,6 +40,7 @@ export default function MarketplaceConnection() {
   const marketStatus = searchParams.get('status');
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [credentialModalVisible, setCredentialModalVisible] = useState(false);
   const [isConnected, setIsConnected] = useState(marketStatus === 'connected'); // Toggle logic
   const [form] = Form.useForm();
 
@@ -113,14 +114,33 @@ export default function MarketplaceConnection() {
                 You haven&apos;t connected any account yet. Click the button below to add your first connection.
               </p>
 
-              <Button
+              {/* <Button
                 type="primary"
                 size="large"
                 className="bg-blue-800 hover:bg-blue-900 border-none px-8 h-12 rounded-lg font-bold flex items-center gap-2 shadow-lg shadow-blue-900/10"
                 onClick={() => setModalVisible(true)}
               >
                 <span>+</span> ADD NEW CONNECTION
-              </Button>
+              </Button> */}
+              <div className="flex items-center justify-center gap-3">
+                <Button
+                  type="primary"
+                  size="large"
+                  className="bg-blue-800 hover:bg-blue-900 border-none px-8 h-12 rounded-lg font-bold flex items-center gap-2 shadow-lg shadow-blue-900/10"
+                  onClick={() => setModalVisible(true)}
+                >
+                  <span>+</span> ADD NEW CONNECTION
+                </Button>
+
+                <Button
+                  type="primary"
+                  size="large"
+                  className="bg-blue-800 hover:bg-blue-900 border-none px-8 h-12 rounded-lg font-bold flex items-center gap-2 shadow-lg shadow-blue-900/10"
+                  onClick={() => setCredentialModalVisible(true)}
+                >
+                  <span>+</span> ADD CREDENTIALS
+                </Button>
+              </div>
             </div>
           ) : (
             /* Connected State View */
@@ -184,6 +204,54 @@ export default function MarketplaceConnection() {
                 <Button
                   type="primary"
                   htmlType="submit"
+                  size="large"
+                  className="w-full bg-blue-600 hover:bg-blue-700 rounded-lg font-bold h-11"
+                >
+                  Submit
+                </Button>
+              </Form.Item>
+            </Form>
+          </div>
+        </Modal>
+        <Modal
+          title={null}
+          footer={null}
+          visible={credentialModalVisible}
+          onCancel={() => setCredentialModalVisible(false)}
+          width={500}
+          centered
+        >
+          <div className="p-6">
+            <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">Add Credentials</h3>
+
+            <Form layout="vertical">
+              <Form.Item
+                name="secretKey"
+                label="Secret Key"
+                rules={[{ required: true, message: 'Please enter secret key' }]}
+              >
+                <Input size="large" className="rounded-lg" placeholder="Enter secret key" />
+              </Form.Item>
+
+              <Form.Item
+                name="merchantId"
+                label="Merchant ID"
+                rules={[{ required: true, message: 'Please enter merchant id' }]}
+              >
+                <Input size="large" className="rounded-lg" placeholder="Enter merchant id" />
+              </Form.Item>
+
+              <Form.Item
+                name="warehouse"
+                label="Warehouse"
+                rules={[{ required: true, message: 'Please enter warehouse' }]}
+              >
+                <Input size="large" className="rounded-lg" placeholder="Enter warehouse" />
+              </Form.Item>
+
+              <Form.Item className="mb-0 mt-8">
+                <Button
+                  type="primary"
                   size="large"
                   className="w-full bg-blue-600 hover:bg-blue-700 rounded-lg font-bold h-11"
                 >

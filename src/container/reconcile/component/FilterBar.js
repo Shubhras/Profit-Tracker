@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useState } from 'react';
 import { Select, Button } from 'antd';
-import { DownOutlined, CloseOutlined, CheckOutlined } from '@ant-design/icons';
+import { CloseOutlined, CheckOutlined, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
 
 export default function FilterBar() {
   const [open, setOpen] = useState(false);
@@ -43,10 +43,19 @@ export default function FilterBar() {
             </Button>
 
             <Button
-              size="small"
-              shape="circle"
-              icon={<DownOutlined className={`transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />}
-            />
+              type="text"
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen((prev) => !prev);
+              }}
+              className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition"
+            >
+              {open ? (
+                <CaretUpOutlined className="text-[#0B3A6E] text-xs leading-none" />
+              ) : (
+                <CaretDownOutlined className="text-[#0B3A6E] text-xs leading-none" />
+              )}
+            </Button>
           </div>
         </div>
 

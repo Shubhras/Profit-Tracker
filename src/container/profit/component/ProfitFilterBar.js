@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from 'antd';
-import { CheckOutlined, CloseOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
+import { CheckOutlined, CloseOutlined, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
 
 function ProfitFilterBar({ filters, setFilters, handleApply, handleClear }) {
   const [showFilters, setShowFilters] = React.useState(false);
@@ -89,12 +89,12 @@ function ProfitFilterBar({ filters, setFilters, handleApply, handleClear }) {
               e.stopPropagation();
               setShowFilters((prev) => !prev);
             }}
-            className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-300 bg-white hover:bg-gray-100 cursor-pointer transition"
+            className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition"
           >
             {showFilters ? (
-              <UpOutlined className="text-[#0B3A6E] text-sm" />
+              <CaretUpOutlined className="text-[#0B3A6E] text-xs leading-none" />
             ) : (
-              <DownOutlined className="text-[#0B3A6E] text-sm" />
+              <CaretDownOutlined className="text-[#0B3A6E] text-xs leading-none" />
             )}
           </Button>
         </div>

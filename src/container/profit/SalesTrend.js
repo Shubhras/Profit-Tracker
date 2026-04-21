@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Card, Button } from 'antd';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { RightOutlined, CheckOutlined, CloseOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
+import { RightOutlined, CheckOutlined, CloseOutlined, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../components/page-headers/page-headers';
@@ -12,6 +12,10 @@ export default function SalesTrend() {
   const navigate = useNavigate();
   const [showChart, setShowChart] = React.useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [pagination, setPagination] = React.useState({
+    current: 1,
+    pageSize: 10,
+  });
   const [filters, setFilters] = React.useState({
     channel: '',
     qty: 'grossqty',
@@ -52,6 +56,10 @@ export default function SalesTrend() {
       mkt: filters.mktCategory,
       qty: filters.qty,
       invMasterSku: filters.invMasterSku,
+    },
+    pagination: {
+      pageNo: 0,
+      pageSize: 25,
     },
   };
   useEffect(() => {
@@ -243,12 +251,12 @@ export default function SalesTrend() {
                     e.stopPropagation();
                     setShowFilters((prev) => !prev);
                   }}
-                  className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-300 bg-white hover:bg-gray-100 cursor-pointer transition"
+                  className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition"
                 >
                   {showFilters ? (
-                    <UpOutlined className="text-[#0B3A6E] text-sm" />
+                    <CaretUpOutlined className="text-[#0B3A6E] text-xs leading-none" />
                   ) : (
-                    <DownOutlined className="text-[#0B3A6E] text-sm" />
+                    <CaretDownOutlined className="text-[#0B3A6E] text-xs leading-none" />
                   )}
                 </Button>
               </div>
@@ -355,8 +363,12 @@ export default function SalesTrend() {
             showSorterTooltip={false}
             loading={loading}
             pagination={{
-              pageSize: 10,
+              ...pagination,
               showSizeChanger: true,
+              pageSizeOptions: ['10', '20', '50', '100'],
+            }}
+            onChange={(pag) => {
+              setPagination(pag);
             }}
             scroll={{ x: 'max-content' }}
             size="small"

@@ -15,6 +15,10 @@ export default function ProfitTableView() {
   const navigate = useNavigate();
   const { loading, profitData, dateRange, search, channel: globalChannel } = useSelector((state) => state.dashboard);
   const totals = profitData?.totals || {};
+  const [pagination, setPagination] = React.useState({
+    current: 1,
+    pageSize: 10,
+  });
   const [openSettings, setOpenSettings] = React.useState(false);
   const [detailModal, setDetailModal] = React.useState({
     open: false,
@@ -539,8 +543,12 @@ export default function ProfitTableView() {
             showSorterTooltip={false}
             loading={loading}
             pagination={{
-              pageSize: 10,
+              ...pagination,
               showSizeChanger: true,
+              pageSizeOptions: ['10', '20', '50', '100'],
+            }}
+            onChange={(pag) => {
+              setPagination(pag);
             }}
             size="small"
             scroll={{ x: 'max-content' }}

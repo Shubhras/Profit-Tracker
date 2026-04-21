@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Row, Col, Card, Statistic, Tag, Select, Divider, Checkbox, Input, Button } from 'antd';
-import { CheckOutlined, CloseOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
+import { CheckOutlined, CloseOutlined, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -285,12 +285,12 @@ export default function Summary() {
                   e.stopPropagation();
                   setShowFilters((prev) => !prev);
                 }}
-                className="w-7 h-7 flex items-center justify-center rounded-full border border-gray-300 bg-white hover:bg-gray-100 cursor-pointer transition"
+                className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition"
               >
                 {showFilters ? (
-                  <UpOutlined className="text-xs text-gray-600" />
+                  <CaretUpOutlined className="text-[#0B3A6E] text-xs leading-none" />
                 ) : (
-                  <DownOutlined className="text-xs text-gray-600" />
+                  <CaretDownOutlined className="text-[#0B3A6E] text-xs leading-none" />
                 )}
               </Button>
             </div>
