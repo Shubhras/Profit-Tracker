@@ -55,8 +55,9 @@ export default function MarketplaceConnection() {
 
   const handleFormSubmit = (values) => {
     console.log('Connecting...', values);
+    window.open('https://partners.myntrainfo.com/', '_blank');
     handleModalClose();
-    setIsConnected(true); // Simulate successful connection
+    setIsConnected(true);
   };
 
   const PageRoutes = [
