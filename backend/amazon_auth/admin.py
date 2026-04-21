@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import AmazonAccount, Order, FinancialEvent, Report, OrderItem
+from .models import *
 
 class OrderItemInline(admin.TabularInline):  # or StackedInline
     model = OrderItem
@@ -48,3 +48,29 @@ class ReportAdmin(admin.ModelAdmin):
     list_display = ('amazon_report_id', 'amazon_account', 'report_type', 'processing_status', 'created_time')
     list_filter = ('amazon_account', 'report_type', 'processing_status')
     search_fields = ('amazon_report_id', 'report_type')
+
+
+
+@admin.register(ProductMapping)
+class ProductMappingAdmin(admin.ModelAdmin):
+    list_display = ('seller_sku', 'parent_sku', 'product_name', 'brand', 'cost_price')
+    search_fields = ('seller_sku', 'parent_sku', 'product_name', 'brand')
+    list_filter = ('brand',)
+    ordering = ('seller_sku',)
+
+
+@admin.register(AdReport)
+class AdReportAdmin(admin.ModelAdmin):
+    list_display = ('sku', 'date', 'impressions', 'clicks', 'spend', 'ad_sales', 'ad_orders')
+    search_fields = ('sku',)
+    list_filter = ('date',)
+    ordering = ('-date',)
+    date_hierarchy = 'date'
+
+
+@admin.register(MissingCatalogQueue)
+class MissingCatalogQueueAdmin(admin.ModelAdmin):
+    list_display = ('seller_sku',  'asin','processed')
+    search_fields = ('seller_sku', 'asin', 'marketplace_id')
+    list_filter = ('processed',)
+    ordering = ('seller_sku',)    
