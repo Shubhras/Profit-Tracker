@@ -72,7 +72,7 @@ function ProfitRoutes() {
         }
       />
       <Route
-        path="profitThirdtable/:channel"
+        path="profitThirdtable/:id"
         element={
           <SubscriptionGate>
             <ProfitViewThirdTable />

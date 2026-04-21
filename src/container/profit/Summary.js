@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Row, Col, Card, Statistic, Tag, Select, Divider, Checkbox, Input, Button } from 'antd';
-import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { CheckOutlined, CloseOutlined, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -39,6 +39,7 @@ export default function Summary() {
   // });
   const location = useLocation();
   const dispatch = useDispatch();
+  const [showFilters, setShowFilters] = useState(false);
   const gstLabel = appliedFilters.withGST ? 'GST Included' : 'GST Excluded';
   const buildMetric = (filtersData) => {
     return {
@@ -237,8 +238,12 @@ export default function Summary() {
               </Button>
             </Col> */}
 
-        <Card className="mb-4 border rounded-xl px-1 py-1 bg-[#f9fafb]">
-          <div className="flex items-center gap-4 mb-3 text-sm">
+        <Card className="mb-4 border rounded-xl px-0 py-0 bg-[#f9fafb]">
+          <button
+            type="button"
+            className="flex items-center justify-between gap-4 mb-1 text-sm cursor-pointer w-full"
+            onClick={() => setShowFilters((prev) => !prev)}
+          >
             <span className="text-gray-500">{selectedFilters.length} Filter Selected</span>
 
             {selectedFilters.map((item, index) => (
@@ -248,10 +253,13 @@ export default function Summary() {
               </div>
             ))}
             {/* RIGHT BUTTONS */}
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-4">
               <Button
                 // type="button"
-                onClick={handleClear}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleClear();
+                }}
                 className="flex items-center gap-1"
                 // className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 bg-white hover:bg-gray-100 transition"
               >
@@ -261,144 +269,165 @@ export default function Summary() {
 
               <Button
                 type="primary"
-                onClick={handleApply}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleApply();
+                }}
                 className="flex items-center gap-1"
                 // className="flex items-center gap-2 px-4 py-1.5 text-sm bg-green-600 text-white hover:bg-blue-700 transition"
               >
                 <span>Apply</span>
                 <CheckOutlined />
               </Button>
+              <Button
+                type="text"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowFilters((prev) => !prev);
+                }}
+                className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition"
+              >
+                {showFilters ? (
+                  <CaretUpOutlined className="text-[#0B3A6E] text-xs leading-none" />
+                ) : (
+                  <CaretDownOutlined className="text-[#0B3A6E] text-xs leading-none" />
+                )}
+              </Button>
             </div>
-          </div>
+          </button>
 
-          <div className="flex items-end gap-3 mb-3 flex-nowrap">
-            {[
-              { label: 'SKU', key: 'sku', placeholder: 'Sku' },
-              { label: 'ProductId', key: 'productId', placeholder: 'ProductId' },
-              { label: 'ParentId', key: 'parentId', placeholder: 'ParentId' },
-            ].map((item) => (
-              <div key={item.key} className="flex flex-col w-[160px]">
-                <span className="text-s text-gray-500 mb-1">{item.label}:</span>
-                <Input
-                  size="small"
-                  placeholder={item.placeholder}
-                  value={filters[item.key]}
-                  onChange={(e) => setFilters({ ...filters, [item.key]: e.target.value })}
-                />
+          {showFilters && (
+            <>
+              <div className="flex items-end gap-3 mb-3 flex-nowrap">
+                {[
+                  { label: 'SKU', key: 'sku', placeholder: 'Sku' },
+                  { label: 'ProductId', key: 'productId', placeholder: 'ProductId' },
+                  { label: 'ParentId', key: 'parentId', placeholder: 'ParentId' },
+                ].map((item) => (
+                  <div key={item.key} className="flex flex-col w-[160px]">
+                    <span className="text-s text-gray-500 mb-1">{item.label}:</span>
+                    <Input
+                      size="small"
+                      placeholder={item.placeholder}
+                      value={filters[item.key]}
+                      onChange={(e) => setFilters({ ...filters, [item.key]: e.target.value })}
+                    />
+                  </div>
+                ))}
+
+                <div className="flex flex-col w-[160px]">
+                  <span className="text-s text-gray-500 mb-1">MKT category:</span>
+                  <Select
+                    size="small"
+                    placeholder="MktCategory"
+                    value={filters.mktCategory}
+                    onChange={(val) => setFilters({ ...filters, mktCategory: val })}
+                  >
+                    <Option value="cat1">Category 1</Option>
+                  </Select>
+                </div>
+
+                <div className="flex flex-col w-[160px]">
+                  <span className="text-s text-gray-500 mb-1">Inv MasterSku:</span>
+                  <Input
+                    size="small"
+                    placeholder="Inv mastersku"
+                    value={filters.invMasterSku}
+                    onChange={(e) => setFilters({ ...filters, invMasterSku: e.target.value })}
+                  />
+                </div>
               </div>
-            ))}
 
-            <div className="flex flex-col w-[160px]">
-              <span className="text-xs text-gray-500 mb-1">MKT category:</span>
-              <Select
-                size="small"
-                placeholder="MktCategory"
-                value={filters.mktCategory}
-                onChange={(val) => setFilters({ ...filters, mktCategory: val })}
-              >
-                <Option value="cat1">Category 1</Option>
-              </Select>
-            </div>
+              <div className="flex items-center justify-between text-[11px] leading-none">
+                {' '}
+                {/* ADS */}
+                <div className="flex gap-1 items-center text-xs">
+                  <Checkbox
+                    checked={filters.withAds}
+                    onChange={() => setFilters({ ...filters, withAds: true, withoutAds: false })}
+                  >
+                    With Ads
+                  </Checkbox>
 
-            <div className="flex flex-col w-[160px]">
-              <span className="text-xs text-gray-500 mb-1">Inv MasterSku:</span>
-              <Input
-                size="small"
-                placeholder="Inv mastersku"
-                value={filters.invMasterSku}
-                onChange={(e) => setFilters({ ...filters, invMasterSku: e.target.value })}
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-[11px] leading-none">
-            {' '}
-            {/* ADS */}
-            <div className="flex gap-1 items-center text-xs">
-              <Checkbox
-                checked={filters.withAds}
-                onChange={() => setFilters({ ...filters, withAds: true, withoutAds: false })}
-              >
-                With Ads
-              </Checkbox>
-
-              <Checkbox
-                checked={filters.withoutAds}
-                onChange={() => setFilters({ ...filters, withAds: false, withoutAds: true })}
-              >
-                Without Ads
-              </Checkbox>
-            </div>
-            <div className="flex gap-[2px] items-center text-[11px]">
-              {' '}
-              <Checkbox
-                checked={filters.withGST}
-                onChange={() => setFilters({ ...filters, withGST: true, withoutGST: false })}
-              >
-                With Gst
-              </Checkbox>
-              <Checkbox
-                checked={filters.withoutGST}
-                onChange={() => setFilters({ ...filters, withGST: false, withoutGST: true })}
-              >
-                Without Gst
-              </Checkbox>
-            </div>
-            <div className="flex gap-[2px] items-center text-[11px]">
-              {' '}
-              <Checkbox
-                checked={filters.withEstimate}
-                onChange={() =>
-                  setFilters({
-                    ...filters,
-                    withEstimate: true,
-                    withoutEstimate: false,
-                  })
-                }
-              >
-                With Estimate
-              </Checkbox>
-              <Checkbox
-                checked={filters.withoutEstimate}
-                onChange={() =>
-                  setFilters({
-                    ...filters,
-                    withEstimate: false,
-                    withoutEstimate: true,
-                  })
-                }
-              >
-                Without Estimate
-              </Checkbox>
-            </div>
-            <div className="flex gap-[2px] items-center text-[11px]">
-              {' '}
-              <Checkbox
-                checked={filters.withExpenses}
-                onChange={() =>
-                  setFilters({
-                    ...filters,
-                    withExpenses: true,
-                    withoutExpenses: false,
-                  })
-                }
-              >
-                With Expenses
-              </Checkbox>
-              <Checkbox
-                checked={filters.withoutExpenses}
-                onChange={() =>
-                  setFilters({
-                    ...filters,
-                    withExpenses: false,
-                    withoutExpenses: true,
-                  })
-                }
-              >
-                Without Expenses
-              </Checkbox>
-            </div>
-          </div>
+                  <Checkbox
+                    checked={filters.withoutAds}
+                    onChange={() => setFilters({ ...filters, withAds: false, withoutAds: true })}
+                  >
+                    Without Ads
+                  </Checkbox>
+                </div>
+                <div className="flex gap-[2px] items-center text-[11px]">
+                  {' '}
+                  <Checkbox
+                    checked={filters.withGST}
+                    onChange={() => setFilters({ ...filters, withGST: true, withoutGST: false })}
+                  >
+                    With Gst
+                  </Checkbox>
+                  <Checkbox
+                    checked={filters.withoutGST}
+                    onChange={() => setFilters({ ...filters, withGST: false, withoutGST: true })}
+                  >
+                    Without Gst
+                  </Checkbox>
+                </div>
+                <div className="flex gap-[2px] items-center text-[11px]">
+                  {' '}
+                  <Checkbox
+                    checked={filters.withEstimate}
+                    onChange={() =>
+                      setFilters({
+                        ...filters,
+                        withEstimate: true,
+                        withoutEstimate: false,
+                      })
+                    }
+                  >
+                    With Estimate
+                  </Checkbox>
+                  <Checkbox
+                    checked={filters.withoutEstimate}
+                    onChange={() =>
+                      setFilters({
+                        ...filters,
+                        withEstimate: false,
+                        withoutEstimate: true,
+                      })
+                    }
+                  >
+                    Without Estimate
+                  </Checkbox>
+                </div>
+                <div className="flex gap-[2px] items-center text-[11px]">
+                  {' '}
+                  <Checkbox
+                    checked={filters.withExpenses}
+                    onChange={() =>
+                      setFilters({
+                        ...filters,
+                        withExpenses: true,
+                        withoutExpenses: false,
+                      })
+                    }
+                  >
+                    With Expenses
+                  </Checkbox>
+                  <Checkbox
+                    checked={filters.withoutExpenses}
+                    onChange={() =>
+                      setFilters({
+                        ...filters,
+                        withExpenses: false,
+                        withoutExpenses: true,
+                      })
+                    }
+                  >
+                    Without Expenses
+                  </Checkbox>
+                </div>
+              </div>
+            </>
+          )}
         </Card>
         <Row gutter={[16, 16]}>
           {/* SALES */}
@@ -498,7 +527,11 @@ export default function Summary() {
 
           {/* PROFIT */}
           <Col xs={24} lg={6}>
-            <Card>
+            <Card
+              onClick={() => navigate(`/admin/profit/profittabledetails/${globalChannel?.[0] || 'all'}`)}
+              hoverable
+              style={{ cursor: 'pointer' }}
+            >
               <Statistic title="Profit" value={dashboardData?.header_metrics?.profit || 0} prefix="₹" />
               <Tag color="gold">Margin: {dashboardData?.header_metrics?.margin || '0%'}</Tag>
               <Tag color="green">ROI: {dashboardData?.header_metrics?.roi || '0%'}</Tag>

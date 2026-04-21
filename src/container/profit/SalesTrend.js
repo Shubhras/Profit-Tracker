@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Table, Card, Button } from 'antd';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { RightOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { RightOutlined, CheckOutlined, CloseOutlined, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../components/page-headers/page-headers';
@@ -11,6 +11,11 @@ export default function SalesTrend() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [showChart, setShowChart] = React.useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [pagination, setPagination] = React.useState({
+    current: 1,
+    pageSize: 10,
+  });
   const [filters, setFilters] = React.useState({
     channel: '',
     qty: 'grossqty',
@@ -51,6 +56,10 @@ export default function SalesTrend() {
       mkt: filters.mktCategory,
       qty: filters.qty,
       invMasterSku: filters.invMasterSku,
+    },
+    pagination: {
+      pageNo: 0,
+      pageSize: 25,
     },
   };
   useEffect(() => {
@@ -236,60 +245,75 @@ export default function SalesTrend() {
                   <span>Apply</span>
                   <CheckOutlined />
                 </Button>
+                <Button
+                  type="text"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowFilters((prev) => !prev);
+                  }}
+                  className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition"
+                >
+                  {showFilters ? (
+                    <CaretUpOutlined className="text-[#0B3A6E] text-xs leading-none" />
+                  ) : (
+                    <CaretDownOutlined className="text-[#0B3A6E] text-xs leading-none" />
+                  )}
+                </Button>
               </div>
             </div>
+            {showFilters && (
+              <div className="flex items-end gap-4 overflow-x-auto whitespace-nowrap pb-1">
+                <div className="min-w-[180px]">
+                  <label className="text-s text-gray-600 mb-1 block">SKU</label>
+                  <input
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
+                    placeholder="Sku"
+                    value={filters.sku}
+                    onChange={(e) => handleChange('sku', e.target.value)}
+                  />
+                </div>
 
-            <div className="flex items-end gap-4 overflow-x-auto whitespace-nowrap pb-1">
-              <div className="min-w-[180px]">
-                <label className="text-s text-gray-600 mb-1 block">SKU</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
-                  placeholder="Sku"
-                  value={filters.sku}
-                  onChange={(e) => handleChange('sku', e.target.value)}
-                />
-              </div>
+                <div className="min-w-[180px]">
+                  <label className="text-s text-gray-600 mb-1 block">ProductId</label>
+                  <input
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
+                    placeholder="ProductId"
+                    value={filters.productId}
+                    onChange={(e) => handleChange('productId', e.target.value)}
+                  />
+                </div>
 
-              <div className="min-w-[180px]">
-                <label className="text-s text-gray-600 mb-1 block">ProductId</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
-                  placeholder="ProductId"
-                  value={filters.productId}
-                  onChange={(e) => handleChange('productId', e.target.value)}
-                />
-              </div>
+                <div className="min-w-[180px]">
+                  <label className="text-s text-gray-600 mb-1 block">ParentId</label>
+                  <input
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
+                    placeholder="ParentId"
+                    value={filters.parentId}
+                    onChange={(e) => handleChange('parentId', e.target.value)}
+                  />
+                </div>
 
-              <div className="min-w-[180px]">
-                <label className="text-s text-gray-600 mb-1 block">ParentId</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
-                  placeholder="ParentId"
-                  value={filters.parentId}
-                  onChange={(e) => handleChange('parentId', e.target.value)}
-                />
-              </div>
+                <div className="min-w-[180px]">
+                  <label className="text-s text-gray-600 mb-1 block">MKT category</label>
+                  <input
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
+                    placeholder="MktCategory"
+                    value={filters.mktCategory}
+                    onChange={(e) => handleChange('mktCategory', e.target.value)}
+                  />
+                </div>
 
-              <div className="min-w-[180px]">
-                <label className="text-s text-gray-600 mb-1 block">MKT category</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
-                  placeholder="MktCategory"
-                  value={filters.mktCategory}
-                  onChange={(e) => handleChange('mktCategory', e.target.value)}
-                />
+                <div className="min-w-[180px]">
+                  <label className="text-s text-gray-600 mb-1 block">Inv MasterSku</label>
+                  <input
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
+                    placeholder="Inv mastersku"
+                    value={filters.invMasterSku}
+                    onChange={(e) => handleChange('invMasterSku', e.target.value)}
+                  />
+                </div>
               </div>
-
-              <div className="min-w-[180px]">
-                <label className="text-s text-gray-600 mb-1 block">Inv MasterSku</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
-                  placeholder="Inv mastersku"
-                  value={filters.invMasterSku}
-                  onChange={(e) => handleChange('invMasterSku', e.target.value)}
-                />
-              </div>
-            </div>
+            )}
           </div>
           <div className="flex justify-end mb-3">
             {' '}
@@ -339,8 +363,12 @@ export default function SalesTrend() {
             showSorterTooltip={false}
             loading={loading}
             pagination={{
-              pageSize: 10,
+              ...pagination,
               showSizeChanger: true,
+              pageSizeOptions: ['10', '20', '50', '100'],
+            }}
+            onChange={(pag) => {
+              setPagination(pag);
             }}
             scroll={{ x: 'max-content' }}
             size="small"

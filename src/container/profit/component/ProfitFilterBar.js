@@ -1,8 +1,9 @@
 import React from 'react';
 import { Button } from 'antd';
-import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { CheckOutlined, CloseOutlined, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
 
 function ProfitFilterBar({ filters, setFilters, handleApply, handleClear }) {
+  const [showFilters, setShowFilters] = React.useState(false);
   const handleChange = (key, value) => {
     setFilters((prev) => ({
       ...prev,
@@ -74,7 +75,7 @@ function ProfitFilterBar({ filters, setFilters, handleApply, handleClear }) {
           })}
         </div> */}
 
-        <div className="ml-auto flex items-center gap-2 shrink-0 whitespace-nowrap">
+        <div className="ml-auto flex items-center gap-4 shrink-0 whitespace-nowrap">
           <Button onClick={handleClear} className="flex items-center gap-1">
             Clear <CloseOutlined />
           </Button>
@@ -82,48 +83,69 @@ function ProfitFilterBar({ filters, setFilters, handleApply, handleClear }) {
           <Button type="primary" onClick={handleApply} className="flex items-center gap-1">
             Apply <CheckOutlined />
           </Button>
+          <Button
+            type="text"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowFilters((prev) => !prev);
+            }}
+            className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition"
+          >
+            {showFilters ? (
+              <CaretUpOutlined className="text-[#0B3A6E] text-xs leading-none" />
+            ) : (
+              <CaretDownOutlined className="text-[#0B3A6E] text-xs leading-none" />
+            )}
+          </Button>
         </div>
       </div>
-
-      <div className="flex items-end gap-4 overflow-x-auto whitespace-nowrap pb-1">
-        {['sku', 'productId', 'parentId', 'mkt'].map((field) => (
-          <div className="min-w-[180px]" key={field}>
-            <label className="text-sm text-gray-600 mb-1 block">{field}</label>
-            <input
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
-              placeholder={field}
-              value={filters[field] || ''}
-              onChange={(e) => handleChange(field, e.target.value)}
-            />
+      {showFilters && (
+        <>
+          <div className="flex items-end gap-4 overflow-x-auto whitespace-nowrap pb-1">
+            {['sku', 'productId', 'parentId', 'mkt'].map((field) => (
+              <div className="min-w-[180px]" key={field}>
+                <label className="text-sm text-gray-600 mb-1 block">{field}</label>
+                <input
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+                  placeholder={field}
+                  value={filters[field] || ''}
+                  onChange={(e) => handleChange(field, e.target.value)}
+                />
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      <div className="flex flex-wrap items-center gap-4 mt-3 border-t pt-3">
-        {[
-          { key: 'ads', label: 'Ads' },
-          { key: 'gst', label: 'Gst' },
-          { key: 'estimate', label: 'Estimate' },
-          { key: 'expenses', label: 'Expenses' },
-          { key: 'accountCharges', label: 'Account Charges' },
-        ].map(({ key, label }) => (
-          <React.Fragment key={key}>
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={filters[key] === 'with'} onChange={() => handlePairChange(key, 'with')} />
-              With {label}
-            </label>
+          <div className="flex flex-wrap items-center gap-4 mt-3 border-t pt-3">
+            {[
+              { key: 'ads', label: 'Ads' },
+              { key: 'gst', label: 'Gst' },
+              { key: 'estimate', label: 'Estimate' },
+              { key: 'expenses', label: 'Expenses' },
+              { key: 'accountCharges', label: 'Account Charges' },
+            ].map(({ key, label }) => (
+              <React.Fragment key={key}>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={filters[key] === 'with'}
+                    onChange={() => handlePairChange(key, 'with')}
+                  />
+                  With {label}
+                </label>
 
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={filters[key] === 'without'}
-                onChange={() => handlePairChange(key, 'without')}
-              />
-              Without {label}
-            </label>
-          </React.Fragment>
-        ))}
-      </div>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={filters[key] === 'without'}
+                    onChange={() => handlePairChange(key, 'without')}
+                  />
+                  Without {label}
+                </label>
+              </React.Fragment>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

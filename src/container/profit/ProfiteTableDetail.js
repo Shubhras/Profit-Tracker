@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { Table, Card } from 'antd';
-import { RightOutlined } from '@ant-design/icons';
+import { Table, Card, Modal } from 'antd';
+import { RightOutlined, EyeOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import ProfitFilterBar from './component/ProfitFilterBar';
@@ -16,6 +16,8 @@ export default function ProfitDetailsView() {
   const dispatch = useDispatch();
   const { dateRange, profitData } = useSelector((state) => state.dashboard);
   const totals = profitData?.totals || {};
+  const [previewImage, setPreviewImage] = React.useState('');
+  const [previewOpen, setPreviewOpen] = React.useState(false);
   const channelLogoMap = {
     'Amazon-India': amazon,
     // 'Flipkart-India': flipkart,
@@ -80,6 +82,7 @@ export default function ProfitDetailsView() {
         image: item.image_url,
 
         view: item.asin || 0,
+        asin: item.asin,
         redirecturl: item.redirecturl,
         // qty: Number(item.grossqty) || 0,
         netQty: Number(item.netqty) || 0,
@@ -103,33 +106,33 @@ export default function ProfitDetailsView() {
         // settledamount: Number(item.profit_settled_amount) || 0,
       })) || [];
 
-    const totalRow = {
-      key: 'total',
-      channel: 'Total',
+    // const totalRow = {
+    //   key: 'total',
+    //   channel: 'Total',
 
-      view: Number(totals.view) || 0,
-      // qty: Number(totals.grossqty) || 0,
-      netQty: Number(totals.totalqty) || 0,
-      returnqty: Number(totals.totalreturn) || 0,
-      returnPercent: Number(totals.totalper) || 0,
+    //   view: Number(totals.view) || 0,
+    //   // qty: Number(totals.grossqty) || 0,
+    //   netQty: Number(totals.totalqty) || 0,
+    //   returnqty: Number(totals.totalreturn) || 0,
+    //   returnPercent: Number(totals.totalper) || 0,
 
-      netsales: Number(totals.netsales) || 0,
-      // netasp: 0,
-      // net_discount: 0,
+    //   netsales: Number(totals.netsales) || 0,
+    //   // netasp: 0,
+    //   // net_discount: 0,
 
-      mpfees: Number(totals.mpfees) || 0,
-      shipping: Number(totals.shippingfees) || 0,
-      adSpend: Number(totals.ads) || 0,
-      gst: Number(totals.gsttopay) || 0,
+    //   mpfees: Number(totals.mpfees) || 0,
+    //   shipping: Number(totals.shippingfees) || 0,
+    //   adSpend: Number(totals.ads) || 0,
+    //   gst: Number(totals.gsttopay) || 0,
 
-      grossprofit: Number(totals.grossprofit) || 0,
-      profit: Number(totals.profit) || 0,
-      profitPercent: Math.round(Number(totals.grossprofitper)) || 0,
+    //   grossprofit: Number(totals.grossprofit) || 0,
+    //   profit: Number(totals.profit) || 0,
+    //   profitPercent: Math.round(Number(totals.grossprofitper)) || 0,
 
-      // settledamount: 0,
-    };
+    //   // settledamount: 0,
+    // };
 
-    return [...rows, totalRow];
+    return rows;
   }, [profitData]);
 
   const columns = [
@@ -141,26 +144,27 @@ export default function ProfitDetailsView() {
       render: (value, record) => {
         if (record.key === 'total') return null;
 
-        return value ? (
-          <img
-            src={value}
-            alt="product"
-            style={{
-              width: 32,
-              height: 32,
-              objectFit: 'cover',
-              borderRadius: 6,
-            }}
-          />
-        ) : (
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              background: '#f0f0f0',
-              borderRadius: 6,
-            }}
-          />
+        return (
+          <div className="relative group w-[32px] h-[32px]">
+            {value ? (
+              <img src={value} alt="product" className="w-full h-full object-cover rounded" />
+            ) : (
+              <div className="w-full h-full bg-gray-200 rounded" />
+            )}
+
+            {value && (
+              <button
+                type="button"
+                onClick={() => {
+                  setPreviewImage(value);
+                  setPreviewOpen(true);
+                }}
+                className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 rounded transition"
+              >
+                <EyeOutlined style={{ color: '#fff', fontSize: 16 }} />
+              </button>
+            )}
+          </div>
         );
       },
     },
@@ -307,7 +311,7 @@ export default function ProfitDetailsView() {
       render: (_, record) => (
         <button
           type="button"
-          onClick={() => navigate(`../profitThirdtable/${record.key}`)}
+          onClick={() => navigate(`../profitThirdtable/${record.asin}`)}
           style={{
             width: 30,
             height: 30,
@@ -377,9 +381,56 @@ export default function ProfitDetailsView() {
             }}
             size="small"
             scroll={{ x: 'max-content' }}
+            summary={() => (
+              <Table.Summary>
+                <Table.Summary.Row style={{ background: '#fafafa', fontWeight: 600 }}>
+                  <Table.Summary.Cell index={0} colSpan={2}>
+                    Total
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell index={2} />{' '}
+                  <Table.Summary.Cell index={3} align="center">
+                    {Number(totals.totalqty) || 0}
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell index={4} align="center">
+                    {Number(totals.totalreturn) || 0}
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell index={5} align="center">
+                    {Number(totals.totalper) || 0}
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell index={6} align="center">
+                    {Number(totals.netsales) || 0}
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell index={7} align="center">
+                    {Number(totals.mpfees) || 0}
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell index={8} align="center">
+                    {Number(totals.shippingfees) || 0}
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell index={9} align="center">
+                    {Number(totals.ads) || 0}
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell index={10} align="center">
+                    {Number(totals.gsttopay) || 0}
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell index={11} align="center">
+                    {Number(totals.grossprofit) || 0}
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell index={12} align="center">
+                    {Number(totals.profit) || 0}
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell index={13} align="center">
+                    {Math.round(Number(totals.grossprofitper)) || 0}%
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell index={14} />{' '}
+                </Table.Summary.Row>
+              </Table.Summary>
+            )}
           />
         </Card>
       </main>
+      <Modal open={previewOpen} footer={null} onCancel={() => setPreviewOpen(false)} centered>
+        <img src={previewImage} alt="preview" style={{ width: '100%', borderRadius: 8 }} />
+      </Modal>
     </>
   );
 }

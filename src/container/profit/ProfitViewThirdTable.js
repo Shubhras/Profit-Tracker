@@ -1,11 +1,18 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Table, Card } from 'antd';
-// import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import ProfitFilterBar from './component/ProfitFilterBar';
+import { getProfitDetailsByParentId } from '../../redux/dashboard/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function ProfitDetailsView() {
-  // const { id } = useParams();
+  const { id } = useParams();
+  console.log('ID AA RHA HAI:', id);
+  const dispatch = useDispatch();
+
+  const { profitData, dateRange, channel: globalChannel } = useSelector((state) => state.dashboard);
+
   const [filters, setFilters] = React.useState({
     channel: '',
     sku: '',
@@ -24,28 +31,46 @@ export default function ProfitDetailsView() {
     { path: '', breadcrumbName: 'Profit Details' },
   ];
 
-  const dataSource = [
-    {
-      key: 1,
-      channel: 'Amazon-India',
-      view: 50000,
-      qty: 120,
-      netQty: 100,
-      returnqty: 20,
-      returnPercent: 16,
-      netsales: 45000,
-      netasp: 450,
-      net_discount: 2000,
-      mpfees: 3000,
-      shipping: 1500,
-      adSpend: 2000,
-      gst: 2500,
-      grossprofit: 8000,
-      profit: 6000,
-      profitPercent: 12,
-      settledamount: 5500,
+  const apipayload = {
+    filters: {
+      fromDate: dateRange?.fromDate || null,
+      toDate: dateRange?.toDate || null,
+      channel: {
+        IN: globalChannel,
+      },
+      parentProductId: id,
     },
-  ];
+    //   "metric": {
+    //     "ctaaction": "(profit != 0)",
+    //     "expense": "withExpense",
+    //     "ads": "withAds"
+    //   },
+    pagination: {
+      pageNo: 0,
+      pageSize: 25,
+    },
+  };
+
+  useEffect(() => {
+    if (!id) return;
+    dispatch(getProfitDetailsByParentId(apipayload));
+  }, [id, dateRange, globalChannel]);
+
+  const dataSource =
+    profitData?.data?.map((item, index) => ({
+      key: index,
+      channel: item.channel,
+      view: item.view,
+      returnqty: item.returnqty,
+      returnPercent: item.returnPercent,
+      netsales: item.netsales,
+      shipping: item.shipping,
+      adSpend: item.adSpend,
+      gst: item.gst,
+      std: item.std,
+      profit: item.profit,
+      profitPercent: item.profitPercent,
+    })) || [];
 
   const columns = [
     {
@@ -59,18 +84,6 @@ export default function ProfitDetailsView() {
       dataIndex: 'view',
       align: 'center',
       sorter: (a, b) => a.view - b.view,
-    },
-    {
-      title: 'Qty',
-      dataIndex: 'qty',
-      align: 'center',
-      sorter: (a, b) => a.qty - b.qty,
-    },
-    {
-      title: 'Net Qty',
-      dataIndex: 'netQty',
-      align: 'center',
-      sorter: (a, b) => a.netQty - b.netQty,
     },
     {
       title: 'Return Qty',
@@ -91,24 +104,6 @@ export default function ProfitDetailsView() {
       sorter: (a, b) => a.netsales - b.netsales,
     },
     {
-      title: 'Net asp',
-      dataIndex: 'netasp',
-      align: 'center',
-      sorter: (a, b) => a.netasp - b.netasp,
-    },
-    {
-      title: 'Net discount',
-      dataIndex: 'net_discount',
-      align: 'center',
-      sorter: (a, b) => a.net_discount - b.net_discount,
-    },
-    {
-      title: 'MP fees',
-      dataIndex: 'mpfees',
-      align: 'center',
-      sorter: (a, b) => a.mpfees - b.mpfees,
-    },
-    {
       title: 'Shipping',
       dataIndex: 'shipping',
       align: 'center',
@@ -121,16 +116,16 @@ export default function ProfitDetailsView() {
       sorter: (a, b) => a.adSpend - b.adSpend,
     },
     {
-      title: 'GST',
+      title: 'GST to pay',
       dataIndex: 'gst',
       align: 'center',
       sorter: (a, b) => a.gst - b.gst,
     },
     {
-      title: 'Gross Profit',
-      dataIndex: 'grossprofit',
+      title: 'std cost',
+      dataIndex: 'std',
       align: 'center',
-      sorter: (a, b) => a.grossprofit - b.grossprofit,
+      sorter: (a, b) => a.std - b.std,
     },
     {
       title: 'Profit',
@@ -145,15 +140,24 @@ export default function ProfitDetailsView() {
       align: 'center',
       sorter: (a, b) => a.profitPercent - b.profitPercent,
     },
-    {
-      title: 'Settled amount',
-      dataIndex: 'settledamount',
-      align: 'center',
-      sorter: (a, b) => a.settledamount - b.settledamount,
-    },
   ];
   const handleApply = () => {
-    console.log('Apply clicked', filters);
+    const payload = {
+      fromDate: filters.fromDate,
+      toDate: filters.toDate,
+      channel: filters.channel ? { IN: [filters.channel] } : undefined,
+      sku: filters.sku,
+      productId: filters.productId,
+      parentProductId: filters.parentId,
+      mkt: filters.mkt,
+      ads: filters.ads,
+      gst: filters.gst,
+      estimate: filters.estimate,
+      expenses: filters.expenses,
+      accountCharges: filters.accountCharges,
+    };
+
+    dispatch(getProfitDetailsByParentId(payload));
   };
 
   const handleClear = () => {
