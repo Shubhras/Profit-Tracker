@@ -3,7 +3,8 @@ from decimal import Decimal
 
 from openpyxl import Workbook
 from django.apps import apps
-
+import time
+import pandas as pd
 from .models import * 
 
 # 🔴 IMPORTANT: change app name here
@@ -266,3 +267,70 @@ def export_all_data_to_single_excel(file_path="complete_data.xlsx"):
     #  Save file
     # ---------------------------
     wb.save(file_path)
+
+
+def update_orderitem_from_mapping():
+    mappings = ProductMapping.objects.all()
+
+    for m in mappings:
+        OrderItem.objects.filter(seller_sku=m.seller_sku).update(
+            parent_sku=m.parent_sku,
+            product_name=m.product_name,
+            brand=m.brand,
+            cost_price=m.cost_price
+        )
+        
+
+# amazon_auth/services/ad_importer.py
+
+
+def safe_get(row, *keys):
+    for k in keys:
+        if k in row and pd.notna(row[k]):
+            return row[k]
+    return None
+
+
+def import_ads_from_excel(file_path):
+    # df = pd.read_excel(file_path)
+    # df = pd.read_excel(file_path, engine="openpyxl")
+    if not os.path.exists(file_path):
+        raise Exception(f"File not found: {file_path}")
+
+    if os.path.getsize(file_path) == 0:
+        raise Exception("Ads file is empty")
+
+    try:
+        df = pd.read_excel(file_path, engine="openpyxl")
+    except:
+        df = pd.read_csv(file_path)
+
+    for _, row in df.iterrows():
+        sku = safe_get(row, 'advertised SKU', 'Advertised SKU', 'sku')
+        if not sku:
+            continue
+
+        date_val = row.get('date')
+        if pd.isna(date_val):
+            continue
+
+        AdReport.objects.update_or_create(
+            sku=sku,
+            date=pd.to_datetime(date_val).date(),
+            defaults={
+                "impressions": int(row.get('impressions', 0) or 0),
+                "clicks": int(row.get('clicks', 0) or 0),
+                "spend": float(row.get('spend', 0) or 0),
+                "ad_sales": float(row.get('7 day total sales', 0) or 0),
+                "ad_orders": int(row.get('7 day total orders', 0) or 0),
+            }
+        )
+
+def safe_catalog_call(manager, asin, marketplace_id, retries=3):
+    for attempt in range(retries):
+        try:
+            return manager.get_catalog_item(asin, marketplace_id)
+        except Exception as e:
+            print(f"Catalog API retry {attempt+1}: {e}")
+            time.sleep(2 * (attempt + 1))  # exponential backoff
+    return {}
