@@ -1,9 +1,14 @@
-import React from 'react';
-import { Table, Card } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Table, Card, Spin } from 'antd';
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function ReturnSummary() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setTimeout(() => setLoading(false), 800);
+  }, []);
   const PageRoutes = [
     { path: '', breadcrumbName: 'Reconcile' },
     { path: '', breadcrumbName: 'Returns' },
@@ -65,59 +70,61 @@ export default function ReturnSummary() {
         className="flex justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 sm:pb-[30px] bg-transparent sm:flex-col"
       />
       <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-8 xl:px-[15px] pb-[30px] bg-transparent space-y-6">
-        <div className="grid grid-cols-2 lg:grid-cols-1 gap-6">
-          {/* Returns Table */}
-          <Card title="Returns Data">
-            <div className="overflow-x-auto">
-              <Table
-                columns={columns}
-                dataSource={[
-                  ...returnsData,
-                  {
-                    key: 'total',
-                    channel: 'Total',
-                    yetToReceive: returnsData.reduce((a, b) => a + b.yetToReceive, 0),
-                    receivedNotInHand: returnsData.reduce((a, b) => a + b.receivedNotInHand, 0),
-                    resolvedClaimed: returnsData.reduce((a, b) => a + b.resolvedClaimed, 0),
-                  },
-                ]}
-                size="small"
-                pagination={false}
-                scroll={{ x: 'max-content' }} // ✅ horizontal scroll on small screens
-              />
-            </div>
-          </Card>
+        <Spin spinning={loading} size="large">
+          <div className="grid grid-cols-2 lg:grid-cols-1 gap-6">
+            {/* Returns Table */}
+            <Card title="Returns Data">
+              <div className="overflow-x-auto">
+                <Table
+                  columns={columns}
+                  dataSource={[
+                    ...returnsData,
+                    {
+                      key: 'total',
+                      channel: 'Total',
+                      yetToReceive: returnsData.reduce((a, b) => a + b.yetToReceive, 0),
+                      receivedNotInHand: returnsData.reduce((a, b) => a + b.receivedNotInHand, 0),
+                      resolvedClaimed: returnsData.reduce((a, b) => a + b.resolvedClaimed, 0),
+                    },
+                  ]}
+                  size="small"
+                  pagination={false}
+                  scroll={{ x: 'max-content' }} // ✅ horizontal scroll on small screens
+                />
+              </div>
+            </Card>
 
-          {/* Yet to Receive Chart */}
-          <Card title="Yet to Receive">
+            {/* Yet to Receive Chart */}
+            <Card title="Yet to Receive">
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={yetToReceiveChartData}>
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <RechartsTooltip />
+                  <Legend />
+                  <Bar dataKey="Meesho" stackId="a" fill="#86efac" />
+                  <Bar dataKey="Flipkart" stackId="a" fill="#fca5a5" />
+                  <Bar dataKey="Ajio" stackId="a" fill="#a5b4fc" />
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
+          </div>
+
+          {/* Received not in hand Chart */}
+          <Card title="Received but not in hand">
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={yetToReceiveChartData}>
+              <BarChart data={receivedNotInHandChartData}>
                 <XAxis dataKey="date" />
                 <YAxis />
                 <RechartsTooltip />
                 <Legend />
+                <Bar dataKey="Ajio" stackId="a" fill="#fca5a5" />
                 <Bar dataKey="Meesho" stackId="a" fill="#86efac" />
-                <Bar dataKey="Flipkart" stackId="a" fill="#fca5a5" />
-                <Bar dataKey="Ajio" stackId="a" fill="#a5b4fc" />
+                <Bar dataKey="Flipkart" stackId="a" fill="#a5b4fc" />
               </BarChart>
             </ResponsiveContainer>
           </Card>
-        </div>
-
-        {/* Received not in hand Chart */}
-        <Card title="Received but not in hand">
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={receivedNotInHandChartData}>
-              <XAxis dataKey="date" />
-              <YAxis />
-              <RechartsTooltip />
-              <Legend />
-              <Bar dataKey="Ajio" stackId="a" fill="#fca5a5" />
-              <Bar dataKey="Meesho" stackId="a" fill="#86efac" />
-              <Bar dataKey="Flipkart" stackId="a" fill="#a5b4fc" />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
+        </Spin>
       </main>
     </>
   );

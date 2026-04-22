@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Card, Table, Checkbox, Popover, Empty, Pagination, Switch } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Card, Table, Checkbox, Popover, Empty, Pagination, Switch, Spin } from 'antd';
 import { SettingOutlined } from '@ant-design/icons';
 import { ResponsiveContainer, ComposedChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, Cell } from 'recharts';
 import ReturnFilterBar from './component/ReturnFilterBar';
@@ -147,6 +147,11 @@ const summaryColumns = [
 ];
 
 export default function ReturnLedger() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setTimeout(() => setLoading(false), 800);
+  }, []);
   const PageRoutes = [
     { path: '', breadcrumbName: 'Reconcile' },
     { path: '', breadcrumbName: 'Returns' },
@@ -211,6 +216,19 @@ export default function ReturnLedger() {
       </div>
     </div>
   );
+  const handleApply = () => {
+    setLoading(true);
+
+    setTimeout(() => {
+      setLoading(false);
+    }, 800);
+  };
+  const handleClear = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+    }, 800);
+  };
 
   return (
     <>
@@ -222,81 +240,82 @@ export default function ReturnLedger() {
 
       <main className="min-h-[715px] flex-1 px-8 xl:px-[15px] pb-[30px] bg-transparent space-y-5">
         {/* -------- Filters -------- */}
-        <ReturnFilterBar />
+        <ReturnFilterBar onApply={handleApply} onClear={handleClear} />
+        <Spin spinning={loading} size="large">
+          <div className="grid grid-cols-2 md:grid-cols-1 gap-5">
+            {/* -------- Channel Summary -------- */}
+            <Card className="rounded-xl">
+              <Table
+                size="small"
+                columns={summaryColumns}
+                dataSource={channelSummaryData}
+                rowKey="channel"
+                pagination={false}
+                scroll={{ x: true }}
+              />
+            </Card>
 
-        <div className="grid grid-cols-2 md:grid-cols-1 gap-5">
-          {/* -------- Channel Summary -------- */}
+            {/* -------- Chart Placeholder -------- */}
+            <Card className="rounded-xl h-[320px]">
+              <ResponsiveContainer width="100%" height={260}>
+                <ComposedChart
+                  data={getWaterfallChartData(waterfallData)}
+                  margin={{ top: 20, right: 20, left: 0, bottom: 20 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+
+                  {/* Invisible offset bar */}
+                  <Bar dataKey="start" stackId="a" fill="transparent" />
+
+                  {/* Actual waterfall bars */}
+                  <Bar dataKey="end" stackId="a">
+                    {getWaterfallChartData(waterfallData).map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={
+                          entry.type === 'total'
+                            ? '#4096ff' // blue (Total)
+                            : entry.type === 'increase'
+                            ? '#fa7d63' // red (Increase)
+                            : '#22c55e' // green (Decrease)
+                        }
+                      />
+                    ))}
+                  </Bar>
+                </ComposedChart>
+              </ResponsiveContainer>
+            </Card>
+          </div>
+
+          {/* -------- Invoice Table -------- */}
           <Card className="rounded-xl">
+            {/* Settings Button */}
+            <div className="flex justify-start mb-2">
+              <Popover content={columnSelector} trigger="click" placement="bottomLeft">
+                <SettingOutlined className="text-lg cursor-pointer" />
+              </Popover>
+            </div>
+
             <Table
+              columns={visibleColumns}
               size="small"
-              columns={summaryColumns}
-              dataSource={channelSummaryData}
-              rowKey="channel"
+              dataSource={invoiceData}
               pagination={false}
-              scroll={{ x: true }}
+              rowKey="orderId"
+              scroll={{ x: 1200 }}
+              locale={{ emptyText: <Empty description="No data" /> }}
             />
+
+            {/* Pagination */}
+            <div className="flex justify-end mt-4">
+              <Pagination current={page} total={0} pageSize={10} onChange={(p) => setPage(p)} showSizeChanger={false} />
+            </div>
           </Card>
-
-          {/* -------- Chart Placeholder -------- */}
-          <Card className="rounded-xl h-[320px]">
-            <ResponsiveContainer width="100%" height={260}>
-              <ComposedChart
-                data={getWaterfallChartData(waterfallData)}
-                margin={{ top: 20, right: 20, left: 0, bottom: 20 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-
-                {/* Invisible offset bar */}
-                <Bar dataKey="start" stackId="a" fill="transparent" />
-
-                {/* Actual waterfall bars */}
-                <Bar dataKey="end" stackId="a">
-                  {getWaterfallChartData(waterfallData).map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={
-                        entry.type === 'total'
-                          ? '#4096ff' // blue (Total)
-                          : entry.type === 'increase'
-                          ? '#fa7d63' // red (Increase)
-                          : '#22c55e' // green (Decrease)
-                      }
-                    />
-                  ))}
-                </Bar>
-              </ComposedChart>
-            </ResponsiveContainer>
-          </Card>
-        </div>
-
-        {/* -------- Invoice Table -------- */}
-        <Card className="rounded-xl">
-          {/* Settings Button */}
-          <div className="flex justify-start mb-2">
-            <Popover content={columnSelector} trigger="click" placement="bottomLeft">
-              <SettingOutlined className="text-lg cursor-pointer" />
-            </Popover>
-          </div>
-
-          <Table
-            columns={visibleColumns}
-            size="small"
-            dataSource={invoiceData}
-            pagination={false}
-            rowKey="orderId"
-            scroll={{ x: 1200 }}
-            locale={{ emptyText: <Empty description="No data" /> }}
-          />
-
-          {/* Pagination */}
-          <div className="flex justify-end mt-4">
-            <Pagination current={page} total={0} pageSize={10} onChange={(p) => setPage(p)} showSizeChanger={false} />
-          </div>
-        </Card>
+        </Spin>
       </main>
     </>
   );

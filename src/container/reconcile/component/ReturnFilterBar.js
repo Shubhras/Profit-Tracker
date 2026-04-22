@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Select, Button } from 'antd';
 import { CloseOutlined, CheckOutlined, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
 
-export default function ReturnFilterBar() {
+export default function ReturnFilterBar({ onApply, onClear }) {
   const [open, setOpen] = useState(false);
   const [filters, setFilters] = useState({
     channel: '',
@@ -15,17 +15,17 @@ export default function ReturnFilterBar() {
     invMasterSku: '',
   });
 
-  const handleClear = () => {
-    setFilters({
-      channel: '',
-      qty: 'grossqty',
-      sku: '',
-      productId: '',
-      parentId: '',
-      mktCategory: '',
-      invMasterSku: '',
-    });
-  };
+  // const handleClear = () => {
+  //   setFilters({
+  //     channel: '',
+  //     qty: 'grossqty',
+  //     sku: '',
+  //     productId: '',
+  //     parentId: '',
+  //     mktCategory: '',
+  //     invMasterSku: '',
+  //   });
+  // };
 
   return (
     <div className="mb-4">
@@ -50,21 +50,20 @@ export default function ReturnFilterBar() {
             onKeyDown={(e) => e.stopPropagation()}
           >
             <Button
-              // type="button"
-              onClick={handleClear}
+              onClick={(e) => {
+                e.stopPropagation();
+
+                if (onClear) {
+                  onClear();
+                }
+              }}
               className="flex items-center gap-2"
-              // className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 bg-white hover:bg-gray-100 transition"
             >
               <span>Clear</span>
               <CloseOutlined className="text-gray-500" />
             </Button>
 
-            <Button
-              type="primary"
-              // onClick={handleApply}
-              className="flex items-center gap-2"
-              // className="flex items-center gap-2 px-4 py-1.5 text-sm bg-green-600 text-white hover:bg-blue-700 transition"
-            >
+            <Button type="primary" onClick={onApply} className="flex items-center gap-2">
               <span>Apply</span>
               <CheckOutlined />
             </Button>

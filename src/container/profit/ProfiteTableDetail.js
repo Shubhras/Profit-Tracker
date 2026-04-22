@@ -14,10 +14,11 @@ export default function ProfitDetailsView() {
   const decodedChannel = decodeURIComponent(channel);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { dateRange, profitData } = useSelector((state) => state.dashboard);
+  const { dateRange, profitData, loading } = useSelector((state) => state.dashboard);
   const totals = profitData?.totals || {};
   const [previewImage, setPreviewImage] = React.useState('');
   const [previewOpen, setPreviewOpen] = React.useState(false);
+  const [showFilters, setShowFilters] = React.useState(false);
   const channelLogoMap = {
     'Amazon-India': amazon,
     // 'Flipkart-India': flipkart,
@@ -332,6 +333,7 @@ export default function ProfitDetailsView() {
   ];
   const handleApply = () => {
     dispatch(getProfitDetails(buildPayload()));
+    setShowFilters(false);
   };
 
   const handleClear = () => {
@@ -365,11 +367,14 @@ export default function ProfitDetailsView() {
             setFilters={setFilters}
             handleApply={handleApply}
             handleClear={handleClear}
+            showFilters={showFilters}
+            setShowFilters={setShowFilters}
           />
           <Table
             columns={columns}
             dataSource={dataSource}
             showSorterTooltip={false}
+            loading={loading}
             locale={{ emptyText: 'No Data Found' }}
             pagination={{
               ...pagination,

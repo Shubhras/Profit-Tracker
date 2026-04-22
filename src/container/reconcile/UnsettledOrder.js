@@ -1,10 +1,15 @@
-import React from 'react';
-import { Table, Card, Tooltip } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Table, Card, Tooltip, Spin } from 'antd';
 import ajio from '../../assets/icons/ajio.png';
 import flipkart from '../../assets/icons/flipkart.svg';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function UnsettledOrder() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setTimeout(() => setLoading(false), 800);
+  }, []);
   const PageRoutes = [
     {
       path: '',
@@ -120,36 +125,38 @@ export default function UnsettledOrder() {
         className="flex  justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 sm:pb-[30px] bg-transparent sm:flex-col"
       />
       <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-8 xl:px-[15px] pb-[30px] bg-transparent">
-        <Card bordered={false}>
-          <Table
-            columns={columns}
-            dataSource={data}
-            pagination={{
-              pageSize: 10,
-              showSizeChanger: true,
-            }}
-            size="small"
-            scroll={{ x: 1000 }} // RESPONSIVE
-            summary={() => (
-              <Table.Summary.Row className="font-semibold">
-                <Table.Summary.Cell>Total</Table.Summary.Cell>
-                <Table.Summary.Cell />
-                <Table.Summary.Cell align="center">1,503</Table.Summary.Cell>
-                <Table.Summary.Cell align="center">₹4,92,657</Table.Summary.Cell>
-                <Table.Summary.Cell align="center" className="text-red-500">
-                  -₹48,186
-                </Table.Summary.Cell>
-                <Table.Summary.Cell align="center" className="text-red-500">
-                  -₹157
-                </Table.Summary.Cell>
-                <Table.Summary.Cell align="center" className="text-red-500">
-                  -₹60,697
-                </Table.Summary.Cell>
-                <Table.Summary.Cell align="center">₹3,65,424</Table.Summary.Cell>
-              </Table.Summary.Row>
-            )}
-          />
-        </Card>{' '}
+        <Spin spinning={loading} size="large">
+          <Card bordered={false}>
+            <Table
+              columns={columns}
+              dataSource={data}
+              pagination={{
+                pageSize: 10,
+                showSizeChanger: true,
+              }}
+              size="small"
+              scroll={{ x: 1000 }} // RESPONSIVE
+              summary={() => (
+                <Table.Summary.Row className="font-semibold">
+                  <Table.Summary.Cell>Total</Table.Summary.Cell>
+                  <Table.Summary.Cell />
+                  <Table.Summary.Cell align="center">1,503</Table.Summary.Cell>
+                  <Table.Summary.Cell align="center">₹4,92,657</Table.Summary.Cell>
+                  <Table.Summary.Cell align="center" className="text-red-500">
+                    -₹48,186
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell align="center" className="text-red-500">
+                    -₹157
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell align="center" className="text-red-500">
+                    -₹60,697
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell align="center">₹3,65,424</Table.Summary.Cell>
+                </Table.Summary.Row>
+              )}
+            />
+          </Card>{' '}
+        </Spin>
       </main>
     </>
   );
