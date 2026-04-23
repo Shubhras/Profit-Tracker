@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Table, Card, Button } from 'antd';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { RightOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { RightOutlined, CheckOutlined, CloseOutlined, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../components/page-headers/page-headers';
@@ -11,6 +11,11 @@ export default function SalesTrend() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [showChart, setShowChart] = React.useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [pagination, setPagination] = React.useState({
+    current: 1,
+    pageSize: 10,
+  });
   const [filters, setFilters] = React.useState({
     channel: '',
     qty: 'grossqty',
@@ -20,7 +25,7 @@ export default function SalesTrend() {
     mktCategory: '',
     invMasterSku: '',
   });
-  const { pivotData, loading, dateRange, search } = useSelector((state) => state.dashboard);
+  const { pivotData, loading, dateRange, search, channel: globalChannel } = useSelector((state) => state.dashboard);
   const graphData = React.useMemo(() => {
     if (!pivotData?.results?.length) return [];
 
@@ -35,11 +40,13 @@ export default function SalesTrend() {
   }, [pivotData]);
 
   const payload = {
-    filer: {
+    filter: {
+      channel: {
+        IN: globalChannel,
+      },
       fromDate: dateRange?.fromDate || null,
       endDate: dateRange?.endDate || null,
       search,
-      channel: filters.channel,
     },
 
     metrics: {
@@ -50,10 +57,14 @@ export default function SalesTrend() {
       qty: filters.qty,
       invMasterSku: filters.invMasterSku,
     },
+    pagination: {
+      pageNo: 0,
+      pageSize: 25,
+    },
   };
   useEffect(() => {
     dispatch(getPivotStats(payload));
-  }, [dispatch, dateRange, search]);
+  }, [dispatch, dateRange, search, globalChannel]);
 
   const PageRoutes = [
     {
@@ -65,26 +76,58 @@ export default function SalesTrend() {
       breadcrumbName: 'Sales Trend',
     },
   ];
+
+  const generateDates = (start, end) => {
+    const dates = [];
+    const current = new Date(start);
+    const last = new Date(end);
+
+    while (current <= last) {
+      dates.push(current.toISOString().split('T')[0]); // yyyy-mm-dd
+      current.setDate(current.getDate() + 1);
+    }
+
+    return dates;
+  };
+
   const dynamicColumns = React.useMemo(() => {
-    if (!pivotData?.results?.length) return [];
+    if (!dateRange?.fromDate || !dateRange?.endDate) return [];
 
-    const firstRow = pivotData.results[0];
+    const dates = generateDates(dateRange.fromDate, dateRange.endDate);
 
-    return Object.keys(firstRow)
-      .filter((key) => key !== 'id')
-      .map((key) => ({
-        title: new Date(key)
-          .toLocaleDateString('en-US', {
-            month: 'short',
-            day: '2-digit',
-          })
-          .replace(',', ''),
-        dataIndex: key,
-        key,
-        align: 'center',
-        sorter: (a, b) => (a[key] || 0) - (b[key] || 0),
-      }));
-  }, [pivotData]);
+    return dates.map((date) => ({
+      title: new Date(date).toLocaleDateString('en-US', {
+        month: 'short',
+        day: '2-digit',
+      }),
+      dataIndex: date,
+      key: date,
+      align: 'center',
+      sorter: (a, b) => (a[date] || 0) - (b[date] || 0),
+      render: (_, record) => record[date] || 0, // fallback
+    }));
+  }, [dateRange]);
+
+  // const dynamicColumns = React.useMemo(() => {
+  //   if (!pivotData?.results?.length) return [];
+
+  //   const firstRow = pivotData.results[0];
+
+  //   return Object.keys(firstRow)
+  //     .filter((key) => key !== 'id')
+  //     .map((key) => ({
+  //       title: new Date(key)
+  //         .toLocaleDateString('en-US', {
+  //           month: 'short',
+  //           day: '2-digit',
+  //         })
+  //         .replace(',', ''),
+  //       dataIndex: key,
+  //       key,
+  //       align: 'center',
+  //       sorter: (a, b) => (a[key] || 0) - (b[key] || 0),
+  //     }));
+  // }, [pivotData]);
   const columns = [
     {
       title: '',
@@ -133,6 +176,7 @@ export default function SalesTrend() {
       ...filters,
     };
     dispatch(getPivotStats(newPayload));
+    setShowFilters(false);
   };
 
   const handleClear = () => {
@@ -146,11 +190,22 @@ export default function SalesTrend() {
       invMasterSku: '',
     });
   };
+  const formatKey = (key) => {
+    const d = new Date(key);
+    return d.toISOString().split('T')[0];
+  };
   const dataSource =
-    pivotData?.results?.map((item, index) => ({
-      key: index,
-      ...item,
-    })) || [];
+    pivotData?.results?.map((item, index) => {
+      const newItem = { key: index, id: item.id };
+
+      Object.keys(item).forEach((k) => {
+        if (k !== 'id') {
+          newItem[formatKey(k)] = item[k];
+        }
+      });
+
+      return newItem;
+    }) || [];
   const getTotal = (key) => {
     return dataSource.reduce((sum, row) => sum + (row[key] || 0), 0);
   };
@@ -164,11 +219,8 @@ export default function SalesTrend() {
       />
       <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-8 xl:px-[15px] pb-[30px] bg-transparent">
         <Card bordered={false} className="sales-table-wrapper">
-          {/* FILTER BAR */}
-          {/* FILTER BAR */}
-          <div className="mb-4 p-4 border border-gray-200 rounded-xl bg-gray-50">
-            {/* TOP ROW */}
-            <div className="flex flex-wrap items-center gap-4 mb-4">
+          <div className="mb-3 p-3 border border-gray-200 rounded-xl bg-gray-50">
+            <div className="flex flex-wrap items-center gap-4">
               <select
                 className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none"
                 onChange={(e) => handleChange('channel', e.target.value)}
@@ -205,57 +257,75 @@ export default function SalesTrend() {
                   <span>Apply</span>
                   <CheckOutlined />
                 </Button>
+                <Button
+                  type="text"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowFilters((prev) => !prev);
+                  }}
+                  className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition"
+                >
+                  {showFilters ? (
+                    <CaretUpOutlined className="text-[#0B3A6E] text-xs leading-none" />
+                  ) : (
+                    <CaretDownOutlined className="text-[#0B3A6E] text-xs leading-none" />
+                  )}
+                </Button>
               </div>
             </div>
+            {showFilters && (
+              <div className="flex items-end gap-4 overflow-x-auto whitespace-nowrap pb-1">
+                <div className="min-w-[180px]">
+                  <label className="text-s text-gray-600 mb-1 block">SKU</label>
+                  <input
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
+                    placeholder="Sku"
+                    value={filters.sku}
+                    onChange={(e) => handleChange('sku', e.target.value)}
+                  />
+                </div>
 
-            {/* BOTTOM ROW */}
-            {/* BOTTOM ROW */}
-            <div className="flex items-end gap-4 overflow-x-auto whitespace-nowrap pb-1">
-              <div className="min-w-[180px]">
-                <label className="text-s text-gray-600 mb-1 block">SKU</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
-                  placeholder="Sku"
-                  onChange={(e) => handleChange('sku', e.target.value)}
-                />
-              </div>
+                <div className="min-w-[180px]">
+                  <label className="text-s text-gray-600 mb-1 block">ProductId</label>
+                  <input
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
+                    placeholder="ProductId"
+                    value={filters.productId}
+                    onChange={(e) => handleChange('productId', e.target.value)}
+                  />
+                </div>
 
-              <div className="min-w-[180px]">
-                <label className="text-s text-gray-600 mb-1 block">ProductId</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
-                  placeholder="ProductId"
-                  onChange={(e) => handleChange('productId', e.target.value)}
-                />
-              </div>
+                <div className="min-w-[180px]">
+                  <label className="text-s text-gray-600 mb-1 block">ParentId</label>
+                  <input
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
+                    placeholder="ParentId"
+                    value={filters.parentId}
+                    onChange={(e) => handleChange('parentId', e.target.value)}
+                  />
+                </div>
 
-              <div className="min-w-[180px]">
-                <label className="text-s text-gray-600 mb-1 block">ParentId</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
-                  placeholder="ParentId"
-                  onChange={(e) => handleChange('parentId', e.target.value)}
-                />
-              </div>
+                <div className="min-w-[180px]">
+                  <label className="text-s text-gray-600 mb-1 block">MKT category</label>
+                  <input
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
+                    placeholder="MktCategory"
+                    value={filters.mktCategory}
+                    onChange={(e) => handleChange('mktCategory', e.target.value)}
+                  />
+                </div>
 
-              <div className="min-w-[180px]">
-                <label className="text-s text-gray-600 mb-1 block">MKT category</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
-                  placeholder="MktCategory"
-                  onChange={(e) => handleChange('mktCategory', e.target.value)}
-                />
+                <div className="min-w-[180px]">
+                  <label className="text-s text-gray-600 mb-1 block">Inv MasterSku</label>
+                  <input
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
+                    placeholder="Inv mastersku"
+                    value={filters.invMasterSku}
+                    onChange={(e) => handleChange('invMasterSku', e.target.value)}
+                  />
+                </div>
               </div>
-
-              <div className="min-w-[180px]">
-                <label className="text-s text-gray-600 mb-1 block">Inv MasterSku</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none"
-                  placeholder="Inv mastersku"
-                  onChange={(e) => handleChange('invMasterSku', e.target.value)}
-                />
-              </div>
-            </div>
+            )}
           </div>
           <div className="flex justify-end mb-3">
             {' '}
@@ -302,10 +372,15 @@ export default function SalesTrend() {
           <Table
             columns={columns}
             dataSource={dataSource}
+            showSorterTooltip={false}
             loading={loading}
             pagination={{
-              pageSize: 10,
+              ...pagination,
               showSizeChanger: true,
+              pageSizeOptions: ['10', '20', '50', '100'],
+            }}
+            onChange={(pag) => {
+              setPagination(pag);
             }}
             scroll={{ x: 'max-content' }}
             size="small"

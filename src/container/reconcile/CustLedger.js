@@ -1,5 +1,5 @@
-import React from 'react';
-import { Card, Table, Empty } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Card, Table, Empty, Spin } from 'antd';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 /* ---------------- Ledger Summary ---------------- */
@@ -84,6 +84,11 @@ const invoiceColumns = [
 ];
 
 export default function CustLedger() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setTimeout(() => setLoading(false), 800);
+  }, []);
   const PageRoutes = [
     { path: '', breadcrumbName: 'Reconcile' },
     { path: '', breadcrumbName: 'B2B Reconciliation' },
@@ -100,41 +105,43 @@ export default function CustLedger() {
 
       <main className="min-h-[715px] flex-1 px-8 xl:px-[15px] pb-[30px] bg-transparent space-y-6">
         {/* -------- Ledger Summary Table -------- */}
-        <Card className="rounded-xl">
-          <Table
-            columns={ledgerSummaryColumns}
-            dataSource={ledgerSummaryData}
-            pagination={false}
-            size="small"
-            scroll={{ x: true }}
-          />
-        </Card>
+        <Spin spinning={loading} size="large">
+          <Card className="rounded-xl">
+            <Table
+              columns={ledgerSummaryColumns}
+              dataSource={ledgerSummaryData}
+              pagination={false}
+              size="small"
+              scroll={{ x: true }}
+            />
+          </Card>
 
-        {/* -------- Summary Cards -------- */}
-        <div className="grid grid-cols-4 lg:grid-cols-2 sm:grid-cols-1 gap-4">
-          {summaryCards.map((title) => (
-            <Card key={title} className="rounded-xl cursor-pointer">
-              <div className="flex justify-between items-center gap-5 ">
-                <span className="text-sm font-medium text-blue-700">{title}</span>
-                <span className="text-xl font-semibold">0</span>
-              </div>
-            </Card>
-          ))}
-        </div>
+          {/* -------- Summary Cards -------- */}
+          <div className="grid grid-cols-4 lg:grid-cols-2 sm:grid-cols-1 gap-4">
+            {summaryCards.map((title) => (
+              <Card key={title} className="rounded-xl cursor-pointer">
+                <div className="flex justify-between items-center gap-5 ">
+                  <span className="text-sm font-medium text-blue-700">{title}</span>
+                  <span className="text-xl font-semibold">0</span>
+                </div>
+              </Card>
+            ))}
+          </div>
 
-        {/* -------- Invoice Table -------- */}
-        <Card className="rounded-xl">
-          <Table
-            rowKey="invoiceId"
-            columns={invoiceColumns}
-            dataSource={[]}
-            pagination={false}
-            scroll={{ x: 1200 }}
-            locale={{
-              emptyText: <Empty description="No data" />,
-            }}
-          />
-        </Card>
+          {/* -------- Invoice Table -------- */}
+          <Card className="rounded-xl">
+            <Table
+              rowKey="invoiceId"
+              columns={invoiceColumns}
+              dataSource={[]}
+              pagination={false}
+              scroll={{ x: 1200 }}
+              locale={{
+                emptyText: <Empty description="No data" />,
+              }}
+            />
+          </Card>
+        </Spin>
       </main>
     </>
   );

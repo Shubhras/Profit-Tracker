@@ -1,17 +1,37 @@
-import React, { useEffect } from 'react';
-import { Table, Card, Button, Modal, Checkbox } from 'antd';
-import { RightOutlined, CheckOutlined, CloseOutlined, SettingOutlined } from '@ant-design/icons';
+import React, { useEffect, useState } from 'react';
+import { Table, Card, Modal, Checkbox } from 'antd';
+import { RightOutlined, SettingOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import ProfitFilterBar from './component/ProfitFilterBar';
+import ProfitModal from './component/ProfitModal';
 import { PageHeader } from '../../components/page-headers/page-headers';
 import { getProfitData } from '../../redux/dashboard/actionCreator';
+import amazon from '../../assets/icons/amazon.svg';
+// import flipkartLogo from '../../assets/flipkart.png';
 
 export default function ProfitTableView() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, profitData, dateRange, search } = useSelector((state) => state.dashboard);
+  const { loading, profitData, dateRange, search, channel: globalChannel } = useSelector((state) => state.dashboard);
   const totals = profitData?.totals || {};
+  const [showFilters, setShowFilters] = useState(false);
+  const [pagination, setPagination] = React.useState({
+    current: 1,
+    pageSize: 10,
+  });
   const [openSettings, setOpenSettings] = React.useState(false);
+  const [detailModal, setDetailModal] = React.useState({
+    open: false,
+    record: null,
+    type: '',
+  });
+
+  const getLogo = (channel) => {
+    if (channel?.includes('Amazon-India')) return amazon;
+    // if (channel?.toLowerCase().includes('flipkart')) return flipkartLogo;
+    return null;
+  };
 
   const [visibleColumns, setVisibleColumns] = React.useState([
     'view',
@@ -27,19 +47,15 @@ export default function ProfitTableView() {
     channel: '',
     sku: '',
     productId: '',
+    parentId: '',
+    mkt: '',
 
-    ads: '', // 'with' | 'without'
-    gst: '',
-    estimate: '',
-    expenses: '',
-    accountCharges: '',
+    ads: 'without',
+    gst: 'without',
+    estimate: 'with',
+    expenses: 'with',
+    accountCharges: 'with',
   });
-  const handlePairChange = (key, value) => {
-    setFilters((prev) => ({
-      ...prev,
-      [key]: prev[key] === value ? '' : value, // toggle bhi ho sake
-    }));
-  };
 
   const getMetricFromFilters = () => {
     return {
@@ -57,13 +73,13 @@ export default function ProfitTableView() {
           : 'withoutAccountCharges'
         : '',
 
-      channel: 'channel',
+      // channel: 'channel',
     };
   };
   const buildPayload = () => {
     return {
       filters: {
-        channel: { IN: ['Amazon-India'] },
+        channel: { IN: globalChannel },
         fromDate: dateRange?.fromDate || null,
         toDate: dateRange?.endDate || null,
         search,
@@ -75,23 +91,27 @@ export default function ProfitTableView() {
       },
     };
   };
+  // useEffect(() => {
+  //   dispatch(
+  //     getProfitData({
+  //       filters: {
+  //         channel: { IN: ['Amazon-India'] },
+  //         fromDate: dateRange?.fromDate || null,
+  //         toDate: dateRange?.endDate || null,
+  //         search,
+  //       },
+  //       metric: getMetricFromFilters(),
+  //       pagination: {
+  //         pageNo: 0,
+  //         pageSize: 25,
+  //       },
+  //     }),
+  //   );
+  // }, [dispatch, dateRange]);
   useEffect(() => {
-    dispatch(
-      getProfitData({
-        filters: {
-          channel: { IN: ['Amazon-India'] },
-          fromDate: dateRange?.fromDate || null,
-          toDate: dateRange?.endDate || null,
-          search,
-        },
-        metric: getMetricFromFilters(),
-        pagination: {
-          pageNo: 0,
-          pageSize: 25,
-        },
-      }),
-    );
-  }, [dispatch, dateRange]);
+    const payload = buildPayload();
+    dispatch(getProfitData(payload));
+  }, [dispatch, dateRange, search, globalChannel]);
 
   // console.log(data);
   const PageRoutes = [
@@ -108,7 +128,7 @@ export default function ProfitTableView() {
   const tableData =
     profitData?.response?.map((item, index) => ({
       key: index,
-      channel: item.channel1,
+      channel: item.channel,
       view: item.grosssales,
       qty: item.grossqty,
       netQty: item.netqty,
@@ -119,6 +139,7 @@ export default function ProfitTableView() {
       mpfees: item.mpfees,
       shipping: item.shippingfees,
       adSpend: item.ads,
+      stdCost: item.stdCost || 0,
       gst: item.gsttopay,
       profit: item.profit,
       grossprofit: item.grossprofit,
@@ -131,87 +152,230 @@ export default function ProfitTableView() {
     {
       title: '',
       dataIndex: 'channel',
-      width: 150,
+      width: 70,
       fixed: 'left',
-      render: (value) => <span>{value}</span>,
+      align: 'center',
+      render: (value, record) => {
+        if (record.key === 'total') return null;
+
+        const logo = getLogo(value);
+
+        return (
+          <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+            {logo && <img src={logo} alt={value} style={{ width: 28, height: 28, objectFit: 'contain' }} />}
+          </div>
+        );
+      },
     },
     {
       title: 'View',
-      dataIndex: 'view',
+      dataIndex: 'channel',
       align: 'center',
-      sorter: (a, b) => a.view - b.view,
+      sorter: (a, b) => a.channel - b.channel,
+      // render: (v, record) => (
+      //   <button
+      //     type="button"
+      //     className="text-blue-500 cursor-pointer bg-transparent border-none"
+      //     onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+      //   >
+      //     {v}
+      //   </button>
+      // ),
     },
     {
       title: 'Qty',
       dataIndex: 'qty',
       align: 'center',
       sorter: (a, b) => a.qty - b.qty,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v}
+        </button>
+      ),
     },
     {
       title: 'Net Qty',
       dataIndex: 'netQty',
       align: 'center',
       sorter: (a, b) => a.netQty - b.netQty,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v}
+        </button>
+      ),
     },
     {
       title: 'Return Qty',
       dataIndex: 'returnqty',
       align: 'center',
       sorter: (a, b) => a.returnqty - b.returnqty,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v}
+        </button>
+      ),
     },
     {
       title: 'Return %',
       dataIndex: 'returnPercent',
       align: 'center',
       sorter: (a, b) => a.returnPercent - b.returnPercent,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'returns' })}
+        >
+          {v}
+        </button>
+      ),
     },
     {
       title: 'Net Sales',
       dataIndex: 'netsales',
       align: 'center',
       sorter: (a, b) => a.netsales - b.netsales,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v}
+        </button>
+      ),
     },
     {
       title: 'Net asp',
       dataIndex: 'netasp',
       align: 'center',
       sorter: (a, b) => a.netasp - b.netasp,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v}
+        </button>
+      ),
     },
     {
       title: 'Net discount',
       dataIndex: 'net_discount',
       align: 'center',
       sorter: (a, b) => a.net_discount - b.net_discount,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v}
+        </button>
+      ),
     },
     {
       title: 'MP fees',
       dataIndex: 'mpfees',
       align: 'center',
       sorter: (a, b) => a.mpfees - b.mpfees,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v}
+        </button>
+      ),
     },
     {
       title: 'Shipping',
       dataIndex: 'shipping',
       align: 'center',
       sorter: (a, b) => a.shipping - b.shipping,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'returns' })}
+        >
+          {v}
+        </button>
+      ),
     },
     {
       title: 'Ad Spend',
       dataIndex: 'adSpend',
       align: 'center',
       sorter: (a, b) => a.adSpend - b.adSpend,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'ads' })}
+        >
+          {v}
+        </button>
+      ),
+    },
+    {
+      title: 'Std Cost',
+      dataIndex: 'stdCost',
+      align: 'center',
+      sorter: (a, b) => a.stdCost - b.stdCost,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'stdcost' })}
+        >
+          {v}
+        </button>
+      ),
     },
     {
       title: 'GST',
       dataIndex: 'gst',
       align: 'center',
       sorter: (a, b) => a.gst - b.gst,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v}
+        </button>
+      ),
     },
     {
       title: 'Gross Profit',
       dataIndex: 'grossprofit',
       align: 'center',
       sorter: (a, b) => a.grossprofit - b.grossprofit,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v}
+        </button>
+      ),
     },
     {
       title: 'Profit',
@@ -225,19 +389,37 @@ export default function ProfitTableView() {
       dataIndex: 'profitPercent',
       align: 'center',
       sorter: (a, b) => a.profitPercent - b.profitPercent,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v}
+        </button>
+      ),
     },
-    {
-      title: 'Settled amount',
-      dataIndex: 'settledamount',
-      align: 'center',
-      sorter: (a, b) => a.profit_settled_amount - b.profit_settled_amount,
-    },
+    // {
+    //   title: 'Settled amount',
+    //   dataIndex: 'settledamount',
+    //   align: 'center',
+    //   sorter: (a, b) => a.profit_settled_amount - b.profit_settled_amount,
+    //   render: (v, record) => (
+    //     <button
+    //       type="button"
+    //       className="cursor-pointer bg-transparent border-none"
+    //       onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+    //     >
+    //       {v}
+    //     </button>
+    //   ),
+    // },
     {
       title: (
         <button
           type="button"
           onClick={() => setOpenSettings(true)}
-          className="flex justify-center items-center w-full cursor-pointer"
+          className="flex justify-center items-center w-full cursor-pointer text-black"
         >
           <SettingOutlined />
         </button>
@@ -248,7 +430,7 @@ export default function ProfitTableView() {
       render: (_, record) => (
         <button
           type="button"
-          onClick={() => navigate(`../profittabledetails/${record.key}`)}
+          onClick={() => navigate(`../profittabledetails/${record.channel}`)}
           style={{
             width: 30,
             height: 30,
@@ -293,7 +475,7 @@ export default function ProfitTableView() {
 
     { label: 'Gross Profit', key: 'grossprofit' },
     { label: 'Profit', key: 'profit' },
-    { label: 'Settled Amount', key: 'settledamount' },
+    // { label: 'Settled Amount', key: 'settledamount' },
 
     { label: 'TACOS', key: 'tacos' },
     { label: 'Gross Profit %', key: 'grossProfitPercent' },
@@ -313,16 +495,17 @@ export default function ProfitTableView() {
   const filteredColumns = columns.filter(
     (col) => col.dataIndex === 'channel' || col.key === 'action' || visibleColumns.includes(col.dataIndex),
   );
-  const handleChange = (key, value) => {
-    setFilters((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
+  // const handleChange = (key, value) => {
+  //   setFilters((prev) => ({
+  //     ...prev,
+  //     [key]: value,
+  //   }));
+  // };
 
   const handleApply = () => {
     const payload = buildPayload();
     dispatch(getProfitData(payload));
+    setShowFilters(false);
   };
 
   const handleClear = () => {
@@ -330,11 +513,14 @@ export default function ProfitTableView() {
       channel: '',
       sku: '',
       productId: '',
-      ads: '',
-      gst: '',
-      estimate: '',
-      expenses: '',
-      accountCharges: '',
+      parentId: '',
+      mkt: '',
+
+      ads: 'without',
+      gst: 'without',
+      estimate: 'with',
+      expenses: 'with',
+      accountCharges: 'with',
     });
   };
   return (
@@ -346,187 +532,27 @@ export default function ProfitTableView() {
       />
       <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-8 xl:px-[15px] pb-[30px] bg-transparent">
         <Card bordered={false} className="sales-table-wrapper">
-          <div className="mb-4 p-4 border border-gray-200 ro  unded-xl bg-gray-50">
-            <div className="flex flex-wrap items-center gap-4 mb-4">
-              <select
-                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm"
-                onChange={(e) => handleChange('channel', e.target.value)}
-              >
-                <option value="">Channel</option>
-                {/* <option value="Amazon">Amazon</option>
-                <option value="Myntra">Myntra</option> */}
-              </select>
-
-              <div className="flex flex-wrap items-center gap-2">
-                {Object.entries(filters).map(([key, value]) => {
-                  if (!value) return null;
-
-                  const labelMap = {
-                    ads: 'Ads',
-                    gst: 'GST',
-                    estimate: 'Estimate',
-                    expenses: 'Expenses',
-                    accountCharges: 'Account Charges',
-                  };
-
-                  return (
-                    <span key={key} className="flex items-center gap-1">
-                      <span className={`w-2 h-2 rounded-full ${value === 'with' ? 'bg-green-500' : 'bg-red-500'}`} />
-                      {labelMap[key]}: {value === 'with' ? 'With' : 'Without'}
-                    </span>
-                  );
-                })}
-              </div>
-
-              <div className="ml-auto flex items-center gap-2">
-                <Button onClick={handleClear} className="flex items-center gap-1">
-                  Clear
-                  <CloseOutlined />
-                </Button>
-
-                <Button type="primary" onClick={handleApply} className="flex items-center gap-1">
-                  Apply
-                  <CheckOutlined />
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex items-end gap-4 overflow-x-auto whitespace-nowrap pb-1">
-              <div className="min-w-[180px]">
-                <label className="text-sm text-gray-600 mb-1 block">SKU</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
-                  placeholder="Sku"
-                  onChange={(e) => handleChange('sku', e.target.value)}
-                />
-              </div>
-
-              <div className="min-w-[180px]">
-                <label className="text-sm text-gray-600 mb-1 block">ProductId:</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
-                  placeholder="ProductId"
-                  onChange={(e) => handleChange('productId', e.target.value)}
-                />
-              </div>
-              <div className="min-w-[180px]">
-                <label className="text-sm text-gray-600 mb-1 block">ParentId:</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
-                  placeholder="ProductId"
-                  onChange={(e) => handleChange('productId', e.target.value)}
-                />
-              </div>
-              <div className="min-w-[180px]">
-                <label className="text-sm text-gray-600 mb-1 block">MKt Category:</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
-                  placeholder="ProductId"
-                  onChange={(e) => handleChange('productId', e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-4 mt-3 border-t pt-3">
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={filters.ads === 'with'}
-                  onChange={() => handlePairChange('ads', 'with')}
-                />
-                With Ads
-              </label>
-
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={filters.ads === 'without'}
-                  onChange={() => handlePairChange('ads', 'without')}
-                />
-                Without Ads
-              </label>
-
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={filters.gst === 'with'}
-                  onChange={() => handlePairChange('gst', 'with')}
-                />
-                With Gst
-              </label>
-
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={filters.gst === 'without'}
-                  onChange={() => handlePairChange('gst', 'without')}
-                />
-                Without Gst
-              </label>
-
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={filters.estimate === 'with'}
-                  onChange={() => handlePairChange('estimate', 'with')}
-                />
-                With Estimate
-              </label>
-
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={filters.estimate === 'without'}
-                  onChange={() => handlePairChange('estimate', 'without')}
-                />
-                Without Estimate
-              </label>
-
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={filters.expenses === 'with'}
-                  onChange={() => handlePairChange('expenses', 'with')}
-                />
-                With Expenses
-              </label>
-
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={filters.expenses === 'without'}
-                  onChange={() => handlePairChange('expenses', 'without')}
-                />
-                Without Expenses
-              </label>
-
-              {/* Account Charges */}
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={filters.accountCharges === 'with'}
-                  onChange={() => handlePairChange('accountCharges', 'with')}
-                />
-                With Account Charges
-              </label>
-
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={filters.accountCharges === 'without'}
-                  onChange={() => handlePairChange('accountCharges', 'without')}
-                />
-                Without Account Charges
-              </label>
-            </div>
-          </div>
+          <ProfitFilterBar
+            filters={filters}
+            setFilters={setFilters}
+            handleApply={handleApply}
+            handleClear={handleClear}
+            showFilters={showFilters}
+            setShowFilters={setShowFilters}
+          />
           <Table
             bordered
             columns={filteredColumns}
             dataSource={tableData}
+            showSorterTooltip={false}
             loading={loading}
             pagination={{
-              pageSize: 10,
+              ...pagination,
               showSizeChanger: true,
+              pageSizeOptions: ['10', '20', '50', '100'],
+            }}
+            onChange={(pag) => {
+              setPagination(pag);
             }}
             size="small"
             scroll={{ x: 'max-content' }}
@@ -553,6 +579,7 @@ export default function ProfitTableView() {
                     mpfees: 'mpfees',
                     shipping: 'shippingfees',
                     adSpend: 'ads',
+                    stdCost: 'stdCost' || 0,
                     gst: 'gsttopay',
                     grossprofit: 'grossprofit',
                     profit: 'profit',
@@ -610,12 +637,18 @@ export default function ProfitTableView() {
                 </Checkbox>
 
                 {/* info icon */}
-                <span className="text-blue-500 text-xs cursor-pointer">i</span>
+                {/* <span className="text-blue-500 text-xs cursor-pointer">i</span> */}
               </div>
             ))}
           </div>
         </Modal>
       </main>
+      <ProfitModal
+        open={detailModal.open}
+        record={detailModal.record}
+        type={detailModal.type}
+        onClose={() => setDetailModal({ open: false, record: null, type: '' })}
+      />
     </>
   );
 }

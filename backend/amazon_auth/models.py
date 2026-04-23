@@ -61,6 +61,7 @@ class Order(models.Model):
     payment_method = models.CharField(max_length=50, null=True, blank=True)
 
     marketplace_id = models.CharField(max_length=50)
+    channel = models.CharField(max_length=50, default="Amazon-India", db_index=True)
 
     # Financial Info
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -102,9 +103,26 @@ class FinancialEvent(models.Model):
     unique_hash = models.CharField(max_length=64, unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    #  CORE BREAKDOWN FIELDS
+    principal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    tax = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    shipping_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    commission_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    fulfillment_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    other_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    # class Meta:
+    #     ordering = ['-posted_date']
+    #     unique_together = ('amazon_account', 'unique_hash')
+
     class Meta:
         ordering = ['-posted_date']
         unique_together = ('amazon_account', 'unique_hash')
+        indexes = [
+            models.Index(fields=['amazon_account']),
+            models.Index(fields=['posted_date']),
+            models.Index(fields=['amazon_order_id']),
+        ]
 
     def __str__(self):
         return f"{self.event_type} | {self.amazon_order_id or 'Non-Order Event'} | {self.total_amount} {self.currency_code}"
@@ -134,22 +152,108 @@ class Report(models.Model):
     def __str__(self):
         return f"{self.report_type} | {self.amazon_report_id} | {self.processing_status}"
 
+# class OrderItem(models.Model):
+#     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
+    
+#     order_item_id = models.CharField(max_length=50) # Amazon's unique ID for the item entry
+#     seller_sku = models.CharField(max_length=100)
+#     title = models.CharField(max_length=500, null=True, blank=True)
+#     asin = models.CharField(max_length=20, null=True, blank=True) 
+    
+#     quantity_ordered = models.IntegerField()
+#     quantity_shipped = models.IntegerField(null=True, blank=True)
+#     image_url = models.URLField(null=True, blank=True)
+#     # Financials per item
+#     item_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+#     item_tax = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+#     shipping_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    
+#     created_at = models.DateTimeField(auto_now_add=True)
+
+#     def __str__(self):
+#         return f"{self.seller_sku} in {self.order.amazon_order_id}"
+
+
+
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
-    
-    order_item_id = models.CharField(max_length=50) # Amazon's unique ID for the item entry
-    seller_sku = models.CharField(max_length=100)
+
+    order_item_id = models.CharField(max_length=50)
+    seller_sku = models.CharField(max_length=100, db_index=True)
+    asin = models.CharField(max_length=20, null=True, blank=True)
     title = models.CharField(max_length=500, null=True, blank=True)
-    
+
     quantity_ordered = models.IntegerField()
     quantity_shipped = models.IntegerField(null=True, blank=True)
-    
-    # Financials per item
-    item_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    item_tax = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    shipping_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    
+
+    quantity_returned = models.IntegerField(default=0)
+    quantity_replaced = models.IntegerField(default=0)
+
+    image_url = models.URLField(null=True, blank=True)
+
+    parent_sku = models.CharField(max_length=100, null=True, blank=True, db_index=True)
+    product_name = models.TextField(null=True, blank=True)
+    brand = models.CharField(max_length=100, null=True, blank=True)
+    cost_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    # ===== ORDER API DATA =====
+    item_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    item_tax = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    shipping_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    # ===== REPORT DATA (CRITICAL) =====
+    mrp = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    selling_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    discount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    promotion_discount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    net_sales = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    # ===== DERIVED =====
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['seller_sku']),
+            models.Index(fields=['asin']),
+        ]
 
     def __str__(self):
         return f"{self.seller_sku} in {self.order.amazon_order_id}"
+    
+
+class ProductMapping(models.Model):
+    seller_sku = models.CharField(max_length=100, unique=True)
+    parent_sku = models.CharField(max_length=100)
+    product_name = models.TextField(null=True, blank=True)
+    brand = models.CharField(max_length=100, null=True, blank=True)
+    cost_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)    
+    
+
+class AdReport(models.Model):
+    sku = models.CharField(max_length=100, db_index=True)
+    date = models.DateField(db_index=True)
+
+    impressions = models.IntegerField(default=0)
+    clicks = models.IntegerField(default=0)
+
+    spend = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    ad_sales = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    ad_orders = models.IntegerField(default=0)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['sku']),
+            models.Index(fields=['date']),
+        ]
+
+
+
+class MissingCatalogQueue(models.Model):
+    seller_sku = models.CharField(max_length=255, unique=True)
+    asin = models.CharField(max_length=50)
+    marketplace_id = models.CharField(max_length=50)
+    processed = models.BooleanField(default=False)

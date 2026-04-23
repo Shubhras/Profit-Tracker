@@ -64,7 +64,7 @@ function ProfitRoutes() {
         }
       />
       <Route
-        path="profittabledetails/:id"
+        path="profittabledetails/:channel"
         element={
           <SubscriptionGate>
             <ProfitTableDetails />

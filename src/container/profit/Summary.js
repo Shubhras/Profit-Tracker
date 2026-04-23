@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Row, Col, Card, Statistic, Tag, Select, Divider, Checkbox, Input, Button } from 'antd';
-import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { Row, Col, Card, Statistic, Tag, Select, Divider, Checkbox, Input, Button, Spin } from 'antd';
+import { CheckOutlined, CloseOutlined, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { amazonAction } from '../../redux/amazonAPI/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
@@ -11,8 +11,10 @@ import { getDashboard } from '../../redux/dashboard/actionCreator';
 const { Option } = Select;
 
 export default function Summary() {
+  // const path = '/admin';
+  const navigate = useNavigate();
   const [viewType, setViewType] = useState('percentage');
-  const { dashboardData, dateRange, search } = useSelector((state) => state.dashboard);
+  const { dashboardData, dateRange, channel: globalChannel, search, loading } = useSelector((state) => state.dashboard);
   const [filters, setFilters] = useState({
     withAds: false,
     withoutAds: true,
@@ -37,18 +39,22 @@ export default function Summary() {
   // });
   const location = useLocation();
   const dispatch = useDispatch();
-  const gstLabel = filters.withGST ? 'GST Included' : 'GST Excluded';
-  const buildMetric = () => {
+  const [showFilters, setShowFilters] = useState(false);
+  const gstLabel = appliedFilters.withGST ? 'GST Included' : 'GST Excluded';
+  const buildMetric = (filtersData) => {
     return {
-      ads: filters.withAds ? 'withAds' : 'withoutAds',
-      gst: filters.withGST ? 'withGst' : 'withoutGst',
-      expense: filters.withExpenses ? 'withExpense' : 'withoutExpense',
-      estimate: filters.withEstimate ? 'withEstimate' : 'withoutEstimate',
+      ads: filtersData.withAds ? 'withAds' : 'withoutAds',
+      gst: filtersData.withGST ? 'withGst' : 'withoutGst',
+      expense: filtersData.withExpenses ? 'withExpense' : 'withoutExpense',
+      estimate: filtersData.withEstimate ? 'withEstimate' : 'withoutEstimate',
     };
   };
 
   const payload = {
     filters: {
+      channel: {
+        IN: globalChannel,
+      },
       fromDate: dateRange?.fromDate || null,
       toDate: dateRange?.endDate || null,
       search,
@@ -58,7 +64,7 @@ export default function Summary() {
 
   useEffect(() => {
     dispatch(getDashboard(payload));
-  }, [dispatch, dateRange, appliedFilters]);
+  }, [dispatch, dateRange, appliedFilters, globalChannel]);
 
   const loginAmazon = useCallback(
     (params) => {
@@ -154,7 +160,9 @@ export default function Summary() {
     filters.withoutExpenses && { label: 'Without Expenses', color: 'red' },
   ].filter(Boolean);
   const handleApply = () => {
-    setAppliedFilters(filters);
+    // setAppliedFilters(filters);
+    dispatch(getDashboard(payload)); //
+    setShowFilters(false);
   };
   const handleClear = () => {
     const resetFilters = {
@@ -232,8 +240,12 @@ export default function Summary() {
               </Button>
             </Col> */}
 
-        <Card className="mb-4 border rounded-xl px-1 py-1 bg-[#f9fafb]">
-          <div className="flex items-center gap-4 mb-3 text-sm">
+        <Card className="mb-4 border rounded-xl px-0 py-0 bg-[#f9fafb]">
+          <button
+            type="button"
+            className="flex items-center justify-between gap-4 mb-0 text-sm cursor-pointer w-full"
+            onClick={() => setShowFilters((prev) => !prev)}
+          >
             <span className="text-gray-500">{selectedFilters.length} Filter Selected</span>
 
             {selectedFilters.map((item, index) => (
@@ -243,10 +255,13 @@ export default function Summary() {
               </div>
             ))}
             {/* RIGHT BUTTONS */}
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-4">
               <Button
                 // type="button"
-                onClick={handleClear}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleClear();
+                }}
                 className="flex items-center gap-1"
                 // className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 bg-white hover:bg-gray-100 transition"
               >
@@ -256,267 +271,339 @@ export default function Summary() {
 
               <Button
                 type="primary"
-                onClick={handleApply}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleApply();
+                }}
                 className="flex items-center gap-1"
                 // className="flex items-center gap-2 px-4 py-1.5 text-sm bg-green-600 text-white hover:bg-blue-700 transition"
               >
                 <span>Apply</span>
                 <CheckOutlined />
               </Button>
+              <Button
+                type="text"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowFilters((prev) => !prev);
+                }}
+                className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition"
+              >
+                {showFilters ? (
+                  <CaretUpOutlined className="text-[#0B3A6E] text-xs leading-none" />
+                ) : (
+                  <CaretDownOutlined className="text-[#0B3A6E] text-xs leading-none" />
+                )}
+              </Button>
             </div>
-          </div>
+          </button>
 
-          <div className="flex items-end gap-3 mb-3 flex-nowrap">
-            {[
-              { label: 'SKU', key: 'sku', placeholder: 'Sku' },
-              { label: 'ProductId', key: 'productId', placeholder: 'ProductId' },
-              { label: 'ParentId', key: 'parentId', placeholder: 'ParentId' },
-            ].map((item) => (
-              <div key={item.key} className="flex flex-col w-[160px]">
-                <span className="text-s text-gray-500 mb-1">{item.label}:</span>
-                <Input
-                  size="small"
-                  placeholder={item.placeholder}
-                  value={filters[item.key]}
-                  onChange={(e) => setFilters({ ...filters, [item.key]: e.target.value })}
-                />
+          {showFilters && (
+            <>
+              <div className="flex items-end gap-3 mb-3 flex-nowrap mt-3">
+                {[
+                  { label: 'SKU', key: 'sku', placeholder: 'Sku' },
+                  { label: 'ProductId', key: 'productId', placeholder: 'ProductId' },
+                  { label: 'ParentId', key: 'parentId', placeholder: 'ParentId' },
+                ].map((item) => (
+                  <div key={item.key} className="flex flex-col w-[160px]">
+                    <span className="text-s text-gray-500 mb-1">{item.label}:</span>
+                    <Input
+                      size="small"
+                      placeholder={item.placeholder}
+                      value={filters[item.key]}
+                      onChange={(e) => setFilters({ ...filters, [item.key]: e.target.value })}
+                    />
+                  </div>
+                ))}
+
+                <div className="flex flex-col w-[160px]">
+                  <span className="text-s text-gray-500 mb-1">MKT category:</span>
+                  <Select
+                    size="small"
+                    placeholder="MktCategory"
+                    value={filters.mktCategory}
+                    onChange={(val) => setFilters({ ...filters, mktCategory: val })}
+                  >
+                    <Option value="cat1">Category 1</Option>
+                  </Select>
+                </div>
+
+                <div className="flex flex-col w-[160px]">
+                  <span className="text-s text-gray-500 mb-1">Inv MasterSku:</span>
+                  <Input
+                    size="small"
+                    placeholder="Inv mastersku"
+                    value={filters.invMasterSku}
+                    onChange={(e) => setFilters({ ...filters, invMasterSku: e.target.value })}
+                  />
+                </div>
               </div>
-            ))}
 
-            <div className="flex flex-col w-[160px]">
-              <span className="text-xs text-gray-500 mb-1">MKT category:</span>
-              <Select
-                size="small"
-                placeholder="MktCategory"
-                value={filters.mktCategory}
-                onChange={(val) => setFilters({ ...filters, mktCategory: val })}
-              >
-                <Option value="cat1">Category 1</Option>
-              </Select>
-            </div>
+              <div className="flex items-center justify-between text-[11px] leading-none">
+                {' '}
+                {/* ADS */}
+                <div className="flex gap-1 items-center text-xs">
+                  <Checkbox
+                    checked={filters.withAds}
+                    onChange={() => setFilters({ ...filters, withAds: true, withoutAds: false })}
+                  >
+                    With Ads
+                  </Checkbox>
 
-            <div className="flex flex-col w-[160px]">
-              <span className="text-xs text-gray-500 mb-1">Inv MasterSku:</span>
-              <Input
-                size="small"
-                placeholder="Inv mastersku"
-                value={filters.invMasterSku}
-                onChange={(e) => setFilters({ ...filters, invMasterSku: e.target.value })}
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-[11px] leading-none">
-            {' '}
-            {/* ADS */}
-            <div className="flex gap-1 items-center text-xs">
-              <Checkbox
-                checked={filters.withAds}
-                onChange={() => setFilters({ ...filters, withAds: true, withoutAds: false })}
-              >
-                With Ads
-              </Checkbox>
-
-              <Checkbox
-                checked={filters.withoutAds}
-                onChange={() => setFilters({ ...filters, withAds: false, withoutAds: true })}
-              >
-                Without Ads
-              </Checkbox>
-            </div>
-            <div className="flex gap-[2px] items-center text-[11px]">
-              {' '}
-              <Checkbox
-                checked={filters.withGST}
-                onChange={() => setFilters({ ...filters, withGST: true, withoutGST: false })}
-              >
-                With Gst
-              </Checkbox>
-              <Checkbox
-                checked={filters.withoutGST}
-                onChange={() => setFilters({ ...filters, withGST: false, withoutGST: true })}
-              >
-                Without Gst
-              </Checkbox>
-            </div>
-            <div className="flex gap-[2px] items-center text-[11px]">
-              {' '}
-              <Checkbox
-                checked={filters.withEstimate}
-                onChange={() =>
-                  setFilters({
-                    ...filters,
-                    withEstimate: true,
-                    withoutEstimate: false,
-                  })
-                }
-              >
-                With Estimate
-              </Checkbox>
-              <Checkbox
-                checked={filters.withoutEstimate}
-                onChange={() =>
-                  setFilters({
-                    ...filters,
-                    withEstimate: false,
-                    withoutEstimate: true,
-                  })
-                }
-              >
-                Without Estimate
-              </Checkbox>
-            </div>
-            <div className="flex gap-[2px] items-center text-[11px]">
-              {' '}
-              <Checkbox
-                checked={filters.withExpenses}
-                onChange={() =>
-                  setFilters({
-                    ...filters,
-                    withExpenses: true,
-                    withoutExpenses: false,
-                  })
-                }
-              >
-                With Expenses
-              </Checkbox>
-              <Checkbox
-                checked={filters.withoutExpenses}
-                onChange={() =>
-                  setFilters({
-                    ...filters,
-                    withExpenses: false,
-                    withoutExpenses: true,
-                  })
-                }
-              >
-                Without Expenses
-              </Checkbox>
-            </div>
-          </div>
+                  <Checkbox
+                    checked={filters.withoutAds}
+                    onChange={() => setFilters({ ...filters, withAds: false, withoutAds: true })}
+                  >
+                    Without Ads
+                  </Checkbox>
+                </div>
+                <div className="flex gap-[2px] items-center text-[11px]">
+                  {' '}
+                  <Checkbox
+                    checked={filters.withGST}
+                    onChange={() => setFilters({ ...filters, withGST: true, withoutGST: false })}
+                  >
+                    With Gst
+                  </Checkbox>
+                  <Checkbox
+                    checked={filters.withoutGST}
+                    onChange={() => setFilters({ ...filters, withGST: false, withoutGST: true })}
+                  >
+                    Without Gst
+                  </Checkbox>
+                </div>
+                <div className="flex gap-[2px] items-center text-[11px]">
+                  {' '}
+                  <Checkbox
+                    checked={filters.withEstimate}
+                    onChange={() =>
+                      setFilters({
+                        ...filters,
+                        withEstimate: true,
+                        withoutEstimate: false,
+                      })
+                    }
+                  >
+                    With Estimate
+                  </Checkbox>
+                  <Checkbox
+                    checked={filters.withoutEstimate}
+                    onChange={() =>
+                      setFilters({
+                        ...filters,
+                        withEstimate: false,
+                        withoutEstimate: true,
+                      })
+                    }
+                  >
+                    Without Estimate
+                  </Checkbox>
+                </div>
+                <div className="flex gap-[2px] items-center text-[11px]">
+                  {' '}
+                  <Checkbox
+                    checked={filters.withExpenses}
+                    onChange={() =>
+                      setFilters({
+                        ...filters,
+                        withExpenses: true,
+                        withoutExpenses: false,
+                      })
+                    }
+                  >
+                    With Expenses
+                  </Checkbox>
+                  <Checkbox
+                    checked={filters.withoutExpenses}
+                    onChange={() =>
+                      setFilters({
+                        ...filters,
+                        withExpenses: false,
+                        withoutExpenses: true,
+                      })
+                    }
+                  >
+                    Without Expenses
+                  </Checkbox>
+                </div>
+              </div>
+            </>
+          )}
         </Card>
-        <Row gutter={[16, 16]}>
-          {/* SALES */}
-          <Col xs={24} lg={6}>
-            <Card>
-              <div className="flex justify-between items-center mb-2">
-                <span className="font-medium">Sales</span>
+        <Spin spinning={loading} size="large">
+          <Row gutter={[16, 16]}>
+            {/* SALES */}
+            <Col xs={24} lg={9}>
+              <Card
+                onClick={() => navigate(`/admin/profit/profittabledetails/${globalChannel?.[0] || 'all'}`)}
+                hoverable
+                style={{ cursor: 'pointer' }}
+              >
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-medium">Sales</span>
 
-                <Tag color={filters.withGST ? 'green' : 'red'}>{gstLabel}</Tag>
-              </div>
-              <Statistic value={dashboardData?.header_metrics?.sales || 0} prefix="₹" />{' '}
-              <Tag color="blue" className="mt-2">
-                Units: {dashboardData?.breakdown_table?.gross?.qty || 0}
-              </Tag>
-              <Divider />
-              <Row className="font-semibold mb-1">
-                <Col span={10} />
-                <Col span={7} className="text-center">
-                  Qty
-                </Col>
-                <Col span={7} className="text-right">
-                  Sales
-                </Col>
-              </Row>
-              <Row>
-                <Col span={10}>Gross</Col>
-                <Col span={7} className="text-center">
-                  {dashboardData?.breakdown_table?.gross?.qty || 0}
-                </Col>
-                <Col span={7} className="text-right">
-                  ₹{dashboardData?.breakdown_table?.gross?.amount || 0}
-                </Col>
-              </Row>
-              <Row>
-                <Col span={10}>Cancelled</Col>
-                <Col span={7} className="text-center">
-                  {dashboardData?.breakdown_table?.cancelled?.qty || 0}
-                </Col>
-                <Col span={7} className="text-right">
-                  ₹{dashboardData?.breakdown_table?.cancelled?.amount || 0}
-                </Col>
-              </Row>
-              <Row>
-                <Col span={10}>Returned</Col>
-                <Col span={7} className="text-center">
-                  {dashboardData?.breakdown_table?.returned?.qty || 0}
-                </Col>
-                <Col span={7} className="text-right">
-                  ₹{dashboardData?.breakdown_table?.returned?.amount || 0}
-                </Col>
-              </Row>
-              <Divider />
-              <Row>
-                <Col span={10}>
-                  <strong>Net</strong>
-                </Col>
-                <Col span={7} className="text-center">
-                  <strong>{dashboardData?.breakdown_table?.net?.qty || 0}</strong>
-                </Col>
-                <Col span={7} className="text-right">
-                  <strong>₹{dashboardData?.breakdown_table?.net?.amount || 0}</strong>
-                </Col>
-              </Row>
-            </Card>
-          </Col>
+                  <Tag color={appliedFilters.withGST ? 'green' : 'red'}>{gstLabel}</Tag>
+                </div>
+                <Statistic value={dashboardData?.header_metrics?.sales || 0} prefix="₹" />{' '}
+                <Tag color="blue" className="mt-2">
+                  Units: {dashboardData?.breakdown_table?.gross?.qty || 0}
+                </Tag>
+                <Divider />
+                <Row className="font-semibold mb-1">
+                  <Col span={10} />
+                  <Col span={7} className="text-center">
+                    Qty
+                  </Col>
+                  <Col span={7} className="text-right">
+                    Sales
+                  </Col>
+                </Row>
+                <Row>
+                  <Col span={10}>Gross</Col>
+                  <Col span={7} className="text-center">
+                    {dashboardData?.breakdown_table?.gross?.qty || 0}
+                  </Col>
+                  <Col span={7} className="text-right">
+                    ₹{dashboardData?.breakdown_table?.gross?.amount || 0}
+                  </Col>
+                </Row>
+                <Row>
+                  <Col span={10}>Cancelled</Col>
+                  <Col span={7} className="text-center">
+                    {dashboardData?.breakdown_table?.cancelled?.qty || 0}
+                  </Col>
+                  <Col span={7} className="text-right">
+                    ₹{dashboardData?.breakdown_table?.cancelled?.amount || 0}
+                  </Col>
+                </Row>
+                <Row>
+                  <Col span={10}>Returned(RTO)</Col>
+                  <Col span={7} className="text-center">
+                    {dashboardData?.breakdown_table?.returned?.qty || 0}
+                  </Col>
+                  <Col span={7} className="text-right">
+                    ₹{dashboardData?.breakdown_table?.returned?.amount || 0}
+                  </Col>
+                </Row>
+                <Row>
+                  <Col span={10}>Cancelled(RTO)</Col>
+                  <Col span={7} className="text-center">
+                    {dashboardData?.breakdown_table?.cancelledrtosummaryqty?.qty || 0}
+                  </Col>
+                  <Col span={7} className="text-right">
+                    ₹{dashboardData?.breakdown_table?.cancelledrtosummarysales?.amount || 0}
+                  </Col>
+                </Row>
+                <Row>
+                  <Col span={10}>Returned(CReF)</Col>
+                  <Col span={7} className="text-center">
+                    {dashboardData?.breakdown_table?.creturnsummaryqty?.qty || 0}
+                  </Col>
+                  <Col span={7} className="text-right">
+                    ₹{dashboardData?.breakdown_table?.returnedcref?.amount || 0}
+                  </Col>
+                </Row>
+                <Row>
+                  <Col span={10}>Claimed</Col>
+                  <Col span={7} className="text-center">
+                    {dashboardData?.breakdown_table?.claimqty?.qty || 0}
+                  </Col>
+                  <Col span={7} className="text-right">
+                    ₹{dashboardData?.breakdown_table?.claimsales?.amount || 0}
+                  </Col>
+                </Row>
+                <Divider />
+                <Row>
+                  <Col span={10}>
+                    <strong>Net</strong>
+                  </Col>
+                  <Col span={7} className="text-center">
+                    <strong>{dashboardData?.breakdown_table?.net?.qty || 0}</strong>
+                  </Col>
+                  <Col span={7} className="text-right">
+                    <strong>₹{dashboardData?.breakdown_table?.net?.amount || 0}</strong>
+                  </Col>
+                </Row>
+              </Card>
+            </Col>
 
-          {/* PROFIT */}
-          <Col xs={24} lg={6}>
-            <Card>
-              <Statistic title="Profit" value={dashboardData?.header_metrics?.profit || 0} prefix="₹" />
-              <Tag color="gold">Margin: {dashboardData?.header_metrics?.margin || '0%'}</Tag>
-              <Tag color="green">ROI: {dashboardData?.header_metrics?.roi || '0%'}</Tag>
-            </Card>
+            {/* PROFIT */}
+            <Col xs={24} lg={6}>
+              <Card
+                onClick={() => navigate(`/admin/profit/profittabledetails/${globalChannel?.[0] || 'all'}`)}
+                hoverable
+                style={{ cursor: 'pointer' }}
+              >
+                <Statistic title="Profit" value={dashboardData?.header_metrics?.profit || 0} prefix="₹" />
+                <Tag color="gold">Margin: {dashboardData?.header_metrics?.margin || '0%'}</Tag>
+                <Tag color="green">ROI: {dashboardData?.header_metrics?.roi || '0%'}</Tag>
+              </Card>
 
-            <Row gutter={8} className="mt-3">
-              <Col span={12}>
-                <Card size="small" className="bg-green-50">
-                  <p className="text-green-700">Profit IDs</p>
-                  <strong>#{dashboardData?.top_orders?.profitaget_full_dashboardble?.length || 0}</strong>
-                  <p>
-                    ₹
-                    {dashboardData?.top_orders?.profitaget_full_dashboardble?.reduce(
-                      (acc, cur) => acc + (cur.amount || 0),
-                      0,
-                    )}
-                  </p>
-                </Card>
-              </Col>
-              <Col span={12}>
-                <Card size="small" className="bg-red-50">
-                  <p className="text-red-600">Loss IDs</p>
-                  <strong>#{dashboardData?.top_orders?.losing?.length || 0}</strong>
-                  <p>₹{dashboardData?.top_orders?.losing?.reduce((acc, cur) => acc + (cur.amount || 0), 0)}</p>
-                </Card>
-              </Col>
-            </Row>
-          </Col>
+              <Row gutter={8} className="mt-1">
+                <Col span={12}>
+                  <Card size="small" className="bg-green-50">
+                    <p className="text-green-700">Profit IDs</p>
+                    <strong>#{dashboardData?.top_orders?.profitable?.total_count || 0}</strong>
 
-          {/* AD SPEND */}
-          <Col xs={24} lg={6}>
+                    <p>{dashboardData?.top_orders?.profitable?.total_amount || 0}</p>
+                  </Card>
+                </Col>
+                <Col span={12}>
+                  <Card size="small" className="bg-red-50">
+                    <p className="text-red-600">Loss IDs</p>
+                    <strong>#{dashboardData?.top_orders?.losing?.total_count || 0}</strong>
+
+                    <p>{dashboardData?.top_orders?.losing?.total_amount || 0}</p>
+                  </Card>
+                </Col>
+              </Row>
+              <Card size="small" className="mt-1 py-0">
+                {/* <div className="flex flex-col justify-between h-full"> */}
+                <div>
+                  {/* <p className="text-gray-500 text-xs mb-1">Ad Spend</p> */}
+                  <Statistic
+                    // className="mt-0"
+                    title="Ad Spend"
+                    value={dashboardData?.header_metrics?.ad_spend || 0}
+                    prefix="₹"
+                  />
+                  {/* <strong className="text-lg block">₹{dashboardData?.header_metrics?.ad_spend || 0}</strong> */}
+                </div>
+
+                <Tag color="magenta" className="mt-1 w-fit">
+                  TACOS: {dashboardData?.header_metrics?.tacos || '0%'}
+                </Tag>
+                {/* </div> */}
+              </Card>
+            </Col>
+
+            {/* AD SPEND */}
+            {/* <Col xs={24} lg={4}>
             <Card>
               <Statistic title="Ad Spend" value={dashboardData?.header_metrics?.ad_spend || 0} prefix="₹" />
               <Tag color="magenta">TACOS: {dashboardData?.header_metrics?.tacos || '0%'}</Tag>
             </Card>
-          </Col>
+          </Col> */}
 
-          {/* STACKED BAR (RIGHT) */}
-          <Col xs={24} lg={6}>
-            <Card>
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={stackedData}>
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="sales" stackId="a" fill="#f28b82" />
-                  <Bar dataKey="qty" stackId="a" fill="#a7f3a0" />
-                  <Bar dataKey="profit" stackId="a" fill="#fbc687" />
-                </BarChart>
-              </ResponsiveContainer>
-            </Card>
-          </Col>
-        </Row>
+            {/* STACKED BAR (RIGHT) */}
+            <Col xs={24} lg={9}>
+              <Card>
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart data={stackedData}>
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="sales" stackId="a" fill="#f28b82" />
+                    <Bar dataKey="qty" stackId="a" fill="#a7f3a0" />
+                    <Bar dataKey="profit" stackId="a" fill="#fbc687" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
+            </Col>
+          </Row>
+        </Spin>
 
         {/* ================= BOTTOM 4 PANELS ================= */}
         <Row gutter={[16, 16]} className="mt-6">

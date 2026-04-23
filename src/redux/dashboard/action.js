@@ -17,6 +17,8 @@ const actions = {
   SET_DATE_RANGE: 'SET_DATE_RANGE',
   SET_SEARCH: 'SET_SEARCH',
 
+  SET_CHANNEL: 'SET_CHANNEL',
+
   dashboardBegin: () => ({
     type: actions.DASHBOARD_BEGIN,
   }),
@@ -56,6 +58,10 @@ const actions = {
   }),
   setSearch: (payload) => ({
     type: actions.SET_SEARCH,
+    payload,
+  }),
+  setChannel: (payload) => ({
+    type: actions.SET_CHANNEL,
     payload,
   }),
 };

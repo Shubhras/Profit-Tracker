@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { Table, Button, Skeleton, Empty } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Table, Button, Skeleton, Empty, Spin } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function Download() {
   const [loading, setLoading] = useState(false);
-
+  useEffect(() => {
+    setTimeout(() => setLoading(false), 800);
+  }, []);
   const PageRoutes = [
     {
       path: '',
@@ -74,29 +76,31 @@ export default function Download() {
       />
 
       <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-8 xl:px-[15px] pb-[30px] bg-transparent">
-        <div className="bg-white dark:bg-white10 rounded-[10px] p-[20px]">
-          {/* Refresh Button */}
-          <div className="flex justify-end mb-3">
-            <Button icon={<ReloadOutlined />} onClick={handleRefresh} loading={loading} />
-          </div>
-
-          {/* Table / Skeleton */}
-          {loading ? (
-            <Skeleton active paragraph={{ rows: 6 }} />
-          ) : (
-            <div className="table-responsive">
-              <Table
-                columns={columns}
-                dataSource={dataSource}
-                pagination={false}
-                scroll={{ x: 900 }}
-                locale={{
-                  emptyText: <Empty description="No data" className="py-10" />,
-                }}
-              />
+        <Spin spinning={loading} size="large">
+          <div className="bg-white dark:bg-white10 rounded-[10px] p-[20px]">
+            {/* Refresh Button */}
+            <div className="flex justify-end mb-3">
+              <Button icon={<ReloadOutlined />} onClick={handleRefresh} loading={loading} />
             </div>
-          )}
-        </div>
+
+            {/* Table / Skeleton */}
+            {loading ? (
+              <Skeleton active paragraph={{ rows: 6 }} />
+            ) : (
+              <div className="table-responsive">
+                <Table
+                  columns={columns}
+                  dataSource={dataSource}
+                  pagination={false}
+                  scroll={{ x: 900 }}
+                  locale={{
+                    emptyText: <Empty description="No data" className="py-10" />,
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        </Spin>
       </main>
     </>
   );

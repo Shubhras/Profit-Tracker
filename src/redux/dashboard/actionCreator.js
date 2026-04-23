@@ -89,3 +89,38 @@ export const getProfitMonthwise = (payload) => {
     }
   };
 };
+
+export const getProfitDetails = (payload) => {
+  return async (dispatch) => {
+    dispatch(profitBegin());
+
+    try {
+      const response = await DataService.post('/amazon/profitability/details/', payload);
+
+      if (response.data?.status === true || response.data?.status === 'success') {
+        dispatch(profitSuccess(response.data)); // same reducer use kar sakte ho
+      } else {
+        dispatch(profitErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(profitErr(err));
+    }
+  };
+};
+
+export const getProfitDetailsByParentId = (payload) => {
+  return async (dispatch) => {
+    dispatch(profitBegin());
+    try {
+      const response = await DataService.post('/amazon/profitability/details/by-parentproductid/', payload);
+
+      if (response.data?.status === true || response.data?.status === 'success') {
+        dispatch(profitSuccess(response.data)); // same reducer reuse
+      } else {
+        dispatch(profitErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(profitErr(err));
+    }
+  };
+};

@@ -1,27 +1,28 @@
 import React, { useEffect } from 'react';
-import { Button, Modal, Checkbox } from 'antd';
+import { Button, Modal, Checkbox, Card, Spin } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
-import { CheckOutlined, CloseOutlined, SettingOutlined } from '@ant-design/icons';
+import { CheckOutlined, CloseOutlined, SettingOutlined, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
 import { PageHeader } from '../../components/page-headers/page-headers';
 import { getProfitMonthwise } from '../../redux/dashboard/actionCreator';
 
 export default function ProfitMonthlyView() {
   const dispatch = useDispatch();
+  const [showFilters, setShowFilters] = React.useState(false);
 
   const [filters, setFilters] = React.useState({
     SKU: '',
     ProductId: '',
-    gst: '',
+    gst: 'with',
   });
   const handleGstChange = (value) => {
     setFilters((prev) => ({
       ...prev,
-      gst: prev.gst === value ? '' : value,
+      gst: value,
     }));
   };
   const [openSettings, setOpenSettings] = React.useState(false);
 
-  const { monthwiseProfitData, dateRange } = useSelector((state) => state.dashboard);
+  const { monthwiseProfitData, dateRange, channel: globalChannel, loading } = useSelector((state) => state.dashboard);
   const PageRoutes = [
     {
       path: 'index',
@@ -35,15 +36,21 @@ export default function ProfitMonthlyView() {
 
   useEffect(() => {
     const payload = {
-      fromDate: dateRange?.fromDate || null,
-      toDate: dateRange?.endDate || null,
-      SKU: '',
-      ProductId: '',
-      gst: 'with',
+      filter: {
+        channel: {
+          IN: globalChannel,
+        },
+        fromDate: dateRange?.fromDate || null,
+        toDate: dateRange?.endDate || null,
+        // SKU: filters.SKU,
+        // ProductId: filters.ProductId,
+        gst: filters.gst,
+      },
     };
 
     dispatch(getProfitMonthwise(payload));
-  }, [dispatch, dateRange]);
+  }, [dispatch, dateRange, globalChannel]);
+
   const formatMonth = (m) => {
     const [month, year] = m.split('-');
     const date = new Date(year, month - 1);
@@ -91,17 +98,17 @@ export default function ProfitMonthlyView() {
       getProfitMonthwise({
         fromDate: dateRange?.fromDate || null,
         toDate: dateRange?.endDate || null,
-        ...filters,
+        ...filters, // ✅ gst included
       }),
     );
+    setShowFilters(false);
   };
 
   const handleClear = () => {
     const reset = {
       SKU: '',
       ProductId: '',
-      // ParentId,
-      // mktCategory
+      gst: 'with',
     };
 
     setFilters(reset);
@@ -110,10 +117,7 @@ export default function ProfitMonthlyView() {
       getProfitMonthwise({
         fromDate: dateRange?.fromDate || null,
         toDate: dateRange?.endDate || null,
-        SKU: '',
-        ProductId: '',
-        // ParentId:'',
-        // mktCategory:''
+        ...reset,
       }),
     );
   };
@@ -126,16 +130,16 @@ export default function ProfitMonthlyView() {
         className="flex  justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 sm:pb-[30px] bg-transparent sm:flex-col"
       />
       <main className="min-h-[715px] lg:min-h-[580p x] flex-1 h-auto px-8 xl:px-[15px] pb-[30px] bg-transparent">
-        <div className="bg-white rounded-md border overflow-x-auto">
-          <div className="mb-4 p-4 border border-gray-200 rounded-xl bg-gray-50">
-            <div role="button" tabIndex={0} className="flex items-center gap-4 mb-3 cursor-pointer">
+        <Card className="bg-white rounded-md border overflow-x-auto">
+          <div className="mb-4 p-3 border border-gray-200 rounded-xl bg-gray-50">
+            <div role="button" tabIndex={0} className="flex items-center gap-4 cursor-pointer">
               <span className="text-sm font-medium text-gray-700">Filters :</span>
 
               <div className="flex items-center gap-2">
                 {(filters.SKU || filters.ProductId) && <span className="text-sm text-gray-500">Filters Applied</span>}
 
                 {filters.gst && (
-                  <span className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-gray-100">
+                  <span className="flex items-center gap-1 px-2 py-1 text-xs rounded-full">
                     <span
                       className={`w-2 h-2 rounded-full ${filters.gst === 'with' ? 'bg-green-500' : 'bg-red-500'}`}
                     />
@@ -144,7 +148,7 @@ export default function ProfitMonthlyView() {
                 )}
               </div>
 
-              <div className="ml-auto flex gap-2">
+              <div className="ml-auto flex gap-4">
                 <Button
                   // type="primary"
                   onClick={(e) => {
@@ -170,127 +174,148 @@ export default function ProfitMonthlyView() {
                   Apply
                   <CheckOutlined />
                 </Button>
-              </div>
-            </div>
-
-            <div className="flex gap-4 overflow-x-auto whitespace-nowrap">
-              <div className="min-w-[200px]">
-                <label className="text-s text-gray-600 mb-1 block">SKU:</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  placeholder="SKU"
-                  onChange={(e) => handleChange('SKU', e.target.value)}
-                />
-              </div>
-
-              <div className="min-w-[200px]">
-                <label className="text-s text-gray-600 mb-1 block">ProductId:</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  placeholder="ProductId"
-                  onChange={(e) => handleChange('ProductId', e.target.value)}
-                />
-              </div>
-              <div className="min-w-[200px]">
-                <label className="text-s text-gray-600 mb-1 block">ParentId:</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  placeholder="ParentId"
-                  onChange={(e) => handleChange('ParentId', e.target.value)}
-                />
-              </div>
-              <div className="min-w-[200px]">
-                <label className="text-s text-gray-600 mb-1 block">MKT category:</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  placeholder="MKT category"
-                  onChange={(e) => handleChange('Mktcategory', e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-4 mt-3 border-t pt-3">
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={filters.gst === 'with'} onChange={() => handleGstChange('with')} />
-                With GST
-              </label>
-
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={filters.gst === 'without'}
-                  onChange={() => handleGstChange('without')}
-                />
-                Without GST
-              </label>
-            </div>
-          </div>
-          <div
-            className="grid border-b bg-gray-50 font-semibold"
-            style={{
-              gridTemplateColumns: isScrollable
-                ? `200px repeat(${months.length}, 150px)`
-                : `200px repeat(${months.length}, 1fr)`,
-            }}
-          >
-            <div className="p-3 sticky left-0 bg-gray-50 z-20 flex justify-center items-center">
-              <SettingOutlined onClick={() => setOpenSettings(true)} className="cursor-pointer text-gray-600" />
-            </div>
-            {months.map((m, i) => (
-              <div key={i} className="p-3 text-center font-semibold text-black">
-                {formatMonth(m)}
-              </div>
-            ))}
-          </div>
-
-          {rows
-            .filter((row) => visibleRows.includes(row.key)) // 👈 YEH LINE ADD KARO
-            .map((row, i) => {
-              const isHighlight = highlightRows.includes(row.key);
-              return (
-                <div
-                  key={i}
-                  className={`grid border-b last:border-0 ${isHighlight ? 'bg-blue-50 font-semibold' : ''}`}
-                  style={{
-                    gridTemplateColumns: isScrollable
-                      ? `200px repeat(${months.length}, 150px)`
-                      : `200px repeat(${months.length}, 1fr)`,
+                <Button
+                  type="text"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowFilters((prev) => !prev);
                   }}
+                  className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition"
                 >
-                  {/* LEFT LABEL */}
-                  <div className={`p-3 sticky left-0 z-10 ${isHighlight ? 'bg-blue-100 font-semibold' : 'bg-gray-50'}`}>
-                    {row.label}
-                  </div>{' '}
-                  {/* VALUES */}
-                  {data.map((item, j) => {
-                    const val = item[row.key];
+                  {showFilters ? (
+                    <CaretUpOutlined className="text-[#0B3A6E] text-xs leading-none" />
+                  ) : (
+                    <CaretDownOutlined className="text-[#0B3A6E] text-xs leading-none" />
+                  )}
+                </Button>
+              </div>
+            </div>
+            {showFilters && (
+              <>
+                <div className="flex gap-4 overflow-x-auto whitespace-nowrap mt-2">
+                  <div className="min-w-[200px]">
+                    <label className="text-s text-gray-600 mb-1 block">SKU:</label>
+                    <input
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      placeholder="SKU"
+                      onChange={(e) => handleChange('SKU', e.target.value)}
+                    />
+                  </div>
 
-                    let bg = '';
-                    let text = '';
-
-                    if (isHighlight) {
-                      if (val > 0) {
-                        bg = 'bg-green-100';
-                        text = 'text-green-700';
-                      } else if (val < 0) {
-                        bg = 'bg-red-100';
-                        text = 'text-red-600';
-                      } else {
-                        bg = 'bg-gray-100';
-                      }
-                    } else {
-                      text = val > 0 ? 'text-green-600' : val < 0 ? 'text-red-500' : '';
-                    }
-
-                    return (
-                      <div key={j} className={`p-3 text-center font-medium ${bg} ${text}`}>
-                        {val}
-                      </div>
-                    );
-                  })}
+                  <div className="min-w-[200px]">
+                    <label className="text-s text-gray-600 mb-1 block">ProductId:</label>
+                    <input
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      placeholder="ProductId"
+                      onChange={(e) => handleChange('ProductId', e.target.value)}
+                    />
+                  </div>
+                  <div className="min-w-[200px]">
+                    <label className="text-s text-gray-600 mb-1 block">ParentId:</label>
+                    <input
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      placeholder="ParentId"
+                      onChange={(e) => handleChange('ParentId', e.target.value)}
+                    />
+                  </div>
+                  <div className="min-w-[200px]">
+                    <label className="text-s text-gray-600 mb-1 block">MKT category:</label>
+                    <input
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      placeholder="MKT category"
+                      onChange={(e) => handleChange('Mktcategory', e.target.value)}
+                    />
+                  </div>
                 </div>
-              );
-            })}
-        </div>
+                <div className="flex items-center gap-4 mt-3 border-t pt-3">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={filters.gst === 'with'} onChange={() => handleGstChange('with')} />
+                    With GST
+                  </label>
+
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={filters.gst === 'without'}
+                      onChange={() => handleGstChange('without')}
+                    />
+                    Without GST
+                  </label>
+                </div>
+              </>
+            )}
+          </div>
+          <Spin spinning={loading} size="large">
+            <div
+              className="grid border-b bg-gray-50 font-semibold"
+              style={{
+                gridTemplateColumns: isScrollable
+                  ? `200px repeat(${months.length}, 150px)`
+                  : `200px repeat(${months.length}, 1fr)`,
+              }}
+            >
+              <div className="p-3 sticky left-0 bg-gray-50 z-20 flex justify-left items-center">
+                <SettingOutlined onClick={() => setOpenSettings(true)} className="cursor-pointer text-black" />
+              </div>
+              {months.map((m, i) => (
+                <div key={i} className="p-3 text-center font-semibold text-black">
+                  {formatMonth(m)}
+                </div>
+              ))}
+            </div>
+
+            {rows
+              .filter((row) => visibleRows.includes(row.key))
+              .map((row, i) => {
+                const isHighlight = highlightRows.includes(row.key);
+                return (
+                  <div
+                    key={i}
+                    className={`grid border-b last:border-0 ${isHighlight ? 'bg-blue-50 font-semibold' : ''}`}
+                    style={{
+                      gridTemplateColumns: isScrollable
+                        ? `200px repeat(${months.length}, 150px)`
+                        : `200px repeat(${months.length}, 1fr)`,
+                    }}
+                  >
+                    {/* LEFT LABEL */}
+                    <div
+                      className={`p-3 sticky left-0 z-10 ${isHighlight ? 'bg-blue-100 font-semibold' : 'bg-gray-50'}`}
+                    >
+                      {row.label}
+                    </div>{' '}
+                    {/* VALUES */}
+                    {data.map((item, j) => {
+                      const val = item[row.key];
+
+                      let bg = '';
+                      let text = '';
+
+                      if (isHighlight) {
+                        if (val > 0) {
+                          bg = 'bg-green-100';
+                          text = 'text-green-700';
+                        } else if (val < 0) {
+                          bg = 'bg-red-100';
+                          text = 'text-red-600';
+                        } else {
+                          bg = 'bg-gray-100';
+                        }
+                      } else {
+                        text = val > 0 ? 'text-green-600' : val < 0 ? 'text-red-500' : '';
+                      }
+
+                      return (
+                        <div key={j} className={`p-3 text-center font-medium ${bg} ${text}`}>
+                          {val}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+          </Spin>
+        </Card>
         <Modal
           title="Customize Rows"
           open={openSettings}
@@ -334,7 +359,7 @@ export default function ProfitMonthlyView() {
                   {row.label}
                 </Checkbox>
 
-                <span className="text-blue-500 text-xs cursor-pointer">i</span>
+                {/* <span className="text-blue-500 text-xs cursor-pointer">i</span> */}
               </div>
             ))}
           </div>

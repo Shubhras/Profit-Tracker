@@ -122,6 +122,7 @@ export default function SalesDetails() {
           <Table
             columns={columns}
             dataSource={dataSource}
+            showSorterTooltip={false}
             pagination={{
               pageSize: 5,
               showSizeChanger: true,

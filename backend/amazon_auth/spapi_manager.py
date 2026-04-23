@@ -6,7 +6,7 @@ import time
 import json
 from datetime import datetime, timedelta
 from urllib.parse import urlparse, quote
-
+from django.core.cache import cache
 from .models import AmazonAccount
 from django.contrib.auth.models import User
 
@@ -218,7 +218,9 @@ class SPAPIManager:
         path = f"/orders/v0/orders/{order_id}/orderItems"
         params = {"NextToken": next_token} if next_token else None
         return self.request("GET", path, params=params)
+    
 
+    
     def get_order_financial_events(self, order_id, max_results=100, next_token=None):
         """Returns all financial events for the specified order."""
         path = f"/finances/v0/orders/{order_id}/financialEvents"
