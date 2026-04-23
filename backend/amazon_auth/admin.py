@@ -20,7 +20,7 @@ class OrderItemInline(admin.TabularInline):  # or StackedInline
 
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
-    list_display = ('seller_sku', 'order', 'quantity_ordered', 'item_price', 'created_at')
+    list_display = ('seller_sku', 'asin', 'order', 'quantity_ordered', 'item_price', 'created_at')
     list_filter = ('created_at',)
     search_fields = ('seller_sku', 'title', 'order__amazon_order_id')
 
@@ -74,3 +74,282 @@ class MissingCatalogQueueAdmin(admin.ModelAdmin):
     search_fields = ('seller_sku', 'asin', 'marketplace_id')
     list_filter = ('processed',)
     ordering = ('seller_sku',)    
+
+
+from django.contrib import admin
+from .models import AdCampaign, AdCampaignMetrics
+
+
+# 🔹 Inline for Metrics (shows inside campaign page)
+class AdCampaignMetricsInline(admin.TabularInline):
+    model = AdCampaignMetrics
+    extra = 0
+    fields = (
+        "date", "spend", "sales", "orders",
+        "cpc", "acos", "roas", "impressions_share"
+    )
+    readonly_fields = ("created_at",)
+    show_change_link = True
+
+
+# 🔹 Campaign Admin
+@admin.register(AdCampaign)
+class AdCampaignAdmin(admin.ModelAdmin):
+    list_display = (
+        "campaign_id",
+        "campaign_name",
+        "user",
+        "amazon_account",
+        "program_type",
+        "campaign_type",
+        "targeting_type",
+        "state",
+        "budget_amount",
+        "start_date",
+        "created_at",
+    )
+
+    search_fields = (
+        "campaign_id",
+        "campaign_name",
+        "portfolio_name",
+    )
+
+    list_filter = (
+        "program_type",
+        "campaign_type",
+        "targeting_type",
+        "state",
+        "amazon_account",
+        "start_date",
+    )
+
+    readonly_fields = ("created_at", "updated_at")
+
+    inlines = [AdCampaignMetricsInline]
+
+    ordering = ("-created_at",)
+
+
+# 🔹 Metrics Admin
+@admin.register(AdCampaignMetrics)
+class AdCampaignMetricsAdmin(admin.ModelAdmin):
+    list_display = (
+        "campaign",
+        "date",
+        "spend",
+        "sales",
+        "orders",
+        "acos",
+        "roas",
+    )
+
+    search_fields = (
+        "campaign__campaign_id",
+        "campaign__campaign_name",
+    )
+
+    list_filter = (
+        "date",
+        "campaign__program_type",
+    )
+
+    readonly_fields = ("created_at",)
+
+    ordering = ("-date",)
+
+
+
+from django.contrib import admin
+from .models import BusinessReport
+
+
+@admin.register(BusinessReport)
+class BusinessReportAdmin(admin.ModelAdmin):
+    list_display = (
+        "date",
+        "user",
+        "amazon_account",
+        "ordered_product_sales",
+        "units_ordered",
+        "total_order_items",
+        "sessions_total",
+        "order_item_session_percentage",
+        "refund_rate",
+        "created_at",
+    )
+
+    search_fields = (
+        "amazon_account__seller_central_id",
+        "user__email",
+    )
+
+    list_filter = (
+        "date",
+        "amazon_account",
+    )
+
+    readonly_fields = ("created_at",)
+
+    ordering = ("-date",)
+
+    list_per_page = 50
+
+
+from django.contrib import admin
+from .models import AmazonReport
+
+
+@admin.register(AmazonReport)
+class AmazonReportAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "id",
+        "account",
+        "report_id",
+        "report_type",
+        "marketplace_id",
+        "processing_status",
+        "download_status",
+        "retry_count",
+        "is_active",
+        "created_at",
+        "updated_at",
+    )
+
+    list_filter = (
+        "processing_status",
+        "download_status",
+        "report_type",
+        "marketplace_id",
+        "is_active",
+        "created_at",
+    )
+
+    search_fields = (
+        "report_id",
+        "report_document_id",
+        "report_type",
+        "marketplace_id",
+        "account__id",
+        "account__email",  # if exists
+    )
+
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+        "created_time",
+        "processing_start_time",
+        "processing_end_time",
+    )
+
+    ordering = ("-created_at",)
+
+    list_per_page = 50
+
+    fieldsets = (
+        ("Account Info", {
+            "fields": ("account",)
+        }),
+        ("Report Details", {
+            "fields": (
+                "report_id",
+                "report_document_id",
+                "report_type",
+                "marketplace_id",
+            )
+        }),
+        ("Time Range", {
+            "fields": (
+                "data_start_time",
+                "data_end_time",
+                "created_time",
+                "processing_start_time",
+                "processing_end_time",
+            )
+        }),
+        ("Status", {
+            "fields": (
+                "processing_status",
+                "download_status",
+                "retry_count",
+                "is_active",
+                "last_synced_at",
+            )
+        }),
+        ("Errors", {
+            "fields": ("error_message",),
+            "classes": ("collapse",)
+        }),
+        ("Timestamps", {
+            "fields": ("created_at", "updated_at"),
+        }),
+    )   
+
+
+
+from django.contrib import admin
+from .models import SettlementOrderSummary
+
+
+@admin.register(SettlementOrderSummary)
+class SettlementOrderSummaryAdmin(admin.ModelAdmin):
+
+    # 🔹 List display (what you see in table)
+    list_display = (
+        "amazon_order_id",
+        "amazon_account",
+        "sales",
+        "fees",
+        "tax",
+        "net",
+        "data_start_time",
+        "data_end_time",
+        "created_at",
+    )
+
+    # 🔹 Filters (right sidebar)
+    list_filter = (
+        "amazon_account",
+        "currency_code",
+        "data_start_time",
+        "data_end_time",
+        "created_at",
+    )
+
+    # 🔹 Search
+    search_fields = (
+        "amazon_order_id",
+        "report_id",
+        "report_document_id",
+    )
+
+    # 🔹 Readonly fields (important for financial data)
+    readonly_fields = (
+        "created_at",
+    )
+
+    # 🔹 Pagination (important if large data)
+    list_per_page = 50
+
+    # 🔹 Ordering
+    ordering = ("-data_start_time", "-created_at")
+
+    # 🔹 Field grouping (clean UI)
+    fieldsets = (
+        ("Basic Info", {
+            "fields": ("user", "amazon_account", "amazon_order_id")
+        }),
+        ("Settlement Period", {
+            "fields": ("data_start_time", "data_end_time")
+        }),
+        ("Financial Breakdown", {
+            "fields": ("sales", "fees", "refunds", "tax", "shipping", "net", "currency_code")
+        }),
+        ("Report Tracking", {
+            "fields": ("report_id", "report_document_id")
+        }),
+        ("Meta", {
+            "fields": ("created_at",)
+        }),
+    )     
