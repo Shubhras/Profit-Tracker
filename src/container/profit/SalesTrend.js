@@ -190,11 +190,22 @@ export default function SalesTrend() {
       invMasterSku: '',
     });
   };
+  const formatKey = (key) => {
+    const d = new Date(key);
+    return d.toISOString().split('T')[0];
+  };
   const dataSource =
-    pivotData?.results?.map((item, index) => ({
-      key: index,
-      ...item,
-    })) || [];
+    pivotData?.results?.map((item, index) => {
+      const newItem = { key: index, id: item.id };
+
+      Object.keys(item).forEach((k) => {
+        if (k !== 'id') {
+          newItem[formatKey(k)] = item[k];
+        }
+      });
+
+      return newItem;
+    }) || [];
   const getTotal = (key) => {
     return dataSource.reduce((sum, row) => sum + (row[key] || 0), 0);
   };

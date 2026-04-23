@@ -544,21 +544,17 @@ export default function Summary() {
                 <Col span={12}>
                   <Card size="small" className="bg-green-50">
                     <p className="text-green-700">Profit IDs</p>
-                    <strong>#{dashboardData?.top_orders?.profitaget_full_dashboardble?.length || 0}</strong>
-                    <p>
-                      ₹
-                      {dashboardData?.top_orders?.profitaget_full_dashboardble?.reduce(
-                        (acc, cur) => acc + (cur.amount || 0),
-                        0,
-                      )}
-                    </p>
+                    <strong>#{dashboardData?.top_orders?.profitable?.total_count || 0}</strong>
+
+                    <p>{dashboardData?.top_orders?.profitable?.total_amount || 0}</p>
                   </Card>
                 </Col>
                 <Col span={12}>
                   <Card size="small" className="bg-red-50">
                     <p className="text-red-600">Loss IDs</p>
-                    <strong>#{dashboardData?.top_orders?.losing?.length || 0}</strong>
-                    <p>₹{dashboardData?.top_orders?.losing?.reduce((acc, cur) => acc + (cur.amount || 0), 0)}</p>
+                    <strong>#{dashboardData?.top_orders?.losing?.total_count || 0}</strong>
+
+                    <p>{dashboardData?.top_orders?.losing?.total_amount || 0}</p>
                   </Card>
                 </Col>
               </Row>
