@@ -2,8 +2,8 @@ import React from 'react';
 import { Button } from 'antd';
 import { CheckOutlined, CloseOutlined, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
 
-function ProfitFilterBar({ filters, setFilters, handleApply, handleClear }) {
-  const [showFilters, setShowFilters] = React.useState(false);
+function ProfitFilterBar({ filters, setFilters, handleApply, handleClear, showFilters, setShowFilters }) {
+  // const [showFilters, setShowFilters] = React.useState(false);
   const handleChange = (key, value) => {
     setFilters((prev) => ({
       ...prev,
@@ -36,7 +36,7 @@ function ProfitFilterBar({ filters, setFilters, handleApply, handleClear }) {
 
   return (
     <div className="mb-4 p-4 border border-gray-200 rounded-xl bg-gray-50">
-      <div className="flex items-center gap-4 mb-4">
+      <div className="flex items-center gap-5">
         <select
           className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm"
           onChange={(e) => handleChange('channel', e.target.value)}

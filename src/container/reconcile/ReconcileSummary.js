@@ -58,7 +58,7 @@ export default function ReconcileSummary() {
   ];
 
   const dispatch = useDispatch();
-  const { reconcileData, bankTransferData } = useSelector((state) => state.reconcilePayment);
+  const { reconcileData, bankTransferData, outstandingLoading } = useSelector((state) => state.reconcilePayment);
   const { dateRange, channel: globalChannel } = useSelector((state) => state.dashboard);
 
   useEffect(() => {
@@ -199,6 +199,7 @@ export default function ReconcileSummary() {
             columns={tableColumns}
             dataSource={tableData}
             pagination={false}
+            loading={outstandingLoading}
             scroll={{ x: 800 }}
             locale={{ emptyText: <Empty description="No data" /> }}
             footer={() => (

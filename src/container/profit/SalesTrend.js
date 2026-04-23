@@ -176,6 +176,7 @@ export default function SalesTrend() {
       ...filters,
     };
     dispatch(getPivotStats(newPayload));
+    setShowFilters(false);
   };
 
   const handleClear = () => {
@@ -207,8 +208,8 @@ export default function SalesTrend() {
       />
       <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-8 xl:px-[15px] pb-[30px] bg-transparent">
         <Card bordered={false} className="sales-table-wrapper">
-          <div className="mb-4 p-4 border border-gray-200 rounded-xl bg-gray-50">
-            <div className="flex flex-wrap items-center gap-4 mb-4">
+          <div className="mb-3 p-3 border border-gray-200 rounded-xl bg-gray-50">
+            <div className="flex flex-wrap items-center gap-4">
               <select
                 className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none"
                 onChange={(e) => handleChange('channel', e.target.value)}
