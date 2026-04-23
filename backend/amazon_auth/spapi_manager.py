@@ -216,7 +216,7 @@ class SPAPIManager:
     def get_order_items(self, order_id, next_token=None):
         """Returns detailed order item information for the order that you specify."""
         path = f"/orders/v0/orders/{order_id}/orderItems"
-        params = {"NextToken": next_token} if next_token else None
+        params = {"NextToken": next_token} if next_token else None  
         return self.request("GET", path, params=params)
     
 
@@ -269,6 +269,25 @@ class SPAPIManager:
         """Returns report details for the report specified by report_id."""
         path = f"/reports/2021-06-30/reports/{report_id}"
         return self.request("GET", path)
+    
+
+    def get_catalog_item(self, asin, marketplace_id):
+        path = f"/catalog/2022-04-01/items/{asin}"
+
+        params = {
+            "marketplaceIds": marketplace_id,
+            "includedData": "attributes,images"
+        }
+
+        return self.request("GET", path, params=params)
+    
+
+    def create_settlement_report(self, start_date=None, end_date=None):
+        return self.create_report(
+            report_type="GET_V2_SETTLEMENT_REPORT_DATA_FLAT_FILE",
+            dataStartTime=start_date,
+            dataEndTime=end_date
+        )
 
     def create_report(self, report_type, **kwargs):
         """Creates a report."""

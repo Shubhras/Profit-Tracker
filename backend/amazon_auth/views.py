@@ -322,18 +322,18 @@ def sync_reports(request):
 
                 #  STEP 4: BULK UPDATE (FAST )
                 if items_to_update:
-                    with transaction.atomic():
-                        OrderItem.objects.bulk_update(
-                            items_to_update,
-                            [
-                                "mrp",
-                                "selling_price",
-                                "promotion_discount",
-                                "discount",
-                                "net_sales",
-                                "total_amount"
-                            ]
-                        )
+                    # with transaction.atomic():
+                    OrderItem.objects.bulk_update(
+                        items_to_update,
+                        [
+                            "mrp",
+                            "selling_price",
+                            "promotion_discount",
+                            "discount",
+                            "net_sales",
+                            "total_amount"
+                        ]
+                    )
 
             total_saved += account_saved_count
 
@@ -1146,7 +1146,352 @@ def to_decimal(val):
         return Decimal(str(val or 0))
     except:
         return Decimal("0")
-    
+# till 23 apr    
+# @api_view(['GET'])
+# @permission_classes([AllowAny])
+# def sync_orders(request):
+#     print("Order sync started")
+
+#     user = request.user
+#     if user.is_anonymous:
+#         from django.contrib.auth.models import User
+#         user = User.objects.first()
+
+#     accounts = AmazonAccount.objects.filter(user=user)
+#     if not accounts.exists():
+#         return JsonResponse({"status": "error", "message": "No Amazon accounts connected."}, status=400)
+
+#     total_saved = 0
+#     sync_details = []
+
+#     for account in accounts:
+#         manager = SPAPIManager(user=user, account=account)
+        
+#         # Allow seller to specify dates
+#         kwargs = {"MaxResultsPerPage": 100}
+#         if request.GET.get('CreatedAfter'): kwargs['CreatedAfter'] = request.GET.get('CreatedAfter')
+#         if request.GET.get('CreatedBefore'): kwargs['CreatedBefore'] = request.GET.get('CreatedBefore')
+        
+#         # PAGINATION LOOP
+#         account_saved_count = 0
+#         while True:
+#             data = manager.fetch_orders(**kwargs)
+
+#             if "errors" in data:
+#                 sync_details.append({"seller_id": account.seller_central_id, "status": "error", "errors": data["errors"]})
+#                 break
+
+#             payload = data.get("payload", {})
+#             orders_list = payload.get("Orders", [])
+#             page_orders_data = []
+
+#             # with transaction.atomic():
+#             sync_items = request.GET.get("sync_items") == "true"
+
+#             for o in orders_list:
+#                 amazon_order_id = o.get("AmazonOrderId")
+#                 total_info = o.get("OrderTotal", {})
+#                 last_update = parse_date(o.get("LastUpdateDate"))
+
+#                 order = Order.objects.filter(
+#                     amazon_account=account,
+#                     amazon_order_id=amazon_order_id,
+#                     user=user
+#                 ).first()
+
+#                 should_sync_items = False
+
+#                 # ✅ NEW
+#                 # FIXED new order block
+#                 if not order:
+#                     order = Order.objects.create(
+#                         amazon_account=account,
+#                         amazon_order_id=amazon_order_id,
+#                         user=user,
+#                         purchase_date=parse_date(o.get("PurchaseDate")),
+#                         last_update_date=last_update,
+#                         order_status=o.get("OrderStatus"),
+#                         total_amount=total_info.get("Amount", 0),
+#                         currency_code=total_info.get("CurrencyCode"),
+#                         buyer_name=o.get("BuyerInfo", {}).get("BuyerName", "Unknown"),
+#                         city=o.get("ShippingAddress", {}).get("City", ""),
+#                         state=o.get("ShippingAddress", {}).get("StateOrRegion", ""),
+#                         country=o.get("ShippingAddress", {}).get("CountryCode", ""),
+#                         fulfillment_channel=o.get("FulfillmentChannel", ""),
+#                         items_shipped=o.get("NumberOfItemsShipped", 0),
+#                         items_unshipped=o.get("NumberOfItemsUnshipped", 0),
+#                         marketplace_id=o.get("MarketplaceId")
+#                     )
+#                     should_sync_items = True
+#                     account_saved_count += 1
+
+#                 # FIXED update condition
+#                 elif not order.last_update_date or order.last_update_date < last_update:
+#                     order.order_status = o.get("OrderStatus")
+#                     order.total_amount = total_info.get("Amount", 0)
+#                     order.last_update_date = last_update
+#                     order.save()
+
+#                     should_sync_items = True
+#                     account_saved_count += 1
+
+#                 else:
+#                     continue
+
+#                 #  MOVE ITEM SYNC HERE
+#                 if sync_items and should_sync_items:
+#                     logger.info(f"Order Items fetch start")
+#                     try:
+#                         items_response = manager.get_order_items(amazon_order_id)
+                        
+#                         payload_items = items_response.get("payload", {})
+
+#                         items = payload_items.get("OrderItems") or payload_items.get("Items") or []
+
+#                         logger.info(f"Order Items API response: {items_response}")
+
+#                         skus = [i.get("SellerSKU") for i in items if i.get("SellerSKU")]
+
+#                         mappings = {
+#                             m.seller_sku: m
+#                             for m in ProductMapping.objects.filter(seller_sku__in=skus)
+#                         }
+
+                        
+
+#                         for item in items:
+#                             sku = item.get("SellerSKU")
+#                             asin = item.get("ASIN")
+#                             marketplace_id = o.get("MarketplaceId")
+
+#                             image_url = None
+#                             brand = None
+
+#                             mapping = mappings.get(sku)
+
+#                             # if mapping:
+#                             #     image_url = getattr(mapping, "image_url", None)
+#                             #     brand = mapping.brand
+
+#                             if  asin and marketplace_id:
+#                                 try:
+#                                     # catalog_response = manager.get_catalog_item(asin, marketplace_id)
+#                                     catalog_response = safe_catalog_call(manager, asin, marketplace_id)
+
+#                                     logger.warning(f"Catalog fallback triggered for SKU={sku}, ASIN={asin}")
+
+#                                     attributes = catalog_response.get("attributes", {})
+#                                     images_data = catalog_response.get("images", [])
+
+#                                     if "brand" in attributes:
+#                                         brand = attributes["brand"][0].get("value")
+
+#                                     for img_group in images_data:
+#                                         if img_group.get("marketplaceId") == marketplace_id:
+#                                             images_list = img_group.get("images", [])
+#                                             if images_list:
+#                                                 image_url = images_list[0].get("link")
+#                                                 break
+
+#                                 except Exception as e:
+#                                     print(f"Catalog API FAILED for {asin}: {e}")
+#                                     image_url = None
+#                                     brand = None
+
+                        
+
+#                             elif asin:
+#                                 MissingCatalogQueue.objects.get_or_create(
+#                                     seller_sku=sku,
+#                                     defaults={
+#                                         "asin": asin,
+#                                         "marketplace_id": marketplace_id
+#                                     }
+#                                 )
+
+#                             OrderItem.objects.update_or_create(
+#                                 order=order,
+#                                 # order_item_id=item.get("OrderItemId"),
+#                                 order_item_id = item.get("OrderItemId") or f"{amazon_order_id}_{item.get('SellerSKU')}",
+#                                 defaults={
+#                                     "seller_sku": sku,
+#                                     "asin": asin,
+#                                     "title": item.get("Title"),
+#                                     "quantity_ordered": item.get("QuantityOrdered", 0),
+#                                     "quantity_shipped": item.get("QuantityShipped", 0),
+#                                     "item_price": item.get("ItemPrice", {}).get("Amount", 0),
+#                                     "item_tax": item.get("ItemTax", {}).get("Amount", 0),
+
+#                                     # "item_price": to_decimal(item.get("ItemPrice", {}).get("Amount")),
+#                                     # "item_tax": to_decimal(item.get("ItemTax", {}).get("Amount")),
+
+#                                     "shipping_price": item.get("ShippingPrice", {}).get("Amount", 0),
+#                                     "image_url": image_url,
+#                                     "parent_sku": mapping.parent_sku if mapping else None,
+#                                     "product_name": mapping.product_name if mapping else item.get("Title"),
+#                                     "brand": mapping.brand if mapping else brand,
+#                                     "cost_price": mapping.cost_price if mapping else 0,
+#                                     "net_sales" :item.get("ItemPrice", {}).get("Amount", 0),
+#                                     "promotion_discount":item.get("PromotionDiscount", {}).get("Amount", 0),
+#                                 }
+#                             )
+
+#                             logger.info(
+#                                 f"Item saved: SKU={sku}, Order={amazon_order_id}"
+#                             )
+
+                
+
+#                     except Exception as e:
+#                         print(f"❌ Item sync failed for order {amazon_order_id}: {str(e)}")
+#                         traceback.print_exc()
+
+#             # for o in orders_list:
+#             #     amazon_order_id = o.get("AmazonOrderId")
+#             #     total_info = o.get("OrderTotal", {})
+
+#             #     new_status = o.get("OrderStatus")
+#             #     new_total = float(total_info.get("Amount", 0))
+
+#             #     # CHECK EXISTING ORDER
+#             #     order = Order.objects.filter(
+#             #         amazon_account=account,
+#             #         amazon_order_id=amazon_order_id,
+#             #         user=user
+#             #     ).first()
+
+#             #     if order:
+#             #         #  UPDATE ONLY IF CHANGED
+#             #         if (
+#             #             order.order_status != new_status or
+#             #             float(order.total_amount) != new_total
+#             #         ):
+#             #             order.order_status = new_status
+#             #             order.total_amount = new_total
+#             #             order.last_update_date = parse_date(o.get("LastUpdateDate"))
+#             #             order.save()
+#             #     else:
+#             #         order = Order.objects.create(
+#             #             amazon_account=account,
+#             #             amazon_order_id=amazon_order_id,
+#             #             user=user,
+#             #             purchase_date=parse_date(o.get("PurchaseDate")),
+#             #             last_update_date=parse_date(o.get("LastUpdateDate")),
+#             #             order_status=new_status,
+#             #             total_amount=new_total,
+#             #             currency_code=total_info.get("CurrencyCode"),
+#             #             buyer_name=o.get("BuyerInfo", {}).get("BuyerName", "Unknown"),
+#             #             city=o.get("ShippingAddress", {}).get("City", ""),
+#             #             state=o.get("ShippingAddress", {}).get("StateOrRegion", ""),
+#             #             country=o.get("ShippingAddress", {}).get("CountryCode", ""),
+#             #             fulfillment_channel=o.get("FulfillmentChannel", ""),
+#             #             items_shipped=o.get("NumberOfItemsShipped", 0),
+#             #             items_unshipped=o.get("NumberOfItemsUnshipped", 0),
+#             #             marketplace_id=o.get("MarketplaceId")
+#             #         )
+
+#             #     account_saved_count += 1
+
+#             #     # =========================
+#             #     #  ITEM SYNC (SMART SKIP)
+#             #     # =========================
+#             #     if sync_items:
+#             #         existing_items = OrderItem.objects.filter(order=order).count()
+#             #         api_items = o.get("NumberOfItemsShipped", 0) + o.get("NumberOfItemsUnshipped", 0)
+
+#             #         if existing_items > 0 and existing_items == api_items:
+#             #             continue  #  skip already synced
+
+#             #         try:
+#             #             items_response = manager.get_order_items(amazon_order_id)
+#             #             payload = items_response.get("payload", {})
+
+#             #             items = payload.get("OrderItems") or payload.get("Items") or []
+
+#             #             skus = [i.get("SellerSKU") for i in items if i.get("SellerSKU")]
+
+#             #             #  BULK FETCH MAPPINGS
+#             #             mappings = {
+#             #                 m.seller_sku: m
+#             #                 for m in ProductMapping.objects.filter(seller_sku__in=skus)
+#             #             }
+
+#             #             for item in items:
+#             #                 sku = item.get("SellerSKU")
+#             #                 asin = item.get("ASIN")
+#             #                 marketplace_id = o.get("MarketplaceId")
+
+#             #                 mapping = mappings.get(sku)
+
+#             #                 image_url = None
+#             #                 brand = None
+
+#             #                 #  USE CACHE
+#             #                 if mapping:
+#             #                     image_url = getattr(mapping, "image_url", None)
+#             #                     brand = mapping.brand
+
+#             #                 #  NO catalog API here (moved to background)
+#             #                 elif asin:
+#             #                     MissingCatalogQueue.objects.get_or_create(
+#             #                         seller_sku=sku,
+#             #                         defaults={
+#             #                             "asin": asin,
+#             #                             "marketplace_id": marketplace_id
+#             #                         }
+#             #                     )
+
+#             #                 OrderItem.objects.update_or_create(
+#             #                     order=order,
+#             #                     order_item_id=item.get("OrderItemId"),
+#             #                     defaults={
+#             #                         "seller_sku": sku,
+#             #                         "asin": asin,
+#             #                         "title": item.get("Title"),
+#             #                         "quantity_ordered": item.get("QuantityOrdered", 0),
+#             #                         "quantity_shipped": item.get("QuantityShipped", 0),
+#             #                         "item_price": item.get("ItemPrice", {}).get("Amount", 0),
+#             #                         "item_tax": item.get("ItemTax", {}).get("Amount", 0),
+#             #                         "shipping_price": item.get("ShippingPrice", {}).get("Amount", 0),
+#             #                         "image_url": image_url,
+#             #                         "parent_sku": mapping.parent_sku if mapping else None,
+#             #                         "product_name": mapping.product_name if mapping else item.get("Title"),
+#             #                         "brand": mapping.brand if mapping else brand,
+#             #                         "cost_price": mapping.cost_price if mapping else 0,
+#             #                     }
+#             #                 )
+
+#             #         except Exception as e:
+#             #             logger.error("Item sync failed", extra={
+#             #                 "amazon_order_id": amazon_order_id,
+#             #                 "error": str(e)
+#             #             })
+
+#             # PAGINATION
+#             next_token = payload.get("NextToken")
+#             if next_token:
+#                 kwargs = {"NextToken": next_token}
+#             else:
+#                 break
+
+#         # ✅ UPDATE LAST SYNC TIME
+#         account.last_synced_at = timezone.now()
+#         account.save()
+
+#         total_saved += account_saved_count
+#         sync_details.append({
+#             "seller_id": account.seller_central_id,
+#             "status": "success",
+#             "synced_count": account_saved_count
+#         })
+
+#     return JsonResponse({
+#         "status": "success",
+#         "message": f"Orders synced for {len(sync_details)} accounts",
+#         "total_synced": total_saved,
+#         "details": sync_details
+#     })
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def sync_orders(request):
@@ -1185,258 +1530,169 @@ def sync_orders(request):
             orders_list = payload.get("Orders", [])
             page_orders_data = []
 
-            with transaction.atomic():
-                sync_items = request.GET.get("sync_items") == "true"
+            # with transaction.atomic():
+            sync_items = request.GET.get("sync_items") == "true"
 
-                for o in orders_list:
-                    amazon_order_id = o.get("AmazonOrderId")
-                    total_info = o.get("OrderTotal", {})
-                    last_update = parse_date(o.get("LastUpdateDate"))
+            for o in orders_list:
+                amazon_order_id = o.get("AmazonOrderId")
+                total_info = o.get("OrderTotal", {})
+                last_update = parse_date(o.get("LastUpdateDate"))
 
-                    order = Order.objects.filter(
+                order = Order.objects.filter(
+                    amazon_account=account,
+                    amazon_order_id=amazon_order_id,
+                    user=user
+                ).first()
+
+                should_sync_items = False
+
+                #  NEW
+                # FIXED new order block
+                if not order:
+                    order = Order.objects.create(
                         amazon_account=account,
                         amazon_order_id=amazon_order_id,
-                        user=user
-                    ).first()
+                        user=user,
+                        purchase_date=parse_date(o.get("PurchaseDate")),
+                        last_update_date=last_update,
+                        order_status=o.get("OrderStatus"),
+                        total_amount=total_info.get("Amount", 0),
+                        currency_code=total_info.get("CurrencyCode"),
+                        buyer_name=o.get("BuyerInfo", {}).get("BuyerName", "Unknown"),
+                        city=o.get("ShippingAddress", {}).get("City", ""),
+                        state=o.get("ShippingAddress", {}).get("StateOrRegion", ""),
+                        country=o.get("ShippingAddress", {}).get("CountryCode", ""),
+                        fulfillment_channel=o.get("FulfillmentChannel", ""),
+                        items_shipped=o.get("NumberOfItemsShipped", 0),
+                        items_unshipped=o.get("NumberOfItemsUnshipped", 0),
+                        marketplace_id=o.get("MarketplaceId")
+                    )
+                    should_sync_items = True
+                    account_saved_count += 1
 
-                    should_sync_items = False
+                # FIXED update condition
+                elif not order.last_update_date or order.last_update_date < last_update:
+                    order.order_status = o.get("OrderStatus")
+                    order.total_amount = total_info.get("Amount", 0)
+                    order.last_update_date = last_update
+                    order.save()
 
-                    # ✅ NEW
-                    # FIXED new order block
-                    if not order:
-                        order = Order.objects.create(
-                            amazon_account=account,
-                            amazon_order_id=amazon_order_id,
-                            user=user,
-                            purchase_date=parse_date(o.get("PurchaseDate")),
-                            last_update_date=last_update,
-                            order_status=o.get("OrderStatus"),
-                            total_amount=total_info.get("Amount", 0),
-                            currency_code=total_info.get("CurrencyCode"),
-                            buyer_name=o.get("BuyerInfo", {}).get("BuyerName", "Unknown"),
-                            city=o.get("ShippingAddress", {}).get("City", ""),
-                            state=o.get("ShippingAddress", {}).get("StateOrRegion", ""),
-                            country=o.get("ShippingAddress", {}).get("CountryCode", ""),
-                            fulfillment_channel=o.get("FulfillmentChannel", ""),
-                            items_shipped=o.get("NumberOfItemsShipped", 0),
-                            items_unshipped=o.get("NumberOfItemsUnshipped", 0),
-                            marketplace_id=o.get("MarketplaceId")
-                        )
-                        should_sync_items = True
-                        account_saved_count += 1
+                    should_sync_items = True
+                    account_saved_count += 1
 
-                    # FIXED update condition
-                    elif not order.last_update_date or order.last_update_date < last_update:
-                        order.order_status = o.get("OrderStatus")
-                        order.total_amount = total_info.get("Amount", 0)
-                        order.last_update_date = last_update
-                        order.save()
+                else:
+                    continue
 
-                        should_sync_items = True
-                        account_saved_count += 1
+                #  MOVE ITEM SYNC HERE
+                if sync_items and should_sync_items:
+                    logger.info(f"Order Items fetch start")
+                    try:
+                        items_response = manager.get_order_items(amazon_order_id)
+                        
+                        payload_items = items_response.get("payload", {})
 
-                    else:
-                        continue
+                        items = payload_items.get("OrderItems") or payload_items.get("Items") or []
 
-                    #  MOVE ITEM SYNC HERE
-                    if sync_items and should_sync_items:
-                        logger.info(f"Order Items fetch start")
-                        try:
-                            items_response = manager.get_order_items(amazon_order_id)
-                            
-                            payload_items = items_response.get("payload", {})
+                        logger.info(f"Order Items API response: {items_response}")
 
-                            items = payload_items.get("OrderItems") or payload_items.get("Items") or []
+                        skus = [i.get("SellerSKU") for i in items if i.get("SellerSKU")]
 
-                            logger.info(f"Order Items API response: {items_response}")
+                        mappings = {
+                            m.seller_sku: m
+                            for m in ProductMapping.objects.filter(seller_sku__in=skus)
+                        }
 
-                            skus = [i.get("SellerSKU") for i in items if i.get("SellerSKU")]
+                        
 
-                            mappings = {
-                                m.seller_sku: m
-                                for m in ProductMapping.objects.filter(seller_sku__in=skus)
-                            }
+                        for item in items:
+                            sku = item.get("SellerSKU")
+                            asin = item.get("ASIN")
+                            marketplace_id = o.get("MarketplaceId")
 
-                            for item in items:
-                                sku = item.get("SellerSKU")
-                                asin = item.get("ASIN")
-                                marketplace_id = o.get("MarketplaceId")
+                            image_url = None
+                            brand = None
 
-                                mapping = mappings.get(sku)
+                            mapping = mappings.get(sku)
 
-                                image_url = None
-                                brand = None
+                            #  PRIORITY 1: USE MAPPING DATA
+                            if mapping:
+                                print(f"not mapping found ")
+                                image_url = getattr(mapping, "image_url", None)
+                                brand = mapping.brand
 
-                                if mapping:
-                                    image_url = getattr(mapping, "image_url", None)
-                                    brand = mapping.brand
+                            #  PRIORITY 2: FALLBACK TO CATALOG ONLY IF IMAGE MISSING
+                            if (not image_url) and asin and marketplace_id:
+                                try:
+                                    catalog_response = safe_catalog_call(manager, asin, marketplace_id)
 
-                                elif asin:
-                                    MissingCatalogQueue.objects.get_or_create(
-                                        seller_sku=sku,
-                                        defaults={
-                                            "asin": asin,
-                                            "marketplace_id": marketplace_id
-                                        }
-                                    )
+                                    logger.warning(f"Catalog fallback triggered for SKU={sku}, ASIN={asin}")
 
-                                OrderItem.objects.update_or_create(
-                                    order=order,
-                                    # order_item_id=item.get("OrderItemId"),
-                                    order_item_id = item.get("OrderItemId") or f"{amazon_order_id}_{item.get('SellerSKU')}",
+                                    attributes = catalog_response.get("attributes", {})
+                                    images_data = catalog_response.get("images", [])
+
+                                    if "brand" in attributes and not brand:
+                                        brand = attributes["brand"][0].get("value")
+
+                                    for img_group in images_data:
+                                        if img_group.get("marketplaceId") == marketplace_id:
+                                            images_list = img_group.get("images", [])
+                                            if images_list:
+                                                image_url = images_list[0].get("link")
+                                                break
+
+                                except Exception as e:
+                                    print(f"Catalog API FAILED for {asin}: {e}")
+
+                            #  FIX QUEUE (only when no mapping exists)
+                            if not mapping and asin and marketplace_id:
+                                print(f"MissingCatalogQueue start to create ")
+                                MissingCatalogQueue.objects.get_or_create(
+                                    seller_sku=sku,
                                     defaults={
-                                        "seller_sku": sku,
                                         "asin": asin,
-                                        "title": item.get("Title"),
-                                        "quantity_ordered": item.get("QuantityOrdered", 0),
-                                        "quantity_shipped": item.get("QuantityShipped", 0),
-                                        "item_price": item.get("ItemPrice", {}).get("Amount", 0),
-                                        "item_tax": item.get("ItemTax", {}).get("Amount", 0),
-
-                                        # "item_price": to_decimal(item.get("ItemPrice", {}).get("Amount")),
-                                        # "item_tax": to_decimal(item.get("ItemTax", {}).get("Amount")),
-
-                                        "shipping_price": item.get("ShippingPrice", {}).get("Amount", 0),
-                                        "image_url": image_url,
-                                        "parent_sku": mapping.parent_sku if mapping else None,
-                                        "product_name": mapping.product_name if mapping else item.get("Title"),
-                                        "brand": mapping.brand if mapping else brand,
-                                        "cost_price": mapping.cost_price if mapping else 0,
-                                        "net_sales" :item.get("ItemPrice", {}).get("Amount", 0),
-                                        "promotion_discount":item.get("PromotionDiscount", {}).get("Amount", 0),
+                                        "marketplace_id": marketplace_id,
+                                        "image_url":image_url,
+                                        "processed": False
                                     }
                                 )
 
-                                logger.info(
-                                    f"Item saved: SKU={sku}, Order={amazon_order_id}"
-                                )
+                            #  PREVENT NULL OVERWRITE
+                            defaults = {
+                                "seller_sku": sku,
+                                "asin": asin,
+                                "title": item.get("Title"),
+                                "quantity_ordered": item.get("QuantityOrdered", 0),
+                                "quantity_shipped": item.get("QuantityShipped", 0),
+                                "item_price": item.get("ItemPrice", {}).get("Amount", 0),
+                                "item_tax": item.get("ItemTax", {}).get("Amount", 0),
+                                "shipping_price": item.get("ShippingPrice", {}).get("Amount", 0),
+                                "parent_sku": mapping.parent_sku if mapping else None,
+                                "product_name": mapping.product_name if mapping else item.get("Title"),
+                                "brand": mapping.brand if mapping else brand,
+                                "cost_price": mapping.cost_price if mapping else 0,
+                                "net_sales": item.get("ItemPrice", {}).get("Amount", 0),
+                                "promotion_discount": item.get("PromotionDiscount", {}).get("Amount", 0),
+                            }
 
-                    
+                            #  only update image if exists
+                            if image_url:
+                                defaults["image_url"] = image_url
 
-                        except Exception as e:
-                            print(f"❌ Item sync failed for order {amazon_order_id}: {str(e)}")
-                            traceback.print_exc()
+                            OrderItem.objects.update_or_create(
+                                order=order,
+                                order_item_id=item.get("OrderItemId") or f"{amazon_order_id}_{sku}",
+                                defaults=defaults
+                            )
 
-                # for o in orders_list:
-                #     amazon_order_id = o.get("AmazonOrderId")
-                #     total_info = o.get("OrderTotal", {})
+                            logger.info(f"Item saved: SKU={sku}, IMAGE={image_url}")
 
-                #     new_status = o.get("OrderStatus")
-                #     new_total = float(total_info.get("Amount", 0))
+                
 
-                #     # CHECK EXISTING ORDER
-                #     order = Order.objects.filter(
-                #         amazon_account=account,
-                #         amazon_order_id=amazon_order_id,
-                #         user=user
-                #     ).first()
+                    except Exception as e:
+                        print(f"Item sync failed for order {amazon_order_id}: {str(e)}")
+                        traceback.print_exc()
 
-                #     if order:
-                #         #  UPDATE ONLY IF CHANGED
-                #         if (
-                #             order.order_status != new_status or
-                #             float(order.total_amount) != new_total
-                #         ):
-                #             order.order_status = new_status
-                #             order.total_amount = new_total
-                #             order.last_update_date = parse_date(o.get("LastUpdateDate"))
-                #             order.save()
-                #     else:
-                #         order = Order.objects.create(
-                #             amazon_account=account,
-                #             amazon_order_id=amazon_order_id,
-                #             user=user,
-                #             purchase_date=parse_date(o.get("PurchaseDate")),
-                #             last_update_date=parse_date(o.get("LastUpdateDate")),
-                #             order_status=new_status,
-                #             total_amount=new_total,
-                #             currency_code=total_info.get("CurrencyCode"),
-                #             buyer_name=o.get("BuyerInfo", {}).get("BuyerName", "Unknown"),
-                #             city=o.get("ShippingAddress", {}).get("City", ""),
-                #             state=o.get("ShippingAddress", {}).get("StateOrRegion", ""),
-                #             country=o.get("ShippingAddress", {}).get("CountryCode", ""),
-                #             fulfillment_channel=o.get("FulfillmentChannel", ""),
-                #             items_shipped=o.get("NumberOfItemsShipped", 0),
-                #             items_unshipped=o.get("NumberOfItemsUnshipped", 0),
-                #             marketplace_id=o.get("MarketplaceId")
-                #         )
-
-                #     account_saved_count += 1
-
-                #     # =========================
-                #     #  ITEM SYNC (SMART SKIP)
-                #     # =========================
-                #     if sync_items:
-                #         existing_items = OrderItem.objects.filter(order=order).count()
-                #         api_items = o.get("NumberOfItemsShipped", 0) + o.get("NumberOfItemsUnshipped", 0)
-
-                #         if existing_items > 0 and existing_items == api_items:
-                #             continue  #  skip already synced
-
-                #         try:
-                #             items_response = manager.get_order_items(amazon_order_id)
-                #             payload = items_response.get("payload", {})
-
-                #             items = payload.get("OrderItems") or payload.get("Items") or []
-
-                #             skus = [i.get("SellerSKU") for i in items if i.get("SellerSKU")]
-
-                #             #  BULK FETCH MAPPINGS
-                #             mappings = {
-                #                 m.seller_sku: m
-                #                 for m in ProductMapping.objects.filter(seller_sku__in=skus)
-                #             }
-
-                #             for item in items:
-                #                 sku = item.get("SellerSKU")
-                #                 asin = item.get("ASIN")
-                #                 marketplace_id = o.get("MarketplaceId")
-
-                #                 mapping = mappings.get(sku)
-
-                #                 image_url = None
-                #                 brand = None
-
-                #                 #  USE CACHE
-                #                 if mapping:
-                #                     image_url = getattr(mapping, "image_url", None)
-                #                     brand = mapping.brand
-
-                #                 #  NO catalog API here (moved to background)
-                #                 elif asin:
-                #                     MissingCatalogQueue.objects.get_or_create(
-                #                         seller_sku=sku,
-                #                         defaults={
-                #                             "asin": asin,
-                #                             "marketplace_id": marketplace_id
-                #                         }
-                #                     )
-
-                #                 OrderItem.objects.update_or_create(
-                #                     order=order,
-                #                     order_item_id=item.get("OrderItemId"),
-                #                     defaults={
-                #                         "seller_sku": sku,
-                #                         "asin": asin,
-                #                         "title": item.get("Title"),
-                #                         "quantity_ordered": item.get("QuantityOrdered", 0),
-                #                         "quantity_shipped": item.get("QuantityShipped", 0),
-                #                         "item_price": item.get("ItemPrice", {}).get("Amount", 0),
-                #                         "item_tax": item.get("ItemTax", {}).get("Amount", 0),
-                #                         "shipping_price": item.get("ShippingPrice", {}).get("Amount", 0),
-                #                         "image_url": image_url,
-                #                         "parent_sku": mapping.parent_sku if mapping else None,
-                #                         "product_name": mapping.product_name if mapping else item.get("Title"),
-                #                         "brand": mapping.brand if mapping else brand,
-                #                         "cost_price": mapping.cost_price if mapping else 0,
-                #                     }
-                #                 )
-
-                #         except Exception as e:
-                #             logger.error("Item sync failed", extra={
-                #                 "amazon_order_id": amazon_order_id,
-                #                 "error": str(e)
-                #             })
+           
 
             # PAGINATION
             next_token = payload.get("NextToken")
@@ -1445,7 +1701,7 @@ def sync_orders(request):
             else:
                 break
 
-        # ✅ UPDATE LAST SYNC TIME
+        # UPDATE LAST SYNC TIME
         account.last_synced_at = timezone.now()
         account.save()
 
@@ -1462,6 +1718,7 @@ def sync_orders(request):
         "total_synced": total_saved,
         "details": sync_details
     })
+
 
 
 
@@ -2028,6 +2285,169 @@ def get_product_analytics(request):
 #     })
 
 # new dash board 21 apr 
+# @api_view(['GET', 'POST'])
+# @permission_classes([IsAuthenticated])
+# def get_full_dashboard(request):
+
+#     print(f"DEBUG: get_full_dashboard called for user {request.user}")
+#     user = request.user
+
+#     # ---------------- EXISTING INPUT LOGIC (UNCHANGED) ----------------
+#     data_source_raw = request.data if request.method == 'POST' else request.GET
+#     data_source = {}
+
+#     if data_source_raw:
+#         if hasattr(data_source_raw, 'dict'):
+#             data_source.update(data_source_raw.dict())
+#         else:
+#             data_source.update(data_source_raw)
+
+#     if not data_source:
+#         try:
+#             import json
+#             body_data = json.loads(request._request.body)
+#             if isinstance(body_data, dict):
+#                 data_source.update(body_data)
+#         except:
+#             pass
+
+#     search_data = {}
+#     search_data.update(data_source)
+
+#     if isinstance(search_data.get('filters'), dict):
+#         search_data.update(search_data.get('filters'))
+
+#     def find_key(keys):
+#         for k in keys:
+#             val = search_data.get(k)
+#             if isinstance(val, list) and val:
+#                 val = val[0]
+#             if val:
+#                 return str(val)
+#         return None
+
+#     start_date = datetime.strptime(find_key(['fromDate'])[:10], '%Y-%m-%d')
+#     end_date = datetime.strptime(find_key(['toDate'])[:10], '%Y-%m-%d')
+#     end_date = end_date.replace(hour=23, minute=59, second=59)
+
+#     # ---------------- DATA ----------------
+#     orders_qs = Order.objects.filter(user=user, purchase_date__range=(start_date, end_date))
+#     finances_qs = FinancialEvent.objects.filter(user=user, posted_date__range=(start_date, end_date))
+
+#     # ---------------- CORE CALCULATIONS (FIXED) ----------------
+
+#     # 1. GROSS SALES
+#     gross_sales = float(orders_qs.aggregate(val=Sum('total_amount'))['val'] or 0)
+#     gross_qty = orders_qs.count()
+
+#     # 2. CANCELLED
+#     cancelled_qs = orders_qs.filter(order_status__icontains='Cancel')
+#     # cancelled_amount = float(cancelled_qs.aggregate(val=Sum('total_amount'))['val'] or 0)
+#     cancelled_amount = float(cancelled_qs.aggregate(val=Sum('total_amount'))['val'] or 0)
+#     cancelled_amount = cancelled_amount if cancelled_amount < 0 else -cancelled_amount
+
+#     # 3. RETURNS / REFUNDS
+#     refund_events = finances_qs.filter(event_type__icontains='Refund')
+#     returns_amount = float(refund_events.aggregate(val=Sum('total_amount'))['val'] or 0)
+
+#     # already negative in DB → keep as negative
+#     # RETURNS
+#     returns_amount = float(refund_events.aggregate(val=Sum('total_amount'))['val'] or 0)
+#     returns_amount = returns_amount if returns_amount < 0 else -returns_amount
+
+#     # 4. ADS SPEND (KEEP NEGATIVE)
+#     ad_events = finances_qs.filter(
+#         Q(event_type__icontains='ServiceFee') |
+#         Q(raw_data__icontains='Ad')
+#     )
+#     ads_amount = float(ad_events.aggregate(val=Sum('total_amount'))['val'] or 0)
+#     ads_amount = ads_amount if ads_amount < 0 else -ads_amount
+
+#     # 5. COGS (stdcostinc like your dashboard)
+#     cogs = gross_sales * 0.35
+#     cogs = -cogs  # keep negative like your response
+
+#     # 6. NET SALES
+#     # net_sales = gross_sales + returns_amount + cancelled_amount
+#     returns_abs = abs(returns_amount)
+#     cancelled_abs = abs(cancelled_amount)
+
+#     net_sales = gross_sales - returns_abs - cancelled_abs
+
+#     # 7. PROFIT (MATCH YOUR RESPONSE STYLE)
+#     profit = net_sales + ads_amount + cogs
+
+#     # 8. METRICS
+#     margin = (profit / net_sales * 100) if net_sales else 0
+#     roi = (profit / abs(cogs) * 100) if cogs else 0
+#     tacos = (abs(ads_amount) / gross_sales * 100) if gross_sales else 0
+
+#     # ---------------- TRENDS FIX ----------------
+#     trends = orders_qs.annotate(date=TruncDate('purchase_date')).values('date').annotate(
+#         sales=Sum('total_amount'),
+#         qty=Count('id')
+#     )
+
+#     trends_data = []
+#     for t in trends:
+#         sales = float(t['sales'] or 0)
+
+#         daily_profit = (sales * 0.65) - (sales * 0.05)  # simplified same logic
+#         trends_data.append({
+#             "date": str(t['date']),
+#             "sales": round(sales, 2),
+#             "qty": t['qty'],
+#             "estimated_profit": round(daily_profit, 2),
+#             "margin": f"{round((daily_profit/sales)*100)}%" if sales else "0%"
+#         })
+
+#     # ---------------- GEO FIX ----------------
+#     geo_data_detailed = []
+#     for state in orders_qs.values_list('state', flat=True).distinct():
+#         state_orders = orders_qs.filter(state=state)
+
+#         rev = float(state_orders.aggregate(val=Sum('total_amount'))['val'] or 0)
+#         st_profit = (rev * 0.65) - (rev * 0.05)
+
+#         geo_data_detailed.append({
+#             "id": state or "UNKNOWN",
+#             "revenue": f"{round(rev, 2)}",
+#             "mpfees": f"{round(-(rev * 0.15), 2)}",
+#             "profit": f"{round(st_profit, 2)}",
+#             "ads": f"{round(-(rev * 0.05), 2)}"
+#         })
+
+#     # ---------------- RESPONSE (UNCHANGED KEYS) ----------------
+#     return JsonResponse({
+#         "status": "success",
+#         "currency": "INR",
+#         "header_metrics": {
+#             "sales": round(net_sales, 2),
+#             "profit": round(profit, 2),
+#             "margin": f"{round(margin)}%",
+#             "roi": f"{round(roi)}%",
+#             "ad_spend": round(ads_amount, 2),
+#             "tacos": f"{round(tacos)}%"
+#         },
+#         "breakdown_table": {
+#             "gross": {"qty": gross_qty, "amount": round(gross_sales, 2)},
+#             "cancelled": {"qty": cancelled_qs.count(), "amount": round(cancelled_amount, 2)},
+#             "cancelled(RTO)": {"qty": cancelled_qs.count(), "amount": round(cancelled_amount, 2)},
+#             "returned": {"qty": refund_events.count(), "amount": round(returns_amount, 2)},
+#             "returned(RTO)": {"qty": refund_events.count(), "amount": round(returns_amount, 2)},
+#             "returned(CRef)": {"qty": refund_events.count(), "amount": round(returns_amount, 2)},
+#             "fees": {"amount": 0, "method": "included_in_profit"},
+#             "net": {"qty": gross_qty, "amount": round(net_sales, 2)}
+#         },
+#         "trends": trends_data,
+#         "geography": geo_data_detailed,
+#         "top_orders": {
+#             "profitaget_full_dashboardble": list(orders_qs.order_by('-total_amount')[:5].values('amazon_order_id', 'total_amount')),
+#             "losing": list(finances_qs.filter(total_amount__lt=0).order_by('total_amount')[:5].values('amazon_order_id', 'total_amount'))
+#         },
+#         "warnings": []
+#     })
+
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def get_full_dashboard(request):
@@ -2077,52 +2497,146 @@ def get_full_dashboard(request):
     orders_qs = Order.objects.filter(user=user, purchase_date__range=(start_date, end_date))
     finances_qs = FinancialEvent.objects.filter(user=user, posted_date__range=(start_date, end_date))
 
-    # ---------------- CORE CALCULATIONS (FIXED) ----------------
+    # # ---------------- CORE CALCULATIONS (FIXED) ----------------
 
-    # 1. GROSS SALES
+    # # 1. GROSS SALES
+    # gross_sales = float(orders_qs.aggregate(val=Sum('total_amount'))['val'] or 0)
+    # gross_qty = orders_qs.count()
+
+    # # 2. CANCELLED
+    # cancelled_qs = orders_qs.filter(order_status__icontains='Cancel')
+    # # cancelled_amount = float(cancelled_qs.aggregate(val=Sum('total_amount'))['val'] or 0)
+    # cancelled_amount = float(cancelled_qs.aggregate(val=Sum('total_amount'))['val'] or 0)
+    # cancelled_amount = cancelled_amount if cancelled_amount < 0 else -cancelled_amount
+
+    # # 3. RETURNS / REFUNDS
+    # refund_events = finances_qs.filter(event_type__icontains='Refund')
+    # returns_amount = float(refund_events.aggregate(val=Sum('total_amount'))['val'] or 0)
+
+    # # already negative in DB → keep as negative
+    # # RETURNS
+    # returns_amount = float(refund_events.aggregate(val=Sum('total_amount'))['val'] or 0)
+    # returns_amount = returns_amount if returns_amount < 0 else -returns_amount
+
+    # # 4. ADS SPEND (KEEP NEGATIVE)
+    # # ad_events = finances_qs.filter(
+    # #     Q(event_type__icontains='ServiceFee') |
+    # #     Q(raw_data__icontains='Ad')
+    # # )
+    # # ads_amount = float(ad_events.aggregate(val=Sum('total_amount'))['val'] or 0)
+    # # ads_amount = ads_amount if ads_amount < 0 else -ads_amount
+
+
+    # ad_metrics_qs = AdCampaignMetrics.objects.filter(
+    #     campaign__user=user,
+    #     date__range=(start_date.date(), end_date.date())
+    # )
+
+    # ads_amount = float(ad_metrics_qs.aggregate(val=Sum('spend'))['val'] or 0)
+    # ads_amount = -ads_amount  # keep negative
+
+    # # 5. COGS (stdcostinc like your dashboard)
+    # cogs = gross_sales * 0.35
+    # cogs = -cogs  # keep negative like your response
+
+    # # 6. NET SALES
+    # # net_sales = gross_sales + returns_amount + cancelled_amount
+    # returns_abs = abs(returns_amount)
+    # cancelled_abs = abs(cancelled_amount)
+
+    # net_sales = gross_sales - returns_abs - cancelled_abs
+
+    # # 7. PROFIT (MATCH YOUR RESPONSE STYLE)
+    # profit = net_sales - ads_amount + cogs
+
+    # # 8. METRICS
+    # margin = (profit / net_sales * 100) if net_sales else 0
+    # roi = (profit / abs(cogs) * 100) if cogs else 0
+    # tacos = (abs(ads_amount) / gross_sales * 100) if gross_sales else 0
+
+
+
+    # ---------------- CORE CALCULATIONS (REAL PROFIT) ----------------
+
+    # 1. GROSS SALES (keep as is for UI consistency)
     gross_sales = float(orders_qs.aggregate(val=Sum('total_amount'))['val'] or 0)
     gross_qty = orders_qs.count()
 
-    # 2. CANCELLED
+    
+
+    items_data = orders_qs.aggregate(
+        total_items=Sum(F('items_shipped') + F('items_unshipped'))
+    )
+
+    gross_item_qty = int(items_data['total_items'] or 0)
+
+    # 2. CANCELLED (keep your logic)
     cancelled_qs = orders_qs.filter(order_status__icontains='Cancel')
-    # cancelled_amount = float(cancelled_qs.aggregate(val=Sum('total_amount'))['val'] or 0)
     cancelled_amount = float(cancelled_qs.aggregate(val=Sum('total_amount'))['val'] or 0)
     cancelled_amount = cancelled_amount if cancelled_amount < 0 else -cancelled_amount
 
-    # 3. RETURNS / REFUNDS
-    refund_events = finances_qs.filter(event_type__icontains='Refund')
-    returns_amount = float(refund_events.aggregate(val=Sum('total_amount'))['val'] or 0)
+    # 3. FINANCIAL BREAKDOWN (🔥 REAL DATA)
+    finance_totals = finances_qs.aggregate(
+        principal=Sum('principal'),
+        tax=Sum('tax'),
+        shipping=Sum('shipping_fee'),
+        commission=Sum('commission_fee'),
+        fulfillment=Sum('fulfillment_fee'),
+        other=Sum('other_fee')
+    )
 
-    # already negative in DB → keep as negative
-    # RETURNS
-    returns_amount = float(refund_events.aggregate(val=Sum('total_amount'))['val'] or 0)
+    principal = float(finance_totals['principal'] or 0)
+    tax = float(finance_totals['tax'] or 0)
+    shipping = float(finance_totals['shipping'] or 0)
+
+    commission = float(finance_totals['commission'] or 0)
+    fulfillment = float(finance_totals['fulfillment'] or 0)
+    other_fees = float(finance_totals['other'] or 0)
+
+
+    # Orders with positive revenue
+    profitable_orders_qs = orders_qs.filter(total_amount__gt=0)
+
+    # Loss comes from financial events (fees/refunds)
+    losing_orders_qs = finances_qs.filter(total_amount__lt=0)
+
+    profitable_summary = profitable_orders_qs.aggregate(
+        total_count=Count('id'),
+        total_amount=Sum('total_amount')
+    )
+
+    losing_summary = losing_orders_qs.aggregate(
+        total_count=Count('id'),
+        total_amount=Sum('total_amount')
+    )
+
+    total_fees = commission + fulfillment + other_fees
+
+    # 4. RETURNS / REFUNDS (derived from principal < 0)
+    refund_events = finances_qs.filter(event_type__icontains='Refund')
+    returns_amount = float(refund_events.aggregate(val=Sum('principal'))['val'] or 0)
     returns_amount = returns_amount if returns_amount < 0 else -returns_amount
 
-    # 4. ADS SPEND (KEEP NEGATIVE)
-    ad_events = finances_qs.filter(
-        Q(event_type__icontains='ServiceFee') |
-        Q(raw_data__icontains='Ad')
+    # 5. ADS (CORRECT SOURCE)
+    ad_metrics_qs = AdCampaignMetrics.objects.filter(
+        campaign__user=user,
+        date__gte=start_date.date(),
+        date__lt=end_date.date()
     )
-    ads_amount = float(ad_events.aggregate(val=Sum('total_amount'))['val'] or 0)
-    ads_amount = ads_amount if ads_amount < 0 else -ads_amount
 
-    # 5. COGS (stdcostinc like your dashboard)
-    cogs = gross_sales * 0.35
-    cogs = -cogs  # keep negative like your response
+    ads_amount = float(ad_metrics_qs.aggregate(val=Sum('acos'))['val'] or 0)
+    ads_amount = -ads_amount  # keep negative
 
-    # 6. NET SALES
-    # net_sales = gross_sales + returns_amount + cancelled_amount
-    returns_abs = abs(returns_amount)
-    cancelled_abs = abs(cancelled_amount)
+    # ---------------- REAL NET SALES ----------------
+    # Net Sales = actual money from Amazon before fees/ads
+    net_sales = principal + shipping - tax
 
-    net_sales = gross_sales - returns_abs - cancelled_abs
+    # ---------------- REAL PROFIT ----------------
+    profit = net_sales - total_fees + ads_amount  # ads already negative
 
-    # 7. PROFIT (MATCH YOUR RESPONSE STYLE)
-    profit = net_sales + ads_amount + cogs
-
-    # 8. METRICS
+    # ---------------- METRICS ----------------
     margin = (profit / net_sales * 100) if net_sales else 0
-    roi = (profit / abs(cogs) * 100) if cogs else 0
+    roi = (profit / abs(ads_amount) * 100) if ads_amount else 0
     tacos = (abs(ads_amount) / gross_sales * 100) if gross_sales else 0
 
     # ---------------- TRENDS FIX ----------------
@@ -2173,7 +2687,7 @@ def get_full_dashboard(request):
             "tacos": f"{round(tacos)}%"
         },
         "breakdown_table": {
-            "gross": {"qty": gross_qty, "amount": round(gross_sales, 2)},
+            "gross": {"qty": gross_item_qty, "amount": round(gross_sales, 2)},
             "cancelled": {"qty": cancelled_qs.count(), "amount": round(cancelled_amount, 2)},
             "cancelled(RTO)": {"qty": cancelled_qs.count(), "amount": round(cancelled_amount, 2)},
             "returned": {"qty": refund_events.count(), "amount": round(returns_amount, 2)},
@@ -2184,12 +2698,32 @@ def get_full_dashboard(request):
         },
         "trends": trends_data,
         "geography": geo_data_detailed,
+
         "top_orders": {
-            "profitaget_full_dashboardble": list(orders_qs.order_by('-total_amount')[:5].values('amazon_order_id', 'total_amount')),
-            "losing": list(finances_qs.filter(total_amount__lt=0).order_by('total_amount')[:5].values('amazon_order_id', 'total_amount'))
+            "profitable": {
+                "total_count": profitable_summary['total_count'] or 0,
+                "total_amount": f"₹{round(float(profitable_summary['total_amount'] or 0), 2)}",
+                "data": list(
+                    profitable_orders_qs.values('amazon_order_id', 'total_amount')
+                )
+            },
+            "losing": {
+                "total_count": losing_summary['total_count'] or 0,
+                # "total_amount": round(float(losing_summary['total_amount'] or 0), 2),
+                "total_amount": f"₹{round(float(losing_summary['total_amount'] or 0), 2)}",
+                "data": list(
+                    losing_orders_qs.values('amazon_order_id', 'total_amount')
+                )
+            }
         },
+        # "top_orders": {
+        #     "profitaget_full_dashboardble": list(orders_qs.order_by('-total_amount')[:5].values('amazon_order_id', 'total_amount')),
+        #     "losing": list(finances_qs.filter(total_amount__lt=0).order_by('total_amount')[:5].values('amazon_order_id', 'total_amount'))
+        # },
         "warnings": []
     })
+
+
 
 @api_view(['POST', 'GET'])
 @permission_classes([IsAuthenticated])

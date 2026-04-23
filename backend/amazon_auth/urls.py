@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views
-
+from .ads_campins import *
+from .bussiness_report import *
+from .finance_report import *
 urlpatterns = [
     path('dashboard-stats/', views.get_full_dashboard, name='dashboard-stats'),
     path('pivot-stats/', views.get_pivot_dashboard, name='pivot-stats'),
@@ -43,5 +45,18 @@ urlpatterns = [
     path('reconcile-paymentsummary/', views.get_amazon_data_reconcile_paymentsummary, name='get_amazon_data_reconcile_paymentsummary'),
     path('bank/ransfer-summary/', views.get_bank_transfer_workflow, name='bank/ransfer-summary/'),
     path('outstanding-payments/', views.get_outstanding_payments, name='get_outstanding_payments'),
+
+
+    #ads_campins
+    path('ads-campins/sync/', sync_ads_manual, name='ads_campins_sync'),
+
+    #bussiness report 
+    path('business-report/sync/', sync_daily_business_report, name='sync_daily_business_report'),
+    path('amazon-new/report-sync/', manual_sync_amazon_reports, name='manual_sync_amazon_reports'),
+
+    path("orders/<str:order_id>/financial-events/", OrderFinancialEventsView.as_view()),
+
+    # path("orders-new/<str:order_id>/financial-events/", SettlementReportView.as_view()),
+    path("orders-new/financial-events/", SettlementReportView.as_view()),
  
 ]

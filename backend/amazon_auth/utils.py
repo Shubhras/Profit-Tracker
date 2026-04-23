@@ -334,3 +334,83 @@ def safe_catalog_call(manager, asin, marketplace_id, retries=3):
             print(f"Catalog API retry {attempt+1}: {e}")
             time.sleep(2 * (attempt + 1))  # exponential backoff
     return {}
+
+
+
+def normalize_financial_events(payload):
+    data = payload.get("payload", {}).get("FinancialEvents", {})
+
+    result = {
+        "shipments": [],
+        "refunds": [],
+        "fees": [],
+        "adjustments": [],
+        "summary": {
+            "total_sales": 0,
+            "total_refunds": 0,
+            "total_fees": 0,
+            "net": 0
+        }
+    }
+
+    # ------------------
+    # SHIPMENTS
+    # ------------------
+    for event in data.get("ShipmentEventList", []):
+        total = 0
+
+        for charge in event.get("OrderChargeList", []):
+            total += charge["ChargeAmount"]["CurrencyAmount"]
+
+        result["shipments"].append({
+            "order_id": event.get("AmazonOrderId"),
+            "posted_date": event.get("PostedDate"),
+            "amount": total
+        })
+
+        result["summary"]["total_sales"] += total
+
+    # ------------------
+    # REFUNDS
+    # ------------------
+    for event in data.get("RefundEventList", []):
+        total = 0
+
+        for charge in event.get("OrderChargeList", []):
+            total += charge["ChargeAmount"]["CurrencyAmount"]
+
+        result["refunds"].append({
+            "order_id": event.get("AmazonOrderId"),
+            "posted_date": event.get("PostedDate"),
+            "amount": total
+        })
+
+        result["summary"]["total_refunds"] += total
+
+    # ------------------
+    # FEES (from shipments + refunds)
+    # ------------------
+    for event_list_name in ["ShipmentEventList", "RefundEventList"]:
+        for event in data.get(event_list_name, []):
+            for fee in event.get("OrderFeeList", []):
+                amount = fee["FeeAmount"]["CurrencyAmount"]
+
+                result["fees"].append({
+                    "type": fee["FeeType"],
+                    "amount": amount
+                })
+
+                result["summary"]["total_fees"] += amount
+
+    # ------------------
+    # NET CALCULATION
+    # ------------------
+    result["summary"]["net"] = (
+        result["summary"]["total_sales"]
+        - result["summary"]["total_refunds"]
+        - result["summary"]["total_fees"]
+    )
+
+    return result
+
+
