@@ -4,7 +4,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import Cookies from 'js-cookie';
 import { Button } from 'antd';
-import { HiOutlineChartBar } from 'react-icons/hi2';
 import { HiOutlineMenuAlt3, HiOutlineX, HiOutlineUser, HiOutlineLogout } from 'react-icons/hi';
 import { LoginOutlined, UserAddOutlined } from '@ant-design/icons';
 import { logOut } from '../../../../redux/authentication/actionCreator';
@@ -99,19 +98,16 @@ function Navbar() {
 
   return (
     <header
-      className={`w-full fixed top-0 left-0 z-50 transition-[background-color,box-shadow,backdrop-filter] duration-300 ${
-        scrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-white shadow-md'
-      }`}
+      className={`w-full fixed top-0 left-0 z-50 transition-[background-color,box-shadow,backdrop-filter] duration-300 ${scrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-white shadow-md'
+        }`}
     >
       <div className="px-[3%]">
         <div className="max-w-7xl mx-auto flex items-center justify-between h-20 text-lg">
           {/* LEFT: LOGO */}
           <motion.div whileHover={{ scale: 1.02 }} className="flex items-center gap-1">
             <Link className="flex items-center gap-2 cursor-pointer" to="/">
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl flex items-center justify-center">
-                <HiOutlineChartBar className="text-white" size={22} />
-              </div>
-              <p className="text-2xl font-bold text-gray-900 mb-0">TrackMyProfit</p>
+              <img src="/WhatsApp-Image-2026-04-23.jpeg" alt="Logo" className="h-10 w-auto object-contain" />
+
             </Link>
           </motion.div>
 
@@ -121,11 +117,10 @@ function Navbar() {
               <Link
                 key={link.to}
                 to={link.to}
-                className={`relative px-4 py-2 font-medium transition-colors duration-200 rounded-lg ${
-                  isActiveLink(link.to)
-                    ? 'text-emerald-600 bg-emerald-50'
-                    : 'text-gray-600 hover:text-emerald-600 hover:bg-gray-50'
-                }`}
+                className={`relative px-4 py-2 font-medium transition-colors duration-200 rounded-lg ${isActiveLink(link.to)
+                  ? 'text-emerald-600 bg-emerald-50'
+                  : 'text-gray-600 hover:text-emerald-600 hover:bg-gray-50'
+                  }`}
               >
                 {link.label}
                 {isActiveLink(link.to) && (
@@ -283,9 +278,8 @@ function Navbar() {
                   <Link
                     to={link.to}
                     onClick={() => setMobileOpen(false)}
-                    className={`block py-3 px-4 rounded-xl font-medium transition-colors ${
-                      isActiveLink(link.to) ? 'text-emerald-600 bg-emerald-50' : 'text-gray-700 hover:bg-gray-50'
-                    }`}
+                    className={`block py-3 px-4 rounded-xl font-medium transition-colors ${isActiveLink(link.to) ? 'text-emerald-600 bg-emerald-50' : 'text-gray-700 hover:bg-gray-50'
+                      }`}
                   >
                     {link.label}
                   </Link>
