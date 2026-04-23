@@ -34,6 +34,10 @@ class AmazonAccount(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    ads_cookie = models.TextField(null=True, blank=True)
+    csrf_token = models.CharField(max_length=500, null=True, blank=True)
+    csrf_data = models.TextField(null=True, blank=True) 
+
     def set_refresh_token(self, token):
         self.refresh_token_encrypted = encrypt_token(token)
 
@@ -81,6 +85,53 @@ class Order(models.Model):
     def __str__(self):
         return f"{self.amazon_order_id} ({self.amazon_account.seller_central_id if self.amazon_account else 'No Account'})"
 
+
+class SettlementOrderSummary(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    amazon_account = models.ForeignKey(
+        AmazonAccount,
+        on_delete=models.CASCADE,
+        related_name='settlement_summaries'
+    )
+
+    amazon_order_id = models.CharField(max_length=50, db_index=True)
+
+    # 🔹 Settlement period (VERY IMPORTANT)
+    data_start_time = models.DateTimeField()
+    data_end_time = models.DateTimeField()
+
+    # 🔹 Financial Breakdown
+    sales = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    fees = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    refunds = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    tax = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    shipping = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    net = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    currency_code = models.CharField(max_length=10, default="INR")
+
+    # 🔹 Tracking
+    report_id = models.CharField(max_length=100, null=True, blank=True)
+    report_document_id = models.CharField(max_length=200, null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = (
+            'amazon_account',
+            'amazon_order_id',
+            'data_start_time',
+            'data_end_time'
+        )
+        indexes = [
+            models.Index(fields=['amazon_order_id']),
+            models.Index(fields=['data_start_time', 'data_end_time']),
+        ]
+
+    def __str__(self):
+        return f"{self.amazon_order_id} | {self.net}"
+    
 
 class FinancialEvent(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -152,28 +203,6 @@ class Report(models.Model):
     def __str__(self):
         return f"{self.report_type} | {self.amazon_report_id} | {self.processing_status}"
 
-# class OrderItem(models.Model):
-#     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
-    
-#     order_item_id = models.CharField(max_length=50) # Amazon's unique ID for the item entry
-#     seller_sku = models.CharField(max_length=100)
-#     title = models.CharField(max_length=500, null=True, blank=True)
-#     asin = models.CharField(max_length=20, null=True, blank=True) 
-    
-#     quantity_ordered = models.IntegerField()
-#     quantity_shipped = models.IntegerField(null=True, blank=True)
-#     image_url = models.URLField(null=True, blank=True)
-#     # Financials per item
-#     item_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     item_tax = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-#     shipping_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    
-#     created_at = models.DateTimeField(auto_now_add=True)
-
-#     def __str__(self):
-#         return f"{self.seller_sku} in {self.order.amazon_order_id}"
-
-
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
@@ -230,7 +259,8 @@ class ProductMapping(models.Model):
     parent_sku = models.CharField(max_length=100)
     product_name = models.TextField(null=True, blank=True)
     brand = models.CharField(max_length=100, null=True, blank=True)
-    cost_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)    
+    cost_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)  
+    image_url = models.URLField(null=True, blank=True)  
     
 
 class AdReport(models.Model):
@@ -257,3 +287,154 @@ class MissingCatalogQueue(models.Model):
     asin = models.CharField(max_length=50)
     marketplace_id = models.CharField(max_length=50)
     processed = models.BooleanField(default=False)
+    image_url = models.URLField(null=True, blank=True)
+
+
+class AdCampaign(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    amazon_account = models.ForeignKey(AmazonAccount, on_delete=models.CASCADE, related_name="campaigns")
+
+    campaign_id = models.CharField(max_length=100, db_index=True)
+    campaign_name = models.CharField(max_length=255)
+
+    program_type = models.CharField(max_length=50, null=True, blank=True)  # SP, SB, etc.
+    campaign_type = models.CharField(max_length=50, null=True, blank=True)
+    targeting_type = models.CharField(max_length=50, null=True, blank=True)
+
+    state = models.CharField(max_length=50, null=True, blank=True)
+    status_name = models.CharField(max_length=100, null=True, blank=True)
+
+    portfolio_name = models.CharField(max_length=255, null=True, blank=True)
+
+    budget_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    budget_type = models.CharField(max_length=50, null=True, blank=True)
+
+    start_date = models.DateField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("amazon_account", "campaign_id")
+
+
+
+class AdCampaignMetrics(models.Model):
+    campaign = models.ForeignKey(AdCampaign, on_delete=models.CASCADE, related_name="metrics")
+
+    date = models.DateField(db_index=True)
+
+    spend = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    sales = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    orders = models.IntegerField(default=0)
+
+    cpc = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+    acos = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    roas = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
+
+    impressions_share = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("campaign", "date")
+
+
+
+
+class BusinessReport(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    amazon_account = models.ForeignKey("AmazonAccount", on_delete=models.CASCADE)
+
+    date = models.DateField()
+
+    # Sales
+    ordered_product_sales = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    ordered_product_sales_b2b = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    # Units
+    units_ordered = models.IntegerField(default=0)
+    units_ordered_b2b = models.IntegerField(default=0)
+
+    # Orders
+    total_order_items = models.IntegerField(default=0)
+
+    # Traffic
+    sessions_total = models.IntegerField(default=0)
+
+    # Conversion
+    order_item_session_percentage = models.FloatField(default=0)
+
+    # Refunds
+    units_refunded = models.IntegerField(default=0)
+    refund_rate = models.FloatField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ["amazon_account", "date"]
+
+
+
+class AmazonReport(models.Model):
+
+    class Status(models.TextChoices):
+        REQUESTED = "REQUESTED"
+        IN_QUEUE = "IN_QUEUE"
+        IN_PROGRESS = "IN_PROGRESS"
+        DONE = "DONE"
+        FAILED = "FAILED"
+        CANCELLED = "CANCELLED"
+
+    class DownloadStatus(models.TextChoices):
+        PENDING = "PENDING"
+        DOWNLOADED = "DOWNLOADED"
+        PARSED = "PARSED"
+        ERROR = "ERROR"
+
+    account = models.ForeignKey(AmazonAccount, on_delete=models.CASCADE, related_name="amazon_reports")
+
+    # Amazon identifiers
+    report_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    report_document_id = models.CharField(max_length=100, null=True, blank=True)
+
+    # Report meta
+    report_type = models.CharField(max_length=100)
+    marketplace_id = models.CharField(max_length=50)
+
+    # Filters used to generate report
+    data_start_time = models.DateTimeField(null=True, blank=True)
+    data_end_time = models.DateTimeField(null=True, blank=True)
+
+    # Status tracking
+    processing_status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.REQUESTED
+    )
+
+    download_status = models.CharField(
+        max_length=20,
+        choices=DownloadStatus.choices,
+        default=DownloadStatus.PENDING
+    )
+
+    # Amazon timestamps
+    created_time = models.DateTimeField(null=True, blank=True)
+    processing_start_time = models.DateTimeField(null=True, blank=True)
+    processing_end_time = models.DateTimeField(null=True, blank=True)
+
+    # Error handling
+    error_message = models.TextField(null=True, blank=True)
+    retry_count = models.IntegerField(default=0)
+
+    # Local system tracking
+    is_active = models.BooleanField(default=True)
+    last_synced_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.report_type} - {self.report_id or 'pending'}"
