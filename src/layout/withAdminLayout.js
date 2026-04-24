@@ -9,7 +9,6 @@ import { Scrollbars } from '@pezhmanparsaee/react-custom-scrollbars';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { ThemeProvider } from 'styled-components';
-import { HiOutlineChartBar } from 'react-icons/hi2';
 import MenueItems from './MenueItems';
 // import CustomizerWrap from './overview/Customizer';
 import { FooterStyle, LayoutContainer, SmallScreenAuthInfo, TopMenuSearch } from './Style';
@@ -148,12 +147,7 @@ const ThemeLayout = (WrappedComponent) => {
                   ) : null}
 
                   <Link className="flex items-center gap-2 cursor-pointer group" to="/admin/profit/summary">
-                    <div className="w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform">
-                      <HiOutlineChartBar className="text-white" size={20} />
-                    </div>
-                    <p className="hidden min-md:block text-xl font-bold text-gray-800 mb-0 tracking-tight group-hover:text-emerald-600 transition-colors">
-                      TrackMyProfit
-                    </p>
+                    <img src="/WhatsApp-Image-2026-04-23.jpeg" alt="Logo" className="h-10 w-auto object-contain" />
                   </Link>
                 </div>
 

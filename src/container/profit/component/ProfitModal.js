@@ -1,12 +1,46 @@
 import React from 'react';
 import { Card, Button } from 'antd';
-import { CloseOutlined, DollarCircleOutlined, BarChartOutlined, CarOutlined } from '@ant-design/icons';
+import {
+  CloseOutlined,
+  DollarCircleOutlined,
+  BarChartOutlined,
+  CarOutlined,
+  CalendarOutlined,
+  PlusOutlined,
+  MinusOutlined,
+} from '@ant-design/icons';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Line } from 'recharts';
+import { useSelector } from 'react-redux';
 import AdsTab from './AdsTab';
 import ReturnShippingTab from './ReturnShippingTab';
 
 export default function ProfitModal({ open, record, onClose, type }) {
   if (!open) return null;
+  const { dateRange } = useSelector((state) => state.dashboard);
+  const formatDate = (date) => {
+    if (!date) return '';
+    const d = new Date(date);
+
+    return d.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit',
+    });
+  };
+  const [expandedRows, setExpandedRows] = React.useState({
+    mpFees: false,
+    shippingFees: false,
+    stdCost: false,
+    ads: false,
+    accountCharges: false,
+    otherFees: false,
+  });
+  const toggleRow = (key) => {
+    setExpandedRows((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
 
   const stats = [
     { label: 'RTO(%)', value: '4%', color: 'text-orange-500' },
@@ -56,9 +90,13 @@ export default function ProfitModal({ open, record, onClose, type }) {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* <span className="text-sm text-gray-500">01-04-26 → 30-04-26</span> */}
-
-            <Button type="text" onClick={onClose}>
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <CalendarOutlined />
+              <span className="font-bold">
+                {formatDate(dateRange?.fromDate)} → {formatDate(dateRange?.endDate)}
+              </span>
+            </div>
+            <Button type="text" onClick={onClose} className="mb-3">
               <CloseOutlined />
             </Button>
           </div>
@@ -195,15 +233,80 @@ export default function ProfitModal({ open, record, onClose, type }) {
                 </div>
 
                 {/* EXTRA ROWS */}
+                {/* MP FEES */}
+                <button
+                  type="button"
+                  onClick={() => toggleRow('mpFees')}
+                  className="grid grid-cols-5 text-xs py-2 border-b w-full text-left bg-transparent"
+                >
+                  <span className="text-black font-semibold flex items-center gap-2">
+                    {expandedRows.mpFees ? <MinusOutlined /> : <PlusOutlined />} MP Fees w/o Claims
+                  </span>
+                  <span />
+                  <span className="text-center">-₹248</span>
+                  <span className="text-center">-₹1</span>
+                  <span className="text-center">-₹249</span>
+                </button>
+
+                {expandedRows.mpFees &&
+                  [
+                    ['estimate_fees', '-₹47,135'],
+                    ['fixedclosingfee', '-₹28,872'],
+                    ['pickandpackfee', '-₹20,502'],
+                    ['return_fbaperunitfulfilme', '₹68'],
+                    ['return_fixedclosingfee', '₹38'],
+                    ['return_refundcommission', '-₹4,569'],
+                    ['return_shippingchargebdc', '₹235'],
+                    ['shippingchargeback', '-₹1,245'],
+                  ].map((row) => (
+                    <div className="grid grid-cols-5 text-xs py-2 border-b bg-gray-50 pl-6">
+                      <span className="text-gray-600">{row[0]}</span>
+                      <span />
+                      <span className="text-center">{row[1]}</span>
+                      <span />
+                      <span />
+                    </div>
+                  ))}
+
+                <button
+                  type="button"
+                  onClick={() => toggleRow('shippingFees')}
+                  className="grid grid-cols-5 text-xs py-2 border-b w-full text-left bg-transparent"
+                >
+                  <span className="text-black font-semibold flex items-center gap-2">
+                    {expandedRows.shippingFees ? <MinusOutlined /> : <PlusOutlined />}
+                    Shipping Fees
+                  </span>
+                  <span />
+                  <span className="text-center">-₹18,378</span>
+                  <span className="text-center">-₹3,308</span>
+                  <span className="text-center">-₹21,686</span>
+                </button>
+
+                {/* SHIPPING EXPAND */}
+                {expandedRows.shippingFees &&
+                  [
+                    ['estimate_shippingfees', '-₹59,011'],
+                    ['fbaweightbasedfee', '-₹48,711'],
+                    ['mfnpostagefee', '-₹19,386'],
+                    ['return_fbaweightbasedfee', '₹168'],
+                  ].map((row) => (
+                    <div className="grid grid-cols-5 text-xs py-2 border-b bg-gray-50 pl-6">
+                      <span className="text-gray-600">{row[0]}</span>
+                      <span />
+                      <span className="text-center">{row[1]}</span>
+                      <span />
+                      <span />
+                    </div>
+                  ))}
+
+                {/* NORMAL ROWS */}
                 {[
-                  ['+ MP Fees w/o Claims', '', '-₹248', '-₹1', '-₹249'],
-                  ['+ Shipping Fees', '', '-₹18,378', '-₹3,308', '-₹21,686'],
                   ['TCS/TDS', '', '', '-₹530', '-₹530'],
                   ['claims', '', '₹0', '', '₹0'],
                 ].map((row) => (
                   <div className="grid grid-cols-5 text-xs py-2 border-b">
                     <span className="text-black">{row[0]}</span>
-                    {/* <span></span> */}
                     <span />
                     <span className="text-center">{row[2]}</span>
                     <span className="text-center">{row[3]}</span>
@@ -221,18 +324,117 @@ export default function ProfitModal({ open, record, onClose, type }) {
                   <span className="text-center">₹72,397</span>
                 </div>
 
-                {/* MORE ROWS */}
+                <button
+                  type="button"
+                  onClick={() => toggleRow('stdCost')}
+                  className="grid grid-cols-5 text-xs py-2 border-b w-full text-left bg-transparent"
+                >
+                  <span className="text-black font-semibold flex items-center gap-2">
+                    {expandedRows.stdCost ? <MinusOutlined /> : <PlusOutlined />}
+                    Std Cost
+                  </span>
+                  <span />
+                  <span className="text-center">-₹3,78,832</span>
+                  <span className="text-center">₹0</span>
+                  <span className="text-center">-₹3,78,832</span>
+                </button>
+
+                {expandedRows.stdCost && (
+                  <div className="grid grid-cols-5 text-xs py-2 border-b bg-gray-50 pl-6">
+                    <span className="text-gray-600">OtherOrdersStdCost</span>
+                    <span />
+                    <span className="text-center">-₹3,78,832</span>
+                    <span />
+                    <span />
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => toggleRow('ads')}
+                  className="grid grid-cols-5 text-xs py-2 border-b w-full text-left bg-transparent"
+                >
+                  <span className="text-black font-semibold flex items-center gap-2">
+                    {expandedRows.ads ? <MinusOutlined /> : <PlusOutlined />}
+                    Ads
+                  </span>
+                  <span />
+                  <span className="text-center">-₹1,19,682</span>
+                  <span className="text-center">-₹21,543</span>
+                  <span className="text-center">-₹1,41,224</span>
+                </button>
+
+                {expandedRows.ads && (
+                  <div className="grid grid-cols-5 text-xs py-2 border-b bg-gray-50 pl-6">
+                    <span className="text-gray-600">Amazon-India</span>
+                    <span />
+                    <span className="text-center">-₹1,19,682</span>
+                    <span />
+                    <span />
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => toggleRow('accountCharges')}
+                  className="grid grid-cols-5 text-xs py-2 border-b w-full text-left bg-transparent"
+                >
+                  <span className="text-black font-semibold flex items-center gap-2">
+                    {expandedRows.accountCharges ? <MinusOutlined /> : <PlusOutlined />}
+                    Account Charges
+                  </span>
+                  <span />
+                  <span className="text-center">-₹1,806</span>
+                  <span className="text-center">-₹325</span>
+                  <span className="text-center">-₹2,131</span>
+                </button>
+
+                {expandedRows.accountCharges && (
+                  <>
+                    <div className="grid grid-cols-5 text-xs py-2 border-b bg-gray-50 pl-6">
+                      <span className="text-gray-600">FBA Inbound</span>
+                      <span />
+                      <span className="text-center">-₹1,446</span>
+                      <span />
+                      <span />
+                    </div>
+                    <div className="grid grid-cols-5 text-xs py-2 border-b bg-gray-50 pl-6">
+                      <span className="text-gray-600">FBA Removal</span>
+                      <span />
+                      <span className="text-center">-₹360</span>
+                      <span />
+                      <span />
+                    </div>
+                  </>
+                )}
+                <button
+                  type="button"
+                  onClick={() => toggleRow('otherFees')}
+                  className="grid grid-cols-5 text-xs py-2 border-b w-full text-left bg-transparent"
+                >
+                  <span className="text-black font-semibold flex items-center gap-2">
+                    {expandedRows.otherFees ? <MinusOutlined /> : <PlusOutlined />}
+                    Otherfees
+                  </span>
+                  <span />
+                  <span className="text-center">-₹4,132</span>
+                  <span />
+                  <span className="text-center">-₹4,132</span>
+                </button>
+
+                {expandedRows.otherFees && (
+                  <div className="grid grid-cols-5 text-xs py-2 border-b bg-gray-50 pl-6">
+                    <span className="text-gray-600">packingcost</span>
+                    <span />
+                    <span className="text-center">-₹4,132</span>
+                    <span />
+                    <span />
+                  </div>
+                )}
                 {[
-                  ['+ Std Cost', '', '-₹54,105', '', '-₹54,105'],
-                  ['+ Ads', '', '-₹406', '-₹73', '-₹479'],
-                  ['+ Account Charges', '', '₹0', '', '₹0'],
-                  ['+ Otherfees', '', '-₹1,832', '', '-₹1,832'],
                   ['TCS', '', '', '₹530', '₹530'],
                   ['GST to Pay', '', '', '-₹1,137', '-₹1,137'],
                 ].map((row) => (
                   <div className="grid grid-cols-5 text-xs py-2 border-b">
                     <span className="text-black">{row[0]}</span>
-                    {/* <span></span> */}
                     <span />
                     <span className="text-center">{row[2]}</span>
                     <span className="text-center">{row[3]}</span>
@@ -240,7 +442,6 @@ export default function ProfitModal({ open, record, onClose, type }) {
                   </div>
                 ))}
 
-                {/* FINAL PROFIT */}
                 <div className="grid grid-cols-5 text-xs py-2 px-2 bg-blue-200 font-bold mt-2 rounded">
                   <span>Profit</span>
                   <span className="text-center">533</span>

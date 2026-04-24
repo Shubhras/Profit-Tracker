@@ -8,10 +8,10 @@ import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function ProfitDetailsView() {
   const { id } = useParams();
-  console.log('ID AA RHA HAI:', id);
   const dispatch = useDispatch();
+  const [showFilters, setShowFilters] = React.useState(false);
 
-  const { profitData, dateRange, channel: globalChannel } = useSelector((state) => state.dashboard);
+  const { profitData, dateRange, channel: globalChannel, loading } = useSelector((state) => state.dashboard);
 
   const [filters, setFilters] = React.useState({
     channel: '',
@@ -158,6 +158,7 @@ export default function ProfitDetailsView() {
     };
 
     dispatch(getProfitDetailsByParentId(payload));
+    setShowFilters(false);
   };
 
   const handleClear = () => {
@@ -191,12 +192,15 @@ export default function ProfitDetailsView() {
             setFilters={setFilters}
             handleApply={handleApply}
             handleClear={handleClear}
+            showFilters={showFilters}
+            setShowFilters={setShowFilters}
           />
 
           <Table
             columns={columns}
             dataSource={dataSource}
             showSorterTooltip={false}
+            loading={loading}
             pagination={{
               pageSize: 10,
               showSizeChanger: true,

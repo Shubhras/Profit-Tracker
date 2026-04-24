@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Table, Card, Modal, Checkbox } from 'antd';
 import { RightOutlined, SettingOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
@@ -15,6 +15,7 @@ export default function ProfitTableView() {
   const navigate = useNavigate();
   const { loading, profitData, dateRange, search, channel: globalChannel } = useSelector((state) => state.dashboard);
   const totals = profitData?.totals || {};
+  const [showFilters, setShowFilters] = useState(false);
   const [pagination, setPagination] = React.useState({
     current: 1,
     pageSize: 10,
@@ -72,7 +73,7 @@ export default function ProfitTableView() {
           : 'withoutAccountCharges'
         : '',
 
-      channel: 'channel',
+      // channel: 'channel',
     };
   };
   const buildPayload = () => {
@@ -504,6 +505,7 @@ export default function ProfitTableView() {
   const handleApply = () => {
     const payload = buildPayload();
     dispatch(getProfitData(payload));
+    setShowFilters(false);
   };
 
   const handleClear = () => {
@@ -535,6 +537,8 @@ export default function ProfitTableView() {
             setFilters={setFilters}
             handleApply={handleApply}
             handleClear={handleClear}
+            showFilters={showFilters}
+            setShowFilters={setShowFilters}
           />
           <Table
             bordered

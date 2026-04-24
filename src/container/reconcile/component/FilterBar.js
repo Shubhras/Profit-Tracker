@@ -3,13 +3,30 @@ import React, { useState } from 'react';
 import { Select, Button } from 'antd';
 import { CloseOutlined, CheckOutlined, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
 
-export default function FilterBar() {
+export default function FilterBar({ onApply, onClear }) {
   const [open, setOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    channel: '',
+    qty: 'grossqty',
+    sku: '',
+    productId: '',
+    parentId: '',
+    mktCategory: '',
+    invMasterSku: '',
+  });
+
+  // const handleApply = () => {
+  //   const newPayload = {
+  //     ...payload,
+  //     ...filters,
+  //   };
+  //   dispatch(getPivotStats(newPayload));
+  // };
 
   return (
     <div className="mb-4">
       <div
-        className={`bg-white rounded-lg border transition-all duration-[2000ms] ease-in-out
+        className={`bg-gray-50 rounded-lg border transition-all duration-[2000ms] ease-in-out
         ${open ? 'border-blue-500' : 'border-gray-200'}`}
       >
         {/* TOP ROW */}
@@ -24,24 +41,28 @@ export default function FilterBar() {
 
           <div
             className="flex items-center gap-2"
-            onClick={(e) => e.stopPropagation()} // prevent toggle on button click
+            onClick={(e) => e.stopPropagation()}
             role="none"
             onKeyDown={(e) => e.stopPropagation()}
           >
-            <Button size="small" onClick={() => setOpen(!open)}>
-              <span className="inline-flex items-center gap-1">
-                <CloseOutlined />
-                <span>Cancel</span>
-              </span>
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+
+                if (onClear) {
+                  onClear();
+                }
+              }}
+              className="flex items-center gap-2"
+            >
+              <span>Clear</span>
+              <CloseOutlined className="text-gray-500" />
             </Button>
 
-            <Button size="small" type="primary" onClick={() => setOpen(!open)}>
-              <span className="inline-flex items-center gap-1">
-                <CheckOutlined />
-                <span>Apply</span>
-              </span>
+            <Button type="primary" onClick={onApply} className="flex items-center gap-2">
+              <span>Apply</span>
+              <CheckOutlined />
             </Button>
-
             <Button
               type="text"
               onClick={(e) => {
@@ -73,6 +94,8 @@ export default function FilterBar() {
                   id="sku"
                   showSearch
                   allowClear
+                  value={filters.sku || undefined}
+                  onChange={(value) => setFilters((prev) => ({ ...prev, sku: value || '' }))}
                   placeholder="Sku"
                   className="w-full mt-1 text-start"
                   optionFilterProp="label"
@@ -93,6 +116,8 @@ export default function FilterBar() {
                 <Select
                   id="parentId"
                   showSearch
+                  value={filters.parentId || undefined}
+                  onChange={(value) => setFilters((prev) => ({ ...prev, parentId: value || '' }))}
                   allowClear
                   placeholder="ParentId"
                   className="w-full mt-1"
@@ -114,6 +139,8 @@ export default function FilterBar() {
                 <Select
                   id="mkt"
                   showSearch
+                  value={filters.mktCategory || undefined}
+                  onChange={(value) => setFilters((prev) => ({ ...prev, mktCategory: value || '' }))}
                   allowClear
                   placeholder="MktCategory"
                   className="w-full mt-1"
@@ -135,6 +162,8 @@ export default function FilterBar() {
                 <Select
                   id="Inv"
                   showSearch
+                  value={filters.invMasterSku || undefined}
+                  onChange={(value) => setFilters((prev) => ({ ...prev, invMasterSku: value || '' }))}
                   allowClear
                   placeholder="Inv mastersku"
                   className="w-full mt-1"

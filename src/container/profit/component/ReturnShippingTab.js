@@ -1,47 +1,92 @@
 import React from 'react';
-import { Card, Table, Radio } from 'antd';
+import { Card, Table, Radio, Pagination } from 'antd';
 
 export default function ReturnShippingTab() {
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const pageSize = 3; // ek page me kitne items
+  const reasonData = [
+    { orders: 9, reason: 'APPAREL_TOO_LARGE', color: 'bg-yellow-200' },
+    { orders: 8, reason: 'AMZ-PG-APP-TOO-LARGE', color: 'bg-red-200' },
+    { orders: 5, reason: 'CR-SWITCHEROO', color: 'bg-green-200' },
+    { orders: 6, reason: 'SIZE_ISSUE', color: 'bg-blue-200' },
+    { orders: 4, reason: 'DAMAGED', color: 'bg-pink-200' },
+    { orders: 3, reason: 'WRONG_ITEM', color: 'bg-purple-200' },
+  ];
+
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedData = reasonData.slice(startIndex, startIndex + pageSize);
   // 🔹 STATE TABLE
   const stateColumns = [
     {
       title: <span className="text-xs font-medium">State</span>,
       dataIndex: 'state',
       render: (v) => <span className="text-xs">{v}</span>,
+      sorter: (a, b) => a.state - b.state,
     },
     {
       title: <span className="text-xs font-medium">Gross Qty</span>,
       dataIndex: 'gross',
+      sorter: (a, b) => a.gross - b.gross,
       render: (v) => <span className="text-xs">{v}</span>,
     },
     {
       title: <span className="text-xs font-medium">Net Qty</span>,
       dataIndex: 'net',
+      sorter: (a, b) => a.net - b.net,
       render: (v) => <span className="text-xs">{v}</span>,
     },
     {
       title: <span className="text-xs font-medium">RTO</span>,
       dataIndex: 'rto',
+      sorter: (a, b) => a.rto - b.rto,
       render: (v) => <span className="text-xs">{v}</span>,
     },
     {
       title: <span className="text-xs font-medium">RTO(%)</span>,
       dataIndex: 'rtoPer',
+      sorter: (a, b) => a.rtoPer - b.rtoPer,
       render: (v) => <span className="text-xs">{v}</span>,
     },
     {
       title: <span className="text-xs font-medium">CRET</span>,
       dataIndex: 'cret',
+      sorter: (a, b) => a.cret - b.cret,
       render: (v) => <span className="text-xs">{v}</span>,
     },
     {
       title: <span className="text-xs font-medium">CRET(%)</span>,
       dataIndex: 'cretPer',
+      sorter: (a, b) => a.cretPer - b.cretPer,
       render: (v) => <span className="text-xs">{v}</span>,
     },
     {
       title: <span className="text-xs font-medium">Total ship(₹)</span>,
       dataIndex: 'total',
+      sorter: (a, b) => a.total - b.total,
+      render: (v) => <span className="text-xs">{v}</span>,
+    },
+    {
+      title: <span className="text-xs font-medium">Total ship(₹)</span>,
+      dataIndex: 'total',
+      sorter: (a, b) => a.total - b.total,
+      render: (v) => <span className="text-xs">{v}</span>,
+    },
+    {
+      title: <span className="text-xs font-medium">Total ship(₹)</span>,
+      dataIndex: 'total',
+      sorter: (a, b) => a.total - b.total,
+      render: (v) => <span className="text-xs">{v}</span>,
+    },
+    {
+      title: <span className="text-xs font-medium">Total ship(₹)</span>,
+      dataIndex: 'total',
+      sorter: (a, b) => a.total - b.total,
+      render: (v) => <span className="text-xs">{v}</span>,
+    },
+    {
+      title: <span className="text-xs font-medium">Total ship(₹)</span>,
+      dataIndex: 'total',
+      sorter: (a, b) => a.total - b.total,
       render: (v) => <span className="text-xs">{v}</span>,
     },
   ];
@@ -221,40 +266,27 @@ export default function ReturnShippingTab() {
             </Radio.Group>
           </div>
 
-          {/* TABLE HEADER */}
           <div className="grid grid-cols-2 text-xs font-semibold border-b pb-2 mb-2">
             <span>Orders</span>
             <span>Reason</span>
           </div>
 
-          {/* ROWS */}
           <div className="space-y-3 text-xs">
-            <div className="grid grid-cols-2 items-center">
-              <span className="w-fit bg-yellow-200 px-2 py-1 rounded-full text-center">9</span>
-              <span className="font-medium">APPAREL_TOO_LARGE</span>
-            </div>
-
-            <div className="grid grid-cols-2 items-center">
-              <span className="w-fit bg-red-200 px-2 py-1 rounded-full text-center">8</span>
-              <span className="font-medium">AMZ-PG-APP-TOO-LARGE</span>
-            </div>
-
-            <div className="grid grid-cols-2 items-center">
-              <span className="w-fit bg-green-200 px-2 py-1 rounded-full text-center">5</span>
-              <span className="font-medium">CR-SWITCHEROO</span>
-            </div>
+            {paginatedData.map((item, i) => (
+              <div key={i} className="grid grid-cols-2 items-center">
+                <span className={`w-fit ${item.color} px-2 py-1 rounded-full text-center`}>{item.orders}</span>
+                <span className="font-medium">{item.reason}</span>
+              </div>
+            ))}
           </div>
-
-          <div className="flex justify-end items-center gap-2 mt-4 text-xs">
-            <span className="cursor-pointer">{'<'}</span>
-            <span className="bg-blue-500 text-white px-2 rounded">1</span>
-            <span>2</span>
-            <span>3</span>
-            <span>4</span>
-            <span>5</span>
-            <span>6</span>
-            <span>7</span>
-            <span className="cursor-pointer">{'>'}</span>
+          <div className="flex justify-end mt-4">
+            <Pagination
+              size="small"
+              current={currentPage}
+              pageSize={pageSize}
+              total={reasonData.length}
+              onChange={(page) => setCurrentPage(page)}
+            />
           </div>
         </Card>
       </div>
@@ -267,7 +299,11 @@ export default function ReturnShippingTab() {
             <Table
               columns={stateColumns}
               dataSource={stateData}
-              pagination={false}
+              pagination={{
+                current: 1,
+                pageSize: 10,
+                total: stateData.length,
+              }}
               size="small"
               rowKey={(r, i) => i}
               className="[&_.ant-table-cell]:py-1 [&_.ant-table-cell]:px-2"
@@ -284,7 +320,7 @@ export default function ReturnShippingTab() {
                 <span>₹1,162</span>
               </div>
 
-              <div className="flex justify-between bg-pink-200 px-2 py-1 rounded">
+              <div className="flex justify-between bg-red-200 px-2 py-1 rounded">
                 <span>Customer Return</span>
                 <span>₹8,003</span>
               </div>

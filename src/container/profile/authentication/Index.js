@@ -1,7 +1,6 @@
 import { Spin } from 'antd';
 import React, { Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { HiOutlineChartBar } from 'react-icons/hi2';
 import { UserOutlined } from '@ant-design/icons';
 import { FaStar } from 'react-icons/fa';
 import Navbar from '../home/components/Navbar';
@@ -24,10 +23,7 @@ const AuthLayout = (WraperContent) => {
           {/* Logo */}
           <div className="relative z-10">
             <Link to="/" className="flex items-center gap-3 text-gray-900 text-2xl font-bold tracking-tight">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                <HiOutlineChartBar className="text-white" size={24} />
-              </div>
-              TrackMyProfit
+              <img src="/WhatsApp-Image-2026-04-23.jpeg" alt="Logo" className="h-10 w-auto object-contain" />
             </Link>
           </div>
 

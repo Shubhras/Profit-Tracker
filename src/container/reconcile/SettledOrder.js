@@ -1,10 +1,15 @@
-import React from 'react';
-import { Table, Card } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Table, Card, Spin } from 'antd';
 import ajio from '../../assets/icons/ajio.png';
 import flipkart from '../../assets/icons/flipkart.svg';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function SettledOrder() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setTimeout(() => setLoading(false), 800);
+  }, []);
   const PageRoutes = [
     {
       path: 'index',
@@ -134,16 +139,18 @@ export default function SettledOrder() {
         className="flex  justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 sm:pb-[30px] bg-transparent sm:flex-col"
       />
       <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-8 xl:px-[15px] pb-[30px] bg-transparent">
-        <Card bordered={false} className="sales-table-wrapper">
-          <Table
-            columns={columns}
-            dataSource={data}
-            bordered
-            size="small"
-            pagination={{ pageSize: 10 }}
-            scroll={{ x: 'max-content' }}
-          />
-        </Card>
+        <Spin spinning={loading} size="large">
+          <Card bordered={false} className="sales-table-wrapper">
+            <Table
+              columns={columns}
+              dataSource={data}
+              bordered
+              size="small"
+              pagination={{ pageSize: 10 }}
+              scroll={{ x: 'max-content' }}
+            />
+          </Card>
+        </Spin>
       </main>
     </>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Row, Col, Card, Statistic, Tag, Select, Divider, Checkbox, Input, Button } from 'antd';
+import { Row, Col, Card, Statistic, Tag, Select, Divider, Checkbox, Input, Button, Spin } from 'antd';
 import { CheckOutlined, CloseOutlined, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -14,7 +14,7 @@ export default function Summary() {
   // const path = '/admin';
   const navigate = useNavigate();
   const [viewType, setViewType] = useState('percentage');
-  const { dashboardData, dateRange, channel: globalChannel, search } = useSelector((state) => state.dashboard);
+  const { dashboardData, dateRange, channel: globalChannel, search, loading } = useSelector((state) => state.dashboard);
   const [filters, setFilters] = useState({
     withAds: false,
     withoutAds: true,
@@ -160,7 +160,9 @@ export default function Summary() {
     filters.withoutExpenses && { label: 'Without Expenses', color: 'red' },
   ].filter(Boolean);
   const handleApply = () => {
-    setAppliedFilters(filters);
+    // setAppliedFilters(filters);
+    dispatch(getDashboard(payload)); //
+    setShowFilters(false);
   };
   const handleClear = () => {
     const resetFilters = {
@@ -241,7 +243,7 @@ export default function Summary() {
         <Card className="mb-4 border rounded-xl px-0 py-0 bg-[#f9fafb]">
           <button
             type="button"
-            className="flex items-center justify-between gap-4 mb-1 text-sm cursor-pointer w-full"
+            className="flex items-center justify-between gap-4 mb-0 text-sm cursor-pointer w-full"
             onClick={() => setShowFilters((prev) => !prev)}
           >
             <span className="text-gray-500">{selectedFilters.length} Filter Selected</span>
@@ -298,7 +300,7 @@ export default function Summary() {
 
           {showFilters && (
             <>
-              <div className="flex items-end gap-3 mb-3 flex-nowrap">
+              <div className="flex items-end gap-3 mb-3 flex-nowrap mt-3">
                 {[
                   { label: 'SKU', key: 'sku', placeholder: 'Sku' },
                   { label: 'ProductId', key: 'productId', placeholder: 'ProductId' },
@@ -429,181 +431,179 @@ export default function Summary() {
             </>
           )}
         </Card>
-        <Row gutter={[16, 16]}>
-          {/* SALES */}
-          <Col xs={24} lg={9}>
-            <Card
-              onClick={() => navigate(`/admin/profit/profittabledetails/${globalChannel?.[0] || 'all'}`)}
-              hoverable
-              style={{ cursor: 'pointer' }}
-            >
-              <div className="flex justify-between items-center mb-2">
-                <span className="font-medium">Sales</span>
+        <Spin spinning={loading} size="large">
+          <Row gutter={[16, 16]}>
+            {/* SALES */}
+            <Col xs={24} lg={9}>
+              <Card
+                onClick={() => navigate(`/admin/profit/profittabledetails/${globalChannel?.[0] || 'all'}`)}
+                hoverable
+                style={{ cursor: 'pointer' }}
+              >
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-medium">Sales</span>
 
-                <Tag color={appliedFilters.withGST ? 'green' : 'red'}>{gstLabel}</Tag>
-              </div>
-              <Statistic value={dashboardData?.header_metrics?.sales || 0} prefix="₹" />{' '}
-              <Tag color="blue" className="mt-2">
-                Units: {dashboardData?.breakdown_table?.gross?.qty || 0}
-              </Tag>
-              <Divider />
-              <Row className="font-semibold mb-1">
-                <Col span={10} />
-                <Col span={7} className="text-center">
-                  Qty
-                </Col>
-                <Col span={7} className="text-right">
-                  Sales
-                </Col>
-              </Row>
-              <Row>
-                <Col span={10}>Gross</Col>
-                <Col span={7} className="text-center">
-                  {dashboardData?.breakdown_table?.gross?.qty || 0}
-                </Col>
-                <Col span={7} className="text-right">
-                  ₹{dashboardData?.breakdown_table?.gross?.amount || 0}
-                </Col>
-              </Row>
-              <Row>
-                <Col span={10}>Cancelled</Col>
-                <Col span={7} className="text-center">
-                  {dashboardData?.breakdown_table?.cancelled?.qty || 0}
-                </Col>
-                <Col span={7} className="text-right">
-                  ₹{dashboardData?.breakdown_table?.cancelled?.amount || 0}
-                </Col>
-              </Row>
-              <Row>
-                <Col span={10}>Returned(RTO)</Col>
-                <Col span={7} className="text-center">
-                  {dashboardData?.breakdown_table?.returned?.qty || 0}
-                </Col>
-                <Col span={7} className="text-right">
-                  ₹{dashboardData?.breakdown_table?.returned?.amount || 0}
-                </Col>
-              </Row>
-              <Row>
-                <Col span={10}>Cancelled(RTO)</Col>
-                <Col span={7} className="text-center">
-                  {dashboardData?.breakdown_table?.cancelledrtosummaryqty?.qty || 0}
-                </Col>
-                <Col span={7} className="text-right">
-                  ₹{dashboardData?.breakdown_table?.cancelledrtosummarysales?.amount || 0}
-                </Col>
-              </Row>
-              <Row>
-                <Col span={10}>Returned(CReF)</Col>
-                <Col span={7} className="text-center">
-                  {dashboardData?.breakdown_table?.creturnsummaryqty?.qty || 0}
-                </Col>
-                <Col span={7} className="text-right">
-                  ₹{dashboardData?.breakdown_table?.returnedcref?.amount || 0}
-                </Col>
-              </Row>
-              <Row>
-                <Col span={10}>Claimed</Col>
-                <Col span={7} className="text-center">
-                  {dashboardData?.breakdown_table?.claimqty?.qty || 0}
-                </Col>
-                <Col span={7} className="text-right">
-                  ₹{dashboardData?.breakdown_table?.claimsales?.amount || 0}
-                </Col>
-              </Row>
-              <Divider />
-              <Row>
-                <Col span={10}>
-                  <strong>Net</strong>
-                </Col>
-                <Col span={7} className="text-center">
-                  <strong>{dashboardData?.breakdown_table?.net?.qty || 0}</strong>
-                </Col>
-                <Col span={7} className="text-right">
-                  <strong>₹{dashboardData?.breakdown_table?.net?.amount || 0}</strong>
-                </Col>
-              </Row>
-            </Card>
-          </Col>
+                  <Tag color={appliedFilters.withGST ? 'green' : 'red'}>{gstLabel}</Tag>
+                </div>
+                <Statistic value={dashboardData?.header_metrics?.sales || 0} prefix="₹" />{' '}
+                <Tag color="blue" className="mt-2">
+                  Units: {dashboardData?.breakdown_table?.gross?.qty || 0}
+                </Tag>
+                <Divider />
+                <Row className="font-semibold mb-1">
+                  <Col span={10} />
+                  <Col span={7} className="text-center">
+                    Qty
+                  </Col>
+                  <Col span={7} className="text-right">
+                    Sales
+                  </Col>
+                </Row>
+                <Row>
+                  <Col span={10}>Gross</Col>
+                  <Col span={7} className="text-center">
+                    {dashboardData?.breakdown_table?.gross?.qty || 0}
+                  </Col>
+                  <Col span={7} className="text-right">
+                    ₹{dashboardData?.breakdown_table?.gross?.amount || 0}
+                  </Col>
+                </Row>
+                <Row>
+                  <Col span={10}>Cancelled</Col>
+                  <Col span={7} className="text-center">
+                    {dashboardData?.breakdown_table?.cancelled?.qty || 0}
+                  </Col>
+                  <Col span={7} className="text-right">
+                    ₹{dashboardData?.breakdown_table?.cancelled?.amount || 0}
+                  </Col>
+                </Row>
+                <Row>
+                  <Col span={10}>Returned(RTO)</Col>
+                  <Col span={7} className="text-center">
+                    {dashboardData?.breakdown_table?.returned?.qty || 0}
+                  </Col>
+                  <Col span={7} className="text-right">
+                    ₹{dashboardData?.breakdown_table?.returned?.amount || 0}
+                  </Col>
+                </Row>
+                <Row>
+                  <Col span={10}>Cancelled(RTO)</Col>
+                  <Col span={7} className="text-center">
+                    {dashboardData?.breakdown_table?.cancelledrtosummaryqty?.qty || 0}
+                  </Col>
+                  <Col span={7} className="text-right">
+                    ₹{dashboardData?.breakdown_table?.cancelledrtosummarysales?.amount || 0}
+                  </Col>
+                </Row>
+                <Row>
+                  <Col span={10}>Returned(CReF)</Col>
+                  <Col span={7} className="text-center">
+                    {dashboardData?.breakdown_table?.creturnsummaryqty?.qty || 0}
+                  </Col>
+                  <Col span={7} className="text-right">
+                    ₹{dashboardData?.breakdown_table?.returnedcref?.amount || 0}
+                  </Col>
+                </Row>
+                <Row>
+                  <Col span={10}>Claimed</Col>
+                  <Col span={7} className="text-center">
+                    {dashboardData?.breakdown_table?.claimqty?.qty || 0}
+                  </Col>
+                  <Col span={7} className="text-right">
+                    ₹{dashboardData?.breakdown_table?.claimsales?.amount || 0}
+                  </Col>
+                </Row>
+                <Divider />
+                <Row>
+                  <Col span={10}>
+                    <strong>Net</strong>
+                  </Col>
+                  <Col span={7} className="text-center">
+                    <strong>{dashboardData?.breakdown_table?.net?.qty || 0}</strong>
+                  </Col>
+                  <Col span={7} className="text-right">
+                    <strong>₹{dashboardData?.breakdown_table?.net?.amount || 0}</strong>
+                  </Col>
+                </Row>
+              </Card>
+            </Col>
 
-          {/* PROFIT */}
-          <Col xs={24} lg={6}>
-            <Card
-              onClick={() => navigate(`/admin/profit/profittabledetails/${globalChannel?.[0] || 'all'}`)}
-              hoverable
-              style={{ cursor: 'pointer' }}
-            >
-              <Statistic title="Profit" value={dashboardData?.header_metrics?.profit || 0} prefix="₹" />
-              <Tag color="gold">Margin: {dashboardData?.header_metrics?.margin || '0%'}</Tag>
-              <Tag color="green">ROI: {dashboardData?.header_metrics?.roi || '0%'}</Tag>
-            </Card>
+            {/* PROFIT */}
+            <Col xs={24} lg={6}>
+              <Card
+                onClick={() => navigate(`/admin/profit/profittabledetails/${globalChannel?.[0] || 'all'}`)}
+                hoverable
+                style={{ cursor: 'pointer' }}
+              >
+                <Statistic title="Profit" value={dashboardData?.header_metrics?.profit || 0} prefix="₹" />
+                <Tag color="gold">Margin: {dashboardData?.header_metrics?.margin || '0%'}</Tag>
+                <Tag color="green">ROI: {dashboardData?.header_metrics?.roi || '0%'}</Tag>
+              </Card>
 
-            <Row gutter={8} className="mt-1">
-              <Col span={12}>
-                <Card size="small" className="bg-green-50">
-                  <p className="text-green-700">Profit IDs</p>
-                  <strong>#{dashboardData?.top_orders?.profitaget_full_dashboardble?.length || 0}</strong>
-                  <p>
-                    ₹
-                    {dashboardData?.top_orders?.profitaget_full_dashboardble?.reduce(
-                      (acc, cur) => acc + (cur.amount || 0),
-                      0,
-                    )}
-                  </p>
-                </Card>
-              </Col>
-              <Col span={12}>
-                <Card size="small" className="bg-red-50">
-                  <p className="text-red-600">Loss IDs</p>
-                  <strong>#{dashboardData?.top_orders?.losing?.length || 0}</strong>
-                  <p>₹{dashboardData?.top_orders?.losing?.reduce((acc, cur) => acc + (cur.amount || 0), 0)}</p>
-                </Card>
-              </Col>
-            </Row>
-            <Card size="small" className="mt-1 py-0">
-              {/* <div className="flex flex-col justify-between h-full"> */}
-              <div>
-                {/* <p className="text-gray-500 text-xs mb-1">Ad Spend</p> */}
-                <Statistic
-                  // className="mt-0"
-                  title="Ad Spend"
-                  value={dashboardData?.header_metrics?.ad_spend || 0}
-                  prefix="₹"
-                />
-                {/* <strong className="text-lg block">₹{dashboardData?.header_metrics?.ad_spend || 0}</strong> */}
-              </div>
+              <Row gutter={8} className="mt-1">
+                <Col span={12}>
+                  <Card size="small" className="bg-green-50">
+                    <p className="text-green-700">Profit IDs</p>
+                    <strong>#{dashboardData?.top_orders?.profitable?.total_count || 0}</strong>
 
-              <Tag color="magenta" className="mt-1 w-fit">
-                TACOS: {dashboardData?.header_metrics?.tacos || '0%'}
-              </Tag>
-              {/* </div> */}
-            </Card>
-          </Col>
+                    <p>{dashboardData?.top_orders?.profitable?.total_amount || 0}</p>
+                  </Card>
+                </Col>
+                <Col span={12}>
+                  <Card size="small" className="bg-red-50">
+                    <p className="text-red-600">Loss IDs</p>
+                    <strong>#{dashboardData?.top_orders?.losing?.total_count || 0}</strong>
 
-          {/* AD SPEND */}
-          {/* <Col xs={24} lg={4}>
+                    <p>{dashboardData?.top_orders?.losing?.total_amount || 0}</p>
+                  </Card>
+                </Col>
+              </Row>
+              <Card size="small" className="mt-1 py-0">
+                {/* <div className="flex flex-col justify-between h-full"> */}
+                <div>
+                  {/* <p className="text-gray-500 text-xs mb-1">Ad Spend</p> */}
+                  <Statistic
+                    // className="mt-0"
+                    title="Ad Spend"
+                    value={dashboardData?.header_metrics?.ad_spend || 0}
+                    prefix="₹"
+                  />
+                  {/* <strong className="text-lg block">₹{dashboardData?.header_metrics?.ad_spend || 0}</strong> */}
+                </div>
+
+                <Tag color="magenta" className="mt-1 w-fit">
+                  TACOS: {dashboardData?.header_metrics?.tacos || '0%'}
+                </Tag>
+                {/* </div> */}
+              </Card>
+            </Col>
+
+            {/* AD SPEND */}
+            {/* <Col xs={24} lg={4}>
             <Card>
               <Statistic title="Ad Spend" value={dashboardData?.header_metrics?.ad_spend || 0} prefix="₹" />
               <Tag color="magenta">TACOS: {dashboardData?.header_metrics?.tacos || '0%'}</Tag>
             </Card>
           </Col> */}
 
-          {/* STACKED BAR (RIGHT) */}
-          <Col xs={24} lg={9}>
-            <Card>
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={stackedData}>
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="sales" stackId="a" fill="#f28b82" />
-                  <Bar dataKey="qty" stackId="a" fill="#a7f3a0" />
-                  <Bar dataKey="profit" stackId="a" fill="#fbc687" />
-                </BarChart>
-              </ResponsiveContainer>
-            </Card>
-          </Col>
-        </Row>
+            {/* STACKED BAR (RIGHT) */}
+            <Col xs={24} lg={9}>
+              <Card>
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart data={stackedData}>
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="sales" stackId="a" fill="#f28b82" />
+                    <Bar dataKey="qty" stackId="a" fill="#a7f3a0" />
+                    <Bar dataKey="profit" stackId="a" fill="#fbc687" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
+            </Col>
+          </Row>
+        </Spin>
 
         {/* ================= BOTTOM 4 PANELS ================= */}
         <Row gutter={[16, 16]} className="mt-6">

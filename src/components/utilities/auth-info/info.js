@@ -5,16 +5,16 @@ import UilDollarSign from '@iconscout/react-unicons/icons/uil-dollar-sign';
 import UilSignout from '@iconscout/react-unicons/icons/uil-signout';
 import UilUser from '@iconscout/react-unicons/icons/uil-user';
 // import UilUsersAlt from '@iconscout/react-unicons/icons/uil-users-alt';
-import { Avatar, DatePicker, Button } from 'antd';
+import { Avatar, Button } from 'antd';
 import React, { useEffect, useState } from 'react';
 // import { useTranslation} from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import UilTimes from '@iconscout/react-unicons/icons/uil-times';
 import moment from 'moment';
-// import { DateRange } from 'react-date-range';
-// import 'react-date-range/dist/styles.css';
-// import 'react-date-range/dist/theme/default.css';
+import { DateRange } from 'react-date-range';
+import 'react-date-range/dist/styles.css';
+import 'react-date-range/dist/theme/default.css';
 import Search from './Search';
 import FilterDropdown from './FilterDropdown';
 // import Message from './Message';
@@ -28,73 +28,65 @@ import action from '../../../redux/dashboard/action';
 
 const AuthInfo = React.memo(() => {
   const dispatch = useDispatch();
-  const { RangePicker } = DatePicker;
+  // const { RangePicker } = DatePicker;
   // const dateRef = React.useRef(null);
   // const [dateRange, setDateRange] = useState(null);
   const [dateRange, setDateRange] = useState([moment().startOf('month'), moment()]);
   const [open, setOpen] = useState(false);
-  const [tempRange, setTempRange] = useState(dateRange);
-  // const [dateRange, setDateRange] = React.useState([
-  //   {
-  //     startDate: new Date(),
-  //     endDate: new Date(),
-  //     key: 'selection',
-  //   },
-  // ]);
+  // const [tempRange, setTempRange] = useState(dateRange);
+  const [tempRange, setTempRange] = useState([
+    {
+      startDate: new Date(),
+      endDate: new Date(),
+      key: 'selection',
+    },
+  ]);
   // const [openDate, setOpenDate] = React.useState(false);
-  // const handlePreset = (type) => {
-  //   const today = new Date();
+  const handlePreset = (type) => {
+    let start;
+    let end;
+    const today = new Date();
 
-  //   let start = new Date();
-  //   let end = new Date();
+    switch (type) {
+      case 'today':
+        start = today;
+        end = today;
+        break;
+      case 'yesterday':
+        start = new Date(today.setDate(today.getDate() - 1));
+        end = start;
+        break;
+      case 'thisWeek':
+        start = new Date();
+        start.setDate(today.getDate() - today.getDay());
+        end = new Date();
+        break;
+      case 'lastWeek':
+        start = new Date();
+        start.setDate(today.getDate() - today.getDay() - 7);
+        end = new Date();
+        end.setDate(start.getDate() + 6);
+        break;
+      case 'thisMonth':
+        start = new Date(today.getFullYear(), today.getMonth(), 1);
+        end = new Date();
+        break;
+      case 'lastMonth':
+        start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        end = new Date(today.getFullYear(), today.getMonth(), 0);
+        break;
+      default:
+        return;
+    }
 
-  //   if (type === 'Today') {
-  //     start = today;
-  //     end = today;
-  //   }
-
-  //   if (type === 'Yesterday') {
-  //     const y = new Date();
-  //     y.setDate(today.getDate() - 1);
-  //     start = y;
-  //     end = y;
-  //   }
-
-  //   if (type === 'This Week') {
-  //     const day = today.getDay(); // 0 = Sunday
-  //     const diff = today.getDate() - day + (day === 0 ? -6 : 1); // Monday
-  //     start = new Date(today.setDate(diff));
-  //     end = new Date(start);
-  //     end.setDate(start.getDate() + 6);
-  //   }
-
-  //   if (type === 'Last Week') {
-  //     const day = today.getDay();
-  //     const diff = today.getDate() - day - 6; // last week Monday
-  //     start = new Date(today.setDate(diff));
-  //     end = new Date(start);
-  //     end.setDate(start.getDate() + 6);
-  //   }
-
-  //   if (type === 'This Month') {
-  //     start = new Date(today.getFullYear(), today.getMonth(), 1);
-  //     end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-  //   }
-
-  //   if (type === 'Last Month') {
-  //     start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-  //     end = new Date(today.getFullYear(), today.getMonth(), 0);
-  //   }
-
-  //   setDateRange([
-  //     {
-  //       startDate: start,
-  //       endDate: end,
-  //       key: 'selection',
-  //       label: type,
-  //     },
-  //   ]);
-  // };
+    setTempRange([
+      {
+        startDate: start,
+        endDate: end,
+        key: 'selection',
+      },
+    ]);
+  };
   // useEffect(() => {
   //   const handleClickOutside = (e) => {
   //     if (dateRef.current && !dateRef.current.contains(e.target)) {
@@ -135,6 +127,23 @@ const AuthInfo = React.memo(() => {
         endDate: moment().format('YYYY-MM-DD'),
       }),
     );
+  }, []);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const selects = document.querySelectorAll('.rdrYearPicker select');
+
+      selects.forEach((select) => {
+        Array.from(select.options).forEach((option) => {
+          const year = Number(option.value);
+
+          if (year < 2020 || year > 2026) {
+            option.style.display = 'none';
+          }
+        });
+      });
+    }, 300);
+
+    return () => clearInterval(interval);
   }, []);
 
   const userContent = (
@@ -235,41 +244,6 @@ const AuthInfo = React.memo(() => {
   //     </Link>
   //   </div>
   // );
-  const handlePreset = (type) => {
-    let start;
-    let end;
-
-    switch (type) {
-      case 'today':
-        start = moment();
-        end = moment();
-        break;
-      case 'yesterday':
-        start = moment().subtract(1, 'day');
-        end = moment().subtract(1, 'day');
-        break;
-      case 'thisWeek':
-        start = moment().startOf('week');
-        end = moment().endOf('week');
-        break;
-      case 'lastWeek':
-        start = moment().subtract(1, 'week').startOf('week');
-        end = moment().subtract(1, 'week').endOf('week');
-        break;
-      case 'thisMonth':
-        start = moment().startOf('month');
-        end = moment().endOf('month');
-        break;
-      case 'lastMonth':
-        start = moment().subtract(1, 'month').startOf('month');
-        end = moment().subtract(1, 'month').endOf('month');
-        break;
-      default:
-        return;
-    }
-
-    setTempRange([start, end]);
-  };
 
   return (
     <div className="flex items-center justify-end flex-auto">
@@ -313,13 +287,12 @@ const AuthInfo = React.memo(() => {
             )}
           </button>
 
-          <RangePicker
+          {/* <RangePicker
             open={open}
             onOpenChange={(val) => setOpen(val)}
             value={tempRange}
             panelRender={(panelNode) => (
               <div style={{ display: 'flex' }}>
-                {/* 🔹 LEFT SIDE */}
                 <div
                   style={{
                     width: 180,
@@ -327,7 +300,7 @@ const AuthInfo = React.memo(() => {
                     padding: 10,
                     display: 'flex',
                     flexDirection: 'column',
-                    height: 300, // important
+                    height: 300,
                   }}
                 >
                   <div style={{ flex: 1 }}>
@@ -385,27 +358,157 @@ const AuthInfo = React.memo(() => {
               </div>
             )}
             disabledDate={(current) => current && current > moment()}
-            // onChange={(val) => {
-            //   setDateRange(val);
-            //   setOpen(false);
-            // }}
             onChange={(val) => {
               setTempRange(val);
-              // setOpen(false);
-
-              // if (val) {
-              //   dispatch(
-              //     action.setDateRange({
-              //       fromDate: val[0].format('YYYY-MM-DD'),
-              //       endDate: val[1].format('YYYY-MM-DD'),
-              //     }),
-              //   );
-              // } else {
-              //   dispatch(action.setDateRange(null));
-              // }
             }}
             style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
-          />
+          /> */}
+          {open && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 40,
+                right: 0,
+                zIndex: 1000,
+                background: '#fff',
+                borderRadius: 8,
+                boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                display: 'flex',
+              }}
+            >
+              {/* LEFT SIDE SAME */}
+              <div
+                style={{
+                  width: 180,
+                  borderRight: '1px solid #f0f0f0',
+                  padding: 10,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: 300,
+                }}
+              >
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {' '}
+                  {[
+                    { label: 'Today', type: 'today' },
+                    { label: 'Yesterday', type: 'yesterday' },
+                    { label: 'This Week', type: 'thisWeek' },
+                    { label: 'Last Week', type: 'lastWeek' },
+                    { label: 'This Month', type: 'thisMonth' },
+                    { label: 'Last Month', type: 'lastMonth' },
+                  ].map((item) => (
+                    <button
+                      type="button"
+                      key={item.type}
+                      onClick={() => handlePreset(item.type)}
+                      className="px-2 py-3 w-full text-left rounded-md text-[13px] hover:bg-gray-100"
+                      style={{ lineHeight: '16px' }}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: 6,
+                    marginTop: 'auto',
+                    paddingTop: 8,
+                    borderTop: '1px solid #f0f0f0',
+                  }}
+                >
+                  <Button
+                    type="primary"
+                    onClick={() => {
+                      const start = tempRange[0].startDate;
+                      const end = tempRange[0].endDate;
+
+                      setDateRange([moment(start), moment(end)]);
+
+                      dispatch(
+                        action.setDateRange({
+                          fromDate: moment(start).format('YYYY-MM-DD'),
+                          endDate: moment(end).format('YYYY-MM-DD'),
+                        }),
+                      );
+
+                      setOpen(false);
+                    }}
+                  >
+                    Submit
+                  </Button>
+
+                  <Button onClick={() => setOpen(false)}>Cancel</Button>
+                </div>
+              </div>
+              <style>
+                {`
+.rdrMonthPicker select {
+  padding: 2px 6px !important;
+  height: auto !important;
+}
+
+.rdrMonthPicker select:hover {
+  background-color: rgba(59,130,246,0.08) !important;
+  padding: 2px 6px !important; /* height same rahe */
+}
+
+.rdrYearPicker select {
+  padding: 4px 22x !important;
+  height: 30px !important;
+   height: auto !important; 
+}
+
+.rdrYearPicker select:hover {
+  background-color: rgba(59,130,246,0.08) !important;
+}
+
+.rdrMonthName {
+  padding-top: 0px !important;
+  padding-bottom: 0px !important;
+  font-size: 13px !important;
+}
+
+.rdrMonthAndYearPickers {
+  gap: 4px !important;
+}
+.rdrDateDisplayWrapper {
+  padding: 2px 8px !important;
+}
+
+.rdrDateDisplay {
+  gap: 6px !important; 
+}
+    .rdrMonth {
+    width: 300px !important; 
+  }
+
+.rdrDateDisplayItem {
+  height: 28px !important; 
+  min-width: 120px !important;
+  padding: 0 6px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rdrDateDisplayItem input {
+  font-size: 12px !important; 
+  text-align: center;
+}
+`}
+              </style>
+              <DateRange
+                ranges={tempRange}
+                onChange={(item) => setTempRange([item.selection])}
+                months={2}
+                direction="horizontal"
+                maxDate={new Date()}
+                rangeColors={['#22c55e']}
+              />
+            </div>
+          )}
         </div>
         {/* <div ref={dateRef} className="relative">
           <button
