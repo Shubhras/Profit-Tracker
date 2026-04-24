@@ -326,6 +326,8 @@ def import_ads_from_excel(file_path):
             }
         )
 
+# from .spapi_manager import get_catalog_item
+
 def safe_catalog_call(manager, asin, marketplace_id, retries=3):
     for attempt in range(retries):
         try:

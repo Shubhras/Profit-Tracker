@@ -1648,11 +1648,13 @@ def sync_orders(request):
                                 print(f"MissingCatalogQueue start to create ")
                                 MissingCatalogQueue.objects.get_or_create(
                                     seller_sku=sku,
+                                    account=account,
                                     defaults={
                                         "asin": asin,
                                         "marketplace_id": marketplace_id,
                                         "image_url":image_url,
-                                        "processed": False
+                                        "processed": False,
+                                       
                                     }
                                 )
 

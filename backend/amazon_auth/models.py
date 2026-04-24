@@ -255,12 +255,17 @@ class OrderItem(models.Model):
     
 
 class ProductMapping(models.Model):
-    seller_sku = models.CharField(max_length=100, unique=True)
+    asin = models.CharField(max_length=50,null=True,)
+    seller_sku = models.CharField(max_length=100)
     parent_sku = models.CharField(max_length=100)
     product_name = models.TextField(null=True, blank=True)
     brand = models.CharField(max_length=100, null=True, blank=True)
     cost_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)  
-    image_url = models.URLField(null=True, blank=True)  
+    image_url = models.URLField(null=True, blank=True)
+    account = models.ForeignKey(AmazonAccount, on_delete=models.CASCADE,null=True,  blank=True)
+
+    class Meta:
+        unique_together = ("seller_sku", "account")  
     
 
 class AdReport(models.Model):
@@ -283,11 +288,18 @@ class AdReport(models.Model):
 
 
 class MissingCatalogQueue(models.Model):
-    seller_sku = models.CharField(max_length=255, unique=True)
+    seller_sku = models.CharField(max_length=255)
     asin = models.CharField(max_length=50)
     marketplace_id = models.CharField(max_length=50)
+    account = models.ForeignKey(
+        AmazonAccount,
+        on_delete=models.CASCADE,
+        related_name="catalog_queue",null=True,  blank=True)
     processed = models.BooleanField(default=False)
     image_url = models.URLField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ("seller_sku", "account")
 
 
 class AdCampaign(models.Model):

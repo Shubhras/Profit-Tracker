@@ -53,7 +53,7 @@ class ReportAdmin(admin.ModelAdmin):
 
 @admin.register(ProductMapping)
 class ProductMappingAdmin(admin.ModelAdmin):
-    list_display = ('seller_sku', 'parent_sku', 'product_name', 'brand', 'cost_price')
+    list_display = ('id','seller_sku','account', 'parent_sku', 'product_name', 'brand', 'cost_price')
     search_fields = ('seller_sku', 'parent_sku', 'product_name', 'brand')
     list_filter = ('brand',)
     ordering = ('seller_sku',)
@@ -70,7 +70,7 @@ class AdReportAdmin(admin.ModelAdmin):
 
 @admin.register(MissingCatalogQueue)
 class MissingCatalogQueueAdmin(admin.ModelAdmin):
-    list_display = ('seller_sku',  'asin','processed')
+    list_display = ('id','seller_sku', 'account',  'asin','processed')
     search_fields = ('seller_sku', 'asin', 'marketplace_id')
     list_filter = ('processed',)
     ordering = ('seller_sku',)    
