@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Card, Modal, Checkbox } from 'antd';
+import { Table, Card, Modal, Checkbox, Tooltip } from 'antd';
 import { RightOutlined, SettingOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -146,6 +146,17 @@ export default function ProfitTableView() {
       profitPercent: item.profitmargin,
       returnqty: item.returnqty,
       settledamount: item.profit_settled_amount,
+      grossqty: item.grossqty,
+      netmrp: item.netmrp,
+      mrpNetDiscount: item.mrp_net_discount,
+      mrp_customer_discount: item.mrp_customer_discount,
+      accountCharges: item.account_charges,
+      otherExpenses: item.other_expenses,
+      tacos: item.tacos,
+      grossProfitPercent: item.grossprofit_percent,
+      percentOfSales: item.percent_of_sales,
+      drr: item.drr,
+      lastOrderDate: item.last_order_date,
     })) || [];
 
   const columns = [
@@ -172,15 +183,13 @@ export default function ProfitTableView() {
       dataIndex: 'channel',
       align: 'center',
       sorter: (a, b) => a.channel - b.channel,
-      // render: (v, record) => (
-      //   <button
-      //     type="button"
-      //     className="text-blue-500 cursor-pointer bg-transparent border-none"
-      //     onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
-      //   >
-      //     {v}
-      //   </button>
-      // ),
+      render: (v) => (
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <button type="button" className="text-blue-500 cursor-pointer bg-transparent border-none">
+            {v}
+          </button>
+        </Tooltip>
+      ),
     },
     {
       title: 'Qty',
@@ -398,6 +407,153 @@ export default function ProfitTableView() {
           {v}
         </button>
       ),
+    },
+    {
+      title: 'Gross Qty',
+      dataIndex: 'grossqty',
+      align: 'center',
+      sorter: (a, b) => a.grossqty - b.grossqty,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v ?? 0}
+        </button>
+      ),
+    },
+    {
+      title: 'Net MRP',
+      dataIndex: 'netmrp',
+      align: 'center',
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v ?? 0}
+        </button>
+      ),
+    },
+    {
+      title: 'MRP Net Discount %',
+      dataIndex: 'mrpNetDiscount',
+      align: 'center',
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v ?? 0}
+        </button>
+      ),
+    },
+    {
+      title: 'MRP Customer Discount %',
+      dataIndex: 'mrp_customer_discount',
+      align: 'center',
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v ?? 0}
+        </button>
+      ),
+    },
+    {
+      title: 'Account Charges',
+      dataIndex: 'accountCharges',
+      align: 'center',
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'charges' })}
+        >
+          {v ?? 0}
+        </button>
+      ),
+    },
+    {
+      title: 'Other Expenses',
+      dataIndex: 'otherExpenses',
+      align: 'center',
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'expenses' })}
+        >
+          {v ?? 0}
+        </button>
+      ),
+    },
+    {
+      title: 'TACOS',
+      dataIndex: 'tacos',
+      align: 'center',
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'ads' })}
+        >
+          {v ?? 0}
+        </button>
+      ),
+    },
+    {
+      title: 'Gross Profit %',
+      dataIndex: 'grossProfitPercent',
+      align: 'center',
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'profit' })}
+        >
+          {v ?? 0}
+        </button>
+      ),
+    },
+    {
+      title: '% of Sales',
+      dataIndex: 'percentOfSales',
+      align: 'center',
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'sales' })}
+        >
+          {v ?? 0}
+        </button>
+      ),
+    },
+    {
+      title: 'DRR (Daily Run Rate)',
+      dataIndex: 'drr',
+      align: 'center',
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'drr' })}
+        >
+          {v ?? 0}
+        </button>
+      ),
+    },
+    {
+      title: 'Last Order Date',
+      dataIndex: 'lastOrderDate',
+      align: 'center',
+      render: (v) => <span>{v ?? 0}</span>, // date pe modal nahi chahiye usually
     },
     // {
     //   title: 'Settled amount',

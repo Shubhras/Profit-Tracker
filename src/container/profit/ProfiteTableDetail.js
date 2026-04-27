@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { Table, Card, Modal } from 'antd';
-import { RightOutlined, EyeOutlined } from '@ant-design/icons';
+import { Table, Card, Modal, Checkbox, Tooltip } from 'antd';
+import { RightOutlined, EyeOutlined, SettingOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import ProfitFilterBar from './component/ProfitFilterBar';
@@ -16,6 +16,8 @@ export default function ProfitDetailsView() {
   const dispatch = useDispatch();
   const { dateRange, profitData, loading } = useSelector((state) => state.dashboard);
   const totals = profitData?.totals || {};
+  const [openSettings, setOpenSettings] = React.useState(false);
+
   const [previewImage, setPreviewImage] = React.useState('');
   const [previewOpen, setPreviewOpen] = React.useState(false);
   const [showFilters, setShowFilters] = React.useState(false);
@@ -83,6 +85,7 @@ export default function ProfitDetailsView() {
         image: item.image_url,
 
         view: item.asin || 0,
+        name: item.name,
         asin: item.asin,
         redirecturl: item.redirecturl,
         // qty: Number(item.grossqty) || 0,
@@ -198,13 +201,15 @@ export default function ProfitDetailsView() {
         if (!record.redirecturl) return <span>{v}</span>;
 
         return (
-          <button
-            type="button"
-            onClick={() => window.open(record.redirecturl, '_blank')}
-            className="text-blue-500 hover:text-blue-600 underline font-medium bg-transparent border-none p-0 cursor-pointer"
-          >
-            {v}
-          </button>
+          <Tooltip title={record.name} color="black" overlayInnerStyle={{ color: '#fff' }}>
+            <button
+              type="button"
+              onClick={() => window.open(record.redirecturl, '_blank')}
+              className="text-blue-500 hover:text-blue-600 underline font-medium bg-transparent border-none p-0 cursor-pointer"
+            >
+              {v}
+            </button>
+          </Tooltip>
         );
       },
     },
@@ -298,6 +303,73 @@ export default function ProfitDetailsView() {
         return <span style={{ color: value < 0 ? 'red' : 'green' }}>{value}%</span>;
       },
     },
+    {
+      title: 'Gross Qty',
+      dataIndex: 'grossqty',
+      align: 'center',
+      render: (v) => v ?? 0,
+    },
+    {
+      title: 'Net MRP',
+      dataIndex: 'netmrp',
+      align: 'center',
+      render: (v) => v ?? 0,
+    },
+    {
+      title: 'MRP Net Discount%',
+      dataIndex: 'mrpNetDiscount',
+      align: 'center',
+      render: (v) => v ?? 0,
+    },
+    {
+      title: 'MRP Customer Discount%',
+      dataIndex: 'mrpCustomerDiscount',
+      align: 'center',
+      render: (v) => v ?? 0,
+    },
+    {
+      title: 'Account Charges',
+      dataIndex: 'accountCharges',
+      align: 'center',
+      render: (v) => v ?? 0,
+    },
+    {
+      title: 'Other Expenses',
+      dataIndex: 'otherExpenses',
+      align: 'center',
+      render: (v) => v ?? 0,
+    },
+    {
+      title: 'TACOS',
+      dataIndex: 'tacos',
+      align: 'center',
+      render: (v) => v ?? 0,
+    },
+    {
+      title: 'Gross Profit %',
+      dataIndex: 'grossProfitPercent',
+      align: 'center',
+      render: (v) => v ?? 0,
+    },
+    {
+      title: '% of Sales',
+      dataIndex: 'percentOfSales',
+      align: 'center',
+      render: (v) => v ?? 0,
+    },
+    {
+      title: 'DRR',
+      dataIndex: 'drr',
+      align: 'center',
+      render: (v) => v ?? 0,
+    },
+    {
+      title: 'Last Order Date',
+      dataIndex: 'lastOrderDate',
+      align: 'center',
+      render: (v) => v || '-',
+    },
+
     // {
     //   title: 'Settled amount',
     //   dataIndex: 'settledamount',
@@ -305,7 +377,15 @@ export default function ProfitDetailsView() {
     //   sorter: (a, b) => a.settledamount - b.settledamount,
     // },
     {
-      title: '',
+      title: (
+        <button
+          type="button"
+          onClick={() => setOpenSettings(true)}
+          className="flex justify-center items-center w-full cursor-pointer text-black"
+        >
+          <SettingOutlined />
+        </button>
+      ),
       key: 'action',
       fixed: 'right',
       width: 60,
@@ -352,6 +432,72 @@ export default function ProfitDetailsView() {
     });
   };
 
+  const allColumnsList = [
+    { key: 'grossQty', label: 'Gross Qty' },
+    { key: 'netQty', label: 'Net Qty' },
+    { key: 'returnqty', label: 'Return Qty' },
+    { key: 'returnPercent', label: 'Return %' },
+
+    { key: 'netMRP', label: 'Net MRP' },
+    { key: 'mrpNetDiscount', label: 'MRP Net Discount%' },
+    { key: 'mrpCustomerDiscount', label: 'MRP Customer Discount%' },
+
+    { key: 'grossSales', label: 'Gross Sales' },
+    { key: 'netsales', label: 'Net Sales' },
+    { key: 'mpfees', label: 'MP fees' },
+
+    { key: 'shipping', label: 'Shipping' },
+    { key: 'adSpend', label: 'Ad spend' },
+    { key: 'stdCost', label: 'Std Cost' },
+
+    { key: 'stdCostMS', label: 'Std Cost M/S %' },
+    { key: 'accountCharges', label: 'Account Charges' },
+    { key: 'otherExpenses', label: 'Other Expenses' },
+
+    { key: 'gst', label: 'Gst to Pay' },
+    { key: 'grossprofit', label: 'Gross Profit' },
+    { key: 'profit', label: 'Profit' },
+
+    { key: 'settledAmount', label: 'Settled Amount' },
+    { key: 'tacos', label: 'TACOS' },
+    { key: 'grossProfitPercent', label: 'Gross Profit %' },
+
+    { key: 'profitPercent', label: 'Profit %' },
+    { key: 'percentOfSales', label: '% of Sales' },
+    { key: 'drr', label: 'DRR (Daily Run Rate)' },
+
+    { key: 'lastOrderDate', label: 'Last Order Date' },
+  ];
+  const [visibleColumns, setVisibleColumns] = React.useState([
+    'view',
+    'netQty',
+    'returnqty',
+    'returnPercent',
+    'netsales',
+    'mpfees',
+    'shipping',
+    'adSpend',
+    'gst',
+    'grossprofit',
+    'profit',
+    'profitPercent',
+  ]);
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      setVisibleColumns(allColumnsList.map((col) => col.key));
+    } else {
+      setVisibleColumns([]);
+    }
+  };
+  const filteredColumns = columns.filter((col) => {
+    if (col.dataIndex === 'image' || col.dataIndex === 'channel' || col.key === 'action') return true;
+
+    return visibleColumns.some(
+      (key) =>
+        key === col.dataIndex || // direct match
+        key.toLowerCase() === col.dataIndex.toLowerCase(), // handle grossQty vs grossqty
+    );
+  });
   return (
     <>
       <PageHeader
@@ -371,7 +517,7 @@ export default function ProfitDetailsView() {
             setShowFilters={setShowFilters}
           />
           <Table
-            columns={columns}
+            columns={filteredColumns}
             dataSource={dataSource}
             showSorterTooltip={false}
             loading={loading}
@@ -387,51 +533,94 @@ export default function ProfitDetailsView() {
             size="small"
             scroll={{ x: 'max-content' }}
             summary={() => (
-              <Table.Summary>
-                <Table.Summary.Row style={{ background: '#fafafa', fontWeight: 600 }}>
-                  <Table.Summary.Cell index={0} colSpan={2}>
-                    Total
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={2} />{' '}
-                  <Table.Summary.Cell index={3} align="center">
-                    {Number(totals.totalqty) || 0}
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={4} align="center">
-                    {Number(totals.totalreturn) || 0}
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={5} align="center">
-                    {Number(totals.totalper) || 0}
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={6} align="center">
-                    {Number(totals.netsales) || 0}
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={7} align="center">
-                    {Number(totals.mpfees) || 0}
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={8} align="center">
-                    {Number(totals.shippingfees) || 0}
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={9} align="center">
-                    {Number(totals.ads) || 0}
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={10} align="center">
-                    {Number(totals.gsttopay) || 0}
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={11} align="center">
-                    {Number(totals.grossprofit) || 0}
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={12} align="center">
-                    {Number(totals.profit) || 0}
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={13} align="center">
-                    {Math.round(Number(totals.grossprofitper)) || 0}%
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={14} />{' '}
-                </Table.Summary.Row>
-              </Table.Summary>
+              <Table.Summary.Row style={{ background: '#fafafa', fontWeight: 600 }}>
+                <Table.Summary.Cell index={0} colSpan={2}>
+                  Total
+                </Table.Summary.Cell>
+
+                {filteredColumns.slice(2).map((col, index) => {
+                  if (col.key === 'action') return <Table.Summary.Cell key={index} />;
+
+                  const keyMap = {
+                    netQty: 'netqty',
+                    returnqty: 'totalreturn',
+                    returnPercent: 'totalreturnper',
+                    netsales: 'netsales',
+                    mpfees: 'mpfees',
+                    shipping: 'shippingfees',
+                    adSpend: 'ads',
+                    gst: 'totalgst',
+                    grossprofit: 'grossprofit',
+                    profit: 'profit',
+                    profitPercent: 'grossprofitper',
+
+                    grossqty: 'grossqty',
+                    netmrp: 'netmrp',
+                    mrpNetDiscount: 'mrp_net_discount',
+                    mrpCustomerDiscount: 'mrpCustomerDiscount',
+                    accountCharges: 'account_charges',
+                    otherExpenses: 'other_expenses',
+                    tacos: 'tacos',
+                    grossProfitPercent: 'grossprofit_percent',
+                    percentOfSales: 'percent_of_sales',
+                    drr: 'drr',
+                  };
+
+                  const value = totals[keyMap[col.dataIndex]];
+
+                  return (
+                    <Table.Summary.Cell key={index} align="center">
+                      {value ?? 0}
+                    </Table.Summary.Cell>
+                  );
+                })}
+              </Table.Summary.Row>
             )}
           />
         </Card>
+        <Modal
+          title="Customize Your Columns"
+          open={openSettings}
+          onCancel={() => setOpenSettings(false)}
+          footer={null}
+          width={900}
+        >
+          {/* Select All */}
+          <div className="mb-3 flex items-center gap-2">
+            <Checkbox
+              checked={visibleColumns.length === allColumnsList.length}
+              onChange={(e) => handleSelectAll(e.target.checked)}
+            >
+              Select All
+            </Checkbox>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 max-h-[400px] overflow-y-auto pr-1">
+            {allColumnsList.map((col) => (
+              <div
+                key={col.key}
+                className="flex items-center justify-between gap-2 p-2 bg-gray-100 rounded whitespace-nowrap"
+              >
+                <Checkbox
+                  className="whitespace-nowrap"
+                  checked={visibleColumns.includes(col.key)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setVisibleColumns([...visibleColumns, col.key]);
+                    } else {
+                      setVisibleColumns(visibleColumns.filter((c) => c !== col.key));
+                    }
+                  }}
+                >
+                  {col.label}
+                </Checkbox>
+
+                {/* info icon */}
+                {/* <span className="text-blue-500 text-xs cursor-pointer">i</span> */}
+              </div>
+            ))}
+          </div>
+        </Modal>
       </main>
       <Modal open={previewOpen} footer={null} onCancel={() => setPreviewOpen(false)} centered>
         <img src={previewImage} alt="preview" style={{ width: '100%', borderRadius: 8 }} />
