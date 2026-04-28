@@ -1,14 +1,22 @@
 import React, { useEffect } from 'react';
 import { Button, Modal, Checkbox, Card, Spin } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
-import { CheckOutlined, CloseOutlined, SettingOutlined, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
+import {
+  CheckOutlined,
+  CloseOutlined,
+  SettingOutlined,
+  CaretDownOutlined,
+  CaretUpOutlined,
+  PlusOutlined,
+  MinusOutlined,
+} from '@ant-design/icons';
 import { PageHeader } from '../../components/page-headers/page-headers';
 import { getProfitMonthwise } from '../../redux/dashboard/actionCreator';
 
 export default function ProfitMonthlyView() {
   const dispatch = useDispatch();
   const [showFilters, setShowFilters] = React.useState(false);
-
+  const [expandedRows, setExpandedRows] = React.useState({});
   const [filters, setFilters] = React.useState({
     SKU: '',
     ProductId: '',
@@ -78,14 +86,20 @@ export default function ProfitMonthlyView() {
     { label: 'Return Sales', key: 'returnedcreturnsales' },
     { label: 'Claimed Sales', key: 'claimsales' },
     { label: 'Net Sales', key: 'netsales' },
+    { label: 'Marketplace Fees', key: 'marketplacefees', isExpandable: true },
+    { label: 'Shipping Fees', key: 'shipfees', isExpandable: true },
+    { label: 'Std Cost', key: 'stdcost', isExpandable: true },
+    { label: 'Ad Fees', key: 'ads', isExpandable: true },
+    { label: 'Account Charges', key: 'accountcharges', isExpandable: true },
+    { label: 'Other Expense', key: 'otherfees', isExpandable: true },
     { label: 'Profit', key: 'profit' },
     { label: 'Replaced Qty', key: 'replacedqty' },
     { label: 'Gross ASP', key: 'grossasp' },
     { label: 'Net ASP', key: 'netasp' },
+    { label: 'TACOS', key: 'tacos' },
+    { label: 'Profit Margin', key: 'profitmargin' },
   ];
-  const [visibleRows, setVisibleRows] = React.useState(
-    rows.map((r) => r.key), // sab initially visible
-  );
+  const [visibleRows, setVisibleRows] = React.useState(rows.map((r) => r.key));
   const handleChange = (key, value) => {
     setFilters((prev) => ({
       ...prev,
@@ -121,7 +135,12 @@ export default function ProfitMonthlyView() {
       }),
     );
   };
-
+  const toggleRow = (key) => {
+    setExpandedRows((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
   return (
     <>
       <PageHeader
@@ -269,49 +288,77 @@ export default function ProfitMonthlyView() {
               .map((row, i) => {
                 const isHighlight = highlightRows.includes(row.key);
                 return (
-                  <div
-                    key={i}
-                    className={`grid border-b last:border-0 ${isHighlight ? 'bg-blue-50 font-semibold' : ''}`}
-                    style={{
-                      gridTemplateColumns: isScrollable
-                        ? `200px repeat(${months.length}, 150px)`
-                        : `200px repeat(${months.length}, 1fr)`,
-                    }}
-                  >
-                    {/* LEFT LABEL */}
+                  <React.Fragment key={i}>
                     <div
-                      className={`p-3 sticky left-0 z-10 ${isHighlight ? 'bg-blue-100 font-semibold' : 'bg-gray-50'}`}
+                      className={`grid border-b last:border-0 ${isHighlight ? 'bg-blue-50 font-semibold' : ''}`}
+                      style={{
+                        gridTemplateColumns: isScrollable
+                          ? `200px repeat(${months.length}, 150px)`
+                          : `200px repeat(${months.length}, 1fr)`,
+                      }}
                     >
-                      {row.label}
-                    </div>{' '}
-                    {/* VALUES */}
-                    {data.map((item, j) => {
-                      const val = item[row.key];
+                      {/* LEFT LABEL */}
+                      <div
+                        className={`p-2 sticky left-0 z-10 flex items-center gap-2 ${
+                          isHighlight ? 'bg-blue-100 font-semibold' : 'bg-gray-50'
+                        }`}
+                      >
+                        {row.isExpandable && (
+                          <button type="button" onClick={() => toggleRow(row.key)} style={{ fontSize: '10px' }}>
+                            {expandedRows[row.key] ? <MinusOutlined /> : <PlusOutlined />}{' '}
+                          </button>
+                        )}
+                        {row.label}
+                      </div>
 
-                      let bg = '';
-                      let text = '';
+                      {/* VALUES */}
+                      {data.map((item, j) => {
+                        const val = item[row.key];
 
-                      if (isHighlight) {
-                        if (val > 0) {
-                          bg = 'bg-green-100';
-                          text = 'text-green-700';
-                        } else if (val < 0) {
-                          bg = 'bg-red-100';
-                          text = 'text-red-600';
+                        let bg = '';
+                        let text = '';
+
+                        if (isHighlight) {
+                          if (val > 0) {
+                            bg = 'bg-green-100';
+                            text = 'text-green-700';
+                          } else if (val < 0) {
+                            bg = 'bg-red-100';
+                            text = 'text-red-600';
+                          } else {
+                            bg = 'bg-gray-100';
+                          }
                         } else {
-                          bg = 'bg-gray-100';
+                          text = val > 0 ? 'text-green-600' : val < 0 ? 'text-red-500' : '';
                         }
-                      } else {
-                        text = val > 0 ? 'text-green-600' : val < 0 ? 'text-red-500' : '';
-                      }
 
-                      return (
-                        <div key={j} className={`p-3 text-center font-medium ${bg} ${text}`}>
-                          {val}
-                        </div>
-                      );
-                    })}
-                  </div>
+                        return (
+                          <div key={j} className={`p-3 text-center font-medium ${bg} ${text}`}>
+                            {val}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {row.isExpandable && expandedRows[row.key] && (
+                      <div
+                        className="grid border-b bg-gray-50"
+                        style={{
+                          gridTemplateColumns: isScrollable
+                            ? `200px repeat(${months.length}, 150px)`
+                            : `200px repeat(${months.length}, 1fr)`,
+                        }}
+                      >
+                        <div className="p-3 pl-8 sticky left-0 bg-gray-50" />
+
+                        {months.map((_, j) => (
+                          <div key={j} className="p-3 text-center text-gray-500 font-medium">
+                            -
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </React.Fragment>
                 );
               })}
           </Spin>
