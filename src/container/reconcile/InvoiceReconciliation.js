@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Table, Tabs, Button, Spin } from 'antd';
-import { UploadOutlined } from '@ant-design/icons';
+import { Card, Table, Tabs, Button, Spin, Modal, Select } from 'antd';
+import { UploadOutlined, CloseOutlined } from '@ant-design/icons';
 import { PageHeader } from '../../components/page-headers/page-headers';
 import meeshoIcon from '../../assets/icons/meesho.png';
 import flipkartIcon from '../../assets/icons/flipkart.svg';
@@ -25,6 +25,22 @@ export default function InvoiceReconciliation() {
   const [activeTab, setActiveTab] = useState('meesho');
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [type, setType] = useState(null);
+  const [uploadModal, setUploadModal] = useState(false);
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.detail === 'upload') {
+        setUploadModal(true);
+      }
+    };
+
+    window.addEventListener('headerAction', handler);
+
+    return () => {
+      window.removeEventListener('headerAction', handler);
+    };
+  }, []);
 
   /* -------------------- MOCK API -------------------- */
   const fetchData = (channel) => {
@@ -189,6 +205,54 @@ export default function InvoiceReconciliation() {
           </Spin>
         </Card>
       </main>
+      <Modal
+        open={uploadModal}
+        onCancel={() => setUploadModal(false)}
+        footer={null}
+        centered
+        width={420}
+        closeIcon={<CloseOutlined style={{ fontSize: '16px', color: '#6b7280' }} />}
+      >
+        <h3 className="text-[16px] font-semibold mb-4">File Upload</h3>
+
+        <Select
+          placeholder="Select Type"
+          className="w-full mb-4"
+          size="large"
+          value={type}
+          onChange={(val) => setType(val)}
+          options={[
+            { label: 'MTR', value: 'mtr' },
+            { label: 'TRANSACTION', value: 'transaction' },
+          ]}
+        />
+        <input
+          type="file"
+          id="invoiceFileInput"
+          style={{ display: 'none' }}
+          onChange={(e) => {
+            const file = e.target.files[0];
+            setSelectedFile(file);
+          }}
+        />
+        <Button
+          onClick={() => document.getElementById('invoiceFileInput').click()}
+          className="mb-4 flex items-center gap-2 bg-[#e6f0ff] text-[#1d4ed8] border-none hover:bg-[#dbeafe] w-full justify-center"
+        >
+          {selectedFile ? selectedFile.name : 'Invoice Upload'}
+          <UploadOutlined />
+        </Button>
+
+        <div className="flex justify-between mt-2">
+          <Button onClick={() => setUploadModal(false)} className="border border-gray-300 text-gray-700">
+            Cancel
+          </Button>
+
+          <Button type="primary" className="bg-[#1e3a8a]">
+            Submit
+          </Button>
+        </div>
+      </Modal>
     </>
   );
 }

@@ -2,7 +2,6 @@ import UilSearch from '@iconscout/react-unicons/icons/uil-search';
 import UilTimes from '@iconscout/react-unicons/icons/uil-times';
 import { Form, Input } from 'antd';
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import actions from '../../../redux/dashboard/action';
 
@@ -17,65 +16,34 @@ const SearchBar = React.memo(() => {
 
     return () => clearTimeout(timer);
   }, [value]);
-
-  const [state, setState] = useState({
-    openSearch: false,
-  });
-
-  const openSearchbar = (e) => {
-    e.preventDefault();
-    setState({
-      ...state,
-      openSearch: true,
-    });
-  };
-  const closeSearchbar = (e) => {
-    e.preventDefault();
-    setState({
-      ...state,
-      openSearch: false,
-    });
-  };
-
-  const { openSearch } = state;
-
   return (
-    <div className="flex items-center ltr:mr-2.5 rtl:ml-2.5">
-      <div
-        className={
-          openSearch
-            ? 'null ssm:fixed ssm:top-[72px] ssm:bg-white ssm:dark:bg-[#1b1d2a] ssm:rounded-[6px] ssm:ltr:ssm:right-[10px] rtl:ssm:left-[10px] ssm:min-w-[280px] ssm:z-[98] '
-            : 'opacity-0 invisible w-0'
-        }
-      >
+    <div className="flex items-center">
+      <div className="w-[150px]">
         <Form form={form} name="hexadash-search">
           <Form.Item name="search-input" className="mb-0">
             <Input
-              className="bg-transparent dark:bg-transparent p-1.5 min-ssm:border-none ssm:h-[48px] ssm:px-[20px] ssm:dark:shadow-none ssm:border-1 ssm:border-regular dark:ssm:border-white10"
+              value={value}
+              className="bg-white border border-gray-300 rounded-md h-[36px] px-3 focus:border-blue-500 focus:shadow-none"
               placeholder="Search Here"
               onChange={(e) => setValue(e.target.value)}
+              suffix={
+                value ? (
+                  <UilTimes
+                    className="cursor-pointer text-gray-400 w-4 h-4"
+                    onClick={() => {
+                      setValue('');
+                      form.setFieldsValue({ 'search-input': '' });
+                      dispatch(actions.setSearch(''));
+                    }}
+                  />
+                ) : (
+                  <UilSearch className="text-gray-400 w-4 h-4" />
+                )
+              }
             />
           </Form.Item>
         </Form>
       </div>
-      <Link
-        to="/"
-        onClick={(e) => openSearchbar(e)}
-        className={
-          openSearch
-            ? 'hidden opacity-0'
-            : 'hexadash-search-icon flex relative -top-1 w-4 h-4 text-theme-gray dark:text-white60 '
-        }
-      >
-        <UilSearch />
-      </Link>
-      <Link
-        to="/"
-        onClick={(e) => closeSearchbar(e)}
-        className={openSearch ? 'flex relative -top-1 w-4 h-4 text-theme-gray dark:text-white60' : 'hidden opacity-0'}
-      >
-        <UilTimes />
-      </Link>
     </div>
   );
 });
