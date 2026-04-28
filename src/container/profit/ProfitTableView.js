@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Card, Modal, Checkbox, Tooltip } from 'antd';
-import { RightOutlined, SettingOutlined } from '@ant-design/icons';
+import { RightOutlined, SettingOutlined, BarChartOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import ProfitFilterBar from './component/ProfitFilterBar';
@@ -584,24 +584,43 @@ export default function ProfitTableView() {
       fixed: 'right',
       width: 60,
       render: (_, record) => (
-        <button
-          type="button"
-          onClick={() => navigate(`../profittabledetails/${record.channel}`)}
-          style={{
-            width: 30,
-            height: 30,
-            border: '1px solid #d9d9d9',
-            borderRadius: 4,
-            background: 'rgb(202, 221, 254)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: 'auto',
-          }}
-        >
-          <RightOutlined style={{ fontSize: 12 }} />
-        </button>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+          <button
+            type="button"
+            onClick={() => navigate(`../profittabledetails/${record.channel}`)}
+            style={{
+              width: 30,
+              height: 30,
+              border: '1px solid #d9d9d9',
+              borderRadius: 4,
+              background: 'rgb(202, 221, 254)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: 'auto',
+            }}
+          >
+            <RightOutlined style={{ fontSize: 12 }} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+            style={{
+              width: 30,
+              height: 30,
+              border: '1px solid #ffc0cb',
+              borderRadius: 4,
+              background: '#ffe4e9', // light pink
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <BarChartOutlined style={{ fontSize: 14, color: '#ff4d6d' }} />
+          </button>
+        </div>
       ),
     },
   ];

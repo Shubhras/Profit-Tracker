@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
 import { Table, Card, Modal, Checkbox, Tooltip } from 'antd';
-import { RightOutlined, EyeOutlined, SettingOutlined } from '@ant-design/icons';
+import { RightOutlined, EyeOutlined, SettingOutlined, BarChartOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import ProfitFilterBar from './component/ProfitFilterBar';
+import ProfitModal from './component/ProfitModal';
 import amazon from '../../assets/icons/amazon.svg';
 // import flipkart from "../../assets/icons/flipkart.png";
 import { getProfitDetails } from '../../redux/dashboard/actionCreator';
@@ -17,7 +18,11 @@ export default function ProfitDetailsView() {
   const { dateRange, profitData, loading } = useSelector((state) => state.dashboard);
   const totals = profitData?.totals || {};
   const [openSettings, setOpenSettings] = React.useState(false);
-
+  const [detailModal, setDetailModal] = React.useState({
+    open: false,
+    record: null,
+    type: '',
+  });
   const [previewImage, setPreviewImage] = React.useState('');
   const [previewOpen, setPreviewOpen] = React.useState(false);
   const [showFilters, setShowFilters] = React.useState(false);
@@ -224,24 +229,60 @@ export default function ProfitDetailsView() {
       dataIndex: 'netQty',
       align: 'center',
       sorter: (a, b) => a.netQty - b.netQty,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v}
+        </button>
+      ),
     },
     {
       title: 'Return Qty',
       dataIndex: 'returnqty',
       align: 'center',
       sorter: (a, b) => a.returnqty - b.returnqty,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'returns' })}
+        >
+          {v}
+        </button>
+      ),
     },
     {
       title: 'Return %',
       dataIndex: 'returnPercent',
       align: 'center',
       sorter: (a, b) => a.returnPercent - b.returnPercent,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'returns' })}
+        >
+          {v}
+        </button>
+      ),
     },
     {
       title: 'Net Sales',
       dataIndex: 'netsales',
       align: 'center',
       sorter: (a, b) => a.netsales - b.netsales,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v}
+        </button>
+      ),
     },
     // {
     //   title: 'Net asp',
@@ -260,30 +301,75 @@ export default function ProfitDetailsView() {
       dataIndex: 'mpfees',
       align: 'center',
       sorter: (a, b) => a.mpfees - b.mpfees,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v}
+        </button>
+      ),
     },
     {
       title: 'Shipping',
       dataIndex: 'shipping',
       align: 'center',
       sorter: (a, b) => a.shipping - b.shipping,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v}
+        </button>
+      ),
     },
     {
       title: 'Ad Spend',
       dataIndex: 'adSpend',
       align: 'center',
       sorter: (a, b) => a.adSpend - b.adSpend,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v}
+        </button>
+      ),
     },
     {
       title: 'GST',
       dataIndex: 'gst',
       align: 'center',
       sorter: (a, b) => a.gst - b.gst,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v}
+        </button>
+      ),
     },
     {
       title: 'Gross Profit',
       dataIndex: 'grossprofit',
       align: 'center',
       sorter: (a, b) => a.grossprofit - b.grossprofit,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v}
+        </button>
+      ),
     },
     {
       title: 'Profit',
@@ -291,6 +377,15 @@ export default function ProfitDetailsView() {
       align: 'center',
       sorter: (a, b) => a.profit - b.profit,
       // render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>₹{v}</span>,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v}
+        </button>
+      ),
     },
     {
       title: 'Profit %',
@@ -390,24 +485,43 @@ export default function ProfitDetailsView() {
       fixed: 'right',
       width: 60,
       render: (_, record) => (
-        <button
-          type="button"
-          onClick={() => navigate(`../profitThirdtable/${record.asin}`)}
-          style={{
-            width: 30,
-            height: 30,
-            border: '1px solid #d9d9d9',
-            borderRadius: 4,
-            background: 'rgb(202, 221, 254)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: 'auto',
-          }}
-        >
-          <RightOutlined style={{ fontSize: 12 }} />
-        </button>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+          <button
+            type="button"
+            onClick={() => navigate(`../profitThirdtable/${record.asin}`)}
+            style={{
+              width: 30,
+              height: 30,
+              border: '1px solid #d9d9d9',
+              borderRadius: 4,
+              background: 'rgb(202, 221, 254)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: 'auto',
+            }}
+          >
+            <RightOutlined style={{ fontSize: 12 }} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+            style={{
+              width: 30,
+              height: 30,
+              border: '1px solid #ffc0cb',
+              borderRadius: 4,
+              background: '#ffe4e9', // light pink
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <BarChartOutlined style={{ fontSize: 14, color: '#ff4d6d' }} />
+          </button>
+        </div>
       ),
     },
   ];
@@ -625,6 +739,12 @@ export default function ProfitDetailsView() {
       <Modal open={previewOpen} footer={null} onCancel={() => setPreviewOpen(false)} centered>
         <img src={previewImage} alt="preview" style={{ width: '100%', borderRadius: 8 }} />
       </Modal>
+      <ProfitModal
+        open={detailModal.open}
+        record={detailModal.record}
+        type={detailModal.type}
+        onClose={() => setDetailModal({ open: false, record: null, type: '' })}
+      />
     </>
   );
 }
