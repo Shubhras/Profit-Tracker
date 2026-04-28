@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Skeleton, Empty, Spin } from 'antd';
-import { ReloadOutlined } from '@ant-design/icons';
+import { ReloadOutlined, UploadOutlined } from '@ant-design/icons';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function Download() {
@@ -8,6 +8,10 @@ export default function Download() {
   useEffect(() => {
     setTimeout(() => setLoading(false), 800);
   }, []);
+  const [pagination, setPagination] = React.useState({
+    current: 1,
+    pageSize: 10,
+  });
   const PageRoutes = [
     {
       path: '',
@@ -26,36 +30,76 @@ export default function Download() {
       title: 'Report Type',
       dataIndex: 'reportType',
       key: 'reportType',
-      render: (text) => <span className="text-primary font-medium cursor-pointer">{text}</span>,
+      // render: (text) => <span className="text-primar font-medium cursor-pointer">{text}</span>,
     },
     {
       title: 'Period (From Date - To Date)',
       dataIndex: 'period',
       key: 'period',
       align: 'center',
-    },
-    {
-      title: 'Created At',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      align: 'center',
-      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
-      render: (date) =>
-        new Date(date).toLocaleDateString('en-GB', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-        }),
+      render: (val) => val || '-',
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
       align: 'center',
+      render: (status) => <span className="text-green-600 font-medium">{status}</span>,
+    },
+    {
+      title: 'Created At',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      align: 'center',
+      sorter: (a, b) => a.createdAt - b.createdAt,
+      render: (date) =>
+        new Date(date).toLocaleString('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+    },
+    {
+      title: '',
+      key: 'action',
+      align: 'center',
+      render: () => (
+        <Button className="bg-blue-100 text-black-600 rounded-md flex items-center gap-1 border-none shadow-none">
+          Export
+          <UploadOutlined />
+        </Button>
+      ),
     },
   ];
 
-  const dataSource = [];
+  const dataSource = [
+    {
+      key: 1,
+      sno: 1,
+      reportType: 'OUTSTANDING CASHBACK',
+      period: '-',
+      status: 'Completed',
+      createdAt: '2026-04-28T12:17:03',
+    },
+    {
+      key: 2,
+      sno: 2,
+      reportType: 'OUTSTANDING PAYMENTS',
+      period: '-',
+      status: 'Completed',
+      createdAt: '2026-04-28T12:17:00',
+    },
+    {
+      key: 3,
+      sno: 3,
+      reportType: 'PROFIT LOWEST LEVEL',
+      period: '01/04/2026 - 30/04/2026',
+      status: 'Completed',
+      createdAt: '2026-04-28T12:16:47',
+    },
+  ];
 
   const handleRefresh = () => {
     // console.log('refresh');
@@ -80,7 +124,7 @@ export default function Download() {
           <div className="bg-white dark:bg-white10 rounded-[10px] p-[20px]">
             {/* Refresh Button */}
             <div className="flex justify-end mb-3">
-              <Button icon={<ReloadOutlined />} onClick={handleRefresh} loading={loading} />
+              <Button shape="circle" icon={<ReloadOutlined />} onClick={handleRefresh} loading={loading} />
             </div>
 
             {/* Table / Skeleton */}
@@ -91,8 +135,16 @@ export default function Download() {
                 <Table
                   columns={columns}
                   dataSource={dataSource}
-                  pagination={false}
                   scroll={{ x: 900 }}
+                  pagination={{
+                    ...pagination,
+                    showSizeChanger: true,
+                    pageSizeOptions: ['10', '20', '50', '100'],
+                  }}
+                  onChange={(pag) => {
+                    setPagination(pag);
+                  }}
+                  size="small"
                   locale={{
                     emptyText: <Empty description="No data" className="py-10" />,
                   }}

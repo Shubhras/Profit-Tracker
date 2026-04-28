@@ -16,10 +16,10 @@ export default function Summary() {
   const [viewType, setViewType] = useState('percentage');
   const { dashboardData, dateRange, channel: globalChannel, search, loading } = useSelector((state) => state.dashboard);
   const [filters, setFilters] = useState({
-    withAds: false,
-    withoutAds: true,
-    withGST: false,
-    withoutGST: true,
+    withAds: true,
+    withoutAds: false,
+    withGST: true,
+    withoutGST: false,
     withEstimate: true,
     withoutEstimate: false,
     withExpenses: true,
@@ -243,8 +243,8 @@ export default function Summary() {
         <Card className="mb-4 border rounded-xl px-0 py-0 bg-[#f9fafb]">
           <button
             type="button"
-            className="flex items-center justify-between gap-4 mb-0 text-sm cursor-pointer w-full"
-            onClick={() => setShowFilters((prev) => !prev)}
+            className="flex items-center justify-between gap-4 mb-0 text-sm w-full"
+            // onClick={() => setShowFilters((prev) => !prev)}
           >
             <span className="text-gray-500">{selectedFilters.length} Filter Selected</span>
 

@@ -9,7 +9,7 @@ import { Avatar, Button } from 'antd';
 import React, { useEffect, useState } from 'react';
 // import { useTranslation} from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import UilTimes from '@iconscout/react-unicons/icons/uil-times';
 import moment from 'moment';
 import { DateRange } from 'react-date-range';
@@ -20,20 +20,26 @@ import FilterDropdown from './FilterDropdown';
 // import Message from './Message';
 // import Notification from './Notification';
 // import Settings from './settings';
+import HeaderButton from './HeaderButton';
+
 import { Popover } from '../../popup/popup';
 import Heading from '../../heading/heading';
 // import { Dropdown } from '../../dropdown/dropdown';
+import { HEADER_ACTIONS } from '../../../config/headerActionsConfig';
 import { logOut, getProfile } from '../../../redux/authentication/actionCreator';
 import action from '../../../redux/dashboard/action';
 
 const AuthInfo = React.memo(() => {
   const dispatch = useDispatch();
-  // const { RangePicker } = DatePicker;
-  // const dateRef = React.useRef(null);
-  // const [dateRange, setDateRange] = useState(null);
+  const location = useLocation();
+
+  const currentPath = location.pathname;
+
+  const matchedRoute = Object.keys(HEADER_ACTIONS).find((route) => currentPath.includes(route));
+
+  const actions = HEADER_ACTIONS[matchedRoute] || [];
   const [dateRange, setDateRange] = useState([moment().startOf('month'), moment()]);
   const [open, setOpen] = useState(false);
-  // const [tempRange, setTempRange] = useState(dateRange);
   const [tempRange, setTempRange] = useState([
     {
       startDate: new Date(),
@@ -247,13 +253,22 @@ const AuthInfo = React.memo(() => {
 
   return (
     <div className="flex items-center justify-end flex-auto">
-      <div className="md:hidden flex items-center gap-2">
+      <div className="md:hidden flex items-center gap-3">
+        {actions.map((btn) => (
+          <HeaderButton
+            key={btn}
+            type={btn}
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent('headerAction', { detail: btn }));
+            }}
+          />
+        ))}
         <Search />
         <div className="relative">
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="px-3 py-1 border rounded-md text-sm bg-white flex items-center gap-2"
+            className="px-2 py-2 border rounded-md text-sm bg-white flex items-center gap-2"
           >
             {/* DATE TEXT */}
             <span>

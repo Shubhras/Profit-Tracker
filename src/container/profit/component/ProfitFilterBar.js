@@ -101,10 +101,10 @@ function ProfitFilterBar({ filters, setFilters, handleApply, handleClear, showFi
       </div>
       {showFilters && (
         <>
-          <div className="flex items-end gap-4 overflow-x-auto whitespace-nowrap pb-1">
-            {['sku', 'productId', 'parentId', 'mkt'].map((field) => (
+          <div className="flex items-end gap-4 overflow-x-auto whitespace-nowrap pb-1 mt-3">
+            {['SKU', 'ProductId', 'ParentId', 'MKT'].map((field) => (
               <div className="min-w-[180px]" key={field}>
-                <label className="text-sm text-gray-600 mb-1 block">{field}</label>
+                <label className="text-s text-gray-600 mb-1 block">{field}</label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
                   placeholder={field}

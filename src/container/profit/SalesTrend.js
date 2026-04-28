@@ -274,7 +274,7 @@ export default function SalesTrend() {
               </div>
             </div>
             {showFilters && (
-              <div className="flex items-end gap-4 overflow-x-auto whitespace-nowrap pb-1">
+              <div className="flex items-end gap-4 overflow-x-auto whitespace-nowrap pb-1 mt-3">
                 <div className="min-w-[180px]">
                   <label className="text-s text-gray-600 mb-1 block">SKU</label>
                   <input
