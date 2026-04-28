@@ -504,7 +504,7 @@ const AuthInfo = React.memo(() => {
                 onChange={(item) => setTempRange([item.selection])}
                 months={2}
                 direction="horizontal"
-                maxDate={new Date()}
+                // maxDate={new Date()}
                 rangeColors={['#22c55e']}
               />
             </div>
