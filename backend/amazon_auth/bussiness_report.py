@@ -11,97 +11,11 @@ import logging
 logger = logging.getLogger(__name__)
 from django.core.cache import cache
 
-# def sync_business_report(account, start_date, end_date):
-#     url = "https://sellercentral.amazon.in/business-reports/api"
+from amazon_auth.spapi_manager import SPAPIManager
+from django.http import HttpResponse
+from openpyxl import Workbook
 
-#     payload = {
-#         "operationName": "getReportData",
-#         "variables": {
-#             "input": {
-#                 "legacyReportId": "102:SalesTrafficTimeSeries",
-#                 "granularity": "DAY",
-#                 "startDate": start_date,
-#                 "endDate": end_date,
 
-#                 #  REQUIRED FIX
-#                 "userSelectedRows": [],
-
-#                 "selectedColumns": [
-#                     "SC_MA_Date_25913",
-#                     "SC_MA_OrderedProductSales_40591",
-#                     "SC_MA_UnitsOrdered_40590",
-#                     "SC_MA_TotalOrderItems_1",
-#                     "SC_MA_Sessions_Total",
-#                     "SC_MA_OrderItemSessionPercentage_1",
-#                     "SC_MA_UnitsRefunded_25980",
-#                     "SC_MA_RefundRate_25981",
-#                 ]
-#             }
-#         },
-#         "query": """
-#         query getReportData($input: GetReportDataInput) {
-#         getReportData(input: $input) {
-#             columns {
-#             label
-#             }
-#             rows
-#         }
-#         }
-#         """
-#     }
-
-#     headers = {
-#         "cookie": account.ads_cookie,
-#         "x-csrf-token": account.csrf_token,
-#         "content-type": "application/json",
-#         "user-agent": "Mozilla/5.0",
-#         "accept": "application/json",
-#         "origin": "https://sellercentral.amazon.in",
-#         "referer": "https://sellercentral.amazon.in/business-reports",
-#     }
-
-#     res = requests.post(url, json=payload, headers=headers)
-
-#     print("STATUS:", res.status_code)
-#     print("BODY:", res.text[:300])
-
-#     # 🚨 Detect HTML (auth issue)
-#     if "<html" in res.text.lower():
-#         raise Exception("Session expired / invalid cookie / blocked by Amazon")
-
-#     try:
-#         json_data = res.json()
-#     except Exception:
-#         raise Exception(f"Invalid JSON response: {res.text[:300]}")
-
-#     if "data" not in json_data:
-#         raise Exception(f"Unexpected response: {json_data}")
-
-#     report = json_data["data"]["getReportData"]
-
-#     columns = [col["label"] for col in report["columns"]]
-
-#     for row in report["rows"]:
-#         row_dict = dict(zip(columns, row))
-
-#         date = datetime.utcfromtimestamp(int(row_dict["Date"])).date()
-
-#         BusinessReport.objects.update_or_create(
-#             amazon_account=account,
-#             date=date,
-#             defaults={
-#                 "user": account.user,
-#                 "ordered_product_sales": float(row_dict.get("Ordered Product Sales") or 0),
-#                 "units_ordered": int(row_dict.get("Units Ordered") or 0),
-#                 "total_order_items": int(row_dict.get("Total Order Items") or 0),
-#                 "sessions_total": int(row_dict.get("Sessions - Total") or 0),
-#                 "order_item_session_percentage": float(row_dict.get("Order Item Session Percentage") or 0),
-#                 "units_refunded": int(row_dict.get("Units Refunded") or 0),
-#                 "refund_rate": float(row_dict.get("Refund Rate") or 0),
-#             }
-#         )
-
-#     return {"status": "success"}
 
 
 @api_view(['POST'])
@@ -357,18 +271,6 @@ def sync_business_report(account, start_date, end_date):
     return {"status": "success"}
 
 
-
-
-# amazon report 
-
-
-import requests
-import time
-import hashlib
-import hmac
-import base64
-
-
 def get_spapi_headers(account):
     """
     Build SP-API headers using stored tokens.
@@ -385,42 +287,6 @@ def get_spapi_headers(account):
         "Accept": "application/json",
     }
 
-
-from datetime import datetime, timedelta
-
-from datetime import datetime, timedelta
-import requests
-# from amazon_auth.spapi_manager.SPAPIManager import get_access_token
-from amazon_auth.spapi_manager import SPAPIManager
-
-
-
-# def get_access_token(self):
-#     cache_key = f"lwa_token_{self.app_client_id}"
-
-#     token = cache.get(cache_key)
-#     if token:
-#         return token
-
-#     url = "https://api.amazon.com/auth/o2/token"
-
-#     payload = {
-#         # "grant_type": "refresh_token",
-#         # "refresh_token": self.refresh_token,
-#         "client_id": self.app_client_id,
-#         "client_secret": self.app_client_secret,
-#     }
-
-#     res = requests.post(url, data=payload)
-
-#     if res.status_code != 200:
-#         raise Exception(res.text)
-
-#     data = res.json()
-
-#     cache.set(cache_key, data["access_token"], timeout=3500)
-
-#     return data["access_token"]
 
 def sync_reports_for_account(request, account, report_type=None, marketplace_id=None):
     sp = SPAPIManager(user=request.user, account=account)
@@ -506,3 +372,112 @@ def manual_sync_amazon_reports(request):
         "status": "completed",
         "results": results
     })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def export_business_report_excel(request):
+    user = request.user
+
+    start_date = request.GET.get("start_date")
+    end_date = request.GET.get("end_date")
+
+    if not start_date or not end_date:
+        return HttpResponse("start_date and end_date required", status=400)
+
+    try:
+        start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+        end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+    except:
+        return HttpResponse("Invalid date format. Use YYYY-MM-DD", status=400)
+
+    queryset = BusinessReport.objects.filter(
+        user=user,
+        date__range=[start_date, end_date]
+    ).order_by("date")
+
+    # ✅ Create Excel
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Business Report"
+
+    # ✅ Headers
+    headers = [
+        "Date", "Parent ASIN", "Child ASIN", "Title",
+
+        "Ordered Sales", "Ordered Sales B2B",
+        "Units Ordered", "Units Ordered B2B",
+        "Total Orders", "Total Orders B2B",
+
+        "Sessions", "Sessions B2B",
+        "Page Views", "Page Views B2B",
+
+        "Mobile Sessions", "Browser Sessions",
+        "Mobile Page Views", "Browser Page Views",
+
+        "Session %", "Page Views %",
+
+        "Unit Session %", "Unit Session % B2B",
+        "Buy Box %", "Buy Box % B2B",
+
+        "Units Refunded", "Refund Rate",
+
+        "Units Shipped", "Orders Shipped", "Shipped Sales",
+    ]
+
+    ws.append(headers)
+
+    # ✅ Data rows
+    for obj in queryset:
+        ws.append([
+            obj.date,
+            obj.parent_asin,
+            obj.child_asin,
+            obj.title,
+
+            float(obj.ordered_product_sales),
+            float(obj.ordered_product_sales_b2b),
+
+            obj.units_ordered,
+            obj.units_ordered_b2b,
+
+            obj.total_order_items,
+            obj.total_order_items_b2b,
+
+            obj.sessions_total,
+            obj.sessions_total_b2b,
+
+            obj.page_views_total,
+            obj.page_views_total_b2b,
+
+            obj.sessions_mobile_app,
+            obj.sessions_browser,
+
+            obj.page_views_mobile_app,
+            obj.page_views_browser,
+
+            obj.session_percentage_total,
+            obj.page_views_percentage_total,
+
+            obj.unit_session_percentage,
+            obj.unit_session_percentage_b2b,
+
+            obj.buy_box_percentage,
+            obj.buy_box_percentage_b2b,
+
+            obj.units_refunded,
+            obj.refund_rate,
+
+            obj.units_shipped,
+            obj.orders_shipped,
+            float(obj.shipped_product_sales),
+        ])
+
+    # ✅ Response
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = f'attachment; filename=business_report_{start_date}_to_{end_date}.xlsx'
+
+    wb.save(response)
+    return response
