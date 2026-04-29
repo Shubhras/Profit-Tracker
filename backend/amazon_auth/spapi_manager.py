@@ -250,9 +250,20 @@ class SPAPIManager:
         path = "/reports/2021-06-30/reports"
         params = {}
         
+        # param_mapping = [
+        #     "reportTypes", "processingStatuses", "marketplaceIds", 
+        #     "pageSize", "createdSince", "createdUntil", "nextToken"
+        # ]
+
         param_mapping = [
-            "reportTypes", "processingStatuses", "marketplaceIds", 
-            "pageSize", "createdSince", "createdUntil", "nextToken"
+            "reportTypes",
+            "processingStatuses",
+            "marketplaceIds",
+            "pageSize",
+            "createdSince",
+            "createdUntil",
+            "nextToken",
+            "reportIds",  # ✅ ADD THIS
         ]
         
         for key in param_mapping:
@@ -264,6 +275,29 @@ class SPAPIManager:
                     params[key] = val
         
         return self.request("GET", path, params=params)
+    
+
+    def new_create_report(self, report_type, start_date, end_date):
+        import json
+
+        path = "/reports/2021-06-30/reports"
+        
+        payload = {
+            "reportType": report_type,
+            "marketplaceIds": ["A21TJRUUN4KGV"],
+            "dataStartTime": start_date,
+            "dataEndTime": end_date,
+            "reportOptions": {
+                "dateGranularity": "DAY",
+                # "asinGranularity": "PARENT"
+                "asinGranularity": "CHILD"  
+            }
+        }
+
+        # ✅ convert dict → JSON string
+        payload_json = json.dumps(payload)
+
+        return self.request("POST", path, data=payload_json)
 
     def get_report(self, report_id):
         """Returns report details for the report specified by report_id."""
@@ -276,7 +310,7 @@ class SPAPIManager:
 
         params = {
             "marketplaceIds": marketplace_id,
-            "includedData": "attributes,images"
+            "includedData": "attributes,images,relationships"  # ✅ ADD THIS
         }
 
         return self.request("GET", path, params=params)
@@ -313,3 +347,29 @@ class SPAPIManager:
         """Returns the information required for retrieving a report document's contents."""
         path = f"/reports/2021-06-30/documents/{document_id}"
         return self.request("GET", path)
+    
+
+    def list_returns(self, **kwargs):
+        path = "/externalFulfillment/2024-09-11/returns"
+        
+
+        params = {}
+
+        allowed_params = [
+            "returnLocationId",
+            "rmaId",
+            "status",
+            "reverseTrackingId",
+            "createdSince",
+            "createdUntil",
+            "lastUpdatedSince",
+            "lastUpdatedUntil",
+            "maxResults",
+            "nextToken"
+        ]
+
+        for key in allowed_params:
+            if key in kwargs and kwargs[key] is not None:
+                params[key] = kwargs[key]
+
+        return self.request("GET", path, params=params)
