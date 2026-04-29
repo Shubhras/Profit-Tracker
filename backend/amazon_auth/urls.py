@@ -3,6 +3,7 @@ from . import views
 from .ads_campins import *
 from .bussiness_report import *
 from .finance_report import *
+from .return_items import *
 urlpatterns = [
     path('dashboard-stats/', views.get_full_dashboard, name='dashboard-stats'),
     path('pivot-stats/', views.get_pivot_dashboard, name='pivot-stats'),
@@ -53,10 +54,15 @@ urlpatterns = [
     #bussiness report 
     path('business-report/sync/', sync_daily_business_report, name='sync_daily_business_report'),
     path('amazon-new/report-sync/', manual_sync_amazon_reports, name='manual_sync_amazon_reports'),
+    #export bussiness report 
+    path('business-report/export/', export_business_report_excel, name='export_business_report_excel'),
 
     path("orders/<str:order_id>/financial-events/", OrderFinancialEventsView.as_view()),
 
     # path("orders-new/<str:order_id>/financial-events/", SettlementReportView.as_view()),
     path("orders-new/financial-events/", SettlementReportView.as_view()),
+
+    #get retunitems
+    path("get-retunslist/", sync_returns , name ='get-retunslist'),
  
 ]

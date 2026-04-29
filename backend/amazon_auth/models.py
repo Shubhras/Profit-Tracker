@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from cryptography.fernet import Fernet
 import os
 from django.conf import settings
+from django.db.models import UniqueConstraint
 
 # In a real SaaS, you'd store this in environment variables
 # For demonstration, we'll generate one if not present
@@ -137,34 +138,30 @@ class FinancialEvent(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     amazon_account = models.ForeignKey(AmazonAccount, on_delete=models.CASCADE, related_name='financial_events', null=True, blank=True)
     amazon_order_id = models.CharField(max_length=50, blank=True, null=True)
-    
-    # Event Category (e.g., ShipmentEvent, RefundEvent, GuaranteeClaimEvent, etc.)
-    event_type = models.CharField(max_length=100)
-    
-    # When this event was posted by Amazon
-    posted_date = models.DateTimeField()
-    
-    # Financial details
+
+    event_type = models.CharField(max_length=100)  # Event Category (e.g., ShipmentEvent, RefundEvent, GuaranteeClaimEvent, etc.)
+    posted_date = models.DateTimeField() # When this event was posted by Amazon
+
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     currency_code = models.CharField(max_length=10, blank=True, null=True)
-    
-    # Optional: Store the raw JSON response for full traceability
-    raw_data = models.JSONField(blank=True, null=True)
-    
+    raw_data = models.JSONField(blank=True, null=True)  # Optional: Store the raw JSON response for full traceability
     unique_hash = models.CharField(max_length=64, unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
-    #  CORE BREAKDOWN FIELDS
-    principal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    principal = models.DecimalField(max_digits=12, decimal_places=2, default=0) 
     tax = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     shipping_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    shipping_income = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     commission_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     fulfillment_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     other_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
-    # class Meta:
-    #     ordering = ['-posted_date']
-    #     unique_together = ('amazon_account', 'unique_hash')
+    event_group = models.CharField(max_length=50, null=True, blank=True) # SALE / REFUND / CLAIM / FEE / ADJUSTMENT
+    quantity = models.IntegerField(default=0)
+
+    promotion_discount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    refund_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    
+
 
     class Meta:
         ordering = ['-posted_date']
@@ -210,6 +207,7 @@ class OrderItem(models.Model):
     order_item_id = models.CharField(max_length=50)
     seller_sku = models.CharField(max_length=100, db_index=True)
     asin = models.CharField(max_length=20, null=True, blank=True)
+    parent_asin = models.CharField(max_length=50, null=True, blank=True)
     title = models.CharField(max_length=500, null=True, blank=True)
 
     quantity_ordered = models.IntegerField()
@@ -229,6 +227,8 @@ class OrderItem(models.Model):
     item_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     item_tax = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     shipping_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    shipping_income = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    shipping_expense = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
     # ===== REPORT DATA (CRITICAL) =====
     mrp = models.DecimalField(max_digits=12, decimal_places=2, default=0)
@@ -244,6 +244,16 @@ class OrderItem(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    quantity_claimed = models.IntegerField(default=0)
+    claim_type = models.CharField(max_length=50, null=True, blank=True)
+    total_claimed_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    refund_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    commission_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    fulfillment_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    other_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    payout_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
     class Meta:
         indexes = [
             models.Index(fields=['seller_sku']),
@@ -252,9 +262,9 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.seller_sku} in {self.order.amazon_order_id}"
-    
 
 class ProductMapping(models.Model):
+    parent_asin = models.CharField(max_length=50, null=True, blank=True)
     asin = models.CharField(max_length=50,null=True,)
     seller_sku = models.CharField(max_length=100)
     parent_sku = models.CharField(max_length=100)
@@ -290,6 +300,7 @@ class AdReport(models.Model):
 class MissingCatalogQueue(models.Model):
     seller_sku = models.CharField(max_length=255)
     asin = models.CharField(max_length=50)
+    parent_asin = models.CharField(max_length=50, null=True, blank=True)
     marketplace_id = models.CharField(max_length=50)
     account = models.ForeignKey(
         AmazonAccount,
@@ -355,37 +366,124 @@ class AdCampaignMetrics(models.Model):
 
 
 
+# class BusinessReport(models.Model):
+#     user = models.ForeignKey(User, on_delete=models.CASCADE)
+#     amazon_account = models.ForeignKey("AmazonAccount", on_delete=models.CASCADE)
+#     date = models.DateField()
+#     parent_asin = models.CharField(max_length=20)
+#     child_asin = models.CharField(max_length=20)
+#     # Sales
+#     ordered_product_sales = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+#     ordered_product_sales_b2b = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+#     # Units
+#     units_ordered = models.IntegerField(default=0)
+#     units_ordered_b2b = models.IntegerField(default=0)
+#     # Orders
+#     total_order_items = models.IntegerField(default=0)
+#     # Traffic
+#     sessions_total = models.IntegerField(default=0)
+#     # Conversion
+#     order_item_session_percentage = models.FloatField(default=0)
+#     # Refunds
+#     units_refunded = models.IntegerField(default=0)
+#     refund_rate = models.FloatField(default=0)
+#     created_at = models.DateTimeField(auto_now_add=True)
+
+#     class Meta:
+#         unique_together = ["amazon_account", "date", "parent_asin", "child_asin"]
+
+
+
+class ReportRequest(models.Model):
+    amazon_account = models.ForeignKey("AmazonAccount", on_delete=models.CASCADE)
+
+    report_type = models.CharField(max_length=100)
+    report_id = models.CharField(max_length=100, null=True, blank=True)
+
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+
+    status = models.CharField(max_length=50, default="REQUESTED")  
+    # REQUESTED | IN_PROGRESS | DONE | FAILED
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["amazon_account", "report_type"]),
+        ]
+
+        
 class BusinessReport(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     amazon_account = models.ForeignKey("AmazonAccount", on_delete=models.CASCADE)
 
     date = models.DateField()
 
-    # Sales
+    parent_asin = models.CharField(max_length=20,null=True,)
+    child_asin = models.CharField(max_length=20, null=True, blank=True, default="")
+
+    title = models.TextField(null=True, blank=True)
+
+    # SALES
     ordered_product_sales = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     ordered_product_sales_b2b = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
-    # Units
+    # UNITS
     units_ordered = models.IntegerField(default=0)
     units_ordered_b2b = models.IntegerField(default=0)
 
-    # Orders
+    # ORDERS
     total_order_items = models.IntegerField(default=0)
+    total_order_items_b2b = models.IntegerField(default=0)
 
-    # Traffic
+    # TRAFFIC
     sessions_total = models.IntegerField(default=0)
+    sessions_total_b2b = models.IntegerField(default=0)
 
-    # Conversion
-    order_item_session_percentage = models.FloatField(default=0)
+    page_views_total = models.IntegerField(default=0)
+    page_views_total_b2b = models.IntegerField(default=0)
 
-    # Refunds
+    # DEVICE SPLIT
+    sessions_mobile_app = models.IntegerField(default=0)
+    sessions_browser = models.IntegerField(default=0)
+
+    page_views_mobile_app = models.IntegerField(default=0)
+    page_views_browser = models.IntegerField(default=0)
+
+    # PERCENTAGES
+    session_percentage_total = models.FloatField(default=0)
+    page_views_percentage_total = models.FloatField(default=0)
+
+    # CONVERSION
+    unit_session_percentage = models.FloatField(default=0)
+    unit_session_percentage_b2b = models.FloatField(default=0)
+
+    # BUY BOX
+    buy_box_percentage = models.FloatField(default=0)
+    buy_box_percentage_b2b = models.FloatField(default=0)
+
+    # REFUNDS
     units_refunded = models.IntegerField(default=0)
     refund_rate = models.FloatField(default=0)
+
+    # SHIPPING
+    units_shipped = models.IntegerField(default=0)
+    orders_shipped = models.IntegerField(default=0)
+    shipped_product_sales = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    report_datetime = models.DateTimeField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ["amazon_account", "date"]
+        constraints = [
+            UniqueConstraint(
+                fields=["amazon_account", "date", "parent_asin", "child_asin"],
+                name="unique_business_report"
+            )
+        ]
+
 
 
 
@@ -450,3 +548,33 @@ class AmazonReport(models.Model):
 
     def __str__(self):
         return f"{self.report_type} - {self.report_id or 'pending'}"
+    
+
+
+
+class ReturnItem(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    amazon_account = models.ForeignKey(AmazonAccount, on_delete=models.CASCADE)
+
+    return_id = models.CharField(max_length=255, unique=True)
+
+    amazon_order_id = models.CharField(max_length=255, db_index=True)
+    seller_sku = models.CharField(max_length=255, db_index=True)
+
+    quantity = models.IntegerField(default=0)
+
+    status = models.CharField(max_length=100)
+    return_type = models.CharField(max_length=50)
+    return_reason = models.CharField(max_length=255, null=True, blank=True)
+
+    tracking_id = models.CharField(max_length=255, null=True, blank=True)
+
+    created_at = models.DateTimeField()
+    updated_at = models.DateTimeField()
+
+    raw_data = models.JSONField(null=True, blank=True)
+
+    created_db = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.amazon_order_id} - {self.seller_sku}"

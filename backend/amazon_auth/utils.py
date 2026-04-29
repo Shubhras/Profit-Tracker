@@ -329,6 +329,7 @@ def import_ads_from_excel(file_path):
 # from .spapi_manager import get_catalog_item
 
 def safe_catalog_call(manager, asin, marketplace_id, retries=3):
+    print("call catlog function")
     for attempt in range(retries):
         try:
             return manager.get_catalog_item(asin, marketplace_id)
@@ -416,3 +417,39 @@ def normalize_financial_events(payload):
     return result
 
 
+
+# def classify_event(event_type):
+#     if event_type == "ShipmentEvent":
+#         return "SALE"
+#     elif event_type == "RefundEvent":
+#         return "REFUND"
+#     elif event_type == "GuaranteeClaimEvent":
+#         return "CLAIM"
+#     elif event_type in ["ServiceFeeEvent", "FeeEvent"]:
+#         return "FEE"
+#     else:
+#         return "OTHER"
+    
+
+def classify_event(event_type):
+    if event_type == "ShipmentEvent":
+        return "SALE"
+    elif event_type == "RefundEvent":
+        return "REFUND"
+    elif event_type in ["GuaranteeClaimEvent", "ChargebackEvent"]:
+        return "CLAIM"
+    elif event_type in ["ServiceFeeEvent", "FeeEvent"]:
+        return "FEE"
+    elif event_type == "AdjustmentEvent":
+        return "ADJUSTMENT"
+    
+    elif event_type in ["RetrochargeEvent"]:
+        return "RTO"   # 🔥 IMPORTANT
+    else:
+        return "OTHER"
+
+def get_val(row, *keys, default=0):
+    for k in keys:
+        if k in row and row[k] not in [None, ""]:
+            return row[k]
+    return default

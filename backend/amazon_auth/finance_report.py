@@ -12,7 +12,8 @@ from .utils import normalize_financial_events
 
 class AmazonFinancesClient:
 
-    BASE_URL = "https://sellingpartnerapi-na.amazon.com"
+    # BASE_URL = "https://sellingpartnerapi-na.amazon.com"
+    BASE_URL = "https://sellingpartnerapi-eu.amazon.com"
 
     def __init__(self, access_token):
         self.access_token = access_token

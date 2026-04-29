@@ -20,18 +20,18 @@ class OrderItemInline(admin.TabularInline):  # or StackedInline
 
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
-    list_display = ('seller_sku', 'asin', 'order', 'quantity_ordered', 'item_price', 'created_at')
+    list_display = ('id','seller_sku', 'asin', 'order', 'quantity_ordered', 'item_price', 'created_at')
     list_filter = ('created_at',)
-    search_fields = ('seller_sku', 'title', 'order__amazon_order_id')
+    search_fields = ('seller_sku','asin', 'title', 'order__amazon_order_id')
 
 @admin.register(AmazonAccount)
 class AmazonAccountAdmin(admin.ModelAdmin):
-    list_display = ('user', 'seller_central_id', 'region', 'marketplace_id', 'created_at')
+    list_display = ('id','user', 'seller_central_id', 'region', 'marketplace_id', 'created_at')
     search_fields = ('user__username', 'seller_central_id')
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('amazon_order_id', 'amazon_account', 'purchase_date', 'order_status', 'total_amount', 'currency_code', 'user')
+    list_display = ('id','amazon_order_id', 'amazon_account', 'purchase_date', 'order_status', 'total_amount', 'currency_code', 'user')
     list_filter = ('amazon_account', 'order_status', 'fulfillment_channel', 'purchase_date')
     search_fields = ('amazon_order_id', 'buyer_name', 'city')
     date_hierarchy = 'purchase_date'
@@ -39,13 +39,13 @@ class OrderAdmin(admin.ModelAdmin):
 
 @admin.register(FinancialEvent)
 class FinancialEventAdmin(admin.ModelAdmin):
-    list_display = ('event_type', 'amazon_account', 'amazon_order_id', 'posted_date', 'total_amount', 'currency_code')
+    list_display = ('id','event_type', 'amazon_account', 'amazon_order_id', 'posted_date', 'total_amount', 'currency_code')
     list_filter = ('amazon_account', 'event_type', 'posted_date')
     search_fields = ('amazon_order_id', 'event_type')
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
-    list_display = ('amazon_report_id', 'amazon_account', 'report_type', 'processing_status', 'created_time')
+    list_display = ('id','amazon_report_id', 'amazon_account', 'report_type', 'processing_status', 'created_time')
     list_filter = ('amazon_account', 'report_type', 'processing_status')
     search_fields = ('amazon_report_id', 'report_type')
 
@@ -61,7 +61,7 @@ class ProductMappingAdmin(admin.ModelAdmin):
 
 @admin.register(AdReport)
 class AdReportAdmin(admin.ModelAdmin):
-    list_display = ('sku', 'date', 'impressions', 'clicks', 'spend', 'ad_sales', 'ad_orders')
+    list_display = ('id','sku', 'date', 'impressions', 'clicks', 'spend', 'ad_sales', 'ad_orders')
     search_fields = ('sku',)
     list_filter = ('date',)
     ordering = ('-date',)
@@ -74,10 +74,6 @@ class MissingCatalogQueueAdmin(admin.ModelAdmin):
     search_fields = ('seller_sku', 'asin', 'marketplace_id')
     list_filter = ('processed',)
     ordering = ('seller_sku',)    
-
-
-from django.contrib import admin
-from .models import AdCampaign, AdCampaignMetrics
 
 
 # 🔹 Inline for Metrics (shows inside campaign page)
@@ -95,7 +91,7 @@ class AdCampaignMetricsInline(admin.TabularInline):
 # 🔹 Campaign Admin
 @admin.register(AdCampaign)
 class AdCampaignAdmin(admin.ModelAdmin):
-    list_display = (
+    list_display = ('id',
         "campaign_id",
         "campaign_name",
         "user",
@@ -108,26 +104,13 @@ class AdCampaignAdmin(admin.ModelAdmin):
         "start_date",
         "created_at",
     )
-
-    search_fields = (
-        "campaign_id",
-        "campaign_name",
-        "portfolio_name",
-    )
+    search_fields = ("campaign_id","campaign_name", "portfolio_name",)
 
     list_filter = (
-        "program_type",
-        "campaign_type",
-        "targeting_type",
-        "state",
-        "amazon_account",
-        "start_date",
+        "program_type","campaign_type","targeting_type","state","amazon_account","start_date",
     )
-
     readonly_fields = ("created_at", "updated_at")
-
     inlines = [AdCampaignMetricsInline]
-
     ordering = ("-created_at",)
 
 
@@ -143,26 +126,16 @@ class AdCampaignMetricsAdmin(admin.ModelAdmin):
         "acos",
         "roas",
     )
-
     search_fields = (
         "campaign__campaign_id",
         "campaign__campaign_name",
     )
-
     list_filter = (
         "date",
         "campaign__program_type",
     )
-
     readonly_fields = ("created_at",)
-
     ordering = ("-date",)
-
-
-
-from django.contrib import admin
-from .models import BusinessReport
-
 
 @admin.register(BusinessReport)
 class BusinessReportAdmin(admin.ModelAdmin):
@@ -170,11 +143,14 @@ class BusinessReportAdmin(admin.ModelAdmin):
         "date",
         "user",
         "amazon_account",
+        "parent_asin",
+        "child_asin",
         "ordered_product_sales",
         "units_ordered",
         "total_order_items",
         "sessions_total",
-        "order_item_session_percentage",
+        "unit_session_percentage",  
+        "buy_box_percentage",      
         "refund_rate",
         "created_at",
     )
@@ -182,6 +158,9 @@ class BusinessReportAdmin(admin.ModelAdmin):
     search_fields = (
         "amazon_account__seller_central_id",
         "user__email",
+        "parent_asin",
+        "child_asin",
+        "title",
     )
 
     list_filter = (
@@ -190,15 +169,19 @@ class BusinessReportAdmin(admin.ModelAdmin):
     )
 
     readonly_fields = ("created_at",)
-
     ordering = ("-date",)
-
     list_per_page = 50
 
 
-from django.contrib import admin
-from .models import AmazonReport
 
+@admin.register(ReportRequest)
+class ReportRequestAdmin(admin.ModelAdmin):
+    list_display = ("id", "amazon_account", "report_type", "report_id", "status", "start_date", "end_date", "created_at")
+    list_filter = ("status", "report_type", "amazon_account", "created_at")
+    search_fields = ("report_id", "amazon_account__seller_central_id")
+    ordering = ("-created_at",)
+    readonly_fields = ("report_id", "created_at")
+    list_per_page = 50
 
 @admin.register(AmazonReport)
 class AmazonReportAdmin(admin.ModelAdmin):
@@ -216,7 +199,6 @@ class AmazonReportAdmin(admin.ModelAdmin):
         "created_at",
         "updated_at",
     )
-
     list_filter = (
         "processing_status",
         "download_status",
@@ -225,7 +207,6 @@ class AmazonReportAdmin(admin.ModelAdmin):
         "is_active",
         "created_at",
     )
-
     search_fields = (
         "report_id",
         "report_document_id",
@@ -234,7 +215,6 @@ class AmazonReportAdmin(admin.ModelAdmin):
         "account__id",
         "account__email",  # if exists
     )
-
     readonly_fields = (
         "created_at",
         "updated_at",
@@ -242,11 +222,8 @@ class AmazonReportAdmin(admin.ModelAdmin):
         "processing_start_time",
         "processing_end_time",
     )
-
     ordering = ("-created_at",)
-
     list_per_page = 50
-
     fieldsets = (
         ("Account Info", {
             "fields": ("account",)
@@ -286,12 +263,6 @@ class AmazonReportAdmin(admin.ModelAdmin):
         }),
     )   
 
-
-
-from django.contrib import admin
-from .models import SettlementOrderSummary
-
-
 @admin.register(SettlementOrderSummary)
 class SettlementOrderSummaryAdmin(admin.ModelAdmin):
 
@@ -319,9 +290,7 @@ class SettlementOrderSummaryAdmin(admin.ModelAdmin):
 
     # 🔹 Search
     search_fields = (
-        "amazon_order_id",
-        "report_id",
-        "report_document_id",
+        "amazon_order_id","report_id","report_document_id",
     )
 
     # 🔹 Readonly fields (important for financial data)
