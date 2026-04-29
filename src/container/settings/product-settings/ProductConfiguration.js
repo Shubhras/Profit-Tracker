@@ -32,6 +32,9 @@ export default function ProductConfiguration() {
       window.removeEventListener('headerAction', handler);
     };
   }, []);
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('tabChange', { detail: activeTab }));
+  }, [activeTab]);
 
   const PageRoutes = [
     { path: 'index', breadcrumbName: 'Settings' },

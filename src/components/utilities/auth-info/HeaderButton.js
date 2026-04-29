@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Button, Dropdown } from 'antd';
-import { UploadOutlined, DownOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
+import { UploadOutlined, DownOutlined, PlusOutlined, ReloadOutlined, DeleteOutlined } from '@ant-design/icons';
 
-function HeaderButton({ type, onClick }) {
+function HeaderButton({ type, onClick, isEnabled }) {
   const [selected, setSelected] = useState('MP Date');
   const [checked, setChecked] = useState(false);
+  const [orderType, setOrderType] = useState('Order Date');
 
   const items = selected === 'MP Date' ? [{ key: 'ledger', label: 'Ledger Date' }] : [{ key: 'mp', label: 'MP Date' }];
 
@@ -88,7 +89,11 @@ function HeaderButton({ type, onClick }) {
 
     case 'sellerflex':
       return (
-        <Button type="primary" className="rounded-lg shadow-sm flex items-center gap-1 font-bold px-2 py-1">
+        <Button
+          type="primary"
+          onClick={onClick}
+          className="rounded-lg shadow-sm flex items-center gap-1 font-bold px-2 py-1"
+        >
           SellerFlex
           <UploadOutlined style={{ color: '#fff', fontSize: '16px' }} />
         </Button>
@@ -96,7 +101,11 @@ function HeaderButton({ type, onClick }) {
 
     case 'inyourhand':
       return (
-        <Button type="primary" className="rounded-lg shadow-sm flex items-center gap-1 font-bold px-2 py-1">
+        <Button
+          type="primary"
+          onClick={onClick}
+          className="rounded-lg shadow-sm flex items-center gap-1 font-bold px-2 py-1"
+        >
           In your Hand
           <UploadOutlined style={{ color: '#fff', fontSize: '16px' }} />
         </Button>
@@ -104,7 +113,11 @@ function HeaderButton({ type, onClick }) {
 
     case 'resolved':
       return (
-        <Button type="primary" className="rounded-lg shadow-sm flex items-center gap-1 font-bold px-2 py-1">
+        <Button
+          type="primary"
+          onClick={onClick}
+          className="rounded-lg shadow-sm flex items-center gap-1 font-bold px-2 py-1"
+        >
           Resolved/Claimed
           <UploadOutlined style={{ color: '#fff', fontSize: '16px' }} />
         </Button>
@@ -124,9 +137,49 @@ function HeaderButton({ type, onClick }) {
 
     case 'addexpense':
       return (
-        <Button type="primary" className="rounded-lg shadow-sm flex items-center gap-1 font-bold px-2 py-1">
+        <Button
+          type="primary"
+          onClick={onClick}
+          className="rounded-lg shadow-sm flex items-center gap-1 font-bold px-2 py-1"
+        >
           Add Expense
           <PlusOutlined style={{ color: '#fff', fontSize: '16px' }} />
+        </Button>
+      );
+
+    case 'add':
+      return (
+        <Button
+          type="primary"
+          onClick={onClick}
+          className="rounded-lg shadow-sm flex items-center gap-1 font-bold px-2 py-1"
+        >
+          Add
+          <PlusOutlined style={{ color: '#fff', fontSize: '16px' }} />
+        </Button>
+      );
+
+    case 'addrules':
+      return (
+        <Button
+          type="primary"
+          onClick={onClick}
+          className="rounded-lg shadow-sm flex items-center gap-1 font-bold px-2 py-1"
+        >
+          Add Rules
+          <PlusOutlined style={{ color: '#fff', fontSize: '16px' }} />
+        </Button>
+      );
+
+    case 'sync':
+      return (
+        <Button
+          type="primary"
+          onClick={onClick}
+          className="rounded-lg shadow-sm flex items-center gap-1 font-bold px-2 py-1"
+        >
+          Sync
+          <ReloadOutlined style={{ color: '#fff', fontSize: '16px' }} />
         </Button>
       );
 
@@ -139,6 +192,25 @@ function HeaderButton({ type, onClick }) {
         >
           Recalculate Expense
           <ReloadOutlined style={{ color: '#fff', fontSize: '16px' }} />
+        </Button>
+      );
+    case 'delete':
+      return (
+        <Button
+          type={isEnabled ? 'primary' : 'default'}
+          disabled={!isEnabled}
+          onClick={onClick}
+          className={`rounded-lg shadow-sm flex items-center gap-1 font-bold px-2 py-1 
+        ${!isEnabled ? 'bg-gray-200 text-gray-400 border-gray-200 cursor-not-allowed' : ''}
+      `}
+        >
+          Delete
+          <DeleteOutlined
+            style={{
+              fontSize: '16px',
+              color: isEnabled ? '#fff' : '#9ca3af', // grey icon when disabled
+            }}
+          />
         </Button>
       );
 
@@ -177,6 +249,28 @@ function HeaderButton({ type, onClick }) {
           <span className="font-semibold">30</span>
         </Button>
       );
+    case 'orderDate': {
+      const orderDateItems = [
+        { key: 'order', label: 'Order Date' },
+        { key: 'delivery', label: 'Delivery Date' },
+        { key: 'returnDelivery', label: 'Return Delivery' },
+      ];
+
+      const handleOrderDateClick = ({ key }) => {
+        if (key === 'order') setOrderType('Order Date');
+        if (key === 'delivery') setOrderType('Delivery Date');
+        if (key === 'returnDelivery') setOrderType('Return Delivery');
+      };
+
+      return (
+        <Dropdown menu={{ items: orderDateItems, onClick: handleOrderDateClick }} trigger={['click']}>
+          <Button className="rounded-lg flex items-center gap-2 font-semibold px-2 py-1">
+            {orderType}
+            <DownOutlined />
+          </Button>
+        </Dropdown>
+      );
+    }
     default:
       return null;
   }

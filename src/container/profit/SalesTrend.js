@@ -77,36 +77,42 @@ export default function SalesTrend() {
     },
   ];
 
-  const generateDates = (start, end) => {
-    const dates = [];
-    const current = new Date(start);
-    const last = new Date(end);
+  // const generateDates = (start, end) => {
+  //   const dates = [];
+  //   const current = new Date(start);
+  //   const last = new Date(end);
 
-    while (current <= last) {
-      dates.push(current.toISOString().split('T')[0]); // yyyy-mm-dd
-      current.setDate(current.getDate() + 1);
-    }
+  //   while (current <= last) {
+  //     dates.push(current.toISOString().split('T')[0]);
+  //     current.setDate(current.getDate() + 1);
+  //   }
 
-    return dates;
-  };
+  //   return dates;
+  // };
 
   const dynamicColumns = React.useMemo(() => {
-    if (!dateRange?.fromDate || !dateRange?.endDate) return [];
+    if (!pivotData?.results?.length) return [];
 
-    const dates = generateDates(dateRange.fromDate, dateRange.endDate);
+    const firstRow = pivotData.results[0];
 
-    return dates.map((date) => ({
-      title: new Date(date).toLocaleDateString('en-US', {
-        month: 'short',
-        day: '2-digit',
-      }),
-      dataIndex: date,
-      key: date,
-      align: 'center',
-      sorter: (a, b) => (a[date] || 0) - (b[date] || 0),
-      render: (_, record) => record[date] || 0, // fallback
-    }));
-  }, [dateRange]);
+    return Object.keys(firstRow)
+      .filter((key) => key !== 'id')
+      .map((key) => {
+        const d = new Date(key);
+
+        return {
+          title: d.toLocaleDateString('en-US', {
+            month: 'long', // March
+            day: '2-digit', // 01
+          }), // ✅ "March 01"
+          dataIndex: key, // 🔥 SAME AS API
+          key,
+          align: 'center',
+          sorter: (a, b) => (a[key] || 0) - (b[key] || 0),
+          render: (_, record) => record[key] || 0,
+        };
+      });
+  }, [pivotData]);
 
   // const dynamicColumns = React.useMemo(() => {
   //   if (!pivotData?.results?.length) return [];
@@ -190,17 +196,17 @@ export default function SalesTrend() {
       invMasterSku: '',
     });
   };
-  const formatKey = (key) => {
-    const d = new Date(key);
-    return d.toISOString().split('T')[0];
-  };
+  // const formatKey = (key) => {
+  //   const d = new Date(key);
+  //   return d.toISOString().split('T')[0];
+  // };
   const dataSource =
     pivotData?.results?.map((item, index) => {
       const newItem = { key: index, id: item.id };
 
       Object.keys(item).forEach((k) => {
         if (k !== 'id') {
-          newItem[formatKey(k)] = item[k];
+          newItem[k] = item[k]; // ✅ SAME KEY AS COLUMN
         }
       });
 

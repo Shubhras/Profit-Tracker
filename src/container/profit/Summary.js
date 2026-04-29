@@ -447,7 +447,7 @@ export default function Summary() {
                 </div>
                 <Statistic value={dashboardData?.header_metrics?.sales || 0} prefix="₹" />{' '}
                 <Tag color="blue" className="mt-2">
-                  Units: {dashboardData?.breakdown_table?.gross?.qty || 0}
+                  Units: {dashboardData?.breakdown_table?.net?.qty || 0}
                 </Tag>
                 <Divider />
                 <Row className="font-semibold mb-1">

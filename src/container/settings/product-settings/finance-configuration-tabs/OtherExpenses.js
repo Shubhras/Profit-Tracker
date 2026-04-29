@@ -3,9 +3,9 @@ import { Table, DatePicker, InputNumber } from 'antd';
 import { EditOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import moment from 'moment';
 
-export default function OtherExpenses() {
+export default function OtherExpenses({ selectedRows, setSelectedRows }) {
   const [editingKey, setEditingKey] = useState(null);
-  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  // const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
   const dataSource = [
     {
@@ -131,8 +131,16 @@ export default function OtherExpenses() {
     <Table
       className="!min-h-0"
       rowSelection={{
-        selectedRowKeys,
-        onChange: setSelectedRowKeys,
+        selectedRowKeys: selectedRows,
+        onChange: (keys) => {
+          setSelectedRows(keys);
+
+          window.dispatchEvent(
+            new CustomEvent('rowSelectionChange', {
+              detail: keys,
+            }),
+          );
+        },
       }}
       columns={columns}
       dataSource={dataSource}

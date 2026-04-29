@@ -5,14 +5,14 @@ import UilDollarSign from '@iconscout/react-unicons/icons/uil-dollar-sign';
 import UilSignout from '@iconscout/react-unicons/icons/uil-signout';
 import UilUser from '@iconscout/react-unicons/icons/uil-user';
 // import UilUsersAlt from '@iconscout/react-unicons/icons/uil-users-alt';
-import { Avatar, Button } from 'antd';
+import { Avatar, DatePicker, Button } from 'antd';
 import React, { useEffect, useState } from 'react';
 // import { useTranslation} from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import UilTimes from '@iconscout/react-unicons/icons/uil-times';
 import moment from 'moment';
-import { DateRange } from 'react-date-range';
+// import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
 import Search from './Search';
@@ -21,7 +21,7 @@ import FilterDropdown from './FilterDropdown';
 // import Notification from './Notification';
 // import Settings from './settings';
 import HeaderButton from './HeaderButton';
-
+import CustomCalendar from './CustomCalendar';
 import { Popover } from '../../popup/popup';
 import Heading from '../../heading/heading';
 // import { Dropdown } from '../../dropdown/dropdown';
@@ -32,94 +32,84 @@ import action from '../../../redux/dashboard/action';
 const AuthInfo = React.memo(() => {
   const dispatch = useDispatch();
   const location = useLocation();
+  const { RangePicker } = DatePicker;
 
   const currentPath = location.pathname;
 
   const matchedRoute = Object.keys(HEADER_ACTIONS).find((route) => currentPath.includes(route));
 
-  const actions = HEADER_ACTIONS[matchedRoute] || [];
+  // const actions = HEADER_ACTIONS[matchedRoute] || [];
+  // const routeConfig = HEADER_ACTIONS[matchedRoute] || {};
+  const [activeTab, setActiveTab] = useState('otherExpenses');
+
+  // const actions = routeConfig[activeTab] || [];
+  const routeConfig = HEADER_ACTIONS[matchedRoute];
+
+  let actions = [];
+
+  if (Array.isArray(routeConfig)) {
+    actions = routeConfig;
+  } else if (typeof routeConfig === 'object') {
+    actions = routeConfig[activeTab] || [];
+  }
+  const isMonthMode = matchedRoute === '/profit/profitMonthlyView';
   const [dateRange, setDateRange] = useState([moment().startOf('month'), moment()]);
   const [open, setOpen] = useState(false);
-  const [tempRange, setTempRange] = useState([
-    {
-      startDate: new Date(),
-      endDate: new Date(),
-      key: 'selection',
-    },
-  ]);
-  // const [openDate, setOpenDate] = React.useState(false);
-  const handlePreset = (type) => {
-    let start;
-    let end;
-    const today = new Date();
+  const [tempDates, setTempDates] = useState(null);
 
-    switch (type) {
-      case 'today':
-        start = today;
-        end = today;
-        break;
-      case 'yesterday':
-        start = new Date(today.setDate(today.getDate() - 1));
-        end = start;
-        break;
-      case 'thisWeek':
-        start = new Date();
-        start.setDate(today.getDate() - today.getDay());
-        end = new Date();
-        break;
-      case 'lastWeek':
-        start = new Date();
-        start.setDate(today.getDate() - today.getDay() - 7);
-        end = new Date();
-        end.setDate(start.getDate() + 6);
-        break;
-      case 'thisMonth':
-        start = new Date(today.getFullYear(), today.getMonth(), 1);
-        end = new Date();
-        break;
-      case 'lastMonth':
-        start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        end = new Date(today.getFullYear(), today.getMonth(), 0);
-        break;
-      default:
-        return;
-    }
+  const HIDE_CALENDAR = [
+    '/settings/product-setting/finance-configuration',
+    '/settings/product-setting/product-configuration',
+    '/profit/profittabledetails',
+    '/profit/salesdetails/',
+    '/reconcile/os-payment',
+    '/reconcile/return/summary',
+    '/profit/profitThirdtable/',
+  ];
 
-    setTempRange([
-      {
-        startDate: start,
-        endDate: end,
-        key: 'selection',
-      },
-    ]);
-  };
-  // useEffect(() => {
-  //   const handleClickOutside = (e) => {
-  //     if (dateRef.current && !dateRef.current.contains(e.target)) {
-  //       setOpenDate(false);
-  //     }
-  //   };
-
-  //   document.addEventListener('mousedown', handleClickOutside);
-  //   return () => document.removeEventListener('mousedown', handleClickOutside);
-  // }, []);
-
-  // ✅ Get Profile and profileLoading from Redux Store
+  const hideCalendar = HIDE_CALENDAR.some((route) => location.pathname.includes(route));
   const { profile, profileLoading, profileError } = useSelector((state) => state.auth);
+  const [selectedRows, setSelectedRows] = useState([]);
 
-  // const [state, setState] = useState({
-  //   flag: 'en',
-  // });
+  const HIDE_SEARCH = [
+    '/settings/product-setting/overview',
+    '/profit/profitMonthlyView',
+    '/reconcile/os-payment',
+    '/reconcile/b2c-reconciliation/invoice-reconciliation',
+    '/reconcile/return/summary',
+    '/reconcile/summary',
+  ];
+
+  const hideSearch = HIDE_SEARCH.some((route) => location.pathname.includes(route));
+  useEffect(() => {
+    const handler = (e) => {
+      setActiveTab(e.detail);
+    };
+
+    window.addEventListener('tabChange', handler);
+
+    return () => {
+      window.removeEventListener('tabChange', handler);
+    };
+  }, []);
   const navigate = useNavigate();
-  // const { i18n } = useTranslation();
-  // const { flag } = state;
 
   const SignOut = (e) => {
     e.preventDefault();
     dispatch(logOut(() => navigate('/')));
   };
+  useEffect(() => {
+    const handler = (e) => {
+      setSelectedRows(e.detail);
+    };
 
-  // ✅ Call API on Page Load (via Redux) if profile is missing and not already loading
+    window.addEventListener('rowSelectionChange', handler);
+
+    return () => {
+      window.removeEventListener('rowSelectionChange', handler);
+    };
+  }, []);
+
   useEffect(() => {
     if (!profile && !profileLoading && !profileError) {
       dispatch(getProfile());
@@ -258,19 +248,159 @@ const AuthInfo = React.memo(() => {
           <HeaderButton
             key={btn}
             type={btn}
+            isEnabled={selectedRows.length > 0}
             onClick={() => {
               window.dispatchEvent(new CustomEvent('headerAction', { detail: btn }));
             }}
           />
         ))}
-        <Search />
-        <div className="relative">
-          <button
+        {!hideSearch && <Search />}
+        {!hideCalendar && (
+          <div className="relative">
+            {/* ✅ BUTTON */}
+            <button
+              type="button"
+              onClick={() => setOpen(!open)}
+              className="px-2 py-2 border rounded-md text-sm bg-white flex items-center gap-2"
+            >
+              {/* DATE TEXT */}
+              {/* <span>
+              {dateRange
+                ? `${dateRange[0].format('DD/MM/YYYY')} - ${dateRange[1].format('DD/MM/YYYY')}`
+                : 'Select Date'}
+            </span> */}
+              <span>
+                {dateRange
+                  ? isMonthMode
+                    ? `${dateRange[0].format('MMM YYYY')} - ${dateRange[1].format('MMM YYYY')}`
+                    : `${dateRange[0].format('DD/MM/YYYY')} - ${dateRange[1].format('DD/MM/YYYY')}`
+                  : 'Select Date'}
+              </span>
+
+              {/* ❌ CLEAR BUTTON */}
+              {dateRange && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation(); // 👈 calendar open na ho
+
+                    const start = moment().startOf('month');
+                    const end = moment();
+
+                    setDateRange([start, end]);
+
+                    dispatch(
+                      action.setDateRange({
+                        fromDate: start.format('YYYY-MM-DD'),
+                        endDate: end.format('YYYY-MM-DD'),
+                      }),
+                    );
+                  }}
+                  className="text-gray-400 hover:text-red-500 flex items-center cursor-pointer"
+                >
+                  <UilTimes className="w-4 h-4" />
+                </button>
+              )}
+            </button>
+
+            {open && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 40, // 👈 button ke niche
+                  right: 0,
+                  zIndex: 1000,
+                  background: '#fff',
+                  borderRadius: 8,
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                }}
+              >
+                {isMonthMode ? (
+                  <div className="p-3">
+                    <RangePicker
+                      picker="month"
+                      open
+                      value={tempDates}
+                      order={false}
+                      disabledDate={(current) => {
+                        return current && current > moment().endOf('month');
+                      }}
+                      onCalendarChange={(dates) => {
+                        setTempDates(dates);
+                      }}
+                      onChange={(dates) => {
+                        setTempDates(dates);
+                      }}
+                      panelRender={(panelNode) => (
+                        <div>
+                          {panelNode}
+
+                          <div className="flex justify-end gap-2 mt-2 p-2 border-t">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTempDates(null);
+                                setOpen(false);
+                              }}
+                              className="px-3 py-1 border rounded"
+                            >
+                              Cancel
+                            </button>
+
+                            <Button
+                              type="primary"
+                              disabled={!tempDates}
+                              onClick={() => {
+                                const start = tempDates[0].startOf('month');
+                                const end = tempDates[1].endOf('month');
+
+                                setDateRange([start, end]);
+
+                                dispatch(
+                                  action.setDateRange({
+                                    fromDate: start.format('YYYY-MM-DD'),
+                                    endDate: end.format('YYYY-MM-DD'),
+                                  }),
+                                );
+
+                                setOpen(false);
+                              }}
+                            >
+                              Submit
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    />
+                  </div>
+                ) : (
+                  <CustomCalendar
+                    initialRange={dateRange}
+                    onSubmit={(start, end) => {
+                      setDateRange([moment(start), moment(end)]);
+
+                      dispatch(
+                        action.setDateRange({
+                          fromDate: moment(start).format('YYYY-MM-DD'),
+                          endDate: moment(end).format('YYYY-MM-DD'),
+                        }),
+                      );
+
+                      setOpen(false);
+                    }}
+                    onCancel={() => setOpen(false)}
+                  />
+                )}
+              </div>
+            )}
+          </div>
+        )}
+        {/* <div className="relative"> */}
+        {/* <button
             type="button"
             onClick={() => setOpen(true)}
             className="px-2 py-2 border rounded-md text-sm bg-white flex items-center gap-2"
           >
-            {/* DATE TEXT */}
             <span>
               {dateRange
                 ? `${dateRange[0].format('DD/MM/YYYY')} - ${dateRange[1].format('DD/MM/YYYY')}`
@@ -300,9 +430,9 @@ const AuthInfo = React.memo(() => {
                 <UilTimes className="w-4 h-4" />
               </button>
             )}
-          </button>
+          </button> */}
 
-          {/* <RangePicker
+        {/* <RangePicker
             open={open}
             onOpenChange={(val) => setOpen(val)}
             value={tempRange}
@@ -378,7 +508,7 @@ const AuthInfo = React.memo(() => {
             }}
             style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
           /> */}
-          {open && (
+        {/* {open && (
             <div
               style={{
                 position: 'absolute',
@@ -391,7 +521,6 @@ const AuthInfo = React.memo(() => {
                 display: 'flex',
               }}
             >
-              {/* LEFT SIDE SAME */}
               <div
                 style={{
                   width: 180,
@@ -457,74 +586,18 @@ const AuthInfo = React.memo(() => {
                   <Button onClick={() => setOpen(false)}>Cancel</Button>
                 </div>
               </div>
-              <style>
-                {`
-.rdrMonthPicker select {
-  padding: 2px 6px !important;
-  height: auto !important;
-}
 
-.rdrMonthPicker select:hover {
-  background-color: rgba(59,130,246,0.08) !important;
-  padding: 2px 6px !important; /* height same rahe */
-}
-
-.rdrYearPicker select {
-  padding: 4px 22x !important;
-  height: 30px !important;
-   height: auto !important; 
-}
-
-.rdrYearPicker select:hover {
-  background-color: rgba(59,130,246,0.08) !important;
-}
-
-.rdrMonthName {
-  padding-top: 0px !important;
-  padding-bottom: 0px !important;
-  font-size: 13px !important;
-}
-
-.rdrMonthAndYearPickers {
-  gap: 4px !important;
-}
-.rdrDateDisplayWrapper {
-  padding: 2px 8px !important;
-}
-
-.rdrDateDisplay {
-  gap: 6px !important; 
-}
-    .rdrMonth {
-    width: 300px !important; 
-  }
-
-.rdrDateDisplayItem {
-  height: 28px !important; 
-  min-width: 120px !important;
-  padding: 0 6px !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.rdrDateDisplayItem input {
-  font-size: 12px !important; 
-  text-align: center;
-}
-`}
-              </style>
               <DateRange
                 ranges={tempRange}
                 onChange={(item) => setTempRange([item.selection])}
                 months={2}
                 direction="horizontal"
-                // maxDate={new Date()}
+                maxDate={new Date()}
                 rangeColors={['#22c55e']}
               />
             </div>
           )}
-        </div>
+        </div> */}
         {/* <div ref={dateRef} className="relative">
           <button
             type="button"

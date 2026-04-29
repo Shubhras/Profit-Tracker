@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Checkbox, Popover, Empty, Pagination, Switch, Spin } from 'antd';
-import { SettingOutlined } from '@ant-design/icons';
+import { Card, Table, Checkbox, Popover, Empty, Pagination, Switch, Spin, Modal, Button, Select } from 'antd';
+import { SettingOutlined, DownloadOutlined, UploadOutlined } from '@ant-design/icons';
 import { ResponsiveContainer, ComposedChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, Cell } from 'recharts';
 import ReturnFilterBar from './component/ReturnFilterBar';
 
@@ -148,7 +148,35 @@ const summaryColumns = [
 
 export default function ReturnLedger() {
   const [loading, setLoading] = useState(true);
+  const [exportModal, setExportModal] = useState(false);
+  const [sellerModal, setSellerModal] = useState(false);
+  const [inhandModal, setInHandModal] = useState(false);
+  const [modalType, setModalType] = useState('inhand');
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.detail === 'export') {
+        setExportModal(true);
+      }
+      if (e.detail === 'sellerflex') {
+        setSellerModal(true);
+      }
+      if (e.detail === 'inyourhand') {
+        setModalType('inhand');
+        setInHandModal(true);
+      }
 
+      if (e.detail === 'resolved') {
+        setModalType('claimed');
+        setInHandModal(true);
+      }
+    };
+
+    window.addEventListener('headerAction', handler);
+
+    return () => {
+      window.removeEventListener('headerAction', handler);
+    };
+  }, []);
   useEffect(() => {
     setTimeout(() => setLoading(false), 800);
   }, []);
@@ -317,6 +345,93 @@ export default function ReturnLedger() {
           </Card>
         </Spin>
       </main>
+      <Modal open={exportModal} onCancel={() => setExportModal(false)} footer={null} centered width={520} closable>
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 w-full">
+            <h3 className="text-lg font-semibold">Returns Report</h3>
+
+            <div className="flex items-center w-full">
+              <Select
+                defaultValue="all"
+                className="w-[280px]"
+                options={[
+                  { label: 'All Returns Not In Your Hand Export', value: 'all' },
+                  { label: 'All Returns Export', value: 'received' },
+                  { label: 'Late Return', value: 'yet' },
+                  { label: 'MP Return but not in my hand', value: 'mpreturn' },
+                ]}
+              />
+
+              <Button type="primary" className="ml-auto flex items-center gap-1 font-semibold">
+                Export
+                <DownloadOutlined />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Modal>
+      <Modal open={sellerModal} onCancel={() => setSellerModal(false)} footer={null} centered width={520}>
+        <div className="flex flex-col gap-6">
+          <div className="text-lg font-semibold text-black">File Upload</div>
+
+          <input type="file" hidden id="fileUpload" />
+
+          <Button onClick={() => document.getElementById('fileUpload').click()} className="flex items-center gap-2">
+            <UploadOutlined />
+            Upload
+          </Button>
+
+          <div className="flex justify-end gap-3">
+            <Button onClick={() => setSellerModal(false)}>Cancel</Button>
+
+            <Button type="primary">Submit</Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={inhandModal} onCancel={() => setInHandModal(false)} footer={null} centered width={520}>
+        <div className="flex flex-col gap-5">
+          {/* Title */}
+          <div className="text-lg font-semibold text-black">
+            {modalType === 'claimed' ? 'Resolved/Claimed Upload' : 'In Your Hand Upload'}
+          </div>
+          {/* File Row */}
+          <div className="flex items-center justify-between">
+            {/* File Picker */}
+            <div className="flex items-center gap-3">
+              <input
+                type="file"
+                id="inhandFile"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  console.log(file);
+                }}
+              />
+
+              <button
+                type="button"
+                className="border px-3 py-1 rounded-md text-sm bg-gray-50"
+                onClick={() => document.getElementById('inhandFile').click()}
+              >
+                Choose file
+              </button>
+
+              <span className="text-sm text-gray-500">No file chosen</span>
+            </div>
+
+            <a href="#" className="text-blue-600 text-sm underline">
+              Sample file
+            </a>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button onClick={() => setInHandModal(false)}>Cancel</Button>
+
+            <Button type="primary">OK</Button>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }

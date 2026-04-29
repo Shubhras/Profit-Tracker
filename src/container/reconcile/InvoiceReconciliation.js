@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { Card, Table, Tabs, Button, Spin, Modal, Select } from 'antd';
 import { UploadOutlined, CloseOutlined } from '@ant-design/icons';
+import { getInvoiceReconciliation } from '../../redux/reconcilePayment/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
 import meeshoIcon from '../../assets/icons/meesho.png';
 import flipkartIcon from '../../assets/icons/flipkart.svg';
@@ -28,6 +30,17 @@ export default function InvoiceReconciliation() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [type, setType] = useState(null);
   const [uploadModal, setUploadModal] = useState(false);
+  const dispatch = useDispatch();
+  const payload = {
+    channel: {
+      IN: activeTab === 'meesho' ? ['Meesho'] : ['Amazon-India'],
+    },
+    startDate: '2025-12-31T18:30:00Z',
+    endDate: '2026-04-30T18:29:59Z',
+  };
+  useEffect(() => {
+    dispatch(getInvoiceReconciliation(payload));
+  }, [activeTab]);
   useEffect(() => {
     const handler = (e) => {
       if (e.detail === 'upload') {

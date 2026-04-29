@@ -18,13 +18,13 @@ const SearchBar = React.memo(() => {
   }, [value]);
   return (
     <div className="flex items-center">
-      <div className="w-[150px]">
+      <div className="w-[140px]">
         <Form form={form} name="hexadash-search">
           <Form.Item name="search-input" className="mb-0">
             <Input
               value={value}
               className="bg-white border border-gray-300 rounded-md h-[36px] px-3 focus:border-blue-500 focus:shadow-none"
-              placeholder="Search Here"
+              placeholder="Search..."
               onChange={(e) => setValue(e.target.value)}
               suffix={
                 value ? (
