@@ -30,6 +30,7 @@ import subscriptionReducer from './subscription/reducers';
 import amazonReducer from './amazonAPI/reducers';
 import dashboardReducer from './dashboard/reducers';
 import reconcilePaymentReducer from './reconcilePayment/reducers';
+import settingsReducer from './Settings/reducers';
 
 const rootReducers = combineReducers({
   themeUsers: themeUsersReducer,
@@ -71,6 +72,7 @@ const rootReducers = combineReducers({
   amazonAPI: amazonReducer,
   dashboard: dashboardReducer,
   reconcilePayment: reconcilePaymentReducer,
+  settings: settingsReducer,
 });
 
 export default rootReducers;

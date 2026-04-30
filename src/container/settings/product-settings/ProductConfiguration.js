@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { Tabs, Spin, Modal, Button } from 'antd';
 import ProductConfigTab from './ProductConfigurationTabs/ProductConfigTab';
 import InventoryMastertab from './ProductConfigurationTabs/InventoryMastertab';
 import PincodeTab from './ProductConfigurationTabs/PincodeTab';
+import { getProductConfiguration } from '../../../redux/Settings/actionCreator';
 import { PageHeader } from '../../../components/page-headers/page-headers';
 
 export default function ProductConfiguration() {
@@ -12,6 +14,45 @@ export default function ProductConfiguration() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [exportModal, setExportModal] = useState(false);
   const [uploadModal, setUploadModal] = useState(false);
+
+  const dispatch = useDispatch();
+  const getPayloadByTab = (tab) => {
+    switch (tab) {
+      case 'product':
+        return {
+          type: 'inventorysettings',
+          method: 'get',
+        };
+
+      case 'inventory':
+        return {
+          type: 'inventorysettigstable',
+          method: 'get',
+          filters: {},
+          pagination: {
+            pageNo: 0,
+            pageSize: 25,
+          },
+        };
+
+      default:
+        return {};
+    }
+  };
+  useEffect(() => {
+    setLoading(true);
+
+    const payload = getPayloadByTab(activeTab);
+
+    dispatch(getProductConfiguration(payload));
+
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [activeTab]);
+
   useEffect(() => {
     const handler = (e) => {
       if (e.detail === 'upload') {
@@ -32,6 +73,9 @@ export default function ProductConfiguration() {
       window.removeEventListener('headerAction', handler);
     };
   }, []);
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('tabChange', { detail: activeTab }));
+  }, [activeTab]);
 
   const PageRoutes = [
     { path: 'index', breadcrumbName: 'Settings' },

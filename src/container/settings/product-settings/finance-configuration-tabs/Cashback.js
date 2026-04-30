@@ -1,7 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { Table } from 'antd';
+import { getCashbackApi } from '../../../../redux/Settings/actionCreator';
 
 export default function Cashback() {
+  const dispatch = useDispatch();
+
+  const getPayload = () => ({
+    filters: {
+      channel: {
+        IN: ['Amazon-India', 'Flipkart', 'Jiomart', 'Meesho', 'Myntra', 'Snapdeal'],
+      },
+      method: 'show',
+    },
+    pagination: {
+      pageNo: 0,
+      pageSize: 25,
+    },
+  });
+  useEffect(() => {
+    dispatch(getCashbackApi(getPayload));
+  }, []);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
   const dataSource = [

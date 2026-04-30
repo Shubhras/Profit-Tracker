@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { Card, Table, Empty, Spin } from 'antd';
 import {
   ResponsiveContainer,
@@ -12,6 +13,7 @@ import {
   Tooltip as RechartsTooltip,
   Legend,
 } from 'recharts';
+import { getQuickComReconciliation } from '../../redux/reconcilePayment/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 /* ---------- Dummy Chart Data ---------- */
@@ -40,6 +42,24 @@ const invoiceColumns = [
 ];
 
 export default function Others() {
+  const dispatch = useDispatch();
+  const payload = {
+    filters: {
+      channel: {
+        IN: ['Amazon-India', 'Flipkart', 'Jiomart', 'Meesho', 'Myntra', 'Snapdeal'],
+      },
+      fromDate: '2026-03-31T18:30:00Z',
+      toDate: '2026-04-30T18:29:59Z',
+      mode: 'list',
+    },
+    pagination: {
+      pageNo: 0,
+      pageSize: 25,
+    },
+  };
+  useEffect(() => {
+    dispatch(getQuickComReconciliation(payload));
+  }, []);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

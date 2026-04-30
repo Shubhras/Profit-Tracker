@@ -1,9 +1,36 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { Row, Col, Card, Table, Empty, Spin } from 'antd';
 import FilterBar from './component/FilterBar';
+import { getFeeleaksconciliation } from '../../redux/reconcilePayment/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function FeeLeaks() {
+  const dispatch = useDispatch();
+  const payload = {
+    filters: {
+      method: 'show',
+      function_type: 'fee_waiver_order',
+      filters: {
+        channel: {
+          IN: ['Amazon-India', 'Flipkart', 'Jiomart', 'Meesho', 'Myntra', 'Snapdeal'],
+        },
+        fromDate: '2026-03-31T18:30:00Z',
+        toDate: '2026-04-30T18:29:59Z',
+      },
+      pagination: {
+        pageNo: 0,
+        pageSize: 25,
+      },
+      sort: {
+        orderdate: -1,
+      },
+    },
+  };
+
+  useEffect(() => {
+    dispatch(getFeeleaksconciliation(payload));
+  }, []);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

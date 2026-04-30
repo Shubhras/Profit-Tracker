@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { Switch, Button, Spin } from 'antd';
+import { getChannels } from '../../redux/Settings/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 // Import Local Icons
@@ -122,6 +124,10 @@ const marketplaces = [
 ];
 
 export default function MarketPlaceSettings() {
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(getChannels());
+  }, []);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

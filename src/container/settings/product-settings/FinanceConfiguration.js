@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Spin, Tabs, Modal, Input, Button } from 'antd';
-import { UploadOutlined, CloseOutlined } from '@ant-design/icons';
+import { UploadOutlined, CloseOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import OtherExpenses from './finance-configuration-tabs/OtherExpenses';
 import Cashback from './finance-configuration-tabs/Cashback';
 import InventoryConfig from './finance-configuration-tabs/InventoryConfig';
 import Rule from './finance-configuration-tabs/Rule';
+import AddExpenseModal from './finance-configuration-tabs/AddExpenseModal';
 import FeeWaiverConfig from './finance-configuration-tabs/FeeWaiverConfig';
 import SettledAmountConfig from './finance-configuration-tabs/SettledAmountConfig';
 import { PageHeader } from '../../../components/page-headers/page-headers';
@@ -21,6 +22,10 @@ export default function FinanceConfiguration() {
   const [uploadModal, setUploadModal] = useState(false);
   const [savedPercentage, setSavedPercentage] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [addexpenseModal, setAddExpenseModal] = useState(false);
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [deleteModal, setDeleteModal] = useState(false);
+
   useEffect(() => {
     const handler = (e) => {
       if (e.detail === 'upload') {
@@ -29,6 +34,15 @@ export default function FinanceConfiguration() {
       if (e.detail === 'recalculate') {
         setRecalculateModal(true);
       }
+      if (e.detail === 'addexpense') {
+        setAddExpenseModal(true);
+      }
+
+      if (e.detail === 'delete') {
+        if (selectedRows.length > 0) {
+          setDeleteModal(true);
+        }
+      }
     };
 
     window.addEventListener('headerAction', handler);
@@ -36,7 +50,10 @@ export default function FinanceConfiguration() {
     return () => {
       window.removeEventListener('headerAction', handler);
     };
-  }, []);
+  }, [selectedRows]);
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('tabChange', { detail: activeTab }));
+  }, [activeTab]);
 
   // const PageRoutes = [
   //   {
@@ -65,7 +82,7 @@ export default function FinanceConfiguration() {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'otherExpenses':
-        return <OtherExpenses />;
+        return <OtherExpenses selectedRows={selectedRows} setSelectedRows={setSelectedRows} />;
       case 'cashback':
         return <Cashback />;
       case 'inventoryConfig':
@@ -219,6 +236,42 @@ export default function FinanceConfiguration() {
           </Button>
         </div>
       </Modal>
+      <Modal open={deleteModal} onCancel={() => setDeleteModal(false)} footer={null} centered>
+        <div className="flex items-start gap-3 mb-3">
+          {/* ICON */}
+          <div className="bg-yellow-100 text-yellow-600 rounded-full p-2">
+            <ExclamationCircleOutlined style={{ fontSize: '18px' }} />
+          </div>
+
+          {/* TITLE */}
+          <h3 className="text-lg font-semibold">Confirm deletion</h3>
+        </div>
+
+        {/* TEXT */}
+        <p className="text-sm text-gray-500 mb-4 ml-10">
+          Once you have updated all the settings, please click Recalculate Expense button to calculate if your changes
+          are beyond 2 months. Otherwise, it will automatically reflect the next morning.
+        </p>
+
+        <div className="flex justify-end gap-2">
+          <Button onClick={() => setDeleteModal(false)}>Cancel</Button>
+
+          <Button
+            danger
+            type="default"
+            className="border-red-500 text-red-500 bg-white hover:!bg-red-500"
+            onClick={() => {
+              console.log('Deleting:', selectedRows);
+
+              setSelectedRows([]);
+              setDeleteModal(false);
+            }}
+          >
+            Delete
+          </Button>
+        </div>
+      </Modal>
+      <AddExpenseModal open={addexpenseModal} onCancel={() => setAddExpenseModal(false)} />
     </>
   );
 }

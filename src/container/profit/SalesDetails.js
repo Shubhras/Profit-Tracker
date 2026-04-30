@@ -13,7 +13,7 @@ export default function SalesDetails() {
     return date.toISOString().split('T')[0];
   });
 
-  const dataSource = ['Product A', 'Product B', 'Product C'].map((product, idx) => {
+  const dataSource = ['SLIP - BLACK -L', 'SLIP - BLACK - M', 'SLIP - BLACK - S'].map((product, idx) => {
     const row = {
       key: idx,
       id: product,
@@ -64,6 +64,22 @@ export default function SalesDetails() {
     },
     ...dynamicColumns,
   ];
+
+  const totalRow = useMemo(() => {
+    const total = {
+      key: 'total',
+      id: 'Total',
+    };
+
+    dates.forEach((date) => {
+      total[date] = dataSource.reduce((sum, row) => {
+        return sum + (row[date] || 0);
+      }, 0);
+    });
+
+    return total;
+  }, [dataSource, dates]);
+  const finalData = [...dataSource, totalRow];
 
   return (
     <>
@@ -121,7 +137,7 @@ export default function SalesDetails() {
           )}
           <Table
             columns={columns}
-            dataSource={dataSource}
+            dataSource={finalData}
             showSorterTooltip={false}
             pagination={{
               pageSize: 5,
