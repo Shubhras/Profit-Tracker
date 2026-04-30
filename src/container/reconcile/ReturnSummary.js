@@ -1,9 +1,25 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { Table, Card, Spin } from 'antd';
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
+import { getReturnSummary } from '../../redux/reconcilePayment/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function ReturnSummary() {
+  const dispatch = useDispatch();
+  const payload = {
+    filters: {
+      channel: {
+        IN: ['Amazon-India', 'Flipkart', 'Jiomart', 'Meesho', 'Myntra', 'Snapdeal'],
+      },
+      Type: 'SUMMARY',
+    },
+  };
+
+  useEffect(() => {
+    dispatch(getReturnSummary(payload));
+  }, []);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

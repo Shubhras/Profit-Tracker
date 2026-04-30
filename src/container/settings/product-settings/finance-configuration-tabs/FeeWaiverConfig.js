@@ -1,10 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { Table, Tooltip } from 'antd';
 import { InfoCircleOutlined, EditOutlined } from '@ant-design/icons';
+import { getConfigReconcile } from '../../../../redux/Settings/actionCreator';
 
 export default function FeeWaiverConfig() {
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
+  const dispatch = useDispatch();
+  const getPayload = () => ({
+    method: 'show',
+    filters: {
+      channel: {
+        IN: ['Amazon-India', 'Flipkart', 'Jiomart', 'Meesho', 'Myntra', 'Snapdeal'],
+      },
+      function_type: 'fee_waiver',
+    },
+    pagination: {
+      pageNo: 0,
+      pageSize: 25,
+    },
+  });
+
+  useEffect(() => {
+    dispatch(getConfigReconcile(getPayload));
+  }, []);
   const dataSource = [
     // {
     //   key: '1',

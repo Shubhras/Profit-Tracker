@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { Card, Table, Checkbox, Popover, Empty, Pagination, Switch, Spin, Modal, Button, Select } from 'antd';
 import { SettingOutlined, DownloadOutlined, UploadOutlined } from '@ant-design/icons';
 import { ResponsiveContainer, ComposedChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, Cell } from 'recharts';
 import ReturnFilterBar from './component/ReturnFilterBar';
+import { getReturnSummary } from '../../redux/reconcilePayment/actionCreator';
 
 import { PageHeader } from '../../components/page-headers/page-headers';
 
@@ -148,6 +150,31 @@ const summaryColumns = [
 
 export default function ReturnLedger() {
   const [loading, setLoading] = useState(true);
+
+  const dispatch = useDispatch();
+  const payload = {
+    filters: {
+      channel: {
+        IN: ['Amazon-India', 'Flipkart', 'Jiomart', 'Meesho', 'Myntra', 'Snapdeal'],
+      },
+      fromDate: '2026-03-31T18:30:00Z',
+      toDate: '2026-04-30T18:29:59Z',
+      selectedDate: 'orderdate',
+      Type: 'RETURN',
+      fsorderstatus: {
+        IN: ['RTO TRANSIT', 'RTO RECEIVED', 'C RETURN APPROVED', 'C RETURN RECEIVED'],
+      },
+    },
+    pagination: {
+      pageNo: 0,
+      pageSize: 25,
+    },
+  };
+
+  useEffect(() => {
+    dispatch(getReturnSummary(payload));
+  }, []);
+
   const [exportModal, setExportModal] = useState(false);
   const [sellerModal, setSellerModal] = useState(false);
   const [inhandModal, setInHandModal] = useState(false);

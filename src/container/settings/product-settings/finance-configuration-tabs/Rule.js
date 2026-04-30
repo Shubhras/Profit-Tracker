@@ -1,8 +1,29 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { Table } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
+import { getExceptionRules } from '../../../../redux/Settings/actionCreator';
 
 export default function Rule() {
+  const dispatch = useDispatch();
+
+  const getPayload = () => ({
+    filters: {
+      channel: {
+        IN: ['Amazon-India', 'Flipkart', 'Jiomart', 'Meesho', 'Myntra', 'Snapdeal'],
+      },
+    },
+    pagination: {
+      pageNo: 0,
+      pageSize: 25,
+    },
+    method: 'RulesList',
+  });
+
+  useEffect(() => {
+    dispatch(getExceptionRules(getPayload));
+  }, []);
+
   const dataSource = [
     {
       key: '1',

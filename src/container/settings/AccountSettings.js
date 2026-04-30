@@ -1,9 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { Row, Col, Card, Form, Input, Button, Spin } from 'antd';
+import { getUserInfo, getChannels } from '../../redux/Settings/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function AccountSettings() {
   const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(getUserInfo());
+    dispatch(getChannels());
+  }, []);
 
   useEffect(() => {
     setTimeout(() => setLoading(false), 800);

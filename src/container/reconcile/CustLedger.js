@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { Card, Table, Empty, Spin } from 'antd';
+import { getQuickComReconciliation } from '../../redux/reconcilePayment/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 /* ---------------- Ledger Summary ---------------- */
@@ -84,6 +86,26 @@ const invoiceColumns = [
 ];
 
 export default function CustLedger() {
+  const dispatch = useDispatch();
+  const payload = {
+    filters: {
+      channel: {
+        IN: ['Blinkit', 'BigBasket', 'Swiggy', 'Zepto'],
+      },
+      fromDate: '2026-03-31T18:30:00+00:00',
+      toDate: '2026-04-30T18:29:59+00:00',
+      mode: 'ledger_total_and_summary',
+      selectedDateType: 'orderdate',
+    },
+    pagination: {
+      pageNo: 0,
+      pageSize: 25,
+    },
+  };
+
+  useEffect(() => {
+    dispatch(getQuickComReconciliation(payload));
+  }, []);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

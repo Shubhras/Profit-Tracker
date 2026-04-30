@@ -23,6 +23,25 @@ const {
   vcpReconBegin,
   vcpReconSuccess,
   vcpReconErr,
+  quickcomReconBegin,
+  quickcomReconSuccess,
+  quickcomReconErr,
+
+  feeleaksReconBegin,
+  feeleaksReconSuccess,
+  feeleaksReconErr,
+
+  returnsummaryBegin,
+  returnsummarySuccess,
+  returnsummaryErr,
+
+  downloadsBegin,
+  downloadsSuccess,
+  downloadsErr,
+
+  organisationreportBegin,
+  organisationreportSuccess,
+  organisationreportErr,
 } = actions;
 
 const mockService = async (payload) => {
@@ -162,6 +181,96 @@ export const getVcpReconciliation = (payload) => {
       }
     } catch (err) {
       dispatch(vcpReconErr(err.message));
+    }
+  };
+};
+
+export const getQuickComReconciliation = (payload) => {
+  return async (dispatch) => {
+    dispatch(quickcomReconBegin());
+
+    try {
+      const response = await mockService(payload);
+
+      if (response.data.status === 'success') {
+        dispatch(quickcomReconSuccess(response.data));
+      } else {
+        dispatch(quickcomReconErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(quickcomReconErr(err.message));
+    }
+  };
+};
+
+export const getFeeleaksconciliation = (payload) => {
+  return async (dispatch) => {
+    dispatch(feeleaksReconBegin());
+
+    try {
+      const response = await mockService(payload);
+
+      if (response.data.status === 'success') {
+        dispatch(feeleaksReconSuccess(response.data));
+      } else {
+        dispatch(feeleaksReconErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(feeleaksReconErr(err.message));
+    }
+  };
+};
+
+export const getReturnSummary = (payload) => {
+  return async (dispatch) => {
+    dispatch(returnsummaryBegin());
+
+    try {
+      const response = await mockService(payload);
+
+      if (response.data.status === 'success') {
+        dispatch(returnsummarySuccess(response.data));
+      } else {
+        dispatch(returnsummaryErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(returnsummaryErr(err.message));
+    }
+  };
+};
+
+export const getDownloads = (payload) => {
+  return async (dispatch) => {
+    dispatch(downloadsBegin());
+
+    try {
+      const response = await mockService(payload);
+
+      if (response.data.status === 'success') {
+        dispatch(downloadsSuccess(response.data));
+      } else {
+        dispatch(downloadsErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(downloadsErr(err.message));
+    }
+  };
+};
+
+export const getOrganisationReport = (payload) => {
+  return async (dispatch) => {
+    dispatch(organisationreportBegin());
+
+    try {
+      const response = await mockService(payload);
+
+      if (response.data.status === 'success') {
+        dispatch(organisationreportSuccess(response.data));
+      } else {
+        dispatch(organisationreportErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(organisationreportErr(err.message));
     }
   };
 };

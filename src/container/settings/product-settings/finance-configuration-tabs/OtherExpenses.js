@@ -1,11 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { Table, DatePicker, InputNumber } from 'antd';
 import { EditOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import moment from 'moment';
+import { getOtherExpenses } from '../../../../redux/Settings/actionCreator';
 
 export default function OtherExpenses({ selectedRows, setSelectedRows }) {
   const [editingKey, setEditingKey] = useState(null);
   // const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const dispatch = useDispatch();
+  useEffect(() => {
+    const payload = {
+      filters: {
+        channel: {
+          IN: ['Amazon-India', 'Flipkart', 'Jiomart', 'Meesho', 'Myntra', 'Snapdeal'],
+        },
+        method: 'show',
+      },
+      pagination: {
+        pageNo: 0,
+        pageSize: 25,
+      },
+    };
+
+    dispatch(getOtherExpenses(payload));
+  }, []);
 
   const dataSource = [
     {

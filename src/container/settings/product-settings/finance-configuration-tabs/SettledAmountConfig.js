@@ -1,9 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { Table } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
+import { getConfigReconcile } from '../../../../redux/Settings/actionCreator';
 
 export default function SettledAmountConfig() {
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+
+  const dispatch = useDispatch();
+  const getPayload = () => ({
+    method: 'show',
+    filters: {
+      channel: {
+        IN: ['Amazon-India', 'Flipkart', 'Jiomart', 'Meesho', 'Myntra', 'Snapdeal'],
+      },
+      function_type: 'settled_recon',
+    },
+    pagination: {
+      pageNo: 0,
+      pageSize: 25,
+    },
+  });
+
+  useEffect(() => {
+    dispatch(getConfigReconcile(getPayload));
+  }, []);
 
   const dataSource = [
     {
@@ -31,7 +52,6 @@ export default function SettledAmountConfig() {
       amount: 10,
     },
   ];
-
   const columns = [
     { title: 'Channel', dataIndex: 'channel', width: 120 },
     { title: 'Match Type', dataIndex: 'matchType', width: 120 },
