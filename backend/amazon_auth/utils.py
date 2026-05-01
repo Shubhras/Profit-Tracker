@@ -453,3 +453,7 @@ def get_val(row, *keys, default=0):
         if k in row and row[k] not in [None, ""]:
             return row[k]
     return default
+
+def format_currency(value):
+    value = float(value or 0)
+    return f"-₹{abs(round(value, 2))}" if value < 0 else f"₹{round(value, 2)}"

@@ -10,6 +10,7 @@ from django.core.cache import cache
 from .models import AmazonAccount
 from django.contrib.auth.models import User
 
+
 class SPAPIManager:
     def __init__(self, user=None, account=None):
         self.user = user

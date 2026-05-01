@@ -66,7 +66,7 @@ export default function ProfitDetailsView() {
       metric: getMetricFromFilters(),
       pagination: {
         pageNo: 0,
-        pageSize: 25,
+        pageSize: 1000,
       },
     };
   };
@@ -98,17 +98,17 @@ export default function ProfitDetailsView() {
         returnqty: Number(item.returnqty) || 0,
         returnPercent: Number(item.retpercent) || 0,
 
-        netsales: Number(item.netsales) || 0,
+        netsales: item.netsales || 0,
         // netasp: Number(item.netasp) || 0,
         // net_discount: Number(item.net_discount) || 0,
 
-        mpfees: Number(item.mpfees) || 0,
-        shipping: Number(item.shippingfees) || 0,
-        adSpend: Number(item.ads) || 0,
-        gst: Number(item.gsttopay) || 0,
+        stdcost: item.stdcost || 0,
+        shipping: item.shippingfees || 0,
+        adSpend: item.ads || 0,
+        gst: item.gst || 0,
 
-        grossprofit: Number(item.grossprofit) || 0,
-        profit: Number(item.profit) || 0,
+        // grossprofit: Number(sitem.grossprofit) || 0,
+        profit: item.profit || 0,
         // profitPercent: Number(item.grossprofitper) || 0,
         profitPercent: Math.round(Number(item.grossprofitper)) || 0,
 
@@ -182,10 +182,10 @@ export default function ProfitDetailsView() {
       dataIndex: 'channel',
       width: 70,
       fixed: 'left',
-      render: (value, record) => {
-        if (record.key === 'total') {
-          return <span>Total</span>;
-        }
+      render: (value) => {
+        // if (record.key === 'total') {
+        //   return <span>Total</span>;
+        // }
 
         const logo = channelLogoMap[value];
 
@@ -265,7 +265,7 @@ export default function ProfitDetailsView() {
           className="cursor-pointer bg-transparent border-none"
           onClick={() => setDetailModal({ open: true, record, type: 'returns' })}
         >
-          {v}
+          {v}%
         </button>
       ),
     },
@@ -297,10 +297,10 @@ export default function ProfitDetailsView() {
     //   sorter: (a, b) => a.net_discount - b.net_discount,
     // },
     {
-      title: 'MP fees',
-      dataIndex: 'mpfees',
+      title: 'Std Cost',
+      dataIndex: 'stdcost',
       align: 'center',
-      sorter: (a, b) => a.mpfees - b.mpfees,
+      sorter: (a, b) => a.stdcost - b.stdcost,
       render: (v, record) => (
         <button
           type="button"
@@ -342,7 +342,7 @@ export default function ProfitDetailsView() {
       ),
     },
     {
-      title: 'GST',
+      title: 'Gst to Pay',
       dataIndex: 'gst',
       align: 'center',
       sorter: (a, b) => a.gst - b.gst,
@@ -356,21 +356,21 @@ export default function ProfitDetailsView() {
         </button>
       ),
     },
-    {
-      title: 'Gross Profit',
-      dataIndex: 'grossprofit',
-      align: 'center',
-      sorter: (a, b) => a.grossprofit - b.grossprofit,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
-        >
-          {v}
-        </button>
-      ),
-    },
+    // {
+    //   title: 'Gross Profit',
+    //   dataIndex: 'grossprofit',
+    //   align: 'center',
+    //   sorter: (a, b) => a.grossprofit - b.grossprofit,
+    //   render: (v, record) => (
+    //     <button
+    //       type="button"
+    //       className="cursor-pointer bg-transparent border-none"
+    //       onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+    //     >
+    //       {v}
+    //     </button>
+    //   ),
+    // },
     {
       title: 'Profit',
       dataIndex: 'profit',
@@ -558,7 +558,7 @@ export default function ProfitDetailsView() {
 
     { key: 'grossSales', label: 'Gross Sales' },
     { key: 'netsales', label: 'Net Sales' },
-    { key: 'mpfees', label: 'MP fees' },
+    { key: 'stdcost', label: 'Std Cost' },
 
     { key: 'shipping', label: 'Shipping' },
     { key: 'adSpend', label: 'Ad spend' },
@@ -569,7 +569,7 @@ export default function ProfitDetailsView() {
     { key: 'otherExpenses', label: 'Other Expenses' },
 
     { key: 'gst', label: 'Gst to Pay' },
-    { key: 'grossprofit', label: 'Gross Profit' },
+    // { key: 'grossprofit', label: 'Gross Profit' },
     { key: 'profit', label: 'Profit' },
 
     { key: 'settledAmount', label: 'Settled Amount' },
@@ -588,11 +588,11 @@ export default function ProfitDetailsView() {
     'returnqty',
     'returnPercent',
     'netsales',
-    'mpfees',
+    'stdcost',
     'shipping',
     'adSpend',
     'gst',
-    'grossprofit',
+    // 'grossprofit',
     'profit',
     'profitPercent',
   ]);
@@ -651,43 +651,44 @@ export default function ProfitDetailsView() {
                 <Table.Summary.Cell index={0} colSpan={2}>
                   Total
                 </Table.Summary.Cell>
+                <Table.Summary.Cell />
 
-                {filteredColumns.slice(2).map((col, index) => {
-                  if (col.key === 'action') return <Table.Summary.Cell key={index} />;
+                {filteredColumns
+                  .filter((col) => !['image', 'channel', 'view'].includes(col.dataIndex) && col.key !== 'action')
+                  .map((col, index) => {
+                    const keyMap = {
+                      netQty: 'netqty',
+                      returnqty: 'totalreturn',
+                      returnPercent: 'totalreturnper',
+                      netsales: 'netsales',
+                      stdcost: 'stdcost',
+                      shipping: 'shippingfees',
+                      adSpend: 'ads',
+                      gst: 'totalgst',
+                      // grossprofit: 'grossprofit',
+                      profit: 'profit',
+                      profitPercent: 'grossprofitper',
 
-                  const keyMap = {
-                    netQty: 'netqty',
-                    returnqty: 'totalreturn',
-                    returnPercent: 'totalreturnper',
-                    netsales: 'netsales',
-                    mpfees: 'mpfees',
-                    shipping: 'shippingfees',
-                    adSpend: 'ads',
-                    gst: 'totalgst',
-                    grossprofit: 'grossprofit',
-                    profit: 'profit',
-                    profitPercent: 'grossprofitper',
+                      grossqty: 'grossqty',
+                      netmrp: 'netmrp',
+                      mrpNetDiscount: 'mrp_net_discount',
+                      mrpCustomerDiscount: 'mrpCustomerDiscount',
+                      accountCharges: 'account_charges',
+                      otherExpenses: 'other_expenses',
+                      tacos: 'tacos',
+                      grossProfitPercent: 'grossprofit_percent',
+                      percentOfSales: 'percent_of_sales',
+                      drr: 'drr',
+                    };
 
-                    grossqty: 'grossqty',
-                    netmrp: 'netmrp',
-                    mrpNetDiscount: 'mrp_net_discount',
-                    mrpCustomerDiscount: 'mrpCustomerDiscount',
-                    accountCharges: 'account_charges',
-                    otherExpenses: 'other_expenses',
-                    tacos: 'tacos',
-                    grossProfitPercent: 'grossprofit_percent',
-                    percentOfSales: 'percent_of_sales',
-                    drr: 'drr',
-                  };
+                    const value = totals[keyMap[col.dataIndex]];
 
-                  const value = totals[keyMap[col.dataIndex]];
-
-                  return (
-                    <Table.Summary.Cell key={index} align="center">
-                      {value ?? 0}
-                    </Table.Summary.Cell>
-                  );
-                })}
+                    return (
+                      <Table.Summary.Cell key={index} align="center">
+                        {['profitPercent'].includes(col.dataIndex) ? `${value ?? 0}%` : value ?? 0}
+                      </Table.Summary.Cell>
+                    );
+                  })}
               </Table.Summary.Row>
             )}
           />
