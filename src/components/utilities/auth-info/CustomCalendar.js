@@ -21,15 +21,46 @@ function CustomCalendar({ onSubmit, onCancel, initialRange }) {
         start = today;
         end = today;
         break;
-      case 'thisWeek':
-        start = new Date();
-        start.setDate(today.getDate() - today.getDay());
-        end = new Date();
+
+      case 'yesterday':
+        start = new Date(today);
+        start.setDate(today.getDate() - 1);
+        end = new Date(start);
         break;
-      case 'thisMonth':
-        start = new Date(today.getFullYear(), today.getMonth(), 1);
-        end = new Date();
+
+      case 'thisWeek': {
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+
+        const endOfWeek = new Date(today);
+        endOfWeek.setDate(today.getDate() + (6 - today.getDay()));
+
+        start = startOfWeek;
+        end = endOfWeek;
         break;
+      }
+
+      case 'lastWeek': {
+        const lastWeekStart = new Date(today);
+        lastWeekStart.setDate(today.getDate() - today.getDay() - 7);
+
+        const lastWeekEnd = new Date(today);
+        lastWeekEnd.setDate(today.getDate() - today.getDay() - 1);
+
+        start = lastWeekStart;
+        end = lastWeekEnd;
+        break;
+      }
+      case 'thisMonth': {
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+        start = startOfMonth;
+        end = endOfMonth;
+        break;
+      }
+
       case 'lastMonth':
         start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
         end = new Date(today.getFullYear(), today.getMonth(), 0);

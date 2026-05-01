@@ -53,7 +53,7 @@ const AuthInfo = React.memo(() => {
     actions = routeConfig[activeTab] || [];
   }
   const isMonthMode = matchedRoute === '/profit/profitMonthlyView';
-  const [dateRange, setDateRange] = useState([moment().startOf('month'), moment()]);
+  const [dateRange, setDateRange] = useState([moment().startOf('month'), moment().endOf('month')]);
   const [open, setOpen] = useState(false);
   const [tempDates, setTempDates] = useState(null);
 
@@ -120,7 +120,7 @@ const AuthInfo = React.memo(() => {
       action.setDateRange({
         fromDate: moment().startOf('month').format('YYYY-MM-DD'),
 
-        endDate: moment().format('YYYY-MM-DD'),
+        endDate: moment().endOf('month').format('YYYY-MM-DD'),
       }),
     );
   }, []);
@@ -141,6 +141,11 @@ const AuthInfo = React.memo(() => {
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    setOpen(false);
+    setTempDates(null);
+  }, [location.pathname]);
 
   const userContent = (
     <div className="min-w-md w-full bg-white dark:bg-[#1b1e2b] rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] overflow-hidden">
@@ -282,10 +287,10 @@ const AuthInfo = React.memo(() => {
                 <button
                   type="button"
                   onClick={(e) => {
-                    e.stopPropagation(); // 👈 calendar open na ho
+                    e.stopPropagation();
 
                     const start = moment().startOf('month');
-                    const end = moment();
+                    const end = moment().endOf('month');
 
                     setDateRange([start, end]);
 
