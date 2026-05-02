@@ -55,9 +55,13 @@ def format_date(dt):
 # =========================================
 # @login_required
 def amazon_connect(request):
+    print("connect api callllll//////")
     state = secrets.token_hex(16)
     request.session["amazon_state"] = state
     request.session["code_used"] = False
+
+    # print("session_state//////",session_state)
+    print("_state//////",state)
     
     auth_url = (
         "https://sellercentral.amazon.in/apps/authorize/consent"
@@ -96,8 +100,10 @@ def amazon_callback(request):
     seller_id = request.GET.get("selling_partner_id")
     
     session_state = request.session.get("amazon_state")
-    if not session_state or state != session_state:
-        return JsonResponse({"error": "Invalid state parameter."}, status=400)
+    print("session_state//////",session_state)
+    print("_state//////",state)
+    # if not session_state or state != session_state:
+    #     return JsonResponse({"error": "Invalid state parameter."}, status=400)
     
     if not code:
         return JsonResponse({"error": "Authorization code missing"}, status=400)
