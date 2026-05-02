@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Table, Card, Modal, Checkbox, Tooltip } from 'antd';
 import { RightOutlined, EyeOutlined, SettingOutlined, BarChartOutlined } from '@ant-design/icons';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import ProfitFilterBar from './component/ProfitFilterBar';
 import ProfitModal from './component/ProfitModal';
@@ -12,11 +12,14 @@ import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function ProfitDetailsView() {
   const { channel } = useParams();
+  const location = useLocation();
   const decodedChannel = decodeURIComponent(channel);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { dateRange, profitData, loading } = useSelector((state) => state.dashboard);
+  const { dateRange, profitData, loading, channel: globalChannel } = useSelector((state) => state.dashboard);
   const totals = profitData?.totals || {};
+
+  const channels = location.state?.channels?.length > 0 ? location.state.channels : globalChannel || [];
   const [openSettings, setOpenSettings] = React.useState(false);
   const [detailModal, setDetailModal] = React.useState({
     open: false,
@@ -57,7 +60,8 @@ export default function ProfitDetailsView() {
     return {
       filters: {
         channel: {
-          IN: [decodedChannel],
+          // IN: [decodedChannel],
+          IN: channels,
           // IN: globalChannel,
         },
         fromDate: dateRange?.fromDate || null,
@@ -99,6 +103,7 @@ export default function ProfitDetailsView() {
         returnPercent: Number(item.retpercent) || 0,
 
         netsales: item.netsales || 0,
+        mpfees: item.mpfees || 0,
         // netasp: Number(item.netasp) || 0,
         // net_discount: Number(item.net_discount) || 0,
 
@@ -274,6 +279,21 @@ export default function ProfitDetailsView() {
       dataIndex: 'netsales',
       align: 'center',
       sorter: (a, b) => a.netsales - b.netsales,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v}
+        </button>
+      ),
+    },
+    {
+      title: 'MP fees',
+      dataIndex: 'mpfees',
+      align: 'center',
+      sorter: (a, b) => a.mpfees - b.mpfees,
       render: (v, record) => (
         <button
           type="button"
@@ -558,6 +578,7 @@ export default function ProfitDetailsView() {
 
     { key: 'grossSales', label: 'Gross Sales' },
     { key: 'netsales', label: 'Net Sales' },
+    { key: 'mpfees', label: 'mpfees' },
     { key: 'stdcost', label: 'Std Cost' },
 
     { key: 'shipping', label: 'Shipping' },
@@ -587,6 +608,7 @@ export default function ProfitDetailsView() {
     'netQty',
     'returnqty',
     'returnPercent',
+    'mpfees',
     'netsales',
     'stdcost',
     'shipping',
@@ -648,19 +670,19 @@ export default function ProfitDetailsView() {
             scroll={{ x: 'max-content' }}
             summary={() => (
               <Table.Summary.Row style={{ background: '#fafafa', fontWeight: 600 }}>
-                <Table.Summary.Cell index={0} colSpan={2}>
-                  Total
-                </Table.Summary.Cell>
-                <Table.Summary.Cell />
+                <Table.Summary.Cell index={0}>Total</Table.Summary.Cell>
+                <Table.Summary.Cell index={1} fixed="left" />
+                <Table.Summary.Cell index={2} fixed="left" />
 
                 {filteredColumns
-                  .filter((col) => !['image', 'channel', 'view'].includes(col.dataIndex) && col.key !== 'action')
+                  .filter((col) => !['image', 'channel', 'view'].includes(col.dataIndex))
                   .map((col, index) => {
                     const keyMap = {
                       netQty: 'netqty',
                       returnqty: 'totalreturn',
                       returnPercent: 'totalreturnper',
                       netsales: 'netsales',
+                      mpfees: 'mpfees',
                       stdcost: 'stdcost',
                       shipping: 'shippingfees',
                       adSpend: 'ads',
@@ -684,8 +706,17 @@ export default function ProfitDetailsView() {
                     const value = totals[keyMap[col.dataIndex]];
 
                     return (
-                      <Table.Summary.Cell key={index} align="center">
-                        {['profitPercent'].includes(col.dataIndex) ? `${value ?? 0}%` : value ?? 0}
+                      <Table.Summary.Cell
+                        key={col.key || index}
+                        index={index + 3} // 🔥 important
+                        fixed={col.fixed}
+                        align="center"
+                      >
+                        {col.key === 'action'
+                          ? null // 👈 right me blank
+                          : ['profitPercent'].includes(col.dataIndex)
+                          ? `${value ?? 0}%`
+                          : value ?? 0}
                       </Table.Summary.Cell>
                     );
                   })}
