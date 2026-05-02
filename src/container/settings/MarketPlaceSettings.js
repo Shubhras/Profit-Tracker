@@ -26,7 +26,7 @@ const marketplaces = [
     name: 'Amazon',
     domain: 'amazon.com',
     img: amazonIcon,
-    status: 'connected', // ya connected agar needed
+    status: 'disconnected', // ya connected agar needed
   },
   {
     id: 'flipkart',
