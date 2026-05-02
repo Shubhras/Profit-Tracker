@@ -158,7 +158,7 @@ export default function MarketPlaceSettings() {
 
   const handleConnect = (market) => {
     if (market.id === 'amazon') {
-      window.location.href = 'https://api.trackmyprofit.com/api/amazon/connect';
+      window.location.href = 'https://api.trackmyprofit.com/api/amazon/connect/';
       return;
     }
 
