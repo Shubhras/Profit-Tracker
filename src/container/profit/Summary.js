@@ -436,7 +436,12 @@ export default function Summary() {
             {/* SALES */}
             <Col xs={24} lg={9}>
               <Card
-                onClick={() => navigate(`/admin/profit/profittabledetails/${globalChannel?.[0] || 'all'}`)}
+                onClick={() =>
+                  navigate('/admin/profit/profittabledetails', {
+                    state: { channels: globalChannel, type: 'all' },
+                  })
+                }
+                // onClick={() => navigate(`/admin/profit/profittabledetails/${globalChannel?.[0] || 'all'}`)}
                 hoverable
                 style={{ cursor: 'pointer' }}
               >

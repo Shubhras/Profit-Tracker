@@ -26,6 +26,7 @@ export default function ProfitDetailsView() {
     'shipping',
     'adSpend',
     'gst',
+    'mpfees',
     'std',
     'profit',
     'profitPercent',
@@ -590,6 +591,7 @@ export default function ProfitDetailsView() {
                       adSpend: 'adSpend',
                       gst: 'gst',
                       std: 'cost',
+                      mpfees: 'mpfees',
                       profit: 'profit',
                       profitPercent: 'totalprofitmargin',
                     };

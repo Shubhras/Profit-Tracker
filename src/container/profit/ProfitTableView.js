@@ -587,7 +587,12 @@ export default function ProfitTableView() {
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
           <button
             type="button"
-            onClick={() => navigate(`../profittabledetails/${record.channel}`)}
+            onClick={() =>
+              navigate('/admin/profit/profittabledetails', {
+                state: { channels: [record.channel], type: 'single' },
+              })
+            }
+            // onClick={() => navigate(`../profittabledetails/${record.channel}`)}
             style={{
               width: 30,
               height: 30,
@@ -738,9 +743,9 @@ export default function ProfitTableView() {
                 </Table.Summary.Cell>
 
                 {filteredColumns.slice(1).map((col, index) => {
-                  if (col.key === 'action') {
-                    return <Table.Summary.Cell key={index} />;
-                  }
+                  // if (col.key === 'action') {
+                  //   return <Table.Summary.Cell key={index} />;
+                  // }
 
                   const keyMap = {
                     view: 'grosssales',
@@ -760,13 +765,15 @@ export default function ProfitTableView() {
                     profit: 'profit',
                     profitPercent: 'profitmargin',
                     settledamount: 'profit_settled_amount',
+                    lastOrderDate: 'lastorderdate' || 0,
                   };
 
                   const value = totals[keyMap[col.dataIndex]];
 
                   return (
-                    <Table.Summary.Cell key={index} align="center">
-                      {value !== undefined ? value : ''}
+                    <Table.Summary.Cell key={col.key || index} index={index + 1} fixed={col.fixed} align="center">
+                      {/* {value !== undefined ? value : ''} */}
+                      {col.key === 'action' ? null : value ?? ''}
                     </Table.Summary.Cell>
                   );
                 })}
