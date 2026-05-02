@@ -5,6 +5,10 @@ from rest_framework import status
 from subscription.utils.custom_response import success_response, error_response
 from user_auth.models import PasswordResetRequest
 
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+
 
 class UserResetPasswordAPI(APIView):
     def post(self, request):
@@ -41,3 +45,38 @@ class UserResetPasswordAPI(APIView):
         message="Password reset successfully",
         data={}
         )
+    
+
+
+
+class RefreshTokenAPI(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        refresh_token = request.data.get("refresh")
+
+        if not refresh_token:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "error": "Refresh token is required"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            refresh = RefreshToken(refresh_token)
+
+            return Response({
+                "statusCode": 200,
+                "status": True,
+                "message": "Access token refreshed successfully",
+                "data": {
+                    "access": str(refresh.access_token)
+                }
+            }, status=status.HTTP_200_OK)
+
+        except TokenError:
+            return Response({
+                "statusCode": 401,
+                "status": False,
+                "error": "Invalid or expired refresh token"
+            }, status=status.HTTP_401_UNAUTHORIZED)    
