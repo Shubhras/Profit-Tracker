@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Switch, Button, Spin } from 'antd';
 import { getChannels } from '../../redux/Settings/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
@@ -129,7 +129,8 @@ export default function MarketPlaceSettings() {
     dispatch(getChannels());
   }, []);
   const [loading, setLoading] = useState(true);
-
+  const profile = useSelector((state) => state.auth.profile);
+  console.log('dddddddddddddddd', profile);
   useEffect(() => {
     setTimeout(() => setLoading(false), 800);
   }, []);
@@ -155,10 +156,14 @@ export default function MarketPlaceSettings() {
   ];
 
   const filteredMarketplaces = showConnectedOnly ? marketplaces.filter((m) => m.status === 'connected') : marketplaces;
+  const userId = profile?.user_id;
 
   const handleConnect = (market) => {
     if (market.id === 'amazon') {
-      window.location.href = 'https://api.trackmyprofit.com/api/amazon/connect/';
+      // window.location.href = 'https://372nmlsj-8000.inc1.devtunnels.ms/api/amazon/connect/';
+      // window.location.href = `https://372nmlsj-8000.inc1.devtunnels.ms/api/amazon/connect/?user_id=${userId}`;
+      window.location.href = `https://api.trackmyprofit.com/api/amazon/connect/?user_id=${userId}`;
+
       return;
     }
 

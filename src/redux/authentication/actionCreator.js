@@ -41,6 +41,7 @@ const login = (values, callback) => {
 
         // Dispatch login success and subscription status
         dispatch(loginSuccess(true));
+        dispatch(actions.setUserProfile(response.data.data));
         dispatch(actions.setHasSubscription(hasSubscription));
 
         // Pass subscription status to callback for redirect logic
@@ -82,7 +83,7 @@ const register = (values, callback) => {
 
       // console.log('Register Success:', response.data);
       if (response.data.status === true) {
-        dispatch(loginSuccess(false)); // user not logged in yet
+        dispatch(loginSuccess(false));
         callback(); // redirect to login page
       } else {
         const errorMessage = response.data.error || 'Registration failed';
