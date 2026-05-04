@@ -6,6 +6,7 @@ from user_auth.apis.password import UserChangePasswordAPI
 from user_auth.apis.forgot_password import UserForgotPasswordAPI
 from user_auth.apis.reset_password import UserResetPasswordAPI,RefreshTokenAPI
 from user_auth.apis.update_profile import UserUpdateProfileAPI
+from .views import *
 
 
 urlpatterns = [
@@ -17,4 +18,5 @@ urlpatterns = [
     path('forgot-password/', UserForgotPasswordAPI.as_view()),
     path('reset-password/', UserResetPasswordAPI.as_view()),
     path('refresh-token/', RefreshTokenAPI.as_view(), name='refresh-token'),
+    path('connected-accounts/', ConnectedMarketplacesView.as_view(), name='connected-accounts'),
 ]
