@@ -4815,7 +4815,7 @@ def amazon_profitability_details(request):
             "profit": format_currency(total_profit),
             "grossprofitper": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
             "mpfees": format_currency(total_mpfees),
-            "shippingfees": round(total_shipping, 2),
+            "shippingfees": format_currency(total_shipping),
             "tacos": (total_ads / total_sales * 100) if total_sales else 0,
             "stdcost": format_currency(total_stdcost),
             "totalgst": format_currency(total_tcs),
