@@ -1,5 +1,5 @@
 import actions from './actions';
-// import { DataService } from '../../config/dataService/dataService';
+import { DataService } from '../../config/dataService/dataService';
 
 const {
   overviewsettingBegin,
@@ -162,15 +162,15 @@ export const getConfigReconcile = (payload) => {
   };
 };
 
-export const getChannels = (payload) => {
+export const getChannels = () => {
   return async (dispatch) => {
     dispatch(getchannelsBegin());
 
     try {
-      const response = await mockService(payload);
+      const response = await DataService.get('/user/connected-accounts/');
 
       if (response.data.status === 'success') {
-        dispatch(getchannelsSuccess(response.data));
+        dispatch(getchannelsSuccess(response.data.data));
       } else {
         dispatch(getchannelsErr('Something went wrong'));
       }
