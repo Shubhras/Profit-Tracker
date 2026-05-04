@@ -4,7 +4,7 @@ from user_auth.apis.login import UserLoginAPI
 from user_auth.apis.profile import UserProfileAPI
 from user_auth.apis.password import UserChangePasswordAPI
 from user_auth.apis.forgot_password import UserForgotPasswordAPI
-from user_auth.apis.reset_password import UserResetPasswordAPI
+from user_auth.apis.reset_password import UserResetPasswordAPI,RefreshTokenAPI
 from user_auth.apis.update_profile import UserUpdateProfileAPI
 
 
@@ -16,4 +16,5 @@ urlpatterns = [
     path('change-password/', UserChangePasswordAPI.as_view()),
     path('forgot-password/', UserForgotPasswordAPI.as_view()),
     path('reset-password/', UserResetPasswordAPI.as_view()),
+    path('refresh-token/', RefreshTokenAPI.as_view(), name='refresh-token'),
 ]
