@@ -470,7 +470,7 @@ export default function Summary() {
                     {dashboardData?.breakdown_table?.gross?.qty || 0}
                   </Col>
                   <Col span={7} className="text-right">
-                    ₹{dashboardData?.breakdown_table?.gross?.amount || 0}
+                    {dashboardData?.breakdown_table?.gross?.amount || 0}
                   </Col>
                 </Row>
                 <Row>
@@ -479,7 +479,7 @@ export default function Summary() {
                     {dashboardData?.breakdown_table?.cancelled?.qty || 0}
                   </Col>
                   <Col span={7} className="text-right">
-                    ₹{dashboardData?.breakdown_table?.cancelled?.amount || 0}
+                    {dashboardData?.breakdown_table?.cancelled?.amount || 0}
                   </Col>
                 </Row>
                 <Row>
@@ -488,7 +488,7 @@ export default function Summary() {
                     {dashboardData?.breakdown_table?.returned?.qty || 0}
                   </Col>
                   <Col span={7} className="text-right">
-                    ₹{dashboardData?.breakdown_table?.returned?.amount || 0}
+                    {dashboardData?.breakdown_table?.returned?.amount || 0}
                   </Col>
                 </Row>
                 <Row>
@@ -497,7 +497,7 @@ export default function Summary() {
                     {dashboardData?.breakdown_table?.cancelledrtosummaryqty?.qty || 0}
                   </Col>
                   <Col span={7} className="text-right">
-                    ₹{dashboardData?.breakdown_table?.cancelledrtosummarysales?.amount || 0}
+                    {dashboardData?.breakdown_table?.cancelledrtosummarysales?.amount || 0}
                   </Col>
                 </Row>
                 <Row>
@@ -506,7 +506,7 @@ export default function Summary() {
                     {dashboardData?.breakdown_table?.creturnsummaryqty?.qty || 0}
                   </Col>
                   <Col span={7} className="text-right">
-                    ₹{dashboardData?.breakdown_table?.returnedcref?.amount || 0}
+                    {dashboardData?.breakdown_table?.returnedcref?.amount || 0}
                   </Col>
                 </Row>
                 <Row>
@@ -515,7 +515,7 @@ export default function Summary() {
                     {dashboardData?.breakdown_table?.claimqty?.qty || 0}
                   </Col>
                   <Col span={7} className="text-right">
-                    ₹{dashboardData?.breakdown_table?.claimsales?.amount || 0}
+                    {dashboardData?.breakdown_table?.claimsales?.amount || 0}
                   </Col>
                 </Row>
                 <Divider />
@@ -527,7 +527,7 @@ export default function Summary() {
                     <strong>{dashboardData?.breakdown_table?.net?.qty || 0}</strong>
                   </Col>
                   <Col span={7} className="text-right">
-                    <strong>₹{dashboardData?.breakdown_table?.net?.amount || 0}</strong>
+                    <strong>{dashboardData?.breakdown_table?.net?.amount || 0}</strong>
                   </Col>
                 </Row>
               </Card>

@@ -25,7 +25,7 @@ const initialState = {
   configreconcileLoading: false,
   configreconcileError: null,
 
-  getchannelsData: [],
+  channel: [],
   getchannelsLoading: false,
   getchannelsError: null,
 
@@ -200,7 +200,7 @@ const settingsReducer = (state = initialState, action) => {
     case GET_CHANNELS_SUCCESS:
       return {
         ...state,
-        getchannelsData: data,
+        channels: action.data,
         getchannelsLoading: false,
       };
 
