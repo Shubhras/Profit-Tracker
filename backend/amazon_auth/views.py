@@ -94,26 +94,94 @@ def amazon_connect(request):
 # =========================================
 # 2. CALLBACK → Handle Amazon response
 # =========================================
+# def amazon_callback(request):
+#     state = request.GET.get("state")
+#     code = request.GET.get("spapi_oauth_code")
+#     seller_id = request.GET.get("selling_partner_id")
+    
+#     session_state = request.session.get("amazon_state")
+#     print("session_state//////",session_state)
+#     print("_state//////",state)
+#     # if not session_state or state != session_state:
+#     #     return JsonResponse({"error": "Invalid state parameter."}, status=400)
+    
+#     if not code:
+#         return JsonResponse({"error": "Authorization code missing"}, status=400)
+    
+#     if request.session.get("code_used"):
+#         return JsonResponse({"error": "Code already used"}, status=400)
+
+#     request.session["code_used"] = True
+
+#     lwa_token_url = "https://api.amazon.com/auth/o2/token"
+#     payload = {
+#         "grant_type": "authorization_code",
+#         "code": code,
+#         "client_id": AMAZON_CLIENT_ID,
+#         "client_secret": AMAZON_CLIENT_SECRET,
+#         "redirect_uri": REDIRECT_URI,
+#     }
+ 
+#     try:
+#         response = requests.post(lwa_token_url, data=payload)
+#         # response.raise_for_status()
+#         print("STATUS:", response.status_code)
+#         print("RESPONSE BODY:", response.text)
+#         # data = response.json()
+#         response = requests.post(
+#             lwa_token_url,
+#             data=payload,
+#             headers={
+#                 "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+#             }
+#         )
+
+#         print("STATUS:", response.status_code)
+#         print("RESPONSE BODY:", response.text)
+
+#         if response.status_code != 200:
+#             return JsonResponse({
+#                 "error": response.text
+#             }, status=400)
+
+#         data = response.json()
+#         refresh_token = data.get("refresh_token")
+        
+#         user = request.user if request.user.is_authenticated else User.objects.first()
+        
+#         # Link account to both user and seller_id to allow multiple unique accounts
+#         account, created = AmazonAccount.objects.get_or_create(
+#             user=user, 
+#             seller_central_id=seller_id,
+#             defaults={
+#                 'marketplace_id': "A21TJRUUN4KGV", # Default to India
+#                 'region': "EU"
+#             }
+#         )
+        
+#         account.app_client_id = AMAZON_CLIENT_ID
+#         print("CLIENT_ID:", AMAZON_CLIENT_ID)
+#         account.app_client_secret = AMAZON_CLIENT_SECRET
+#         account.set_refresh_token(refresh_token)
+#         account.save()
+
+#         return JsonResponse({
+#             "status": "success", 
+#             "message": "Amazon connected successfully", 
+#             "seller_id": seller_id,
+#             "is_new": created
+#         })
+#     except Exception as e:
+#         return JsonResponse({"error": str(e)}, status=500)
+
+
 def amazon_callback(request):
-    state = request.GET.get("state")
     code = request.GET.get("spapi_oauth_code")
     seller_id = request.GET.get("selling_partner_id")
-    
-    session_state = request.session.get("amazon_state")
-    print("session_state//////",session_state)
-    print("_state//////",state)
-    # if not session_state or state != session_state:
-    #     return JsonResponse({"error": "Invalid state parameter."}, status=400)
-    
+
     if not code:
         return JsonResponse({"error": "Authorization code missing"}, status=400)
-    
-    if request.session.get("code_used"):
-        return JsonResponse({"error": "Code already used"}, status=400)
 
-    request.session["code_used"] = True
-
-    lwa_token_url = "https://api.amazon.com/auth/o2/token"
     payload = {
         "grant_type": "authorization_code",
         "code": code,
@@ -121,59 +189,28 @@ def amazon_callback(request):
         "client_secret": AMAZON_CLIENT_SECRET,
         "redirect_uri": REDIRECT_URI,
     }
- 
-    try:
-        response = requests.post(lwa_token_url, data=payload)
-        # response.raise_for_status()
-        print("STATUS:", response.status_code)
-        print("RESPONSE BODY:", response.text)
-        # data = response.json()
-        response = requests.post(
-            lwa_token_url,
-            data=payload,
-            headers={
-                "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
-            }
-        )
 
-        print("STATUS:", response.status_code)
-        print("RESPONSE BODY:", response.text)
+    response = requests.post(
+        "https://api.amazon.com/auth/o2/token",
+        data=payload,
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+    )
 
-        if response.status_code != 200:
-            return JsonResponse({
-                "error": response.text
-            }, status=400)
+    print("STATUS:", response.status_code)
+    print("RESPONSE:", response.text)
 
-        data = response.json()
-        refresh_token = data.get("refresh_token")
-        
-        user = request.user if request.user.is_authenticated else User.objects.first()
-        
-        # Link account to both user and seller_id to allow multiple unique accounts
-        account, created = AmazonAccount.objects.get_or_create(
-            user=user, 
-            seller_central_id=seller_id,
-            defaults={
-                'marketplace_id': "A21TJRUUN4KGV", # Default to India
-                'region': "EU"
-            }
-        )
-        
-        account.app_client_id = AMAZON_CLIENT_ID
-        account.app_client_secret = AMAZON_CLIENT_SECRET
-        account.set_refresh_token(refresh_token)
-        account.save()
+    if response.status_code != 200:
+        return JsonResponse({"error": response.text}, status=400)
 
-        return JsonResponse({
-            "status": "success", 
-            "message": "Amazon connected successfully", 
-            "seller_id": seller_id,
-            "is_new": created
-        })
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+    data = response.json()
+    refresh_token = data.get("refresh_token")
 
-
+    return JsonResponse({
+        "status": "success",
+        "refresh_token": refresh_token
+    })
 
 # apr 28
 # @api_view(['GET'])
