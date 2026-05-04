@@ -1,16 +1,19 @@
 /* eslint-disable camelcase */
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { Spin, Card, Row, Col, message } from 'antd';
 import { amazonAction } from '../../redux/amazonAPI/actionCreator';
 
 function AmazonCallback() {
+  const hasCalled = useRef(false);
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   useEffect(() => {
+    if (hasCalled.current) return;
+    hasCalled.current = true;
     const searchParams = new URLSearchParams(location.search);
     const spapiOauthCode = searchParams.get('spapi_oauth_code');
     const state = searchParams.get('state');
