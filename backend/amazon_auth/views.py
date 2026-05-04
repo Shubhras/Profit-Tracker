@@ -124,7 +124,26 @@ def amazon_callback(request):
  
     try:
         response = requests.post(lwa_token_url, data=payload)
-        response.raise_for_status()
+        # response.raise_for_status()
+        print("STATUS:", response.status_code)
+        print("RESPONSE BODY:", response.text)
+        # data = response.json()
+        response = requests.post(
+            lwa_token_url,
+            data=payload,
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+            }
+        )
+
+        print("STATUS:", response.status_code)
+        print("RESPONSE BODY:", response.text)
+
+        if response.status_code != 200:
+            return JsonResponse({
+                "error": response.text
+            }, status=400)
+
         data = response.json()
         refresh_token = data.get("refresh_token")
         
@@ -4581,6 +4600,7 @@ def amazon_profitability_details(request):
             grossqty=Sum('quantity_ordered'),
             grosssales=Sum('item_price'),
             shipping_income=Sum('shipping_income'),
+            shipping_price=Sum('shipping_price'),
             discount=Sum('discount'),
             promotion_discount=Sum('promotion_discount'),
             avg_cost=Avg('item_price'),
@@ -4708,7 +4728,7 @@ def amazon_profitability_details(request):
         # ---------------- CALCULATIONS ----------------
         net_qty = max(gross_qty - return_units, 0)
         net_sales = gross_sales + refund + rto
-        shipping_final = shipping_income - abs(shipping_price)
+        shipping_final = shipping_price 
 
         total_cost = float(row.get('total_cost') or 0)
         avg_cost = float(row.get('avg_cost') or 0)
@@ -4795,7 +4815,7 @@ def amazon_profitability_details(request):
             "profit": format_currency(total_profit),
             "grossprofitper": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
             "mpfees": format_currency(total_mpfees),
-            "shippingfees": round(total_shipping, 2),
+            "shippingfees": format_currency(total_shipping),
             "tacos": (total_ads / total_sales * 100) if total_sales else 0,
             "stdcost": format_currency(total_stdcost),
             "totalgst": format_currency(total_tcs),
@@ -5164,8 +5184,9 @@ def sku_profit_report(request):
         oid = row['order__amazon_order_id']
 
         gross_qty = int(row['grossqty'] or 0)
-        gross_sales = float(row['grosssales'] or 0)
+        gross_sales = float(row['grosssales'] or 0)   
         shipping_income = float(row['shipping_income'] or 0)
+        # shipping_price = float(row['shipping_price'] or 0)
         cost = float(row['total_cost'] or 0)
 
         f = finance_map.get(oid, {})
@@ -5203,7 +5224,7 @@ def sku_profit_report(request):
 
         # ---------------- CALCULATIONS ----------------
         net_sales = gross_sales + refund
-        shipping_final = shipping_income - abs(shipping_fee)
+        shipping_final = shipping_income 
 
         profit = net_sales - abs(mpfees) + shipping_final - cost + tcs
 
@@ -5283,7 +5304,7 @@ def sku_profit_report(request):
 
             "ads": format_currency(total_ads),
             "mpfees": round(total_mpfees, 2),
-            "shippingfees": format_currency(total_shipping),
+            "shipping": format_currency(total_shipping),
             "gst": format_currency(total_tcs),
             "tcs": format_currency(total_tcs),
             "cost": format_currency(total_cost)
