@@ -27,6 +27,8 @@ class AmazonAccount(models.Model):
     # Seller specific tokens
     seller_central_id = models.CharField(max_length=255, blank=True, null=True)
     refresh_token_encrypted = models.TextField()
+
+    amazon_refresh_token = models.TextField(blank=True, null=True)
     
     # Regional Info
     region = models.CharField(max_length=10, default='NA') # NA, EU, FE

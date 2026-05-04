@@ -33,6 +33,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from django.db.models import *
+from django.core.cache import cache
 
 
 
@@ -44,7 +45,9 @@ load_dotenv()
 AMAZON_CLIENT_ID = os.getenv("AMAZON_CLIENT_ID")
 AMAZON_CLIENT_SECRET = os.getenv("AMAZON_CLIENT_SECRET")
 AMAZON_APP_ID = os.getenv("AMAZON_APP_ID")
-REDIRECT_URI = os.getenv("REDIRECT_URI")
+# REDIRECT_URI = os.getenv("REDIRECT_URI")
+REDIRECT_URI="https://trackmyprofit.com/api/amazon/callback"
+
 
 def format_date(dt):
     """Formats datetime to Amazon ISO8601 string with Z suffix"""
@@ -56,9 +59,14 @@ def format_date(dt):
 # @login_required
 def amazon_connect(request):
     print("connect api callllll//////")
-    state = secrets.token_hex(16)
+    # state = secrets.token_hex(16)
+    # request.session["amazon_state"] = state
+
+    user_id = request.GET.get("user_id")
+    state = f"{user_id}:{secrets.token_hex(16)}"
     request.session["amazon_state"] = state
     request.session["code_used"] = False
+
 
     # print("session_state//////",session_state)
     print("_state//////",state)
@@ -72,24 +80,6 @@ def amazon_connect(request):
     )
     return redirect(auth_url)
 
-
-
-# @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
-# def amazon_connect(request):
-#     state = secrets.token_hex(16)
-
-#     request.session["amazon_state"] = state
-#     request.session["code_used"] = False
-
-#     auth_url = (
-#         "https://sellercentral.amazon.in/apps/authorize/consent"
-#         f"?application_id={AMAZON_APP_ID}"
-#         f"&state={state}"
-#         f"&redirect_uri={REDIRECT_URI}"
-#     )
-
-#     return redirect(auth_url)
 
 # =========================================
 # 2. CALLBACK → Handle Amazon response
@@ -174,13 +164,20 @@ def amazon_connect(request):
 #     except Exception as e:
 #         return JsonResponse({"error": str(e)}, status=500)
 
-
 def amazon_callback(request):
+    print("callback api calll ///////////////:")
+    state = request.GET.get("state")
     code = request.GET.get("spapi_oauth_code")
     seller_id = request.GET.get("selling_partner_id")
+    user_id = request.GET.get("user_id")
 
     if not code:
         return JsonResponse({"error": "Authorization code missing"}, status=400)
+
+    #  Prevent duplicate code usage
+    if cache.get(code):
+        return JsonResponse({"error": "Code already used"}, status=400)
+    cache.set(code, True, timeout=300)
 
     payload = {
         "grant_type": "authorization_code",
@@ -193,184 +190,54 @@ def amazon_callback(request):
     response = requests.post(
         "https://api.amazon.com/auth/o2/token",
         data=payload,
-        headers={
-            "Content-Type": "application/x-www-form-urlencoded"
-        }
+        headers={"Content-Type": "application/x-www-form-urlencoded"}
     )
 
     print("STATUS:", response.status_code)
-    print("RESPONSE:", response.text)
+    print("RESPONSE:", response.text) 
+    
 
     if response.status_code != 200:
         return JsonResponse({"error": response.text}, status=400)
 
     data = response.json()
+    access_token = data.get("access_token")
     refresh_token = data.get("refresh_token")
+
+
+    # SAVE TO DATABASE (your original logic)
+    user = None
+    if user_id:
+        user = User.objects.get(id=user_id)
+
+    else:
+        try:
+            user_id = state.split(":")[0]
+            user = User.objects.get(id=user_id)
+        except:
+            return JsonResponse({"error": "Invalid state"}, status=400)    
+
+
+    account, created = AmazonAccount.objects.get_or_create(
+        user=user,
+        seller_central_id=seller_id,
+        defaults={
+            'marketplace_id': "A21TJRUUN4KGV",
+            'region': "EU"
+        }
+    )
+
+    account.app_client_id = AMAZON_CLIENT_ID
+    account.app_client_secret = AMAZON_CLIENT_SECRET
+    account.set_refresh_token(refresh_token)
+    account.amazon_refresh_token = refresh_token
+    account.save()
 
     return JsonResponse({
         "status": "success",
-        "refresh_token": refresh_token
+        "seller_id": seller_id,
+        "is_new": created
     })
-
-# apr 28
-# @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
-# def sync_reports(request):
-#     """
-#     Fetches Amazon reports, downloads them, parses CSV,
-#     and updates OrderItem financial fields.
-#     """
-
-
-#     try:
-#         user = request.user
-#         if user.is_anonymous:
-#             from django.contrib.auth.models import User
-#             user = User.objects.first()
-
-#         accounts = AmazonAccount.objects.filter(user=user)
-
-#         if not accounts.exists():
-#             return JsonResponse({"status": "error", "message": "No Amazon accounts connected."}, status=400)
-
-#         total_saved = 0
-#         sync_details = []
-
-#         for account in accounts:
-#             manager = SPAPIManager(user=user, account=account)
-
-#             params = request.GET.dict()
-#             if not params.get('reportTypes') and not params.get('nextToken'):
-#                 params['reportTypes'] = [
-#                     'GET_V2_SETTLEMENT_REPORT_DATA_FLAT_FILE',
-#                     'GET_FLAT_FILE_ALL_ORDERS_DATA_BY_LAST_UPDATE_GENERAL'
-                    
-#                 ]
-
-#             data = manager.get_reports(**params)
-
-#             if "errors" in data:
-#                 sync_details.append({
-#                     "seller_id": account.seller_central_id,
-#                     "status": "error",
-#                     "errors": data["errors"]
-#                 })
-#                 continue
-
-#             reports = data.get("reports", [])
-#             account_saved_count = 0
-
-#             for report in reports:
-#                 report_obj, _ = Report.objects.update_or_create(
-#                     amazon_report_id=report.get("reportId"),
-#                     amazon_account=account,
-#                     defaults={
-#                         "user": user,
-#                         "report_type": report.get("reportType"),
-#                         "processing_status": report.get("processingStatus"),
-#                         "created_time": parse_date(report.get("createdTime")),
-#                         "data_start_time": parse_date(report.get("dataStartTime")) if report.get("dataStartTime") else None,
-#                         "data_end_time": parse_date(report.get("dataEndTime")) if report.get("dataEndTime") else None,
-#                         "report_document_id": report.get("reportDocumentId"),
-#                         "raw_data": report
-#                     }
-#                 )
-
-#                 account_saved_count += 1
-
-#                 # ❗ ONLY PROCESS COMPLETED REPORTS
-#                 if report.get("processingStatus") != "DONE":
-#                     continue
-
-#                 doc_id = report.get("reportDocumentId")
-#                 if not doc_id:
-#                     continue
-
-#                 #  STEP 1: GET DOCUMENT URL
-#                 doc = manager.get_report_document(doc_id)
-#                 url = doc.get("url")
-
-#                 if not url:
-#                     continue
-
-#                 # STEP 2: DOWNLOAD CSV
-#                 response = requests.get(url)
-#                 content = response.content.decode("utf-8")
-
-#                 reader = csv.DictReader(StringIO(content))
-
-#                 items_to_update = []
-
-#                 #  STEP 3: PARSE & UPDATE
-#                 for row in reader:
-#                     sku = row.get("sku") or row.get("seller-sku")
-#                     if not sku:
-#                         continue
-
-#                     item = OrderItem.objects.filter(
-#                         seller_sku=sku,
-#                         order__amazon_account=account
-#                     ).order_by("-created_at").first()
-
-#                     if not item:
-#                         continue
-
-#                     try:
-#                         item_price = float(row.get("item-price", 0))
-#                         item_tax = float(row.get("item-tax", 0))
-#                         promo = abs(float(row.get("promotion-discount", 0)))
-
-#                         item.mrp = item_price + item_tax
-#                         item.selling_price = item_price
-
-#                         item.promotion_discount = promo
-#                         item.discount = item.mrp - item.selling_price
-
-#                         item.net_sales = item.selling_price - promo
-#                         item.total_amount = item.net_sales
-
-#                         items_to_update.append(item)
-
-#                     except Exception as e:
-#                         print("Row parsing error:", e)
-
-#                 #  STEP 4: BULK UPDATE (FAST )
-#                 if items_to_update:
-#                     # with transaction.atomic():
-#                     OrderItem.objects.bulk_update(
-#                         items_to_update,
-#                         [
-#                             "mrp",
-#                             "selling_price",
-#                             "promotion_discount",
-#                             "discount",
-#                             "net_sales",
-#                             "total_amount"
-#                         ]
-#                     )
-
-#             total_saved += account_saved_count
-
-#             sync_details.append({
-#                 "seller_id": account.seller_central_id,
-#                 "status": "success",
-#                 "synced_count": account_saved_count
-#             })
-
-#         return JsonResponse({
-#             "status": "success",
-#             "message": f"Reports synced & processed for {len(sync_details)} accounts",
-#             "total_synced": total_saved,
-#             "details": sync_details
-#         })
-
-#     except Exception as e:
-#         import traceback
-#         return JsonResponse({
-#             "status": "error",
-#             "message": str(e),
-#             "trace": traceback.format_exc()
-#         }, status=500)
 
 
 
