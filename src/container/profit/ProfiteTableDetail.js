@@ -706,17 +706,19 @@ export default function ProfitDetailsView() {
                     const value = totals[keyMap[col.dataIndex]];
 
                     return (
-                      <Table.Summary.Cell
-                        key={col.key || index}
-                        index={index + 3} // 🔥 important
-                        fixed={col.fixed}
-                        align="center"
-                      >
-                        {col.key === 'action'
-                          ? null // 👈 right me blank
-                          : ['profitPercent'].includes(col.dataIndex)
-                          ? `${value ?? 0}%`
-                          : value ?? 0}
+                      <Table.Summary.Cell key={col.key || index} index={index + 3} fixed={col.fixed} align="center">
+                        {col.key === 'action' ? null : ['profitPercent'].includes(col.dataIndex) ? (
+                          <span
+                            style={{
+                              color: (value ?? 0) >= 0 ? 'green' : 'red',
+                              fontWeight: 600,
+                            }}
+                          >
+                            {col.dataIndex === 'profitPercent' ? `${value ?? 0}%` : value ?? 0}
+                          </span>
+                        ) : (
+                          value ?? 0
+                        )}
                       </Table.Summary.Cell>
                     );
                   })}
