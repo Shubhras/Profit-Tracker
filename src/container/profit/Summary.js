@@ -518,7 +518,16 @@ export default function Summary() {
                     {dashboardData?.breakdown_table?.claimsales?.amount || 0}
                   </Col>
                 </Row>
-                <Divider />
+                <Row>
+                  <Col span={10}>Standard Cost</Col>
+                  <Col span={7} className="text-center">
+                    {dashboardData?.breakdown_table?.claimqty?.qty || 0}
+                  </Col>
+                  <Col span={7} className="text-right">
+                    {dashboardData?.breakdown_table?.claimsales?.amount || 0}
+                  </Col>
+                </Row>
+                <Divider className="mt-2" />
                 <Row>
                   <Col span={10}>
                     <strong>Net</strong>
@@ -546,7 +555,16 @@ export default function Summary() {
               </Card>
 
               <Row gutter={8} className="mt-1">
-                <Col span={12}>
+                <Col
+                  span={12}
+                  onClick={() =>
+                    navigate('/admin/profit/profittabledetails', {
+                      state: { channels: globalChannel, type: 'all', profitType: 'profitable' },
+                    })
+                  }
+                  hoverable
+                  style={{ cursor: 'pointer' }}
+                >
                   <Card size="small" className="bg-green-50">
                     <p className="text-green-700">Profit IDs</p>
                     <strong>#{dashboardData?.top_orders?.profitable?.total_count || 0}</strong>
@@ -554,7 +572,16 @@ export default function Summary() {
                     <p>{dashboardData?.top_orders?.profitable?.total_amount || 0}</p>
                   </Card>
                 </Col>
-                <Col span={12}>
+                <Col
+                  span={12}
+                  onClick={() =>
+                    navigate('/admin/profit/profittabledetails', {
+                      state: { channels: globalChannel, type: 'all', profitType: 'losing' },
+                    })
+                  }
+                  hoverable
+                  style={{ cursor: 'pointer' }}
+                >
                   <Card size="small" className="bg-red-50">
                     <p className="text-red-600">Loss IDs</p>
                     <strong>#{dashboardData?.top_orders?.losing?.total_count || 0}</strong>

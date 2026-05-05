@@ -152,17 +152,10 @@ export default function SalesTrend() {
           type="button"
           onClick={() => navigate(`../salesdetails/${record.id}`)}
           style={{
-            width: 28,
-            height: 28,
             border: '1px solid #d9d9d9',
-            borderRadius: 6,
-            background: '#fff',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: 'auto',
+            background: 'rgb(202, 221, 254)',
           }}
+          className="w-[30px] h-[30px] rounded-[4px] cursor-pointer flex-items-center justify-center  mx-auto"
         >
           <RightOutlined style={{ fontSize: 12 }} />
         </button>
