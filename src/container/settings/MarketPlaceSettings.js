@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Switch, Button, Spin } from 'antd';
 import { getChannels } from '../../redux/Settings/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
@@ -20,116 +20,15 @@ import swiggyIcon from '../../assets/icons/swiggy.png';
 import tallyIcon from '../../assets/icons/tally.png';
 import zohoIcon from '../../assets/icons/zoho.png';
 
-const marketplaces = [
-  {
-    id: 'amazon',
-    name: 'Amazon',
-    domain: 'amazon.com',
-    img: amazonIcon,
-    status: 'connected', // ya connected agar needed
-  },
-  {
-    id: 'flipkart',
-    name: 'Flipkart',
-    domain: 'flipkart.com',
-    img: flipkartIcon,
-    status: 'connected',
-    connectedCount: 1,
-  },
-  {
-    id: 'myntra',
-    name: 'Myntra',
-    domain: 'myntra.com',
-    img: myntraIcon,
-    status: 'disconnected',
-  },
-  {
-    id: 'meesho',
-    name: 'Meesho',
-    domain: 'meesho.com',
-    img: meeshoIcon,
-    status: 'connected',
-    connectedCount: 1,
-  },
-  {
-    id: 'ajio',
-    name: 'Ajio',
-    domain: 'ajio.com',
-    img: ajioIcon,
-    status: 'disconnected',
-  },
-  {
-    id: 'nykaa',
-    name: 'Nykaa',
-    domain: 'nykaa.com',
-    img: nykaaIcon,
-    status: 'disconnected',
-  },
-  {
-    id: 'shopify',
-    name: 'Shopify',
-    domain: 'shopify.com',
-    img: shopifyIcon,
-    status: 'disconnected',
-  },
-  {
-    id: 'woocommerce',
-    name: 'WooCommerce',
-    domain: 'woocommerce.com',
-    img: wooIcon,
-    status: 'disconnected',
-  },
-  {
-    id: 'magento',
-    name: 'Magento',
-    domain: 'magento.com',
-    img: magentoIcon,
-    status: 'disconnected',
-  },
-  {
-    id: 'blinkit',
-    name: 'Blinkit',
-    domain: 'blinkit.com',
-    img: blinkitIcon,
-    status: 'disconnected',
-  },
-  {
-    id: 'zepto',
-    name: 'Zepto',
-    domain: 'zeptonow.com',
-    img: zeptoIcon,
-    status: 'disconnected',
-  },
-  {
-    id: 'swiggy',
-    name: 'Swiggy Instamart',
-    domain: 'swiggy.com',
-    img: swiggyIcon,
-    status: 'disconnected',
-  },
-  {
-    id: 'tally',
-    name: 'Tally',
-    domain: 'tallysolutions.com',
-    img: tallyIcon,
-    status: 'disconnected',
-  },
-  {
-    id: 'zoho',
-    name: 'Zoho Books',
-    domain: 'zoho.com',
-    img: zohoIcon,
-    status: 'disconnected',
-  },
-];
-
 export default function MarketPlaceSettings() {
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(getChannels());
   }, []);
+  const channels = useSelector((state) => state.settings.channels);
   const [loading, setLoading] = useState(true);
-
+  const profile = useSelector((state) => state.auth.profile);
+  console.log('dddddddddddddddd', profile);
   useEffect(() => {
     setTimeout(() => setLoading(false), 800);
   }, []);
@@ -153,12 +52,17 @@ export default function MarketPlaceSettings() {
       breadcrumbName: 'MarketPlace Settings',
     },
   ];
-
-  const filteredMarketplaces = showConnectedOnly ? marketplaces.filter((m) => m.status === 'connected') : marketplaces;
+  const filteredMarketplaces = showConnectedOnly
+    ? (channels || []).filter((m) => m.status === 'connected')
+    : channels || [];
+  const userId = profile?.user_id;
 
   const handleConnect = (market) => {
     if (market.id === 'amazon') {
-      window.location.href = 'https://api.trackmyprofit.com/api/amazon/connect/';
+      // window.location.href = 'https://372nmlsj-8000.inc1.devtunnels.ms/api/amazon/connect/';
+      // window.location.href = `https://372nmlsj-8000.inc1.devtunnels.ms/api/amazon/connect/?user_id=${userId}`;
+      window.location.href = `https://api.trackmyprofit.com/api/amazon/connect/?user_id=${userId}`;
+
       return;
     }
 
@@ -167,6 +71,23 @@ export default function MarketPlaceSettings() {
     // For now, just opening the page as requested.
     const statusParam = market.status === 'connected' ? '&status=connected' : '';
     window.open(`/admin/settings/user-setting/marketplace-connection?market=${market.id}${statusParam}`, '_blank');
+  };
+
+  const iconMap = {
+    amazon: amazonIcon,
+    flipkart: flipkartIcon,
+    myntra: myntraIcon,
+    meesho: meeshoIcon,
+    ajio: ajioIcon,
+    nykaa: nykaaIcon,
+    shopify: shopifyIcon,
+    woocommerce: wooIcon,
+    magento: magentoIcon,
+    blinkit: blinkitIcon,
+    zepto: zeptoIcon,
+    swiggy: swiggyIcon,
+    tally: tallyIcon,
+    zoho: zohoIcon,
   };
 
   return (
@@ -197,7 +118,7 @@ export default function MarketPlaceSettings() {
                 {/* Logo Area */}
                 <div className="w-20 h-20 mb-4 relative flex items-center justify-center p-2">
                   <img
-                    src={market.img || `https://logo.clearbit.com/${market.domain}`}
+                    src={iconMap[market.id] || `https://logo.clearbit.com/${market.domain}`}
                     alt={market.name}
                     className="max-w-full max-h-full object-contain filter grayscale-0 group-hover:scale-110 transition-all duration-300"
                     onError={(e) => {

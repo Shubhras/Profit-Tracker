@@ -32,7 +32,10 @@ export default function ProfitDetailsView() {
     'profitPercent',
   ]);
   const [showFilters, setShowFilters] = React.useState(false);
-
+  const [pagination, setPagination] = React.useState({
+    current: 1,
+    pageSize: 10,
+  });
   const { profitData, dateRange, channel: globalChannel, loading } = useSelector((state) => state.dashboard);
 
   const [filters, setFilters] = React.useState({
@@ -290,6 +293,27 @@ export default function ProfitDetailsView() {
       ),
     },
     {
+      title: 'MP Fees',
+      dataIndex: 'mpfees',
+      align: 'center',
+      render: (v) => v ?? 0,
+    },
+    {
+      title: 'std cost',
+      dataIndex: 'std',
+      align: 'center',
+      sorter: (a, b) => a.std - b.std,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v}
+        </button>
+      ),
+    },
+    {
       title: 'Shipping',
       dataIndex: 'shipping',
       align: 'center',
@@ -334,21 +358,7 @@ export default function ProfitDetailsView() {
         </button>
       ),
     },
-    {
-      title: 'std cost',
-      dataIndex: 'std',
-      align: 'center',
-      sorter: (a, b) => a.std - b.std,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
-        >
-          {v}
-        </button>
-      ),
-    },
+
     {
       title: 'Profit',
       dataIndex: 'profit',
@@ -370,6 +380,15 @@ export default function ProfitDetailsView() {
       dataIndex: 'profitPercent',
       align: 'center',
       sorter: (a, b) => a.profitPercent - b.profitPercent,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+        >
+          {v}
+        </button>
+      ),
     },
     {
       title: 'Gross Qty',
@@ -398,12 +417,6 @@ export default function ProfitDetailsView() {
     {
       title: 'Gross Sales',
       dataIndex: 'grossSales',
-      align: 'center',
-      render: (v) => v ?? 0,
-    },
-    {
-      title: 'MP Fees',
-      dataIndex: 'mpfees',
       align: 'center',
       render: (v) => v ?? 0,
     },
@@ -566,8 +579,12 @@ export default function ProfitDetailsView() {
             showSorterTooltip={false}
             loading={loading}
             pagination={{
-              pageSize: 10,
+              ...pagination,
               showSizeChanger: true,
+              pageSizeOptions: ['10', '20', '50', '100'],
+            }}
+            onChange={(pag) => {
+              setPagination(pag);
             }}
             size="small"
             scroll={{ x: 'max-content' }}
