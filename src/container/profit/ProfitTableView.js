@@ -35,13 +35,15 @@ export default function ProfitTableView() {
 
   const [visibleColumns, setVisibleColumns] = React.useState([
     'view',
-    'qty',
+    // 'qty',
     'netQty',
     'returnqty',
     'returnPercent',
     'netsales',
     'mpfees',
     'shipping',
+    'profit',
+    'profitPercent',
   ]);
   const [filters, setFilters] = React.useState({
     channel: '',
@@ -129,7 +131,7 @@ export default function ProfitTableView() {
     profitData?.response?.map((item, index) => ({
       key: index,
       channel: item.channel,
-      view: item.grosssales,
+      // view: item.grosssales,
       qty: item.grossqty,
       netQty: item.netqty,
       net_discount: item.net_discount,
@@ -147,16 +149,18 @@ export default function ProfitTableView() {
       returnqty: item.returnqty,
       settledamount: item.profit_settled_amount,
       grossqty: item.grossqty,
-      netmrp: item.netmrp,
-      mrpNetDiscount: item.mrp_net_discount,
+      netmrp: item.mrp,
+      mrpNetDiscount: item.mrp,
       mrp_customer_discount: item.mrp_customer_discount,
       accountCharges: item.account_charges,
-      otherExpenses: item.other_expenses,
+      otherExpenses: item.otherfees,
       tacos: item.tacos,
-      grossProfitPercent: item.grossprofit_percent,
-      percentOfSales: item.percent_of_sales,
+      grossprofitper: item.grossprofitper,
+      percentOfSales: item.per_of_sale,
       drr: item.drr,
-      lastOrderDate: item.last_order_date,
+      lastOrderDate: item.orderdate,
+      stdcost_missing_percentage: item.stdcost_missing_percentage || 0,
+      grosssales: 'grosssales',
     })) || [];
 
   const columns = [
@@ -357,7 +361,7 @@ export default function ProfitTableView() {
       ),
     },
     {
-      title: 'GST',
+      title: 'Gst to Pay',
       dataIndex: 'gst',
       align: 'center',
       sorter: (a, b) => a.gst - b.gst,
@@ -391,7 +395,7 @@ export default function ProfitTableView() {
       dataIndex: 'profit',
       align: 'center',
       sorter: (a, b) => a.profit - b.profit,
-      render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>₹{v}</span>,
+      // render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>₹{v}</span>,
     },
     {
       title: 'Profit %',
@@ -402,9 +406,10 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
+          style={{ color: v < 0 ? 'red' : 'green' }}
           onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
         >
-          {v}
+          {v}%
         </button>
       ),
     },
@@ -427,6 +432,7 @@ export default function ProfitTableView() {
       title: 'Net MRP',
       dataIndex: 'netmrp',
       align: 'center',
+      sorter: (a, b) => a.netmrp - b.netmrp,
       render: (v, record) => (
         <button
           type="button"
@@ -441,6 +447,7 @@ export default function ProfitTableView() {
       title: 'MRP Net Discount %',
       dataIndex: 'mrpNetDiscount',
       align: 'center',
+      sorter: (a, b) => a.mrpNetDiscount - b.mrpNetDiscount,
       render: (v, record) => (
         <button
           type="button"
@@ -455,6 +462,7 @@ export default function ProfitTableView() {
       title: 'MRP Customer Discount %',
       dataIndex: 'mrp_customer_discount',
       align: 'center',
+      sorter: (a, b) => a.mrp_customer_discount - b.mrp_customer_discount,
       render: (v, record) => (
         <button
           type="button"
@@ -469,6 +477,7 @@ export default function ProfitTableView() {
       title: 'Account Charges',
       dataIndex: 'accountCharges',
       align: 'center',
+      sorter: (a, b) => a.accountCharges - b.accountCharges,
       render: (v, record) => (
         <button
           type="button"
@@ -483,6 +492,7 @@ export default function ProfitTableView() {
       title: 'Other Expenses',
       dataIndex: 'otherExpenses',
       align: 'center',
+      sorter: (a, b) => a.otherExpenses - b.otherExpenses,
       render: (v, record) => (
         <button
           type="button"
@@ -497,6 +507,7 @@ export default function ProfitTableView() {
       title: 'TACOS',
       dataIndex: 'tacos',
       align: 'center',
+      sorter: (a, b) => a.tacos - b.tacos,
       render: (v, record) => (
         <button
           type="button"
@@ -509,8 +520,9 @@ export default function ProfitTableView() {
     },
     {
       title: 'Gross Profit %',
-      dataIndex: 'grossProfitPercent',
+      dataIndex: 'grossprofitper',
       align: 'center',
+      sorter: (a, b) => a.grossprofitper - b.grossprofitper,
       render: (v, record) => (
         <button
           type="button"
@@ -525,6 +537,7 @@ export default function ProfitTableView() {
       title: '% of Sales',
       dataIndex: 'percentOfSales',
       align: 'center',
+      sorter: (a, b) => a.percentOfSales - b.percentOfSales,
       render: (v, record) => (
         <button
           type="button"
@@ -539,6 +552,38 @@ export default function ProfitTableView() {
       title: 'DRR (Daily Run Rate)',
       dataIndex: 'drr',
       align: 'center',
+      sorter: (a, b) => a.drr - b.drr,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'drr' })}
+        >
+          {v ?? 0}
+        </button>
+      ),
+    },
+    {
+      title: 'Gross Sales',
+      dataIndex: 'grosssales',
+      align: 'center',
+      sorter: (a, b) => a.grosssales - b.grosssales,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'drr' })}
+        >
+          {v ?? 0}
+        </button>
+      ),
+    },
+
+    {
+      title: 'Std Cost M/S %',
+      dataIndex: 'stdcost_missing_percentage',
+      align: 'center',
+      sorter: (a, b) => a.stdcost_missing_percentage - b.stdcost_missing_percentage,
       render: (v, record) => (
         <button
           type="button"
@@ -553,7 +598,16 @@ export default function ProfitTableView() {
       title: 'Last Order Date',
       dataIndex: 'lastOrderDate',
       align: 'center',
-      render: (v) => <span>{v ?? 0}</span>, // date pe modal nahi chahiye usually
+      sorter: (a, b) => a.lastOrderDate - b.lastOrderDate,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() => setDetailModal({ open: true, record, type: 'drr' })}
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     // {
     //   title: 'Settled amount',
@@ -594,17 +648,10 @@ export default function ProfitTableView() {
             }
             // onClick={() => navigate(`../profittabledetails/${record.channel}`)}
             style={{
-              width: 30,
-              height: 30,
               border: '1px solid #d9d9d9',
-              borderRadius: 4,
               background: 'rgb(202, 221, 254)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: 'auto',
             }}
+            className="w-[30px] h-[30px] rounded-[4px] cursor-pointer flex-items-center justify-center mx-auto"
           >
             <RightOutlined style={{ fontSize: 12 }} />
           </button>
@@ -612,16 +659,10 @@ export default function ProfitTableView() {
             type="button"
             onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
             style={{
-              width: 30,
-              height: 30,
               border: '1px solid #ffc0cb',
-              borderRadius: 4,
-              background: '#ffe4e9', // light pink
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              background: '#ffe4e9',
             }}
+            className="w-[30px] h-[30px] rounded-[4px] cursor-pointer flex-items-center justify-center mx-auto"
           >
             <BarChartOutlined style={{ fontSize: 14, color: '#ff4d6d' }} />
           </button>
@@ -636,7 +677,7 @@ export default function ProfitTableView() {
     { label: 'Return %', key: 'returnPercent' },
 
     { label: 'Net ASP', key: 'netasp' },
-    { label: 'Net MRP', key: 'netmrp' },
+    { label: 'Net MRP', key: 'mrp' },
     { label: 'MRP Net Discount %', key: 'mrpNetDiscount' },
     { label: 'MRP Customer Discount %', key: 'mrp_customer_discount' },
 
@@ -658,7 +699,7 @@ export default function ProfitTableView() {
     // { label: 'Settled Amount', key: 'settledamount' },
 
     { label: 'TACOS', key: 'tacos' },
-    { label: 'Gross Profit %', key: 'grossProfitPercent' },
+    { label: 'Gross Profit %', key: 'grossprofitper' },
     { label: 'Profit %', key: 'profitPercent' },
 
     { label: '% of Sales', key: 'percentOfSales' },
@@ -726,10 +767,12 @@ export default function ProfitTableView() {
             dataSource={tableData}
             showSorterTooltip={false}
             loading={loading}
+            locale={{ emptyText: 'No Data Found' }}
             pagination={{
               ...pagination,
               showSizeChanger: true,
               pageSizeOptions: ['10', '20', '50', '100'],
+              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
             }}
             onChange={(pag) => {
               setPagination(pag);
@@ -748,24 +791,34 @@ export default function ProfitTableView() {
                   // }
 
                   const keyMap = {
-                    view: 'grosssales',
+                    grosssales: 'grosssales',
                     qty: 'grossqty',
                     netQty: 'netqty',
                     returnqty: 'returnqty',
-                    returnPercent: 'retpercent',
-                    netsales: 'netsales',
-                    netasp: 'netasp',
-                    net_discount: 'net_discount',
-                    mpfees: 'mpfees',
-                    shipping: 'shippingfees',
+                    returnPercent: 'retpercent' || 0,
+                    netsales: 'netsales' || 0,
+                    netasp: 'netasp' || 0,
+                    net_discount: 'net_discount' || 0,
+                    mpfees: 'mpfees' || 0,
+                    shipping: 'shippingfees' || 0,
                     adSpend: 'ads',
                     stdCost: 'stdCost' || 0,
-                    gst: 'gsttopay',
-                    grossprofit: 'grossprofit',
-                    profit: 'profit',
-                    profitPercent: 'profitmargin',
-                    settledamount: 'profit_settled_amount',
+                    gst: 'gsttopay' || 0,
+                    grossprofit: 'grossprofit' || 0,
+                    profit: 'profit' || 0,
+                    profitPercent: 'profitmargin' || 0,
+                    settledamount: 'profit_settled_amount' || 0,
                     lastOrderDate: 'lastorderdate' || 0,
+                    drr: 'drr',
+                    mrp: 'mrp',
+                    grossqty: 'grossqty' || 0,
+                    mrpNetDiscount: 'mrp',
+                    mrp_customer_discount: 'mrp_customer_discount' || 0,
+                    otherExpenses: 'otherfees' || 0,
+                    tacos: 'tacos' || 0,
+                    grossprofitper: 'grossprofitper' || 0,
+                    percentOfSales: 'per_of_sales' || 0,
+                    stdcost_missing_percentage: 'stdcost_missing_percentage' || 0,
                   };
 
                   const value = totals[keyMap[col.dataIndex]];
@@ -773,7 +826,27 @@ export default function ProfitTableView() {
                   return (
                     <Table.Summary.Cell key={col.key || index} index={index + 1} fixed={col.fixed} align="center">
                       {/* {value !== undefined ? value : ''} */}
-                      {col.key === 'action' ? null : value ?? ''}
+                      {/* {col.key === 'action' ? null : value ?? ''} */}
+                      {/* {col.key === 'action' ? null : col.dataIndex === 'profitPercent' ? (
+                        <span style={{ color: Number(value) < 0 ? 'red' : 'green' }}>{value ?? ''}%</span>
+                      ) : (
+                        value ?? ''
+                      )} */}
+                      {col.key === 'action' ? (
+                        <div className="flex gap-2 justify-end">
+                          <button
+                            type="button"
+                            onClick={() => setDetailModal({ open: true, record: totals, type: 'qty' })}
+                            className="w-[30px] h-[30px] border border-[#ffc0cb] rounded-[4px] bg-[#ffe4e9] flex items-center justify-center"
+                          >
+                            <BarChartOutlined style={{ fontSize: 14, color: '#ff4d6d' }} />
+                          </button>
+                        </div>
+                      ) : col.dataIndex === 'profitPercent' ? (
+                        <span style={{ color: Number(value) < 0 ? 'red' : 'green' }}>{value ?? ''}%</span>
+                      ) : (
+                        value ?? ''
+                      )}
                     </Table.Summary.Cell>
                   );
                 })}
