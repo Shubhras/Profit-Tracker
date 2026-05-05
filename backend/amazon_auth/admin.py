@@ -6,6 +6,8 @@ class OrderItemInline(admin.TabularInline):  # or StackedInline
     extra = 0
     fields = (
         'order_item_id',
+        'asin',
+        'parent_asin',
         'seller_sku',
         'title',
         'quantity_ordered',
@@ -20,8 +22,8 @@ class OrderItemInline(admin.TabularInline):  # or StackedInline
 
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
-    list_display = ('id','seller_sku', 'asin', 'order','shipping_price','shipping_income','shipping_expense', 'quantity_ordered', 'item_price', 'created_at')
-    list_filter = ('created_at',)
+    list_display = ('id','seller_sku', 'asin', 'order','shipping_price','shipping_income','quantity_claimed','claim_type', 'quantity_ordered', 'item_price', 'created_at')
+    list_filter = ('created_at','claim_type')
     search_fields = ('seller_sku','asin', 'title', 'order__amazon_order_id','order_item_id')
 
 @admin.register(AmazonAccount)
@@ -39,9 +41,9 @@ class OrderAdmin(admin.ModelAdmin):
 
 @admin.register(FinancialEvent)
 class FinancialEventAdmin(admin.ModelAdmin):
-    list_display = ('id','event_type', 'amazon_account','shipping_fee','shipping_income', 'amazon_order_id', 'posted_date', 'total_amount', 'currency_code')
-    list_filter = ('amazon_account', 'event_type', 'posted_date')
-    search_fields = ('amazon_order_id', 'event_type')
+    list_display = ('id','event_type','event_group', 'amazon_account','shipping_fee','shipping_income', 'amazon_order_id', 'posted_date', 'total_amount', 'currency_code')
+    list_filter = ('amazon_account', 'event_type', 'posted_date','event_group')
+    search_fields = ('amazon_order_id', 'event_type','event_group')
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
