@@ -22,7 +22,7 @@ class OrderItemInline(admin.TabularInline):  # or StackedInline
 class OrderItemAdmin(admin.ModelAdmin):
     list_display = ('id','seller_sku', 'asin', 'order','shipping_price','shipping_income','shipping_expense', 'quantity_ordered', 'item_price', 'created_at')
     list_filter = ('created_at',)
-    search_fields = ('seller_sku','asin', 'title', 'order__amazon_order_id')
+    search_fields = ('seller_sku','asin', 'title', 'order__amazon_order_id','order_item_id')
 
 @admin.register(AmazonAccount)
 class AmazonAccountAdmin(admin.ModelAdmin):
