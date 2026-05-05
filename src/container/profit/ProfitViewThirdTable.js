@@ -44,8 +44,8 @@ export default function ProfitDetailsView() {
     productId: '',
     parentId: '',
     mkt: '',
-    ads: 'without',
-    gst: 'without',
+    ads: 'with',
+    gst: 'with',
     estimate: 'with',
     expenses: 'with',
     accountCharges: 'with',
@@ -65,7 +65,7 @@ export default function ProfitDetailsView() {
   const apipayload = {
     filters: {
       fromDate: dateRange?.fromDate || null,
-      toDate: dateRange?.toDate || null,
+      endDate: dateRange?.endDate || null,
       channel: {
         IN: globalChannel,
       },
@@ -109,7 +109,7 @@ export default function ProfitDetailsView() {
       mrp: item.mrp || 0,
       mrpNetDiscount: item.mrp_net_discount || 0,
       grossSales: item.grosssales || 0,
-      mpfees: item.mpfees || 0,
+      mpfees: item.new_mpfees || 0,
       accountCharges: item.account_charges || 0,
       otherExpenses: item.other_expenses || 0,
       grossProfit: item.grossprofit || 0,
@@ -135,7 +135,7 @@ export default function ProfitDetailsView() {
     { label: 'Gross Sales', key: 'grossSales' },
 
     { label: 'Net Sales', key: 'netsales' },
-    { label: 'MP fees', key: 'mpfees' },
+    { label: 'MP Fees', key: 'mpfees' },
     { label: 'Shipping', key: 'shipping' },
 
     { label: 'Ad spend', key: 'adSpend' },
@@ -296,10 +296,11 @@ export default function ProfitDetailsView() {
       title: 'MP Fees',
       dataIndex: 'mpfees',
       align: 'center',
+      sorter: (a, b) => a.mpfees - b.mpfees,
       render: (v) => v ?? 0,
     },
     {
-      title: 'std cost',
+      title: 'Std Cost',
       dataIndex: 'std',
       align: 'center',
       sorter: (a, b) => a.std - b.std,
@@ -344,7 +345,7 @@ export default function ProfitDetailsView() {
       ),
     },
     {
-      title: 'GST to pay',
+      title: 'Gst to Pay',
       dataIndex: 'gst',
       align: 'center',
       sorter: (a, b) => a.gst - b.gst,
@@ -493,16 +494,10 @@ export default function ProfitDetailsView() {
             type="button"
             onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
             style={{
-              width: 30,
-              height: 30,
               border: '1px solid #ffc0cb',
-              borderRadius: 4,
-              background: '#ffe4e9', // light pink
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              background: '#ffe4e9',
             }}
+            className="w-[30px] h-[30px] rounded-[4px] cursor-pointer flex-items-center  justify-center mx-auto"
           >
             <BarChartOutlined style={{ fontSize: 14, color: '#ff4d6d' }} />
           </button>
@@ -578,10 +573,12 @@ export default function ProfitDetailsView() {
             dataSource={dataSource}
             showSorterTooltip={false}
             loading={loading}
+            locale={{ emptyText: 'No Data Found' }}
             pagination={{
               ...pagination,
               showSizeChanger: true,
               pageSizeOptions: ['10', '20', '50', '100'],
+              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
             }}
             onChange={(pag) => {
               setPagination(pag);
@@ -608,20 +605,42 @@ export default function ProfitDetailsView() {
                       adSpend: 'adSpend',
                       gst: 'gst',
                       std: 'cost',
-                      mpfees: 'mpfees',
+                      mpfees: 'total_new_mpfees',
                       profit: 'profit',
                       profitPercent: 'totalprofitmargin',
+                      grossqty: 'grossqty',
+                      netasp: 'netasp',
+                      mrp: 'mrp',
+                      mrpNetDiscount: 'mrpNetDiscount',
+                      grossSales: 'grosssales',
+                      accountCharges: 'accountCharges',
+                      otherExpenses: 'otherExpenses',
+                      grossProfit: 'grossProfit',
+                      grossProfitPercent: 'grossProfitPercent',
+                      percentOfSales: 'percentOfSales',
+                      drr: 'drr',
+                      lastOrderDate: 'lastOrderDate',
                     };
 
                     const value = profitData?.totals?.[keyMap[col.dataIndex]];
 
                     return (
                       <Table.Summary.Cell key={index} index={index + 3} align="center" fixed={col.fixed}>
-                        {col.key === 'action'
-                          ? null
-                          : col.dataIndex === 'profitPercent'
-                          ? Number(value || 0).toFixed(2)
-                          : value ?? 0}
+                        {col.key === 'action' ? (
+                          <div className="flex gap-2 justify-center">
+                            <button
+                              type="button"
+                              onClick={() => setDetailModal({ open: true, record: profitData?.totals, type: 'qty' })}
+                              className="w-[30px] h-[30px] border border-[#ffc0cb] rounded-[4px] bg-[#ffe4e9] flex items-center justify-center"
+                            >
+                              <BarChartOutlined style={{ fontSize: 14, color: '#ff4d6d' }} />
+                            </button>
+                          </div>
+                        ) : col.dataIndex === 'profitPercent' ? (
+                          Number(value || 0).toFixed(2)
+                        ) : (
+                          value ?? 0
+                        )}
                       </Table.Summary.Cell>
                     );
                   })}

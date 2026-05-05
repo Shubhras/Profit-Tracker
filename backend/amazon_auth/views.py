@@ -836,238 +836,6 @@ def parse_date(date_str):
         return timezone.now()
 
 
-#update function  to get more info 
-# @api_view(['GET'])
-# @permission_classes([AllowAny])
-# def sync_finances(request):
-#     print("finace sync started")
-#     try:
-#         user = request.user
-#         if user.is_anonymous:
-#             from django.contrib.auth.models import User
-#             user = User.objects.first()
-
-#         accounts = AmazonAccount.objects.filter(user=user)
-#         if not accounts.exists():
-#             return JsonResponse({"status": "error", "message": "No Amazon accounts connected."}, status=400)
-
-#         import hashlib, json
-#         from decimal import Decimal
-#         from django.db import transaction
-
-#         total_saved = 0
-#         sync_details = []
-
-#         for account in accounts:
-#             manager = SPAPIManager(user=user, account=account)
-
-#             kwargs = {}
-#             if request.GET.get('PostedAfter'):
-#                 kwargs['PostedAfter'] = request.GET.get('PostedAfter')
-#             if request.GET.get('PostedBefore'):
-#                 kwargs['PostedBefore'] = request.GET.get('PostedBefore')
-
-#             account_saved = 0
-
-#             while True:
-#                 objects_to_create = []
-
-#                 response = manager.list_financial_events(**kwargs)
-
-#                 if "errors" in response:
-#                     logger.error(f"Finance API error: {response}")
-#                     break
-
-#                 payload = response.get("payload", {})
-#                 events = payload.get("FinancialEvents", {})
-
-#                 for category, event_list in events.items():
-#                     if not isinstance(event_list, list):
-#                         continue
-
-#                     event_type = category.replace("List", "")
-
-#                     for event in event_list:
-#                         event_str = json.dumps(event, sort_keys=True)
-#                         unique_hash = hashlib.sha256(event_str.encode()).hexdigest()
-
-#                         posted_date = event.get("PostedDate") or event.get("TransactionPostedDate")
-#                         if not posted_date:
-#                             continue
-
-#                         posted_date = parse_date(posted_date)
-#                         # order_id = event.get("AmazonOrderId") or event.get("OrderId")
-#                         order_id = event.get("AmazonOrderId") or event.get("OrderId") or None
-
-                       
-#                         # =========================
-#                         # ✅ RETURN / REPLACEMENT LOGIC (ADD HERE)
-#                         # =========================
-
-#                         # Refund → Returned
-#                         if event_type == "RefundEvent":
-#                             for item in event.get("ShipmentItemAdjustmentList", []):
-#                                 sku = item.get("SellerSKU")
-#                                 item_id = item.get("OrderAdjustmentItemId")
-#                                 qty = int(item.get("QuantityShipped", 0))
-
-#                                 if sku and order_id:
-#                                     OrderItem.objects.filter(
-#                                         seller_sku=sku,
-#                                         order__amazon_order_id=order_id,
-#                                         order_item_id=item_id,
-#                                     ).update(
-#                                         quantity_returned=F('quantity_returned') + qty
-#                                     )
-
-#                         # Replacement → Replaced
-#                         if event_type == "ShipmentEvent":
-#                             if event.get("ShipmentType") == "Replacement":
-#                                 for item in event.get("ShipmentItemList", []):
-#                                     sku = item.get("SellerSKU")
-#                                     qty = int(item.get("QuantityShipped", 0))
-
-#                                     if sku and order_id:
-#                                         OrderItem.objects.filter(
-#                                             seller_sku=sku,
-#                                             order__amazon_order_id=order_id
-#                                         ).update(
-#                                             quantity_replaced=F('quantity_replaced') + qty
-#                                         )             
-
-#                         principal = tax = shipping = commission = fulfillment = other = Decimal("0")
-#                         currency = event.get("CurrencyCode")
-#                         total_qty = 0
-
-
-#                         total_qty = 0
-
-#                         # AFTER process() calls
-#                         if "FeeList" in event:
-#                             for fee in event.get("FeeList", []):
-#                                 amt = Decimal(str(fee.get("FeeAmount", {}).get("CurrencyAmount", 0)))
-#                                 ftype = fee.get("FeeType")
-
-#                                 currency = currency or fee.get("FeeAmount", {}).get("CurrencyCode")
-
-#                                 if ftype == "Commission":
-#                                     commission += amt
-#                                 elif "Fulfillment" in str(ftype):
-#                                     fulfillment += amt
-#                                 else:
-#                                     other += amt
-
-#                         def process(items, charge_key, fee_key):
-#                             nonlocal principal, tax, shipping, commission, fulfillment, other, currency, total_qty
-
-#                             for item in items:
-#                                 qty = (
-#                                     item.get("QuantityShipped")
-#                                     or item.get("QuantityOrdered")
-#                                     or item.get("Quantity")
-#                                     or 0
-#                                 )
-#                                 total_qty += int(qty)
-
-#                                 for charge in item.get(charge_key, []):
-#                                     amt = Decimal(str(charge.get("ChargeAmount", {}).get("CurrencyAmount", 0)))
-#                                     ctype = charge.get("ChargeType")
-
-#                                     currency = currency or charge.get("ChargeAmount", {}).get("CurrencyCode")
-
-#                                     if ctype == "Principal":
-#                                         principal += amt
-#                                     elif ctype == "Tax":
-#                                         tax += amt
-#                                     elif "Shipping" in str(ctype):
-#                                         shipping += amt
-#                                     else:
-#                                         other += amt
-
-#                                 for fee in item.get(fee_key, []):
-#                                     amt = Decimal(str(fee.get("FeeAmount", {}).get("CurrencyAmount", 0)))
-#                                     ftype = fee.get("FeeType")
-
-#                                     currency = currency or fee.get("FeeAmount", {}).get("CurrencyCode")
-
-#                                     if ftype == "Commission":
-#                                         commission += amt
-#                                     elif "Fulfillment" in str(ftype):
-#                                         fulfillment += amt
-#                                     else:
-#                                         other += amt
-                                        
-
-#                         if "ShipmentItemList" in event:
-#                             process(event["ShipmentItemList"], "ItemChargeList", "ItemFeeList")
-
-#                         if "ShipmentItemAdjustmentList" in event:
-#                             process(event["ShipmentItemAdjustmentList"], "ItemChargeAdjustmentList", "ItemFeeAdjustmentList")
-
-                   
-#                         # total_amount = principal + tax + shipping - commission - fulfillment + other
-#                         total_amount = principal + tax + shipping + commission + fulfillment + other  #now fix 28ap
-
-#                         event_group = classify_event(event_type)
-
-#                         objects_to_create.append(
-#                             FinancialEvent(
-#                                 user=user,
-#                                 amazon_account=account,
-#                                 amazon_order_id=order_id,
-#                                 event_type=event_type,
-#                                 posted_date=posted_date,
-#                                 principal=principal,
-#                                 tax=tax,
-#                                 shipping_fee=shipping,
-#                                 commission_fee=commission,
-#                                 fulfillment_fee=fulfillment,
-#                                 other_fee=other,
-#                                 total_amount=total_amount,
-#                                 currency_code=currency or "INR",
-#                                 raw_data=event,
-#                                 unique_hash=unique_hash,
-#                                 event_group =event_group,
-#                                 quantity=total_qty,
-                                
-#                             )
-#                         )
-
-#                 created = FinancialEvent.objects.bulk_create(
-#                     objects_to_create,
-#                     ignore_conflicts=True
-#                 )
-
-#                 account_saved += len(created)
-
-#                 next_token = payload.get("NextToken")
-#                 if next_token:
-#                     kwargs = {"NextToken": next_token}
-#                 else:
-#                     break
-#             total_saved += account_saved
-#             sync_details.append({
-#                 "seller_id": account.seller_central_id,
-#                 "status": "success",
-#                 "synced_count": account_saved
-#             })
-
-#         return JsonResponse({
-#             "status": True,
-#             "message": "Financial events synced successfully",
-#             "total_synced": total_saved,
-#             "details": sync_details
-#         })
-
-#     except Exception as e:
-#         import traceback
-#         return JsonResponse({
-#             "status": False,
-#             "error": str(e),
-#             "trace": traceback.format_exc()
-#         }, status=500)
-
-
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def sync_finances(request):
@@ -1177,46 +945,6 @@ def sync_finances(request):
                         currency = event.get("CurrencyCode")
                         total_qty = 0
 
-
-                        # def process(items, charge_key, fee_key):
-                        #     nonlocal principal, tax, shipping, commission, fulfillment, other, currency, total_qty
-
-                        #     for item in items:
-                        #         qty = (
-                        #             item.get("QuantityShipped")
-                        #             or item.get("QuantityOrdered")
-                        #             or item.get("Quantity")
-                        #             or 0
-                        #         )
-                        #         total_qty += int(qty)
-
-                        #         for charge in item.get(charge_key, []):
-                        #             amt = Decimal(str(charge.get("ChargeAmount", {}).get("CurrencyAmount", 0)))
-                        #             ctype = charge.get("ChargeType")
-
-                        #             currency = currency or charge.get("ChargeAmount", {}).get("CurrencyCode")
-
-                        #             if ctype == "Principal":
-                        #                 principal += amt
-                        #             elif ctype == "Tax":
-                        #                 tax += amt
-                        #             elif "Shipping" in str(ctype):
-                        #                 shipping += amt
-                        #             else:
-                        #                 other += amt
-
-                        #         for fee in item.get(fee_key, []):
-                        #             amt = Decimal(str(fee.get("FeeAmount", {}).get("CurrencyAmount", 0)))
-                        #             ftype = fee.get("FeeType")
-
-                        #             currency = currency or fee.get("FeeAmount", {}).get("CurrencyCode")
-
-                        #             if ftype == "Commission":
-                        #                 commission += amt
-                        #             elif "Fulfillment" in str(ftype):
-                        #                 fulfillment += amt
-                        #             else:
-                        #                 other += amt
 
                         def process(items, charge_key, fee_key):
                             nonlocal principal, tax,shipping, shipping_income, shipping_expense
@@ -2535,20 +2263,6 @@ def get_full_dashboard(request):
             "ads": f"{round(-(rev * 0.05), 2)}"
         })
 
-    # ---------------- TOP ORDERS ----------------
-    # profitable_orders_qs = orders_qs.filter(total_amount__gt=0)
-    # losing_orders_qs = finances_qs.filter(total_amount__lt=0)
-
-    # profitable_summary = profitable_orders_qs.aggregate(
-    #     total_count=Count('id'),
-    #     total_amount=Sum('total_amount')
-    # )
-
-    # losing_summary = losing_orders_qs.aggregate(
-    #     total_count=Count('id'),
-    #     total_amount=Sum('total_amount')
-    # )
-
     
     # profit and losss asin
     from django.db.models import DecimalField, Value
@@ -2610,7 +2324,7 @@ def get_full_dashboard(request):
             "tacos": f"{round(tacos)}%"
         },
         "breakdown_table": {
-            "gross": {"qty": total_q, "amount": round(gross_sales, 2)}, 
+            "gross": {"qty": total_q, "amount": format_currency(gross_sales)}, 
             "cancelled": {"qty": -abs(cancelled_qs.count()), "amount": format_currency(cancelled_amount)},
             "cancelled(RTO)": {"qty": -abs(rto_qty), "amount": format_currency(rto_amount)},
             "returned": {"qty": -abs(returns_qty), "amount": format_currency(returns_amount)},
@@ -3915,13 +3629,14 @@ def amazon_profitability_details(request):
             title=Max('title'),
             image_url=Max('image_url'),
             grossqty=Sum('quantity_ordered'),
-            grosssales=Sum('item_price'),
+            # grosssales=Sum('item_price'),
             shipping_income=Sum('shipping_income'),
             shipping_price=Sum('shipping_price'),
             discount=Sum('discount'),
             promotion_discount=Sum('promotion_discount'),
             avg_cost=Avg('item_price'),
-            total_cost=Sum(F('item_price') * F('quantity_ordered'))
+            total_cost=Sum(F('item_price') * F('quantity_ordered')),
+            grosssales=Sum(F('item_price') * F('quantity_ordered'))
         )
     )
 
@@ -3984,6 +3699,13 @@ def amazon_profitability_details(request):
     total_gst = 0
     total_tcs = 0
 
+    sku_asin_map = {
+        normalize_sku(k): v
+        for k, v in OrderItem.objects
+            .filter(order_filter)
+            .values_list('seller_sku', 'asin')
+    }
+
     for row in items:
         asin = row['asin']
 
@@ -3997,7 +3719,8 @@ def amazon_profitability_details(request):
         refund = rto = ads = mpfees = shipping_fee = 0
         return_units = 0
         gst = 0
-        tcs_total = 0      
+        tcs_total = 0  
+        t_new_charge = 0    
 
         for o in orders:
             oid = o['order__amazon_order_id']
@@ -4026,18 +3749,17 @@ def amazon_profitability_details(request):
             raw_list = raw_data_map.get(oid, [])
             tcs = 0
 
-            for raw in raw_list:
-                if not isinstance(raw, dict):
-                    continue
-                try:
-                    for item in raw.get("ShipmentItemList", []):
-                        for charge in item.get("ItemChargeList", []):
-                            if charge.get("ChargeType") == "TCS-IGST":
-                                tcs += float(charge["ChargeAmount"]["CurrencyAmount"])
-                except Exception:
-                    pass
+            # ✅ USE SAME FUNCTION AS LIST API
+            
+            order_fee_map = extract_fees_and_tcs_per_asin(
+                raw_data_map.get(oid, []),
+                sku_asin_map=sku_asin_map
+            )
 
-            tcs_total += tcs
+            if asin in order_fee_map:
+                t_new_charge += order_fee_map[asin]["fee"]
+                tcs_total += order_fee_map[asin]["tcs"]
+
 
             if r < 0 or rto_amt < 0:
                 return_units += qty
@@ -4060,7 +3782,9 @@ def amazon_profitability_details(request):
 
         stdcost_missing_percentage = (missing_qty / gross_qty * 100) if gross_qty else 0
 
-        profit = net_sales - abs(mpfees) + shipping_final - stdcost + tcs_total
+        # profit = net_sales - abs(mpfees) + shipping_final - stdcost + tcs_total
+        # profit = net_sales - t_new_charge + shipping_final - stdcost + tcs_total
+        profit = net_sales + t_new_charge + shipping_final - stdcost + tcs_total
         profit_margin = (profit / net_sales * 100) if net_sales else 0
         tacos = (ads / gross_sales * 100) if gross_sales else 0
         ret_percent = (return_units / gross_qty * 100) if gross_qty else 0
@@ -4073,10 +3797,11 @@ def amazon_profitability_details(request):
             "channel1": "Amazon-India",
             "grossqty": gross_qty,
             "netqty": net_qty,
-            "grosssales": round(gross_sales, 2),
+            "grosssales": format_currency(gross_sales),
             "netsales": format_currency(net_sales),
             "ads": format_currency(ads),
             "mpfees": round(mpfees, 2),
+            "new_mpfees": format_currency(t_new_charge),
             "shippingfees": format_currency(shipping_final),
             "profit": format_currency(profit),
             "grossprofitper": round(profit_margin, 2),
@@ -4098,7 +3823,7 @@ def amazon_profitability_details(request):
         total_net_sales += net_sales
         total_profit += profit
         total_ads += ads
-        total_mpfees += mpfees
+        total_mpfees += t_new_charge
         total_qty += net_qty
         total_returns += return_units
         total_shipping += shipping_final
@@ -4132,6 +3857,7 @@ def amazon_profitability_details(request):
             "profit": format_currency(total_profit),
             "grossprofitper": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
             "mpfees": format_currency(total_mpfees),
+            "total_new_mpfees": format_currency(total_mpfees),
             "shippingfees": format_currency(total_shipping),
             "tacos": (total_ads / total_sales * 100) if total_sales else 0,
             "stdcost": format_currency(total_stdcost),
@@ -4142,6 +3868,7 @@ def amazon_profitability_details(request):
     })
 
 
+# working fine till 5 may 
 # @api_view(['POST'])
 # @permission_classes([IsAuthenticated])
 # def sku_profit_report(request):
@@ -4149,7 +3876,7 @@ def amazon_profitability_details(request):
 #     user = request.user
 #     data = request.data
 
-#     # ---------------- FIX: GET ASIN FROM BOTH PLACES ----------------
+#     # ---------------- GET ASIN ----------------
 #     filters = data.get("filters", {})
 #     asin = data.get("parentProductId") or filters.get("parentProductId")
 
@@ -4177,24 +3904,17 @@ def amazon_profitability_details(request):
 #     except Exception:
 #         pass
 
-#     # ---------------- BASE FILTER ----------------
+#     # ---------------- FILTER ----------------
 #     order_filter = Q(order__user=user, asin=asin)
 
-#     # ---------------- CHANNEL FILTER ----------------
-#     CHANNEL_MAP = {
-#         "Amazon-India": "A21TJRUUN4KGV",
-#         # add more if needed
-#     }
+#     CHANNEL_MAP = {"Amazon-India": "A21TJRUUN4KGV"}
 
 #     channels = filters.get("channel", {}).get("IN", [])
 #     if channels:
-#         marketplace_ids = [
-#             CHANNEL_MAP[ch] for ch in channels if ch in CHANNEL_MAP
-#         ]
+#         marketplace_ids = [CHANNEL_MAP[ch] for ch in channels if ch in CHANNEL_MAP]
 #         if marketplace_ids:
 #             order_filter &= Q(order__marketplace_id__in=marketplace_ids)
 
-#     # ---------------- DATE APPLY ----------------
 #     if from_date:
 #         order_filter &= Q(order__purchase_date__gte=from_date)
 #     if to_date:
@@ -4204,14 +3924,14 @@ def amazon_profitability_details(request):
 #     items = (
 #         OrderItem.objects
 #         .filter(order_filter)
-#         .values('order__amazon_order_id', 'order__purchase_date')   # ✅ FIXED
+#         .values('order__amazon_order_id', 'order__purchase_date')
 #         .annotate(
-#             title=Max('seller_sku'),
+#             title=Max('title'),
 #             image=Max('image_url'),
-#             qty=Sum('quantity_ordered'),
+
 #             grossqty=Sum('quantity_ordered'),
-#             netquantity = Sum('quantity_shipped'),
-#             sales=Sum('item_price'),
+#             grosssales=Sum('item_price'),
+
 #             shipping_income=Sum('shipping_price'),
 #             total_cost=Sum(F('item_price') * F('quantity_ordered'))
 #         )
@@ -4232,9 +3952,11 @@ def amazon_profitability_details(request):
 #         .annotate(
 #             refund=Sum('total_amount', filter=Q(event_group="REFUND")),
 #             ads=Sum('total_amount', filter=Q(event_type__icontains='Ad')),
+
 #             commission=Sum('commission_fee'),
 #             fulfillment=Sum('fulfillment_fee'),
 #             other_fee=Sum('other_fee'),
+
 #             shipping_fee=Sum('shipping_fee'),
 #             gst=Sum('tax')
 #         )
@@ -4260,18 +3982,19 @@ def amazon_profitability_details(request):
 #     total_sales = total_profit = total_qty = 0
 #     total_ads = total_mpfees = total_shipping = 0
 #     total_gst = total_tcs = total_cost = 0
-#     total_net_sales = 0   # ✅ NEW (for correct margin)
-#     total_netquantity =0
+#     total_net_sales = 0
+#     total_returns = 0
+#     total_ret_percent =0
+#     total_new_charge = 0
 
 #     for row in items:
 
 #         oid = row['order__amazon_order_id']
 
-#         qty = int(row['qty'] or 0)
 #         gross_qty = int(row['grossqty'] or 0)
-#         netquantity = int(row['netquantity'] or 0)
-#         sales = float(row['sales'] or 0)
+#         gross_sales = float(row['grosssales'] or 0)   
 #         shipping_income = float(row['shipping_income'] or 0)
+#         # shipping_price = float(row['shipping_price'] or 0)
 #         cost = float(row['total_cost'] or 0)
 
 #         f = finance_map.get(oid, {})
@@ -4284,7 +4007,7 @@ def amazon_profitability_details(request):
 #             float(f.get('fulfillment') or 0) +
 #             float(f.get('other_fee') or 0)
 #         )
-#         net_qty = max(gross_qty - return_units, 0)
+
 #         shipping_fee = float(f.get('shipping_fee') or 0)
 #         gst = float(f.get('gst') or 0)
 
@@ -4298,57 +4021,109 @@ def amazon_profitability_details(request):
 #                     for charge in item.get("ItemChargeList", []):
 #                         if charge.get("ChargeType") == "TCS-IGST":
 #                             tcs += float(charge["ChargeAmount"]["CurrencyAmount"])
+#             except:
+#                 pass
+
+
+   
+#         # ---------------- NEW FEES (SUM OF ALL FEETYPES) ----------------
+#         new_charge = 0
+
+#         for raw in raw_data_map.get(oid, []):
+#             if not isinstance(raw, dict):
+#                 continue
+
+#             try:
+#                 # ✅ Handle BOTH types
+#                 item_lists = []
+#                 item_lists.extend(raw.get("ShipmentItemList", []))
+#                 item_lists.extend(raw.get("ShipmentItemAdjustmentList", []))
+
+#                 for item in item_lists:
+
+#                     fee_lists = []
+#                     fee_lists.extend(item.get("ItemFeeList", []))               # ✅ NORMAL
+#                     fee_lists.extend(item.get("ItemFeeAdjustmentList", []))     # ✅ REFUND
+
+#                     for fee in fee_lists:
+#                         amount = float(
+#                             fee.get("FeeAmount", {}).get("CurrencyAmount", 0) or 0
+#                         )
+#                         new_charge += amount
+
 #             except Exception:
 #                 pass
 
-#         # ---------------- CALCULATIONS ----------------
-#         net_sales = sales + refund
-#         shipping_final = shipping_income - abs(shipping_fee)
+#         # ---------------- RETURNS ----------------
+#         return_units = abs(refund) / (gross_sales / gross_qty) if gross_qty and gross_sales else 0
+#         return_units = int(round(return_units))
 
-#         profit = net_sales - abs(mpfees) + shipping_final - cost + tcs
+#         net_qty = max(gross_qty - return_units, 0)
+
+#         # ---------------- CALCULATIONS ----------------
+#         net_sales = gross_sales + refund
+#         shipping_final = shipping_income  
+
+#         # profit = net_sales - abs(mpfees) + shipping_final - cost + tcs
+#         # profit = net_sales - new_charge + shipping_final - cost + tcs
+#         profit = net_sales + new_charge + shipping_final - cost + tcs
+
 #         profit_margin = (profit / net_sales * 100) if net_sales else 0
+#         tacos = (ads / gross_sales * 100) if gross_sales else 0
+#         drr = tacos
+#         ret_percent = (return_units / gross_qty * 100) if gross_qty else 0
 
 #         results.append({
 #             "order_id": oid,
 #             "date": row['order__purchase_date'],
-#             # "name": row['title'],
 #             "name": row['title'],
-#             "channel": "Amazon-India",
-#             "channel1": "Amazon-India",
-#             "redirecturl": f"https://www.amazon.in/dp/{asin}" if asin else None,
-
 #             "image": row['image'],
 
-#             "qty": qty,
-#             "net_qty": net_qty,
-#             "sales": round(sales, 2),
-#             "netsales": round(net_sales, 2),
+#             "channel": "Amazon-India",
+#             "channel1": "Amazon-India",
+#             "redirecturl": f"https://www.amazon.in/dp/{asin}",
 
-#             "ads": round(ads, 2),
+#             "grossqty": gross_qty,
+#             "qty": net_qty,
+
+#             "grosssales": round(gross_sales, 2),
+#             "netsales": format_currency(net_sales),
+
+#             "ads": format_currency(ads),
 #             "mpfees": round(mpfees, 2),
-#             "shippingfees": round(shipping_final, 2),
+#             "new_mpfees": format_currency(new_charge),
+#             "shippingfees": format_currency(shipping_final),
 
-#             "cost": round(cost, 2),
+#             "profit": format_currency(profit),
+#             "grossprofitper": format_currency(profit_margin),
 
-#             "profit": round(profit, 2),
-#             "profitmargin": round(profit_margin, 2),
+#             "returnqty": return_units,
+#             "retpercent": round(ret_percent, 2),
 
-#             "gst": round(gst, 2),
-#             "tcs": round(tcs, 2),
+#             "tacos": round(tacos, 2),
+#             "drr": round(drr, 2),
+
+#             "stdcost": format_currency(cost),
+
+#             "gst": format_currency(tcs),
+#             "tcs": format_currency(tcs),
 #         })
 
 #         # ---------------- TOTALS ----------------
-#         total_sales += sales
-#         total_net_sales += net_sales   # ✅ important
+#         total_sales += gross_sales
+#         total_net_sales += net_sales
 #         total_profit += profit
-#         total_qty += qty
-#         total_netquantity += netquantity
+#         total_qty += net_qty
+#         total_returns += return_units
 #         total_ads += ads
 #         total_mpfees += mpfees
 #         total_shipping += shipping_final
 #         total_gst += gst
 #         total_tcs += tcs
 #         total_cost += cost
+#         total_ret_percent += ret_percent
+#         total_new_charge += new_charge
+        
 
 #     # ---------------- RESPONSE ----------------
 #     return Response({
@@ -4361,23 +4136,25 @@ def amazon_profitability_details(request):
 #         },
 #         "totals": {
 #             "grosssales": round(total_sales, 2),
-#             "netsales": round(total_net_sales, 2),   # ✅ NEW
-#             "qty": total_qty,
-#             "total_netquantity":total_netquantity,
-#             "profit": round(total_profit, 2),
+#             "netsales": format_currency(total_net_sales),
+#             "total_netquantity": total_qty,
+#             "profit": format_currency(total_profit),
+#             "total_returns":total_returns,
+#             "total_ret_percent":round(total_ret_percent, 2),
 
-#             # ✅ FIXED (use net sales)
-#             "profitmargin": (total_profit / total_net_sales * 100) if total_net_sales else 0,
+#             "totalprofitmargin": (total_profit / total_net_sales * 100) if total_net_sales else 0,
 
-#             "ads": round(total_ads, 2),
+#             "ads": format_currency(total_ads),
 #             "mpfees": round(total_mpfees, 2),
-#             "shippingfees": round(total_shipping, 2),
-#             "gst": round(total_gst, 2),
-#             "tcs": round(total_tcs, 2),
-#             "cost": round(total_cost, 2)
+#             "total_new_mpfees": format_currency(total_new_charge),
+#             "shipping": format_currency(total_shipping),
+#             "gst": format_currency(total_tcs),
+#             "tcs": format_currency(total_tcs),
+#             "cost": format_currency(total_cost)
 #         },
 #         "response": results[page_no * page_size:(page_no + 1) * page_size]
 #     })
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -4400,22 +4177,52 @@ def sku_profit_report(request):
     page_no = int(pagination.get("pageNo", 0))
     page_size = int(pagination.get("pageSize", 25))
 
+
+   
     # ---------------- DATE FILTER ----------------
-    from_date = to_date = None
+    from_date = None
+    to_date = None
+
     try:
         if filters.get("fromDate"):
             from_date = timezone.make_aware(
                 datetime.strptime(filters["fromDate"], "%Y-%m-%d")
             )
-        if filters.get("toDate"):
+
+        if filters.get("endDate"):
             to_date = timezone.make_aware(
-                datetime.strptime(filters["toDate"], "%Y-%m-%d")
+                datetime.strptime(filters["endDate"], "%Y-%m-%d")
             ) + timedelta(days=1)
-    except Exception:
-        pass
+
+        # ✅ FIX: handle single-day filter
+        if from_date and not to_date:
+            to_date = from_date + timedelta(days=1)
+
+    except Exception as e:
+        print("Date error:", e)
+    valid_orders = (
+        OrderItem.objects
+        .filter(order__user=user)
+    )
+
+    order_filter = Q(order__user=user, asin=asin)
+
+    if from_date:
+        order_filter &= Q(order__purchase_date__gte=from_date)
+
+    if to_date:
+        order_filter &= Q(order__purchase_date__lt=to_date)   # ✅ IMPORTANT
+
+    valid_order_ids = set(
+        valid_orders.values_list('order__amazon_order_id', flat=True)
+    )
 
     # ---------------- FILTER ----------------
-    order_filter = Q(order__user=user, asin=asin)
+    # order_filter = Q(order__user=user, asin=asin)
+    # order_filter = Q(order__user=user, asin=asin)
+
+    if valid_order_ids:
+        order_filter &= Q(order__amazon_order_id__in=valid_order_ids)
 
     CHANNEL_MAP = {"Amazon-India": "A21TJRUUN4KGV"}
 
@@ -4449,7 +4256,11 @@ def sku_profit_report(request):
     )
 
     # ---------------- FINANCE ----------------
-    finance_qs = FinancialEvent.objects.filter(user=user)
+    # finance_qs = FinancialEvent.objects.filter(user=user)
+    finance_qs = FinancialEvent.objects.filter(
+        user=user,
+        amazon_order_id__in=valid_order_ids
+    )
 
     if from_date:
         finance_qs = finance_qs.filter(posted_date__gte=from_date)
@@ -4477,7 +4288,7 @@ def sku_profit_report(request):
     # ---------------- RAW DATA (TCS) ----------------
     raw_map = (
         FinancialEvent.objects
-        .filter(user=user)
+        .filter(user=user, amazon_order_id__in=valid_order_ids)
         .exclude(raw_data=None)
         .values('amazon_order_id', 'raw_data')
     )
@@ -4495,6 +4306,7 @@ def sku_profit_report(request):
     total_net_sales = 0
     total_returns = 0
     total_ret_percent =0
+    total_new_charge = 0
 
     for row in items:
 
@@ -4533,6 +4345,36 @@ def sku_profit_report(request):
             except:
                 pass
 
+
+   
+        # ---------------- NEW FEES (SUM OF ALL FEETYPES) ----------------
+        new_charge = 0
+
+        for raw in raw_data_map.get(oid, []):
+            if not isinstance(raw, dict):
+                continue
+
+            try:
+                # ✅ Handle BOTH types
+                item_lists = []
+                item_lists.extend(raw.get("ShipmentItemList", []))
+                item_lists.extend(raw.get("ShipmentItemAdjustmentList", []))
+
+                for item in item_lists:
+
+                    fee_lists = []
+                    fee_lists.extend(item.get("ItemFeeList", []))               # ✅ NORMAL
+                    fee_lists.extend(item.get("ItemFeeAdjustmentList", []))     # ✅ REFUND
+
+                    for fee in fee_lists:
+                        amount = float(
+                            fee.get("FeeAmount", {}).get("CurrencyAmount", 0) or 0
+                        )
+                        new_charge += amount
+
+            except Exception:
+                pass
+
         # ---------------- RETURNS ----------------
         return_units = abs(refund) / (gross_sales / gross_qty) if gross_qty and gross_sales else 0
         return_units = int(round(return_units))
@@ -4541,9 +4383,11 @@ def sku_profit_report(request):
 
         # ---------------- CALCULATIONS ----------------
         net_sales = gross_sales + refund
-        shipping_final = shipping_income 
+        shipping_final = shipping_income  
 
-        profit = net_sales - abs(mpfees) + shipping_final - cost + tcs
+        # profit = net_sales - abs(mpfees) + shipping_final - cost + tcs
+        # profit = net_sales - new_charge + shipping_final - cost + tcs
+        profit = net_sales + new_charge + shipping_final - cost + tcs
 
         profit_margin = (profit / net_sales * 100) if net_sales else 0
         tacos = (ads / gross_sales * 100) if gross_sales else 0
@@ -4568,6 +4412,7 @@ def sku_profit_report(request):
 
             "ads": format_currency(ads),
             "mpfees": round(mpfees, 2),
+            "new_mpfees": format_currency(new_charge),
             "shippingfees": format_currency(shipping_final),
 
             "profit": format_currency(profit),
@@ -4598,6 +4443,7 @@ def sku_profit_report(request):
         total_tcs += tcs
         total_cost += cost
         total_ret_percent += ret_percent
+        total_new_charge += new_charge
         
 
     # ---------------- RESPONSE ----------------
@@ -4621,6 +4467,7 @@ def sku_profit_report(request):
 
             "ads": format_currency(total_ads),
             "mpfees": round(total_mpfees, 2),
+            "total_new_mpfees": format_currency(total_new_charge),
             "shipping": format_currency(total_shipping),
             "gst": format_currency(total_tcs),
             "tcs": format_currency(total_tcs),
