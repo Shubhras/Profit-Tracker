@@ -33,6 +33,9 @@ const {
   userinfoBegin,
   userinfoSuccess,
   userinfoErr,
+  adduserBegin,
+  adduserSuccess,
+  adduserErr,
 } = actions;
 
 const mockService = async (payload) => {
@@ -194,6 +197,24 @@ export const getUserInfo = (payload) => {
       }
     } catch (err) {
       dispatch(userinfoErr(err.message));
+    }
+  };
+};
+
+export const addUser = (payload) => {
+  return async (dispatch) => {
+    dispatch(adduserBegin());
+
+    try {
+      const response = await mockService(payload);
+
+      if (response.data?.status === 'success' || response.data?.status === true) {
+        dispatch(adduserSuccess(response.data));
+      } else {
+        dispatch(adduserErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(adduserErr(err.message));
     }
   };
 };

@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Card, Table } from 'antd';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { getOutstandingPayments } from '../../redux/reconcilePayment/actionCreator';
+import { exportProfitData } from '../../redux/dashboard/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function OsPayment() {
@@ -28,6 +29,56 @@ export default function OsPayment() {
         },
       }),
     );
+  }, [dispatch, dateRange, globalChannel]);
+
+  useEffect(() => {
+    const handleHeaderAction = (event) => {
+      if (event.detail === 'payment') {
+        const payload = {
+          reportType: 'payment',
+
+          params: {
+            filters: {
+              channel: {
+                IN: globalChannel,
+              },
+              fromDate: dateRange?.fromDate || null,
+              toDate: dateRange?.toDate || null,
+            },
+          },
+
+          email: 'bhavnaaprostore@gmail.com',
+        };
+
+        dispatch(exportProfitData(payload));
+      }
+
+      if (event.detail === 'cashback') {
+        const payload = {
+          reportType: 'cashback',
+
+          params: {
+            filters: {
+              channel: {
+                IN: globalChannel,
+              },
+              fromDate: dateRange?.fromDate || null,
+              toDate: dateRange?.toDate || null,
+            },
+          },
+
+          email: 'bhavnaaprostore@gmail.com',
+        };
+
+        dispatch(exportProfitData(payload));
+      }
+    };
+
+    window.addEventListener('headerAction', handleHeaderAction);
+
+    return () => {
+      window.removeEventListener('headerAction', handleHeaderAction);
+    };
   }, [dispatch, dateRange, globalChannel]);
   const totalChannel = apiData.find((item) => item.channel === 'zzzTotal');
   const otherChannels = apiData.filter((item) => item.channel !== 'zzzTotal');

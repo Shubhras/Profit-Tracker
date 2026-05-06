@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Table, Button, Modal, Form, Input, Select, Spin, Empty } from 'antd';
+import { addUser } from '../../redux/Settings/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 const { Option } = Select;
@@ -12,9 +14,11 @@ export default function UserManagement() {
   ];
 
   const [users, setUsers] = useState([]); // table data
-  const [loading, setLoading] = useState(false);
+  const { adduserLoading } = useSelector((state) => state.settings);
+  // const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [form] = Form.useForm();
+  const dispatch = useDispatch();
 
   /* ================= TABLE ================= */
 
@@ -56,32 +60,37 @@ export default function UserManagement() {
     },
   ];
 
-  /* ================= CREATE USER ================= */
-
   const handleCreateUser = async () => {
     try {
       const values = await form.validateFields();
-      console.log('Create User Payload 👉', values);
 
-      setLoading(true);
+      const payload = {
+        name: values.name,
+        email: values.email,
+        mobile: values.mobile,
+        password: values.password,
+        role: values.role,
+      };
 
-      setTimeout(() => {
-        setUsers((prev) => [
-          ...prev,
-          {
-            key: Date.now(),
-            name: values.name,
-            email: values.email,
-            mobile: values.mobile,
-            status: 'Active',
-            role: values.role,
-          },
-        ]);
+      console.log('CREATE USER PAYLOAD =>', payload);
 
-        setLoading(false);
-        setOpen(false);
-        form.resetFields();
-      }, 1000);
+      dispatch(addUser(payload));
+
+      setUsers((prev) => [
+        ...prev,
+        {
+          key: Date.now(),
+          name: values.name,
+          email: values.email,
+          mobile: values.mobile,
+          status: 'Active',
+          role: values.role,
+        },
+      ]);
+
+      setOpen(false);
+
+      form.resetFields();
     } catch (error) {
       console.log('Validation Failed', error);
     }
@@ -105,7 +114,7 @@ export default function UserManagement() {
           </div>
 
           {/* TABLE */}
-          <Spin spinning={loading}>
+          <Spin spinning={adduserLoading}>
             <Table
               columns={columns}
               dataSource={users}
@@ -157,7 +166,7 @@ export default function UserManagement() {
 
           <div className="flex justify-end gap-3 mt-4">
             <Button onClick={() => setOpen(false)}>Cancel</Button>
-            <Button type="primary" loading={loading} onClick={handleCreateUser}>
+            <Button type="primary" loading={adduserLoading} onClick={handleCreateUser}>
               Create User
             </Button>
           </div>

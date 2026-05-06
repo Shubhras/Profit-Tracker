@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Table, Card, Tooltip, Spin } from 'antd';
 import { getUnsettledOrders } from '../../redux/reconcilePayment/actionCreator';
+import { exportProfitData } from '../../redux/dashboard/actionCreator';
 import ajio from '../../assets/icons/ajio.png';
 import flipkart from '../../assets/icons/flipkart.svg';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function UnsettledOrder() {
   const dispatch = useDispatch();
+  const { dateRange, channel: globalChannel } = useSelector((state) => state.dashboard);
+
   const payload = {
     filters: {
       channel: {
@@ -28,6 +31,35 @@ export default function UnsettledOrder() {
     dispatch(getUnsettledOrders(payload));
   }, []);
 
+  useEffect(() => {
+    const handleHeaderAction = (event) => {
+      if (event.detail === 'export') {
+        const exportPayload = {
+          reportType: 'UnSettled',
+
+          params: {
+            filters: {
+              channel: {
+                IN: globalChannel,
+              },
+              fromDate: dateRange?.fromDate || null,
+              toDate: dateRange?.toDate || null,
+            },
+          },
+
+          email: 'bhavnaaprostore@gmail.com',
+        };
+
+        dispatch(exportProfitData(exportPayload));
+      }
+    };
+
+    window.addEventListener('headerAction', handleHeaderAction);
+
+    return () => {
+      window.removeEventListener('headerAction', handleHeaderAction);
+    };
+  }, [dispatch]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

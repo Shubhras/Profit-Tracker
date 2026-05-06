@@ -7,7 +7,7 @@ import ProfitFilterBar from './component/ProfitFilterBar';
 import ProfitModal from './component/ProfitModal';
 import amazon from '../../assets/icons/amazon.svg';
 // import flipkart from "../../assets/icons/flipkart.png";
-import { getProfitDetails } from '../../redux/dashboard/actionCreator';
+import { getProfitDetails, getProfitModalApi } from '../../redux/dashboard/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function ProfitDetailsView() {
@@ -106,9 +106,9 @@ export default function ProfitDetailsView() {
         asin: item.asin,
         redirecturl: item.redirecturl,
         grossQty: item.grossqty || 0,
-        netQty: Number(item.netqty) || 0,
-        returnqty: Number(item.returnqty) || 0,
-        returnPercent: Number(item.retpercent) || 0,
+        netQty: item.netqty || 0,
+        returnqty: item.returnqty || 0,
+        returnPercent: item.retpercent || 0,
 
         netsales: item.netsales || 0,
         mpfees: item.new_mpfees || 0,
@@ -253,7 +253,9 @@ export default function ProfitDetailsView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
+          }
         >
           {v}
         </button>
@@ -268,7 +270,9 @@ export default function ProfitDetailsView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'returns' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'returns', modalLabel: 'ASIN', modalValue: record.asin })
+          }
         >
           {v}
         </button>
@@ -283,7 +287,9 @@ export default function ProfitDetailsView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'returns' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'returns', modalLabel: 'ASIN', modalValue: record.asin })
+          }
         >
           {v}%
         </button>
@@ -298,7 +304,9 @@ export default function ProfitDetailsView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
+          }
         >
           {v}
         </button>
@@ -313,7 +321,9 @@ export default function ProfitDetailsView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
+          }
         >
           {v}
         </button>
@@ -340,7 +350,9 @@ export default function ProfitDetailsView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
+          }
         >
           {v}
         </button>
@@ -355,7 +367,9 @@ export default function ProfitDetailsView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
+          }
         >
           {v}
         </button>
@@ -370,7 +384,9 @@ export default function ProfitDetailsView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
+          }
         >
           {v}
         </button>
@@ -385,7 +401,9 @@ export default function ProfitDetailsView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
+          }
         >
           {v}
         </button>
@@ -416,7 +434,9 @@ export default function ProfitDetailsView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
+          }
         >
           {v}
         </button>
@@ -427,10 +447,32 @@ export default function ProfitDetailsView() {
       dataIndex: 'profitPercent',
       align: 'center',
       sorter: (a, b) => a.profitPercent - b.profitPercent,
-      render: (v) => {
+      render: (v, record) => {
         const value = Math.round(v || 0);
 
-        return <span style={{ color: value < 0 ? 'red' : 'green' }}>{value}%</span>;
+        return (
+          <button
+            type="button"
+            className="cursor-pointer bg-transparent border-none"
+            onClick={() =>
+              setDetailModal({
+                open: true,
+                record,
+                type: 'qty',
+                modalLabel: 'ASIN',
+                modalValue: record.asin,
+              })
+            }
+          >
+            <span
+              style={{
+                color: value < 0 ? 'red' : 'green',
+              }}
+            >
+              {value}%
+            </span>
+          </button>
+        );
       },
     },
     {
@@ -438,70 +480,240 @@ export default function ProfitDetailsView() {
       dataIndex: 'netmrp',
       align: 'center',
       sorter: (a, b) => a.netmrp - b.netmrp,
-      render: (v) => v ?? 0,
+      // render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({
+              open: true,
+              record,
+              type: 'qty',
+              modalLabel: 'ASIN',
+              modalValue: record.asin,
+            })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'MRP Net Discount%',
       dataIndex: 'mrpNetDiscount',
       align: 'center',
       sorter: (a, b) => a.mrpNetDiscount - b.mrpNetDiscount,
-      render: (v) => v ?? 0,
+      // render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({
+              open: true,
+              record,
+              type: 'qty',
+              modalLabel: 'ASIN',
+              modalValue: record.asin,
+            })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'MRP Customer Discount%',
       dataIndex: 'mrpCustomerDiscount',
       align: 'center',
       sorter: (a, b) => a.mrpCustomerDiscount - b.mrpCustomerDiscount,
-      render: (v) => v ?? 0,
+      // render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({
+              open: true,
+              record,
+              type: 'qty',
+              modalLabel: 'ASIN',
+              modalValue: record.asin,
+            })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'Account Charges',
       dataIndex: 'accountCharges',
       align: 'center',
       sorter: (a, b) => a.accountCharges - b.accountCharges,
-      render: (v) => v ?? 0,
+      // render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({
+              open: true,
+              record,
+              type: 'qty',
+              modalLabel: 'ASIN',
+              modalValue: record.asin,
+            })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'Other Expenses',
       dataIndex: 'otherExpenses',
       align: 'center',
       sorter: (a, b) => a.otherExpenses - b.otherExpenses,
-      render: (v) => v ?? 0,
+      // render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({
+              open: true,
+              record,
+              type: 'qty',
+              modalLabel: 'ASIN',
+              modalValue: record.asin,
+            })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'TACOS',
       dataIndex: 'tacos',
       align: 'center',
       sorter: (a, b) => a.tacos - b.tacos,
-      render: (v) => v ?? 0,
+      // render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({
+              open: true,
+              record,
+              type: 'qty',
+              modalLabel: 'ASIN',
+              modalValue: record.asin,
+            })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'Gross Profit %',
       dataIndex: 'grossProfitPercent',
       align: 'center',
       sorter: (a, b) => a.grossProfitPercent - b.grossProfitPercent,
-      render: (v) => v ?? 0,
+      // render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({
+              open: true,
+              record,
+              type: 'qty',
+              modalLabel: 'ASIN',
+              modalValue: record.asin,
+            })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: '% of Sales',
       dataIndex: 'percentOfSales',
       align: 'center',
       sorter: (a, b) => a.percentOfSales - b.percentOfSales,
-      render: (v) => v ?? 0,
+      // render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({
+              open: true,
+              record,
+              type: 'qty',
+              modalLabel: 'ASIN',
+              modalValue: record.asin,
+            })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'DRR',
       dataIndex: 'drr',
       align: 'center',
       sorter: (a, b) => a.drr - b.drr,
-      render: (v) => v ?? 0,
+      // render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({
+              open: true,
+              record,
+              type: 'qty',
+              modalLabel: 'ASIN',
+              modalValue: record.asin,
+            })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'Last Order Date',
       dataIndex: 'lastOrderDate',
       align: 'center',
       sorter: (a, b) => a.lastOrderDate - b.lastOrderDate,
-      render: (v) => v || '-',
+      // render: (v) => v || '-',
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({
+              open: true,
+              record,
+              type: 'qty',
+              modalLabel: 'ASIN',
+              modalValue: record.asin,
+            })
+          }
+        >
+          {v ?? '-'}
+        </button>
+      ),
     },
 
     // {
@@ -527,7 +739,7 @@ export default function ProfitDetailsView() {
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
           <button
             type="button"
-            onClick={() => navigate(`../profitThirdtable/${record.asin}`)}
+            onClick={() => navigate(`../profitSecondtable/${record.asin}`)}
             style={{
               border: '1px solid #d9d9d9',
               background: 'rgb(202, 221, 254)',
@@ -538,7 +750,40 @@ export default function ProfitDetailsView() {
           </button>
           <button
             type="button"
-            onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+            // onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+            onClick={() => {
+              const payload = {
+                filters: {
+                  channel: { IN: globalChannel },
+                  fromDate: dateRange?.fromDate || null,
+                  toDate: dateRange?.endDate || null,
+                },
+                metric: {
+                  expense: 'withExpense',
+                  ads: 'withAds',
+                  account_charges: 'withAccountCharges',
+                  gst: 'withGst',
+                  payment: 'withEstimate',
+                  summarymetric: 'channel',
+                },
+                pagination: {
+                  pageNo: 0,
+                  pageSize: 25,
+                },
+                expand: 'channel',
+                expandValue: 'Amazon-India',
+                tab_name: 'summary',
+              };
+              dispatch(getProfitModalApi(payload));
+
+              setDetailModal({
+                open: true,
+                record,
+                type: 'qty',
+                modalLabel: 'ASIN',
+                modalValue: record.asin,
+              });
+            }}
             style={{
               border: '1px solid #ffc0cb',
               background: '#ffe4e9',
@@ -796,6 +1041,8 @@ export default function ProfitDetailsView() {
         open={detailModal.open}
         record={detailModal.record}
         type={detailModal.type}
+        modalLabel={detailModal.modalLabel}
+        modalValue={detailModal.modalValue}
         onClose={() => setDetailModal({ open: false, record: null, type: '' })}
       />
     </>

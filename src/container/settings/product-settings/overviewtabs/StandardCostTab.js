@@ -1,8 +1,36 @@
 import React from 'react';
 import { Table } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
+import { useDispatch } from 'react-redux';
+import { exportProfitData } from '../../../../redux/dashboard/actionCreator';
 
 export default function StandardCostTab() {
+  const dispatch = useDispatch();
+  const handleExport = () => {
+    dispatch(
+      exportProfitData({
+        reportType: 'Monthly Missing Export',
+
+        params: {
+          missingfield: 'costperunit',
+          missingtype: 'withSales',
+          exportType: 'channel,sku',
+          orgName: null,
+
+          filters: {
+            channel: {
+              IN: ['Amazon-India', 'Flipkart', 'Jiomart', 'Meesho', 'Myntra', 'Snapdeal'],
+            },
+
+            fromDate: '2026-04-30T18:30:00Z',
+            toDate: '2026-05-31T18:29:59Z',
+          },
+        },
+
+        email: 'bhavnaaprostore@gmail.com',
+      }),
+    );
+  };
   const dataSource = [
     { key: '1', month: 'Jan-26', qty: 87, stdCost: 4061 },
     { key: '2', month: 'Dec-25', qty: 23, stdCost: 6196 },
@@ -34,7 +62,7 @@ export default function StandardCostTab() {
       title: 'Export',
       key: 'export',
       align: 'center',
-      render: () => <DownloadOutlined className="text-blue-600 cursor-pointer" />,
+      render: () => <DownloadOutlined onClick={handleExport} className="text-blue-600 cursor-pointer" />,
     },
   ];
 
@@ -51,7 +79,7 @@ export default function StandardCostTab() {
             <span className="font-medium">Date, SKU vs Avg (StdCostExc)</span>
           </Table.Summary.Cell>
           <Table.Summary.Cell align="center">
-            <DownloadOutlined className="text-blue-600 cursor-pointer" />
+            <DownloadOutlined onClick={handleExport} className="text-blue-600 cursor-pointer" />
           </Table.Summary.Cell>
         </Table.Summary.Row>
       )}

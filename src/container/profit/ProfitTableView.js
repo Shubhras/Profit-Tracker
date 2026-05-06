@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import ProfitFilterBar from './component/ProfitFilterBar';
 import ProfitModal from './component/ProfitModal';
 import { PageHeader } from '../../components/page-headers/page-headers';
-import { getProfitData } from '../../redux/dashboard/actionCreator';
+import { getProfitData, exportProfitData, getProfitModalApi } from '../../redux/dashboard/actionCreator';
 import amazon from '../../assets/icons/amazon.svg';
 // import flipkartLogo from '../../assets/flipkart.png';
 
@@ -114,6 +114,62 @@ export default function ProfitTableView() {
     const payload = buildPayload();
     dispatch(getProfitData(payload));
   }, [dispatch, dateRange, search, globalChannel]);
+
+  useEffect(() => {
+    const handleHeaderAction = (event) => {
+      // ✅ EXPORT BUTTON
+      if (event.detail === 'export') {
+        const payload = {
+          reportType: 'MOMExport',
+
+          params: {
+            filters: {
+              channel: {
+                IN: globalChannel,
+              },
+              fromDate: dateRange?.fromDate || null,
+              toDate: dateRange?.endDate || null,
+            },
+
+            metric: getMetricFromFilters(),
+          },
+
+          email: 'bhavnaaprostore@gmail.com',
+        };
+
+        dispatch(exportProfitData(payload));
+      }
+
+      // ✅ LOWEST BUTTON
+      if (event.detail === 'lowest') {
+        const payload = {
+          reportType: 'MOMExportSkuBased',
+
+          params: {
+            filters: {
+              channel: {
+                IN: globalChannel,
+              },
+              fromDate: dateRange?.fromDate || null,
+              toDate: dateRange?.endDate || null,
+            },
+
+            metric: getMetricFromFilters(),
+          },
+
+          email: 'bhavnaaprostore@gmail.com',
+        };
+
+        dispatch(exportProfitData(payload));
+      }
+    };
+
+    window.addEventListener('headerAction', handleHeaderAction);
+
+    return () => {
+      window.removeEventListener('headerAction', handleHeaderAction);
+    };
+  }, [dispatch, dateRange, globalChannel, filters]);
 
   // console.log(data);
   const PageRoutes = [
@@ -657,7 +713,39 @@ export default function ProfitTableView() {
           </button>
           <button
             type="button"
-            onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+            onClick={() => {
+              const payload = {
+                filters: {
+                  channel: { IN: globalChannel },
+                  fromDate: dateRange?.fromDate || null,
+                  toDate: dateRange?.endDate || null,
+                },
+                metric: {
+                  expense: 'withExpense',
+                  ads: 'withAds',
+                  account_charges: 'withAccountCharges',
+                  gst: 'withGst',
+                  payment: 'withEstimate',
+                  summarymetric: 'channel',
+                },
+                pagination: {
+                  pageNo: 0,
+                  pageSize: 25,
+                },
+                expand: 'channel',
+                expandValue: 'Amazon-India',
+                tab_name: 'summary',
+              };
+              dispatch(getProfitModalApi(payload));
+
+              setDetailModal({
+                open: true,
+                record,
+                type: 'qty',
+                modalLabel: 'Channel',
+                modalValue: record.channel,
+              });
+            }}
             style={{
               border: '1px solid #ffc0cb',
               background: '#ffe4e9',
@@ -902,6 +990,8 @@ export default function ProfitTableView() {
         open={detailModal.open}
         record={detailModal.record}
         type={detailModal.type}
+        modalLabel={detailModal.modalLabel}
+        modalValue={detailModal.modalValue}
         onClose={() => setDetailModal({ open: false, record: null, type: '' })}
       />
     </>

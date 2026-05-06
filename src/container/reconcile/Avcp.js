@@ -14,6 +14,7 @@ import {
   CartesianGrid,
 } from 'recharts';
 import { getVcpReconciliation } from '../../redux/reconcilePayment/actionCreator';
+import { exportProfitData } from '../../redux/dashboard/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 const overdueData = [
@@ -123,6 +124,38 @@ export default function Avcp() {
   useEffect(() => {
     dispatch(getVcpReconciliation(payload));
   }, []);
+
+  useEffect(() => {
+    const handleHeaderAction = (e) => {
+      if (['export', 'oneline'].includes(e.detail)) {
+        dispatch(
+          exportProfitData({
+            params: {
+              filters: {
+                channel: {
+                  IN: ['AmazonVCP'],
+                },
+                fromDate: '2026-04-30T18:30:00Z',
+                toDate: '2026-05-31T18:29:59Z',
+                isdelayed_payments_enabled: false,
+                delayed_payment_days: 30,
+              },
+            },
+
+            reportType: e.detail === 'export' ? 'AmazonVCPReconciliation' : 'AmazonVCPReconciliationOneLine',
+
+            email: 'bhavnaaprostore@gmail.com',
+          }),
+        );
+      }
+    };
+
+    window.addEventListener('headerAction', handleHeaderAction);
+
+    return () => {
+      window.removeEventListener('headerAction', handleHeaderAction);
+    };
+  }, [dispatch]);
 
   useEffect(() => {
     setTimeout(() => setLoading(false), 800);
