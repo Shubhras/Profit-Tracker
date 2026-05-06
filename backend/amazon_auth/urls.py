@@ -1,5 +1,6 @@
 from django.urls import path
-from . import views
+from . import views 
+from .views import *
 from .ads_campins import *
 from .bussiness_report import *
 from .finance_report import *
@@ -41,6 +42,7 @@ urlpatterns = [
     path('product-analytics/', views.get_product_analytics, name='get_product_analytics'),
     path('dashboard-profitability/', views.get_amazon_data_profi_tability, name='get_amazon_data_profi_tability'),
     path('profitability/details/', views.amazon_profitability_details, name='get_amazon_data_profi_tability_details'),
+    path('profitability/details/by-parent-asin/', views.amazon_profitability_parent, name='profi_tability_details_by_parent_asin'),
     path('profitability/details/by-parentproductid/', views.sku_profit_report, name='profi_tability_details_by_parentproductid'),
     path('profitability-monthwise/', views.get_profitability_monthwise, name='get_profitability_monthwise'),
     path('reconcile-paymentsummary/', views.get_amazon_data_reconcile_paymentsummary, name='get_amazon_data_reconcile_paymentsummary'),
@@ -64,5 +66,8 @@ urlpatterns = [
 
     #get retunitems
     path("get-retunslist/", sync_returns , name ='get-retunslist'),
+
+    #catelog details
+    path('get-catlog/details/', get_catalog_details, name='get_catelog_details'),
  
 ]
