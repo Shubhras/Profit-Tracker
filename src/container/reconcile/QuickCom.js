@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Card, Table, Empty, Spin } from 'antd';
 import {
   ResponsiveContainer,
@@ -14,7 +14,7 @@ import {
   Legend,
 } from 'recharts';
 import { getQuickComReconciliation } from '../../redux/reconcilePayment/actionCreator';
-
+import { exportProfitData } from '../../redux/dashboard/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 /* ---------- Dummy Chart Data ---------- */
@@ -44,6 +44,8 @@ const invoiceColumns = [
 
 export default function QuickCom() {
   const dispatch = useDispatch();
+  const { dateRange, channel: globalChannel } = useSelector((state) => state.dashboard);
+
   const payload = {
     filters: {
       channel: {
@@ -61,6 +63,37 @@ export default function QuickCom() {
   useEffect(() => {
     dispatch(getQuickComReconciliation(payload));
   }, []);
+
+  useEffect(() => {
+    const handleHeaderAction = (event) => {
+      if (event.detail === 'export') {
+        const exportPayload = {
+          reportType: 'PO Invoice',
+
+          params: {
+            filters: {
+              channel: {
+                IN: globalChannel,
+              },
+              fromDate: dateRange?.fromDate || null,
+              toDate: dateRange?.toDate || null,
+            },
+          },
+
+          email: 'bhavnaaprostore@gmail.com',
+        };
+
+        dispatch(exportProfitData(exportPayload));
+      }
+    };
+
+    window.addEventListener('headerAction', handleHeaderAction);
+
+    return () => {
+      window.removeEventListener('headerAction', handleHeaderAction);
+    };
+  }, [dispatch]);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

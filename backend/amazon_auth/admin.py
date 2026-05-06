@@ -22,9 +22,9 @@ class OrderItemInline(admin.TabularInline):  # or StackedInline
 
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
-    list_display = ('id','seller_sku', 'asin', 'order','shipping_price','shipping_income','quantity_claimed','claim_type', 'quantity_ordered', 'item_price', 'created_at')
+    list_display = ('id','seller_sku','parent_sku', 'parent_asin', 'asin','cost_price', 'order','shipping_price','shipping_income','quantity_claimed','claim_type', 'quantity_ordered', 'item_price', 'created_at')
     list_filter = ('created_at','claim_type')
-    search_fields = ('seller_sku','asin', 'title', 'order__amazon_order_id','order_item_id')
+    search_fields = ('seller_sku','asin','parent_asin', 'title', 'order__amazon_order_id','order_item_id')
 
 @admin.register(AmazonAccount)
 class AmazonAccountAdmin(admin.ModelAdmin):
@@ -55,7 +55,7 @@ class ReportAdmin(admin.ModelAdmin):
 
 @admin.register(ProductMapping)
 class ProductMappingAdmin(admin.ModelAdmin):
-    list_display = ('id','seller_sku','account', 'parent_sku', 'product_name', 'brand', 'cost_price')
+    list_display = ('id','seller_sku','account','parent_asin', 'asin','parent_sku', 'product_name', 'brand', 'cost_price')
     search_fields = ('seller_sku', 'parent_sku', 'product_name', 'brand')
     list_filter = ('brand',)
     ordering = ('seller_sku',)
@@ -72,7 +72,7 @@ class AdReportAdmin(admin.ModelAdmin):
 
 @admin.register(MissingCatalogQueue)
 class MissingCatalogQueueAdmin(admin.ModelAdmin):
-    list_display = ('id','seller_sku', 'account',  'asin','processed')
+    list_display = ('id','seller_sku', 'account', 'parent_asin', 'asin','processed')
     search_fields = ('seller_sku', 'asin', 'marketplace_id')
     list_filter = ('processed',)
     ordering = ('seller_sku',)    

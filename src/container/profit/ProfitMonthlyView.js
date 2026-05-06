@@ -11,7 +11,7 @@ import {
   MinusOutlined,
 } from '@ant-design/icons';
 import { PageHeader } from '../../components/page-headers/page-headers';
-import { getProfitMonthwise } from '../../redux/dashboard/actionCreator';
+import { getProfitMonthwise, exportProfitData } from '../../redux/dashboard/actionCreator';
 
 export default function ProfitMonthlyView() {
   const dispatch = useDispatch();
@@ -41,9 +41,29 @@ export default function ProfitMonthlyView() {
       breadcrumbName: 'Profit Monthly View',
     },
   ];
+  const handleExport = () => {
+    const payload = {
+      params: {
+        filters: {
+          channel: {
+            IN: ['Amazon-India', 'Flipkart', 'Jiomart', 'Meesho', 'Myntra', 'Snapdeal'],
+          },
+          fromDate: '2026-04-30T18:30:00Z',
+          toDate: '2026-05-31T18:29:59Z',
+          group_id: 'channel',
+          qty: 'grossqty',
+          calender_view: 'date',
+        },
+      },
+      reportType: 'SalesSummaryNew',
+      email: 'bhavnaaprostore@gmail.com',
+    };
+
+    dispatch(exportProfitData(payload));
+  };
 
   useEffect(() => {
-    const payload = {
+    const exportpayload = {
       filter: {
         channel: {
           IN: globalChannel,
@@ -56,8 +76,25 @@ export default function ProfitMonthlyView() {
       },
     };
 
-    dispatch(getProfitMonthwise(payload));
+    dispatch(getProfitMonthwise(exportpayload));
   }, [dispatch, dateRange, globalChannel]);
+
+  useEffect(() => {
+    const handleHeaderAction = (event) => {
+      if (event.detail === 'export') {
+        handleExport();
+      }
+      if (event.detail === 'sku') {
+        handleExport();
+      }
+    };
+
+    window.addEventListener('headerAction', handleHeaderAction);
+
+    return () => {
+      window.removeEventListener('headerAction', handleHeaderAction);
+    };
+  }, [handleExport]);
 
   const formatMonth = (m) => {
     const [month, year] = m.split('-');

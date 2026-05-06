@@ -5,13 +5,14 @@ import { RightOutlined, CheckOutlined, CloseOutlined, CaretDownOutlined, CaretUp
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../components/page-headers/page-headers';
-import { getPivotStats } from '../../redux/dashboard/actionCreator';
+import { getPivotStats, exportProfitData } from '../../redux/dashboard/actionCreator';
 
 export default function SalesTrend() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [showChart, setShowChart] = React.useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedChannel, setSelectedChannel] = useState('all');
   const [pagination, setPagination] = React.useState({
     current: 1,
     pageSize: 10,
@@ -26,18 +27,68 @@ export default function SalesTrend() {
     invMasterSku: '',
   });
   const { pivotData, loading, dateRange, search, channel: globalChannel } = useSelector((state) => state.dashboard);
+  // const graphData = React.useMemo(() => {
+  //   if (!pivotData?.results?.length) return [];
+
+  //   const row = pivotData.results[0];
+
+  //   return Object.keys(row)
+  //     .filter((key) => key !== 'id')
+  //     .map((key) => ({
+  //       date: key,
+  //       value: row[key],
+  //     }));
+  // }, [pivotData]);
+
+  // const graphData = React.useMemo(() => {
+  //   if (!pivotData?.results?.length) return [];
+
+  //   const selectedRow =
+  //     selectedChannel === 'all' ? pivotData.results[0] : pivotData.results.find((item) => item.id === selectedChannel);
+
+  //   if (!selectedRow) return [];
+
+  //   return Object.keys(selectedRow)
+  //     .filter((key) => key !== 'id')
+  //     .map((key) => ({
+  //       date: key,
+  //       value: selectedRow[key],
+  //     }));
+  // }, [pivotData, selectedChannel]);
+
   const graphData = React.useMemo(() => {
     if (!pivotData?.results?.length) return [];
 
-    const row = pivotData.results[0];
+    // ✅ SELECT ALL => TOTAL ROW DATA
+    if (selectedChannel === 'all') {
+      const totals = {};
 
-    return Object.keys(row)
+      pivotData.results.forEach((row) => {
+        Object.keys(row).forEach((key) => {
+          if (key !== 'id') {
+            totals[key] = (totals[key] || 0) + (row[key] || 0);
+          }
+        });
+      });
+
+      return Object.keys(totals).map((key) => ({
+        date: key,
+        value: totals[key],
+      }));
+    }
+
+    // ✅ INDIVIDUAL CHANNEL
+    const selectedRow = pivotData.results.find((item) => item.id === selectedChannel);
+
+    if (!selectedRow) return [];
+
+    return Object.keys(selectedRow)
       .filter((key) => key !== 'id')
       .map((key) => ({
         date: key,
-        value: row[key],
+        value: selectedRow[key],
       }));
-  }, [pivotData]);
+  }, [pivotData, selectedChannel]);
 
   const payload = {
     filter: {
@@ -66,6 +117,19 @@ export default function SalesTrend() {
     dispatch(getPivotStats(payload));
   }, [dispatch, dateRange, search, globalChannel]);
 
+  useEffect(() => {
+    const handleHeaderAction = (event) => {
+      if (event.detail === 'export') {
+        dispatch(exportProfitData(payload));
+      }
+    };
+
+    window.addEventListener('headerAction', handleHeaderAction);
+
+    return () => {
+      window.removeEventListener('headerAction', handleHeaderAction);
+    };
+  }, [dispatch, payload]);
   const PageRoutes = [
     {
       path: 'index',
@@ -136,10 +200,39 @@ export default function SalesTrend() {
   // }, [pivotData]);
   const columns = [
     {
-      title: '',
+      title: (
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setSelectedChannel('all')}
+            className={`w-4 h-4 rounded-full border-2 flex items-center justify-center
+        ${selectedChannel === 'all' ? 'border-[#1677ff]' : 'border-gray-400'}`}
+          >
+            {selectedChannel === 'all' && <div className="w-2 h-2 rounded-full bg-[#1677ff]" />}
+          </button>
+
+          <span>Select All</span>
+        </div>
+      ),
+
       dataIndex: 'id',
       fixed: 'left',
-      width: 120,
+      width: 220,
+
+      render: (_, record) => (
+        <div className="flex items-center gap-2 text-black">
+          <button
+            type="button"
+            onClick={() => setSelectedChannel(record.id)}
+            className={`w-4 h-4 rounded-full border-2 flex items-center justify-center
+        ${selectedChannel === record.id ? 'border-[#1677ff]' : 'border-gray-400'}`}
+          >
+            {selectedChannel === record.id && <div className="w-2 h-2 rounded-full bg-[#1677ff]" />}
+          </button>
+
+          <span>{record.id}</span>
+        </div>
+      ),
     },
     ...dynamicColumns,
     {
@@ -326,12 +419,15 @@ export default function SalesTrend() {
               </div>
             )}
           </div>
-          <div className="flex justify-end mb-3">
+          <div className="flex justify-between items-center mb-4">
             {' '}
+            <div className="font-medium text-[15px] text-black">
+              Chart View: {selectedChannel === 'all' ? 'Total' : selectedChannel}
+            </div>
             <button
               type="button"
               onClick={() => setShowChart(!showChart)}
-              className="border border-gray-300 rounded-lg px-3 py-1.5 bg-white hover:bg-gray-100 transition"
+              className="border border-gray-300 rounded-lg px-2 py-1 bg-white hover:bg-gray-100 transition"
             >
               {showChart ? 'Hide Chart' : 'View Chart'}
             </button>
@@ -385,7 +481,7 @@ export default function SalesTrend() {
             size="small"
             summary={() => (
               <Table.Summary.Row className="custom-total-row">
-                <Table.Summary.Cell index={0} fixed="left">
+                <Table.Summary.Cell index={0} fixed="left" className="text-black">
                   Total
                 </Table.Summary.Cell>
 
