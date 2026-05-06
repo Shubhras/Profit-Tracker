@@ -18,7 +18,7 @@ export default function ProfitDetailsView() {
   const dispatch = useDispatch();
   const { dateRange, profitData, loading, channel: globalChannel } = useSelector((state) => state.dashboard);
   const totals = profitData?.totals || {};
-
+  const profitType = location.state?.profitType || 'all';
   const channels = location.state?.channels?.length > 0 ? location.state.channels : globalChannel || [];
   const [openSettings, setOpenSettings] = React.useState(false);
   const [detailModal, setDetailModal] = React.useState({
@@ -43,8 +43,8 @@ export default function ProfitDetailsView() {
     productId: '',
     parentId: '',
     mkt: '',
-    ads: 'without',
-    gst: 'without',
+    ads: 'with',
+    gst: 'with',
     estimate: 'with',
     expenses: 'with',
     accountCharges: 'with',
@@ -64,6 +64,14 @@ export default function ProfitDetailsView() {
           IN: channels,
           // IN: globalChannel,
         },
+        ...(profitType === 'profitable' && {
+          profit: { GT: 0 },
+        }),
+
+        ...(profitType === 'losing' && {
+          Profit: { LT: 0 },
+        }),
+
         fromDate: dateRange?.fromDate || null,
         toDate: dateRange?.endDate || null,
       },
@@ -97,13 +105,13 @@ export default function ProfitDetailsView() {
         name: item.name,
         asin: item.asin,
         redirecturl: item.redirecturl,
-        // qty: Number(item.grossqty) || 0,
+        grossQty: item.grossqty || 0,
         netQty: Number(item.netqty) || 0,
         returnqty: Number(item.returnqty) || 0,
         returnPercent: Number(item.retpercent) || 0,
 
         netsales: item.netsales || 0,
-        mpfees: item.mpfees || 0,
+        mpfees: item.new_mpfees || 0,
         // netasp: Number(item.netasp) || 0,
         // net_discount: Number(item.net_discount) || 0,
 
@@ -229,6 +237,13 @@ export default function ProfitDetailsView() {
     //   align: 'center',
     //   sorter: (a, b) => a.qty - b.qty,
     // },
+    {
+      title: 'Gross Qty',
+      dataIndex: 'grossQty',
+      align: 'center',
+      sorter: (a, b) => a.grossqty - b.grossqty,
+      // render: (v) => v ?? 0,
+    },
     {
       title: 'Net Qty',
       dataIndex: 'netQty',
@@ -419,69 +434,73 @@ export default function ProfitDetailsView() {
       },
     },
     {
-      title: 'Gross Qty',
-      dataIndex: 'grossqty',
-      align: 'center',
-      render: (v) => v ?? 0,
-    },
-    {
       title: 'Net MRP',
       dataIndex: 'netmrp',
       align: 'center',
+      sorter: (a, b) => a.netmrp - b.netmrp,
       render: (v) => v ?? 0,
     },
     {
       title: 'MRP Net Discount%',
       dataIndex: 'mrpNetDiscount',
       align: 'center',
+      sorter: (a, b) => a.mrpNetDiscount - b.mrpNetDiscount,
       render: (v) => v ?? 0,
     },
     {
       title: 'MRP Customer Discount%',
       dataIndex: 'mrpCustomerDiscount',
       align: 'center',
+      sorter: (a, b) => a.mrpCustomerDiscount - b.mrpCustomerDiscount,
       render: (v) => v ?? 0,
     },
     {
       title: 'Account Charges',
       dataIndex: 'accountCharges',
       align: 'center',
+      sorter: (a, b) => a.accountCharges - b.accountCharges,
       render: (v) => v ?? 0,
     },
     {
       title: 'Other Expenses',
       dataIndex: 'otherExpenses',
       align: 'center',
+      sorter: (a, b) => a.otherExpenses - b.otherExpenses,
       render: (v) => v ?? 0,
     },
     {
       title: 'TACOS',
       dataIndex: 'tacos',
       align: 'center',
+      sorter: (a, b) => a.tacos - b.tacos,
       render: (v) => v ?? 0,
     },
     {
       title: 'Gross Profit %',
       dataIndex: 'grossProfitPercent',
       align: 'center',
+      sorter: (a, b) => a.grossProfitPercent - b.grossProfitPercent,
       render: (v) => v ?? 0,
     },
     {
       title: '% of Sales',
       dataIndex: 'percentOfSales',
       align: 'center',
+      sorter: (a, b) => a.percentOfSales - b.percentOfSales,
       render: (v) => v ?? 0,
     },
     {
       title: 'DRR',
       dataIndex: 'drr',
       align: 'center',
+      sorter: (a, b) => a.drr - b.drr,
       render: (v) => v ?? 0,
     },
     {
       title: 'Last Order Date',
       dataIndex: 'lastOrderDate',
       align: 'center',
+      sorter: (a, b) => a.lastOrderDate - b.lastOrderDate,
       render: (v) => v || '-',
     },
 
@@ -510,17 +529,10 @@ export default function ProfitDetailsView() {
             type="button"
             onClick={() => navigate(`../profitThirdtable/${record.asin}`)}
             style={{
-              width: 30,
-              height: 30,
               border: '1px solid #d9d9d9',
-              borderRadius: 4,
               background: 'rgb(202, 221, 254)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: 'auto',
             }}
+            className="w-[30px]  h-[30px] rounded-[4px] cursor-pointer flex-items-center justify-center mx-auto"
           >
             <RightOutlined style={{ fontSize: 12 }} />
           </button>
@@ -528,16 +540,10 @@ export default function ProfitDetailsView() {
             type="button"
             onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
             style={{
-              width: 30,
-              height: 30,
               border: '1px solid #ffc0cb',
-              borderRadius: 4,
-              background: '#ffe4e9', // light pink
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              background: '#ffe4e9',
             }}
+            className="w-[30px] h-[30px] rounded-[4px] cursor-pointer flex-items-center justify-center mx-auto"
           >
             <BarChartOutlined style={{ fontSize: 14, color: '#ff4d6d' }} />
           </button>
@@ -605,6 +611,7 @@ export default function ProfitDetailsView() {
   ];
   const [visibleColumns, setVisibleColumns] = React.useState([
     'view',
+    // 'grossQty',
     'netQty',
     'returnqty',
     'returnPercent',
@@ -662,6 +669,7 @@ export default function ProfitDetailsView() {
               ...pagination,
               showSizeChanger: true,
               pageSizeOptions: ['10', '20', '50', '100'],
+              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
             }}
             onChange={(pag) => {
               setPagination(pag);
@@ -682,7 +690,7 @@ export default function ProfitDetailsView() {
                       returnqty: 'totalreturn',
                       returnPercent: 'totalreturnper',
                       netsales: 'netsales',
-                      mpfees: 'mpfees',
+                      mpfees: 'total_new_mpfees',
                       stdcost: 'stdcost',
                       shipping: 'shippingfees',
                       adSpend: 'ads',
@@ -691,7 +699,7 @@ export default function ProfitDetailsView() {
                       profit: 'profit',
                       profitPercent: 'grossprofitper',
 
-                      grossqty: 'grossqty',
+                      grossQty: 'grossqty',
                       netmrp: 'netmrp',
                       mrpNetDiscount: 'mrp_net_discount',
                       mrpCustomerDiscount: 'mrpCustomerDiscount',
@@ -701,13 +709,24 @@ export default function ProfitDetailsView() {
                       grossProfitPercent: 'grossprofit_percent',
                       percentOfSales: 'percent_of_sales',
                       drr: 'drr',
+                      lastOrderDate: 'lastOrderDate',
                     };
 
                     const value = totals[keyMap[col.dataIndex]];
 
                     return (
                       <Table.Summary.Cell key={col.key || index} index={index + 3} fixed={col.fixed} align="center">
-                        {col.key === 'action' ? null : ['profitPercent'].includes(col.dataIndex) ? (
+                        {col.key === 'action' ? (
+                          <div className="flex gap-2 justify-end">
+                            <button
+                              type="button"
+                              onClick={() => setDetailModal({ open: true, record: totals, type: 'qty' })}
+                              className="w-[30px] h-[30px] border border-[#ffc0cb] rounded-[4px] bg-[#ffe4e9] flex items-center justify-center"
+                            >
+                              <BarChartOutlined style={{ fontSize: 14, color: '#ff4d6d' }} />
+                            </button>
+                          </div>
+                        ) : ['profitPercent'].includes(col.dataIndex) ? (
                           <span
                             style={{
                               color: (value ?? 0) >= 0 ? 'green' : 'red',
