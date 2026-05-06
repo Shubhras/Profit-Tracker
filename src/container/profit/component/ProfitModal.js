@@ -14,7 +14,7 @@ import { useSelector } from 'react-redux';
 import AdsTab from './AdsTab';
 import ReturnShippingTab from './ReturnShippingTab';
 
-export default function ProfitModal({ open, record, onClose, type }) {
+export default function ProfitModal({ open, record, onClose, type, modalLabel, modalValue }) {
   if (!open) return null;
   const { dateRange } = useSelector((state) => state.dashboard);
   const formatDate = (date) => {
@@ -86,7 +86,7 @@ export default function ProfitModal({ open, record, onClose, type }) {
       <div className="bg-white w-[95%] h-[95%] rounded-xl shadow-2xl overflow-y-auto">
         <div className="flex justify-between items-center px-6 py-4">
           <div className="text-[15px] font-semibold text-gray-800">
-            channel : <span className="font-bold">{record?.channel}</span>
+            {modalLabel || 'Channel'} : <span className="font-bold">{modalValue || record?.channel}</span>
           </div>
 
           <div className="flex items-center gap-4">

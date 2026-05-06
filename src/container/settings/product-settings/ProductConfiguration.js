@@ -5,6 +5,7 @@ import ProductConfigTab from './ProductConfigurationTabs/ProductConfigTab';
 import InventoryMastertab from './ProductConfigurationTabs/InventoryMastertab';
 import PincodeTab from './ProductConfigurationTabs/PincodeTab';
 import { getProductConfiguration } from '../../../redux/Settings/actionCreator';
+import { exportProfitData } from '../../../redux/dashboard/actionCreator';
 import { PageHeader } from '../../../components/page-headers/page-headers';
 
 export default function ProductConfiguration() {
@@ -101,7 +102,48 @@ export default function ProductConfiguration() {
         return null;
     }
   };
+  const handleExport = () => {
+    const fileInput = document.getElementById('fileInput');
 
+    if (fileInput) {
+      fileInput.value = '';
+    }
+    dispatch(
+      exportProfitData({
+        params: {
+          filters: {
+            channel: {
+              IN: ['Amazon-India', 'Flipkart', 'Jiomart', 'Meesho', 'Myntra', 'Snapdeal'],
+            },
+          },
+
+          dataOption: 'channel,sku',
+
+          columns: [
+            'productid',
+            'account',
+            'displaysku',
+            'status',
+            'name',
+            'parentproductid',
+            'mrp',
+            'costperunit',
+            'costperunittax',
+            'storagemaster',
+            'inventorymastersku',
+            'packagedimensionsnew',
+            'categoryids',
+          ],
+        },
+
+        reportType: 'Prod Config Selected',
+
+        email: 'bhavnaaprostore@gmail.com',
+      }),
+    );
+
+    setExportModal(false);
+  };
   return (
     <>
       <PageHeader
@@ -285,7 +327,15 @@ export default function ProductConfiguration() {
         <div className="flex justify-end gap-2 mt-4">
           <Button onClick={() => setExportModal(false)}>Cancel</Button>
 
-          <Button type="primary" onClick={() => setExportModal(false)}>
+          <Button
+            type="primary"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+
+              handleExport();
+            }}
+          >
             Export
           </Button>
         </div>

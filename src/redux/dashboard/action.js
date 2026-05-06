@@ -14,6 +14,14 @@ const actions = {
   MONTHWISE_PROFIT_SUCCESS: 'MONTHWISE_PROFIT_SUCCESS',
   MONTHWISE_PROFIT_ERR: 'MONTHWISE_PROFIT_ERR',
 
+  PROFITABILITY_BEGIN: 'PROFITABILITY_BEGIN',
+  PROFITABILITY_SUCCESS: 'PROFITABILITY_SUCCESS',
+  PROFITABILITY_ERR: 'PROFITABILITY_ERR',
+
+  PROFITMODAL_BEGIN: 'PROFITMODAL_BEGIN',
+  PROFITMODAL_SUCCESS: 'PROFITMODAL_SUCCESS',
+  PROFITMODAL_ERR: 'PROFITMODAL_ERR',
+
   SET_DATE_RANGE: 'SET_DATE_RANGE',
   SET_SEARCH: 'SET_SEARCH',
 
@@ -35,6 +43,10 @@ const actions = {
   pivotBegin: () => ({ type: actions.PIVOT_BEGIN }),
   pivotSuccess: (data) => ({ type: actions.PIVOT_SUCCESS, data }),
   pivotErr: (err) => ({ type: actions.PIVOT_ERR, err }),
+
+  profitmodalBegin: () => ({ type: actions.PROFITMODAL_BEGIN }),
+  profitmodalSuccess: (data) => ({ type: actions.PROFITMODAL_SUCCESS, data }),
+  profitmodalErr: (err) => ({ type: actions.PROFITMODAL_ERR, err }),
 
   profitBegin: () => ({ type: actions.PROFIT_BEGIN }),
   profitSuccess: (data) => ({ type: actions.PROFIT_SUCCESS, data }),
@@ -64,6 +76,10 @@ const actions = {
     type: actions.SET_CHANNEL,
     payload,
   }),
+
+  profitabilityBegin: () => ({ type: actions.PROFITABILITY_BEGIN }),
+  profitabilitySuccess: (data) => ({ type: actions.PROFITABILITY_SUCCESS, data }),
+  profitabilityErr: (err) => ({ type: actions.PROFITABILITY_ERR, err }),
 };
 
 export default actions;

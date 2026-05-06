@@ -18,6 +18,14 @@ const {
   MONTHWISE_PROFIT_BEGIN,
   MONTHWISE_PROFIT_SUCCESS,
   MONTHWISE_PROFIT_ERR,
+
+  PROFITABILITY_BEGIN,
+  PROFITABILITY_SUCCESS,
+  PROFITABILITY_ERR,
+
+  PROFITMODAL_BEGIN,
+  PROFITMODAL_SUCCESS,
+  PROFITMODAL_ERR,
 } = actions;
 
 const initialState = {
@@ -131,6 +139,48 @@ const dashboardReducer = (state = initialState, action) => {
       return {
         ...state,
         channel: action.payload, // array of selected channels
+      };
+
+    case PROFITABILITY_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case PROFITABILITY_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        profitData: action.data,
+      };
+
+    case PROFITABILITY_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case PROFITMODAL_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case PROFITMODAL_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        profitData: action.data,
+      };
+
+    case PROFITMODAL_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
       };
 
     default:

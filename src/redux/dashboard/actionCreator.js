@@ -16,7 +16,32 @@ const {
   profitBegin,
   profitSuccess,
   profitErr,
+
+  profitabilityBegin,
+  profitabilitySuccess,
+  profitabilityErr,
+
+  profitmodalBegin,
+  profitmodalSuccess,
+  profitmodalErr,
 } = actions;
+
+const mockService = async (payload) => {
+  console.log('EXPORT PAYLOAD =>', payload);
+
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const blob = new Blob(['Dummy excel content'], {
+        type: 'application/vnd.ms-excel',
+      });
+
+      resolve({
+        data: blob,
+      });
+    }, 500);
+  });
+};
+
 export const getDashboard = (payload) => {
   return async (dispatch) => {
     dispatch(dashboardBegin());
@@ -121,6 +146,69 @@ export const getProfitDetailsByParentId = (payload) => {
       }
     } catch (err) {
       dispatch(profitErr(err));
+    }
+  };
+};
+
+export const exportProfitData = (payload) => {
+  return async () => {
+    try {
+      // const response = await DataService.post('/amazon/export', payload, {
+      //   responseType: 'blob',
+      // });
+      const response = await mockService(payload);
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+
+      const link = document.createElement('a');
+
+      link.href = url;
+
+      link.setAttribute('download', 'profit.xlsx');
+
+      document.body.appendChild(link);
+
+      // link.click();
+
+      link.remove();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+};
+
+export const getSecondDetials = (payload) => {
+  return async (dispatch) => {
+    dispatch(profitabilityBegin());
+
+    try {
+      const response = await DataService.post('/amazon/profitability/details/by-parent-asin/', payload);
+
+      if (response.data?.status === true || response.data?.status === 'success') {
+        dispatch(profitabilitySuccess(response.data)); // same reducer use kar sakte ho
+      } else {
+        dispatch(profitabilityErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(profitabilityErr(err));
+    }
+  };
+};
+
+export const getProfitModalApi = (payload) => {
+  return async (dispatch) => {
+    dispatch(profitmodalBegin());
+
+    try {
+      const response = await mockService(payload);
+
+      if (response.data?.status === 'success' || response.data?.status === true) {
+        dispatch(profitmodalSuccess(response.data));
+      } else {
+        dispatch(profitmodalErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(profitmodalErr(err.message));
     }
   };
 };

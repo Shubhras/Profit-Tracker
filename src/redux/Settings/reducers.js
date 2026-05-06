@@ -32,6 +32,9 @@ const initialState = {
   userinfoData: [],
   userinfoLoading: false,
   userinfoError: null,
+  adduserData: [],
+  adduserLoading: false,
+  adduserError: null,
 };
 
 const {
@@ -66,6 +69,10 @@ const {
   USER_INFO_BEGIN,
   USER_INFO_SUCCESS,
   USER_INFO_ERR,
+
+  ADD_USER_BEGIN,
+  ADD_USER_SUCCESS,
+  ADD_USER_ERR,
 } = actions;
 
 const settingsReducer = (state = initialState, action) => {
@@ -229,6 +236,26 @@ const settingsReducer = (state = initialState, action) => {
         ...state,
         userinfoError: err,
         userinfoLoading: false,
+      };
+
+    case ADD_USER_BEGIN:
+      return {
+        ...state,
+        adduserLoading: true,
+      };
+
+    case ADD_USER_SUCCESS:
+      return {
+        ...state,
+        adduserData: data,
+        adduserLoading: false,
+      };
+
+    case ADD_USER_ERR:
+      return {
+        ...state,
+        adduserError: err,
+        adduserLoading: false,
       };
     default:
       return state;

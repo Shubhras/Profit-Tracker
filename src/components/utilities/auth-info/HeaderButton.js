@@ -30,15 +30,23 @@ function HeaderButton({ type, onClick, isEnabled }) {
       );
     case 'lowest':
       return (
-        <Button type="primary" className="rounded-lg shadow-sm flex items-center gap-1 font-bold px-2 py-1">
-          Lowet Level Profit Export
+        <Button
+          type="primary"
+          onClick={onClick}
+          className="rounded-lg shadow-sm flex items-center gap-1 font-bold px-2 py-1"
+        >
+          Lowest Level Profit Export
           <UploadOutlined style={{ color: '#fff', fontSize: '16px' }} />
         </Button>
       );
 
     case 'sku':
       return (
-        <Button type="primary" className="rounded-lg shadow-sm flex items-center gap-1 font-bold px-2 py-1">
+        <Button
+          type="primary"
+          onClick={onClick}
+          className="rounded-lg shadow-sm flex items-center gap-1 font-bold px-2 py-1"
+        >
           SKU
           <UploadOutlined style={{ color: '#fff', fontSize: '16px' }} />
         </Button>
@@ -46,14 +54,22 @@ function HeaderButton({ type, onClick, isEnabled }) {
 
     case 'payment':
       return (
-        <Button type="primary" className="rounded-lg shadow-sm flex items-center gap-1 font-bold px-2 py-1">
+        <Button
+          type="primary"
+          onClick={onClick}
+          className="rounded-lg shadow-sm flex items-center gap-1 font-bold px-2 py-1"
+        >
           Outstanding Payment Export
           <UploadOutlined style={{ color: '#fff', fontSize: '16px' }} />
         </Button>
       );
     case 'cashback':
       return (
-        <Button type="primary" className="rounded-lg shadow-sm flex items-center gap-1 font-bold px-2 py-1">
+        <Button
+          type="primary"
+          onClick={onClick}
+          className="rounded-lg shadow-sm flex items-center gap-1 font-bold px-2 py-1"
+        >
           Cashback Export
           <UploadOutlined style={{ color: '#fff', fontSize: '16px' }} />
         </Button>
@@ -72,7 +88,11 @@ function HeaderButton({ type, onClick, isEnabled }) {
 
     case 'oneline':
       return (
-        <Button type="primary" className="rounded-lg shadow-sm flex items-center gap-1 font-bold px-2 py-1">
+        <Button
+          type="primary"
+          onClick={onClick}
+          className="rounded-lg shadow-sm flex items-center gap-1 font-bold px-2 py-1"
+        >
           OneLine Invoice
           <UploadOutlined style={{ color: '#fff', fontSize: '16px' }} />
         </Button>

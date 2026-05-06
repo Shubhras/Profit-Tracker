@@ -31,6 +31,10 @@ const actions = {
   USER_INFO_SUCCESS: 'USER_INFO_SUCCESS',
   USER_INFO_ERR: 'USER_INFO_ERR',
 
+  ADD_USER_BEGIN: 'ADD_USER_BEGIN',
+  ADD_USER_SUCCESS: 'ADD_USER_SUCCESS',
+  ADD_USER_ERR: 'ADD_USER_ERR',
+
   overviewsettingBegin: () => {
     return {
       type: actions.OVERVIEW_SETTING_BEGIN,
@@ -186,6 +190,26 @@ const actions = {
   userinfoErr: (err) => {
     return {
       type: actions.USER_INFO_ERR,
+      err,
+    };
+  },
+
+  adduserBegin: () => {
+    return {
+      type: actions.ADD_USER_BEGIN,
+    };
+  },
+
+  adduserSuccess: (data) => {
+    return {
+      type: actions.ADD_USER_SUCCESS,
+      data,
+    };
+  },
+
+  adduserErr: (err) => {
+    return {
+      type: actions.ADD_USER_ERR,
       err,
     };
   },
