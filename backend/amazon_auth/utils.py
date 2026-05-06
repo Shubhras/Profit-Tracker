@@ -458,6 +458,53 @@ def format_currency(value):
     value = float(value or 0)
     return f"-₹{abs(round(value, 2))}" if value < 0 else f"₹{round(value, 2)}"
 
+# def extract_fees_and_tcs_per_asin(raw_list, sku_asin_map=None):
+#     asin_map = {}
+
+#     for raw in raw_list:
+#         if not isinstance(raw, dict):
+#             continue
+
+#         try:
+#             item_lists = []
+#             item_lists.extend(raw.get("ShipmentItemList", []))
+#             item_lists.extend(raw.get("ShipmentItemAdjustmentList", []))
+
+#             for item in item_lists:
+#                 # sku = item.get("SellerSKU")
+#                 asin = item.get("ASIN")
+#                 sku = normalize_sku(item.get("SellerSKU"))
+
+#                 # 🔥 FIX SKU → ASIN
+#                 if not asin and sku and sku_asin_map:
+#                     asin = sku_asin_map.get(sku)
+
+#                 if not asin:
+#                     continue
+
+#                 asin_map.setdefault(asin, {"fee": 0, "tcs": 0})
+
+#                 # -------- FEES --------
+#                 for fee in item.get("ItemFeeList", []) + item.get("ItemFeeAdjustmentList", []):
+#                     asin_map[asin]["fee"] += float(
+#                         fee.get("FeeAmount", {}).get("CurrencyAmount", 0) or 0
+#                     )
+
+#                 # -------- TCS --------
+#                 for charge in item.get("ItemChargeList", []):
+#                     if charge.get("ChargeType") == "TCS-IGST":
+#                         asin_map[asin]["tcs"] += float(
+#                             charge.get("ChargeAmount", {}).get("CurrencyAmount", 0) or 0
+#                         )
+
+#         except Exception:
+#             pass
+
+#     return asin_map
+
+
+from decimal import Decimal
+
 def extract_fees_and_tcs_per_asin(raw_list, sku_asin_map=None):
     asin_map = {}
 
@@ -465,44 +512,39 @@ def extract_fees_and_tcs_per_asin(raw_list, sku_asin_map=None):
         if not isinstance(raw, dict):
             continue
 
-        try:
-            item_lists = []
-            item_lists.extend(raw.get("ShipmentItemList", []))
-            item_lists.extend(raw.get("ShipmentItemAdjustmentList", []))
+        item_lists = []
+        item_lists.extend(raw.get("ShipmentItemList", []))
+        item_lists.extend(raw.get("ShipmentItemAdjustmentList", []))
 
-            for item in item_lists:
-                # sku = item.get("SellerSKU")
-                asin = item.get("ASIN")
-                sku = normalize_sku(item.get("SellerSKU"))
+        for item in item_lists:
+            asin = item.get("ASIN")
+            sku = normalize_sku(item.get("SellerSKU"))
 
-                # 🔥 FIX SKU → ASIN
-                if not asin and sku and sku_asin_map:
-                    asin = sku_asin_map.get(sku)
+            if not asin and sku and sku_asin_map:
+                asin = sku_asin_map.get(sku)
 
-                if not asin:
-                    continue
+            if not asin:
+                continue
 
-                asin_map.setdefault(asin, {"fee": 0, "tcs": 0})
+            asin_map.setdefault(asin, {"fee": Decimal(0), "tcs": Decimal(0)})
 
-                # -------- FEES --------
-                for fee in item.get("ItemFeeList", []) + item.get("ItemFeeAdjustmentList", []):
-                    asin_map[asin]["fee"] += float(
-                        fee.get("FeeAmount", {}).get("CurrencyAmount", 0) or 0
+            for fee in item.get("ItemFeeList", []) + item.get("ItemFeeAdjustmentList", []):
+                asin_map[asin]["fee"] += Decimal(
+                    fee.get("FeeAmount", {}).get("CurrencyAmount", 0) or 0
+                )
+
+            for charge in item.get("ItemChargeList", []):
+                if charge.get("ChargeType") == "TCS-IGST":
+                    asin_map[asin]["tcs"] += Decimal(
+                        charge.get("ChargeAmount", {}).get("CurrencyAmount", 0) or 0
                     )
 
-                # -------- TCS --------
-                for charge in item.get("ItemChargeList", []):
-                    if charge.get("ChargeType") == "TCS-IGST":
-                        asin_map[asin]["tcs"] += float(
-                            charge.get("ChargeAmount", {}).get("CurrencyAmount", 0) or 0
-                        )
-
-        except Exception:
-            pass
-
     return asin_map
-
 
 def normalize_sku(sku):
         return sku.replace(" COPY", "").strip() if sku else sku
 
+def clean_sku(sku):
+    if not sku:
+        return sku
+    return sku.replace("-Copy", "").strip()

@@ -3945,7 +3945,8 @@ def amazon_profitability_details(request):
             promotion_discount=Sum('promotion_discount'),
             avg_cost=Avg('item_price'),
             total_cost=Sum(F('cost_price') * F('quantity_ordered')),
-            grosssales=Sum(F('item_price') * F('quantity_ordered'))
+            # grosssales=Sum(F('item_price') * F('quantity_ordered'))
+            grosssales=Sum('item_price'),
         )
     )
 
@@ -4014,6 +4015,7 @@ def amazon_profitability_details(request):
     total_returns = total_shipping = 0
     total_stdcost = 0
     total_ret_percent = 0
+    adjusted_gross_sales = 0
 
     total_gst = 0
     total_tcs = 0
@@ -4025,12 +4027,24 @@ def amazon_profitability_details(request):
             .values_list('seller_sku', 'asin')
     }
 
+    child_parent_map = {
+        row['asin']: (row['parent_asin'] or row['asin'])
+        for row in OrderItem.objects
+            .filter(order_filter)
+            .values('asin', 'parent_asin')
+    }
+
     for row in items:
         # asin = row['asin']
         parent_asin = row['parent_asin']
 
         gross_qty = int(row['grossqty'] or 0)
+        # gross_sales = float(row['grosssales'] or 0)
         gross_sales = float(row['grosssales'] or 0)
+        discount = float(row.get('discount') or 0)
+        promo_discount = float(row.get('promotion_discount') or 0)
+
+        adjusted_gross_sales = gross_sales - discount - promo_discount
         shipping_income = float(row.get('shipping_income') or 0)
         shipping_price = float(row.get('shipping_price') or 0)
 
@@ -4072,20 +4086,32 @@ def amazon_profitability_details(request):
 
             # ✅ USE SAME FUNCTION AS LIST API
             
+            # order_fee_map = extract_fees_and_tcs_per_asin(
+            #     raw_data_map.get(oid, []),
+            #     sku_asin_map=sku_asin_map
+            # )
+
+            # child_asins = list(
+            #     OrderItem.objects.filter(parent_asin=parent_asin)
+            #     .values_list('asin', flat=True)
+            # )
             order_fee_map = extract_fees_and_tcs_per_asin(
                 raw_data_map.get(oid, []),
                 sku_asin_map=sku_asin_map
             )
 
-            child_asins = list(
-                OrderItem.objects.filter(parent_asin=parent_asin)
-                .values_list('asin', flat=True)
-            )
+            for child_asin, fee_data in order_fee_map.items():
 
-            for child_asin in child_asins:
-                if child_asin in order_fee_map:
-                    t_new_charge += order_fee_map[child_asin]["fee"]
-                    tcs_total += order_fee_map[child_asin]["tcs"]
+                parent_key = child_parent_map.get(child_asin)
+
+                if parent_key == parent_asin:
+                    t_new_charge += float(fee_data["fee"])
+                    tcs_total += float(fee_data["tcs"])
+
+            # for child_asin in child_asins:
+            #     if child_asin in order_fee_map:
+            #         t_new_charge += order_fee_map[child_asin]["fee"]
+            #         tcs_total += order_fee_map[child_asin]["tcs"]
 
 
             if r < 0 or rto_amt < 0:
@@ -4093,7 +4119,8 @@ def amazon_profitability_details(request):
 
         # ---------------- CALCULATIONS ----------------
         net_qty = max(gross_qty - return_units, 0)
-        net_sales = gross_sales + refund + rto
+        # net_sales = gross_sales + refund + rto
+        net_sales = adjusted_gross_sales + refund + rto
         shipping_final = shipping_price 
 
         total_cost = float(row.get('total_cost') or 0)
@@ -4198,215 +4225,6 @@ def amazon_profitability_details(request):
     })
 
 # asin by parent asin 
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
-# def amazon_profitability_parent(request):
-
-#     user = request.user
-#     data = request.data
-
-#     filters = data.get("filters", {})
-#     pagination = data.get("pagination", {})
-
-#     page_no = int(pagination.get("pageNo", 0))
-#     page_size = int(pagination.get("pageSize", 25))
-
-#     # ---------------- DATE FILTER ----------------
-#     from_date = to_date = None
-#     try:
-#         if filters.get("fromDate"):
-#             from_date = timezone.make_aware(datetime.strptime(filters["fromDate"], "%Y-%m-%d"))
-#         if filters.get("toDate"):
-#             to_date = timezone.make_aware(datetime.strptime(filters["toDate"], "%Y-%m-%d")) + timedelta(days=1)
-#     except Exception as e:
-#         print("Date error:", e)
-
-#     order_filter = Q(order__user=user)
-
-#     # ---------------- CHANNEL FILTER ----------------
-#     CHANNEL_MAP = {"Amazon-India": "A21TJRUUN4KGV"}
-
-#     channels = filters.get("channel", {}).get("IN", [])
-#     if channels:
-#         marketplace_ids = [CHANNEL_MAP.get(ch) for ch in channels if CHANNEL_MAP.get(ch)]
-#         order_filter &= Q(order__marketplace_id__in=marketplace_ids)
-
-#     # ---------------- PARENT ASIN FILTER ----------------
-#     parent_ids = filters.get("parentproductid", {}).get("IN", [])
-#     if parent_ids:
-#         order_filter &= Q(parent_asin__in=parent_ids)
-
-#     # ---------------- DATE APPLY ----------------
-#     if from_date:
-#         order_filter &= Q(order__purchase_date__gte=from_date)
-#     if to_date:
-#         order_filter &= Q(order__purchase_date__lte=to_date)
-
-#     # ===============================
-#     # 🔥 GROUP BY PARENT ASIN
-#     # ===============================
-#     items = (
-#         OrderItem.objects
-#         .filter(order_filter)
-#         .values('parent_asin')
-#         .annotate(
-#             title=Max('title'),
-#             image_url=Max('image_url'),
-#             grossqty=Sum('quantity_ordered'),
-#             shipping_income=Sum('shipping_income'),
-#             shipping_price=Sum('shipping_price'),
-#             discount=Sum('discount'),
-#             promotion_discount=Sum('promotion_discount'),
-#             total_cost=Sum(F('cost_price') * F('quantity_ordered')),
-#             grosssales=Sum(F('item_price') * F('quantity_ordered'))
-#         )
-#     )
-
-#     # ---------------- FINANCE ----------------
-#     finances_qs = FinancialEvent.objects.filter(user=user)
-
-#     if from_date:
-#         finances_qs = finances_qs.filter(posted_date__gte=from_date)
-#     if to_date:
-#         finances_qs = finances_qs.filter(posted_date__lte=to_date)
-
-#     finance_data = (
-#         finances_qs
-#         .values('amazon_order_id')
-#         .annotate(
-#             refund=Sum('total_amount', filter=Q(event_group="REFUND")),
-#             rto=Sum('total_amount', filter=Q(event_group="RTO")),
-#             ads=Sum('total_amount', filter=Q(event_type__icontains='Ad')),
-#             commission=Sum('commission_fee'),
-#             fulfillment=Sum('fulfillment_fee'),
-#             other_fee=Sum('other_fee'),
-#             shipping_fee=Sum('shipping_fee'),
-#             gst=Sum('tax'),
-#         )
-#     )
-
-#     finance_map = {f['amazon_order_id']: f for f in finance_data}
-
-#     # ===============================
-#     # 🔥 MAP PARENT → ORDERS
-#     # ===============================
-#     asin_orders = (
-#         OrderItem.objects
-#         .filter(order_filter)
-#         .values('parent_asin', 'order__amazon_order_id', 'quantity_ordered')
-#     )
-
-#     parent_map = {}
-#     for row in asin_orders:
-#         parent_map.setdefault(row['parent_asin'], []).append(row)
-
-#     # ===============================
-#     # 🔥 BUILD RESPONSE
-#     # ===============================
-#     results = []
-
-#     total_sales = total_profit = total_ads = 0
-#     total_mpfees = total_net_sales = total_qty = 0
-#     total_returns = total_shipping = 0
-#     total_stdcost = total_ret_percent = 0
-
-#     for row in items:
-#         parent_asin = row['parent_asin']
-
-#         gross_qty = int(row['grossqty'] or 0)
-#         gross_sales = float(row['grosssales'] or 0)
-
-#         orders = parent_map.get(parent_asin, [])
-
-#         refund = rto = ads = mpfees = shipping_fee = 0
-#         return_units = 0
-
-#         for o in orders:
-#             oid = o['order__amazon_order_id']
-#             qty = o['quantity_ordered'] or 0
-
-#             f = finance_map.get(oid, {})
-
-#             r = float(f.get('refund') or 0)
-#             rto_amt = float(f.get('rto') or 0)
-
-#             refund += r
-#             rto += rto_amt
-#             ads += float(f.get('ads') or 0)
-
-#             mpfees += (
-#                 float(f.get('commission') or 0) +
-#                 float(f.get('fulfillment') or 0) +
-#                 float(f.get('other_fee') or 0)
-#             )
-
-#             shipping_fee += float(f.get('shipping_fee') or 0)
-
-#             if r < 0 or rto_amt < 0:
-#                 return_units += qty
-
-#         # ---------------- CALC ----------------
-#         net_qty = max(gross_qty - return_units, 0)
-#         net_sales = gross_sales + refund + rto
-
-#         total_cost = float(row.get('total_cost') or 0)
-
-#         profit = net_sales - abs(mpfees) - total_cost
-#         profit_margin = (profit / net_sales * 100) if net_sales else 0
-#         ret_percent = (return_units / net_qty * 100) if net_qty else 0
-
-#         results.append({
-#             "parent_asin": parent_asin,
-#             "name": row['title'],
-#             "image_url": row['image_url'],
-#             "grossqty": gross_qty,
-#             "netqty": net_qty,
-#             "grosssales": format_currency(gross_sales),
-#             "netsales": format_currency(net_sales),
-#             "ads": format_currency(ads),
-#             "mpfees": round(mpfees, 2),
-#             "profit": format_currency(profit),
-#             "grossprofitper": round(profit_margin, 2),
-#             "returnqty": return_units,
-#             "retpercent": round(ret_percent, 2),
-#             "stdcost": format_currency(total_cost),
-#         })
-
-#         # totals
-#         total_sales += gross_sales
-#         total_net_sales += net_sales
-#         total_profit += profit
-#         total_ads += ads
-#         total_mpfees += mpfees
-#         total_qty += net_qty
-#         total_returns += return_units
-#         total_stdcost += total_cost
-#         total_ret_percent += ret_percent
-
-#     return Response({
-#         "status": True,
-#         "message": "Success",
-#         "pagination": {
-#             "pageNo": page_no,
-#             "pageSize": page_size,
-#             "count": len(results)
-#         },
-#         "totals": {
-#             "grosssales": format_currency(total_sales),
-#             "netsales": format_currency(total_net_sales),
-#             "profit": format_currency(total_profit),
-#             "ads": format_currency(total_ads),
-#             "mpfees": format_currency(total_mpfees),
-#             "netqty": total_qty,
-#             "totalreturn": total_returns,
-#             "totalreturnper": round(total_ret_percent, 2),
-#             "stdcost": format_currency(total_stdcost),
-#         },
-#         "response": results[page_no * page_size:(page_no + 1) * page_size]
-#     })
-
-
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def amazon_profitability_parent(request):
@@ -4440,52 +4258,38 @@ def amazon_profitability_parent(request):
         marketplace_ids = [CHANNEL_MAP.get(ch) for ch in channels if CHANNEL_MAP.get(ch)]
         order_filter &= Q(order__marketplace_id__in=marketplace_ids)
 
+    # ---------------- PARENT FILTER (IMPORTANT) ----------------
+    parent_ids = filters.get("parentproductid", {}).get("IN", [])
+    if not parent_ids:
+        return Response({
+            "status": False,
+            "message": "parentproductid is required"
+        })
+
+    order_filter &= Q(parent_asin__in=parent_ids)
+
     # ---------------- DATE APPLY ----------------
     if from_date:
         order_filter &= Q(order__purchase_date__gte=from_date)
     if to_date:
         order_filter &= Q(order__purchase_date__lte=to_date)
 
-    # ---------------- ORDER ITEM AGG ----------------
+    # ---------------- CHILD ASIN DATA ----------------
     items = (
         OrderItem.objects
         .filter(order_filter)
         .values('asin', 'parent_asin')
         .annotate(
             title=Max('title'),
+            seller_sku=Max('seller_sku'),
             image_url=Max('image_url'),
             grossqty=Sum('quantity_ordered'),
             shipping_price=Sum('shipping_price'),
             total_cost=Sum(F('cost_price') * F('quantity_ordered')),
-            grosssales=Sum(F('item_price') * F('quantity_ordered'))
+            # grosssales=Sum(F('item_price') * F('quantity_ordered'))
+            grosssales=Sum('item_price'),
         )
     )
-
-    # ---------------- GROUP BY PARENT ----------------
-    parent_group_map = {}
-
-    for row in items:
-        parent = row['parent_asin'] or row['asin']
-
-        if parent not in parent_group_map:
-            parent_group_map[parent] = {
-                "title": row['title'],
-                "image_url": row['image_url'],
-                "grossqty": Decimal(0),
-                "grosssales": Decimal(0),
-                "shipping_price": Decimal(0),
-                "total_cost": Decimal(0),
-                "children": []
-            }
-
-        grp = parent_group_map[parent]
-
-        grp["grossqty"] += Decimal(row['grossqty'] or 0)
-        grp["grosssales"] += Decimal(row['grosssales'] or 0)
-        grp["shipping_price"] += Decimal(row['shipping_price'] or 0)
-        grp["total_cost"] += Decimal(row['total_cost'] or 0)
-
-        grp["children"].append(row['asin'])
 
     # ---------------- FINANCE ----------------
     finances_qs = FinancialEvent.objects.filter(user=user)
@@ -4527,8 +4331,7 @@ def amazon_profitability_parent(request):
 
     asin_map = {}
     for row in asin_orders:
-        key = row['parent_asin'] or row['asin']
-        asin_map.setdefault(key, []).append(row)
+        asin_map.setdefault(row['asin'], []).append(row)
 
     # ---------------- SKU MAP ----------------
     sku_asin_map = {
@@ -4542,15 +4345,21 @@ def amazon_profitability_parent(request):
     total_sales = total_profit = total_ads = Decimal(0)
     total_net_sales = total_qty = Decimal(0)
     total_returns = total_shipping = Decimal(0)
-    total_stdcost = total_ret_percent = Decimal(0)
     total_tcs = Decimal(0)
+    total_mpfees = Decimal(0)   
+    total_ret_percent = Decimal(0)  
+    total_stdcost = Decimal(0) 
 
-    for parent_asin, row in parent_group_map.items():
+    for row in items:
 
-        orders = asin_map.get(parent_asin, [])
+        asin = row['asin']
+        parent_asin = row['parent_asin']
+        child_sku = row['seller_sku']
+    
+        orders = asin_map.get(asin, [])
 
-        gross_qty = row['grossqty']
-        gross_sales = row['grosssales']
+        gross_qty = Decimal(row['grossqty'] or 0)
+        gross_sales = Decimal(row['grosssales'] or 0)
 
         refund = rto = ads = mpfees = shipping_fee = Decimal(0)
         return_units = Decimal(0)
@@ -4580,43 +4389,63 @@ def amazon_profitability_parent(request):
                 sku_asin_map=sku_asin_map
             )
 
-            for child in row["children"]:
-                if child in order_fee_map:
-                    t_new_charge += Decimal(order_fee_map[child]["fee"])
-                    tcs_total += Decimal(order_fee_map[child]["tcs"])
+            if asin in order_fee_map:
+                t_new_charge += Decimal(order_fee_map[asin]["fee"])
+                tcs_total += Decimal(order_fee_map[asin]["tcs"])
 
-            if refund < 0 or rto < 0:
+            r = Decimal(f.get('refund') or 0)
+            rto_amt = Decimal(f.get('rto') or 0)
+
+            refund += r
+            rto += rto_amt
+
+            if r < 0 or rto_amt < 0:
                 return_units += qty
 
         net_qty = max(gross_qty - return_units, 0)
         net_sales = gross_sales + refund + rto
-        shipping_final = row['shipping_price']
-
-        total_cost = row['total_cost']
+        shipping_final = Decimal(row['shipping_price'] or 0)
+        total_cost = Decimal(row['total_cost'] or 0)
 
         profit = net_sales + t_new_charge + shipping_final - total_cost + tcs_total
         profit_margin = (profit / net_sales * 100) if net_sales else 0
-        tacos = (ads / gross_sales * 100) if gross_sales else 0
+
         ret_percent = (return_units / net_qty * 100) if net_qty else 0
+        
 
         results.append({
-            "asin": parent_asin,
+            "asin": asin,
+            "parent_asin": parent_asin,
             "name": row['title'],
+            "child_sku": clean_sku(child_sku),
             "image_url": row['image_url'],
+            "channel": "Amazon-India",
+            "channel1": "Amazon-India",
+
             "grossqty": int(gross_qty),
             "netqty": int(net_qty),
+
             "grosssales": format_currency(gross_sales),
             "netsales": format_currency(net_sales),
+
             "ads": format_currency(ads),
+
+            "new_mpfees": format_currency(t_new_charge),
+            "shippingfees": format_currency(shipping_final),
+            "tcs": format_currency(tcs_total),
+
             "profit": format_currency(profit),
             "grossprofitper": round(profit_margin, 2),
+            "retpercent": round(ret_percent, 2),
             "returnqty": int(return_units),
-            "retpercent": f"{round(ret_percent, 2)}%",
-            "tacos": round(tacos, 2),
-            "id": parent_asin,
+            # "tacos": round(tacos, 2),
+            "gst": format_currency(tcs_total),
+
+            "id": asin,
             "stdcost": format_currency(total_cost),
-            "redirecturl": f"https://www.amazon.in/dp/{parent_asin}",
+            "redirecturl": f"https://www.amazon.in/dp/{asin}" if asin else None,
         })
+
 
         total_sales += gross_sales
         total_net_sales += net_sales
@@ -4625,9 +4454,10 @@ def amazon_profitability_parent(request):
         total_qty += net_qty
         total_returns += return_units
         total_shipping += shipping_final
-        total_stdcost += total_cost
-        total_ret_percent += ret_percent
         total_tcs += tcs_total
+        total_mpfees += t_new_charge
+        total_ret_percent += ret_percent
+        total_stdcost += total_cost
 
     return Response({
         "status": True,
@@ -4639,15 +4469,25 @@ def amazon_profitability_parent(request):
         },
         "totals": {
             "ads": format_currency(total_ads),
-            "netqty": int(total_qty),
-            "totalreturn": int(total_returns),
+            "netqty": total_qty,
+            "totalreturn": total_returns,
             "totalreturnper": f"{round(total_ret_percent, 2)}%",
             "grosssales": format_currency(total_sales),
             "netsales": format_currency(total_net_sales),
             "profit": format_currency(total_profit),
+            "grossprofitper": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
+            "mpfees": format_currency(total_mpfees),
+            "total_new_mpfees": format_currency(total_mpfees),
+            "shippingfees": format_currency(total_shipping),
+            "tacos": (total_ads / total_sales * 100) if total_sales else 0,
+            "stdcost": format_currency(total_stdcost),
+            "totalgst": format_currency(total_tcs),
+            "tcs": format_currency(total_tcs),
         },
         "response": results[page_no * page_size:(page_no + 1) * page_size]
     })
+
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
