@@ -2,6 +2,7 @@ export const HEADER_ACTIONS = {
   '/profit/profitMonthlyView': ['export', 'sku'],
   '/profit/profitTableView': ['orderprofit', 'export', 'lowest'],
   '/profit/profittabledetails': ['orderprofit', 'export', 'lowest'],
+  '/profit/profitSecondtable': ['orderprofit', 'export', 'lowest'],
   '/profit/profitThirdtable/': ['export', 'lowest'],
   '/profit/salesTrend': ['export'],
   '/profit/salesdetails/': ['export'],

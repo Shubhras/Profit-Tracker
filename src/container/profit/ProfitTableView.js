@@ -933,7 +933,21 @@ export default function ProfitTableView() {
                       ) : col.dataIndex === 'profitPercent' ? (
                         <span style={{ color: Number(value) < 0 ? 'red' : 'green' }}>{value ?? ''}%</span>
                       ) : (
-                        value ?? ''
+                        <button
+                          type="button"
+                          className="cursor-pointer bg-transparent border-none"
+                          onClick={() =>
+                            setDetailModal({
+                              open: true,
+                              record: totals,
+                              type: 'qty',
+                              modalLabel: ' Channel',
+                              modalValue: 'TOTAL',
+                            })
+                          }
+                        >
+                          {value ?? ''}
+                        </button>
                       )}
                     </Table.Summary.Cell>
                   );
