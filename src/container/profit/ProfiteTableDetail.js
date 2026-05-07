@@ -111,6 +111,7 @@ export default function ProfitDetailsView() {
         returnPercent: item.retpercent || 0,
 
         netsales: item.netsales || 0,
+        tcs: item.tcs || 0,
         mpfees: item.new_mpfees || 0,
         // netasp: Number(item.netasp) || 0,
         // net_discount: Number(item.net_discount) || 0,
@@ -300,6 +301,23 @@ export default function ProfitDetailsView() {
       dataIndex: 'netsales',
       align: 'center',
       sorter: (a, b) => a.netsales - b.netsales,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
+          }
+        >
+          {v}
+        </button>
+      ),
+    },
+    {
+      title: 'TCS-IGST',
+      dataIndex: 'tcs',
+      align: 'center',
+      sorter: (a, b) => a.tcs - b.tcs,
       render: (v, record) => (
         <button
           type="button"
@@ -829,6 +847,7 @@ export default function ProfitDetailsView() {
 
     { key: 'grossSales', label: 'Gross Sales' },
     { key: 'netsales', label: 'Net Sales' },
+    { key: 'tcs', label: 'tcs' },
     { key: 'mpfees', label: 'mpfees' },
     { key: 'stdcost', label: 'Std Cost' },
 
@@ -862,6 +881,7 @@ export default function ProfitDetailsView() {
     'returnPercent',
     'mpfees',
     'netsales',
+    'tcs',
     'stdcost',
     'shipping',
     'adSpend',
@@ -935,6 +955,7 @@ export default function ProfitDetailsView() {
                       returnqty: 'totalreturn',
                       returnPercent: 'totalreturnper',
                       netsales: 'netsales',
+                      tcs: 'tcs',
                       mpfees: 'total_new_mpfees',
                       stdcost: 'stdcost',
                       shipping: 'shippingfees',
@@ -981,7 +1002,21 @@ export default function ProfitDetailsView() {
                             {col.dataIndex === 'profitPercent' ? `${value ?? 0}%` : value ?? 0}
                           </span>
                         ) : (
-                          value ?? 0
+                          <button
+                            type="button"
+                            className="cursor-pointer bg-transparent border-none"
+                            onClick={() =>
+                              setDetailModal({
+                                open: true,
+                                record: totals,
+                                type: 'qty',
+                                modalLabel: ' ASIN',
+                                modalValue: 'TOTAL',
+                              })
+                            }
+                          >
+                            {value ?? 0}
+                          </button>
                         )}
                       </Table.Summary.Cell>
                     );

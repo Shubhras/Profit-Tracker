@@ -8,13 +8,17 @@ import {
   CalendarOutlined,
   PlusOutlined,
   MinusOutlined,
+  RetweetOutlined,
+  HeatMapOutlined,
 } from '@ant-design/icons';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Line } from 'recharts';
 import { useSelector } from 'react-redux';
 import AdsTab from './AdsTab';
 import ReturnShippingTab from './ReturnShippingTab';
+import Return from './Return';
+import Maps from './Maps';
 
-export default function ProfitModal({ open, record, onClose, type, modalLabel, modalValue }) {
+export default function ProfitModal({ open, record, onClose, type, modalLabel, modalValue, showExtraTabs = false }) {
   if (!open) return null;
   const { dateRange } = useSelector((state) => state.dashboard);
   const formatDate = (date) => {
@@ -141,6 +145,35 @@ export default function ProfitModal({ open, record, onClose, type, modalLabel, m
             <CarOutlined />
             Return & Shipping
           </button>
+
+          {showExtraTabs && (
+            <>
+              <button
+                type="button"
+                onClick={() => setActiveTab('extrareturn')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition border-b-2 ${
+                  activeTab === 'extrareturn'
+                    ? 'bg-green-100 text-green-700 border-green-600 font-semibold'
+                    : 'text-black font-semibold border-transparent hover:bg-gray-100'
+                }`}
+              >
+                <RetweetOutlined />
+                Returns
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('maps')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition border-b-2 ${
+                  activeTab === 'maps'
+                    ? 'bg-green-100 text-green-700 border-green-600 font-semibold'
+                    : 'text-black font-semibold border-transparent hover:bg-gray-100'
+                }`}
+              >
+                <HeatMapOutlined />
+                Maps
+              </button>
+            </>
+          )}
         </div>
 
         {activeTab === 'finance' && (
@@ -470,6 +503,10 @@ export default function ProfitModal({ open, record, onClose, type, modalLabel, m
         {activeTab === 'ads' && <AdsTab />}
 
         {activeTab === 'returns' && <ReturnShippingTab />}
+
+        {activeTab === 'extrareturn' && <Return />}
+
+        {activeTab === 'maps' && <Maps />}
       </div>
     </div>
   );
