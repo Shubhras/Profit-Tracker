@@ -22,7 +22,7 @@ class OrderItemInline(admin.TabularInline):  # or StackedInline
 
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
-    list_display = ('id','seller_sku','parent_sku', 'parent_asin', 'asin','cost_price', 'order','shipping_price','shipping_income','quantity_claimed','claim_type', 'quantity_ordered', 'item_price', 'created_at')
+    list_display = ('id','seller_sku','parent_sku', 'parent_asin', 'asin','cost_price', 'order','shipping_price','shipping_income','shipping_expense', 'quantity_claimed','claim_type', 'quantity_ordered', 'item_price', 'created_at')
     list_filter = ('created_at','claim_type')
     search_fields = ('seller_sku','asin','parent_asin', 'title', 'order__amazon_order_id','order_item_id')
 
@@ -33,7 +33,7 @@ class AmazonAccountAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id','amazon_order_id', 'amazon_account', 'purchase_date', 'order_status', 'total_amount', 'currency_code', 'user')
+    list_display = ('id','amazon_order_id','items_shipped', 'amazon_account', 'purchase_date', 'order_status', 'total_amount', 'currency_code', 'user')
     list_filter = ('amazon_account', 'order_status', 'fulfillment_channel', 'purchase_date')
     search_fields = ('amazon_order_id', 'buyer_name', 'city')
     date_hierarchy = 'purchase_date'
