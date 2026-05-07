@@ -22,6 +22,7 @@ export default function ProfitDetailsView() {
     'netqty',
     'returnqty',
     'returnPercent',
+    'tcs',
     'netsales',
     'shipping',
     'adSpend',
@@ -77,15 +78,17 @@ export default function ProfitDetailsView() {
     //     "ads": "withAds"
     //   },
     pagination: {
-      pageNo: 0,
-      pageSize: 25,
+      // pageNo: 0,
+      // pageSize: 25,
+      pageNo: pagination.current - 1,
+      pageSize: pagination.pageSize,
     },
   };
 
   useEffect(() => {
     if (!id) return;
     dispatch(getProfitDetailsByParentId(apipayload));
-  }, [id, dateRange, globalChannel]);
+  }, [id, dateRange, globalChannel, pagination]);
 
   const dataSource =
     profitData?.response?.map((item, index) => ({
@@ -98,6 +101,7 @@ export default function ProfitDetailsView() {
       returnqty: item.returnqty || 0,
       returnPercent: item.retpercent || 0,
       netsales: item.netsales,
+      tcs: item.tcs || 0,
       shipping: item.shippingfees,
       adSpend: item.ads,
       gst: item.gst,
@@ -135,6 +139,7 @@ export default function ProfitDetailsView() {
     { label: 'Gross Sales', key: 'grossSales' },
 
     { label: 'Net Sales', key: 'netsales' },
+    { label: 'TCS-IGST', key: 'tcs' },
     { label: 'MP Fees', key: 'mpfees' },
     { label: 'Shipping', key: 'shipping' },
 
@@ -241,7 +246,9 @@ export default function ProfitDetailsView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+          }
         >
           {v}
         </button>
@@ -256,7 +263,9 @@ export default function ProfitDetailsView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'returns' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'returns', modalLabel: 'OrderId', modalValue: record.view })
+          }
         >
           {v}
         </button>
@@ -271,7 +280,9 @@ export default function ProfitDetailsView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'returns' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'returns', modalLabel: 'OrderId', modalValue: record.view })
+          }
         >
           {v}%
         </button>
@@ -286,7 +297,26 @@ export default function ProfitDetailsView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+          }
+        >
+          {v}
+        </button>
+      ),
+    },
+    {
+      title: 'TCS-IGST',
+      dataIndex: 'tcs',
+      align: 'center',
+      sorter: (a, b) => a.tcs - b.tcs,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
+          }
         >
           {v}
         </button>
@@ -297,7 +327,17 @@ export default function ProfitDetailsView() {
       dataIndex: 'mpfees',
       align: 'center',
       sorter: (a, b) => a.mpfees - b.mpfees,
-      render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'Std Cost',
@@ -308,7 +348,9 @@ export default function ProfitDetailsView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+          }
         >
           {v}
         </button>
@@ -323,7 +365,9 @@ export default function ProfitDetailsView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+          }
         >
           {v}
         </button>
@@ -338,7 +382,9 @@ export default function ProfitDetailsView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+          }
         >
           {v}
         </button>
@@ -353,7 +399,9 @@ export default function ProfitDetailsView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+          }
         >
           {v}
         </button>
@@ -370,7 +418,9 @@ export default function ProfitDetailsView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+          }
         >
           {v}
         </button>
@@ -385,7 +435,9 @@ export default function ProfitDetailsView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+          }
         >
           {v}
         </button>
@@ -395,85 +447,226 @@ export default function ProfitDetailsView() {
       title: 'Gross Qty',
       dataIndex: 'grossqty',
       align: 'center',
-      render: (v) => v ?? 0,
+      // render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'Net ASP',
       dataIndex: 'netasp',
       align: 'center',
-      render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'MRP',
       dataIndex: 'mrp',
       align: 'center',
-      render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'MRP Net Discount%',
       dataIndex: 'mrpNetDiscount',
       align: 'center',
-      render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'Gross Sales',
       dataIndex: 'grossSales',
       align: 'center',
-      render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'Account Charges',
       dataIndex: 'accountCharges',
       align: 'center',
-      render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'Other Expenses',
       dataIndex: 'otherExpenses',
       align: 'center',
-      render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'Gross Profit',
       dataIndex: 'grossProfit',
       align: 'center',
-      render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'Settled Amount',
       dataIndex: 'settledAmount',
       align: 'center',
-      render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'TACOS',
       dataIndex: 'tacos',
       align: 'center',
-      render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'Gross Profit %',
       dataIndex: 'grossProfitPercent',
       align: 'center',
-      render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: '% of Sales',
       dataIndex: 'percentOfSales',
       align: 'center',
-      render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'DRR',
       dataIndex: 'drr',
       align: 'center',
-      render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'Last Order Date',
       dataIndex: 'lastOrderDate',
       align: 'center',
-      render: (v) => v || '-',
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+          }
+        >
+          {v ?? '-'}
+        </button>
+      ),
     },
     {
       title: (
@@ -575,7 +768,10 @@ export default function ProfitDetailsView() {
             loading={loading}
             locale={{ emptyText: 'No Data Found' }}
             pagination={{
-              ...pagination,
+              // ...pagination,
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: profitData?.pagination?.count || 0,
               showSizeChanger: true,
               pageSizeOptions: ['10', '20', '50', '100'],
               showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
@@ -601,6 +797,7 @@ export default function ProfitDetailsView() {
                       returnqty: 'total_returns',
                       returnPercent: 'total_ret_percent',
                       netsales: 'netsales',
+                      tcs: 'tcs',
                       shipping: 'shipping',
                       adSpend: 'adSpend',
                       gst: 'gst',
@@ -639,7 +836,21 @@ export default function ProfitDetailsView() {
                         ) : col.dataIndex === 'profitPercent' ? (
                           Number(value || 0).toFixed(2)
                         ) : (
-                          value ?? 0
+                          <button
+                            type="button"
+                            className="cursor-pointer bg-transparent border-none"
+                            onClick={() =>
+                              setDetailModal({
+                                open: true,
+                                record: profitData?.totals,
+                                type: 'qty',
+                                modalLabel: ' OrderId',
+                                modalValue: 'TOTAL',
+                              })
+                            }
+                          >
+                            {value ?? 0}
+                          </button>
                         )}
                       </Table.Summary.Cell>
                     );
@@ -706,6 +917,9 @@ export default function ProfitDetailsView() {
         open={detailModal.open}
         record={detailModal.record}
         type={detailModal.type}
+        modalLabel={detailModal.modalLabel}
+        modalValue={detailModal.modalValue}
+        showExtraTabs
         onClose={() => setDetailModal({ open: false, record: null, type: '' })}
       />
     </>

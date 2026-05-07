@@ -65,6 +65,7 @@ const AuthInfo = React.memo(() => {
     '/reconcile/os-payment',
     '/reconcile/return/summary',
     '/profit/profitThirdtable/',
+    '/profit/profitSecondtable/',
   ];
 
   const hideCalendar = HIDE_CALENDAR.some((route) => location.pathname.includes(route));

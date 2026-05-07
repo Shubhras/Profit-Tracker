@@ -74,8 +74,8 @@ export default function ProfitViewSecondTable() {
       },
 
       pagination: {
-        pageNo: 0,
-        pageSize: 25,
+        pageNo: pagination.current - 1,
+        pageSize: pagination.pageSize,
       },
     };
   };
@@ -106,6 +106,7 @@ export default function ProfitViewSecondTable() {
         returnPercent: item.retpercent || 0,
 
         netsales: item.netsales || 0,
+        tcs: item.tcs || 0,
         mpfees: item.new_mpfees || 0,
         // netasp: Number(item.netasp) || 0,
         // net_discount: Number(item.net_discount) || 0,
@@ -119,6 +120,22 @@ export default function ProfitViewSecondTable() {
         profit: item.profit || 0,
         // profitPercent: Number(item.grossprofitper) || 0,
         profitPercent: Math.round(Number(item.grossprofitper)) || 0,
+
+        grossqty: item.grossqty || 0,
+        netasp: item.netasp || 0,
+        mrp: item.mrp || 0,
+        mrpNetDiscount: item.mrp_net_discount || 0,
+        grossSales: item.grosssales || 0,
+        // mpfees: item.new_mpfees || 0,
+        accountCharges: item.account_charges || 0,
+        otherExpenses: item.other_expenses || 0,
+        grossProfit: item.grossprofit || 0,
+        settledAmount: item.settled_amount || 0,
+        tacos: item.tacos || 0,
+        grossProfitPercent: item.grossprofit_percent || 0,
+        percentOfSales: item.percent_of_sales || 0,
+        drr: item.drr || 0,
+        lastOrderDate: item.last_order_date || '',
 
         // settledamount: Number(item.profit_settled_amount) || 0,
       })) || [];
@@ -254,7 +271,9 @@ export default function ProfitViewSecondTable() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
+          }
         >
           {v}
         </button>
@@ -269,7 +288,9 @@ export default function ProfitViewSecondTable() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'returns' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'returns', modalLabel: 'SKU', modalValue: record.view })
+          }
         >
           {v}
         </button>
@@ -284,7 +305,9 @@ export default function ProfitViewSecondTable() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'returns' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'returns', modalLabel: 'SKU', modalValue: record.view })
+          }
         >
           {v}%
         </button>
@@ -299,7 +322,26 @@ export default function ProfitViewSecondTable() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
+          }
+        >
+          {v}
+        </button>
+      ),
+    },
+    {
+      title: 'TCS-IGST',
+      dataIndex: 'tcs',
+      align: 'center',
+      sorter: (a, b) => a.tcs - b.tcs,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
+          }
         >
           {v}
         </button>
@@ -314,7 +356,9 @@ export default function ProfitViewSecondTable() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
+          }
         >
           {v}
         </button>
@@ -341,7 +385,9 @@ export default function ProfitViewSecondTable() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
+          }
         >
           {v}
         </button>
@@ -356,7 +402,9 @@ export default function ProfitViewSecondTable() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
+          }
         >
           {v}
         </button>
@@ -371,7 +419,9 @@ export default function ProfitViewSecondTable() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
+          }
         >
           {v}
         </button>
@@ -386,7 +436,9 @@ export default function ProfitViewSecondTable() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
+          }
         >
           {v}
         </button>
@@ -417,7 +469,9 @@ export default function ProfitViewSecondTable() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: record.channel, modalValue: record.view })
+          }
         >
           {v}
         </button>
@@ -428,10 +482,32 @@ export default function ProfitViewSecondTable() {
       dataIndex: 'profitPercent',
       align: 'center',
       sorter: (a, b) => a.profitPercent - b.profitPercent,
-      render: (v) => {
+      render: (v, record) => {
         const value = Math.round(v || 0);
 
-        return <span style={{ color: value < 0 ? 'red' : 'green' }}>{value}%</span>;
+        return (
+          <button
+            type="button"
+            className="cursor-pointer bg-transparent border-none"
+            onClick={() =>
+              setDetailModal({
+                open: true,
+                record,
+                type: 'qty',
+                modalLabel: 'SKU',
+                modalValue: record.view,
+              })
+            }
+          >
+            <span
+              style={{
+                color: value < 0 ? 'red' : 'green',
+              }}
+            >
+              {value}%
+            </span>
+          </button>
+        );
       },
     },
     {
@@ -439,70 +515,191 @@ export default function ProfitViewSecondTable() {
       dataIndex: 'netmrp',
       align: 'center',
       sorter: (a, b) => a.netmrp - b.netmrp,
-      render: (v) => v ?? 0,
+      // render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
+    },
+    {
+      title: 'Gross Sales',
+      dataIndex: 'grossSales',
+      align: 'center',
+      sorter: (a, b) => a.grossSales - b.grossSales,
+      // render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'MRP Net Discount%',
       dataIndex: 'mrpNetDiscount',
       align: 'center',
       sorter: (a, b) => a.mrpNetDiscount - b.mrpNetDiscount,
-      render: (v) => v ?? 0,
+      // render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'MRP Customer Discount%',
       dataIndex: 'mrpCustomerDiscount',
       align: 'center',
       sorter: (a, b) => a.mrpCustomerDiscount - b.mrpCustomerDiscount,
-      render: (v) => v ?? 0,
+      // render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'Account Charges',
       dataIndex: 'accountCharges',
       align: 'center',
       sorter: (a, b) => a.accountCharges - b.accountCharges,
-      render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'Other Expenses',
       dataIndex: 'otherExpenses',
       align: 'center',
       sorter: (a, b) => a.otherExpenses - b.otherExpenses,
-      render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'TACOS',
       dataIndex: 'tacos',
       align: 'center',
       sorter: (a, b) => a.tacos - b.tacos,
-      render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'Gross Profit %',
       dataIndex: 'grossProfitPercent',
       align: 'center',
       sorter: (a, b) => a.grossProfitPercent - b.grossProfitPercent,
-      render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: '% of Sales',
       dataIndex: 'percentOfSales',
       align: 'center',
       sorter: (a, b) => a.percentOfSales - b.percentOfSales,
-      render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'DRR',
       dataIndex: 'drr',
       align: 'center',
       sorter: (a, b) => a.drr - b.drr,
-      render: (v) => v ?? 0,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
     },
     {
       title: 'Last Order Date',
       dataIndex: 'lastOrderDate',
       align: 'center',
       sorter: (a, b) => a.lastOrderDate - b.lastOrderDate,
-      render: (v) => v || '-',
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
+          }
+        >
+          {v ?? '-'}
+        </button>
+      ),
     },
 
     // {
@@ -616,6 +813,8 @@ export default function ProfitViewSecondTable() {
 
     { key: 'grossSales', label: 'Gross Sales' },
     { key: 'netsales', label: 'Net Sales' },
+    { key: 'tcs', label: 'TCS-IGST' },
+
     { key: 'mpfees', label: 'mpfees' },
     { key: 'stdcost', label: 'Std Cost' },
 
@@ -647,6 +846,7 @@ export default function ProfitViewSecondTable() {
     'netQty',
     'returnqty',
     'returnPercent',
+    'tcs',
     'mpfees',
     'netsales',
     'stdcost',
@@ -698,7 +898,10 @@ export default function ProfitViewSecondTable() {
             loading={loading}
             locale={{ emptyText: 'No Data Found' }}
             pagination={{
-              ...pagination,
+              // ...pagination,
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: profitData?.pagination?.count || 0,
               showSizeChanger: true,
               pageSizeOptions: ['10', '20', '50', '100'],
               showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
@@ -722,6 +925,7 @@ export default function ProfitViewSecondTable() {
                       returnqty: 'totalreturn',
                       returnPercent: 'totalreturnper',
                       netsales: 'netsales',
+                      tcs: 'tcs',
                       mpfees: 'total_new_mpfees',
                       stdcost: 'stdcost',
                       shipping: 'shippingfees',
@@ -768,7 +972,21 @@ export default function ProfitViewSecondTable() {
                             {col.dataIndex === 'profitPercent' ? `${value ?? 0}%` : value ?? 0}
                           </span>
                         ) : (
-                          value ?? 0
+                          <button
+                            type="button"
+                            className="cursor-pointer bg-transparent border-none"
+                            onClick={() =>
+                              setDetailModal({
+                                open: true,
+                                record: totals,
+                                type: 'qty',
+                                modalLabel: ' SKU',
+                                modalValue: 'TOTAL',
+                              })
+                            }
+                          >
+                            {value ?? 0}
+                          </button>
                         )}
                       </Table.Summary.Cell>
                     );
@@ -828,6 +1046,8 @@ export default function ProfitViewSecondTable() {
         open={detailModal.open}
         record={detailModal.record}
         type={detailModal.type}
+        modalLabel={detailModal.modalLabel}
+        modalValue={detailModal.modalValue}
         onClose={() => setDetailModal({ open: false, record: null, type: '' })}
       />
     </>

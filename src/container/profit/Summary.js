@@ -512,10 +512,10 @@ export default function Summary() {
                 <Row>
                   <Col span={10}>Claimed</Col>
                   <Col span={7} className="text-center">
-                    {dashboardData?.breakdown_table?.claimqty?.qty || 0}
+                    {dashboardData?.breakdown_table?.claim?.qty || 0}
                   </Col>
                   <Col span={7} className="text-right">
-                    {dashboardData?.breakdown_table?.claimsales?.amount || 0}
+                    {dashboardData?.breakdown_table?.claim?.amount || 0}
                   </Col>
                 </Row>
                 <Row>
