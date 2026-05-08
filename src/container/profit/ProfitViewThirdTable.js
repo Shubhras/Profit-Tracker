@@ -66,7 +66,7 @@ export default function ProfitDetailsView() {
   const apipayload = {
     filters: {
       fromDate: dateRange?.fromDate || null,
-      endDate: dateRange?.endDate || null,
+      toDate: dateRange?.endDate || null,
       channel: {
         IN: globalChannel,
       },
@@ -685,7 +685,9 @@ export default function ProfitDetailsView() {
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
           <button
             type="button"
-            onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+            onClick={() =>
+              setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+            }
             style={{
               border: '1px solid #ffc0cb',
               background: '#ffe4e9',
@@ -827,7 +829,15 @@ export default function ProfitDetailsView() {
                           <div className="flex gap-2 justify-center">
                             <button
                               type="button"
-                              onClick={() => setDetailModal({ open: true, record: profitData?.totals, type: 'qty' })}
+                              onClick={() =>
+                                setDetailModal({
+                                  open: true,
+                                  record: profitData?.totals,
+                                  type: 'qty',
+                                  modalLabel: 'OrderId',
+                                  modalValue: 'Total',
+                                })
+                              }
                               className="w-[30px] h-[30px] border border-[#ffc0cb] rounded-[4px] bg-[#ffe4e9] flex items-center justify-center"
                             >
                               <BarChartOutlined style={{ fontSize: 14, color: '#ff4d6d' }} />
@@ -845,7 +855,7 @@ export default function ProfitDetailsView() {
                                 record: profitData?.totals,
                                 type: 'qty',
                                 modalLabel: ' OrderId',
-                                modalValue: 'TOTAL',
+                                modalValue: 'Total',
                               })
                             }
                           >
