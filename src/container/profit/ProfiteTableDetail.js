@@ -112,7 +112,7 @@ export default function ProfitDetailsView() {
 
         netsales: item.netsales || 0,
         tcs: item.tcs || 0,
-        mpfees: item.new_mpfees || 0,
+        mpfees: item.estimatefees || 0,
         // netasp: Number(item.netasp) || 0,
         // net_discount: Number(item.net_discount) || 0,
 
@@ -757,7 +757,7 @@ export default function ProfitDetailsView() {
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
           <button
             type="button"
-            onClick={() => navigate(`../profitSecondtable/${record.asin}`)}
+            onClick={() => navigate(`../second/${record.asin}`)}
             style={{
               border: '1px solid #d9d9d9',
               background: 'rgb(202, 221, 254)',
@@ -956,7 +956,7 @@ export default function ProfitDetailsView() {
                       returnPercent: 'totalreturnper',
                       netsales: 'netsales',
                       tcs: 'tcs',
-                      mpfees: 'total_new_mpfees',
+                      mpfees: 'estimatefees',
                       stdcost: 'stdcost',
                       shipping: 'shippingfees',
                       adSpend: 'ads',
@@ -986,7 +986,15 @@ export default function ProfitDetailsView() {
                           <div className="flex gap-2 justify-end">
                             <button
                               type="button"
-                              onClick={() => setDetailModal({ open: true, record: totals, type: 'qty' })}
+                              onClick={() =>
+                                setDetailModal({
+                                  open: true,
+                                  record: totals,
+                                  type: 'qty',
+                                  modalLabel: 'ASIN',
+                                  modalValue: 'Total',
+                                })
+                              }
                               className="w-[30px] h-[30px] border border-[#ffc0cb] rounded-[4px] bg-[#ffe4e9] flex items-center justify-center"
                             >
                               <BarChartOutlined style={{ fontSize: 14, color: '#ff4d6d' }} />

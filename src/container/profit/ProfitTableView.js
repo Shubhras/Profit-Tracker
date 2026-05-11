@@ -275,7 +275,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v}
         </button>
@@ -290,7 +292,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v}
         </button>
@@ -305,7 +309,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'returns' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'returns', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v}
         </button>
@@ -320,7 +326,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v}
         </button>
@@ -335,7 +343,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v}
         </button>
@@ -350,7 +360,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v}
         </button>
@@ -365,7 +377,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v}
         </button>
@@ -380,7 +394,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'returns' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'returns', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v}
         </button>
@@ -395,7 +411,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'ads' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'ads', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v}
         </button>
@@ -410,7 +428,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'stdcost' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'stdcost', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v}
         </button>
@@ -425,7 +445,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v}
         </button>
@@ -440,7 +462,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v}
         </button>
@@ -463,7 +487,9 @@ export default function ProfitTableView() {
           type="button"
           className="cursor-pointer bg-transparent border-none"
           style={{ color: v < 0 ? 'red' : 'green' }}
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v}%
         </button>
@@ -478,7 +504,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v ?? 0}
         </button>
@@ -493,7 +521,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v ?? 0}
         </button>
@@ -508,7 +538,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v ?? 0}
         </button>
@@ -523,7 +555,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v ?? 0}
         </button>
@@ -538,7 +572,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'charges' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v ?? 0}
         </button>
@@ -553,7 +589,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'expenses' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v ?? 0}
         </button>
@@ -568,7 +606,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'ads' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v ?? 0}
         </button>
@@ -583,7 +623,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'profit' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v ?? 0}
         </button>
@@ -598,7 +640,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'sales' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v ?? 0}
         </button>
@@ -613,7 +657,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'drr' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v ?? 0}
         </button>
@@ -628,7 +674,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'drr' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v ?? 0}
         </button>
@@ -644,7 +692,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'drr' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v ?? 0}
         </button>
@@ -659,7 +709,9 @@ export default function ProfitTableView() {
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'drr' })}
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
+          }
         >
           {v ?? 0}
         </button>
@@ -698,7 +750,7 @@ export default function ProfitTableView() {
           <button
             type="button"
             onClick={() =>
-              navigate('/admin/profit/profittabledetails', {
+              navigate('/admin/profit/profitTableView/details', {
                 state: { channels: [record.channel], type: 'single' },
               })
             }
@@ -924,7 +976,15 @@ export default function ProfitTableView() {
                         <div className="flex gap-2 justify-end">
                           <button
                             type="button"
-                            onClick={() => setDetailModal({ open: true, record: totals, type: 'qty' })}
+                            onClick={() =>
+                              setDetailModal({
+                                open: true,
+                                record: totals,
+                                type: 'qty',
+                                modalLabel: 'Channel',
+                                modalValue: 'Total',
+                              })
+                            }
                             className="w-[30px] h-[30px] border border-[#ffc0cb] rounded-[4px] bg-[#ffe4e9] flex items-center justify-center"
                           >
                             <BarChartOutlined style={{ fontSize: 14, color: '#ff4d6d' }} />
@@ -942,7 +1002,7 @@ export default function ProfitTableView() {
                               record: totals,
                               type: 'qty',
                               modalLabel: ' Channel',
-                              modalValue: 'TOTAL',
+                              modalValue: 'Total',
                             })
                           }
                         >

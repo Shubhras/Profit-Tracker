@@ -107,7 +107,7 @@ export default function ProfitViewSecondTable() {
 
         netsales: item.netsales || 0,
         tcs: item.tcs || 0,
-        mpfees: item.new_mpfees || 0,
+        mpfees: item.estimatefees || 0,
         // netasp: Number(item.netasp) || 0,
         // net_discount: Number(item.net_discount) || 0,
 
@@ -130,7 +130,7 @@ export default function ProfitViewSecondTable() {
         accountCharges: item.account_charges || 0,
         otherExpenses: item.other_expenses || 0,
         grossProfit: item.grossprofit || 0,
-        settledAmount: item.settled_amount || 0,
+        // settledAmount: item.settled_amount || 0,
         tacos: item.tacos || 0,
         grossProfitPercent: item.grossprofit_percent || 0,
         percentOfSales: item.percent_of_sales || 0,
@@ -725,7 +725,7 @@ export default function ProfitViewSecondTable() {
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
           <button
             type="button"
-            onClick={() => navigate(`../profitThirdtable/${record.asin}`)}
+            onClick={() => navigate(`../third/${record.asin}`)}
             style={{
               border: '1px solid #d9d9d9',
               background: 'rgb(202, 221, 254)',
@@ -766,6 +766,8 @@ export default function ProfitViewSecondTable() {
                 open: true,
                 record,
                 type: 'qty',
+                modalLabel: 'SKU',
+                modalValue: record.view,
               });
             }}
             style={{
@@ -830,7 +832,7 @@ export default function ProfitViewSecondTable() {
     // { key: 'grossprofit', label: 'Gross Profit' },
     { key: 'profit', label: 'Profit' },
 
-    { key: 'settledAmount', label: 'Settled Amount' },
+    // { key: 'settledAmount', label: 'Settled Amount' },
     { key: 'tacos', label: 'TACOS' },
     { key: 'grossProfitPercent', label: 'Gross Profit %' },
 
@@ -926,7 +928,7 @@ export default function ProfitViewSecondTable() {
                       returnPercent: 'totalreturnper',
                       netsales: 'netsales',
                       tcs: 'tcs',
-                      mpfees: 'total_new_mpfees',
+                      mpfees: 'estimatefees',
                       stdcost: 'stdcost',
                       shipping: 'shippingfees',
                       adSpend: 'ads',
@@ -956,7 +958,15 @@ export default function ProfitViewSecondTable() {
                           <div className="flex gap-2 justify-end">
                             <button
                               type="button"
-                              onClick={() => setDetailModal({ open: true, record: totals, type: 'qty' })}
+                              onClick={() =>
+                                setDetailModal({
+                                  open: true,
+                                  record: totals,
+                                  type: 'qty',
+                                  modalLabel: 'SKU',
+                                  modalValue: 'Total',
+                                })
+                              }
                               className="w-[30px] h-[30px] border border-[#ffc0cb] rounded-[4px] bg-[#ffe4e9] flex items-center justify-center"
                             >
                               <BarChartOutlined style={{ fontSize: 14, color: '#ff4d6d' }} />
@@ -981,7 +991,7 @@ export default function ProfitViewSecondTable() {
                                 record: totals,
                                 type: 'qty',
                                 modalLabel: ' SKU',
-                                modalValue: 'TOTAL',
+                                modalValue: 'Total',
                               })
                             }
                           >

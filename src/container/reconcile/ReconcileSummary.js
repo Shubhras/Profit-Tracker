@@ -6,6 +6,7 @@ import { DownloadOutlined } from '@ant-design/icons';
 // import { globalizeLocalizer } from 'react-big-calendar';
 import { PageHeader } from '../../components/page-headers/page-headers';
 import { getReconcilePaymentSummary, getBankTransferSummary } from '../../redux/reconcilePayment/actionCreator';
+import { exportProfitData } from '../../redux/dashboard/actionCreator';
 
 /* ================= DATA OBJECTS ================= */
 
@@ -172,6 +173,24 @@ export default function ReconcileSummary() {
     }
   }, [bankTransferData]);
 
+  const handleBankWorkflowExport = () => {
+    const payload = {
+      params: {
+        filters: {
+          channel: {
+            IN: globalChannel,
+          },
+          fromDate: dateRange?.fromDate || null,
+          toDate: dateRange?.endDate || null,
+        },
+      },
+      reportType: 'BankRemittance',
+      email: 'bhavnaaprostore@gmail.com',
+    };
+
+    dispatch(exportProfitData(payload));
+  };
+
   return (
     <>
       <PageHeader
@@ -256,7 +275,7 @@ export default function ReconcileSummary() {
                 title={
                   <div className="flex items-center justify-between gap-2">
                     <span>Bank Transfer Workflow</span>
-                    <DownloadOutlined className="text-blue-600 cursor-pointer" />
+                    <DownloadOutlined className="text-blue-600 cursor-pointer" onClick={handleBankWorkflowExport} />
                   </div>
                 }
               >

@@ -32,14 +32,14 @@ function ProfitRoutes() {
           </SubscriptionGate>
         }
       />
-      <Route
+      {/* <Route
         path="profittableview"
         element={
           <SubscriptionGate>
             <ProfitTableView />
           </SubscriptionGate>
         }
-      />
+      /> */}
       <Route
         path="profitmonthlyview"
         element={
@@ -64,8 +64,45 @@ function ProfitRoutes() {
           </SubscriptionGate>
         }
       />
-      <Route
-        path="profittabledetails"
+      <Route path="profitTableView">
+        <Route
+          index
+          element={
+            <SubscriptionGate>
+              <ProfitTableView />
+            </SubscriptionGate>
+          }
+        />
+
+        <Route
+          path="details"
+          element={
+            <SubscriptionGate>
+              <ProfitTableDetails />
+            </SubscriptionGate>
+          }
+        />
+
+        <Route
+          path="second/:asin"
+          element={
+            <SubscriptionGate>
+              <ProfitViewSecondTable />
+            </SubscriptionGate>
+          }
+        />
+
+        <Route
+          path="third/:id"
+          element={
+            <SubscriptionGate>
+              <ProfitViewThirdTable />
+            </SubscriptionGate>
+          }
+        />
+      </Route>
+      {/* <Route
+        path="details"
         element={
           <SubscriptionGate>
             <ProfitTableDetails />
@@ -87,7 +124,7 @@ function ProfitRoutes() {
             <ProfitViewSecondTable />
           </SubscriptionGate>
         }
-      />
+      /> */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
