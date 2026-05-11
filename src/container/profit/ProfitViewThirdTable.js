@@ -66,7 +66,7 @@ export default function ProfitDetailsView() {
   const apipayload = {
     filters: {
       fromDate: dateRange?.fromDate || null,
-      toDate: dateRange?.endDate || null,
+      endDate: dateRange?.endDate || null,
       channel: {
         IN: globalChannel,
       },
