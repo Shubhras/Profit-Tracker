@@ -112,7 +112,7 @@ export default function ProfitDetailsView() {
 
         netsales: item.netsales || 0,
         tcs: item.tcs || 0,
-        mpfees: item.new_mpfees || 0,
+        mpfees: item.estimatefees || 0,
         // netasp: Number(item.netasp) || 0,
         // net_discount: Number(item.net_discount) || 0,
 
@@ -956,7 +956,7 @@ export default function ProfitDetailsView() {
                       returnPercent: 'totalreturnper',
                       netsales: 'netsales',
                       tcs: 'tcs',
-                      mpfees: 'total_new_mpfees',
+                      mpfees: 'estimatefees',
                       stdcost: 'stdcost',
                       shipping: 'shippingfees',
                       adSpend: 'ads',

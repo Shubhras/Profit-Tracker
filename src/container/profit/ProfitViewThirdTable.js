@@ -113,7 +113,7 @@ export default function ProfitDetailsView() {
       mrp: item.mrp || 0,
       mrpNetDiscount: item.mrp_net_discount || 0,
       grossSales: item.grosssales || 0,
-      mpfees: item.new_mpfees || 0,
+      mpfees: item.estimatefees || 0,
       accountCharges: item.account_charges || 0,
       otherExpenses: item.other_expenses || 0,
       grossProfit: item.grossprofit || 0,
@@ -140,7 +140,7 @@ export default function ProfitDetailsView() {
 
     { label: 'Net Sales', key: 'netsales' },
     { label: 'TCS-IGST', key: 'tcs' },
-    { label: 'MP Fees', key: 'mpfees' },
+    { label: 'MP fees', key: 'mpfees' },
     { label: 'Shipping', key: 'shipping' },
 
     { label: 'Ad spend', key: 'adSpend' },
@@ -323,7 +323,7 @@ export default function ProfitDetailsView() {
       ),
     },
     {
-      title: 'MP Fees',
+      title: 'MP fees',
       dataIndex: 'mpfees',
       align: 'center',
       sorter: (a, b) => a.mpfees - b.mpfees,
@@ -804,7 +804,7 @@ export default function ProfitDetailsView() {
                       adSpend: 'adSpend',
                       gst: 'gst',
                       std: 'cost',
-                      mpfees: 'total_new_mpfees',
+                      mpfees: 'estimatefees',
                       profit: 'profit',
                       profitPercent: 'totalprofitmargin',
                       grossqty: 'grossqty',
