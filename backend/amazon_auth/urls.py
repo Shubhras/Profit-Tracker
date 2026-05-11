@@ -5,6 +5,7 @@ from .ads_campins import *
 from .bussiness_report import *
 from .finance_report import *
 from .return_items import *
+from .retundata import *
 urlpatterns = [
     path('dashboard-stats/', views.get_full_dashboard, name='dashboard-stats'),
     path('pivot-stats/', views.get_pivot_dashboard, name='pivot-stats'),
@@ -69,5 +70,7 @@ urlpatterns = [
 
     #catelog details
     path('get-catlog/details/', get_catalog_details, name='get_catelog_details'),
+
+    path("amazon-returns/", amazon_returns_list, name="amazon_returns_list"),
  
 ]

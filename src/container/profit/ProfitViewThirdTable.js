@@ -113,7 +113,7 @@ export default function ProfitDetailsView() {
       mrp: item.mrp || 0,
       mrpNetDiscount: item.mrp_net_discount || 0,
       grossSales: item.grosssales || 0,
-      mpfees: item.new_mpfees || 0,
+      mpfees: item.estimatefees || 0,
       accountCharges: item.account_charges || 0,
       otherExpenses: item.other_expenses || 0,
       grossProfit: item.grossprofit || 0,
@@ -140,7 +140,7 @@ export default function ProfitDetailsView() {
 
     { label: 'Net Sales', key: 'netsales' },
     { label: 'TCS-IGST', key: 'tcs' },
-    { label: 'MP Fees', key: 'mpfees' },
+    { label: 'MP fees', key: 'mpfees' },
     { label: 'Shipping', key: 'shipping' },
 
     { label: 'Ad spend', key: 'adSpend' },
@@ -323,7 +323,7 @@ export default function ProfitDetailsView() {
       ),
     },
     {
-      title: 'MP Fees',
+      title: 'MP fees',
       dataIndex: 'mpfees',
       align: 'center',
       sorter: (a, b) => a.mpfees - b.mpfees,
@@ -685,7 +685,9 @@ export default function ProfitDetailsView() {
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
           <button
             type="button"
-            onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
+            onClick={() =>
+              setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+            }
             style={{
               border: '1px solid #ffc0cb',
               background: '#ffe4e9',
@@ -802,7 +804,7 @@ export default function ProfitDetailsView() {
                       adSpend: 'adSpend',
                       gst: 'gst',
                       std: 'cost',
-                      mpfees: 'total_new_mpfees',
+                      mpfees: 'estimatefees',
                       profit: 'profit',
                       profitPercent: 'totalprofitmargin',
                       grossqty: 'grossqty',
@@ -827,7 +829,15 @@ export default function ProfitDetailsView() {
                           <div className="flex gap-2 justify-center">
                             <button
                               type="button"
-                              onClick={() => setDetailModal({ open: true, record: profitData?.totals, type: 'qty' })}
+                              onClick={() =>
+                                setDetailModal({
+                                  open: true,
+                                  record: profitData?.totals,
+                                  type: 'qty',
+                                  modalLabel: 'OrderId',
+                                  modalValue: 'Total',
+                                })
+                              }
                               className="w-[30px] h-[30px] border border-[#ffc0cb] rounded-[4px] bg-[#ffe4e9] flex items-center justify-center"
                             >
                               <BarChartOutlined style={{ fontSize: 14, color: '#ff4d6d' }} />
@@ -845,7 +855,7 @@ export default function ProfitDetailsView() {
                                 record: profitData?.totals,
                                 type: 'qty',
                                 modalLabel: ' OrderId',
-                                modalValue: 'TOTAL',
+                                modalValue: 'Total',
                               })
                             }
                           >

@@ -13,7 +13,13 @@ const { Option } = Select;
 export default function Summary() {
   // const path = '/admin';
   const navigate = useNavigate();
-  const [viewType, setViewType] = useState('percentage');
+  // const [viewType, setViewType] = useState('percentage');
+  const [viewTypes, setViewTypes] = useState({
+    'Quantity Sold': 'percentage',
+    Return: 'percentage',
+    Shipping: 'percentage',
+    Profit: 'percentage',
+  });
   const { dashboardData, dateRange, channel: globalChannel, search, loading } = useSelector((state) => state.dashboard);
   const [filters, setFilters] = useState({
     withAds: true,
@@ -113,6 +119,12 @@ export default function Summary() {
     { path: 'index', breadcrumbName: 'Profit' },
     { path: '', breadcrumbName: 'Summary' },
   ];
+  const handleViewTypeChange = (title, value) => {
+    setViewTypes((prev) => ({
+      ...prev,
+      [title]: value,
+    }));
+  };
 
   /* ---------- RIGHT STACKED CHART ---------- */
   // const stackedData = [
@@ -437,7 +449,7 @@ export default function Summary() {
             <Col xs={24} lg={9}>
               <Card
                 onClick={() =>
-                  navigate('/admin/profit/profittabledetails', {
+                  navigate('/admin/profit/profitTableView/details', {
                     state: { channels: globalChannel, type: 'all' },
                   })
                 }
@@ -545,9 +557,9 @@ export default function Summary() {
             {/* PROFIT */}
             <Col xs={24} lg={6}>
               <Card
-                onClick={() => navigate(`/admin/profit/profittabledetails/${globalChannel?.[0] || 'all'}`)}
-                hoverable
-                style={{ cursor: 'pointer' }}
+              // onClick={() => navigate(`/admin/profit/profitTableView/details/${globalChannel?.[0] || 'all'}`)}
+              // hoverable
+              // style={{ cursor: 'pointer' }}
               >
                 <Statistic title="Profit" value={dashboardData?.header_metrics?.profit || 0} prefix="₹" />
                 <Tag color="gold">Margin: {dashboardData?.header_metrics?.margin || '0%'}</Tag>
@@ -558,7 +570,7 @@ export default function Summary() {
                 <Col
                   span={12}
                   onClick={() =>
-                    navigate('/admin/profit/profittabledetails', {
+                    navigate('/admin/profit/profitTableView/details', {
                       state: { channels: globalChannel, type: 'all', profitType: 'profitable' },
                     })
                   }
@@ -575,7 +587,7 @@ export default function Summary() {
                 <Col
                   span={12}
                   onClick={() =>
-                    navigate('/admin/profit/profittabledetails', {
+                    navigate('/admin/profit/profitTableView/details', {
                       state: { channels: globalChannel, type: 'all', profitType: 'losing' },
                     })
                   }
@@ -644,7 +656,12 @@ export default function Summary() {
               <Card
                 title={title}
                 extra={
-                  <Select size="small" value={viewType} onChange={setViewType} style={{ width: 120 }}>
+                  <Select
+                    size="small"
+                    value={viewTypes[title]}
+                    onChange={(value) => handleViewTypeChange(title, value)}
+                    style={{ width: 120 }}
+                  >
                     <Option value="percentage">Percentage</Option>
                     <Option value="amount">Amount</Option>
                   </Select>

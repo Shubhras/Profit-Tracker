@@ -350,27 +350,107 @@ class SPAPIManager:
         return self.request("GET", path)
     
 
+    #get estimate fees 
+
+    def get_my_fees_estimate_for_sku(
+        self,
+        seller_sku,
+        amount,
+        currency="INR",
+        shipping=0,
+        is_fba=True,
+        identifier="estimate-fee"
+    ):
+
+        encoded_sku = quote(seller_sku, safe='')
+
+        path = f"/products/fees/v0/listings/{encoded_sku}/feesEstimate"
+
+        payload = {
+            "FeesEstimateRequest": {
+                "MarketplaceId": self.marketplace_id,
+                "Identifier": identifier,
+                "IsAmazonFulfilled": is_fba,
+                "PriceToEstimateFees": {
+                    "ListingPrice": {
+                        "CurrencyCode": currency,
+                        "Amount": float(amount)
+                    },
+                    "Shipping": {
+                        "CurrencyCode": currency,
+                        "Amount": float(shipping)
+                    }
+                }
+            }
+        }
+
+        return self.request(
+            "POST",
+            path,
+            data=json.dumps(payload)
+        )
+    
+    # retundata 
+    # spapi_manager.py
+
     def list_returns(self, **kwargs):
+
         path = "/externalFulfillment/2024-09-11/returns"
-        
 
         params = {}
 
         allowed_params = [
+
             "returnLocationId",
             "rmaId",
             "status",
             "reverseTrackingId",
+
             "createdSince",
             "createdUntil",
+
             "lastUpdatedSince",
             "lastUpdatedUntil",
+
             "maxResults",
             "nextToken"
+
         ]
 
         for key in allowed_params:
+
             if key in kwargs and kwargs[key] is not None:
+
                 params[key] = kwargs[key]
 
-        return self.request("GET", path, params=params)
+        return self.request(
+            "GET",
+            path,
+            params=params
+        )
+    
+
+    # def list_returns(self, **kwargs):
+    #     path = "/externalFulfillment/2024-09-11/returns"
+        
+
+    #     params = {}
+
+    #     allowed_params = [
+    #         "returnLocationId",
+    #         "rmaId",
+    #         "status",
+    #         "reverseTrackingId",
+    #         "createdSince",
+    #         "createdUntil",
+    #         "lastUpdatedSince",
+    #         "lastUpdatedUntil",
+    #         "maxResults",
+    #         "nextToken"
+    #     ]
+
+    #     for key in allowed_params:
+    #         if key in kwargs and kwargs[key] is not None:
+    #             params[key] = kwargs[key]
+
+    #     return self.request("GET", path, params=params)

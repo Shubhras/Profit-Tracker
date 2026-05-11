@@ -174,6 +174,7 @@ export default function SettledOrder() {
       shipfee: 3.12,
       return: 3,
       settled: 1,
+      banksettled: 3,
     },
     {
       key: 2,
@@ -187,6 +188,7 @@ export default function SettledOrder() {
       shipfee: 2.0,
       return: 2,
       settled: 3,
+      banksettled: 2,
     },
   ];
 
@@ -262,6 +264,13 @@ export default function SettledOrder() {
       sorter: (a, b) => new Date(a.settled) - new Date(b.settled),
       render: (v) => `₹${v}`,
     },
+    {
+      title: 'Bank Settled Amount',
+      dataIndex: 'banksettled',
+      align: 'center',
+      sorter: (a, b) => new Date(a.banksettled) - new Date(b.banksettled),
+      render: (v) => `₹${v}`,
+    },
   ];
   return (
     <>
@@ -322,6 +331,7 @@ export default function SettledOrder() {
                   <Table.Summary.Cell align="center">₹5</Table.Summary.Cell>
 
                   <Table.Summary.Cell align="center">₹4</Table.Summary.Cell>
+                  <Table.Summary.Cell align="center">₹5</Table.Summary.Cell>
                 </Table.Summary.Row>
               )}
             />

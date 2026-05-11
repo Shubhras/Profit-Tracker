@@ -1,12 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { Row, Col, Card, Table, Empty, Spin } from 'antd';
+import { Row, Col, Card, Table, Empty, Spin, Modal, Select, Button } from 'antd';
+import { UploadOutlined, CloseOutlined } from '@ant-design/icons';
 import FilterBar from './component/FilterBar';
 import { getFeeleaksconciliation } from '../../redux/reconcilePayment/actionCreator';
+import { exportProfitData } from '../../redux/dashboard/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function FeeLeaks() {
   const dispatch = useDispatch();
+  const [uploadModal, setUploadModal] = useState(false);
+  const [exportType, setExportType] = useState('All Fees');
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.detail === 'export') {
+        setUploadModal(true);
+      }
+    };
+
+    window.addEventListener('headerAction', handler);
+
+    return () => {
+      window.removeEventListener('headerAction', handler);
+    };
+  }, []);
+
   const payload = {
     filters: {
       method: 'show',
@@ -95,6 +113,27 @@ export default function FeeLeaks() {
       setLoading(false);
     }, 800);
   };
+
+  const handleExport = () => {
+    const exportPayload = {
+      params: {
+        filters: {
+          channel: {
+            IN: ['Amazon-India', 'Flipkart', 'Jiomart', 'Meesho', 'Myntra', 'Snapdeal'],
+          },
+          fromDate: '2026-04-30T18:30:00Z',
+          toDate: '2026-05-31T18:29:59Z',
+        },
+      },
+      reportType: 'fee_waiver_order',
+      email: 'bhavnaaprostore@gmail.com',
+    };
+
+    dispatch(exportProfitData(exportPayload));
+
+    setUploadModal(false);
+  };
+
   return (
     <>
       <PageHeader
@@ -114,7 +153,7 @@ export default function FeeLeaks() {
                   columns={varianceSummaryColumns}
                   dataSource={[]}
                   pagination={false}
-                  scroll={{ x: true }} // important for mobile
+                  scroll={{ x: true }}
                   locale={{
                     emptyText: <Empty description="No data" />,
                   }}
@@ -146,7 +185,7 @@ export default function FeeLeaks() {
                 <Table
                   columns={varianceDetailColumns}
                   dataSource={[]}
-                  scroll={{ x: true }} // mobile-friendly
+                  scroll={{ x: true }}
                   locale={{
                     emptyText: <Empty description="No data" />,
                   }}
@@ -156,6 +195,87 @@ export default function FeeLeaks() {
           </Row>
         </Spin>
       </main>
+      <Modal
+        open={uploadModal}
+        footer={null}
+        closable={false}
+        centered
+        width={540}
+        onCancel={() => setUploadModal(false)}
+      >
+        <div className="relative">
+          {/* CLOSE ICON */}
+          <button
+            type="button"
+            onClick={() => setUploadModal(false)}
+            className="absolute right-0 top-0 text-gray-400 hover:text-gray-600"
+          >
+            <CloseOutlined />
+          </button>
+
+          {/* TITLE */}
+          <h2 className="text-[20px] font-semibold text-[#1f2937] mb-5">Recon Exports</h2>
+
+          {/* CONTENT */}
+          <div className="flex items-center gap-4">
+            <Select
+              value={exportType}
+              onChange={setExportType}
+              style={{
+                width: '100%',
+                height: 42,
+              }}
+              options={[
+                {
+                  label: 'All Fees',
+                  value: 'All Fees',
+                },
+                {
+                  label: 'Rules Uploaded',
+                  value: 'Rule Uploaded',
+                },
+                {
+                  label: 'Amazon-India (All fees)',
+                  value: 'Amazon-India (All fees)',
+                },
+                {
+                  label: 'Amazon-India (Shipping fees)',
+                  value: 'Amazon-India (Shipping fees)',
+                },
+                {
+                  label: 'Flipkart',
+                  value: 'Flipkart',
+                },
+                {
+                  label: 'Myntra',
+                  value: 'Myntra',
+                },
+                {
+                  label: 'Jiomart',
+                  value: 'Jiomart',
+                },
+                {
+                  label: 'Meesho',
+                  value: 'Meesho',
+                },
+                {
+                  label: 'Snapdeal',
+                  Index: 'Snapdeal',
+                },
+              ]}
+            />
+
+            <Button
+              type="primary"
+              icon={<UploadOutlined />}
+              className="!h-[42px] px-5 rounded-md"
+              onClick={handleExport}
+            >
+              Export
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }

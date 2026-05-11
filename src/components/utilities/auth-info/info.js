@@ -36,8 +36,10 @@ const AuthInfo = React.memo(() => {
 
   const currentPath = location.pathname;
 
-  const matchedRoute = Object.keys(HEADER_ACTIONS).find((route) => currentPath.includes(route));
-
+  // const matchedRoute = Object.keys(HEADER_ACTIONS).find((route) => currentPath.includes(route));
+  const matchedRoute = Object.keys(HEADER_ACTIONS)
+    .sort((a, b) => b.length - a.length)
+    .find((route) => currentPath.includes(route));
   // const actions = HEADER_ACTIONS[matchedRoute] || [];
   // const routeConfig = HEADER_ACTIONS[matchedRoute] || {};
   const [activeTab, setActiveTab] = useState('otherExpenses');
@@ -60,12 +62,12 @@ const AuthInfo = React.memo(() => {
   const HIDE_CALENDAR = [
     '/settings/product-setting/finance-configuration',
     '/settings/product-setting/product-configuration',
-    '/profit/profittabledetails',
+    '/profit/profitTableView/details',
     '/profit/salesdetails/',
     '/reconcile/os-payment',
     '/reconcile/return/summary',
-    '/profit/profitThirdtable/',
-    '/profit/profitSecondtable/',
+    '/profit/profitTableView/third/',
+    '/profit/profitTableView/second/',
   ];
 
   const hideCalendar = HIDE_CALENDAR.some((route) => location.pathname.includes(route));

@@ -9,7 +9,7 @@ import {
   PlusOutlined,
   MinusOutlined,
   RetweetOutlined,
-  HeatMapOutlined,
+  EnvironmentOutlined,
 } from '@ant-design/icons';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Line } from 'recharts';
 import { useSelector } from 'react-redux';
@@ -90,7 +90,7 @@ export default function ProfitModal({ open, record, onClose, type, modalLabel, m
       <div className="bg-white w-[95%] h-[95%] rounded-xl shadow-2xl overflow-y-auto">
         <div className="flex justify-between items-center px-6 py-4">
           <div className="text-[15px] font-semibold text-gray-800">
-            {modalLabel || 'Channel'} : <span className="font-bold">{modalValue || record?.channel}</span>
+            {modalLabel} : <span className="font-bold">{modalValue || record?.channel}</span>
           </div>
 
           <div className="flex items-center gap-4">
@@ -169,7 +169,7 @@ export default function ProfitModal({ open, record, onClose, type, modalLabel, m
                     : 'text-black font-semibold border-transparent hover:bg-gray-100'
                 }`}
               >
-                <HeatMapOutlined />
+                <EnvironmentOutlined />
                 Maps
               </button>
             </>
@@ -189,7 +189,7 @@ export default function ProfitModal({ open, record, onClose, type, modalLabel, m
 
             <div className="grid grid-cols-2 gap-4 px-6 pb-6">
               <Card title={<span className="text-black font-semibold text-m">Order status</span>}>
-                <div className="grid grid-cols-2 gap-3">
+                {/* <div className="grid grid-cols-2 gap-3">
                   {[
                     { title: 'Pending Shipment', orders: 50, units: 50, color: 'bg-orange-100' },
                     { title: 'Customer Return', orders: 21, units: 21, color: 'bg-pink-100' },
@@ -206,6 +206,50 @@ export default function ProfitModal({ open, record, onClose, type, modalLabel, m
                       <div className={`w-6 h-6 rounded-full ${item.color}`} />
                     </div>
                   ))}
+                </div> */}
+                <div className="space-y-3">
+                  {/* TOP 2 BOXES */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { title: 'Pending Shipment', orders: 50, units: 50, color: 'bg-orange-100' },
+                      { title: 'Customer Return', orders: 21, units: 21, color: 'bg-pink-100' },
+                    ].map((item) => (
+                      <div
+                        key={item.title}
+                        className="bg-gray-50 rounded-lg p-3 border flex justify-between items-start"
+                      >
+                        <div>
+                          <div className="text-sm font-medium text-black">{item.title}</div>
+                          <div className="text-xs text-gray-500 mt-1">orders {item.orders}</div>
+                          <div className="text-xs text-gray-500">units {item.units}</div>
+                        </div>
+
+                        <div className={`w-6 h-6 rounded-full ${item.color}`} />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* BOTTOM 3 BOXES */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { title: 'Shipped', orders: 483, units: 484, color: 'bg-green-100' },
+                      { title: 'RTO', orders: 23, units: 23, color: 'bg-blue-100' },
+                      { title: 'Cancelled', orders: 113, units: 0, color: 'bg-purple-100' },
+                    ].map((item) => (
+                      <div
+                        key={item.title}
+                        className="bg-gray-50 rounded-lg p-3 border flex justify-between items-start"
+                      >
+                        <div>
+                          <div className="text-sm font-medium text-black">{item.title}</div>
+                          <div className="text-xs text-gray-500 mt-1">orders {item.orders}</div>
+                          <div className="text-xs text-gray-500">units {item.units}</div>
+                        </div>
+
+                        <div className={`w-6 h-6 rounded-full ${item.color}`} />
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="mt-4">
