@@ -4323,6 +4323,41 @@ def amazon_profitability_details(request):
         )
     )
 
+    # ---------------- ESTIMATED FEES ----------------
+    estimated_fee_qs = AmazonEstimatedFee.objects.filter(
+        order_item__order__user=user
+    )
+
+    # apply same date filter
+    if from_date:
+        estimated_fee_qs = estimated_fee_qs.filter(
+            order_item__order__purchase_date__gte=from_date
+        )
+
+    if to_date:
+        estimated_fee_qs = estimated_fee_qs.filter(
+            order_item__order__purchase_date__lte=to_date
+        )
+
+    # apply same parent filter
+    if parent_ids:
+        estimated_fee_qs = estimated_fee_qs.filter(
+            order_item__parent_asin__in=parent_ids
+        )
+
+    estimated_fee_data = (
+        estimated_fee_qs
+        .values('order_item__parent_asin')
+        .annotate(
+            estimated_fees=Sum('total_fees')
+        )
+    )
+
+    estimated_fee_map = {
+        row['order_item__parent_asin']: float(row['estimated_fees'] or 0)
+        for row in estimated_fee_data
+    }
+
     # ---------------- FINANCIAL EVENTS ----------------
     finances_qs = FinancialEvent.objects.filter(user=user)
 
@@ -4389,6 +4424,7 @@ def amazon_profitability_details(request):
     total_stdcost = 0
     total_ret_percent = 0
     adjusted_gross_sales = 0
+    total_estimatefees = 0 
 
     total_gst = 0
     total_tcs = 0
@@ -4410,6 +4446,7 @@ def amazon_profitability_details(request):
     for row in items:
         # asin = row['asin']
         parent_asin = row['parent_asin']
+        estimated_fees = estimated_fee_map.get(parent_asin, 0)
 
         gross_qty = int(row['grossqty'] or 0)  
         quantity_shipped = int(row['quantity_shipped'] or 0) 
@@ -4421,6 +4458,7 @@ def amazon_profitability_details(request):
         
         shipping_income = float(row.get('shipping_income') or 0)
         shipping_price = float(row.get('shipping_price') or 0)
+        
 
         adjusted_gross_sales = gross_sales + item_tax - promo_discount + shipping_price
 
@@ -4431,7 +4469,8 @@ def amazon_profitability_details(request):
         return_units = 0
         gst = 0
         tcs_total = 0  
-        t_new_charge = 0    
+        t_new_charge = 0   
+
 
         for o in orders:
             oid = o['order__amazon_order_id']
@@ -4460,21 +4499,13 @@ def amazon_profitability_details(request):
             raw_list = raw_data_map.get(oid, [])
             tcs = 0
 
-            # ✅ USE SAME FUNCTION AS LIST API
             
-            # order_fee_map = extract_fees_and_tcs_per_asin(
-            #     raw_data_map.get(oid, []),
-            #     sku_asin_map=sku_asin_map
-            # )
-
-            # child_asins = list(
-            #     OrderItem.objects.filter(parent_asin=parent_asin)
-            #     .values_list('asin', flat=True)
-            # )
             order_fee_map = extract_fees_and_tcs_per_asin(
                 raw_data_map.get(oid, []),
                 sku_asin_map=sku_asin_map
             )
+
+            # total_estimatefees += estimated_fees
 
             for child_asin, fee_data in order_fee_map.items():
 
@@ -4521,6 +4552,7 @@ def amazon_profitability_details(request):
         tacos = (ads / gross_sales * 100) if gross_sales else 0
         ret_percent = (return_units / net_qty * 100) if net_qty else 0
 
+
         results.append({
             # "asin": asin,
             "asin": parent_asin, 
@@ -4536,6 +4568,8 @@ def amazon_profitability_details(request):
             "ads": format_currency(ads),
             "mpfees": round(mpfees, 2),
             "new_mpfees": format_currency(t_new_charge),
+            # "estimatefees": format_currency(estimated_fees),
+            "estimatefees": format_currency(-abs(estimated_fees)),
             "shippingfees": format_currency(shipping_final),
             "profit": format_currency(profit),
             "grossprofitper": round(profit_margin, 2),
@@ -4567,6 +4601,7 @@ def amazon_profitability_details(request):
         total_gst += gst
         total_tcs += tcs_total
         total_ret_percent += ret_percent
+        total_estimatefees += estimated_fees
 
     # -------- DEBUG AFTER BUILD --------
     db_asins = set(OrderItem.objects.filter(order__user=user).values_list('asin', flat=True))
@@ -4593,6 +4628,8 @@ def amazon_profitability_details(request):
             "profit": format_currency(total_profit),
             "grossprofitper": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
             "mpfees": format_currency(total_mpfees),
+            # "estimatefees": format_currency(total_estimatefees),
+            "estimatefees": format_currency(-abs(total_estimatefees)),
             "total_new_mpfees": format_currency(total_mpfees),
             "shippingfees": format_currency(total_shipping),
             "tacos": (total_ads / total_sales * 100) if total_sales else 0,
@@ -4655,6 +4692,27 @@ def amazon_profitability_parent(request):
         order_filter &= Q(order__purchase_date__lte=to_date)
 
     # ---------------- CHILD ASIN DATA ----------------
+    # items = (
+    #     OrderItem.objects
+    #     .filter(order_filter)
+    #     .exclude(order__order_status__icontains='Cancel')
+    #     .values('asin', 'parent_asin')
+    #     .annotate(
+    #         title=Max('title'),
+    #         seller_sku=Max('seller_sku'),
+    #         image_url=Max('image_url'),
+    #         grossqty=Sum('quantity_ordered'),
+    #         shipping_price=Sum('shipping_price'),
+    #         total_cost=Sum(F('cost_price') * F('quantity_ordered')),
+    #         # grosssales=Sum(F('item_price') * F('quantity_ordered'))
+    #         grosssales=Sum('item_price'),
+    #         promotion_discount=Sum('promotion_discount'),
+    #         avg_cost=Avg('item_price'),
+    #         item_tax=Sum('item_tax'),
+    #     )
+    # )
+
+    # ---------------- CHILD ASIN DATA ----------------
     items = (
         OrderItem.objects
         .filter(order_filter)
@@ -4665,15 +4723,69 @@ def amazon_profitability_parent(request):
             seller_sku=Max('seller_sku'),
             image_url=Max('image_url'),
             grossqty=Sum('quantity_ordered'),
+            quantity_shipped=Sum('quantity_shipped'),
             shipping_price=Sum('shipping_price'),
             total_cost=Sum(F('cost_price') * F('quantity_ordered')),
-            # grosssales=Sum(F('item_price') * F('quantity_ordered'))
             grosssales=Sum('item_price'),
             promotion_discount=Sum('promotion_discount'),
             avg_cost=Avg('item_price'),
             item_tax=Sum('item_tax'),
         )
     )
+
+    # ---------------- ESTIMATED FEES ----------------
+    # estimated_fee_data = (
+    #     AmazonEstimatedFee.objects
+    #     .filter(
+    #         order_item__order__user=user
+    #     )
+    #     .values(
+    #         'order_item__parent_asin'
+    #     )
+    #     .annotate(
+    #         estimated_fees=Sum('total_fees')
+    #     )
+    # )
+
+    # estimated_fee_map = {
+    #     row['order_item__parent_asin']: Decimal(
+    #         str(row['estimated_fees'] or 0)
+    #     )
+    #     for row in estimated_fee_data
+    # }
+
+    # ---------------- ESTIMATED FEES ----------------
+    estimated_fee_qs = AmazonEstimatedFee.objects.filter(
+        order_item__order__user=user
+    )
+
+    if from_date:
+        estimated_fee_qs = estimated_fee_qs.filter(
+            order_item__order__purchase_date__gte=from_date
+        )
+
+    if to_date:
+        estimated_fee_qs = estimated_fee_qs.filter(
+            order_item__order__purchase_date__lte=to_date
+        )
+
+    if channels:
+        estimated_fee_qs = estimated_fee_qs.filter(
+            order_item__order__marketplace_id__in=marketplace_ids
+        )
+
+    estimated_fee_data = (
+        estimated_fee_qs
+        .values('asin')
+        .annotate(
+            estimated_fees=Sum('total_fees')
+        )
+    )
+
+    estimated_fee_map = {
+        row['asin']: Decimal(str(row['estimated_fees'] or 0))
+        for row in estimated_fee_data
+    }
 
     # ---------------- FINANCE ----------------
     finances_qs = FinancialEvent.objects.filter(user=user)
@@ -4734,6 +4846,7 @@ def amazon_profitability_parent(request):
     total_ret_percent = Decimal(0)  
     total_stdcost = Decimal(0) 
     adjusted_gross_sales = Decimal(0) 
+    total_estimatefees = Decimal(0)
 
     for row in items:
 
@@ -4742,6 +4855,8 @@ def amazon_profitability_parent(request):
         child_sku = row['seller_sku']
     
         orders = asin_map.get(asin, [])
+        # estimated_fees = estimated_fee_map.get(parent_asin, 0)
+        estimated_fees = estimated_fee_map.get(asin, Decimal("0"))
 
         gross_qty = Decimal(row['grossqty'] or 0)
         gross_sales = Decimal(row['grosssales'] or 0)
@@ -4792,6 +4907,8 @@ def amazon_profitability_parent(request):
             refund += r
             rto += rto_amt
 
+            # total_estimatefees += estimated_fees
+
             if r < 0 or rto_amt < 0:
                 return_units += qty
 
@@ -4799,6 +4916,7 @@ def amazon_profitability_parent(request):
         net_qty = max(gross_qty , 0)
         # net_sales = gross_sales + refund + rto
         net_sales = adjusted_gross_sales
+        # total_estimatefees += estimated_fees
         shipping_final = Decimal(row['shipping_price'] or 0)
         total_cost = Decimal(row['total_cost'] or 0)
 
@@ -4826,6 +4944,8 @@ def amazon_profitability_parent(request):
             "ads": format_currency(ads),
 
             "new_mpfees": format_currency(t_new_charge),
+            # "estimatefees": format_currency(estimated_fees),
+            "estimatefees": format_currency(-abs(estimated_fees)),
             "shippingfees": format_currency(shipping_final),
             "tcs": format_currency(tcs_total),
 
@@ -4854,6 +4974,7 @@ def amazon_profitability_parent(request):
         total_mpfees += t_new_charge
         total_ret_percent += ret_percent
         total_stdcost += total_cost
+        total_estimatefees += Decimal(estimated_fees)
 
     return Response({
         "status": True,
@@ -4873,6 +4994,8 @@ def amazon_profitability_parent(request):
             "profit": format_currency(total_profit),
             "grossprofitper": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
             "mpfees": format_currency(total_mpfees),
+            # "estimatefees": format_currency(total_estimatefees),
+            "estimatefees": format_currency(-abs(total_estimatefees)),
             "total_new_mpfees": format_currency(total_mpfees),
             "shippingfees": format_currency(total_shipping),
             "tacos": (total_ads / total_sales * 100) if total_sales else 0,
@@ -4990,6 +5113,24 @@ def sku_profit_report(request):
         .order_by('-order__purchase_date')
     )
 
+    estimated_fee_data = (
+        AmazonEstimatedFee.objects
+        .filter(
+            order_item__order__user=user,
+            asin=asin
+        )
+        .values('order_item__order__amazon_order_id')
+        .annotate(
+            estimated_fees=Sum('total_fees')
+        )
+    )
+
+    estimated_fee_map = {
+        row['order_item__order__amazon_order_id']: Decimal(
+            str(row['estimated_fees'] or 0)
+        )
+        for row in estimated_fee_data
+    }
     # ---------------- FINANCE ----------------
     # finance_qs = FinancialEvent.objects.filter(user=user)
     finance_qs = FinancialEvent.objects.filter(
@@ -5043,6 +5184,7 @@ def sku_profit_report(request):
     total_ret_percent =0
     total_new_charge = 0
     adjusted_gross_sales = 0
+    total_estimatefees = 0
 
     for row in items:
 
@@ -5053,6 +5195,7 @@ def sku_profit_report(request):
 
         item_tax = float(row.get('item_tax') or 0)
         promo_discount = float(row.get('promotion_discount') or 0)
+        estimated_fees = estimated_fee_map.get(oid, Decimal("0"))
 
         adjusted_gross_sales = gross_sales + item_tax - promo_discount
 
@@ -5131,8 +5274,9 @@ def sku_profit_report(request):
         net_sales = adjusted_gross_sales
         shipping_final = shipping_income  
 
-        # profit = net_sales - abs(mpfees) + shipping_final - cost + tcs
+        # profit = net_sales - abs(mpfees) + shipping_final - cost + tcs  
         # profit = net_sales - new_charge + shipping_final - cost + tcs
+        # profit = net_sales + new_charge + shipping_final - cost + tcs
         profit = net_sales + new_charge + shipping_final - cost + tcs
 
         profit_margin = (profit / net_sales * 100) if net_sales else 0
@@ -5158,6 +5302,8 @@ def sku_profit_report(request):
 
             "ads": format_currency(ads),
             "mpfees": round(mpfees, 2),
+            # "estimatefees": format_currency(estimated_fees),
+            "estimatefees": format_currency(-abs(estimated_fees)),
             "new_mpfees": format_currency(new_charge),
             "shippingfees": format_currency(shipping_final),
 
@@ -5191,6 +5337,7 @@ def sku_profit_report(request):
         total_cost += cost
         total_ret_percent += ret_percent
         total_new_charge += new_charge
+        total_estimatefees += estimated_fees
         
 
     # ---------------- RESPONSE ----------------
@@ -5214,6 +5361,8 @@ def sku_profit_report(request):
 
             "ads": format_currency(total_ads),
             "mpfees": round(total_mpfees, 2),
+            # "estimatefees": format_currency(total_estimatefees),
+            "estimatefees": format_currency(-abs(total_estimatefees)),
             "total_new_mpfees": format_currency(total_new_charge),
             "shipping": format_currency(total_shipping),
             # "gst": format_currency(total_tcs),

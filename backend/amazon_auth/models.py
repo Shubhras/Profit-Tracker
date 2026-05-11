@@ -265,6 +265,60 @@ class OrderItem(models.Model):
     def __str__(self):
         return f"{self.seller_sku} in {self.order.amazon_order_id}"
 
+
+# models.py
+
+class AmazonEstimatedFee(models.Model):
+    order_item = models.ForeignKey(
+        OrderItem,
+        on_delete=models.CASCADE,
+        related_name="estimated_fees"
+    )
+
+    amazon_account = models.ForeignKey(
+        AmazonAccount,
+        on_delete=models.CASCADE,
+        related_name="estimated_fees",
+        null=True,
+        blank=True
+    )
+
+    seller_sku = models.CharField(max_length=255, db_index=True)
+    asin = models.CharField(max_length=50, null=True, blank=True)
+    marketplace_id = models.CharField(max_length=50)
+
+    currency = models.CharField(max_length=10, default="INR")
+
+    selling_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    total_fees = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    referral_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    closing_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    per_item_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    fba_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    fba_pick_pack_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    fba_weight_handling_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    tax_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    raw_response = models.JSONField(default=dict)
+
+    estimated_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["seller_sku"]),
+            models.Index(fields=["asin"]),
+        ]
+
+    def __str__(self):
+        return f"{self.seller_sku} - {self.total_fees}"
+    
+    
 class ProductMapping(models.Model):
     parent_asin = models.CharField(max_length=50, null=True, blank=True)
     asin = models.CharField(max_length=50,null=True,)

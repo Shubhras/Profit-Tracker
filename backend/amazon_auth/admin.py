@@ -323,4 +323,43 @@ class SettlementOrderSummaryAdmin(admin.ModelAdmin):
         ("Meta", {
             "fields": ("created_at",)
         }),
-    )     
+    )  
+
+@admin.register(AmazonEstimatedFee)
+class AmazonEstimatedFeeAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "id",
+        "seller_sku","amazon_account",
+        "asin",
+        "marketplace_id",
+        "selling_price",
+        "total_fees",
+        "referral_fee",
+        "fba_fee",
+        "tax_amount",
+        "estimated_at",
+        "created_at",
+    )
+
+    search_fields = (
+        "seller_sku",
+        "asin",
+        "marketplace_id","amazon_account",
+    )
+
+    list_filter = (
+        "marketplace_id",
+        "currency",
+        "created_at",
+        "estimated_at","amazon_account",
+    )
+
+    readonly_fields = (
+        "raw_response",
+        "created_at",
+    )
+
+    ordering = ("-created_at",)
+
+    list_per_page = 50       
