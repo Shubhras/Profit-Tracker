@@ -306,6 +306,7 @@ class AmazonEstimatedFee(models.Model):
     raw_response = models.JSONField(default=dict)
 
     estimated_at = models.DateTimeField(null=True, blank=True)
+    fulfillment_channel=models.CharField( max_length=10,null=True,blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 

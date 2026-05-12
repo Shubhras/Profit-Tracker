@@ -33,7 +33,7 @@ class AmazonAccountAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id','amazon_order_id','items_shipped', 'amazon_account', 'purchase_date', 'order_status', 'total_amount', 'currency_code', 'user')
+    list_display = ('id','amazon_order_id','items_shipped','fulfillment_channel', 'amazon_account', 'purchase_date', 'order_status', 'total_amount', 'currency_code', 'user')
     list_filter = ('amazon_account', 'order_status', 'fulfillment_channel', 'purchase_date')
     search_fields = ('amazon_order_id', 'buyer_name', 'city')
     date_hierarchy = 'purchase_date'
@@ -330,7 +330,7 @@ class AmazonEstimatedFeeAdmin(admin.ModelAdmin):
 
     list_display = (
         "id",
-        "seller_sku","amazon_account",
+        "seller_sku","amazon_account","fulfillment_channel",
         "asin",
         "marketplace_id",
         "selling_price",
@@ -345,14 +345,14 @@ class AmazonEstimatedFeeAdmin(admin.ModelAdmin):
     search_fields = (
         "seller_sku",
         "asin",
-        "marketplace_id","amazon_account",
+        "marketplace_id","amazon_account","fulfillment_channel",
     )
 
     list_filter = (
         "marketplace_id",
         "currency",
         "created_at",
-        "estimated_at","amazon_account",
+        "estimated_at","amazon_account","fulfillment_channel",
     )
 
     readonly_fields = (

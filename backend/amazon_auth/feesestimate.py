@@ -197,14 +197,30 @@ def save_fee_estimate(order_item, user):
         print(
             f"TRY {attempt + 1}/{max_retries} => "
             f"{order_item.seller_sku}"
-        )
+        )  
+
+        # ==============================
+        # DETECT FULFILLMENT CHANNEL
+        # ==============================
+
+        fulfillment_channel = (
+            order_item.order.fulfillment_channel or ""
+        ).upper()
+
+        is_fba = fulfillment_channel == "AFN"
+
+        print(
+            f"FULFILLMENT => "
+            f"{fulfillment_channel} => "
+            f"{'FBA' if is_fba else 'FBM'}"
+        ) 
 
         response = manager.get_my_fees_estimate_for_sku(
             seller_sku=order_item.seller_sku,
             amount=float(selling_price),
             currency="INR",
             shipping=0,
-            is_fba=True,
+            is_fba=is_fba,
             identifier=f"fee-{order_item.id}"
         )
 
@@ -421,6 +437,7 @@ def save_fee_estimate(order_item, user):
         tax_amount=total_tax,
 
         raw_response=response,
+        fulfillment_channel=fulfillment_channel,
 
         estimated_at=estimated_time,
     )
