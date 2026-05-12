@@ -4547,7 +4547,8 @@ def amazon_profitability_details(request):
 
         # profit = net_sales - abs(mpfees) + shipping_final - stdcost + tcs_total
         # profit = net_sales - t_new_charge + shipping_final - stdcost + tcs_total
-        profit = net_sales + t_new_charge + shipping_final - stdcost + tcs_total
+        # profit = net_sales + t_new_charge + shipping_final - stdcost + tcs_total
+        profit = net_sales - estimated_fees - shipping_final - stdcost - tcs_total
         profit_margin = (profit / net_sales * 100) if net_sales else 0
         tacos = (ads / gross_sales * 100) if gross_sales else 0
         ret_percent = (return_units / net_qty * 100) if net_qty else 0
@@ -4691,26 +4692,6 @@ def amazon_profitability_parent(request):
     if to_date:
         order_filter &= Q(order__purchase_date__lte=to_date)
 
-    # ---------------- CHILD ASIN DATA ----------------
-    # items = (
-    #     OrderItem.objects
-    #     .filter(order_filter)
-    #     .exclude(order__order_status__icontains='Cancel')
-    #     .values('asin', 'parent_asin')
-    #     .annotate(
-    #         title=Max('title'),
-    #         seller_sku=Max('seller_sku'),
-    #         image_url=Max('image_url'),
-    #         grossqty=Sum('quantity_ordered'),
-    #         shipping_price=Sum('shipping_price'),
-    #         total_cost=Sum(F('cost_price') * F('quantity_ordered')),
-    #         # grosssales=Sum(F('item_price') * F('quantity_ordered'))
-    #         grosssales=Sum('item_price'),
-    #         promotion_discount=Sum('promotion_discount'),
-    #         avg_cost=Avg('item_price'),
-    #         item_tax=Sum('item_tax'),
-    #     )
-    # )
 
     # ---------------- CHILD ASIN DATA ----------------
     items = (
@@ -4920,7 +4901,8 @@ def amazon_profitability_parent(request):
         shipping_final = Decimal(row['shipping_price'] or 0)
         total_cost = Decimal(row['total_cost'] or 0)
 
-        profit = net_sales + t_new_charge + shipping_final - total_cost + tcs_total
+        # profit = net_sales + t_new_charge + shipping_final - total_cost + tcs_total
+        profit = net_sales - estimated_fees - shipping_final - tcs_total
         profit_margin = (profit / net_sales * 100) if net_sales else 0
 
         ret_percent = (return_units / net_qty * 100) if net_qty else 0
@@ -5195,7 +5177,10 @@ def sku_profit_report(request):
 
         item_tax = float(row.get('item_tax') or 0)
         promo_discount = float(row.get('promotion_discount') or 0)
-        estimated_fees = estimated_fee_map.get(oid, Decimal("0"))
+        # estimated_fees = estimated_fee_map.get(oid, Decimal("0"))
+        estimated_fees = float(
+            estimated_fee_map.get(oid, Decimal("0"))
+        )
 
         adjusted_gross_sales = gross_sales + item_tax - promo_discount
 
@@ -5274,15 +5259,15 @@ def sku_profit_report(request):
         net_sales = adjusted_gross_sales
         shipping_final = shipping_income  
 
-        # profit = net_sales - abs(mpfees) + shipping_final - cost + tcs  
-        # profit = net_sales - new_charge + shipping_final - cost + tcs
+        
         # profit = net_sales + new_charge + shipping_final - cost + tcs
-        profit = net_sales + new_charge + shipping_final - cost + tcs
+        profit = net_sales - estimated_fees - shipping_final - tcs
+        
 
         profit_margin = (profit / net_sales * 100) if net_sales else 0
         tacos = (ads / gross_sales * 100) if gross_sales else 0
         drr = tacos
-        ret_percent = (return_units / gross_qty * 100) if gross_qty else 0
+        ret_percent = (return_units / net_qty * 100) if net_qty else 0
 
         results.append({
             "order_id": oid,
@@ -5308,7 +5293,7 @@ def sku_profit_report(request):
             "shippingfees": format_currency(shipping_final),
 
             "profit": format_currency(profit),
-            "grossprofitper": format_currency(profit_margin),
+            "grossprofitper": round(profit_margin, 2),
 
             "returnqty": return_units,
             "retpercent": round(ret_percent, 2),
@@ -5355,7 +5340,7 @@ def sku_profit_report(request):
             "total_netquantity": total_qty,
             "profit": format_currency(total_profit),
             "total_returns":total_returns,
-            "total_ret_percent":round(total_ret_percent, 2),
+            "total_ret_percent":f"{round(total_ret_percent, 2)}%",
 
             "totalprofitmargin": (total_profit / total_net_sales * 100) if total_net_sales else 0,
 
