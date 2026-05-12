@@ -37,6 +37,7 @@ import {
   // UilUsersAlt,
   // UilWindowSection,
   UilArrowGrowth,
+  UilMegaphone,
   UilBookOpen,
   UilCreateDashboard,
   UilFileShieldAlt,
@@ -188,6 +189,12 @@ function MenuItems({ toggleCollapsed }) {
     ]),
 
     getItem(t('reconcile'), 'reconcile', !topMenu && <UilCreateDashboard />, [
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-reconcile`}>
+          {t('Payment Reconciliation')}
+        </NavLink>,
+        'payment-reconcile',
+      ),
       // Summary
       getItem(
         <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/summary`}>
@@ -289,6 +296,16 @@ function MenuItems({ toggleCollapsed }) {
           'returns-ledger',
         ),
       ]),
+    ]),
+
+    getItem(t('Advertising'), 'advertising', !topMenu && <UilMegaphone />, [
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/overview`}>
+          {t('Overview')}
+        </NavLink>,
+        'overview',
+        null,
+      ),
     ]),
 
     getItem(

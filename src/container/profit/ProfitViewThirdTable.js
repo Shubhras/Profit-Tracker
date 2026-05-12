@@ -434,12 +434,14 @@ export default function ProfitDetailsView() {
       render: (v, record) => (
         <button
           type="button"
-          className="cursor-pointer bg-transparent border-none"
+          className={`cursor-pointer bg-transparent border-none font-semibold ${
+            v > 0 ? 'text-green-600' : v < 0 ? 'text-red-600' : 'text-gray-600'
+          }`}
           onClick={() =>
             setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
           }
         >
-          {v}
+          {v}%
         </button>
       ),
     },
@@ -844,7 +846,17 @@ export default function ProfitDetailsView() {
                             </button>
                           </div>
                         ) : col.dataIndex === 'profitPercent' ? (
-                          Number(value || 0).toFixed(2)
+                          <span
+                            className={`font-semibold ${
+                              Number(value) > 0
+                                ? 'text-green-600'
+                                : Number(value) < 0
+                                ? 'text-red-600'
+                                : 'text-gray-600'
+                            }`}
+                          >
+                            {Number(value || 0).toFixed(2)}%
+                          </span>
                         ) : (
                           <button
                             type="button"
