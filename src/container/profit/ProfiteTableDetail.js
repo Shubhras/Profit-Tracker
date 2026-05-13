@@ -313,11 +313,28 @@ export default function ProfitDetailsView() {
         </button>
       ),
     },
+    // {
+    //   title: 'TCS-IGST',
+    //   dataIndex: 'tcs',
+    //   align: 'center',
+    //   sorter: (a, b) => a.tcs - b.tcs,
+    //   render: (v, record) => (
+    //     <button
+    //       type="button"
+    //       className="cursor-pointer bg-transparent border-none"
+    //       onClick={() =>
+    //         setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
+    //       }
+    //     >
+    //       {v}
+    //     </button>
+    //   ),
+    // },
     {
-      title: 'TCS-IGST',
-      dataIndex: 'tcs',
+      title: 'MP-GST',
+      dataIndex: 'mpigst',
       align: 'center',
-      sorter: (a, b) => a.tcs - b.tcs,
+      sorter: (a, b) => a.mpigst - b.mpigst,
       render: (v, record) => (
         <button
           type="button"
@@ -326,7 +343,25 @@ export default function ProfitDetailsView() {
             setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
           }
         >
-          {v}
+          {v ?? 0}
+        </button>
+      ),
+    },
+
+    {
+      title: 'IGST',
+      dataIndex: 'igst',
+      align: 'center',
+      sorter: (a, b) => a.igst - b.igst,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
+          }
+        >
+          {v ?? 0}
         </button>
       ),
     },
@@ -881,7 +916,8 @@ export default function ProfitDetailsView() {
     'returnPercent',
     'mpfees',
     'netsales',
-    'tcs',
+    'mpigst',
+    'igst',
     'stdcost',
     'shipping',
     'adSpend',

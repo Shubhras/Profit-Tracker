@@ -11,6 +11,7 @@ import Users from './users';
 import Widgets from './widgets';
 import ProfitRoutes from './profit';
 import Advertising from './advertising';
+import ValueAdded from './valueAdded';
 import ReconcileRoutes from './reconcile';
 import SettingsRoutes from './settings';
 import withAdminLayout from '../../layout/withAdminLayout';
@@ -93,6 +94,14 @@ const Admin = React.memo(() => {
           element={
             <SubscriptionGate allowFree>
               <Advertising />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="valueadded/*"
+          element={
+            <SubscriptionGate allowFree>
+              <ValueAdded />
             </SubscriptionGate>
           }
         />

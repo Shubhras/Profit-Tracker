@@ -22,7 +22,8 @@ export default function ProfitDetailsView() {
     'netqty',
     'returnqty',
     'returnPercent',
-    'tcs',
+    'mpigst',
+    'igst',
     'netsales',
     'shipping',
     'adSpend',
@@ -139,7 +140,7 @@ export default function ProfitDetailsView() {
     { label: 'Gross Sales', key: 'grossSales' },
 
     { label: 'Net Sales', key: 'netsales' },
-    { label: 'TCS-IGST', key: 'tcs' },
+    { label: 'MP-GST', key: 'mpigst' },
     { label: 'MP fees', key: 'mpfees' },
     { label: 'Shipping', key: 'shipping' },
 
@@ -306,10 +307,10 @@ export default function ProfitDetailsView() {
       ),
     },
     {
-      title: 'TCS-IGST',
-      dataIndex: 'tcs',
+      title: 'MP-GST',
+      dataIndex: 'mpigst',
       align: 'center',
-      sorter: (a, b) => a.tcs - b.tcs,
+      sorter: (a, b) => a.mpigst - b.mpigst,
       render: (v, record) => (
         <button
           type="button"
@@ -318,10 +319,29 @@ export default function ProfitDetailsView() {
             setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
           }
         >
-          {v}
+          {v ?? 0}
         </button>
       ),
     },
+
+    {
+      title: 'IGST',
+      dataIndex: 'igst',
+      align: 'center',
+      sorter: (a, b) => a.igst - b.igst,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
+    },
+
     {
       title: 'MP fees',
       dataIndex: 'mpfees',

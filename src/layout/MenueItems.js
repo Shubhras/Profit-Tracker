@@ -42,6 +42,9 @@ import {
   UilCreateDashboard,
   UilFileShieldAlt,
   UilSetting,
+  UilChartGrowth,
+  UilProcess,
+  UilLayersAlt,
 } from '@iconscout/react-unicons';
 import { Menu } from 'antd';
 import React from 'react';
@@ -303,7 +306,121 @@ function MenuItems({ toggleCollapsed }) {
         <NavLink onClick={toggleCollapsed} to={`${path}/advertising/overview`}>
           {t('Overview')}
         </NavLink>,
-        'overview',
+        'advertising-overview',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/campaigns`}>
+          {t('Campaigns')}
+        </NavLink>,
+        'campaigns',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/adsgroup`}>
+          {t('Ad Groups')}
+        </NavLink>,
+        'adsgroup',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/searchTerms`}>
+          {t('Search Terms')}
+        </NavLink>,
+        'searchTerms',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/keywords`}>
+          {t('Keywords')}
+        </NavLink>,
+        'keywords',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/placements`}>
+          {t('Placements')}
+        </NavLink>,
+        'placements',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/negativeKey`}>
+          {t('Negative Keywords')}
+        </NavLink>,
+        'negativeKey',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/rulesAuto`}>
+          {t('Rules & Automation')}
+        </NavLink>,
+        'rulesAuto',
+        null,
+      ),
+    ]),
+
+    getItem(t('Organic Performance'), 'organicperformance', !topMenu && <UilChartGrowth />, [
+      // getItem(
+      //   <NavLink onClick={toggleCollapsed} to={`${path}/advertising/overview`}>
+      //     {t('Summary')}
+      //   </NavLink>,
+      //   'summary',
+      //   null,
+      // ),
+    ]),
+
+    getItem(t('Operations'), 'Operations', !topMenu && <UilProcess />, [
+      // getItem(
+      //   <NavLink onClick={toggleCollapsed} to={`${path}/advertising/overview`}>
+      //     {t('Summary')}
+      //   </NavLink>,
+      //   'summary',
+      //   null,
+      // ),
+    ]),
+
+    getItem(t('Value Added Services'), 'valueadded', !topMenu && <UilLayersAlt />, [
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/overview`}>
+          {t('Overview')}
+        </NavLink>,
+        'valueadded-overview',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/accountmanage`}>
+          {t('Account Management')}
+        </NavLink>,
+        'accountmanage',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/digitalmarketing`}>
+          {t('Digital Marketing')}
+        </NavLink>,
+        'digitalmarketing',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/QuickCommerce`}>
+          {t('Quick Commerce')}
+        </NavLink>,
+        'quickcommerce',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/myservices`}>
+          {t('My Services')}
+        </NavLink>,
+        'myservices',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/invoicebilling`}>
+          {t('Invoices & Billing')}
+        </NavLink>,
+        'invoicebilling',
         null,
       ),
     ]),

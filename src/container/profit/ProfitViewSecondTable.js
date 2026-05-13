@@ -330,11 +330,28 @@ export default function ProfitViewSecondTable() {
         </button>
       ),
     },
+    // {
+    //   title: 'TCS-IGST',
+    //   dataIndex: 'tcs',
+    //   align: 'center',
+    //   sorter: (a, b) => a.tcs - b.tcs,
+    //   render: (v, record) => (
+    //     <button
+    //       type="button"
+    //       className="cursor-pointer bg-transparent border-none"
+    //       onClick={() =>
+    //         setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
+    //       }
+    //     >
+    //       {v}
+    //     </button>
+    //   ),
+    // },
     {
-      title: 'TCS-IGST',
-      dataIndex: 'tcs',
+      title: 'MP-GST',
+      dataIndex: 'mpigst',
       align: 'center',
-      sorter: (a, b) => a.tcs - b.tcs,
+      sorter: (a, b) => a.mpigst - b.mpigst,
       render: (v, record) => (
         <button
           type="button"
@@ -343,7 +360,25 @@ export default function ProfitViewSecondTable() {
             setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
           }
         >
-          {v}
+          {v ?? 0}
+        </button>
+      ),
+    },
+
+    {
+      title: 'IGST',
+      dataIndex: 'igst',
+      align: 'center',
+      sorter: (a, b) => a.igst - b.igst,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
+          }
+        >
+          {v ?? 0}
         </button>
       ),
     },
@@ -815,7 +850,7 @@ export default function ProfitViewSecondTable() {
 
     { key: 'grossSales', label: 'Gross Sales' },
     { key: 'netsales', label: 'Net Sales' },
-    { key: 'tcs', label: 'TCS-IGST' },
+    { key: 'mpigst', label: 'MP-GST' },
 
     { key: 'mpfees', label: 'mpfees' },
     { key: 'stdcost', label: 'Std Cost' },
@@ -848,7 +883,8 @@ export default function ProfitViewSecondTable() {
     'netQty',
     'returnqty',
     'returnPercent',
-    'tcs',
+    'mpigst',
+    'igst',
     'mpfees',
     'netsales',
     'stdcost',
