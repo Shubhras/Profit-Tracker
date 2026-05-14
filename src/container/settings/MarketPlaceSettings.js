@@ -67,7 +67,7 @@ export default function MarketPlaceSettings() {
       return;
     }
     if (market.id === 'amazon_ads') {
-      window.location.href = `https://372nmlsj-8000.inc1.devtunnels.ms/api/amazon-ads/account/connect/?user_id=${userId}`;
+      window.location.href = `https://api.trackmyprofit.com/api/amazon-ads/account/connect/?user_id=${userId}`;
       return;
     }
 

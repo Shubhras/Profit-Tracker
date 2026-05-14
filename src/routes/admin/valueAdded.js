@@ -10,7 +10,7 @@ const MyService = lazy(() => import('../../container/valueAdded/MyService'));
 const InvoicesBilling = lazy(() => import('../../container/valueAdded/InvoicesBilling'));
 const NotFound = lazy(() => import('../../container/pages/404'));
 
-function AdvertisingRoutes() {
+function ValueAddedRoutes() {
   return (
     <Routes>
       <Route
@@ -68,4 +68,4 @@ function AdvertisingRoutes() {
   );
 }
 
-export default AdvertisingRoutes;
+export default ValueAddedRoutes;

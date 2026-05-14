@@ -15,7 +15,7 @@ import {
   ArrowRightOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import amazon from '../../assets/icons/newamazon.png';
+import amazon from '../../assets/icons/amazonAds.png';
 import flipkart from '../../assets/icons/newflipkart.svg';
 import myntra from '../../assets/icons/newMyntra.png';
 import walmart from '../../assets/icons/walmartimages.png';

@@ -191,7 +191,7 @@ function MenuItems({ toggleCollapsed }) {
       ),
     ]),
 
-    getItem(t('reconcile'), 'reconcile', !topMenu && <UilCreateDashboard />, [
+    getItem(t('paymentreconcile'), 'reconcile', !topMenu && <UilCreateDashboard />, [
       getItem(
         <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-reconcile`}>
           {t('Payment Reconciliation')}
@@ -361,23 +361,110 @@ function MenuItems({ toggleCollapsed }) {
     ]),
 
     getItem(t('Organic Performance'), 'organicperformance', !topMenu && <UilChartGrowth />, [
-      // getItem(
-      //   <NavLink onClick={toggleCollapsed} to={`${path}/advertising/overview`}>
-      //     {t('Summary')}
-      //   </NavLink>,
-      //   'summary',
-      //   null,
-      // ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/overview`}>
+          {t('Overview')}
+        </NavLink>,
+        'perofrmance-Overview',
+        null,
+      ),
+
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/trafficVisibility`}>
+          {t('Traffic & Visibility')}
+        </NavLink>,
+        'traffic-visibility',
+        null,
+      ),
+
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/salesDrivers`}>
+          {t('Sales Drivers')}
+        </NavLink>,
+        'sales-drivers',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/Keyperformance`}>
+          {t('Keyword Performance')}
+        </NavLink>,
+        'keyperformance',
+        null,
+      ),
+
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/productranking`}>
+          {t('Product Ranking')}
+        </NavLink>,
+        'product-ranking',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/reviewRating`}>
+          {t('Reviews & Ratings')}
+        </NavLink>,
+        'Reviews-Rating',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/inventoryImpact`}>
+          {t('Inventory Impact')}
+        </NavLink>,
+        'inventoryImpact',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/reports`}>
+          {t('Reports')}
+        </NavLink>,
+        'reports',
+        null,
+      ),
     ]),
 
     getItem(t('Operations'), 'Operations', !topMenu && <UilProcess />, [
-      // getItem(
-      //   <NavLink onClick={toggleCollapsed} to={`${path}/advertising/overview`}>
-      //     {t('Summary')}
-      //   </NavLink>,
-      //   'summary',
-      //   null,
-      // ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/operations/dailyOperations`}>
+          {t('Daily Operations')}
+        </NavLink>,
+        'dailyoperations',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/operations/orderProcessing`}>
+          {t('Order Processing')}
+        </NavLink>,
+        'orderProcessing',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/operations/inventorySync`}>
+          {t('Inventory Sync')}
+        </NavLink>,
+        'inventorySync',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/operations/autoClaims`}>
+          {t('Auto Claims')}
+        </NavLink>,
+        'autoClaims',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/operations/logsHistory`}>
+          {t('Logs & History')}
+        </NavLink>,
+        'logshistory',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/operations/settings`}>
+          {t('Settings')}
+        </NavLink>,
+        'settings',
+        null,
+      ),
     ]),
 
     getItem(t('Value Added Services'), 'valueadded', !topMenu && <UilLayersAlt />, [
