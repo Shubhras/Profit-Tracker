@@ -22,6 +22,7 @@ export default function ProfitDetailsView() {
     'netqty',
     'returnqty',
     'returnPercent',
+    'mpigst',
     'tcs',
     'netsales',
     'shipping',
@@ -139,16 +140,16 @@ export default function ProfitDetailsView() {
     { label: 'Gross Sales', key: 'grossSales' },
 
     { label: 'Net Sales', key: 'netsales' },
-    { label: 'TCS-IGST', key: 'tcs' },
+    { label: 'MP-GST', key: 'mpigst' },
     { label: 'MP fees', key: 'mpfees' },
     { label: 'Shipping', key: 'shipping' },
 
     { label: 'Ad spend', key: 'adSpend' },
-    { label: 'Std Cost', key: 'std' },
+    { label: 'Product Cost', key: 'std' },
     { label: 'Account Charges', key: 'accountCharges' },
 
     { label: 'Other Expenses', key: 'otherExpenses' },
-    { label: 'Gst to Pay', key: 'gst' },
+    { label: 'GST to Pay', key: 'gst' },
     { label: 'Gross Profit', key: 'grossProfit' },
 
     { label: 'Profit', key: 'profit' },
@@ -306,23 +307,6 @@ export default function ProfitDetailsView() {
       ),
     },
     {
-      title: 'TCS-IGST',
-      dataIndex: 'tcs',
-      align: 'center',
-      sorter: (a, b) => a.tcs - b.tcs,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
-          }
-        >
-          {v}
-        </button>
-      ),
-    },
-    {
       title: 'MP fees',
       dataIndex: 'mpfees',
       align: 'center',
@@ -336,23 +320,6 @@ export default function ProfitDetailsView() {
           }
         >
           {v ?? 0}
-        </button>
-      ),
-    },
-    {
-      title: 'Std Cost',
-      dataIndex: 'std',
-      align: 'center',
-      sorter: (a, b) => a.std - b.std,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
-          }
-        >
-          {v}
         </button>
       ),
     },
@@ -374,6 +341,41 @@ export default function ProfitDetailsView() {
       ),
     },
     {
+      title: 'MP-GST',
+      dataIndex: 'mpigst',
+      align: 'center',
+      sorter: (a, b) => a.mpigst - b.mpigst,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
+    },
+
+    {
+      title: 'TCS',
+      dataIndex: 'tcs',
+      align: 'center',
+      sorter: (a, b) => a.tcs - b.tcs,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
+    },
+    {
       title: 'Ad Spend',
       dataIndex: 'adSpend',
       align: 'center',
@@ -391,10 +393,27 @@ export default function ProfitDetailsView() {
       ),
     },
     {
-      title: 'Gst to Pay',
+      title: 'GST to Pay',
       dataIndex: 'gst',
       align: 'center',
       sorter: (a, b) => a.gst - b.gst,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
+          }
+        >
+          {v}
+        </button>
+      ),
+    },
+    {
+      title: 'Product Cost',
+      dataIndex: 'std',
+      align: 'center',
+      sorter: (a, b) => a.std - b.std,
       render: (v, record) => (
         <button
           type="button"

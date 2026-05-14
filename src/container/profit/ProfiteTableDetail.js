@@ -313,57 +313,28 @@ export default function ProfitDetailsView() {
         </button>
       ),
     },
-    {
-      title: 'TCS-IGST',
-      dataIndex: 'tcs',
-      align: 'center',
-      sorter: (a, b) => a.tcs - b.tcs,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
-          }
-        >
-          {v}
-        </button>
-      ),
-    },
+    // {
+    //   title: 'TCS-IGST',
+    //   dataIndex: 'tcs',
+    //   align: 'center',
+    //   sorter: (a, b) => a.tcs - b.tcs,
+    //   render: (v, record) => (
+    //     <button
+    //       type="button"
+    //       className="cursor-pointer bg-transparent border-none"
+    //       onClick={() =>
+    //         setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
+    //       }
+    //     >
+    //       {v}
+    //     </button>
+    //   ),
+    // },
     {
       title: 'MP fees',
       dataIndex: 'mpfees',
       align: 'center',
       sorter: (a, b) => a.mpfees - b.mpfees,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
-          }
-        >
-          {v}
-        </button>
-      ),
-    },
-    // {
-    //   title: 'Net asp',
-    //   dataIndex: 'netasp',
-    //   align: 'center',
-    //   sorter: (a, b) => a.netasp - b.netasp,
-    // },
-    // {
-    //   title: 'Net discount',
-    //   dataIndex: 'net_discount',
-    //   align: 'center',
-    //   sorter: (a, b) => a.net_discount - b.net_discount,
-    // },
-    {
-      title: 'Std Cost',
-      dataIndex: 'stdcost',
-      align: 'center',
-      sorter: (a, b) => a.stdcost - b.stdcost,
       render: (v, record) => (
         <button
           type="button"
@@ -394,6 +365,54 @@ export default function ProfitDetailsView() {
       ),
     },
     {
+      title: 'MP-GST',
+      dataIndex: 'mpigst',
+      align: 'center',
+      sorter: (a, b) => a.mpigst - b.mpigst,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
+    },
+
+    {
+      title: 'TCS',
+      dataIndex: 'tcs',
+      align: 'center',
+      sorter: (a, b) => a.tcs - b.tcs,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
+          }
+        >
+          {v ?? 0}
+        </button>
+      ),
+    },
+    // {
+    //   title: 'Net asp',
+    //   dataIndex: 'netasp',
+    //   align: 'center',
+    //   sorter: (a, b) => a.netasp - b.netasp,
+    // },
+    // {
+    //   title: 'Net discount',
+    //   dataIndex: 'net_discount',
+    //   align: 'center',
+    //   sorter: (a, b) => a.net_discount - b.net_discount,
+    // },
+
+    {
       title: 'Ad Spend',
       dataIndex: 'adSpend',
       align: 'center',
@@ -410,8 +429,9 @@ export default function ProfitDetailsView() {
         </button>
       ),
     },
+
     {
-      title: 'Gst to Pay',
+      title: 'GST to Pay',
       dataIndex: 'gst',
       align: 'center',
       sorter: (a, b) => a.gst - b.gst,
@@ -427,6 +447,24 @@ export default function ProfitDetailsView() {
         </button>
       ),
     },
+    {
+      title: 'Product Cost',
+      dataIndex: 'stdcost',
+      align: 'center',
+      sorter: (a, b) => a.stdcost - b.stdcost,
+      render: (v, record) => (
+        <button
+          type="button"
+          className="cursor-pointer bg-transparent border-none"
+          onClick={() =>
+            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
+          }
+        >
+          {v}
+        </button>
+      ),
+    },
+
     // {
     //   title: 'Gross Profit',
     //   dataIndex: 'grossprofit',
@@ -849,17 +887,17 @@ export default function ProfitDetailsView() {
     { key: 'netsales', label: 'Net Sales' },
     { key: 'tcs', label: 'tcs' },
     { key: 'mpfees', label: 'mpfees' },
-    { key: 'stdcost', label: 'Std Cost' },
+    // { key: 'stdcost', label: 'Std Cost' },
 
     { key: 'shipping', label: 'Shipping' },
     { key: 'adSpend', label: 'Ad spend' },
-    { key: 'stdCost', label: 'Std Cost' },
+    { key: 'stdCost', label: 'Product Cost' },
 
     { key: 'stdCostMS', label: 'Std Cost M/S %' },
     { key: 'accountCharges', label: 'Account Charges' },
     { key: 'otherExpenses', label: 'Other Expenses' },
 
-    { key: 'gst', label: 'Gst to Pay' },
+    { key: 'gst', label: 'GST to Pay' },
     // { key: 'grossprofit', label: 'Gross Profit' },
     { key: 'profit', label: 'Profit' },
 
@@ -881,6 +919,7 @@ export default function ProfitDetailsView() {
     'returnPercent',
     'mpfees',
     'netsales',
+    'mpigst',
     'tcs',
     'stdcost',
     'shipping',

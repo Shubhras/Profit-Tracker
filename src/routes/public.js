@@ -1,6 +1,7 @@
 import { Spin } from 'antd';
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import AmazonAdsCallback from '../container/profit/AmazonAdsCallback';
 
 const Home = lazy(() => import('../container/profile/home/Index'));
 const Contact = lazy(() => import('../container/profile/contactus/Index'));
@@ -25,6 +26,7 @@ function PublicRoutes() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/api/amazon/callback" element={<AmazonCallback />} />
+        <Route path="/api/amazon/callback/advertise" element={<AmazonAdsCallback />} />
         <Route path="/integrations" element={<Integrations />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/contact" element={<Contact />} />

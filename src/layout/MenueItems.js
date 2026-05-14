@@ -42,6 +42,9 @@ import {
   UilCreateDashboard,
   UilFileShieldAlt,
   UilSetting,
+  UilChartGrowth,
+  UilProcess,
+  UilLayersAlt,
 } from '@iconscout/react-unicons';
 import { Menu } from 'antd';
 import React from 'react';
@@ -188,7 +191,7 @@ function MenuItems({ toggleCollapsed }) {
       ),
     ]),
 
-    getItem(t('reconcile'), 'reconcile', !topMenu && <UilCreateDashboard />, [
+    getItem(t('paymentreconcile'), 'reconcile', !topMenu && <UilCreateDashboard />, [
       getItem(
         <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-reconcile`}>
           {t('Payment Reconciliation')}
@@ -303,7 +306,208 @@ function MenuItems({ toggleCollapsed }) {
         <NavLink onClick={toggleCollapsed} to={`${path}/advertising/overview`}>
           {t('Overview')}
         </NavLink>,
-        'overview',
+        'advertising-overview',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/campaigns`}>
+          {t('Campaigns')}
+        </NavLink>,
+        'campaigns',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/adsgroup`}>
+          {t('Ad Groups')}
+        </NavLink>,
+        'adsgroup',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/searchTerms`}>
+          {t('Search Terms')}
+        </NavLink>,
+        'searchTerms',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/keywords`}>
+          {t('Keywords')}
+        </NavLink>,
+        'keywords',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/placements`}>
+          {t('Placements')}
+        </NavLink>,
+        'placements',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/negativeKey`}>
+          {t('Negative Keywords')}
+        </NavLink>,
+        'negativeKey',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/rulesAuto`}>
+          {t('Rules & Automation')}
+        </NavLink>,
+        'rulesAuto',
+        null,
+      ),
+    ]),
+
+    getItem(t('Organic Performance'), 'organicperformance', !topMenu && <UilChartGrowth />, [
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/overview`}>
+          {t('Overview')}
+        </NavLink>,
+        'perofrmance-Overview',
+        null,
+      ),
+
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/trafficVisibility`}>
+          {t('Traffic & Visibility')}
+        </NavLink>,
+        'traffic-visibility',
+        null,
+      ),
+
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/salesDrivers`}>
+          {t('Sales Drivers')}
+        </NavLink>,
+        'sales-drivers',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/Keyperformance`}>
+          {t('Keyword Performance')}
+        </NavLink>,
+        'keyperformance',
+        null,
+      ),
+
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/productranking`}>
+          {t('Product Ranking')}
+        </NavLink>,
+        'product-ranking',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/reviewRating`}>
+          {t('Reviews & Ratings')}
+        </NavLink>,
+        'Reviews-Rating',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/inventoryImpact`}>
+          {t('Inventory Impact')}
+        </NavLink>,
+        'inventoryImpact',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/reports`}>
+          {t('Reports')}
+        </NavLink>,
+        'reports',
+        null,
+      ),
+    ]),
+
+    getItem(t('Operations'), 'Operations', !topMenu && <UilProcess />, [
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/operations/dailyOperations`}>
+          {t('Daily Operations')}
+        </NavLink>,
+        'dailyoperations',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/operations/orderProcessing`}>
+          {t('Order Processing')}
+        </NavLink>,
+        'orderProcessing',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/operations/inventorySync`}>
+          {t('Inventory Sync')}
+        </NavLink>,
+        'inventorySync',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/operations/autoClaims`}>
+          {t('Auto Claims')}
+        </NavLink>,
+        'autoClaims',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/operations/logsHistory`}>
+          {t('Logs & History')}
+        </NavLink>,
+        'logshistory',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/operations/settings`}>
+          {t('Settings')}
+        </NavLink>,
+        'settings',
+        null,
+      ),
+    ]),
+
+    getItem(t('Value Added Services'), 'valueadded', !topMenu && <UilLayersAlt />, [
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/overview`}>
+          {t('Overview')}
+        </NavLink>,
+        'valueadded-overview',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/accountmanage`}>
+          {t('Account Management')}
+        </NavLink>,
+        'accountmanage',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/digitalmarketing`}>
+          {t('Digital Marketing')}
+        </NavLink>,
+        'digitalmarketing',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/QuickCommerce`}>
+          {t('Quick Commerce')}
+        </NavLink>,
+        'quickcommerce',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/myservices`}>
+          {t('My Services')}
+        </NavLink>,
+        'myservices',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/invoicebilling`}>
+          {t('Invoices & Billing')}
+        </NavLink>,
+        'invoicebilling',
         null,
       ),
     ]),
