@@ -116,6 +116,7 @@ export default function ProfitViewSecondTable() {
 
         netsales: item.netsales || 0,
         tcs: item.tcs || 0,
+        mp_gst: item.mp_gst,
         mpfees: item.estimatefees || 0,
         // netasp: Number(item.netasp) || 0,
         // net_discount: Number(item.net_discount) || 0,
@@ -392,9 +393,9 @@ export default function ProfitViewSecondTable() {
     // },
     {
       title: 'MP-GST',
-      dataIndex: 'mpigst',
+      dataIndex: 'mp_gst',
       align: 'center',
-      sorter: (a, b) => a.mpigst - b.mpigst,
+      sorter: (a, b) => a.mp_gst - b.mp_gst,
       render: (v, record) => (
         <button
           type="button"
@@ -772,11 +773,12 @@ export default function ProfitViewSecondTable() {
           <button
             type="button"
             onClick={() => navigate(`../third/${record.asin}`)}
-            style={{
-              border: '1px solid #d9d9d9',
-              background: 'rgb(202, 221, 254)',
-            }}
-            className="w-[30px]  h-[30px] rounded-[4px] cursor-pointer flex-items-center justify-center mx-auto"
+            // style={{
+            //   border: '1px solid #d9d9d9',
+            //   background: 'rgb(202, 221, 254)',
+            // }}
+            className="w-[34px] h-[34px] rounded-full border border-[#dbe1e8]
+  flex items-center justify-center cursor-pointer hover:text-black transition-all duration-200 mx-auto"
           >
             <RightOutlined style={{ fontSize: 12 }} />
           </button>
@@ -860,7 +862,7 @@ export default function ProfitViewSecondTable() {
 
     { key: 'grossSales', label: 'Gross Sales' },
     { key: 'netsales', label: 'Net Sales' },
-    { key: 'mpigst', label: 'MP-GST' },
+    { key: 'mp_gst', label: 'MP-GST' },
 
     { key: 'mpfees', label: 'mpfees' },
     // { key: 'stdcost', label: 'Std Cost' },
@@ -893,7 +895,7 @@ export default function ProfitViewSecondTable() {
     'netQty',
     'returnqty',
     'returnPercent',
-    'mpigst',
+    'mp_gst',
     'tcs',
     'mpfees',
     'netsales',
@@ -1126,7 +1128,11 @@ export default function ProfitViewSecondTable() {
             scroll={{ x: 'max-content' }}
             summary={() => {
               const summaryItems = filteredColumns
-                .filter((col) => !['image', 'channel', 'view'].includes(col.dataIndex))
+                .filter(
+                  (col) => !['image', 'channel', 'view', 'lastOrderDate', 'action'].includes(col.dataIndex || col.key),
+                )
+                // const summaryItems = filteredColumns
+                //   .filter((col) => !['image', 'channel', 'view'].includes(col.dataIndex))
                 .map((col) => {
                   const keyMap = {
                     netQty: 'netqty',
@@ -1134,6 +1140,7 @@ export default function ProfitViewSecondTable() {
                     returnPercent: 'totalreturnper',
                     netsales: 'netsales',
                     tcs: 'tcs',
+                    mp_gst: 'mp_gst',
                     mpfees: 'estimatefees',
                     stdcost: 'stdcost',
                     shipping: 'shippingfees',
@@ -1170,10 +1177,11 @@ export default function ProfitViewSecondTable() {
                       colSpan={filteredColumns.length}
                       style={{
                         background: '#fff',
-                        zIndex: 2,
+                        zIndex: 20,
                         minWidth: 220,
                         left: 0,
                         position: 'sticky',
+                        padding: '14px',
                       }}
                     >
                       <div
@@ -1184,7 +1192,7 @@ export default function ProfitViewSecondTable() {
                         <div className="flex items-center gap-4 overflow-x-auto">
                           {/* Left Summary Card */}
                           <div
-                            className="min-w-[190px] h-[88px] rounded-2xl bg-white border border-[#ede9fe]
+                            className="min-w-[360px] h-[88px] rounded-2xl bg-white border border-[#ede9fe]
                 flex items-center gap-3 px-4 shadow-sm"
                           >
                             <div
@@ -1200,63 +1208,66 @@ export default function ProfitViewSecondTable() {
                             </div>
 
                             <div>
-                              <h3 className="text-[13px] font-semibold text-[#111827] mb-1">Total Summary</h3>
+                              <h3 className="text-[17px] font-semibold text-[#111827] mb-1">Total Summary</h3>
 
-                              <p className="text-[11px] text-[#6b7280]">For selected period</p>
+                              <p className="text-[12px] text-[#6b7280]">For selected period</p>
                             </div>
                           </div>
 
                           {/* Metrics */}
                           <div className="flex items-stretch gap-3">
-                            {summaryItems.map((item, index) => {
-                              const isNegative = Number(item.value) < 0;
+                            {/* {summaryItems.map((item, index) => { */}
+                            {summaryItems
+                              .filter((item) => item.dataIndex !== 'lastOrderDate')
+                              .map((item, index) => {
+                                const isNegative = Number(item.value) < 0;
 
-                              const isPercent = [
-                                'profitPercent',
-                                'grossProfitPercent',
-                                'mrpNetDiscount',
-                                'percentOfSales',
-                                'tacos',
-                                'returnPercent',
-                              ].includes(item.dataIndex);
+                                const isPercent = [
+                                  'profitPercent',
+                                  'grossProfitPercent',
+                                  'mrpNetDiscount',
+                                  'percentOfSales',
+                                  'tacos',
+                                  // 'returnPercent',
+                                ].includes(item.dataIndex);
 
-                              return (
-                                <Table.Summary.Cell
-                                  key={index}
-                                  index={index + 3}
-                                  align="center"
-                                  style={{
-                                    background: '#fff',
-                                    padding: '10px 8px',
-                                    minWidth: 140,
-                                  }}
-                                >
-                                  <div
-                                    className="min-w-[135px] h-[88px]
+                                return (
+                                  <Table.Summary.Cell
+                                    key={index}
+                                    index={index + 3}
+                                    align="center"
+                                    style={{
+                                      background: '#fff',
+                                      padding: '10px 8px',
+                                      minWidth: 140,
+                                    }}
+                                  >
+                                    <div
+                                      className="min-w-[135px] h-[88px]
 rounded-2xl bg-white border border-[#f3f4f6]
 px-4 py-3 flex flex-col justify-center
 shadow-sm hover:shadow-md transition-all"
-                                  >
-                                    <div
-                                      className={`text-[18px] font-bold mb-1 ${
-                                        isNegative
-                                          ? 'text-[#ef4444]'
-                                          : item.dataIndex === 'profit'
-                                          ? 'text-[#16a34a]'
-                                          : 'text-[#111827]'
-                                      }`}
                                     >
-                                      {item.value ?? 0}
-                                      {isPercent ? '%' : ''}
-                                    </div>
+                                      <div
+                                        className={`text-[18px] font-bold mb-1 ${
+                                          isNegative
+                                            ? 'text-[#ef4444]'
+                                            : item.dataIndex === 'profit'
+                                            ? 'text-[#16a34a]'
+                                            : 'text-[#111827]'
+                                        }`}
+                                      >
+                                        {item.value ?? 0}
+                                        {isPercent ? '%' : ''}
+                                      </div>
 
-                                    <div className="text-[12px] font-medium text-[#6b7280] whitespace-nowrap">
-                                      {item.label}
+                                      <div className="text-[12px] font-medium text-[#6b7280] whitespace-nowrap">
+                                        {item.label}
+                                      </div>
                                     </div>
-                                  </div>
-                                </Table.Summary.Cell>
-                              );
-                            })}
+                                  </Table.Summary.Cell>
+                                );
+                              })}
                           </div>
                         </div>
                       </div>
