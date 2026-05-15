@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import ProfitFilterBar from './component/ProfitFilterBar';
 import ProfitModal from './component/ProfitModal';
 import { PageHeader } from '../../components/page-headers/page-headers';
-import { getProfitData, exportProfitData, getProfitModalApi } from '../../redux/dashboard/actionCreator';
+import { getProfitData, exportProfitData } from '../../redux/dashboard/actionCreator';
 import amazon from '../../assets/icons/amazon.svg';
 // import flipkartLogo from '../../assets/flipkart.png';
 
@@ -755,15 +755,16 @@ export default function ProfitTableView() {
               })
             }
             // onClick={() => navigate(`../profittabledetails/${record.channel}`)}
-            style={{
-              border: '1px solid #d9d9d9',
-              background: 'rgb(202, 221, 254)',
-            }}
-            className="w-[30px] h-[30px] rounded-[4px] cursor-pointer flex-items-center justify-center mx-auto"
+            // style={{
+            //   border: '1px solid #d9d9d9',
+            //   background: 'rgb(202, 221, 254)',
+            // }}
+            className="w-[34px] h-[34px] rounded-full border border-[#dbe1e8]
+  flex items-center justify-center cursor-pointer hover:text-black transition-all duration-200 mx-auto"
           >
             <RightOutlined style={{ fontSize: 12 }} />
           </button>
-          <button
+          {/* <button
             type="button"
             onClick={() => {
               const payload = {
@@ -805,7 +806,7 @@ export default function ProfitTableView() {
             className="w-[30px] h-[30px] rounded-[4px] cursor-pointer flex-items-center justify-center mx-auto"
           >
             <BarChartOutlined style={{ fontSize: 14, color: '#ff4d6d' }} />
-          </button>
+          </button> */}
         </div>
       ),
     },

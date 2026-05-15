@@ -50,6 +50,13 @@ AMAZON_CLIENT_SECRET = os.getenv("AMAZON_CLIENT_SECRET")
 AMAZON_APP_ID = os.getenv("AMAZON_APP_ID")
 AMAZON_REDIRECT_URI = os.getenv("AMAZON_REDIRECT_URI")
 
+AMAZON_ADS_CLIENT_ID = os.getenv("AMAZON_ADS_CLIENT_ID")
+AMAZON_ADS_CLIENT_SECRET = os.getenv("AMAZON_ADS_CLIENT_SECRET")
+
+AMAZON_ADS_REDIRECT_URI = os.getenv(
+    "AMAZON_ADS_REDIRECT_URI"
+)
+
 
 # ALLOWED_HOSTS = ['trackmyprofit.com', 'www.trackmyprofit.com', '194.238.17.204','api.trackmyprofit.com','127.0.0.1', "localhost" ]
 
@@ -93,6 +100,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'subscription',
     'amazon_auth',
+    'amazon_ads',
     'django_crontab',
 ]
 
@@ -217,14 +225,6 @@ USE_X_FORWARDED_HOST = True
 # CRON JOBS CONFIGURATION
 # Format: ('minute hour day month day_of_week', 'command_to_run')
 # '0 */4 * * *' means every 4 hours
-
-# CRONJOBS = [
-#     ('0 */2 * * *', 'django.core.management.call_command', ['background_sync']),
-# ]
-
-# CRONJOBS = [
-#     ('*/2 * * * *', 'django.core.management.call_command', ['background_sync']),
-# ]
 
 
 

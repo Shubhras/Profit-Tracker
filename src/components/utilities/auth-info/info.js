@@ -81,6 +81,7 @@ const AuthInfo = React.memo(() => {
     '/reconcile/b2c-reconciliation/invoice-reconciliation',
     '/reconcile/return/summary',
     '/reconcile/summary',
+    '/profit/profitTableView/second/',
   ];
 
   const hideSearch = HIDE_SEARCH.some((route) => location.pathname.includes(route));

@@ -42,6 +42,9 @@ import {
   UilCreateDashboard,
   UilFileShieldAlt,
   UilSetting,
+  UilChartGrowth,
+  UilProcess,
+  UilLayersAlt,
 } from '@iconscout/react-unicons';
 import { Menu } from 'antd';
 import React from 'react';
@@ -188,14 +191,13 @@ function MenuItems({ toggleCollapsed }) {
       ),
     ]),
 
-    getItem(t('reconcile'), 'reconcile', !topMenu && <UilCreateDashboard />, [
+    getItem(t('paymentreconcile'), 'reconcile', !topMenu && <UilCreateDashboard />, [
       getItem(
         <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-reconcile`}>
           {t('Payment Reconciliation')}
         </NavLink>,
         'payment-reconcile',
       ),
-      // Summary
       getItem(
         <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/summary`}>
           {t('summary')}
@@ -203,99 +205,132 @@ function MenuItems({ toggleCollapsed }) {
         'reconcile-summary',
       ),
 
-      // OS Payment
       getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/os-payment`}>
-          {t('osPayment')}
+        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/ordersettlement`}>
+          {t('Order & Settlements')}
         </NavLink>,
-        'os-payment',
+        'order-settlements',
       ),
+
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/marketPayment`}>
+          {t('Marketplace Payments')}
+        </NavLink>,
+        'marketplace-payment',
+      ),
+
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/returnsAdjust`}>
+          {t('Returns & Adjustments')}
+        </NavLink>,
+        'returns-adjustments',
+      ),
+
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/paymentLeaks`}>
+          {t('Payment Leaks')}
+        </NavLink>,
+        'payment-leaks',
+      ),
+
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/cashflow`}>
+          {t('Cashflow Planning')}
+        </NavLink>,
+        'cashflow-planning',
+      ),
+
+      // getItem(
+      //   <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/os-payment`}>
+      //     {t('osPayment')}
+      //   </NavLink>,
+      //   'os-payment',
+      // ),
 
       /* ================= B2C Reconciliation ================= */
-      getItem(t('b2cReconciliation'), 'b2c-reconciliation', null, [
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2c-reconciliation/settled-order`}>
-            {t('settledOrder')}
-          </NavLink>,
-          'settled-order',
-        ),
+      // getItem(t('b2cReconciliation'), 'b2c-reconciliation', null, [
+      //   getItem(
+      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2c-reconciliation/settled-order`}>
+      //       {t('settledOrder')}
+      //     </NavLink>,
+      //     'settled-order',
+      //   ),
 
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2c-reconciliation/unsettled-order`}>
-            {t('unsettledOrder')}
-          </NavLink>,
-          'unsettled-order',
-        ),
+      //   getItem(
+      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2c-reconciliation/unsettled-order`}>
+      //       {t('unsettledOrder')}
+      //     </NavLink>,
+      //     'unsettled-order',
+      //   ),
 
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2c-reconciliation/invoice-reconciliation`}>
-            {t('invoiceReconciliation')}
-          </NavLink>,
-          'invoice-reconciliation',
-        ),
-      ]),
+      //   getItem(
+      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2c-reconciliation/invoice-reconciliation`}>
+      //       {t('invoiceReconciliation')}
+      //     </NavLink>,
+      //     'invoice-reconciliation',
+      //   ),
+      // ]),
 
       /* ================= B2B Reconciliation ================= */
-      getItem(t('b2bReconciliation'), 'b2b-reconciliation', null, [
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2b-reconciliation/avcp`}>
-            {t('avcp')}
-          </NavLink>,
-          'avcp',
-        ),
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2b-reconciliation/quick-com`}>
-            {t('quickCom')}
-          </NavLink>,
-          'quick-com',
-        ),
+      // getItem(t('b2bReconciliation'), 'b2b-reconciliation', null, [
+      //   getItem(
+      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2b-reconciliation/avcp`}>
+      //       {t('avcp')}
+      //     </NavLink>,
+      //     'avcp',
+      //   ),
+      //   getItem(
+      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2b-reconciliation/quick-com`}>
+      //       {t('quickCom')}
+      //     </NavLink>,
+      //     'quick-com',
+      //   ),
 
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2b-reconciliation/others`}>
-            {t('others')}
-          </NavLink>,
-          'others',
-        ),
+      //   getItem(
+      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2b-reconciliation/others`}>
+      //       {t('others')}
+      //     </NavLink>,
+      //     'others',
+      //   ),
 
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2b-reconciliation/customer-ledger`}>
-            {t('custLedger')}
-          </NavLink>,
-          'custLedger',
-        ),
-      ]),
+      //   getItem(
+      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2b-reconciliation/customer-ledger`}>
+      //       {t('custLedger')}
+      //     </NavLink>,
+      //     'custLedger',
+      //   ),
+      // ]),
 
       // Fee Leaks
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/fee-leaks`}>
-          {t('feeLeaks')}
-        </NavLink>,
-        'fee-leaks',
-      ),
+      // getItem(
+      //   <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/fee-leaks`}>
+      //     {t('feeLeaks')}
+      //   </NavLink>,
+      //   'fee-leaks',
+      // ),
 
-      // Min Settlement Leak
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/min-settlement-leaks`}>
-          {t('minSettLeaks')}
-        </NavLink>,
-        'minSettLeaks',
-      ),
+      // getItem(
+      //   <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/min-settlement-leaks`}>
+      //     {t('minSettLeaks')}
+      //   </NavLink>,
+      //   'minSettLeaks',
+      // ),
       /* ================= Returns ================= */
-      getItem(t('returns'), 'returns', null, [
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/return/summary`}>
-            {t('summary')}
-          </NavLink>,
-          'returns-summary',
-        ),
+      // getItem(t('returns'), 'returns', null, [
+      //   getItem(
+      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/return/summary`}>
+      //       {t('summary')}
+      //     </NavLink>,
+      //     'returns-summary',
+      //   ),
 
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/return/ledger`}>
-            {t('ledger')}
-          </NavLink>,
-          'returns-ledger',
-        ),
-      ]),
+      //   getItem(
+      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/return/ledger`}>
+      //       {t('ledger')}
+      //     </NavLink>,
+      //     'returns-ledger',
+      //   ),
+      // ]),
     ]),
 
     getItem(t('Advertising'), 'advertising', !topMenu && <UilMegaphone />, [
@@ -303,7 +338,208 @@ function MenuItems({ toggleCollapsed }) {
         <NavLink onClick={toggleCollapsed} to={`${path}/advertising/overview`}>
           {t('Overview')}
         </NavLink>,
-        'overview',
+        'advertising-overview',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/campaigns`}>
+          {t('Campaigns')}
+        </NavLink>,
+        'campaigns',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/adsgroup`}>
+          {t('Ad Groups')}
+        </NavLink>,
+        'adsgroup',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/searchTerms`}>
+          {t('Search Terms')}
+        </NavLink>,
+        'searchTerms',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/keywords`}>
+          {t('Keywords')}
+        </NavLink>,
+        'keywords',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/placements`}>
+          {t('Placements')}
+        </NavLink>,
+        'placements',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/negativeKey`}>
+          {t('Negative Keywords')}
+        </NavLink>,
+        'negativeKey',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/rulesAuto`}>
+          {t('Rules & Automation')}
+        </NavLink>,
+        'rulesAuto',
+        null,
+      ),
+    ]),
+
+    getItem(t('Organic Performance'), 'organicperformance', !topMenu && <UilChartGrowth />, [
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/overview`}>
+          {t('Overview')}
+        </NavLink>,
+        'perofrmance-Overview',
+        null,
+      ),
+
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/trafficVisibility`}>
+          {t('Traffic & Visibility')}
+        </NavLink>,
+        'traffic-visibility',
+        null,
+      ),
+
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/salesDrivers`}>
+          {t('Sales Drivers')}
+        </NavLink>,
+        'sales-drivers',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/Keyperformance`}>
+          {t('Keyword Performance')}
+        </NavLink>,
+        'keyperformance',
+        null,
+      ),
+
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/productranking`}>
+          {t('Product Ranking')}
+        </NavLink>,
+        'product-ranking',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/reviewRating`}>
+          {t('Reviews & Ratings')}
+        </NavLink>,
+        'Reviews-Rating',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/inventoryImpact`}>
+          {t('Inventory Impact')}
+        </NavLink>,
+        'inventoryImpact',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/reports`}>
+          {t('Reports')}
+        </NavLink>,
+        'reports',
+        null,
+      ),
+    ]),
+
+    getItem(t('Operations'), 'Operations', !topMenu && <UilProcess />, [
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/operations/dailyOperations`}>
+          {t('Daily Operations')}
+        </NavLink>,
+        'dailyoperations',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/operations/orderProcessing`}>
+          {t('Order Processing')}
+        </NavLink>,
+        'orderProcessing',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/operations/inventorySync`}>
+          {t('Inventory Sync')}
+        </NavLink>,
+        'inventorySync',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/operations/autoClaims`}>
+          {t('Auto Claims')}
+        </NavLink>,
+        'autoClaims',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/operations/logsHistory`}>
+          {t('Logs & History')}
+        </NavLink>,
+        'logshistory',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/operations/settings`}>
+          {t('Settings')}
+        </NavLink>,
+        'settings',
+        null,
+      ),
+    ]),
+
+    getItem(t('Value Added Services'), 'valueadded', !topMenu && <UilLayersAlt />, [
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/overview`}>
+          {t('Overview')}
+        </NavLink>,
+        'valueadded-overview',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/accountmanage`}>
+          {t('Account Management')}
+        </NavLink>,
+        'accountmanage',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/digitalmarketing`}>
+          {t('Digital Marketing')}
+        </NavLink>,
+        'digitalmarketing',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/QuickCommerce`}>
+          {t('Quick Commerce')}
+        </NavLink>,
+        'quickcommerce',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/myservices`}>
+          {t('My Services')}
+        </NavLink>,
+        'myservices',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/invoicebilling`}>
+          {t('Invoices & Billing')}
+        </NavLink>,
+        'invoicebilling',
         null,
       ),
     ]),

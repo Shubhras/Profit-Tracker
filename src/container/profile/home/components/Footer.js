@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Row, Col, Typography, Divider } from 'antd';
 import { PhoneOutlined, MailOutlined } from '@ant-design/icons';
-import { HiOutlineChartBar } from 'react-icons/hi2';
+// import { HiOutlineChartBar } from 'react-icons/hi2';
 import PropTypes from 'prop-types';
 
 const { Title, Text } = Typography;
@@ -103,11 +103,14 @@ function Footer() {
           <Col xs={24} lg={8}>
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
               {/* Logo */}
-              <Link to="/" className="flex items-center gap-2 text-2xl font-bold text-white mb-6">
+              {/* <Link to="/" className="flex items-center gap-2 text-2xl font-bold text-white mb-6">
                 <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl flex items-center justify-center">
                   <HiOutlineChartBar className="text-white text-xl" />
                 </div>
                 <span>TrackMyProfit</span>
+              </Link> */}
+              <Link to="/" className="flex items-center mb-6 cursor-zoom-in">
+                <img src="/ConvertedLogo.png" alt="TrackMyProfit Logo" className="h-16 w-auto object-contain" />
               </Link>
 
               <Text className="block text-gray-400 text-sm leading-relaxed mb-6 max-w-sm">

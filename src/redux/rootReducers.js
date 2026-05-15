@@ -28,8 +28,10 @@ import jobs from './jobs/reducers';
 import dataTable from './data-filter/reducers';
 import subscriptionReducer from './subscription/reducers';
 import amazonReducer from './amazonAPI/reducers';
+import AmazonAdsReducer from './amazonAds/reducers';
 import dashboardReducer from './dashboard/reducers';
 import reconcilePaymentReducer from './reconcilePayment/reducers';
+import AdvertisingReducer from './advertising/reducer';
 import settingsReducer from './Settings/reducers';
 
 const rootReducers = combineReducers({
@@ -70,8 +72,10 @@ const rootReducers = combineReducers({
   SingleAxiosCrud: axiosSingleCrudReducer,
   subscription: subscriptionReducer,
   amazonAPI: amazonReducer,
+  amazonAds: AmazonAdsReducer,
   dashboard: dashboardReducer,
   reconcilePayment: reconcilePaymentReducer,
+  advertising: AdvertisingReducer,
   settings: settingsReducer,
 });
 

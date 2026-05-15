@@ -6,6 +6,7 @@ import { PageHeader } from '../../components/page-headers/page-headers';
 
 // Import Local Icons
 import amazonIcon from '../../assets/icons/amazon.svg';
+import amazonAds from '../../assets/icons/amazonAds.png';
 import flipkartIcon from '../../assets/icons/flipkart.png';
 import meeshoIcon from '../../assets/icons/meesho.png';
 import myntraIcon from '../../assets/icons/myntra.png';
@@ -28,7 +29,7 @@ export default function MarketPlaceSettings() {
   const channels = useSelector((state) => state.settings.channels);
   const [loading, setLoading] = useState(true);
   const profile = useSelector((state) => state.auth.profile);
-  console.log('dddddddddddddddd', profile);
+  // console.log('dddddddddddddddd', profile);
   useEffect(() => {
     setTimeout(() => setLoading(false), 800);
   }, []);
@@ -65,6 +66,10 @@ export default function MarketPlaceSettings() {
 
       return;
     }
+    if (market.id === 'amazon_ads') {
+      window.location.href = `https://api.trackmyprofit.com/api/amazon-ads/account/connect/?user_id=${userId}`;
+      return;
+    }
 
     // Open the dedicated connection page in a new tag
     // In a real app, you might pass the market ID as a query param, e.g. ?market=flipkart
@@ -75,6 +80,7 @@ export default function MarketPlaceSettings() {
 
   const iconMap = {
     amazon: amazonIcon,
+    amazon_ads: amazonAds,
     flipkart: flipkartIcon,
     myntra: myntraIcon,
     meesho: meeshoIcon,
