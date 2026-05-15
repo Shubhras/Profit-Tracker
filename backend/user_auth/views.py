@@ -16,6 +16,7 @@ class ConnectedMarketplacesView(APIView):
         #  Default marketplaces list
         marketplaces = [
             {"id": "amazon", "name": "Amazon", "domain": "amazon.com", "img": None, "status": "disconnected"},
+            {"id": "amazon_ads", "name": "Amazon (Ads)", "domain": "amazon.com", "img": None, "status": "disconnected"},
             {"id": "flipkart", "name": "Flipkart", "domain": "flipkart.com", "img": None, "status": "disconnected"},
             {"id": "myntra", "name": "Myntra", "domain": "myntra.com", "img": None, "status": "disconnected"},
             {"id": "meesho", "name": "Meesho", "domain": "meesho.com", "img": None, "status": "disconnected"},

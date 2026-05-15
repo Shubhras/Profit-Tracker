@@ -6,12 +6,14 @@ from .bussiness_report import *
 from .finance_report import *
 from .return_items import *
 from .retundata import *
+from amazon_ads.views import AmazonAdsCallbackView
 urlpatterns = [
     path('dashboard-stats/', views.get_full_dashboard, name='dashboard-stats'),
     path('pivot-stats/', views.get_pivot_dashboard, name='pivot-stats'),
     path('', views.home, name='home'),
     path('connect/', views.amazon_connect, name='amazon_connect'),
     path('callback/', views.amazon_callback, name='amazon_callback'),
+    path("callback/advertise",AmazonAdsCallbackView.as_view()),
 
     path('sync-orders/', views.sync_orders, name='sync_orders'),
     
