@@ -198,7 +198,6 @@ function MenuItems({ toggleCollapsed }) {
         </NavLink>,
         'payment-reconcile',
       ),
-      // Summary
       getItem(
         <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/summary`}>
           {t('summary')}
@@ -206,99 +205,132 @@ function MenuItems({ toggleCollapsed }) {
         'reconcile-summary',
       ),
 
-      // OS Payment
       getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/os-payment`}>
-          {t('osPayment')}
+        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/ordersettlement`}>
+          {t('Order & Settlements')}
         </NavLink>,
-        'os-payment',
+        'order-settlements',
       ),
+
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/marketPayment`}>
+          {t('Marketplace Payments')}
+        </NavLink>,
+        'marketplace-payment',
+      ),
+
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/returnsAdjust`}>
+          {t('Returns & Adjustments')}
+        </NavLink>,
+        'returns-adjustments',
+      ),
+
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/paymentLeaks`}>
+          {t('Payment Leaks')}
+        </NavLink>,
+        'payment-leaks',
+      ),
+
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/cashflow`}>
+          {t('Cashflow Planning')}
+        </NavLink>,
+        'cashflow-planning',
+      ),
+
+      // getItem(
+      //   <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/os-payment`}>
+      //     {t('osPayment')}
+      //   </NavLink>,
+      //   'os-payment',
+      // ),
 
       /* ================= B2C Reconciliation ================= */
-      getItem(t('b2cReconciliation'), 'b2c-reconciliation', null, [
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2c-reconciliation/settled-order`}>
-            {t('settledOrder')}
-          </NavLink>,
-          'settled-order',
-        ),
+      // getItem(t('b2cReconciliation'), 'b2c-reconciliation', null, [
+      //   getItem(
+      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2c-reconciliation/settled-order`}>
+      //       {t('settledOrder')}
+      //     </NavLink>,
+      //     'settled-order',
+      //   ),
 
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2c-reconciliation/unsettled-order`}>
-            {t('unsettledOrder')}
-          </NavLink>,
-          'unsettled-order',
-        ),
+      //   getItem(
+      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2c-reconciliation/unsettled-order`}>
+      //       {t('unsettledOrder')}
+      //     </NavLink>,
+      //     'unsettled-order',
+      //   ),
 
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2c-reconciliation/invoice-reconciliation`}>
-            {t('invoiceReconciliation')}
-          </NavLink>,
-          'invoice-reconciliation',
-        ),
-      ]),
+      //   getItem(
+      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2c-reconciliation/invoice-reconciliation`}>
+      //       {t('invoiceReconciliation')}
+      //     </NavLink>,
+      //     'invoice-reconciliation',
+      //   ),
+      // ]),
 
       /* ================= B2B Reconciliation ================= */
-      getItem(t('b2bReconciliation'), 'b2b-reconciliation', null, [
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2b-reconciliation/avcp`}>
-            {t('avcp')}
-          </NavLink>,
-          'avcp',
-        ),
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2b-reconciliation/quick-com`}>
-            {t('quickCom')}
-          </NavLink>,
-          'quick-com',
-        ),
+      // getItem(t('b2bReconciliation'), 'b2b-reconciliation', null, [
+      //   getItem(
+      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2b-reconciliation/avcp`}>
+      //       {t('avcp')}
+      //     </NavLink>,
+      //     'avcp',
+      //   ),
+      //   getItem(
+      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2b-reconciliation/quick-com`}>
+      //       {t('quickCom')}
+      //     </NavLink>,
+      //     'quick-com',
+      //   ),
 
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2b-reconciliation/others`}>
-            {t('others')}
-          </NavLink>,
-          'others',
-        ),
+      //   getItem(
+      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2b-reconciliation/others`}>
+      //       {t('others')}
+      //     </NavLink>,
+      //     'others',
+      //   ),
 
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2b-reconciliation/customer-ledger`}>
-            {t('custLedger')}
-          </NavLink>,
-          'custLedger',
-        ),
-      ]),
+      //   getItem(
+      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2b-reconciliation/customer-ledger`}>
+      //       {t('custLedger')}
+      //     </NavLink>,
+      //     'custLedger',
+      //   ),
+      // ]),
 
       // Fee Leaks
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/fee-leaks`}>
-          {t('feeLeaks')}
-        </NavLink>,
-        'fee-leaks',
-      ),
+      // getItem(
+      //   <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/fee-leaks`}>
+      //     {t('feeLeaks')}
+      //   </NavLink>,
+      //   'fee-leaks',
+      // ),
 
-      // Min Settlement Leak
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/min-settlement-leaks`}>
-          {t('minSettLeaks')}
-        </NavLink>,
-        'minSettLeaks',
-      ),
+      // getItem(
+      //   <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/min-settlement-leaks`}>
+      //     {t('minSettLeaks')}
+      //   </NavLink>,
+      //   'minSettLeaks',
+      // ),
       /* ================= Returns ================= */
-      getItem(t('returns'), 'returns', null, [
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/return/summary`}>
-            {t('summary')}
-          </NavLink>,
-          'returns-summary',
-        ),
+      // getItem(t('returns'), 'returns', null, [
+      //   getItem(
+      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/return/summary`}>
+      //       {t('summary')}
+      //     </NavLink>,
+      //     'returns-summary',
+      //   ),
 
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/return/ledger`}>
-            {t('ledger')}
-          </NavLink>,
-          'returns-ledger',
-        ),
-      ]),
+      //   getItem(
+      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/return/ledger`}>
+      //       {t('ledger')}
+      //     </NavLink>,
+      //     'returns-ledger',
+      //   ),
+      // ]),
     ]),
 
     getItem(t('Advertising'), 'advertising', !topMenu && <UilMegaphone />, [

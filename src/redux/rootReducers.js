@@ -31,6 +31,7 @@ import amazonReducer from './amazonAPI/reducers';
 import AmazonAdsReducer from './amazonAds/reducers';
 import dashboardReducer from './dashboard/reducers';
 import reconcilePaymentReducer from './reconcilePayment/reducers';
+import AdvertisingReducer from './advertising/reducer';
 import settingsReducer from './Settings/reducers';
 
 const rootReducers = combineReducers({
@@ -74,6 +75,7 @@ const rootReducers = combineReducers({
   amazonAds: AmazonAdsReducer,
   dashboard: dashboardReducer,
   reconcilePayment: reconcilePaymentReducer,
+  advertising: AdvertisingReducer,
   settings: settingsReducer,
 });
 
