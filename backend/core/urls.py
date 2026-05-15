@@ -41,5 +41,6 @@ urlpatterns = [
     path('api/user/', include('user_auth.urls')),
     path("api/amazon/", include("amazon_auth.urls")),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path("api/amazon-ads/", include("amazon_ads.urls")),
 
 ]

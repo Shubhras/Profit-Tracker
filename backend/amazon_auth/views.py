@@ -4282,24 +4282,6 @@ def amazon_profitability_details(request):
         order_filter &= Q(order__purchase_date__lte=to_date)
 
     # ---------------- ORDER ITEM AGG ----------------
-    # items = (
-    #     OrderItem.objects
-    #     .filter(order_filter)
-    #     .values('asin')
-    #     .annotate(
-    #         title=Max('title'),
-    #         image_url=Max('image_url'),
-    #         grossqty=Sum('quantity_ordered'),
-    #         # grosssales=Sum('item_price'),
-    #         shipping_income=Sum('shipping_income'),
-    #         shipping_price=Sum('shipping_price'),
-    #         discount=Sum('discount'),
-    #         promotion_discount=Sum('promotion_discount'),
-    #         avg_cost=Avg('item_price'),
-    #         total_cost=Sum(F('cost_price') * F('quantity_ordered')),
-    #         grosssales=Sum(F('item_price') * F('quantity_ordered'))
-    #     )
-    # )
 
     items = (
         OrderItem.objects
@@ -4425,7 +4407,7 @@ def amazon_profitability_details(request):
     total_ret_percent = 0
     adjusted_gross_sales = 0
     total_estimatefees = 0 
-
+    total_mp_gst = 0
     total_gst = 0
     total_tcs = 0
 
@@ -4470,6 +4452,7 @@ def amazon_profitability_details(request):
         gst = 0
         tcs_total = 0  
         t_new_charge = 0   
+        
 
 
         for o in orders:
@@ -4532,7 +4515,13 @@ def amazon_profitability_details(request):
         net_sales = adjusted_gross_sales
         shipping_final = shipping_price 
 
-        total_cost = float(row.get('total_cost') or 0)
+        mp_gst = (net_sales + shipping_final) * 0.18
+
+        
+
+        # total_cost = float(row.get('total_cost') or 0)
+        # total_cost = float(50)
+        total_cost = float(50) * net_qty
         avg_cost = float(row.get('avg_cost') or 0)
 
         stdcost = total_cost
@@ -4548,7 +4537,7 @@ def amazon_profitability_details(request):
         # profit = net_sales - abs(mpfees) + shipping_final - stdcost + tcs_total
         # profit = net_sales - t_new_charge + shipping_final - stdcost + tcs_total
         # profit = net_sales + t_new_charge + shipping_final - stdcost + tcs_total
-        profit = net_sales - estimated_fees - shipping_final - stdcost - tcs_total
+        profit = net_sales - estimated_fees - shipping_final - stdcost - tcs_total + mp_gst
         profit_margin = (profit / net_sales * 100) if net_sales else 0
         tacos = (ads / gross_sales * 100) if gross_sales else 0
         ret_percent = (return_units / net_qty * 100) if net_qty else 0
@@ -4568,6 +4557,7 @@ def amazon_profitability_details(request):
             "netsales": format_currency(net_sales),
             "ads": format_currency(ads),
             "mpfees": round(mpfees, 2),
+            "mp_gst": format_currency(mp_gst),
             "new_mpfees": format_currency(t_new_charge),
             # "estimatefees": format_currency(estimated_fees),
             "estimatefees": format_currency(-abs(estimated_fees)),
@@ -4603,6 +4593,7 @@ def amazon_profitability_details(request):
         total_tcs += tcs_total
         total_ret_percent += ret_percent
         total_estimatefees += estimated_fees
+        total_mp_gst += mp_gst
 
     # -------- DEBUG AFTER BUILD --------
     db_asins = set(OrderItem.objects.filter(order__user=user).values_list('asin', flat=True))
@@ -4629,6 +4620,7 @@ def amazon_profitability_details(request):
             "profit": format_currency(total_profit),
             "grossprofitper": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
             "mpfees": format_currency(total_mpfees),
+            "mp_gst": format_currency(total_mp_gst),
             # "estimatefees": format_currency(total_estimatefees),
             "estimatefees": format_currency(-abs(total_estimatefees)),
             "total_new_mpfees": format_currency(total_mpfees),
@@ -4828,6 +4820,7 @@ def amazon_profitability_parent(request):
     total_stdcost = Decimal(0) 
     adjusted_gross_sales = Decimal(0) 
     total_estimatefees = Decimal(0)
+    total_mp_gst = Decimal(0)
 
     for row in items:
 
@@ -4899,10 +4892,18 @@ def amazon_profitability_parent(request):
         net_sales = adjusted_gross_sales
         # total_estimatefees += estimated_fees
         shipping_final = Decimal(row['shipping_price'] or 0)
-        total_cost = Decimal(row['total_cost'] or 0)
+
+        # mp_gst = (net_sales + shipping_final) * 0.18
+       
+
+        mp_gst = (net_sales + shipping_final) * Decimal("0.18")
+        
+        # total_cost = Decimal(row['total_cost'] or 0)
+
+        total_cost = Decimal(50) * net_qty
 
         # profit = net_sales + t_new_charge + shipping_final - total_cost + tcs_total
-        profit = net_sales - estimated_fees - shipping_final - tcs_total
+        profit = net_sales - estimated_fees - shipping_final - tcs_total + mp_gst - total_cost
         profit_margin = (profit / net_sales * 100) if net_sales else 0
 
         ret_percent = (return_units / net_qty * 100) if net_qty else 0
@@ -4924,7 +4925,7 @@ def amazon_profitability_parent(request):
             "netsales": format_currency(net_sales),
 
             "ads": format_currency(ads),
-
+            "mp_gst": format_currency(mp_gst),
             "new_mpfees": format_currency(t_new_charge),
             # "estimatefees": format_currency(estimated_fees),
             "estimatefees": format_currency(-abs(estimated_fees)),
@@ -4957,6 +4958,7 @@ def amazon_profitability_parent(request):
         total_ret_percent += ret_percent
         total_stdcost += total_cost
         total_estimatefees += Decimal(estimated_fees)
+        total_mp_gst += mp_gst
 
     return Response({
         "status": True,
@@ -4976,6 +4978,7 @@ def amazon_profitability_parent(request):
             "profit": format_currency(total_profit),
             "grossprofitper": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
             "mpfees": format_currency(total_mpfees),
+             "mp_gst": format_currency(total_mp_gst),
             # "estimatefees": format_currency(total_estimatefees),
             "estimatefees": format_currency(-abs(total_estimatefees)),
             "total_new_mpfees": format_currency(total_mpfees),
@@ -5167,6 +5170,7 @@ def sku_profit_report(request):
     total_new_charge = 0
     adjusted_gross_sales = 0
     total_estimatefees = 0
+    total_mp_gst = 0
 
     for row in items:
 
@@ -5188,7 +5192,9 @@ def sku_profit_report(request):
         shipping_price = float(row['shipping_price'] or 0)
 
         adjusted_gross_sales = gross_sales + item_tax - promo_discount + shipping_price
-        cost = float(row['total_cost'] or 0)
+        
+        # cost = float(row['total_cost'] or 0)
+        cost = float(50) * gross_qty
 
         f = finance_map.get(oid, {})
 
@@ -5257,11 +5263,18 @@ def sku_profit_report(request):
         # ---------------- CALCULATIONS ----------------
         # net_sales = gross_sales + refund
         net_sales = adjusted_gross_sales
-        shipping_final = shipping_income  
+        # shipping_final = shipping_income  
+
+        shipping_final = shipping_income
+
+        # MP GST = 18% of (netsales + shipping)
+        mp_gst = (net_sales + shipping_final) * 0.18
 
         
         # profit = net_sales + new_charge + shipping_final - cost + tcs
-        profit = net_sales - estimated_fees - shipping_final - tcs
+        # profit = net_sales - estimated_fees - shipping_final - tcs
+        
+        profit = net_sales - estimated_fees - shipping_final - tcs + mp_gst - cost
         
 
         profit_margin = (profit / net_sales * 100) if net_sales else 0
@@ -5287,6 +5300,7 @@ def sku_profit_report(request):
 
             "ads": format_currency(ads),
             "mpfees": round(mpfees, 2),
+            "mp_gst": format_currency(mp_gst),
             # "estimatefees": format_currency(estimated_fees),
             "estimatefees": format_currency(-abs(estimated_fees)),
             "new_mpfees": format_currency(new_charge),
@@ -5323,6 +5337,7 @@ def sku_profit_report(request):
         total_ret_percent += ret_percent
         total_new_charge += new_charge
         total_estimatefees += estimated_fees
+        total_mp_gst += mp_gst
         
 
     # ---------------- RESPONSE ----------------
@@ -5342,10 +5357,12 @@ def sku_profit_report(request):
             "total_returns":total_returns,
             "total_ret_percent":f"{round(total_ret_percent, 2)}%",
 
-            "totalprofitmargin": (total_profit / total_net_sales * 100) if total_net_sales else 0,
+            # "totalprofitmargin": (total_profit / total_net_sales * 100) if total_net_sales else 0,
+            "totalprofitmargin": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
 
             "ads": format_currency(total_ads),
             "mpfees": round(total_mpfees, 2),
+            "mp_gst": format_currency(total_mp_gst),
             # "estimatefees": format_currency(total_estimatefees),
             "estimatefees": format_currency(-abs(total_estimatefees)),
             "total_new_mpfees": format_currency(total_new_charge),
