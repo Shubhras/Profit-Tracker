@@ -757,7 +757,8 @@ class CampaignListView(APIView):
         )
 
         queryset = AdsCampaign.objects.filter(
-            amazon_account__user=user
+            amazon_account__user=user,
+            amazon_account__is_primary = True
         ).select_related(
             "amazon_account"
         ).prefetch_related(
@@ -1033,7 +1034,8 @@ class AdsProductAdListView(APIView):
         )
 
         queryset = AdsProductAd.objects.filter(
-            amazon_account__user=user
+            amazon_account__user=user,
+            amazon_account__is_primary = True
         ).select_related(
             "amazon_account",
             "campaign",
