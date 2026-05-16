@@ -6,9 +6,10 @@ import Placements from '../../container/advertising/Placements';
 const Overview = lazy(() => import('../../container/advertising/Overview'));
 const Campaigns = lazy(() => import('../../container/advertising/Campaigns'));
 const AdGroups = lazy(() => import('../../container/advertising/AdGroups'));
-
+const AdProducts = lazy(() => import('../../container/advertising/AdProducts'));
 const SearchTerms = lazy(() => import('../../container/advertising/SearchTerms'));
-
+const CampaignDetails = lazy(() => import('../../container/advertising/CampaignDetails'));
+const CampaignSecondDetails = lazy(() => import('../../container/advertising/CampaignSecondDetails'));
 const Keywords = lazy(() => import('../../container/advertising/Keywords'));
 
 const NegativeKey = lazy(() => import('../../container/advertising/NegativeKey'));
@@ -87,6 +88,32 @@ function AdvertisingRoutes() {
         element={
           <SubscriptionGate allowFree>
             <RulesAutomation />
+          </SubscriptionGate>
+        }
+      />
+
+      <Route
+        path="AdProducts"
+        element={
+          <SubscriptionGate allowFree>
+            <AdProducts />
+          </SubscriptionGate>
+        }
+      />
+
+      <Route
+        path="campaign-details/:id"
+        element={
+          <SubscriptionGate allowFree>
+            <CampaignDetails />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="campaign-second-details/:id"
+        element={
+          <SubscriptionGate allowFree>
+            <CampaignSecondDetails />
           </SubscriptionGate>
         }
       />

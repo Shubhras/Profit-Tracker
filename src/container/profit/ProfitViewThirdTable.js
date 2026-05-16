@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Table, Card, Modal, Tooltip, Checkbox, Button } from 'antd';
-import { EyeOutlined, SettingOutlined, FilterOutlined, SearchOutlined, BarChartOutlined } from '@ant-design/icons';
+import { EyeOutlined, FilterOutlined, SearchOutlined, BarChartOutlined } from '@ant-design/icons';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 // import ProfitFilterBar from './component/ProfitFilterBar';
@@ -12,27 +12,27 @@ import amazon from '../../assets/icons/amazon.svg';
 export default function ProfitDetailsView() {
   const { id } = useParams();
   const dispatch = useDispatch();
-  const [openSettings, setOpenSettings] = React.useState(false);
+  // const [openSettings, setOpenSettings] = React.useState(false);
   const [detailModal, setDetailModal] = React.useState({
     open: false,
     record: null,
     type: '',
   });
-  const [selectedColumns, setSelectedColumns] = React.useState([
-    'netqty',
-    'returnqty',
-    'returnPercent',
-    'mp_gst',
-    'tcs',
-    'netsales',
-    'shipping',
-    'adSpend',
-    'gst',
-    'mpfees',
-    'std',
-    'profit',
-    'profitPercent',
-  ]);
+  // const [selectedColumns, setSelectedColumns] = React.useState([
+  //   'netqty',
+  //   'returnqty',
+  //   'returnPercent',
+  //   'mp_gst',
+  //   'tcs',
+  //   'netsales',
+  //   'shipping',
+  //   'adSpend',
+  //   'gst',
+  //   'mpfees',
+  //   'std',
+  //   'profit',
+  //   'profitPercent',
+  // ]);
   const [showFilters, setShowFilters] = React.useState(false);
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -127,43 +127,43 @@ export default function ProfitDetailsView() {
       lastOrderDate: item.last_order_date || '',
     })) || [];
 
-  const allColumnOptions = [
-    { label: 'Description', key: 'description' },
-    { label: 'Gross Qty', key: 'grossqty' },
-    { label: 'Net Qty', key: 'netqty' },
+  // const allColumnOptions = [
+  //   { label: 'Description', key: 'description' },
+  //   { label: 'Gross Qty', key: 'grossqty' },
+  //   { label: 'Net Qty', key: 'netqty' },
 
-    { label: 'Return Qty', key: 'returnqty' },
-    { label: 'Return %', key: 'returnPercent' },
-    { label: 'Net ASP', key: 'netasp' },
+  //   { label: 'Return Qty', key: 'returnqty' },
+  //   { label: 'Return %', key: 'returnPercent' },
+  //   { label: 'Net ASP', key: 'netasp' },
 
-    { label: 'MRP', key: 'mrp' },
-    { label: 'MRP Net Discount%', key: 'mrpNetDiscount' },
-    { label: 'Gross Sales', key: 'grossSales' },
+  //   { label: 'MRP', key: 'mrp' },
+  //   { label: 'MRP Net Discount%', key: 'mrpNetDiscount' },
+  //   { label: 'Gross Sales', key: 'grossSales' },
 
-    { label: 'Net Sales', key: 'netsales' },
-    { label: 'MP-GST', key: 'mp_gst' },
-    { label: 'MP fees', key: 'mpfees' },
-    { label: 'Shipping', key: 'shipping' },
+  //   { label: 'Net Sales', key: 'netsales' },
+  //   { label: 'MP-GST', key: 'mp_gst' },
+  //   { label: 'MP fees', key: 'mpfees' },
+  //   { label: 'Shipping', key: 'shipping' },
 
-    { label: 'Ad spend', key: 'adSpend' },
-    { label: 'Product Cost', key: 'std' },
-    { label: 'Account Charges', key: 'accountCharges' },
+  //   { label: 'Ad spend', key: 'adSpend' },
+  //   { label: 'Product Cost', key: 'std' },
+  //   { label: 'Account Charges', key: 'accountCharges' },
 
-    { label: 'Other Expenses', key: 'otherExpenses' },
-    { label: 'GST to Pay', key: 'gst' },
-    { label: 'Gross Profit', key: 'grossProfit' },
+  //   { label: 'Other Expenses', key: 'otherExpenses' },
+  //   { label: 'GST to Pay', key: 'gst' },
+  //   { label: 'Gross Profit', key: 'grossProfit' },
 
-    { label: 'Profit', key: 'profit' },
-    { label: 'Settled Amount', key: 'settledAmount' },
-    { label: 'TACOS', key: 'tacos' },
+  //   { label: 'Profit', key: 'profit' },
+  //   { label: 'Settled Amount', key: 'settledAmount' },
+  //   { label: 'TACOS', key: 'tacos' },
 
-    { label: 'Gross Profit %', key: 'grossProfitPercent' },
-    { label: 'Profit %', key: 'profitPercent' },
-    { label: '% of Sales', key: 'percentOfSales' },
+  //   { label: 'Gross Profit %', key: 'grossProfitPercent' },
+  //   { label: 'Profit %', key: 'profitPercent' },
+  //   { label: '% of Sales', key: 'percentOfSales' },
 
-    { label: 'DRR(Daily Run Rate)', key: 'drr' },
-    { label: 'Last Order Date', key: 'lastOrderDate' },
-  ];
+  //   { label: 'DRR(Daily Run Rate)', key: 'drr' },
+  //   { label: 'Last Order Date', key: 'lastOrderDate' },
+  // ];
 
   const columns = [
     {
@@ -742,14 +742,15 @@ export default function ProfitDetailsView() {
     setShowFilters(false);
   };
 
-  const fixedColumns = ['image', 'channel', 'view'];
+  // const fixedColumns = ['image', 'channel', 'view'];
 
-  const filteredColumns = columns.filter((col) => {
-    if (fixedColumns.includes(col.dataIndex)) return true; // always show
-    if (!col.dataIndex) return true; // action column
+  // const filteredColumns = columns.filter((col) => {
+  //   if (fixedColumns.includes(col.dataIndex)) return true; // always show
+  //   if (!col.dataIndex) return true; // action column
 
-    return selectedColumns.some((key) => key === col.dataIndex || key.toLowerCase() === col.dataIndex?.toLowerCase());
-  });
+  //   return selectedColumns.some((key) => key === col.dataIndex || key.toLowerCase() === col.dataIndex?.toLowerCase());
+  // });
+
   // const handleClear = () => {
   //   setFilters({
   //     channel: '',
@@ -870,20 +871,11 @@ export default function ProfitDetailsView() {
                   </div>
                 )}
               </div>
-
-              <button
-                type="button"
-                onClick={() => setOpenSettings(true)}
-                className="h-[42px] px-4 rounded-xl border border-[#e5e7eb] bg-white flex items-center gap-2 text-[15px] font-medium shadow-sm transition-all"
-              >
-                <SettingOutlined style={{ fontSize: 14 }} />
-                Manage Columns
-              </button>
             </div>
           </div>
 
           <Table
-            columns={filteredColumns}
+            columns={columns}
             dataSource={dataSource}
             showSorterTooltip={false}
             loading={loading}
@@ -903,7 +895,7 @@ export default function ProfitDetailsView() {
             size="small"
             scroll={{ x: 'max-content' }}
             summary={() => {
-              const summaryItems = filteredColumns
+              const summaryItems = columns
                 .filter(
                   (col) => !['image', 'channel', 'view', 'lastOrderDate', 'action'].includes(col.dataIndex || col.key),
                 )
@@ -949,7 +941,7 @@ export default function ProfitDetailsView() {
                   <Table.Summary.Row>
                     <Table.Summary.Cell
                       index={0}
-                      colSpan={filteredColumns.length}
+                      colSpan={columns.length}
                       style={{
                         background: '#fff',
                         zIndex: 20,
@@ -1025,13 +1017,7 @@ export default function ProfitDetailsView() {
                                   >
                                     <button
                                       type="button"
-                                      className="
-                            min-w-[135px] h-[88px]
-                            rounded-2xl bg-white border border-[#f3f4f6]
-                            px-4 py-3 flex flex-col justify-center
-                            shadow-sm hover:shadow-md transition-all
-                            cursor-pointer
-                          "
+                                      className="min-w-[135px] h-[88px] rounded-2xl bg-white border border-[#f3f4f6] px-4 py-3 flex flex-col justify-center shadow-sm hover:shadow-md transition-all cursor-pointer"
                                       onClick={() =>
                                         setDetailModal({
                                           open: true,
@@ -1046,7 +1032,7 @@ export default function ProfitDetailsView() {
                                         className={`text-[18px] font-bold mb-1 ${
                                           isNegative
                                             ? 'text-[#ef4444]'
-                                            : item.dataIndex === 'profit'
+                                            : item.dataIndex === 'profitPercent'
                                             ? 'text-[#16a34a]'
                                             : 'text-[#111827]'
                                         }`}
@@ -1170,14 +1156,13 @@ export default function ProfitDetailsView() {
       <Modal open={previewOpen} footer={null} onCancel={() => setPreviewOpen(false)} centered>
         <img src={previewImage} alt="preview" style={{ width: '100%', borderRadius: 8 }} />
       </Modal>
-      <Modal
+      {/* <Modal
         title="Customize Your Columns"
         open={openSettings}
         onCancel={() => setOpenSettings(false)}
         footer={null}
         width={700}
       >
-        {/* Select All */}
         <div className="mb-3 p-2 bg-gray-100 rounded flex items-center">
           <input
             type="checkbox"
@@ -1193,7 +1178,6 @@ export default function ProfitDetailsView() {
           <span className="ml-2 font-medium">Select All</span>
         </div>
 
-        {/* 3 Column Grid */}
         <div className="grid grid-cols-3 gap-3 max-h-[400px] overflow-y-auto pr-2">
           {allColumnOptions.map((col) => (
             <div
@@ -1219,7 +1203,7 @@ export default function ProfitDetailsView() {
             </div>
           ))}
         </div>
-      </Modal>
+      </Modal> */}
       <ProfitModal
         open={detailModal.open}
         record={detailModal.record}

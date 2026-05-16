@@ -11,6 +11,10 @@ const {
   keywordsBegin,
   keywordsSuccess,
   keywordsErr,
+
+  adsproductsBegin,
+  adsproductsSuccess,
+  adsproductsErr,
 } = actions;
 
 export const getCampaigns = (page = 1, pageSize = 10) => {
@@ -29,12 +33,15 @@ export const getCampaigns = (page = 1, pageSize = 10) => {
   };
 };
 
-export const getAdsGroup = (page = 1, pageSize = 10) => {
+export const getAdsGroup = (page = 1, pageSize = 10, payload = {}) => {
   return async (dispatch) => {
     dispatch(adsgroupBegin());
 
     try {
-      const response = await DataService.post(`/amazon-ads/ad-groups/list/?page=${page}&page_size=${pageSize}`);
+      const response = await DataService.post(
+        `/amazon-ads/ad-groups/list/?page=${page}&page_size=${pageSize}`,
+        payload,
+      );
 
       if (response.data.status === true) {
         dispatch(adsgroupSuccess(response.data));
@@ -58,6 +65,27 @@ export const getKeywords = (page = 1, pageSize = 10) => {
       }
     } catch (err) {
       dispatch(keywordsErr(err.response?.data?.message || err.message));
+    }
+  };
+};
+
+export const getAdProducts = (page = 1, pageSize = 10, payload = {}) => {
+  return async (dispatch) => {
+    dispatch(adsproductsBegin());
+
+    try {
+      const response = await DataService.post(
+        `/amazon-ads/product-ads/list/?page=${page}&page_size=${pageSize}`,
+        payload,
+      );
+
+      if (response.data.status === true) {
+        dispatch(adsproductsSuccess(response.data));
+      } else {
+        dispatch(adsproductsErr(response.data.message || 'Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(adsproductsErr(err.response?.data?.message || err.message));
     }
   };
 };

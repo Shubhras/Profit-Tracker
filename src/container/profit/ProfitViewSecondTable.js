@@ -1,14 +1,6 @@
 import React, { useEffect } from 'react';
 import { Table, Card, Modal, Checkbox, Tooltip, Button } from 'antd';
-import {
-  RightOutlined,
-  EyeOutlined,
-  SettingOutlined,
-  BarChartOutlined,
-  FilterOutlined,
-  EyeInvisibleOutlined,
-  SearchOutlined,
-} from '@ant-design/icons';
+import { RightOutlined, EyeOutlined, BarChartOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 // import ProfitFilterBar from './component/ProfitFilterBar';
@@ -28,8 +20,6 @@ export default function ProfitViewSecondTable() {
   const totals = profitData?.totals || {};
   //   const profitType = location.state?.profitType || 'all';
   const channels = location.state?.channels?.length > 0 ? location.state.channels : globalChannel || [];
-  const [openSettings, setOpenSettings] = React.useState(false);
-  const [columnSearch, setColumnSearch] = React.useState('');
   const [detailModal, setDetailModal] = React.useState({
     open: false,
     record: null,
@@ -850,63 +840,64 @@ export default function ProfitViewSecondTable() {
   //   });
   // };
 
-  const allColumnsList = [
-    { key: 'grossQty', label: 'Gross Qty' },
-    { key: 'netQty', label: 'Net Qty' },
-    { key: 'returnqty', label: 'Return Qty' },
-    { key: 'returnPercent', label: 'Return %' },
+  // const allColumnsList = [
+  //   { key: 'grossQty', label: 'Gross Qty' },
+  //   { key: 'netQty', label: 'Net Qty' },
+  //   { key: 'returnqty', label: 'Return Qty' },
+  //   { key: 'returnPercent', label: 'Return %' },
 
-    { key: 'netMRP', label: 'Net MRP' },
-    { key: 'mrpNetDiscount', label: 'MRP Net Discount%' },
-    { key: 'mrpCustomerDiscount', label: 'MRP Customer Discount%' },
+  //   { key: 'netMRP', label: 'Net MRP' },
+  //   { key: 'mrpNetDiscount', label: 'MRP Net Discount%' },
+  //   { key: 'mrpCustomerDiscount', label: 'MRP Customer Discount%' },
 
-    { key: 'grossSales', label: 'Gross Sales' },
-    { key: 'netsales', label: 'Net Sales' },
-    { key: 'mp_gst', label: 'MP-GST' },
+  //   { key: 'grossSales', label: 'Gross Sales' },
+  //   { key: 'netsales', label: 'Net Sales' },
+  //   { key: 'mp_gst', label: 'MP-GST' },
 
-    { key: 'mpfees', label: 'mpfees' },
-    // { key: 'stdcost', label: 'Std Cost' },
+  //   { key: 'mpfees', label: 'mpfees' },
+  //   // { key: 'stdcost', label: 'Std Cost' },
 
-    { key: 'shipping', label: 'Shipping' },
-    { key: 'adSpend', label: 'Ad spend' },
-    { key: 'stdCost', label: 'Product Cost' },
+  //   { key: 'shipping', label: 'Shipping' },
+  //   { key: 'adSpend', label: 'Ad spend' },
+  //   { key: 'stdCost', label: 'Product Cost' },
 
-    { key: 'stdCostMS', label: 'Std Cost M/S %' },
-    { key: 'accountCharges', label: 'Account Charges' },
-    { key: 'otherExpenses', label: 'Other Expenses' },
+  //   { key: 'stdCostMS', label: 'Std Cost M/S %' },
+  //   { key: 'accountCharges', label: 'Account Charges' },
+  //   { key: 'otherExpenses', label: 'Other Expenses' },
 
-    { key: 'gst', label: 'GST to Pay' },
-    // { key: 'grossprofit', label: 'Gross Profit' },
-    { key: 'profit', label: 'Profit' },
+  //   { key: 'gst', label: 'GST to Pay' },
+  //   // { key: 'grossprofit', label: 'Gross Profit' },
+  //   { key: 'profit', label: 'Profit' },
 
-    // { key: 'settledAmount', label: 'Settled Amount' },
-    { key: 'tacos', label: 'TACOS' },
-    { key: 'grossProfitPercent', label: 'Gross Profit %' },
+  //   // { key: 'settledAmount', label: 'Settled Amount' },
+  //   { key: 'tacos', label: 'TACOS' },
+  //   { key: 'grossProfitPercent', label: 'Gross Profit %' },
 
-    { key: 'profitPercent', label: 'Profit %' },
-    { key: 'percentOfSales', label: '% of Sales' },
-    { key: 'drr', label: 'DRR (Daily Run Rate)' },
+  //   { key: 'profitPercent', label: 'Profit %' },
+  //   { key: 'percentOfSales', label: '% of Sales' },
+  //   { key: 'drr', label: 'DRR (Daily Run Rate)' },
 
-    { key: 'lastOrderDate', label: 'Last Order Date' },
-  ];
-  const [visibleColumns, setVisibleColumns] = React.useState([
-    'view',
-    // 'grossQty',
-    'netQty',
-    'returnqty',
-    'returnPercent',
-    'mp_gst',
-    'tcs',
-    'mpfees',
-    'netsales',
-    'stdcost',
-    'shipping',
-    'adSpend',
-    'gst',
-    // 'grossprofit',
-    'profit',
-    'profitPercent',
-  ]);
+  //   { key: 'lastOrderDate', label: 'Last Order Date' },
+  // ];
+
+  // const [visibleColumns, setVisibleColumns] = React.useState([
+  //   'view',
+  //   // 'grossQty',
+  //   'netQty',
+  //   'returnqty',
+  //   'returnPercent',
+  //   'mp_gst',
+  //   'tcs',
+  //   'mpfees',
+  //   'netsales',
+  //   'stdcost',
+  //   'shipping',
+  //   'adSpend',
+  //   'gst',
+  //   // 'grossprofit',
+  //   'profit',
+  //   'profitPercent',
+  // ]);
   // const handleSelectAll = (checked) => {
   //   if (checked) {
   //     setVisibleColumns(allColumnsList.map((col) => col.key));
@@ -914,15 +905,17 @@ export default function ProfitViewSecondTable() {
   //     setVisibleColumns([]);
   //   }
   // };
-  const filteredColumns = columns.filter((col) => {
-    if (col.dataIndex === 'image' || col.dataIndex === 'channel' || col.key === 'action') return true;
 
-    return visibleColumns.some(
-      (key) =>
-        key === col.dataIndex || // direct match
-        key.toLowerCase() === col.dataIndex.toLowerCase(), // handle grossQty vs grossqty
-    );
-  });
+  // const filteredColumns = columns.filter((col) => {
+  //   if (col.dataIndex === 'image' || col.dataIndex === 'channel' || col.key === 'action') return true;
+
+  //   return visibleColumns.some(
+  //     (key) =>
+  //       key === col.dataIndex || // direct match
+  //       key.toLowerCase() === col.dataIndex.toLowerCase(), // handle grossQty vs grossqty
+  //   );
+  // });
+
   return (
     <>
       <PageHeader
@@ -947,18 +940,7 @@ export default function ProfitViewSecondTable() {
               <input
                 type="text"
                 placeholder="Search..."
-                className="
-        w-full
-        h-[42px]
-        rounded-xl
-        border border-[#e5e7eb]
-        bg-white
-        pl-4
-        pr-10
-        text-[13px]
-        outline-none
-        shadow-sm
-      "
+                className="w-full h-[42px] rounded-xl border border-[#e5e7eb] bg-white pl-4 pr-10 text-[13px] outline-none shadow-sm "
               />
 
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af]">
@@ -966,7 +948,6 @@ export default function ProfitViewSecondTable() {
               </span>
             </div>
 
-            {/* Filter Dropdown */}
             <div className="flex items-center gap-3">
               <div className="relative">
                 <button
@@ -1094,20 +1075,10 @@ export default function ProfitViewSecondTable() {
                   </div>
                 )}
               </div>
-
-              {/* Columns Button */}
-              <button
-                type="button"
-                onClick={() => setOpenSettings(true)}
-                className=" h-[42px] px-4 rounded-xl border border-[#e5e7eb] bg-white  flex items-center gap-2 text-[15px] font-medium shadow-sm transition-all"
-              >
-                <SettingOutlined style={{ fontSize: 14 }} />
-                Manage Columns
-              </button>
             </div>
           </div>
           <Table
-            columns={filteredColumns}
+            columns={columns}
             dataSource={dataSource}
             showSorterTooltip={false}
             loading={loading}
@@ -1127,7 +1098,7 @@ export default function ProfitViewSecondTable() {
             size="small"
             scroll={{ x: 'max-content' }}
             summary={() => {
-              const summaryItems = filteredColumns
+              const summaryItems = columns
                 .filter(
                   (col) => !['image', 'channel', 'view', 'lastOrderDate', 'action'].includes(col.dataIndex || col.key),
                 )
@@ -1174,7 +1145,7 @@ export default function ProfitViewSecondTable() {
                   <Table.Summary.Row>
                     <Table.Summary.Cell
                       index={0}
-                      colSpan={filteredColumns.length}
+                      colSpan={columns.length}
                       style={{
                         background: '#fff',
                         zIndex: 20,
@@ -1184,21 +1155,10 @@ export default function ProfitViewSecondTable() {
                         padding: '14px',
                       }}
                     >
-                      <div
-                        className="w-full rounded-2xl border border-dashed border-[#8b5cf6]
-            bg-gradient-to-r from-[#faf7ff] to-[#ffffff]
-            px-4 py-1"
-                      >
+                      <div className="w-full rounded-2xl border border-dashed border-[#8b5cf6] bg-gradient-to-r from-[#faf7ff] to-[#ffffff] px-4 py-1">
                         <div className="flex items-center gap-4 overflow-x-auto">
-                          {/* Left Summary Card */}
-                          <div
-                            className="min-w-[360px] h-[88px] rounded-2xl bg-white border border-[#ede9fe]
-                flex items-center gap-3 px-4 shadow-sm"
-                          >
-                            <div
-                              className="w-11 h-11 rounded-xl bg-[#f3e8ff]
-                  flex items-center justify-center"
-                            >
+                          <div className="min-w-[320px] h-[88px] rounded-2xl bg-white border border-[#ede9fe] flex items-center gap-3 px-4 shadow-sm">
+                            <div className="w-11 h-11 rounded-xl bg-[#f3e8ff] flex items-center justify-center">
                               <BarChartOutlined
                                 style={{
                                   color: '#7c3aed',
@@ -1242,17 +1202,12 @@ export default function ProfitViewSecondTable() {
                                       minWidth: 140,
                                     }}
                                   >
-                                    <div
-                                      className="min-w-[135px] h-[88px]
-rounded-2xl bg-white border border-[#f3f4f6]
-px-4 py-3 flex flex-col justify-center
-shadow-sm hover:shadow-md transition-all"
-                                    >
+                                    <div className="min-w-[135px] h-[88px] rounded-2xl bg-white border border-[#f3f4f6] px-4 py-3 flex flex-col justify-center shadow-sm hover:shadow-md transition-all">
                                       <div
                                         className={`text-[18px] font-bold mb-1 ${
                                           isNegative
                                             ? 'text-[#ef4444]'
-                                            : item.dataIndex === 'profit'
+                                            : item.dataIndex === 'profitPercent'
                                             ? 'text-[#16a34a]'
                                             : 'text-[#111827]'
                                         }`}
@@ -1369,7 +1324,7 @@ shadow-sm hover:shadow-md transition-all"
             // )}
           />
         </Card>
-        <Modal
+        {/* <Modal
           open={openSettings}
           onCancel={() => setOpenSettings(false)}
           footer={null}
@@ -1381,7 +1336,6 @@ shadow-sm hover:shadow-md transition-all"
             overflow: 'hidden',
           }}
         >
-          {/* Header */}
           <div className="flex items-center justify-between px-4 py-4 border-b border-[#f1f1f1]">
             <div className="flex items-center gap-2">
               <h2 className="text-[15px] font-semibold text-[#111827]">Manage Column</h2>
@@ -1391,16 +1345,9 @@ shadow-sm hover:shadow-md transition-all"
               </span>
             </div>
 
-            {/* <button
-              type="button"
-              onClick={() => setVisibleColumns([])}
-              className="text-[12px] font-medium text-[#7c3aed] hover:text-[#6d28d9]"
-            >
-              Restore
-            </button> */}
+           
           </div>
 
-          {/* Search */}
           <div className="px-4 py-3 border-b border-[#f5f5f5]">
             <div
               className="
@@ -1424,7 +1371,6 @@ shadow-sm hover:shadow-md transition-all"
             </div>
           </div>
 
-          {/* Column List */}
           <div className="max-h-[420px] overflow-y-auto">
             {allColumnsList
               .filter((col) => col.label.toLowerCase().includes(columnSearch.toLowerCase()))
@@ -1471,7 +1417,7 @@ shadow-sm hover:shadow-md transition-all"
                 );
               })}
           </div>
-        </Modal>
+        </Modal> */}
         {/* <Modal
           title="Customize Your Columns"
           open={openSettings}

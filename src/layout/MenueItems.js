@@ -349,6 +349,13 @@ function MenuItems({ toggleCollapsed }) {
         null,
       ),
       getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/AdProducts`}>
+          {t('Ad Products')}
+        </NavLink>,
+        'adproducts',
+        null,
+      ),
+      getItem(
         <NavLink onClick={toggleCollapsed} to={`${path}/advertising/adsgroup`}>
           {t('Ad Groups')}
         </NavLink>,
