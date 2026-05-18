@@ -1102,4 +1102,184 @@ class AdsProductAdListView(APIView):
         return response    
     
 
+
+
+class QueryAdsView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        user = request.user
+
+        body = request.data.get("body", {})
+        
+
+        account = AmazonAdsAccount.objects.filter(
+            user=user,
+            is_primary=True
+        ).first()
+
+        if not account:
+
+            return Response({
+
+                "status": False,
+
+                "message": "Amazon Ads account not found"
+            })
+
+        advertiser_account_id = str(
+            account.profile_id
+        )
+
+        payload = {
+
+            "body": {
+
+                "accessRequestedAccount": {
+
+                    "advertiserAccountId":
+                    advertiser_account_id
+                },
+
+                "adProductFilter": {
+
+                    "include":
+                    body.get(
+                        "adProductFilter",
+                        {}
+                    ).get(
+                        "include",
+                        [
+                            "SPONSORED_PRODUCTS"
+                        ]
+                    )
+                },
+
+                "maxResults":
+                body.get(
+                    "maxResults",
+                    100
+                )
+            }
+        }
+
+        if body.get("adGroupIdFilter"):
+
+            payload["body"][
+                "adGroupIdFilter"
+            ] = body.get(
+                "adGroupIdFilter"
+            )
+
+        if body.get("adIdFilter"):
+
+            payload["body"][
+                "adIdFilter"
+            ] = body.get(
+                "adIdFilter"
+            )
+
+        if body.get("campaignIdFilter"):
+
+            payload["body"][
+                "campaignIdFilter"
+            ] = body.get(
+                "campaignIdFilter"
+            )
+
+        if body.get("marketplaceScopeFilter"):
+
+            payload["body"][
+                "marketplaceScopeFilter"
+            ] = body.get(
+                "marketplaceScopeFilter"
+            )
+
+        if body.get("nameFilter"):
+
+            payload["body"][
+                "nameFilter"
+            ] = body.get(
+                "nameFilter"
+            )
+
+        if body.get("stateFilter"):
+
+            payload["body"][
+                "stateFilter"
+            ] = body.get(
+                "stateFilter"
+            )
+
+        if body.get("nextToken"):
+
+            payload["body"][
+                "nextToken"
+            ] = body.get(
+                "nextToken"
+            )
+
+        # response = ads_api_request(
+
+        #     account=account,
+
+        #     method="POST",
+
+        #     endpoint="/query/ads",
+
+        #     payload=payload
+        # )
+
+        response = ads_matrix_api_request(
+
+            account=account,
+
+            method="POST",
+
+            endpoint="/query/ads",
+
+            payload=payload,
+
+            content_type="application/json",
+
+            accept_type="application/json"
+        )
+
+        print(response.request.headers)
+
+        if response.status_code != 200:
+
+            return Response({
+
+                "status": False,
+
+                "message": response.text
+            })
+
+        response_data = response.json()
+
+        ads = response_data.get(
+            "ads",
+            []
+        )
+
+        next_token = response_data.get(
+            "nextToken"
+        )
+
+        return Response({
+
+            "status": True,
+
+            "count": len(ads),
+
+            "next_token": next_token,
+
+            "filters_used": payload,
+
+            "results": ads
+        })    
     
+

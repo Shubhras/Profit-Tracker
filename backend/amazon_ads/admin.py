@@ -165,8 +165,8 @@ class AdsProductAdAdmin(admin.ModelAdmin):
         "state",
         "created_at",
     )
-    search_fields = ("asin", "sku", "ad_id")
-    list_filter = ("state", "created_at")
+    search_fields = ("asin", "sku", "ad_id","campaign")
+    list_filter = ("state", "created_at","campaign")
     readonly_fields = ("created_at",)
     ordering = ("-created_at",)    
 
