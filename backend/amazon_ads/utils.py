@@ -312,6 +312,67 @@ def ads_matrix_api_request(
 
     return response
 
+# from botocore.awsrequest import AWSRequest
+# from botocore.auth import SigV4Auth
+# from botocore.credentials import Credentials
+# import requests
+# import json
+
+
+# def ads_rules_api_request(
+#     account,
+#     method,
+#     endpoint,
+#     payload=None
+# ):
+
+#     base_url = REGION_URLS.get(account.region)
+
+#     url = f"{base_url}{endpoint}"
+
+#     body = json.dumps(payload) if payload else ""
+
+#     credentials = Credentials(
+#         settings.AWS_ACCESS_KEY_ID,
+#         settings.AWS_SECRET_ACCESS_KEY,
+#         settings.AWS_SESSION_TOKEN
+#     )
+
+#     headers = {
+#         "Host": "advertising-api-eu.amazon.com",
+#         "Content-Type": "application/json",
+#         "Accept": "application/json",
+#         "Amazon-Advertising-API-ClientId":
+#             settings.AMAZON_ADS_CLIENT_ID,
+#         "Amazon-Advertising-API-Scope":
+#             str(account.profile_id),
+#     }
+
+#     request = AWSRequest(
+#         method=method,
+#         url=url,
+#         data=body,
+#         headers=headers
+#     )
+
+#     SigV4Auth(
+#         credentials,
+#         "execute-api",
+#         "eu-west-1"
+#     ).add_auth(request)
+
+#     prepared_headers = dict(request.headers)
+
+#     response = requests.request(
+#         method=method,
+#         url=url,
+#         headers=prepared_headers,
+#         data=body,
+#         timeout=120
+#     )
+
+#     return response
+
 
 # amazon_ads/reporting.py
 
@@ -384,7 +445,9 @@ from django.db import close_old_connections
 
 def sync_adgroups():
 
-    accounts = AmazonAdsAccount.objects.all()
+    accounts = AmazonAdsAccount.objects.filter(
+            is_primary = True
+    )
 
     total_saved = 0
 
@@ -762,8 +825,9 @@ def sync_adgroups():
 
 def sync_productads():
 
-    accounts = AmazonAdsAccount.objects.all()
-
+    accounts = AmazonAdsAccount.objects.filter(
+                is_primary = True
+            )
     total_saved = 0
 
     for account in accounts:
@@ -928,7 +992,10 @@ def sync_productads():
 
 def sync_targets():
 
-    accounts = AmazonAdsAccount.objects.all()
+    # accounts = AmazonAdsAccount.objects.all()
+    accounts = AmazonAdsAccount.objects.filter(
+                is_primary = True
+    )
 
     total_saved = 0
 
@@ -1122,7 +1189,10 @@ def sync_reports():
 
     start_date = end_date - timedelta(days=7)
 
-    accounts = AmazonAdsAccount.objects.all()
+    # accounts = AmazonAdsAccount.objects.all()
+    accounts = AmazonAdsAccount.objects.filter(
+                is_primary = True
+            )
 
     print("STARTING ADS REPORT SYNC")
 
@@ -1238,7 +1308,10 @@ def sync_searchterms():
 
     start_date = end_date - timedelta(days=7)
 
-    accounts = AmazonAdsAccount.objects.all()
+    # accounts = AmazonAdsAccount.objects.all()
+    accounts = AmazonAdsAccount.objects.filter(
+            is_primary = True
+    )
 
     for account in accounts:
 
@@ -1524,7 +1597,8 @@ def process_reports():
 
                 for row in rows:
 
-                    campaign_id = row.get("campaignId")
+                    # campaign_id = row.get("campaignId")
+                    campaign_id = str(row.get("campaignId", "")).strip()
 
                     if not campaign_id:
                         continue
@@ -1573,15 +1647,18 @@ def process_reports():
                             "orders":
                             row.get("purchases14d", 0),
 
-                            "acos":
-                            row.get(
-                                "acosClicks14d", 0
-                            ),
+                            "acos": row.get("acosClicks14d") or 0,
+                            "roas": row.get("roasClicks14d") or 0,
 
-                            "roas":
-                            row.get(
-                                "roasClicks14d", 0
-                            ),
+                            # "acos":
+                            # row.get(
+                            #     "acosClicks14d", 0
+                            # ),
+
+                            # "roas":
+                            # row.get(
+                            #     "roasClicks14d", 0
+                            # ),
 
                             "raw_data":
                             row
@@ -1604,7 +1681,8 @@ def process_reports():
 
                 for row in rows:
 
-                    keyword_id = row.get("keywordId")
+                    # keyword_id = row.get("keywordId")
+                    keyword_id = str(row.get("keywordId", "")).strip()
 
                     if not keyword_id:
                         continue
@@ -1644,15 +1722,18 @@ def process_reports():
                             "orders":
                             row.get("purchases14d", 0),
 
-                            "acos":
-                            row.get(
-                                "acosClicks14d", 0
-                            ),
+                            "acos": row.get("acosClicks14d") or 0,
+                            "roas": row.get("roasClicks14d") or 0,
 
-                            "roas":
-                            row.get(
-                                "roasClicks14d", 0
-                            ),
+                            # "acos":
+                            # row.get(
+                            #     "acosClicks14d", 0
+                            # ),
+
+                            # "roas":
+                            # row.get(
+                            #     "roasClicks14d", 0
+                            # ),
 
                             "raw_data":
                             row
@@ -1929,7 +2010,10 @@ def check_pending_reports():
 
 def sync_keywords():
 
-    accounts = AmazonAdsAccount.objects.all()
+    # accounts = AmazonAdsAccount.objects.all()
+    accounts = AmazonAdsAccount.objects.filter(
+                is_primary = True
+    )
     total_saved = 0
     for account in accounts:
         ad_groups = AdsAdGroup.objects.filter(

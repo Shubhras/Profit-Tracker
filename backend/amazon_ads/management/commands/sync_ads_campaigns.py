@@ -10,9 +10,11 @@ class Command(BaseCommand):
 
     help = "Sync Amazon Ads Campaigns"
 
-    def handle(self, *args, **kwargs):
+    def handle(self, *args, **kwargs):  
 
-        accounts = AmazonAdsAccount.objects.all()
+        accounts = AmazonAdsAccount.objects.filter(
+            is_primary = True
+        )
 
         for account in accounts:
 

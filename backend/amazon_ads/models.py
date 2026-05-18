@@ -301,3 +301,60 @@ class TargetMetric(models.Model):
     raw_data = models.JSONField(default=dict)       
 
 
+# amazon_ads/models.py
+
+class AdsBudgetRule(models.Model):
+
+    amazon_account = models.ForeignKey(
+        AmazonAdsAccount,
+        on_delete=models.CASCADE
+    )
+
+    rule_id = models.BigIntegerField(unique=True)
+
+    name = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    rule_type = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
+
+    state = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True
+    )
+
+    associated_campaigns_count = models.IntegerField(
+        default=0
+    )
+
+    budget_rule_details = models.JSONField(
+        default=dict,
+        blank=True
+    )
+
+    created_at_amazon = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    last_updated_at_amazon = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    raw_data = models.JSONField(default=dict)
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )

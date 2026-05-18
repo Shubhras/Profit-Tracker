@@ -421,36 +421,6 @@ class AdCampaignMetrics(models.Model):
         unique_together = ("campaign", "date")
 
 
-
-
-# class BusinessReport(models.Model):
-#     user = models.ForeignKey(User, on_delete=models.CASCADE)
-#     amazon_account = models.ForeignKey("AmazonAccount", on_delete=models.CASCADE)
-#     date = models.DateField()
-#     parent_asin = models.CharField(max_length=20)
-#     child_asin = models.CharField(max_length=20)
-#     # Sales
-#     ordered_product_sales = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-#     ordered_product_sales_b2b = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-#     # Units
-#     units_ordered = models.IntegerField(default=0)
-#     units_ordered_b2b = models.IntegerField(default=0)
-#     # Orders
-#     total_order_items = models.IntegerField(default=0)
-#     # Traffic
-#     sessions_total = models.IntegerField(default=0)
-#     # Conversion
-#     order_item_session_percentage = models.FloatField(default=0)
-#     # Refunds
-#     units_refunded = models.IntegerField(default=0)
-#     refund_rate = models.FloatField(default=0)
-#     created_at = models.DateTimeField(auto_now_add=True)
-
-#     class Meta:
-#         unique_together = ["amazon_account", "date", "parent_asin", "child_asin"]
-
-
-
 class ReportRequest(models.Model):
     amazon_account = models.ForeignKey("AmazonAccount", on_delete=models.CASCADE)
 
@@ -543,7 +513,6 @@ class BusinessReport(models.Model):
 
 
 
-
 class AmazonReport(models.Model):
 
     class Status(models.TextChoices):
@@ -607,8 +576,6 @@ class AmazonReport(models.Model):
         return f"{self.report_type} - {self.report_id or 'pending'}"
     
 
-
-
 class ReturnItem(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     amazon_account = models.ForeignKey(AmazonAccount, on_delete=models.CASCADE)
@@ -635,3 +602,55 @@ class ReturnItem(models.Model):
 
     def __str__(self):
         return f"{self.amazon_order_id} - {self.seller_sku}"
+    
+
+
+
+class ProductPricing(models.Model):
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    asin = models.CharField(max_length=255)
+    sku = models.CharField(max_length=255)
+    marketplace_id = models.CharField(max_length=100, default="A21TJRUUN4KGV")
+    listing_price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+
+    landed_price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+
+    shipping_price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+
+    regular_price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+
+    currency = models.CharField(max_length=20, default="INR")
+
+    fulfillment_channel = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True
+    )
+
+    item_condition = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True
+    )
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['user', 'asin', 'sku']    

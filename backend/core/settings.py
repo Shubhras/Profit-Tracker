@@ -134,6 +134,10 @@ RAZORPAY_WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET")
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-key")
 SECRET_KEY = 'django-insecure-1234567890'
 
+
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+
 ROOT_URLCONF = 'core.urls'
 
 TEMPLATES = [

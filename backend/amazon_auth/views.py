@@ -4327,16 +4327,51 @@ def amazon_profitability_details(request):
             order_item__parent_asin__in=parent_ids
         )
 
+    # estimated_fee_data = (
+    #     estimated_fee_qs
+    #     .values('order_item__parent_asin')
+    #     .annotate(
+    #         estimated_fees=Sum('total_fees')
+    #     )
+    # )
+
     estimated_fee_data = (
         estimated_fee_qs
         .values('order_item__parent_asin')
         .annotate(
-            estimated_fees=Sum('total_fees')
+            estimated_fees=Sum('total_fees'),
+
+            referral_fee=Sum('referral_fee'),
+            closing_fee=Sum('closing_fee'),
+            per_item_fee=Sum('per_item_fee'),
+
+            fba_fee=Sum('fba_fee'),
+            fba_pick_pack_fee=Sum('fba_pick_pack_fee'),
+            fba_weight_handling_fee=Sum('fba_weight_handling_fee'),
+
+            tax_amount=Sum('tax_amount'),
         )
     )
 
+    # estimated_fee_map = {
+    #     row['order_item__parent_asin']: float(row['estimated_fees'] or 0)
+    #     for row in estimated_fee_data
+    # }
+
     estimated_fee_map = {
-        row['order_item__parent_asin']: float(row['estimated_fees'] or 0)
+        row['order_item__parent_asin']: {
+            "estimated_fees": float(row['estimated_fees'] or 0),
+
+            "referral_fee": float(row['referral_fee'] or 0),
+            "closing_fee": float(row['closing_fee'] or 0),
+            "per_item_fee": float(row['per_item_fee'] or 0),
+
+            "fba_fee": float(row['fba_fee'] or 0),
+            "fba_pick_pack_fee": float(row['fba_pick_pack_fee'] or 0),
+            "fba_weight_handling_fee": float(row['fba_weight_handling_fee'] or 0),
+
+            "tax_amount": float(row['tax_amount'] or 0),
+        }
         for row in estimated_fee_data
     }
 
@@ -4410,6 +4445,9 @@ def amazon_profitability_details(request):
     total_mp_gst = 0
     total_gst = 0
     total_tcs = 0
+    total_taxable_value = 0
+    total_gst_payable = 0
+    total_exp_settlement = 0
 
     sku_asin_map = {
         normalize_sku(k): v
@@ -4428,7 +4466,21 @@ def amazon_profitability_details(request):
     for row in items:
         # asin = row['asin']
         parent_asin = row['parent_asin']
-        estimated_fees = estimated_fee_map.get(parent_asin, 0)
+        # estimated_fees = estimated_fee_map.get(parent_asin, 0)
+
+        fee_data = estimated_fee_map.get(parent_asin, {})
+
+        estimated_fees = fee_data.get("estimated_fees", 0)
+
+        referral_fee = fee_data.get("referral_fee", 0)
+        closing_fee = fee_data.get("closing_fee", 0)
+        per_item_fee = fee_data.get("per_item_fee", 0)
+
+        fba_fee = fee_data.get("fba_fee", 0)
+        fba_pick_pack_fee = fee_data.get("fba_pick_pack_fee", 0)
+        fba_weight_handling_fee = fee_data.get("fba_weight_handling_fee", 0)
+
+        tax_amount = fee_data.get("tax_amount", 0)
 
         gross_qty = int(row['grossqty'] or 0)  
         quantity_shipped = int(row['quantity_shipped'] or 0) 
@@ -4440,6 +4492,23 @@ def amazon_profitability_details(request):
         
         shipping_income = float(row.get('shipping_income') or 0)
         shipping_price = float(row.get('shipping_price') or 0)
+
+        # ---------------- GST / TAXABLE ----------------
+
+        # Taxable value (without GST)
+        taxable_value = gross_sales
+
+        # GST amount
+        gst_to_pay_amount = item_tax
+
+        # GST percentage
+        gst_to_pay_perc = (
+            (gst_to_pay_amount / taxable_value) * 100
+            if taxable_value else 0
+        )
+
+        # TCS = 1% of taxable value
+        tcs_total = gst_to_pay_amount * 0.01
         
 
         adjusted_gross_sales = gross_sales + item_tax - promo_discount + shipping_price
@@ -4450,7 +4519,7 @@ def amazon_profitability_details(request):
         refund = rto = ads = mpfees = shipping_fee = 0
         return_units = 0
         gst = 0
-        tcs_total = 0  
+        # tcs_total = 0  
         t_new_charge = 0   
         
 
@@ -4496,13 +4565,9 @@ def amazon_profitability_details(request):
 
                 if parent_key == parent_asin:
                     t_new_charge += float(fee_data["fee"])
-                    tcs_total += float(fee_data["tcs"])
+                    # tcs_total += float(fee_data["tcs"])
 
-            # for child_asin in child_asins:
-            #     if child_asin in order_fee_map:
-            #         t_new_charge += order_fee_map[child_asin]["fee"]
-            #         tcs_total += order_fee_map[child_asin]["tcs"]
-
+           
 
             if r < 0 or rto_amt < 0:
                 return_units += qty
@@ -4537,7 +4602,25 @@ def amazon_profitability_details(request):
         # profit = net_sales - abs(mpfees) + shipping_final - stdcost + tcs_total
         # profit = net_sales - t_new_charge + shipping_final - stdcost + tcs_total
         # profit = net_sales + t_new_charge + shipping_final - stdcost + tcs_total
-        profit = net_sales - estimated_fees - shipping_final - stdcost - tcs_total + mp_gst
+        # profit = net_sales - estimated_fees - shipping_final - stdcost - tcs_total + mp_gst
+
+        
+        profit = (
+            net_sales
+            - estimated_fees
+            - shipping_final
+            - stdcost
+            + tcs_total
+            + mp_gst
+        
+        )
+        exp_settlement = (
+            profit
+            - stdcost
+            - tcs_total
+            - mp_gst
+        )
+        
         profit_margin = (profit / net_sales * 100) if net_sales else 0
         tacos = (ads / gross_sales * 100) if gross_sales else 0
         ret_percent = (return_units / net_qty * 100) if net_qty else 0
@@ -4561,6 +4644,16 @@ def amazon_profitability_details(request):
             "new_mpfees": format_currency(t_new_charge),
             # "estimatefees": format_currency(estimated_fees),
             "estimatefees": format_currency(-abs(estimated_fees)),
+
+            "referral_fee": format_currency(referral_fee),
+            "closing_fee": format_currency(closing_fee),
+            "per_item_fee": format_currency(per_item_fee),
+
+            "fba_fee": format_currency(fba_fee),
+            "fba_pick_pack_fee": format_currency(fba_pick_pack_fee),
+            "fba_weight_handling_fee": format_currency(fba_weight_handling_fee),
+
+            "tax_amount": format_currency(tax_amount),
             "shippingfees": format_currency(shipping_final),
             "profit": format_currency(profit),
             "grossprofitper": round(profit_margin, 2),
@@ -4577,6 +4670,13 @@ def amazon_profitability_details(request):
             "gst": format_currency(0),
             # "gst": "0",
             "tcs": format_currency(tcs_total),
+            "taxable_value": format_currency(taxable_value),
+
+            "gst_to_pay_amount": format_currency(gst_to_pay_amount),
+
+            "gst_to_pay_perc": round(gst_to_pay_perc, 2),
+
+            "exp_settlement": format_currency(exp_settlement),
         })
 
         # -------- TOTALS --------
@@ -4594,6 +4694,10 @@ def amazon_profitability_details(request):
         total_ret_percent += ret_percent
         total_estimatefees += estimated_fees
         total_mp_gst += mp_gst
+
+        total_taxable_value += taxable_value
+        total_gst_payable += gst_to_pay_amount
+        total_exp_settlement += exp_settlement
 
     # -------- DEBUG AFTER BUILD --------
     db_asins = set(OrderItem.objects.filter(order__user=user).values_list('asin', flat=True))
@@ -4630,6 +4734,11 @@ def amazon_profitability_details(request):
             # "totalgst": format_currency(total_tcs),
             "totalgst": format_currency(0),
             "tcs": format_currency(total_tcs),
+            "taxable_value": format_currency(total_taxable_value),
+
+            "gst_to_pay_amount": format_currency(total_gst_payable),
+            "gst_to_pay_perc":f"{round((total_gst_payable / total_taxable_value * 100),2) if total_taxable_value else 1}%",
+            "exp_settlement": format_currency(total_exp_settlement),
         },
         "response": results[page_no * page_size:(page_no + 1) * page_size]
     })
@@ -4706,26 +4815,6 @@ def amazon_profitability_parent(request):
         )
     )
 
-    # ---------------- ESTIMATED FEES ----------------
-    # estimated_fee_data = (
-    #     AmazonEstimatedFee.objects
-    #     .filter(
-    #         order_item__order__user=user
-    #     )
-    #     .values(
-    #         'order_item__parent_asin'
-    #     )
-    #     .annotate(
-    #         estimated_fees=Sum('total_fees')
-    #     )
-    # )
-
-    # estimated_fee_map = {
-    #     row['order_item__parent_asin']: Decimal(
-    #         str(row['estimated_fees'] or 0)
-    #     )
-    #     for row in estimated_fee_data
-    # }
 
     # ---------------- ESTIMATED FEES ----------------
     estimated_fee_qs = AmazonEstimatedFee.objects.filter(
@@ -4747,16 +4836,52 @@ def amazon_profitability_parent(request):
             order_item__order__marketplace_id__in=marketplace_ids
         )
 
+    # estimated_fee_data = (
+    #     estimated_fee_qs
+    #     .values('asin')
+    #     .annotate(
+    #         estimated_fees=Sum('total_fees')
+    #     )
+    # )
+
     estimated_fee_data = (
         estimated_fee_qs
         .values('asin')
         .annotate(
-            estimated_fees=Sum('total_fees')
+            estimated_fees=Sum('total_fees'),
+
+            referral_fee=Sum('referral_fee'),
+            closing_fee=Sum('closing_fee'),
+            per_item_fee=Sum('per_item_fee'),
+
+            fba_fee=Sum('fba_fee'),
+            fba_pick_pack_fee=Sum('fba_pick_pack_fee'),
+            fba_weight_handling_fee=Sum('fba_weight_handling_fee'),
+
+            tax_amount=Sum('tax_amount'),
         )
     )
 
+    # estimated_fee_map = {
+    #     row['asin']: Decimal(str(row['estimated_fees'] or 0))
+    #     for row in estimated_fee_data
+    # }
+
+
     estimated_fee_map = {
-        row['asin']: Decimal(str(row['estimated_fees'] or 0))
+        row['asin']: {
+            "estimated_fees": Decimal(str(row['estimated_fees'] or 0)),
+
+            "referral_fee": Decimal(str(row['referral_fee'] or 0)),
+            "closing_fee": Decimal(str(row['closing_fee'] or 0)),
+            "per_item_fee": Decimal(str(row['per_item_fee'] or 0)),
+
+            "fba_fee": Decimal(str(row['fba_fee'] or 0)),
+            "fba_pick_pack_fee": Decimal(str(row['fba_pick_pack_fee'] or 0)),
+            "fba_weight_handling_fee": Decimal(str(row['fba_weight_handling_fee'] or 0)),
+
+            "tax_amount": Decimal(str(row['tax_amount'] or 0)),
+        }
         for row in estimated_fee_data
     }
 
@@ -4822,6 +4947,10 @@ def amazon_profitability_parent(request):
     total_estimatefees = Decimal(0)
     total_mp_gst = Decimal(0)
 
+    total_taxable_value = Decimal(0)
+    total_gst_payable = Decimal(0)
+    total_exp_settlement = Decimal(0)
+
     for row in items:
 
         asin = row['asin']
@@ -4829,8 +4958,22 @@ def amazon_profitability_parent(request):
         child_sku = row['seller_sku']
     
         orders = asin_map.get(asin, [])
-        # estimated_fees = estimated_fee_map.get(parent_asin, 0)
-        estimated_fees = estimated_fee_map.get(asin, Decimal("0"))
+        
+        # estimated_fees = estimated_fee_map.get(asin, Decimal("0"))
+
+        fee_data = estimated_fee_map.get(asin, {})
+
+        estimated_fees = fee_data.get("estimated_fees", Decimal("0"))
+
+        referral_fee = fee_data.get("referral_fee", Decimal("0"))
+        closing_fee = fee_data.get("closing_fee", Decimal("0"))
+        per_item_fee = fee_data.get("per_item_fee", Decimal("0"))
+
+        fba_fee = fee_data.get("fba_fee", Decimal("0"))
+        fba_pick_pack_fee = fee_data.get("fba_pick_pack_fee", Decimal("0"))
+        fba_weight_handling_fee = fee_data.get("fba_weight_handling_fee", Decimal("0"))
+
+        tax_amount = fee_data.get("tax_amount", Decimal("0"))
 
         gross_qty = Decimal(row['grossqty'] or 0)
         gross_sales = Decimal(row['grosssales'] or 0)
@@ -4840,12 +4983,29 @@ def amazon_profitability_parent(request):
 
         shipping_price = Decimal(row.get('shipping_price') or 0)
 
+        # ---------------- GST / TAXABLE ----------------
+
+        # Gross sales excluding GST
+        taxable_value = gross_sales
+
+        # GST collected from order
+        gst_to_pay_amount = item_tax
+
+        # GST %
+        gst_to_pay_perc = (
+            (gst_to_pay_amount / taxable_value) * 100
+            if taxable_value else Decimal("0")
+        )
+
+        # TCS = 1% of taxable value
+        tcs_total = gst_to_pay_amount * Decimal("0.01")
+
         # adjusted_gross_sales = gross_sales + item_tax - promo_discount
         adjusted_gross_sales = gross_sales + item_tax - promo_discount + shipping_price
 
         refund = rto = ads = mpfees = shipping_fee = Decimal(0)
         return_units = Decimal(0)
-        tcs_total = Decimal(0)
+        # tcs_total = Decimal(0)
         t_new_charge = Decimal(0)
 
         for o in orders:
@@ -4873,7 +5033,7 @@ def amazon_profitability_parent(request):
 
             if asin in order_fee_map:
                 t_new_charge += Decimal(order_fee_map[asin]["fee"])
-                tcs_total += Decimal(order_fee_map[asin]["tcs"])
+                # tcs_total += Decimal(order_fee_map[asin]["tcs"])
 
             r = Decimal(f.get('refund') or 0)
             rto_amt = Decimal(f.get('rto') or 0)
@@ -4903,7 +5063,22 @@ def amazon_profitability_parent(request):
         total_cost = Decimal(50) * net_qty
 
         # profit = net_sales + t_new_charge + shipping_final - total_cost + tcs_total
-        profit = net_sales - estimated_fees - shipping_final - tcs_total + mp_gst - total_cost
+        # profit = net_sales - estimated_fees - shipping_final - tcs_total + mp_gst - total_cost
+        profit = (
+            net_sales
+            - estimated_fees
+            - shipping_final
+            + tcs_total
+            + mp_gst
+            - total_cost
+        )
+
+        exp_settlement = (
+            profit
+            - total_cost
+            - tcs_total
+            - mp_gst
+        )
         profit_margin = (profit / net_sales * 100) if net_sales else 0
 
         ret_percent = (return_units / net_qty * 100) if net_qty else 0
@@ -4927,8 +5102,17 @@ def amazon_profitability_parent(request):
             "ads": format_currency(ads),
             "mp_gst": format_currency(mp_gst),
             "new_mpfees": format_currency(t_new_charge),
-            # "estimatefees": format_currency(estimated_fees),
+         
             "estimatefees": format_currency(-abs(estimated_fees)),
+            "referral_fee": format_currency(referral_fee),
+            "closing_fee": format_currency(closing_fee),
+            "per_item_fee": format_currency(per_item_fee),
+
+            "fba_fee": format_currency(fba_fee),
+            "fba_pick_pack_fee": format_currency(fba_pick_pack_fee),
+            "fba_weight_handling_fee": format_currency(fba_weight_handling_fee),
+
+            "tax_amount": format_currency(tax_amount),
             "shippingfees": format_currency(shipping_final),
             "tcs": format_currency(tcs_total),
 
@@ -4939,6 +5123,11 @@ def amazon_profitability_parent(request):
             # "tacos": round(tacos, 2),
             # "gst": format_currency(tcs_total),
             "gst": format_currency(0),
+
+            "taxable_value": format_currency(taxable_value),
+            "gst_to_pay_amount": format_currency(gst_to_pay_amount),
+            "gst_to_pay_perc": round(gst_to_pay_perc, 2),
+            "exp_settlement": format_currency(exp_settlement),
 
             "id": asin,
             "stdcost": format_currency(total_cost),
@@ -4959,6 +5148,9 @@ def amazon_profitability_parent(request):
         total_stdcost += total_cost
         total_estimatefees += Decimal(estimated_fees)
         total_mp_gst += mp_gst
+        total_taxable_value += taxable_value
+        total_gst_payable += gst_to_pay_amount
+        total_exp_settlement += exp_settlement
 
     return Response({
         "status": True,
@@ -4988,6 +5180,12 @@ def amazon_profitability_parent(request):
             # "totalgst": format_currency(total_tcs),
             "totalgst": format_currency(0),
             "tcs": format_currency(total_tcs),
+            "taxable_value": format_currency(total_taxable_value),
+
+            "gst_to_pay_amount": format_currency(total_gst_payable),
+            "gst_to_pay_perc":f"{round((total_gst_payable / total_taxable_value * 100),2) if total_taxable_value else 1}%",
+
+            "exp_settlement": format_currency(total_exp_settlement),
         },
         "response": results[page_no * page_size:(page_no + 1) * page_size]
     })
@@ -5098,6 +5296,18 @@ def sku_profit_report(request):
         .order_by('-order__purchase_date')
     )
 
+    # estimated_fee_data = (
+    #     AmazonEstimatedFee.objects
+    #     .filter(
+    #         order_item__order__user=user,
+    #         asin=asin
+    #     )
+    #     .values('order_item__order__amazon_order_id')
+    #     .annotate(
+    #         estimated_fees=Sum('total_fees')
+    #     )
+    # )
+
     estimated_fee_data = (
         AmazonEstimatedFee.objects
         .filter(
@@ -5106,14 +5316,42 @@ def sku_profit_report(request):
         )
         .values('order_item__order__amazon_order_id')
         .annotate(
-            estimated_fees=Sum('total_fees')
+            estimated_fees=Sum('total_fees'),
+
+            referral_fee=Sum('referral_fee'),
+            closing_fee=Sum('closing_fee'),
+            per_item_fee=Sum('per_item_fee'),
+
+            fba_fee=Sum('fba_fee'),
+            fba_pick_pack_fee=Sum('fba_pick_pack_fee'),
+            fba_weight_handling_fee=Sum('fba_weight_handling_fee'),
+
+            tax_amount=Sum('tax_amount'),
         )
     )
 
+    # estimated_fee_map = {
+    #     row['order_item__order__amazon_order_id']: Decimal(
+    #         str(row['estimated_fees'] or 0)
+    #     )
+    #     for row in estimated_fee_data
+    # }
     estimated_fee_map = {
-        row['order_item__order__amazon_order_id']: Decimal(
-            str(row['estimated_fees'] or 0)
-        )
+        row['order_item__order__amazon_order_id']: {
+
+            "estimated_fees": float(row['estimated_fees'] or 0),
+
+            "referral_fee": float(row['referral_fee'] or 0),
+            "closing_fee": float(row['closing_fee'] or 0),
+            "per_item_fee": float(row['per_item_fee'] or 0),
+
+            "fba_fee": float(row['fba_fee'] or 0),
+            "fba_pick_pack_fee": float(row['fba_pick_pack_fee'] or 0),
+            "fba_weight_handling_fee": float(row['fba_weight_handling_fee'] or 0),
+
+            "tax_amount": float(row['tax_amount'] or 0),
+        }
+
         for row in estimated_fee_data
     }
     # ---------------- FINANCE ----------------
@@ -5172,6 +5410,11 @@ def sku_profit_report(request):
     total_estimatefees = 0
     total_mp_gst = 0
 
+    total_taxable_value = 0
+    total_gst_payable = 0
+
+    total_exp_settlement = 0
+
     for row in items:
 
         oid = row['order__amazon_order_id']
@@ -5181,12 +5424,26 @@ def sku_profit_report(request):
 
         item_tax = float(row.get('item_tax') or 0)
         promo_discount = float(row.get('promotion_discount') or 0)
-        # estimated_fees = estimated_fee_map.get(oid, Decimal("0"))
-        estimated_fees = float(
-            estimated_fee_map.get(oid, Decimal("0"))
-        )
+       
+        # estimated_fees = float(
+        #     estimated_fee_map.get(oid, Decimal("0"))
+        # )
 
-        adjusted_gross_sales = gross_sales + item_tax - promo_discount
+        fee_data = estimated_fee_map.get(oid, {})
+
+        estimated_fees = fee_data.get("estimated_fees", 0)
+
+        referral_fee = fee_data.get("referral_fee", 0)
+        closing_fee = fee_data.get("closing_fee", 0)
+        per_item_fee = fee_data.get("per_item_fee", 0)
+
+        fba_fee = fee_data.get("fba_fee", 0)
+        fba_pick_pack_fee = fee_data.get("fba_pick_pack_fee", 0)
+        fba_weight_handling_fee = fee_data.get("fba_weight_handling_fee", 0)
+
+        tax_amount = fee_data.get("tax_amount", 0)
+
+        # adjusted_gross_sales = gross_sales + item_tax - promo_discount
 
         shipping_income = float(row['shipping_income'] or 0)
         shipping_price = float(row['shipping_price'] or 0)
@@ -5211,17 +5468,35 @@ def sku_profit_report(request):
         gst = float(f.get('gst') or 0)
 
         # ---------------- TCS ----------------
-        tcs = 0
-        for raw in raw_data_map.get(oid, []):
-            if not isinstance(raw, dict):
-                continue
-            try:
-                for item in raw.get("ShipmentItemList", []):
-                    for charge in item.get("ItemChargeList", []):
-                        if charge.get("ChargeType") == "TCS-IGST":
-                            tcs += float(charge["ChargeAmount"]["CurrencyAmount"])
-            except:
-                pass
+
+        # tcs = 0
+        # for raw in raw_data_map.get(oid, []):# ---------------- GST / TAXABLE ----------------
+
+        # Gross sales includes GST
+        # Taxable value = sales without GST
+        
+        gst_to_pay_amount = item_tax
+
+        # TCS = 1% of taxable value
+        tcs = gst_to_pay_amount * 0.01
+
+        # GST amount payable
+        taxable_value = gross_sales
+
+        # GST percentage
+        gst_to_pay_perc = (
+            (gst_to_pay_amount / taxable_value) * 100
+            if taxable_value else 1
+        )
+        #     if not isinstance(raw, dict):
+        #         continue
+        #     try:
+        #         for item in raw.get("ShipmentItemList", []):
+        #             for charge in item.get("ItemChargeList", []):
+        #                 if charge.get("ChargeType") == "TCS-IGST":
+        #                     tcs += float(charge["ChargeAmount"]["CurrencyAmount"])
+        #     except:
+        #         pass
 
 
    
@@ -5274,7 +5549,18 @@ def sku_profit_report(request):
         # profit = net_sales + new_charge + shipping_final - cost + tcs
         # profit = net_sales - estimated_fees - shipping_final - tcs
         
-        profit = net_sales - estimated_fees - shipping_final - tcs + mp_gst - cost
+        # profit = net_sales - estimated_fees - shipping_final - tcs + mp_gst - cost
+        profit = (
+            net_sales
+            - estimated_fees
+            - shipping_final
+            - cost
+            + tcs
+            + mp_gst
+        
+        )
+
+        exp_settlement = profit - cost - tcs - mp_gst
         
 
         profit_margin = (profit / net_sales * 100) if net_sales else 0
@@ -5298,11 +5584,29 @@ def sku_profit_report(request):
             "grosssales": round(gross_sales, 2),
             "netsales": format_currency(net_sales),
 
+            "taxable_value":
+            format_currency(taxable_value),
+
+            "gst_to_pay_amount":
+            format_currency(gst_to_pay_amount),
+
+            "gst_to_pay_perc":
+            round(gst_to_pay_perc, 2),
+
             "ads": format_currency(ads),
             "mpfees": round(mpfees, 2),
             "mp_gst": format_currency(mp_gst),
             # "estimatefees": format_currency(estimated_fees),
             "estimatefees": format_currency(-abs(estimated_fees)),
+            "referral_fee": format_currency(referral_fee),
+            "closing_fee": format_currency(closing_fee),
+            "per_item_fee": format_currency(per_item_fee),
+
+            "fba_fee": format_currency(fba_fee),
+            "fba_pick_pack_fee": format_currency(fba_pick_pack_fee),
+            "fba_weight_handling_fee": format_currency(fba_weight_handling_fee),
+
+            "tax_amount": format_currency(tax_amount),
             "new_mpfees": format_currency(new_charge),
             "shippingfees": format_currency(shipping_final),
 
@@ -5320,6 +5624,7 @@ def sku_profit_report(request):
             # "gst": format_currency(tcs),
             "gst": format_currency(0),
             "tcs": format_currency(tcs),
+            "exp_settlement":format_currency(exp_settlement),
         })
 
         # ---------------- TOTALS ----------------
@@ -5338,7 +5643,9 @@ def sku_profit_report(request):
         total_new_charge += new_charge
         total_estimatefees += estimated_fees
         total_mp_gst += mp_gst
-        
+        total_taxable_value += taxable_value
+        total_gst_payable += gst_to_pay_amount
+        total_exp_settlement += exp_settlement
 
     # ---------------- RESPONSE ----------------
     return Response({
@@ -5370,7 +5677,16 @@ def sku_profit_report(request):
             # "gst": format_currency(total_tcs),
             "gst": format_currency(0),
             "tcs": format_currency(total_tcs),
-            "cost": format_currency(total_cost)
+            "cost": format_currency(total_cost),
+
+            "taxable_value":format_currency(total_taxable_value),
+
+            "gst_to_pay_amount":format_currency(total_gst_payable),
+
+            "gst_to_pay_perc":f"{round((total_gst_payable / total_taxable_value * 100),2) if total_taxable_value else 1}%",
+
+            
+            "exp_settlement":format_currency(total_exp_settlement),
         },
         "response": results[page_no * page_size:(page_no + 1) * page_size]
     })
