@@ -1,18 +1,32 @@
 import React, { useEffect } from 'react';
-import { Button, Table, Tag, Tooltip } from 'antd';
-import { FilterOutlined, ExportOutlined, RightOutlined } from '@ant-design/icons';
-// import { useNavigate } from 'react-router-dom';
+import { Button, Table, Tag, Tooltip, Popover } from 'antd';
+import {
+  FilterOutlined,
+  ExportOutlined,
+  RightOutlined,
+  SearchOutlined,
+  CheckOutlined,
+  ReloadOutlined,
+} from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { getCampaigns } from '../../redux/advertising/actionCreator';
 
 function Campaigns() {
   const dispatch = useDispatch();
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
   const [pagination, setPagination] = React.useState({
     current: 1,
     pageSize: 10,
   });
   const [selectedRowKeys, setSelectedRowKeys] = React.useState([]);
+
+  const [openFilter, setOpenFilter] = React.useState(false);
+
+  const [filters, setFilters] = React.useState({
+    state: '',
+    type: '',
+  });
 
   const { campaignData, loading } = useSelector((state) => state.advertising);
 
@@ -34,11 +48,138 @@ function Campaigns() {
       biddingStrategy: item.bidding_strategy,
       marketplaceBudgetAllocation: item.marketplace_budget_allocation,
       startDate: item.start_date,
-      // profileId: item.profile_id,
       countryCode: item.country_code,
       currencyCode: item.currency_code,
+      impressions: item.metrics?.impressions,
+      clicks: item.metrics?.clicks,
+      cost: item.metrics?.cost,
+      sales: item.metrics?.sales,
+      orders: item.metrics?.orders,
+      units: item.metrics?.units,
+      acos: item.metrics?.acos,
+      roas: item.metrics?.roas,
       // createdAt: item.created_at,
     })) || [];
+
+  const filterContent = (
+    <div className="w-[320px]">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-1 border-b border-[#eef2f7]">
+        <div>
+          <h3 className="text-[18px] font-semibold text-[#111827] mb-1">Filters</h3>
+
+          <p className="text-[13px] text-[#6b7280] mb-1">Refine campaign performance</p>
+        </div>
+
+        <div className="w-9 h-9 rounded-xl bg-[#eff6ff] flex items-center justify-center text-[#2563eb]">
+          <FilterOutlined />
+        </div>
+      </div>
+
+      {/* BODY */}
+      <div className="pt-5 space-y-6">
+        {/* STATE */}
+        <div>
+          <p className="text-[14px] font-semibold text-[#374151] mb-2">Campaign State</p>
+
+          <div className="flex gap-2 flex-wrap">
+            {[
+              { label: 'Enabled', value: 'ENABLED' },
+              { label: 'Paused', value: 'PAUSED' },
+            ].map((item) => {
+              const active = filters.state === item.value;
+
+              return (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      state: item.value,
+                    }))
+                  }
+                  className={`
+                  px-4 h-[38px] rounded-xl border text-[13px] font-medium transition-all duration-200 flex items-center gap-2
+                  ${
+                    active
+                      ? 'bg-[#2563eb] border-[#2563eb] text-white shadow-md shadow-blue-100'
+                      : 'bg-white border-[#dbe1e8] text-[#374151] hover:border-[#2563eb] hover:text-[#2563eb]'
+                  }
+                `}
+                >
+                  {active && <CheckOutlined className="text-[11px]" />}
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* TYPE */}
+        <div>
+          <p className="text-[14px] font-semibold text-[#374151] mb-2">Marketing Type</p>
+
+          <div className="flex gap-2 flex-wrap">
+            {[
+              { label: 'Manual', value: 'MANUAL' },
+              { label: 'Auto', value: 'AUTO' },
+            ].map((item) => {
+              const active = filters.type === item.value;
+
+              return (
+                <button
+                  key={item.value}
+                  type="button"
+                  onClick={() =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      type: item.value,
+                    }))
+                  }
+                  className={`
+                  px-4 h-[38px] rounded-xl border text-[13px] font-medium transition-all duration-200 flex items-center gap-2
+                  ${
+                    active
+                      ? 'bg-[#2563eb] border-[#2563eb] text-white shadow-md'
+                      : 'bg-white border-[#dbe1e8] text-[#374151] hover:border-[#2563eb] hover:text-[#2563eb]'
+                  }
+                `}
+                >
+                  {active && <CheckOutlined className="text-[11px]" />}
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* FOOTER */}
+      <div className="pt-3 mt-2 border-t border-[#eef2f7] flex items-center justify-between">
+        <Button
+          icon={<ReloadOutlined />}
+          onClick={() =>
+            setFilters({
+              state: '',
+              type: '',
+            })
+          }
+          className="!h-[40px] !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium flex items-center "
+        >
+          Reset
+        </Button>
+
+        <Button
+          type="primary"
+          onClick={() => setOpenFilter(false)}
+          className="!h-[40px] !rounded-xl !bg-[#2563eb] !px-6 !font-medium"
+        >
+          Apply
+        </Button>
+      </div>
+    </div>
+  );
 
   const columns = [
     {
@@ -115,17 +256,29 @@ function Campaigns() {
       align: 'center',
     },
 
-    {
-      title: 'Daily Budget',
-      dataIndex: 'dailyBudget',
-      align: 'center',
-      render: (v) => `₹${v}`,
-    },
+    // {
+    //   title: 'Daily Budget',
+    //   dataIndex: 'dailyBudget',
+    //   align: 'center',
+    //   render: (v) => `₹${v}`,
+    // },
 
+    // {
+    //   title: 'Budget Type',
+    //   dataIndex: 'budgetType',
+    //   align: 'center',
+    // },
     {
-      title: 'Budget Type',
-      dataIndex: 'budgetType',
+      title: 'Budget',
+      dataIndex: 'budget',
       align: 'center',
+      render: (_, record) => (
+        <div className="flex justify-center">
+          <div className="px-3 py-1 rounded-full text-[13px] font-medium border border-[#bfdbfe]">
+            ₹{record.dailyBudget} - {record.budgetType}
+          </div>
+        </div>
+      ),
     },
 
     {
@@ -156,6 +309,69 @@ function Campaigns() {
       dataIndex: 'currencyCode',
       align: 'center',
     },
+    {
+      title: 'Impressions',
+      dataIndex: 'impressions',
+      align: 'center',
+      render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
+    },
+
+    {
+      title: 'Clicks',
+      dataIndex: 'clicks',
+      align: 'center',
+      render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
+    },
+
+    {
+      title: 'Cost',
+      dataIndex: 'cost',
+      align: 'center',
+      render: (v) => <span className="font-medium text-[#dc2626]">₹{v ?? 0}</span>,
+    },
+
+    {
+      title: 'Sales',
+      dataIndex: 'sales',
+      align: 'center',
+      render: (v) => <span className="font-medium text-[#16a34a]">₹{v ?? 0}</span>,
+    },
+
+    {
+      title: 'Orders',
+      dataIndex: 'orders',
+      align: 'center',
+      render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
+    },
+
+    {
+      title: 'Units',
+      dataIndex: 'units',
+      align: 'center',
+      render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
+    },
+
+    {
+      title: 'ACOS',
+      dataIndex: 'acos',
+      align: 'center',
+      render: (v) => (
+        <Tag className="!px-3 !py-[3px] !rounded-full" color={v > 100 ? 'error' : 'processing'}>
+          {v ? `${v.toFixed(2)}%` : '-'}
+        </Tag>
+      ),
+    },
+
+    {
+      title: 'ROAS',
+      dataIndex: 'roas',
+      align: 'center',
+      render: (v) => (
+        <Tag className="!px-3 !py-[3px] !rounded-full" color={v >= 1 ? 'success' : 'warning'}>
+          {v ? v.toFixed(2) : '-'}
+        </Tag>
+      ),
+    },
 
     {
       title: 'Action',
@@ -164,14 +380,13 @@ function Campaigns() {
       fixed: 'right',
       align: 'center',
 
-      render: () => (
+      render: (_, record) => (
         <button
           type="button"
-          // onClick={() => {
-          //   navigate(`/advertising/campaigndetails/${record.campaignId}`);
-          // }}
-          className="w-[34px] h-[34px] rounded-full border border-[#dbe1e8]
-  flex items-center justify-center cursor-pointer hover:text-black transition-all duration-200 mx-auto"
+          onClick={() => {
+            navigate(`../campaign-details/${record.campaignId}`);
+          }}
+          className="w-[34px] h-[34px] rounded-full border border-[#dbe1e8] flex items-center justify-center cursor-pointer hover:text-black transition-all duration-200 mx-auto"
         >
           <RightOutlined />
         </button>
@@ -192,7 +407,8 @@ function Campaigns() {
       <div className="p-2">
         <div className="mt-3 mb-3 rounded-2xl border border-[#e5e7eb] bg-white shadow-sm overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-[#edf0f2] px-6 py-4">
+          <div className="border-b border-[#edf0f2] px-6 py-4">
+            {/* Top Content */}
             <div>
               <h1 className="text-[23px] font-semibold text-[#111827] mb-1">Campaigns Performance</h1>
 
@@ -201,26 +417,72 @@ function Campaigns() {
               </p>
             </div>
 
-            {/* Right Buttons */}
-            <div className="flex items-center gap-3">
-              <Button
-                icon={<FilterOutlined />}
-                className="!h-[40px] !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium !flex !items-center !justify-center"
-              >
-                Filters
-              </Button>
+            {/* Bottom Row */}
+            <div className="mt-5 flex items-center justify-between gap-3">
+              {/* Search */}
+              <div className="relative w-[260px]">
+                <input
+                  type="text"
+                  placeholder="Search campaigns..."
+                  className="
+              w-full h-[42px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none
+            "
+                />
 
-              <Button
-                type="primary"
-                icon={<ExportOutlined />}
-                className="!h-[40px] !rounded-xl !bg-[#2563eb] !font-medium !flex !items-center !justify-center"
-              >
-                Export
-              </Button>
+                <SearchOutlined
+                  className="
+              absolute
+              left-4
+              top-1/2
+              -translate-y-1/2
+              text-[#9ca3af]
+              text-[15px]
+            "
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Popover
+                  content={filterContent}
+                  trigger="click"
+                  open={openFilter}
+                  onOpenChange={setOpenFilter}
+                  placement="bottomRight"
+                  overlayInnerStyle={{
+                    padding: '15px',
+                    borderRadius: '22px',
+                  }}
+                >
+                  <Button
+                    icon={<FilterOutlined />}
+                    className="
+      !h-[40px]
+      !rounded-xl
+      !border-[#dbe1e8]
+      !text-[#374151]
+      !font-medium
+      hover:!border-[#2563eb]
+      hover:!text-[#2563eb]
+      !flex
+      !items-center
+      !justify-center
+    "
+                  >
+                    Filters
+                  </Button>
+                </Popover>
+
+                <Button
+                  type="primary"
+                  icon={<ExportOutlined />}
+                  className="!h-[40px] !rounded-xl !bg-[#2563eb] !font-medium !flex !items-center !justify-center"
+                >
+                  Export
+                </Button>
+              </div>
             </div>
           </div>
 
-          {/* Table */}
           <Table
             columns={columns}
             dataSource={dataSource}

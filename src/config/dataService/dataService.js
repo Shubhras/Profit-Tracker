@@ -119,9 +119,50 @@
 // );
 // export { DataService };
 
+// import axios from 'axios';
+// import Cookies from 'js-cookie';
+
+// const API_ENDPOINT = `${process.env.REACT_APP_API_ENDPOINT}/api`;
+
+// const client = axios.create({
+//   baseURL: API_ENDPOINT,
+//   headers: {
+//     'Content-Type': 'application/json',
+//   },
+// });
+
+// client.interceptors.request.use((config) => {
+//   const token = Cookies.get('access_token');
+
+//   if (token) {
+//     config.headers.Authorization = `Bearer ${token}`;
+//   }
+
+//   return config;
+// });
+
+// class DataService {
+//   static get(path = '') {
+//     return client.get(path);
+//   }
+
+//   static post(path = '', data = {}) {
+//     return client.post(path, data);
+//   }
+
+//   static patch(path = '', data = {}) {
+//     return client.patch(path, data);
+//   }
+
+//   static put(path = '', data = {}) {
+//     return client.put(path, data);
+//   }
+// }
+
+// export { DataService };
+
 import axios from 'axios';
 import Cookies from 'js-cookie';
-// import { getItem } from '../../utility/localStorageControl';
 
 const API_ENDPOINT = `${process.env.REACT_APP_API_ENDPOINT}/api`;
 
@@ -132,18 +173,76 @@ const client = axios.create({
   },
 });
 
-// ✅ Interceptor adds token dynamically
-client.interceptors.request.use((config) => {
-  // const token = getItem('access_token');
-  const token = Cookies.get('access_token');
+// REQUEST INTERCEPTOR
+client.interceptors.request.use(
+  (config) => {
+    const token = Cookies.get('access_token');
 
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
+
+// REFRESH TOKEN FUNCTION
+const refreshAccessToken = async () => {
+  try {
+    const refreshToken = Cookies.get('refresh_token');
+
+    const response = await axios.post(`${API_ENDPOINT}/user/refresh-token/`, {
+      refresh: refreshToken,
+    });
+    console.log(response.data);
+
+    const newAccessToken = response.data.data.access;
+
+    // save new token
+    Cookies.set('access_token', newAccessToken);
+
+    return newAccessToken;
+  } catch (error) {
+    console.log('Refresh Token Expired');
+
+    // logout user
+    Cookies.remove('access_token');
+    Cookies.remove('refresh_token');
+
+    window.location.href = '/auth/login';
+
+    return null;
   }
+};
 
-  return config;
-});
+// RESPONSE INTERCEPTOR
+client.interceptors.response.use(
+  (response) => response,
 
+  async (error) => {
+    const originalRequest = error.config;
+
+    // token expired
+    if (error.response?.status === 401 && !originalRequest.retryRequest) {
+      originalRequest.retryRequest = true;
+
+      const newAccessToken = await refreshAccessToken();
+      console.log('New Access Token:', newAccessToken);
+
+      if (newAccessToken) {
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+        // retry original request
+        return client(originalRequest);
+      }
+    }
+
+    return Promise.reject(error);
+  },
+);
+
+// DATA SERVICE
 class DataService {
   static get(path = '') {
     return client.get(path);
@@ -159,6 +258,10 @@ class DataService {
 
   static put(path = '', data = {}) {
     return client.put(path, data);
+  }
+
+  static delete(path = '') {
+    return client.delete(path);
   }
 }
 
