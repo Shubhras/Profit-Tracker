@@ -156,17 +156,17 @@ function Overview() {
               <h2 className="text-lg font-semibold text-[#111827]">Performance Trend</h2>
 
               <div className="mt-2 flex items-center gap-5 text-sm">
-                <span className="flex items-center gap-2 text-green-600">
+                <span className="flex items-center gap-2 text-green-600 text-[12px]">
                   <div className="h-2 w-2 rounded-full bg-green-500" />
                   ACOS (%)
                 </span>
 
-                <span className="flex items-center gap-2 text-blue-600">
+                <span className="flex items-center gap-2 text-blue-600 text-[12px]">
                   <div className="h-2 w-2 rounded-full bg-blue-500" />
                   TACOS (%)
                 </span>
 
-                <span className="flex items-center gap-2 text-purple-600">
+                <span className="flex items-center gap-2 text-purple-600 text-[12px]">
                   <div className="h-2 w-2 rounded-full bg-purple-500" />
                   ROAS
                 </span>

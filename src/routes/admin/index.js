@@ -10,7 +10,7 @@ import Pages from './pages';
 import Users from './users';
 import Widgets from './widgets';
 import ProfitRoutes from './profit';
-import Advertising from './advertising';
+import AdvertisingRoutes from './advertising';
 import ValueAddedRoutes from './valueAdded';
 import OrganicPerformRoutes from './organicPerformance';
 import OperationsRoutes from './operations';
@@ -95,7 +95,7 @@ const Admin = React.memo(() => {
           path="advertising/*"
           element={
             <SubscriptionGate allowFree>
-              <Advertising />
+              <AdvertisingRoutes />
             </SubscriptionGate>
           }
         />

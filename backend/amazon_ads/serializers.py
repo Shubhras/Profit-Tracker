@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from .models import *
+
+
 class CampaignMetricSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -57,7 +59,6 @@ class AdsCampaignSerializer(serializers.ModelSerializer):
 
         return None
     
-
 
 # serializers.py
 

@@ -22,5 +22,8 @@ urlpatterns = [
     path("ad-groups/list/",AdsAdGroupListView.as_view()),
     path("keywords/list/",AdsKeywordListView.as_view()),
     path("product-ads/list/",AdsProductAdListView.as_view()),
+
+    path("product-ads/list/",AdsProductAdListView.as_view()),
+    path("get-query-ads/",QueryAdsView.as_view()),
     path("sync-campaigns/",sync_campaigns_api),
 ]

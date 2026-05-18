@@ -7,6 +7,7 @@ from .finance_report import *
 from .return_items import *
 from .retundata import *
 from amazon_ads.views import AmazonAdsCallbackView
+from .product_pricing import  *
 urlpatterns = [
     path('dashboard-stats/', views.get_full_dashboard, name='dashboard-stats'),
     path('pivot-stats/', views.get_pivot_dashboard, name='pivot-stats'),
@@ -74,5 +75,7 @@ urlpatterns = [
     path('get-catlog/details/', get_catalog_details, name='get_catelog_details'),
 
     path("amazon-returns/", amazon_returns_list, name="amazon_returns_list"),
+
+    path('sync-product-pricing/',SyncProductPricingAPIView.as_view()),
  
 ]

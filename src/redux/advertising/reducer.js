@@ -4,6 +4,7 @@ const initialState = {
   campaignData: [],
   adsGroupData: [],
   keywordsData: [],
+  adsProductsData: [],
   loading: false,
   error: null,
 };
@@ -18,6 +19,10 @@ const {
   KEYWORDS_BEGIN,
   KEYWORDS_SUCCESS,
   KEYWORDS_ERR,
+
+  ADS_PRODUCTS_BEGIN,
+  ADS_PRODUCTS_SUCCESS,
+  ADS_PRODUCTS_ERR,
 } = actions;
 
 const AdvertisingReducer = (state = initialState, action) => {
@@ -79,6 +84,27 @@ const AdvertisingReducer = (state = initialState, action) => {
       };
 
     case KEYWORDS_ERR:
+      return {
+        ...state,
+        error: err,
+        loading: false,
+      };
+
+    case ADS_PRODUCTS_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case ADS_PRODUCTS_SUCCESS:
+      return {
+        ...state,
+        adsProductsData: data,
+        loading: false,
+      };
+
+    case ADS_PRODUCTS_ERR:
       return {
         ...state,
         error: err,

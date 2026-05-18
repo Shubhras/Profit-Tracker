@@ -325,12 +325,15 @@ class SettlementOrderSummaryAdmin(admin.ModelAdmin):
         }),
     )  
 
+
 @admin.register(AmazonEstimatedFee)
 class AmazonEstimatedFeeAdmin(admin.ModelAdmin):
 
     list_display = (
         "id",
-        "seller_sku","amazon_account","fulfillment_channel",
+        "seller_sku",
+        "amazon_account",
+        "fulfillment_channel",
         "asin",
         "marketplace_id",
         "selling_price",
@@ -345,14 +348,18 @@ class AmazonEstimatedFeeAdmin(admin.ModelAdmin):
     search_fields = (
         "seller_sku",
         "asin",
-        "marketplace_id","amazon_account","fulfillment_channel",
+        "marketplace_id",
+        # "amazon_account__name",   # FIXED
+        "fulfillment_channel",
     )
 
     list_filter = (
         "marketplace_id",
         "currency",
         "created_at",
-        "estimated_at","amazon_account","fulfillment_channel",
+        "estimated_at",
+        "amazon_account",
+        "fulfillment_channel",
     )
 
     readonly_fields = (
@@ -362,4 +369,41 @@ class AmazonEstimatedFeeAdmin(admin.ModelAdmin):
 
     ordering = ("-created_at",)
 
-    list_per_page = 50       
+    list_per_page = 50
+
+@admin.register(ProductPricing)
+class ProductPricingAdmin(admin.ModelAdmin):
+
+    list_display = [
+        'id',
+        'user',
+        'asin',
+        'sku',
+        'listing_price',
+        'regular_price',
+        'shipping_price',
+        'currency',
+        'fulfillment_channel',
+        'item_condition',
+        'updated_at'
+    ]
+
+    search_fields = [
+        'asin',
+        'sku',
+        'user__username'
+    ]
+
+    list_filter = [
+        'marketplace_id',
+        'currency',
+        'fulfillment_channel',
+        'item_condition',
+        'updated_at'
+    ]
+
+    readonly_fields = [
+        'updated_at'
+    ]
+
+    ordering = ['-updated_at']
