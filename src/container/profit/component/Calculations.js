@@ -186,9 +186,9 @@ function CalculationModal({ open, onClose, type, data }) {
                 <div className="flex items-center gap-2 mt-1 text-[12px] text-[#6b7280]">
                   <span>ASIN: {data?.asin || '000'}</span>
 
-                  <span>|</span>
+                  {/* <span>|</span> */}
 
-                  <span>Order ID: 1123</span>
+                  {/* <span>Order ID: 1123</span> */}
                 </div>
               </div>
             </div>
@@ -216,34 +216,43 @@ function CalculationModal({ open, onClose, type, data }) {
             {[
               {
                 label: 'Referral Fee',
-                value: totalFees * 0.45,
+                value: data?.referral_fee || 0,
               },
               {
                 label: 'Variable Closing Fee',
-                value: totalFees * 0.0,
+                value: data?.closing_fee || 0,
               },
               {
                 label: 'FBA Weight Handling',
-                value: totalFees * 0.35,
+                value: data?.fba_weight_handling_fee || 0,
               },
               {
                 label: 'FBA Pick And Pack',
-                value: totalFees * 0.2,
+                value: data?.fba_pick_pack_fee || 0,
               },
               {
                 label: 'Other charges',
-                value: 0,
+                value: data?.other_charges || 0,
+              },
+              {
+                label: 'Per Item Fee',
+                value: data?.per_item_fee || 0,
+              },
+              {
+                label: 'FBA Fee',
+                value: data?.fba_fee || 0,
               },
             ].map((item, index) => (
               <div key={index} className="grid grid-cols-2 border-b last:border-b-0 border-[#e5e7eb]">
                 <div className="px-4 py-3 text-[14px] text-[#111827] border-r flex items-center gap-2 font-semibold">
                   {item.label}
 
-                  {item.label === 'Other charges' && <InfoCircleOutlined className="text-[#9ca3af] text-[12px]" />}
+                  {item.label === 'Other charges' && <InfoCircleOutlined className="text-gray-500 text-[13px]" />}
                 </div>
 
                 <div className="px-4 py-3 text-right text-[13px] text-[#111827] font-medium">
-                  -₹{Math.abs(item.value).toFixed(2)}
+                  -₹
+                  {Math.abs(parseFloat(String(item.value || 0).replace(/[₹,]/g, ''))).toFixed(2)}
                 </div>
               </div>
             ))}
@@ -272,20 +281,20 @@ function CalculationModal({ open, onClose, type, data }) {
 
         {/* Footer */}
         <div className="px-5 py-5 flex justify-end">
-          <button
+          {/* <button
             type="button"
             onClick={onClose}
             className="h-[40px] px-6 rounded-xl border border-[#d1d5db] bg-white hover:bg-[#f9fafb] text-[14px] font-medium transition"
           >
             Close
-          </button>
+          </button> */}
         </div>
       </div>
     );
   };
 
   const renderProfitUI = () => {
-    // const sellingPrice = parseFloat(String(data?.netsales || 0).replace(/[₹,]/g, ''));
+    const sellingPrice = parseFloat(String(data?.netsales || 0).replace(/[₹,]/g, ''));
 
     const marketplaceFees = parseFloat(String(data?.estimatefees || data?.mpfees || 0).replace(/[₹,]/g, ''));
 
@@ -299,19 +308,19 @@ function CalculationModal({ open, onClose, type, data }) {
 
     const mpGst = parseFloat(String(data?.mp_gst || 0).replace(/[₹,]/g, ''));
 
-    const gstToPay = parseFloat(String(data?.gst || 0).replace(/[₹,]/g, ''));
+    const gstToPay = parseFloat(String(data?.gst_to_pay_amount || 0).replace(/[₹,]/g, ''));
 
     const profit = parseFloat(String(data?.profit || 0).replace(/[₹,]/g, ''));
 
     const profitPercent = Number(data?.profitPercent || 0);
 
     const rows = [
-      //   {
-      //     label: 'Selling Price',
-      //     value: sellingPrice,
-      //     color: 'text-[#111827]',
-      //     sign: '',
-      //   },
+      {
+        label: 'Selling Price',
+        value: sellingPrice,
+        color: 'text-[#111827]',
+        sign: '',
+      },
       {
         label: '(-) Marketplace Total Fees',
         value: marketplaceFees,

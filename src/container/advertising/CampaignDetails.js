@@ -40,6 +40,14 @@ function CampaignDetails() {
       profileId: item.profile_id,
       countryCode: item.country_code,
       currencyCode: item.currency_code,
+      impressions: item.metrics?.impressions,
+      clicks: item.metrics?.clicks,
+      cost: item.metrics?.cost,
+      sales: item.metrics?.sales,
+      orders: item.metrics?.orders,
+      units: item.metrics?.units,
+      acos: item.metrics?.acos,
+      roas: item.metrics?.roas,
       createdAt: item.created_at,
     })) || [];
 

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Table, Card, Modal, Checkbox, Tooltip } from 'antd';
-import { RightOutlined, SearchOutlined, BarChartOutlined, FilterOutlined, EyeOutlined } from '@ant-design/icons';
+import { RightOutlined, SearchOutlined, FilterOutlined, EyeOutlined } from '@ant-design/icons';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 // import ProfitFilterBar from './component/ProfitFilterBar';
@@ -115,22 +115,32 @@ export default function ProfitDetailsView() {
         name: item.name,
         asin: item.asin,
         redirecturl: item.redirecturl,
-        grossQty: item.grossqty || 0,
         netQty: item.netqty || 0,
         returnqty: item.returnqty || 0,
+        settleAmount: item.exp_settlement,
         returnPercent: item.retpercent || 0,
 
         netsales: item.netsales || 0,
         tcs: item.tcs || 0,
         mp_gst: item.mp_gst,
         mpfees: item.estimatefees || 0,
+        taxableValue: item.taxable_value || 0,
         // netasp: Number(item.netasp) || 0,
         // net_discount: Number(item.net_discount) || 0,
 
         stdcost: item.stdcost || 0,
         shipping: item.shippingfees || 0,
         adSpend: item.ads || 0,
-        gst: item.gst || 0,
+        gst_to_pay_amount: item.gst_to_pay_amount || 0,
+        gst_to_pay_perc: item.gst_to_pay_perc || 0,
+        referral_fee: item.referral_fee || 0,
+        closing_fee: item.closing_fee || 0,
+        per_item_fee: item.per_item_fee || 0,
+        fba_fee: item.fba_fee || 0,
+        fba_pick_pack_fee: item.fba_pick_pack_fee || 0,
+        fba_weight_handling_fee: item.fba_weight_handling_fee || 0,
+        tax_amount: item.tax_amount || 0,
+        other_charges: item.other_charges || 0,
 
         // grossprofit: Number(sitem.grossprofit) || 0,
         profit: item.profit || 0,
@@ -249,13 +259,13 @@ export default function ProfitDetailsView() {
     //   align: 'center',
     //   sorter: (a, b) => a.qty - b.qty,
     // },
-    {
-      title: 'Gross Qty',
-      dataIndex: 'grossQty',
-      align: 'center',
-      sorter: (a, b) => a.grossqty - b.grossqty,
-      // render: (v) => v ?? 0,
-    },
+    // {
+    //   title: 'Gross Qty',
+    //   dataIndex: 'grossQty',
+    //   align: 'center',
+    //   sorter: (a, b) => a.grossqty - b.grossqty,
+    //   // render: (v) => v ?? 0,
+    // },
     {
       title: 'Net Qty',
       dataIndex: 'netQty',
@@ -273,6 +283,7 @@ export default function ProfitDetailsView() {
       dataIndex: 'returnPercent',
       align: 'center',
       sorter: (a, b) => a.returnPercent - b.returnPercent,
+      render: (v) => <span>{v}%</span>,
     },
     {
       title: 'Net Sales',
@@ -373,10 +384,30 @@ export default function ProfitDetailsView() {
     },
 
     {
-      title: 'GST to Pay',
-      dataIndex: 'gst',
+      title: 'Taxable Value',
+      dataIndex: 'taxableValue',
       align: 'center',
-      sorter: (a, b) => a.gst - b.gst,
+      sorter: (a, b) => a.taxableValue - b.taxableValue,
+    },
+
+    {
+      title: 'GST to Pay',
+      dataIndex: 'gst_to_pay_amount',
+      align: 'center',
+      sorter: (a, b) => a.gst_to_pay_amount - b.gst_to_pay_amount,
+    },
+    {
+      title: 'GST to Pay %',
+      dataIndex: 'gst_to_pay_perc',
+      align: 'center',
+      sorter: (a, b) => a.gst_to_pay_perc - b.gst_to_pay_perc,
+      render: (v) => <span>{v}%</span>,
+    },
+    {
+      title: 'Expected Settlement',
+      dataIndex: 'settleAmount',
+      align: 'center',
+      sorter: (a, b) => a.settleAmount - b.settleAmount,
     },
     {
       title: 'Product Cost',
@@ -416,9 +447,9 @@ export default function ProfitDetailsView() {
               record,
             })
           }
-          className={`font-medium underline cursor-pointer bg-transparent border-none ${
-            String(v).includes('-') ? 'text-red-500' : 'text-green-600'
-          }`}
+          // className={`font-medium underline cursor-pointer bg-transparent border-none ${
+          //   String(v).includes('-') ? 'text-red-500' : 'text-green-600'
+          // }`}
         >
           {v}
         </button>
@@ -761,15 +792,7 @@ export default function ProfitDetailsView() {
                       <button
                         type="button"
                         onClick={() => setShowFilters(false)}
-                        className="
-                flex-1
-                h-[38px]
-                rounded-xl
-                border border-[#e5e7eb]
-                text-[13px]
-                font-medium
-                hover:bg-gray-50
-              "
+                        className="flex-1 h-[38px] rounded-xl border border-[#e5e7eb] text-[13px] font-medium hover:bg-gray-50"
                       >
                         Cancel
                       </button>
@@ -780,15 +803,7 @@ export default function ProfitDetailsView() {
                           handleApply();
                           setShowFilters(false);
                         }}
-                        className="
-                flex-1
-                h-[38px]
-                rounded-xl
-                bg-[#1677ff]
-                text-white
-                text-[13px]
-                font-medium
-              "
+                        className="flex-1 h-[38px] rounded-xl bg-[#1677ff] text-white text-[13px] font-medium"
                       >
                         Apply
                       </button>
@@ -816,145 +831,65 @@ export default function ProfitDetailsView() {
             size="small"
             scroll={{ x: 'max-content' }}
             summary={() => {
-              const summaryItems = columns
-                .filter(
-                  (col) => !['image', 'channel', 'view', 'lastOrderDate', 'action'].includes(col.dataIndex || col.key),
-                )
-                .map((col) => {
-                  const keyMap = {
-                    netQty: 'netqty',
-                    returnqty: 'totalreturn',
-                    returnPercent: 'totalreturnper',
-                    netsales: 'netsales',
-                    tcs: 'tcs',
-                    mp_gst: 'mp_gst',
-                    mpfees: 'estimatefees',
-                    stdcost: 'stdcost',
-                    shipping: 'shippingfees',
-                    adSpend: 'ads',
-                    gst: 'totalgst',
-                    profit: 'profit',
-                    profitPercent: 'grossprofitper',
-
-                    grossQty: 'grossqty',
-                    netmrp: 'netmrp',
-                    mrpNetDiscount: 'mrp_net_discount',
-                    mrpCustomerDiscount: 'mrpCustomerDiscount',
-                    accountCharges: 'account_charges',
-                    otherExpenses: 'other_expenses',
-                    tacos: 'tacos',
-                    grossProfitPercent: 'grossprofit_percent',
-                    percentOfSales: 'percent_of_sales',
-                    drr: 'drr',
-                    lastOrderDate: 'lastOrderDate',
-                  };
-
-                  return {
-                    label: col.title,
-                    dataIndex: col.dataIndex,
-                    value: totals[keyMap[col.dataIndex]],
-                  };
-                });
-
               return (
                 <Table.Summary fixed>
-                  <Table.Summary.Row>
-                    <Table.Summary.Cell
-                      index={0}
-                      colSpan={columns.length}
-                      style={{
-                        background: '#fff',
-                        zIndex: 20,
-                        minWidth: 220,
-                        left: 0,
-                        position: 'sticky',
-                        padding: '14px',
-                      }}
-                    >
-                      <div className="w-full rounded-2xl border border-dashed border-[#8b5cf6] bg-gradient-to-r from-[#faf7ff] to-[#ffffff] px-4 py-1 ">
-                        <div className="flex items-center gap-4 overflow-x-auto">
-                          {/* Left Card */}
-                          <div className=" min-w-[280px] h-[88px] rounded-2xl bg-white border border-[#ede9fe] flex items-center gap-3 px-4 shadow-sm ">
-                            <div className=" w-11 h-11 rounded-xl bg-[#f3e8ff]  flex items-center justify-center ">
-                              <BarChartOutlined
-                                style={{
-                                  color: '#7c3aed',
-                                  fontSize: 18,
-                                }}
-                              />
-                            </div>
+                  <Table.Summary.Row className="bg-[#fafafa] font-semibold">
+                    {columns.map((col, index) => {
+                      const keyMap = {
+                        netQty: 'netqty',
+                        returnqty: 'totalreturn',
+                        returnPercent: 'totalreturnper',
+                        netsales: 'netsales',
+                        tcs: 'tcs',
+                        mp_gst: 'mp_gst',
+                        mpfees: 'estimatefees',
+                        stdcost: 'stdcost',
+                        shipping: 'shippingfees',
+                        adSpend: 'ads',
+                        gst_to_pay_amount: 'gst_to_pay_amount',
+                        gst_to_pay_perc: 'gst_to_pay_perc',
+                        profit: 'profit',
+                        profitPercent: 'grossprofitper',
+                        taxableValue: 'taxable_value',
+                        settleAmount: 'exp_settlement',
+                        netmrp: 'netmrp',
+                        mrpNetDiscount: 'mrp_net_discount',
+                        mrpCustomerDiscount: 'mrpCustomerDiscount',
+                        accountCharges: 'account_charges',
+                        otherExpenses: 'other_expenses',
+                        tacos: 'tacos',
+                        grossProfitPercent: 'grossprofit_percent',
+                        percentOfSales: 'percent_of_sales',
+                        drr: 'drr',
+                      };
 
-                            <div>
-                              <h3 className="text-[17px] font-semibold text-[#111827] mb-1">Total Summary</h3>
+                      const value = totals?.[keyMap[col.dataIndex]];
 
-                              <p className="text-[12px] text-[#6b7280]">For selected period</p>
-                            </div>
-                          </div>
+                      const isPercent = ['profitPercent'].includes(col.dataIndex);
 
-                          {/* Summary Cards */}
-                          <div className="flex items-stretch gap-3">
-                            {summaryItems
-                              .filter((item) => item.dataIndex !== 'lastOrderDate')
-                              .map((item, index) => {
-                                const isNegative = Number(item.value) < 0;
-
-                                const isPercent = [
-                                  'profitPercent',
-                                  'grossProfitPercent',
-                                  'mrpNetDiscount',
-                                  'percentOfSales',
-                                  'tacos',
-                                  'returnPercent',
-                                ].includes(item.dataIndex);
-
-                                return (
-                                  <Table.Summary.Cell
-                                    key={index}
-                                    index={index + 3}
-                                    align="center"
-                                    style={{
-                                      background: '#fff',
-                                      padding: '10px 8px',
-                                      minWidth: 140,
-                                    }}
-                                  >
-                                    <button
-                                      type="button"
-                                      className="min-w-[135px] h-[88px] rounded-2xl bg-white border border-[#f3f4f6] px-4 py-3 flex flex-col justify-center shadow-sm hover:shadow-md transition-all cursor-pointer"
-                                      // onClick={() =>
-                                      //   setDetailModal({
-                                      //     open: true,
-                                      //     record: totals,
-                                      //     type: 'qty',
-                                      //     modalLabel: 'ASIN',
-                                      //     modalValue: 'TOTAL',
-                                      //   })
-                                      // }
-                                    >
-                                      <div
-                                        className={`text-[18px] font-bold mb-1 ${
-                                          isNegative
-                                            ? 'text-[#ef4444]'
-                                            : item.dataIndex === 'profitPercent' || item.dataIndex === 'profit'
-                                            ? 'text-[#16a34a]'
-                                            : 'text-[#111827]'
-                                        }`}
-                                      >
-                                        {item.value ?? 0}
-                                        {isPercent ? '%' : ''}
-                                      </div>
-
-                                      <div className="text-[12px] font-medium text-[#6b7280] whitespace-nowrap">
-                                        {item.label}
-                                      </div>
-                                    </button>
-                                  </Table.Summary.Cell>
-                                );
-                              })}
-                          </div>
-                        </div>
-                      </div>
-                    </Table.Summary.Cell>
+                      return (
+                        <Table.Summary.Cell key={index} index={index} align="center" fixed={col.fixed}>
+                          {index === 0 ? (
+                            <span className="font-bold text-[#111827]">Total</span>
+                          ) : index === 1 || col.dataIndex === 'view' || col.key === 'action' ? (
+                            <div />
+                          ) : (
+                            <span
+                              className={`font-semibold ${
+                                Number(value) > 0 && ['profitPercent'].includes(col.dataIndex)
+                                  ? 'text-green-600'
+                                  : Number(value) < 0
+                                  ? 'text-red-600'
+                                  : 'text-[#111827]'
+                              }`}
+                            >
+                              {value ?? 0}
+                              {isPercent ? '%' : ''}
+                            </span>
+                          )}
+                        </Table.Summary.Cell>
+                      );
+                    })}
                   </Table.Summary.Row>
                 </Table.Summary>
               );
