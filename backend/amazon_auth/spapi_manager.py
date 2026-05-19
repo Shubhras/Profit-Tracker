@@ -307,14 +307,40 @@ class SPAPIManager:
     
 
     def get_catalog_item(self, asin, marketplace_id):
+
         path = f"/catalog/2022-04-01/items/{asin}"
 
         params = {
             "marketplaceIds": marketplace_id,
-            "includedData": "attributes,images,relationships"  # ✅ ADD THIS
+            "includedData": ",".join([
+                "attributes",
+                "images",
+                "relationships",
+                "salesRanks",
+                "summaries",
+                "dimensions",
+                "identifiers",
+                "productTypes",
+                "classifications"
+            ])
         }
 
-        return self.request("GET", path, params=params)
+        return self.request(
+            "GET",
+            path,
+            params=params
+        )
+    
+
+    # def get_catalog_item(self, asin, marketplace_id):
+    #     path = f"/catalog/2022-04-01/items/{asin}"
+
+    #     params = {
+    #         "marketplaceIds": marketplace_id,
+    #         "includedData": "attributes,images,relationships"  # ✅ ADD THIS
+    #     }
+
+    #     return self.request("GET", path, params=params)
     
 
     def create_settlement_report(self, start_date=None, end_date=None):
@@ -429,7 +455,42 @@ class SPAPIManager:
             params=params
         )
     
+     # spapi_manager.py
 
+    def search_listing_items(
+        self,
+        seller_id,
+        marketplace_id,
+        page_token=None
+    ):
+
+        path = f"/listings/2021-08-01/items/{seller_id}"
+
+        params = {
+            "marketplaceIds": marketplace_id,
+            "includedData": ",".join([
+                "summaries",
+                "attributes",
+                "issues",
+                "offers",
+                "fulfillmentAvailability",
+                "relationships",
+                "productTypes"
+            ]),
+            "sortBy": "lastUpdatedDate",
+            "sortOrder": "DESC",
+            "pageSize": 20,
+        }
+
+        if page_token:
+            params["pageToken"] = page_token
+
+        return self.request(
+            "GET",
+            path,
+            params=params
+        )
+    
     # def list_returns(self, **kwargs):
     #     path = "/externalFulfillment/2024-09-11/returns"
         
