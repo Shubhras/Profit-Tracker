@@ -75,14 +75,14 @@ export const getOverviewSettings = (payload) => {
   };
 };
 
-export const getProductConfiguration = (payload) => {
+export const getProductConfiguration = (page = 1, pageSize = 10) => {
   return async (dispatch) => {
     dispatch(productconfigBegin());
 
     try {
-      const response = await mockService(payload);
+      const response = await DataService.post(`/amazon/amazon-listing-items/?page=${page}&page_size=${pageSize}`);
 
-      if (response.data.status === 'success') {
+      if (response.data.status === true) {
         dispatch(productconfigSuccess(response.data));
       } else {
         dispatch(productconfigErr('Something went wrong'));

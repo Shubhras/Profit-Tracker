@@ -26,7 +26,12 @@ function CalculationModal({ open, onClose, type, data }) {
               <div>
                 <p className="text-[14px] font-semibold text-[#111827] mb-1"> {data?.name || 'Product Name'}</p>
 
-                <p className="text-[13px] text-[#6b7280]"> ASIN: {data?.asin || '000'}</p>
+                <p className="text-[13px] text-[#6b7280]">
+                  {/* ASIN: {data?.asin || '000'} */}
+                  <span>
+                    {data?.asin ? `ASIN: ${data.asin}` : `Order ID: ${data?.view || data?.order_id || '000'}`}
+                  </span>
+                </p>
               </div>
             </div>
           </div>
@@ -184,7 +189,10 @@ function CalculationModal({ open, onClose, type, data }) {
                 </p>
 
                 <div className="flex items-center gap-2 mt-1 text-[12px] text-[#6b7280]">
-                  <span>ASIN: {data?.asin || '000'}</span>
+                  {/* <span>ASIN: {data?.asin || '000'}</span> */}
+                  <span>
+                    {data?.asin ? `ASIN: ${data.asin}` : `Order ID: ${data?.view || data?.order_id || '000'}`}
+                  </span>
 
                   {/* <span>|</span> */}
 
@@ -380,7 +388,12 @@ function CalculationModal({ open, onClose, type, data }) {
                   {data?.name || 'Product Name'}
                 </p>
 
-                <p className="text-[12px] text-[#6b7280] mt-1">ASIN: {data?.asin || '000'}</p>
+                <p className="text-[12px] text-[#6b7280] mt-1">
+                  {/* ASIN: {data?.asin || '000'} */}
+                  <span>
+                    {data?.asin ? `ASIN: ${data.asin}` : `Order ID: ${data?.view || data?.order_id || '000'}`}
+                  </span>
+                </p>
               </div>
             </div>
           </div>

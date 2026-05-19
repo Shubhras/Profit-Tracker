@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Table, Card, Modal, Checkbox, Tooltip } from 'antd';
-import { RightOutlined, SettingOutlined, BarChartOutlined } from '@ant-design/icons';
+import { RightOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import ProfitFilterBar from './component/ProfitFilterBar';
+// import ProfitFilterBar from './component/ProfitFilterBar';
 import ProfitModal from './component/ProfitModal';
 import { PageHeader } from '../../components/page-headers/page-headers';
 import { getProfitData, exportProfitData } from '../../redux/dashboard/actionCreator';
@@ -15,7 +15,7 @@ export default function ProfitTableView() {
   const navigate = useNavigate();
   const { loading, profitData, dateRange, search, channel: globalChannel } = useSelector((state) => state.dashboard);
   const totals = profitData?.totals || {};
-  const [showFilters, setShowFilters] = useState(false);
+  // const [showFilters, setShowFilters] = useState(false);
   const [pagination, setPagination] = React.useState({
     current: 1,
     pageSize: 10,
@@ -45,39 +45,38 @@ export default function ProfitTableView() {
     'profit',
     'profitPercent',
   ]);
-  const [filters, setFilters] = React.useState({
-    channel: '',
-    sku: '',
-    productId: '',
-    parentId: '',
-    mkt: '',
+  // const [filters, setFilters] = React.useState({
+  //   channel: '',
+  //   sku: '',
+  //   productId: '',
+  //   parentId: '',
+  //   mkt: '',
 
-    ads: 'with',
-    gst: 'with',
-    estimate: 'with',
-    expenses: 'with',
-    accountCharges: 'with',
-  });
+  //   ads: 'with',
+  //   gst: 'with',
+  //   estimate: 'with',
+  //   expenses: 'with',
+  //   accountCharges: 'with',
+  // });
 
-  const getMetricFromFilters = () => {
-    return {
-      ads: filters.ads ? (filters.ads === 'with' ? 'withAds' : 'withoutAds') : '',
+  // const getMetricFromFilters = () => {
+  //   return {
+  //     ads: filters.ads ? (filters.ads === 'with' ? 'withAds' : 'withoutAds') : '',
 
-      gst: filters.gst ? (filters.gst === 'with' ? 'withGst' : 'withoutGst') : '',
+  //     gst: filters.gst ? (filters.gst === 'with' ? 'withGst' : 'withoutGst') : '',
 
-      payment: filters.estimate ? (filters.estimate === 'with' ? 'withEstimate' : 'withoutEstimate') : '',
+  //     payment: filters.estimate ? (filters.estimate === 'with' ? 'withEstimate' : 'withoutEstimate') : '',
 
-      expense: filters.expenses ? (filters.expenses === 'with' ? 'withExpense' : 'withoutExpense') : '',
+  //     expense: filters.expenses ? (filters.expenses === 'with' ? 'withExpense' : 'withoutExpense') : '',
 
-      account_charges: filters.accountCharges
-        ? filters.accountCharges === 'with'
-          ? 'withAccountCharges'
-          : 'withoutAccountCharges'
-        : '',
+  //     account_charges: filters.accountCharges
+  //       ? filters.accountCharges === 'with'
+  //         ? 'withAccountCharges'
+  //         : 'withoutAccountCharges'
+  //       : '',
 
-      // channel: 'channel',
-    };
-  };
+  //   };
+  // };
   const buildPayload = () => {
     return {
       filters: {
@@ -86,7 +85,7 @@ export default function ProfitTableView() {
         toDate: dateRange?.endDate || null,
         search,
       },
-      metric: getMetricFromFilters(),
+      // metric: getMetricFromFilters(),
       pagination: {
         pageNo: 0,
         pageSize: 25,
@@ -131,7 +130,7 @@ export default function ProfitTableView() {
               toDate: dateRange?.endDate || null,
             },
 
-            metric: getMetricFromFilters(),
+            // metric: getMetricFromFilters(),
           },
 
           email: 'bhavnaaprostore@gmail.com',
@@ -154,7 +153,7 @@ export default function ProfitTableView() {
               toDate: dateRange?.endDate || null,
             },
 
-            metric: getMetricFromFilters(),
+            // metric: getMetricFromFilters(),
           },
 
           email: 'bhavnaaprostore@gmail.com',
@@ -169,7 +168,7 @@ export default function ProfitTableView() {
     return () => {
       window.removeEventListener('headerAction', handleHeaderAction);
     };
-  }, [dispatch, dateRange, globalChannel, filters]);
+  }, [dispatch, dateRange, globalChannel]);
 
   // console.log(data);
   const PageRoutes = [
@@ -733,15 +732,6 @@ export default function ProfitTableView() {
     //   ),
     // },
     {
-      title: (
-        <button
-          type="button"
-          onClick={() => setOpenSettings(true)}
-          className="flex justify-center items-center w-full cursor-pointer text-black"
-        >
-          <SettingOutlined />
-        </button>
-      ),
       key: 'action',
       fixed: 'right',
       width: 60,
@@ -864,27 +854,27 @@ export default function ProfitTableView() {
   //   }));
   // };
 
-  const handleApply = () => {
-    const payload = buildPayload();
-    dispatch(getProfitData(payload));
-    setShowFilters(false);
-  };
+  // const handleApply = () => {
+  //   const payload = buildPayload();
+  //   dispatch(getProfitData(payload));
+  //   setShowFilters(false);
+  // };
 
-  const handleClear = () => {
-    setFilters({
-      channel: '',
-      sku: '',
-      productId: '',
-      parentId: '',
-      mkt: '',
+  // const handleClear = () => {
+  //   setFilters({
+  //     channel: '',
+  //     sku: '',
+  //     productId: '',
+  //     parentId: '',
+  //     mkt: '',
 
-      ads: 'without',
-      gst: 'without',
-      estimate: 'with',
-      expenses: 'with',
-      accountCharges: 'with',
-    });
-  };
+  //     ads: 'without',
+  //     gst: 'without',
+  //     estimate: 'with',
+  //     expenses: 'with',
+  //     accountCharges: 'with',
+  //   });
+  // };
   return (
     <>
       <PageHeader
@@ -894,14 +884,14 @@ export default function ProfitTableView() {
       />
       <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-8 xl:px-[15px] pb-[30px] bg-transparent">
         <Card bordered={false} className="sales-table-wrapper">
-          <ProfitFilterBar
+          {/* <ProfitFilterBar
             filters={filters}
             setFilters={setFilters}
             handleApply={handleApply}
             handleClear={handleClear}
             showFilters={showFilters}
             setShowFilters={setShowFilters}
-          />
+          /> */}
           <Table
             bordered
             columns={filteredColumns}
@@ -974,23 +964,7 @@ export default function ProfitTableView() {
                         value ?? ''
                       )} */}
                       {col.key === 'action' ? (
-                        <div className="flex gap-2 justify-end">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setDetailModal({
-                                open: true,
-                                record: totals,
-                                type: 'qty',
-                                modalLabel: 'Channel',
-                                modalValue: 'Total',
-                              })
-                            }
-                            className="w-[30px] h-[30px] border border-[#ffc0cb] rounded-[4px] bg-[#ffe4e9] flex items-center justify-center"
-                          >
-                            <BarChartOutlined style={{ fontSize: 14, color: '#ff4d6d' }} />
-                          </button>
-                        </div>
+                        <div className="flex gap-2 justify-end" />
                       ) : col.dataIndex === 'profitPercent' ? (
                         <span style={{ color: Number(value) < 0 ? 'red' : 'green' }}>{value ?? ''}%</span>
                       ) : (

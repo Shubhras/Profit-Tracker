@@ -34,6 +34,14 @@ function AdProducts() {
       adGroupName: item.ad_group_name,
       countryCode: item.country_code,
       currencyCode: item.currency_code,
+      impressions: item.metrics?.impressions,
+      clicks: item.metrics?.clicks,
+      cost: item.metrics?.cost,
+      sales: item.metrics?.sales,
+      orders: item.metrics?.orders,
+      units: item.metrics?.units,
+      acos: item.metrics?.acos,
+      roas: item.metrics?.roas,
     })) || [];
 
   const columns = [
@@ -139,6 +147,69 @@ function AdProducts() {
       title: 'Currency Code',
       dataIndex: 'currencyCode',
       align: 'center',
+    },
+    {
+      title: 'Impressions',
+      dataIndex: 'impressions',
+      align: 'center',
+      render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
+    },
+
+    {
+      title: 'Clicks',
+      dataIndex: 'clicks',
+      align: 'center',
+      render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
+    },
+
+    {
+      title: 'Cost',
+      dataIndex: 'cost',
+      align: 'center',
+      render: (v) => <span className="font-medium text-[#dc2626]">₹{v ?? 0}</span>,
+    },
+
+    {
+      title: 'Sales',
+      dataIndex: 'sales',
+      align: 'center',
+      render: (v) => <span className="font-medium text-[#16a34a]">₹{v ?? 0}</span>,
+    },
+
+    {
+      title: 'Orders',
+      dataIndex: 'orders',
+      align: 'center',
+      render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
+    },
+
+    {
+      title: 'Units',
+      dataIndex: 'units',
+      align: 'center',
+      render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
+    },
+
+    {
+      title: 'ACOS',
+      dataIndex: 'acos',
+      align: 'center',
+      render: (v) => (
+        <Tag className="!px-3 !py-[3px] !rounded-full" color={v > 100 ? 'error' : 'processing'}>
+          {v ? `${v.toFixed(2)}%` : '-'}
+        </Tag>
+      ),
+    },
+
+    {
+      title: 'ROAS',
+      dataIndex: 'roas',
+      align: 'center',
+      render: (v) => (
+        <Tag className="!px-3 !py-[3px] !rounded-full" color={v >= 1 ? 'success' : 'warning'}>
+          {v ? v.toFixed(2) : '-'}
+        </Tag>
+      ),
     },
   ];
 

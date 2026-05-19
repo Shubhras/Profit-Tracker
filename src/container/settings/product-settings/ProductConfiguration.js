@@ -17,42 +17,42 @@ export default function ProductConfiguration() {
   const [uploadModal, setUploadModal] = useState(false);
 
   const dispatch = useDispatch();
-  const getPayloadByTab = (tab) => {
-    switch (tab) {
-      case 'product':
-        return {
-          type: 'inventorysettings',
-          method: 'get',
-        };
+  // const getPayloadByTab = (tab) => {
+  //   switch (tab) {
+  //     case 'product':
+  //       return {
+  //         type: 'inventorysettings',
+  //         method: 'get',
+  //       };
 
-      case 'inventory':
-        return {
-          type: 'inventorysettigstable',
-          method: 'get',
-          filters: {},
-          pagination: {
-            pageNo: 0,
-            pageSize: 25,
-          },
-        };
+  //     case 'inventory':
+  //       return {
+  //         type: 'inventorysettigstable',
+  //         method: 'get',
+  //         filters: {},
+  //         pagination: {
+  //           pageNo: 0,
+  //           pageSize: 25,
+  //         },
+  //       };
 
-      default:
-        return {};
-    }
-  };
+  //     default:
+  //       return {};
+  //   }
+  // };
   useEffect(() => {
     setLoading(true);
 
-    const payload = getPayloadByTab(activeTab);
-
-    dispatch(getProductConfiguration(payload));
+    if (activeTab === 'product') {
+      dispatch(getProductConfiguration(1, 10));
+    }
 
     const timer = setTimeout(() => {
       setLoading(false);
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [activeTab]);
+  }, [activeTab, dispatch]);
 
   useEffect(() => {
     const handler = (e) => {
