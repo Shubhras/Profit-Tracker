@@ -1393,14 +1393,19 @@ def sync_searchterms():
 
 def process_reports():
 
-    reports = AdsReportLog.objects.filter(
+    # reports = AdsReportLog.objects.filter(
 
-        status__in=[
-            "PENDING",
-            "PROCESSING",
-            "IN_PROGRESS",
-            "QUEUED"
-        ]
+    #     status__in=[
+    #         "PENDING",
+    #         "PROCESSING",
+    #         "IN_PROGRESS",
+    #         "QUEUED"
+    #     ]
+    # )
+    reports = AdsReportLog.objects.filter(
+        status="COMPLETED"
+    ).exclude(
+        download_url__isnull=True
     )
 
     print(f"TOTAL REPORTS TO PROCESS: {reports.count()}")
@@ -1597,14 +1602,16 @@ def process_reports():
 
                 for row in rows:
 
-                    # campaign_id = row.get("campaignId")
                     campaign_id = str(row.get("campaignId", "")).strip()
 
+                    print("ROW CAMPAIGN ID:", campaign_id)
+
                     if not campaign_id:
+                        print("NO CAMPAIGN ID")
                         continue
 
                     campaign = AdsCampaign.objects.filter(
-                        campaign_id=campaign_id
+                        campaign_id=str(campaign_id).strip()
                     ).first()
 
                     if not campaign:
@@ -1615,11 +1622,12 @@ def process_reports():
 
                         continue
 
-                    search_term = row.get(
-                        "searchTerm"
-                    )
+                    search_term = row.get("searchTerm")
+
+                    print("SEARCH TERM:", search_term)
 
                     if not search_term:
+                        print("NO SEARCH TERM")
                         continue
 
                     SearchTermMetric.objects.update_or_create(
@@ -1632,45 +1640,31 @@ def process_reports():
 
                         defaults={
 
-                            "impressions":
-                            row.get("impressions", 0),
+                            "impressions": row.get("impressions", 0),
 
-                            "clicks":
-                            row.get("clicks", 0),
+                            "clicks": row.get("clicks", 0),
 
-                            "cost":
-                            row.get("cost", 0),
+                            "cost": row.get("cost", 0),
 
-                            "sales":
-                            row.get("sales14d", 0),
+                            "sales": row.get("sales14d", 0),
 
-                            "orders":
-                            row.get("purchases14d", 0),
+                            "orders": row.get("purchases14d", 0),
 
                             "acos": row.get("acosClicks14d") or 0,
+
                             "roas": row.get("roasClicks14d") or 0,
 
-                            # "acos":
-                            # row.get(
-                            #     "acosClicks14d", 0
-                            # ),
-
-                            # "roas":
-                            # row.get(
-                            #     "roasClicks14d", 0
-                            # ),
-
-                            "raw_data":
-                            row
+                            "raw_data": row
                         }
                     )
 
                     total_saved += 1
 
+                    print(f"SAVED SEARCH TERM: {search_term}")
+
                 print(
                     f"SEARCH TERM METRICS SAVED: {total_saved}"
                 )
-
             # =================================================
             # KEYWORD REPORT
             # =================================================

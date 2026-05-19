@@ -654,3 +654,126 @@ class ProductPricing(models.Model):
 
     class Meta:
         unique_together = ['user', 'asin', 'sku']    
+
+
+# models.py
+
+class AmazonCatalogDetails(models.Model):
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    asin = models.CharField(max_length=50, db_index=True)
+    parent_asin = models.CharField(max_length=50, null=True, blank=True)
+
+    marketplace_id = models.CharField(max_length=50)
+
+    # BASIC DETAILS
+    brand = models.CharField(max_length=255, null=True, blank=True)
+    item_name = models.TextField(null=True, blank=True)
+    model_name = models.CharField(max_length=255, null=True, blank=True)
+    model_number = models.CharField(max_length=255, null=True, blank=True)
+
+    image_url = models.URLField(null=True, blank=True)
+
+    manufacturer = models.CharField(max_length=255, null=True, blank=True)
+
+    color = models.CharField(max_length=255, null=True, blank=True)
+    material = models.CharField(max_length=255, null=True, blank=True)
+    size = models.CharField(max_length=255, null=True, blank=True)
+
+    item_type_name = models.CharField(max_length=255, null=True, blank=True)
+
+    # DESCRIPTION
+    bullet_points = models.JSONField(default=list, blank=True)
+    product_description = models.TextField(null=True, blank=True)
+
+    # DIMENSIONS
+    item_weight = models.FloatField(null=True, blank=True)
+    item_weight_unit = models.CharField(max_length=50, null=True, blank=True)
+
+    package_weight = models.FloatField(null=True, blank=True)
+    package_weight_unit = models.CharField(max_length=50, null=True, blank=True)
+
+    item_dimensions = models.JSONField(default=dict, blank=True)
+    package_dimensions = models.JSONField(default=dict, blank=True)
+
+    # EXTRA
+    number_of_items = models.IntegerField(null=True, blank=True)
+
+    batteries_required = models.BooleanField(null=True, blank=True)
+
+    care_instructions = models.TextField(null=True, blank=True)
+
+    special_features = models.JSONField(default=list, blank=True)
+
+    recommended_uses = models.TextField(null=True, blank=True)
+
+    # SALES RANK
+    sales_rank = models.IntegerField(null=True, blank=True)
+    sales_rank_category = models.CharField(max_length=255, null=True, blank=True)
+
+    display_group_rank = models.IntegerField(
+        null=True,
+        blank=True
+    )
+
+    display_group_rank_title = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    # COMPLETE API RESPONSE
+    raw_response = models.JSONField(default=dict, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("user", "asin", "marketplace_id")
+
+    def __str__(self):
+        return self.asin        
+    
+
+# amazon_auth/models.py
+
+class AmazonListingItem(models.Model):
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    amazon_account = models.ForeignKey(
+        AmazonAccount,
+        on_delete=models.CASCADE,
+        related_name="listing_items"
+    )
+    sku = models.CharField(max_length=255, db_index=True)
+    asin = models.CharField(max_length=50, null=True, blank=True)
+    marketplace_id = models.CharField(max_length=50, null=True, blank=True)
+    product_type = models.CharField(max_length=255, null=True, blank=True)
+    condition_type = models.CharField(max_length=100, null=True, blank=True)
+    status = models.JSONField(default=list, blank=True)
+    fnsku = models.CharField(max_length=255, null=True, blank=True)
+    item_name = models.TextField(null=True, blank=True)
+    image_url = models.URLField(null=True, blank=True)
+    created_date = models.DateTimeField(null=True, blank=True)
+    last_updated_date = models.DateTimeField(null=True, blank=True)
+    attributes = models.JSONField(default=dict, blank=True)
+    issues = models.JSONField(default=list, blank=True)
+    offers = models.JSONField(default=list, blank=True)
+    fulfillment_availability = models.JSONField(default=list, blank=True)
+    relationships = models.JSONField(default=list, blank=True)
+    product_types = models.JSONField(default=list, blank=True)
+    raw_response = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("amazon_account", "sku", "marketplace_id")
+
+    def __str__(self):
+        return f"{self.sku} - {self.asin}"
+
+
+
+        

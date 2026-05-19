@@ -168,3 +168,6 @@ class SyncProductPricingAPIView(APIView):
         )
 
         return Response(result)
+    
+
+    

@@ -407,3 +407,163 @@ class ProductPricingAdmin(admin.ModelAdmin):
     ]
 
     ordering = ['-updated_at']
+
+
+
+# admin.py
+
+from django.contrib import admin
+from .models import AmazonCatalogDetails
+
+
+@admin.register(AmazonCatalogDetails)
+class AmazonCatalogDetailsAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "asin",
+        "parent_asin",
+        "brand",
+        "marketplace_id",
+        "sales_rank",
+        "sales_rank_category",
+        "manufacturer",
+        "user",
+        "created_at",
+    )
+
+    list_filter = (
+        "marketplace_id",
+        "brand",
+        "manufacturer",
+        "batteries_required",
+        "created_at",
+    )
+
+    search_fields = (
+        "asin",
+        "parent_asin",
+        "brand",
+        "item_name",
+        "model_name",
+        "model_number",
+        "manufacturer",
+        "sales_rank_category",
+    )
+
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+       
+        "raw_response",
+    )
+
+    ordering = ("-created_at",)
+
+    list_per_page = 50
+
+    fieldsets = (
+
+        ("Basic Information", {
+            "fields": (
+                "user","asin","parent_asin","marketplace_id","brand",
+                "item_name","model_name","model_number","image_url",
+            )
+        }),
+
+        ("Manufacturer Details", {
+            "fields": (
+                "manufacturer",
+                "color",
+                "material",
+                "size",
+                "item_type_name",
+            )
+        }),
+
+        ("Description", {
+            "fields": (
+                "bullet_points",
+                "product_description",
+                "special_features",
+                "recommended_uses",
+                "care_instructions",
+            )
+        }),
+
+        ("Dimensions & Weight", {
+            "fields": (
+                "item_weight",
+                "item_weight_unit",
+                "package_weight",
+                "package_weight_unit",
+                "item_dimensions",
+                "package_dimensions",
+            )
+        }),
+
+        ("Additional Details", {
+            "fields": (
+                "number_of_items",
+                "batteries_required",
+            )
+        }),
+
+        ("Sales Rank", {
+            "fields": (
+                "sales_rank",
+                "sales_rank_category",
+            )
+        }),
+
+        ("Raw API Data", {
+            "classes": ("collapse",),
+            "fields": (
+       
+                "raw_response",
+            )
+        }),
+
+        ("Timestamps", {
+            "fields": (
+                "created_at",
+                "updated_at",
+            )
+        }),
+    )
+
+
+@admin.register(AmazonListingItem)
+class AmazonListingItemAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "id", "user","amazon_account","sku","asin",
+        "marketplace_id","product_type","condition_type",
+        "created_date","last_updated_date",
+    )
+
+    search_fields = (
+        "sku",
+        "asin",
+        "item_name",
+        "product_type",
+        "amazon_account__seller_central_id",
+        "user__username",
+    )
+
+    list_filter = (
+        "marketplace_id",
+        "product_type",
+        "condition_type",
+        "created_at",
+        "updated_at",
+    )
+
+    readonly_fields = (
+        "raw_response",
+        "created_at",
+        "updated_at",
+    )
+
+    ordering = ("-created_at",)
+
+    list_per_page = 50
