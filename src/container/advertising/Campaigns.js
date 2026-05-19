@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Button, Table, Tag, Tooltip, Popover } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Button, Table, Tag, Tooltip, Popover, Switch, Modal } from 'antd';
 import {
   FilterOutlined,
   ExportOutlined,
@@ -19,6 +19,7 @@ function Campaigns() {
     current: 1,
     pageSize: 10,
   });
+  const [tableData, setTableData] = useState([]);
   const [selectedRowKeys, setSelectedRowKeys] = React.useState([]);
 
   const [openFilter, setOpenFilter] = React.useState(false);
@@ -27,6 +28,11 @@ function Campaigns() {
     state: '',
     type: '',
   });
+  const [statusModal, setStatusModal] = useState({
+    open: false,
+    record: null,
+    newState: '',
+  });
 
   const { campaignData, loading } = useSelector((state) => state.advertising);
 
@@ -34,39 +40,84 @@ function Campaigns() {
     dispatch(getCampaigns(pagination.current, pagination.pageSize));
   }, [dispatch, pagination]);
 
-  const dataSource =
-    campaignData?.results?.map((item) => ({
-      // key: index,
-      key: item.campaign_id,
-      checkbox: item.id,
-      campaignId: item.campaign_id,
-      name: item.name,
-      state: item.state,
-      targetingType: item.targeting_type,
-      dailyBudget: item.daily_budget,
-      budgetType: item.budget_type,
-      biddingStrategy: item.bidding_strategy,
-      marketplaceBudgetAllocation: item.marketplace_budget_allocation,
-      startDate: item.start_date,
-      countryCode: item.country_code,
-      currencyCode: item.currency_code,
-      impressions: item.metrics?.impressions,
-      clicks: item.metrics?.clicks,
-      cost: item.metrics?.cost,
-      sales: item.metrics?.sales,
-      orders: item.metrics?.orders,
-      units: item.metrics?.units,
-      acos: item.metrics?.acos,
-      roas: item.metrics?.roas,
-      // createdAt: item.created_at,
-    })) || [];
+  const [campaignStatus, setCampaignStatus] = useState({});
+
+  const handleToggleStatus = (key) => {
+    setCampaignStatus((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
+  // const dataSource =
+  //   campaignData?.results?.map((item) => ({
+
+  // const dataSource =
+  //   tableData.length > 0
+  //     ? tableData
+  //     : campaignData?.results?.map((item) => ({
+  //         // key: index,
+  //         key: item.campaign_id,
+  //         checkbox: item.id,
+  //         campaignId: item.campaign_id,
+  //         name: item.name,
+  //         state: item.state,
+  //         targetingType: item.targeting_type,
+  //         dailyBudget: item.daily_budget,
+  //         budgetType: item.budget_type,
+  //         biddingStrategy: item.bidding_strategy,
+  //         marketplaceBudgetAllocation: item.marketplace_budget_allocation,
+  //         startDate: item.start_date,
+  //         countryCode: item.country_code,
+  //         currencyCode: item.currency_code,
+  //         impressions: item.metrics?.impressions,
+  //         clicks: item.metrics?.clicks,
+  //         cost: item.metrics?.cost,
+  //         sales: item.metrics?.sales,
+  //         orders: item.metrics?.orders,
+  //         units: item.metrics?.units,
+  //         acos: item.metrics?.acos,
+  //         roas: item.metrics?.roas,
+  //         // createdAt: item.created_at,
+  //       })) || [];
+
+  useEffect(() => {
+    if (campaignData?.results) {
+      setTableData(
+        campaignData.results.map((item) => ({
+          key: item.campaign_id,
+          checkbox: item.id,
+          campaignId: item.campaign_id,
+          name: item.name,
+          state: item.state,
+          targetingType: item.targeting_type,
+          dailyBudget: item.daily_budget,
+          budgetType: item.budget_type,
+          biddingStrategy: item.bidding_strategy,
+          marketplaceBudgetAllocation: item.marketplace_budget_allocation,
+          startDate: item.start_date,
+          countryCode: item.country_code,
+          currencyCode: item.currency_code,
+          impressions: item.metrics?.impressions,
+          clicks: item.metrics?.clicks,
+          cost: item.metrics?.cost,
+          sales: item.metrics?.sales,
+          orders: item.metrics?.orders,
+          units: item.metrics?.units,
+          acos: item.metrics?.acos,
+          roas: item.metrics?.roas,
+        })),
+      );
+    }
+  }, [campaignData]);
+  const dataSource = tableData;
 
   const filterContent = (
     <div className="w-[320px]">
       {/* Header */}
-      <div className="flex items-center justify-between pb-1 border-b border-[#eef2f7]">
+      <div className="flex items-center justify-between border-b border-[#eef2f7]">
         <div>
-          <h3 className="text-[18px] font-semibold text-[#111827] mb-1">Filters</h3>
+          <h3 className="text-[20px] font-semibold text-[#111827] mb-0">Filters</h3>
 
           <p className="text-[13px] text-[#6b7280] mb-1">Refine campaign performance</p>
         </div>
@@ -77,7 +128,7 @@ function Campaigns() {
       </div>
 
       {/* BODY */}
-      <div className="pt-5 space-y-6">
+      <div className="pt-5 space-y-5">
         {/* STATE */}
         <div>
           <p className="text-[14px] font-semibold text-[#374151] mb-2">Campaign State</p>
@@ -91,8 +142,8 @@ function Campaigns() {
 
               return (
                 <button
-                  key={item.value}
                   type="button"
+                  key={item.value}
                   onClick={() =>
                     setFilters((prev) => ({
                       ...prev,
@@ -220,6 +271,27 @@ function Campaigns() {
     },
 
     {
+      title: 'Active',
+      dataIndex: 'active',
+      align: 'center',
+      width: 110,
+
+      render: (_, record) => {
+        const isActive = campaignStatus[record.key] ?? true;
+
+        return (
+          <Switch
+            checked={isActive}
+            onChange={() => handleToggleStatus(record.key)}
+            style={{
+              transform: 'scale(1.25)', // size increase
+            }}
+          />
+        );
+      },
+    },
+
+    {
       title: 'Campaign ID',
       dataIndex: 'campaignId',
       align: 'center',
@@ -243,12 +315,37 @@ function Campaigns() {
       title: 'State',
       dataIndex: 'state',
       align: 'center',
-      render: (v) => (
-        <Tag color={v === 'ENABLED' ? 'success' : 'error'} className="!px-3 !py-[3px] !rounded-full">
-          {v}
-        </Tag>
-      ),
+      width: 140,
+
+      render: (value, record) => {
+        const isEnabled = record.state === 'ENABLED';
+
+        return (
+          <button
+            type="button"
+            onClick={() => {
+              setStatusModal({
+                open: true,
+                record,
+                newState: isEnabled ? 'PAUSED' : 'ENABLED',
+              });
+            }}
+            className={`
+        px-4 h-[31px] rounded-full text-[12px] font-semibold border transition-all duration-200
+        ${isEnabled ? 'bg-[#f0fdf4] border-[#bbf7d0] text-[#16a34a]' : 'bg-[#fef2f2] border-[#fecaca] text-[#dc2626]'}
+      `}
+          >
+            {isEnabled ? 'Enabled' : 'Paused'}
+          </button>
+        );
+      },
     },
+
+    // render: (v) => (
+    //   <Tag color={v === 'ENABLED' ? 'success' : 'error'} className="!px-3 !py-[3px] !rounded-full">
+    //     {v}
+    //   </Tag>
+    // ),
 
     {
       title: 'Targeting Type',
@@ -424,21 +521,10 @@ function Campaigns() {
                 <input
                   type="text"
                   placeholder="Search campaigns..."
-                  className="
-              w-full h-[42px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none
-            "
+                  className="w-full h-[42px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none"
                 />
 
-                <SearchOutlined
-                  className="
-              absolute
-              left-4
-              top-1/2
-              -translate-y-1/2
-              text-[#9ca3af]
-              text-[15px]
-            "
-                />
+                <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
               </div>
 
               <div className="flex items-center gap-3">
@@ -449,24 +535,13 @@ function Campaigns() {
                   onOpenChange={setOpenFilter}
                   placement="bottomRight"
                   overlayInnerStyle={{
-                    padding: '15px',
+                    padding: '8px',
                     borderRadius: '22px',
                   }}
                 >
                   <Button
                     icon={<FilterOutlined />}
-                    className="
-      !h-[40px]
-      !rounded-xl
-      !border-[#dbe1e8]
-      !text-[#374151]
-      !font-medium
-      hover:!border-[#2563eb]
-      hover:!text-[#2563eb]
-      !flex
-      !items-center
-      !justify-center
-    "
+                    className="!h-[40px] !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium hover:!border-[#2563eb] hover:!text-[#2563eb] !flex !items-center !justify-center"
                   >
                     Filters
                   </Button>
@@ -508,6 +583,67 @@ function Campaigns() {
           />
         </div>
       </div>
+      <Modal
+        open={statusModal.open}
+        footer={null}
+        centered
+        onCancel={() =>
+          setStatusModal({
+            open: false,
+            record: null,
+            newState: '',
+          })
+        }
+      >
+        <div className="py-3">
+          <h2 className="text-[20px] font-semibold text-[#111827] mb-2">Confirm Status Change</h2>
+
+          <p className="text-[#6b7280] text-[14px] leading-6">
+            Are you sure you want to{' '}
+            <span className="font-semibold text-[#111827]">
+              {statusModal.newState === 'ENABLED' ? 'enable' : 'pause'}
+            </span>{' '}
+            this campaign?
+          </p>
+
+          <div className="flex justify-end gap-3 mt-6">
+            <Button
+              onClick={() =>
+                setStatusModal({
+                  open: false,
+                  record: null,
+                  newState: '',
+                })
+              }
+              className="!rounded-xl !h-[40px]"
+            >
+              Cancel
+            </Button>
+
+            <Button
+              type="primary"
+              className="!rounded-xl !h-[40px] !bg-[#2563eb]"
+              onClick={() => {
+                setTableData((prev) =>
+                  prev.map((item) =>
+                    item.key === statusModal.record.key ? { ...item, state: statusModal.newState } : item,
+                  ),
+                );
+
+                console.log('Updated:', statusModal.record, statusModal.newState);
+
+                setStatusModal({
+                  open: false,
+                  record: null,
+                  newState: '',
+                });
+              }}
+            >
+              Yes, Confirm
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }
