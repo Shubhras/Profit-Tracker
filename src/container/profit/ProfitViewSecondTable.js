@@ -1000,6 +1000,7 @@ export default function ProfitViewSecondTable() {
                       // grossprofit: 'grossprofit',
                       profit: 'profit',
                       profitPercent: 'grossprofitper',
+                      mp_gst: 'mp_gst',
 
                       grossQty: 'grossqty',
                       netmrp: 'netmrp',

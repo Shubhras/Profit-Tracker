@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { Table, Tag, Button, Tooltip, Popover, Checkbox, Modal, Select, DatePicker } from 'antd';
-import { SettingOutlined, EditOutlined } from '@ant-design/icons';
+import { useSelector } from 'react-redux';
+import { Table, Tag, Button, Tooltip, Modal, Select, DatePicker } from 'antd';
+import { EditOutlined } from '@ant-design/icons';
 import { PageHeader } from '../../../../components/page-headers/page-headers';
 import amazon from '../../../../assets/icons/amazon.svg';
-import flipkart from '../../../../assets/icons/flipkart.svg';
+// import flipkart from '../../../../assets/icons/flipkart.svg';
 
 export default function ProductConfigTab() {
+  const { productconfigData, productconfigLoading } = useSelector((state) => state.settings);
+  console.log('PRODUCT CONFIG', productconfigData);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFieldModalOpen, setIsFieldModalOpen] = useState(false);
   // const PageRoutes = [
@@ -22,60 +25,26 @@ export default function ProductConfigTab() {
   //     breadcrumbName: 'Product Configuration',
   //   },
   // ];
-  const columnSettingsContent = (
-    <div className="w-[650px]">
-      {/* Title */}
-      <div className="text-center font-semibold py-2 border-b">Customize Your Columns</div>
 
-      {/* Select All Row */}
-      <div className="flex items-center gap-2 bg-gray-100 px-3 py-2 border-b">
-        <Checkbox>Select All</Checkbox>
-      </div>
-
-      {/* Checkbox Grid */}
-      <div className="grid grid-cols-3 gap-3 p-3">
-        <Checkbox defaultChecked>Channel</Checkbox>
-        <Checkbox>Account</Checkbox>
-        <Checkbox defaultChecked>Product Id</Checkbox>
-
-        <Checkbox defaultChecked>SKU</Checkbox>
-        <Checkbox defaultChecked>Status</Checkbox>
-        <Checkbox defaultChecked>Name</Checkbox>
-
-        <Checkbox>Parent ID</Checkbox>
-        <Checkbox defaultChecked>MRP</Checkbox>
-        <Checkbox defaultChecked>Std Cost</Checkbox>
-
-        <Checkbox defaultChecked>Std Cost Tax %</Checkbox>
-        <Checkbox>Category Ids</Checkbox>
-        <Checkbox defaultChecked>Inv Master</Checkbox>
-
-        <Checkbox>Storage Master</Checkbox>
-        <Checkbox>Length(cm)</Checkbox>
-        <Checkbox>Breadth(cm)</Checkbox>
-
-        <Checkbox>Weight(kg)</Checkbox>
-        <Checkbox>Height(cm)</Checkbox>
-      </div>
-    </div>
-  );
   const columns = [
     {
-      title: (
-        <Popover content={columnSettingsContent} trigger="click" placement="bottomLeft">
-          <SettingOutlined className="cursor-pointer" />
-        </Popover>
-      ),
+      title: '',
       dataIndex: 'icon',
-      width: 70,
-      render: (v) => <img src={v} alt="" className="w-6 h-6" />,
+      width: 60,
+      render: (v) => <img src={v} alt="channel" className="w-6 h-6 object-contain mx-auto" />,
     },
     {
       title: 'Channel',
       dataIndex: 'channel',
     },
     {
-      title: 'Product Id',
+      title: 'Image',
+      dataIndex: 'image',
+      width: 90,
+      render: (img) => <img src={img} alt="product" className="w-12 h-12 object-cover rounded-md" />,
+    },
+    {
+      title: 'ASIN',
       dataIndex: 'productId',
     },
     {
@@ -85,7 +54,7 @@ export default function ProductConfigTab() {
     {
       title: 'Status',
       dataIndex: 'status',
-      render: () => <Tag color="green">ACTIVE</Tag>,
+      render: (status) => <Tag color={status === 'ACTIVE' ? 'green' : 'red'}>{status || '-'}</Tag>,
     },
     {
       title: 'Name',
@@ -93,58 +62,108 @@ export default function ProductConfigTab() {
       sorter: (a, b) => a.name - b.name,
       render: (text) => (
         <Tooltip title={text}>
-          <span className="truncate block max-w-[250px]">{text}</span>
+          <span className="truncate cursor-pointer block max-w-[250px]">{text}</span>
         </Tooltip>
       ),
     },
     {
-      title: 'MRP',
-      dataIndex: 'mrp',
-      sorter: (a, b) => a.mrp - b.mrp,
+      title: 'Product Cost',
+      dataIndex: 'productcost',
     },
     {
-      title: 'Std Cost',
-      dataIndex: 'cost',
-      sorter: (a, b) => a.cost - b.cost,
+      title: 'GST Rate%',
+      dataIndex: 'gstrate',
     },
     {
-      title: 'Std Cost Tax %',
-      dataIndex: 'tax',
-      sorter: (a, b) => a.tax - b.tax,
+      title: 'TCS',
+      dataIndex: 'tcs',
     },
+
     {
-      title: 'Inv Master',
-      dataIndex: 'inv',
-      sorter: (a, b) => a.inv - b.inv,
+      title: 'Item Weight',
+      dataIndex: 'itemWeight',
+    },
+
+    {
+      title: 'Length',
+      dataIndex: 'length',
+    },
+
+    {
+      title: 'Width',
+      dataIndex: 'width',
+    },
+
+    {
+      title: 'Height',
+      dataIndex: 'height',
+    },
+
+    {
+      title: 'Pkg Length',
+      dataIndex: 'pkgLength',
+    },
+
+    {
+      title: 'Pkg Width',
+      dataIndex: 'pkgWidth',
+    },
+
+    {
+      title: 'Pkg Height',
+      dataIndex: 'pkgHeight',
     },
   ];
 
-  const data = [
-    {
-      key: 1,
+  const data =
+    productconfigData?.data?.map((item) => ({
+      key: item.id,
+
       icon: amazon,
+
       channel: 'Amazon',
-      productId: 'BOCS6PXFDT',
-      sku: 'shortcami-skin-XL',
-      name: 'Fshway Basic Camisole Adjustable...',
-      mrp: 499,
-      cost: 65,
-      tax: '-',
-      inv: '-',
-    },
-    {
-      key: 2,
-      icon: flipkart,
-      channel: 'Flipkart',
-      productId: 'SPWG7DGS...',
-      sku: 'tummy slimmer belt-3XL',
-      name: 'Fshway Unisex Shapewear',
-      mrp: 699,
-      cost: 145,
-      tax: '-',
-      inv: '-',
-    },
-  ];
+
+      productId: item.asin || '-',
+
+      sku: item.sku || '-',
+
+      status: item.status?.[0] || '-',
+
+      name: item.item_name || '-',
+
+      image: item.image_url || '',
+      productcost: item.productcost || 0,
+      gstrate: item.gstrate || 0,
+      tcs: item.tcs || 0,
+
+      itemWeight: item.attributes?.item_weight?.[0]
+        ? `${item.attributes.item_weight[0].value}/${item.attributes.item_weight[0].unit}`
+        : '-',
+
+      length: item.attributes?.item_dimensions?.[0]?.length
+        ? `${item.attributes.item_dimensions[0].length.value}/${item.attributes.item_dimensions[0].length.unit}`
+        : '-',
+
+      width: item.attributes?.item_dimensions?.[0]?.width
+        ? `${item.attributes.item_dimensions[0].width.value}/${item.attributes.item_dimensions[0].width.unit}`
+        : '-',
+
+      height: item.attributes?.item_dimensions?.[0]?.height
+        ? `${item.attributes.item_dimensions[0].height.value}/${item.attributes.item_dimensions[0].height.unit}`
+        : '-',
+
+      pkgLength: item.attributes?.item_package_dimensions?.[0]?.length
+        ? `${item.attributes.item_package_dimensions[0].length.value}/${item.attributes.item_package_dimensions[0].length.unit}`
+        : '-',
+
+      pkgWidth: item.attributes?.item_package_dimensions?.[0]?.width
+        ? `${item.attributes.item_package_dimensions[0].width.value}/${item.attributes.item_package_dimensions[0].width.unit}`
+        : '-',
+
+      pkgHeight: item.attributes?.item_package_dimensions?.[0]?.height
+        ? `${item.attributes.item_package_dimensions[0].height.value}/${item.attributes.item_package_dimensions[0].height.unit}`
+        : '-',
+    })) || [];
   return (
     <>
       <PageHeader
@@ -193,12 +212,17 @@ export default function ProductConfigTab() {
         <Table
           columns={columns}
           dataSource={data}
-          pagination={false}
+          loading={productconfigLoading}
           showSorterTooltip={false}
           size="small"
           bordered
           scroll={{ x: 'max-content' }}
           className="bg-white rounded-lg shadow-sm"
+          pagination={{
+            total: productconfigData?.totalCount || 0,
+            current: productconfigData?.pageNo || 1,
+            pageSize: productconfigData?.pageSize || 10,
+          }}
         />
       </main>
       <Modal

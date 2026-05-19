@@ -32,7 +32,9 @@ import AmazonAdsReducer from './amazonAds/reducers';
 import dashboardReducer from './dashboard/reducers';
 import reconcilePaymentReducer from './reconcilePayment/reducers';
 import AdvertisingReducer from './advertising/reducer';
+import organicPerformanceReducer from './organicPerformance/reducers';
 import settingsReducer from './Settings/reducers';
+// import OrganicPerformRoutes from '../routes/admin/organicPerformance';
 
 const rootReducers = combineReducers({
   themeUsers: themeUsersReducer,
@@ -76,6 +78,7 @@ const rootReducers = combineReducers({
   dashboard: dashboardReducer,
   reconcilePayment: reconcilePaymentReducer,
   advertising: AdvertisingReducer,
+  OrganicPerformance: organicPerformanceReducer,
   settings: settingsReducer,
 });
 

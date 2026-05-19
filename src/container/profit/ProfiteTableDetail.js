@@ -661,18 +661,7 @@ export default function ProfitDetailsView() {
               <input
                 type="text"
                 placeholder="Search..."
-                className="
-        w-full
-        h-[42px]
-        rounded-xl
-        border border-[#e5e7eb]
-        bg-white
-        pl-4
-        pr-10
-        text-[13px]
-        outline-none
-        shadow-sm
-      "
+                className="w-full h-[42px] rounded-xl border border-[#e5e7eb] bg-white pl-4 pr-10 text-[13px] outline-none shadow-sm"
               />
 
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af]">
