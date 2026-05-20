@@ -82,7 +82,10 @@ urlpatterns = [
 
     path("catalog-list-details/",AmazonCatalogDetailsAPIView.as_view(),name="catalog-details"),
 
-    path("amazon-listing-items/",AmazonListingItemsView.as_view(),name="amazon-listing-items"
-    ),
+    path("amazon-listing-items/",AmazonListingItemsView.as_view(),name="amazon-listing-items"),
+
+    path("export-amazon-listing-excel/",export_amazon_listing_excel,name="export_amazon_listing_excel"),
+
+    path("upload-amazon-listing-excel/",upload_amazon_listing_excel,name="upload_amazon_listing_excel",),
  
 ]
