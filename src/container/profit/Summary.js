@@ -1,6 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Row, Col, Card, Statistic, Tag, Select, Divider, Checkbox, Input, Button, Spin } from 'antd';
-import { CheckOutlined, CloseOutlined, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
+import React, { useEffect, useCallback } from 'react';
+import { Row, Col, Spin, Select } from 'antd';
+import {
+  ShoppingCartOutlined,
+  RiseOutlined,
+  FileDoneOutlined,
+  FileExclamationOutlined,
+  NotificationOutlined,
+  FileTextOutlined,
+  InboxOutlined,
+  ReloadOutlined,
+  CarOutlined,
+  BarChartOutlined,
+} from '@ant-design/icons';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -14,30 +25,13 @@ export default function Summary() {
   // const path = '/admin';
   const navigate = useNavigate();
   // const [viewType, setViewType] = useState('percentage');
-  const [viewTypes, setViewTypes] = useState({
-    'Quantity Sold': 'percentage',
-    Return: 'percentage',
-    Shipping: 'percentage',
-    Profit: 'percentage',
-  });
+  // const [viewTypes, setViewTypes] = useState({
+  //   'Quantity Sold': 'percentage',
+  //   Return: 'percentage',
+  //   Shipping: 'percentage',
+  //   Profit: 'percentage',
+  // });
   const { dashboardData, dateRange, channel: globalChannel, search, loading } = useSelector((state) => state.dashboard);
-  const [filters, setFilters] = useState({
-    withAds: true,
-    withoutAds: false,
-    withGST: true,
-    withoutGST: false,
-    withEstimate: true,
-    withoutEstimate: false,
-    withExpenses: true,
-    withoutExpenses: false,
-
-    sku: '',
-    productId: '',
-    parentId: '',
-    mktCategory: '',
-    invMasterSku: '',
-  });
-  const [appliedFilters, setAppliedFilters] = useState(filters);
   // const [amazonParams, setAmazonParams] = useState({
   //   callbackUri: '',
   //   state: '',
@@ -45,16 +39,16 @@ export default function Summary() {
   // });
   const location = useLocation();
   const dispatch = useDispatch();
-  const [showFilters, setShowFilters] = useState(false);
-  const gstLabel = appliedFilters.withGST ? 'GST Included' : 'GST Excluded';
-  const buildMetric = (filtersData) => {
-    return {
-      ads: filtersData.withAds ? 'withAds' : 'withoutAds',
-      gst: filtersData.withGST ? 'withGst' : 'withoutGst',
-      expense: filtersData.withExpenses ? 'withExpense' : 'withoutExpense',
-      estimate: filtersData.withEstimate ? 'withEstimate' : 'withoutEstimate',
-    };
-  };
+  // const [showFilters, setShowFilters] = useState(false);
+  // const gstLabel = appliedFilters.withGST ? 'GST Included' : 'GST Excluded';
+  // const buildMetric = (filtersData) => {
+  //   return {
+  //     ads: filtersData.withAds ? 'withAds' : 'withoutAds',
+  //     gst: filtersData.withGST ? 'withGst' : 'withoutGst',
+  //     expense: filtersData.withExpenses ? 'withExpense' : 'withoutExpense',
+  //     estimate: filtersData.withEstimate ? 'withEstimate' : 'withoutEstimate',
+  //   };
+  // };
 
   const payload = {
     filters: {
@@ -65,12 +59,12 @@ export default function Summary() {
       toDate: dateRange?.endDate || null,
       search,
     },
-    metric: buildMetric(appliedFilters),
+    // metric: buildMetric(appliedFilters),
   };
 
   useEffect(() => {
     dispatch(getDashboard(payload));
-  }, [dispatch, dateRange, appliedFilters, globalChannel]);
+  }, [dispatch, dateRange, globalChannel]);
 
   const loginAmazon = useCallback(
     (params) => {
@@ -119,12 +113,12 @@ export default function Summary() {
     { path: 'index', breadcrumbName: 'Profit' },
     { path: '', breadcrumbName: 'Summary' },
   ];
-  const handleViewTypeChange = (title, value) => {
-    setViewTypes((prev) => ({
-      ...prev,
-      [title]: value,
-    }));
-  };
+  // const handleViewTypeChange = (title, value) => {
+  //   setViewTypes((prev) => ({
+  //     ...prev,
+  //     [title]: value,
+  //   }));
+  // };
 
   /* ---------- RIGHT STACKED CHART ---------- */
   // const stackedData = [
@@ -151,57 +145,40 @@ export default function Summary() {
       profit: item.estimated_profit || 0,
     })) || [];
 
-  const bottomChartData = dashboardData?.geography?.length
-    ? dashboardData.geography
-        .map((item) => ({
-          name: item.id || 'Unknown',
-          value: Number(item.revenue) || 0,
-          qty: Number(item.grossqty) || 0,
-        }))
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 4)
-    : [];
-  const selectedFilters = [
-    filters.withAds && { label: 'With Ads', color: 'green' },
-    filters.withoutAds && { label: 'Without Ads', color: 'red' },
-    filters.withGST && { label: 'With GST', color: 'green' },
-    filters.withoutGST && { label: 'Without GST', color: 'red' },
-    filters.withEstimate && { label: 'With Estimate', color: 'green' },
-    filters.withoutEstimate && { label: 'Without Estimate', color: 'red' },
-    filters.withExpenses && { label: 'With Expenses', color: 'green' },
-    filters.withoutExpenses && { label: 'Without Expenses', color: 'red' },
-  ].filter(Boolean);
-  const handleApply = () => {
-    // setAppliedFilters(filters);
-    dispatch(getDashboard(payload)); //
-    setShowFilters(false);
-  };
-  const handleClear = () => {
-    const resetFilters = {
-      withAds: false,
-      withoutAds: true,
-      withGST: false,
-      withoutGST: true,
-      withEstimate: true,
-      withoutEstimate: false,
-      withExpenses: true,
-      withoutExpenses: false,
-      sku: '',
-      productId: '',
-      parentId: '',
-      mktCategory: '',
-      invMasterSku: '',
-    };
-
-    setFilters(resetFilters);
-    setAppliedFilters(resetFilters);
-  };
-
+  // const bottomChartData = dashboardData?.geography?.length
+  //   ? dashboardData.geography
+  //       .map((item) => ({
+  //         name: item.id || 'Unknown',
+  //         value: Number(item.revenue) || 0,
+  //         qty: Number(item.grossqty) || 0,
+  //       }))
+  //       .sort((a, b) => b.value - a.value)
+  //       .slice(0, 4)
+  //   : [];
   return (
     <>
       <PageHeader
         routes={PageRoutes}
-        title="Profit"
+        title={
+          <div className="flex items-start gap-3">
+            <div
+              className="w-[42px] h-[42px] rounded-2xl flex items-center justify-center shadow-sm mt-1"
+              style={{
+                background: 'linear-gradient(135deg, rgb(16, 185, 129) 0%, rgb(15, 118, 110) 100%)',
+              }}
+            >
+              <BarChartOutlined className="text-white text-[20px]" />
+            </div>
+
+            <div>
+              <h1 className="text-[26px] font-bold text-[#111827] leading-none mb-0">Profit Summary</h1>
+
+              <p className="text-[14px] text-gray-500 font-medium mb-0">
+                Track sales, profit, returns & performance insights
+              </p>
+            </div>
+          </div>
+        }
         className="flex justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 sm:pb-[30px] bg-transparent sm:flex-col"
       />
 
@@ -252,11 +229,10 @@ export default function Summary() {
               </Button>
             </Col> */}
 
-        <Card className="mb-4 border rounded-xl px-0 py-0 bg-[#f9fafb]">
+        {/* <Card className="mb-4 border rounded-xl px-0 py-0 bg-[#f9fafb]">
           <button
             type="button"
             className="flex items-center justify-between gap-4 mb-0 text-sm w-full"
-            // onClick={() => setShowFilters((prev) => !prev)}
           >
             <span className="text-gray-500">{selectedFilters.length} Filter Selected</span>
 
@@ -266,16 +242,13 @@ export default function Summary() {
                 <span>{item.label}</span>
               </div>
             ))}
-            {/* RIGHT BUTTONS */}
             <div className="ml-auto flex items-center gap-4">
               <Button
-                // type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleClear();
                 }}
                 className="flex items-center gap-1"
-                // className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 bg-white hover:bg-gray-100 transition"
               >
                 <span>Clear</span>
                 <CloseOutlined className="text-gray-500" />
@@ -288,7 +261,6 @@ export default function Summary() {
                   handleApply();
                 }}
                 className="flex items-center gap-1"
-                // className="flex items-center gap-2 px-4 py-1.5 text-sm bg-green-600 text-white hover:bg-blue-700 transition"
               >
                 <span>Apply</span>
                 <CheckOutlined />
@@ -354,7 +326,6 @@ export default function Summary() {
 
               <div className="flex items-center justify-between text-[11px] leading-none">
                 {' '}
-                {/* ADS */}
                 <div className="flex gap-1 items-center text-xs">
                   <Checkbox
                     checked={filters.withAds}
@@ -442,10 +413,10 @@ export default function Summary() {
               </div>
             </>
           )}
-        </Card>
-        <Spin spinning={loading} size="large">
+        </Card> */}
+
+        {/* <Spin spinning={loading} size="large">
           <Row gutter={[16, 16]}>
-            {/* SALES */}
             <Col xs={24} lg={9}>
               <Card
                 onClick={() =>
@@ -453,7 +424,6 @@ export default function Summary() {
                     state: { channels: globalChannel, type: 'all' },
                   })
                 }
-                // onClick={() => navigate(`/admin/profit/profittabledetails/${globalChannel?.[0] || 'all'}`)}
                 hoverable
                 style={{ cursor: 'pointer' }}
               >
@@ -554,12 +524,9 @@ export default function Summary() {
               </Card>
             </Col>
 
-            {/* PROFIT */}
             <Col xs={24} lg={6}>
               <Card
-              // onClick={() => navigate(`/admin/profit/profitTableView/details/${globalChannel?.[0] || 'all'}`)}
-              // hoverable
-              // style={{ cursor: 'pointer' }}
+        
               >
                 <Statistic title="Profit" value={dashboardData?.header_metrics?.profit || 0} prefix="₹" />
                 <Tag color="gold">Margin: {dashboardData?.header_metrics?.margin || '0%'}</Tag>
@@ -603,34 +570,21 @@ export default function Summary() {
                 </Col>
               </Row>
               <Card size="small" className="mt-1 py-0">
-                {/* <div className="flex flex-col justify-between h-full"> */}
                 <div>
-                  {/* <p className="text-gray-500 text-xs mb-1">Ad Spend</p> */}
                   <Statistic
-                    // className="mt-0"
                     title="Ad Spend"
                     value={dashboardData?.header_metrics?.ad_spend || 0}
                     prefix="₹"
                   />
-                  {/* <strong className="text-lg block">₹{dashboardData?.header_metrics?.ad_spend || 0}</strong> */}
                 </div>
 
                 <Tag color="magenta" className="mt-1 w-fit">
                   TACOS: {dashboardData?.header_metrics?.tacos || '0%'}
                 </Tag>
-                {/* </div> */}
               </Card>
             </Col>
 
-            {/* AD SPEND */}
-            {/* <Col xs={24} lg={4}>
-            <Card>
-              <Statistic title="Ad Spend" value={dashboardData?.header_metrics?.ad_spend || 0} prefix="₹" />
-              <Tag color="magenta">TACOS: {dashboardData?.header_metrics?.tacos || '0%'}</Tag>
-            </Card>
-          </Col> */}
 
-            {/* STACKED BAR (RIGHT) */}
             <Col xs={24} lg={9}>
               <Card>
                 <ResponsiveContainer width="100%" height={260}>
@@ -647,10 +601,9 @@ export default function Summary() {
               </Card>
             </Col>
           </Row>
-        </Spin>
+        </Spin> */}
 
-        {/* ================= BOTTOM 4 PANELS ================= */}
-        <Row gutter={[16, 16]} className="mt-6">
+        {/* <Row gutter={[16, 16]} className="mt-6">
           {['Quantity Sold', 'Return', 'Shipping', 'Profit'].map((title) => (
             <Col xs={24} lg={6} key={title}>
               <Card
@@ -678,6 +631,402 @@ export default function Summary() {
               </Card>
             </Col>
           ))}
+        </Row> */}
+
+        <Spin spinning={loading} size="large">
+          <Row gutter={[18, 18]}>
+            {/* ================= LEFT SECTION ================= */}
+            <Col xs={24} lg={13}>
+              <Row gutter={[18, 18]}>
+                <Col xs={24} md={14}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate('/admin/profit/profitTableView/details', {
+                        state: { channels: globalChannel, type: 'all' },
+                      })
+                    }
+                    className="relative overflow-hidden rounded-[24px] bg-white p-5 text-white shadow-sm w-full text-left border-0 h-[190px]"
+                    // style={{
+                    // background: 'linear-gradient(135deg, #8e9fff 0%, #b8c0ff 50%, #d4c2ff 100%)',
+                    // 'linear-gradient(135deg, rgb(168, 162, 229) 0%, rgb(168, 162, 229) 45%, rgb(107 75 163) 100%)',
+
+                    // 'linear-gradient(135deg, rgb(48 45 114) 0%, rgb(168 162 229) 45%, rgb(173 143 225) 100%)',
+                    // }}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="w-11 h-11 rounded-2xl bg-white flex items-center justify-center shadow-md">
+                        <ShoppingCartOutlined className="text-[#4f46e5] text-[20px]" />
+                      </div>
+
+                      {/* <div className="px-3 py-1 rounded-lg bg-[#d9f99d] text-[#166534] text-[11px] font-semibold">
+                        GST Included
+                      </div> */}
+                    </div>
+
+                    <div className="mt-4">
+                      <p className="text-gray-500 text-[15px] mb-1 font-semibold">Total Sales</p>
+
+                      <h2 className="text-[28px] font-semibold tracking-tight leading-tight">
+                        ₹ {dashboardData?.header_metrics?.sales || 0}
+                      </h2>
+
+                      <div className="inline-flex items-center px-3 py-1 rounded-xl bg-[#dcfce780] backdrop-blur-sm border border-[#bbf7d0] text-[#166534] text-[11px] font-semibold">
+                        Units: {dashboardData?.breakdown_table?.net?.qty || 0}
+                      </div>
+                    </div>
+                    {/* 
+                    <div className="absolute right-[-18px] bottom-[-34px] text-[140px] font-bold text-[#8e9fff]/20 leading-none select-none">
+                      $
+                    </div> */}
+                  </button>
+                </Col>
+
+                {/* ================= PROFIT CARD ================= */}
+                <Col xs={24} md={10}>
+                  <div
+                    className="relative overflow-hidden rounded-[24px] bg-white p-5 text-white shadow-sm h-[190px]"
+                    // style={{
+                    // background:
+                    // 'linear-gradient(135deg, rgb(80 181 112) 0%, rgb(91 255 173) 100%, rgb(91 255 173) 100%)',
+                    //  'linear-gradient(135deg, #63d5c7 0%, #8be4d8 45%, #4fa38c 100%)',
+                    // 'linear-gradient(135deg, rgb(134 213 205) 0%, rgb(134 213 205) 45%, rgb(26 104 80) 100%)',
+
+                    // 'linear-gradient(135deg, rgb(37 104 97) 0%, rgb(87 197 160) 45%, rgb(107 209 177) 100%)',
+                    // }}
+                  >
+                    <div className="w-11 h-11 rounded-2xl bg-white flex items-center justify-center shadow-md">
+                      <RiseOutlined className="text-[#10b981] text-[20px]" />
+                    </div>
+
+                    <div className="mt-4">
+                      <p className="text-gray-500 text-[15px] mb-1 font-semibold">Total Profit</p>
+
+                      <h2 className="text-[28px] font-semibold leading-tight">
+                        ₹ {dashboardData?.header_metrics?.profit || 0}
+                      </h2>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className="inline-flex items-center px-3 py-1 rounded-xl bg-[#dcfce780] backdrop-blur-sm border border-[#bbf7d0] text-[#166534] text-[11px] font-semibold">
+                        Margin: {dashboardData?.header_metrics?.margin || '0%'}
+                      </div>
+
+                      <div className="inline-flex items-center px-3 py-1 rounded-xl bg-[#dcfce780] backdrop-blur-sm border border-[#bbf7d0] text-[#166534] text-[11px] font-semibold">
+                        ROI: {dashboardData?.header_metrics?.roi || '0%'}
+                      </div>
+                    </div>
+                  </div>
+                </Col>
+
+                {/* ================= SMALL CARDS ================= */}
+                <Col xs={24}>
+                  <Row gutter={[18, 18]}>
+                    {/* PROFIT IDS */}
+                    <Col xs={24} md={8}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate('/admin/profit/profitTableView/details', {
+                            state: {
+                              channels: globalChannel,
+                              type: 'all',
+                              profitType: 'profitable',
+                            },
+                          })
+                        }
+                        className="bg-white rounded-[22px] p-5 border border-[#edf0f7] shadow-sm w-full text-left"
+                        style={{
+                          background: 'linear-gradient(135deg, #f4fff8 0%, #ecfdf3 100%)',
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-11 h-11 rounded-2xl bg-[#dcfce7] flex items-center justify-center">
+                            <FileDoneOutlined className="text-[#16a34a] text-[20px]" />
+                          </div>
+
+                          <p className="text-[15px] font-semibold text-[#16a34a]">Profit IDs</p>
+                        </div>
+
+                        <h2 className="text-[28px] font-semibold mt-2 text-[#111827]">
+                          #{dashboardData?.top_orders?.profitable?.total_count || 0}
+                        </h2>
+
+                        <p className="text-[#4b5563] mt-2">
+                          {dashboardData?.top_orders?.profitable?.total_amount || 0}
+                        </p>
+                      </button>
+                    </Col>
+
+                    {/* LOSS IDS */}
+                    <Col xs={24} md={8}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate('/admin/profit/profitTableView/details', {
+                            state: {
+                              channels: globalChannel,
+                              type: 'all',
+                              profitType: 'losing',
+                            },
+                          })
+                        }
+                        className="bg-white rounded-[22px] p-5 border border-[#edf0f7] shadow-sm w-full text-left"
+                        style={{
+                          background: 'linear-gradient(135deg, #fff7f7 0%, #fff1f2 100%)',
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-11 h-11 rounded-2xl bg-[#fee2e2] flex items-center justify-center">
+                            <FileExclamationOutlined className="text-[#ef4444] text-[20px]" />
+                          </div>
+
+                          <p className="text-[15px] font-semibold text-[#ef4444]">Loss IDs</p>
+                        </div>
+
+                        <h2 className="text-[28px] font-semibold mt-2 text-[#111827]">
+                          #{dashboardData?.top_orders?.losing?.total_count || 0}
+                        </h2>
+
+                        <p className="text-[#4b5563] mt-2">{dashboardData?.top_orders?.losing?.total_amount || 0}</p>
+                      </button>
+                    </Col>
+
+                    {/* AD SPEND */}
+                    <Col xs={24} md={8}>
+                      <div
+                        className="bg-white rounded-[22px] p-5 border border-[#edf0f7] shadow-sm h-full"
+                        style={{
+                          background: 'linear-gradient(135deg, #faf7ff 0%, #f5f3ff 100%)',
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-11 h-11 rounded-2xl bg-[#ede9fe] flex items-center justify-center">
+                            <NotificationOutlined className="text-[#7c3aed] text-[20px]" />
+                          </div>
+
+                          <p className="text-[15px] font-semibold text-[#111827]">Ad Spend</p>
+                        </div>
+
+                        <h2 className="text-[28px] font-semibold mt-2 text-[#111827]">
+                          ₹ {dashboardData?.header_metrics?.ad_spend || 0}
+                        </h2>
+
+                        <div className="inline-flex mt-0 px-3 py-1 rounded-lg bg-[#fdf2f8] text-[#db2777] text-[12px]">
+                          TACOS: {dashboardData?.header_metrics?.tacos || '0%'}
+                        </div>
+                      </div>
+                    </Col>
+                  </Row>
+                </Col>
+              </Row>
+            </Col>
+
+            {/* ================= RIGHT CHART ================= */}
+            <Col xs={24} lg={11}>
+              <div className="bg-white rounded-[24px] border border-[#edf0f7] shadow-sm p-4 h-full">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-[19px] font-semibold text-[#111827]">Sales, Quantity & Profit Overview</h3>
+
+                  <Select size="small" defaultValue="daily" style={{ width: 100 }}>
+                    <Option value="daily">Daily</Option>
+                  </Select>
+                </div>
+
+                <ResponsiveContainer width="100%" height={320}>
+                  <BarChart data={stackedData}>
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+
+                    <Bar dataKey="sales" stackId="a" fill="#8e9fff" radius={[5, 5, 0, 0]} />
+
+                    {/* QUANTITY - SOFT GREEN */}
+                    <Bar dataKey="qty" stackId="a" fill="#7be0d4" radius={[5, 5, 0, 0]} />
+
+                    {/* PROFIT - DARK GREEN */}
+                    <Bar dataKey="profit" stackId="a" fill="#5aa892" radius={[5, 5, 0, 0]} />
+
+                    {/* <Bar dataKey="sales" stackId="a" fill="#fb7185" radius={[5, 5, 0, 0]} />
+
+                    <Bar dataKey="qty" stackId="a" fill="#86efac" radius={[5, 5, 0, 0]} />
+
+                    <Bar dataKey="profit" stackId="a" fill="#fdba74" radius={[5, 5, 0, 0]} /> */}
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </Col>
+          </Row>
+        </Spin>
+        <Row gutter={[18, 18]} className="mt-5">
+          {/* ================= LEFT TABLE ================= */}
+          <Col xs={24} lg={14}>
+            <div className="bg-white rounded-[22px] border border-[#edf0f7] shadow-sm p-5 h-full">
+              {/* HEADER */}
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-9 h-9 rounded-xl bg-[#ede9fe] flex items-center justify-center text-[#7c3aed]">
+                  <FileTextOutlined />
+                </div>
+
+                <h3 className="text-[20px] font-semibold text-[#111827]">Sales Details</h3>
+              </div>
+
+              {/* SINGLE TABLE */}
+              <div>
+                <div className="grid grid-cols-3 bg-[#f8fafc] rounded-xl px-4 py-3 text-[14px] font-bold text-[#374151] mb-2">
+                  <span>Item</span>
+                  <span className="text-center">Qty</span>
+                  <span className="text-right">Sales</span>
+                </div>
+
+                {[
+                  {
+                    label: 'Gross',
+                    qty: dashboardData?.breakdown_table?.gross?.qty || 0,
+                    sales: dashboardData?.breakdown_table?.gross?.amount || 0,
+                  },
+                  {
+                    label: 'Cancelled',
+                    qty: dashboardData?.breakdown_table?.cancelled?.qty || 0,
+                    sales: dashboardData?.breakdown_table?.cancelled?.amount || 0,
+                    red: true,
+                  },
+                  {
+                    label: 'Returned(RTO)',
+                    qty: dashboardData?.breakdown_table?.returned?.qty || 0,
+                    sales: dashboardData?.breakdown_table?.returned?.amount || 0,
+                    red: true,
+                  },
+                  {
+                    label: 'Cancelled(RTO)',
+                    qty: dashboardData?.breakdown_table?.cancelledrtosummaryqty?.qty || 0,
+                    sales: dashboardData?.breakdown_table?.cancelledrtosummarysales?.amount || 0,
+                  },
+                  {
+                    label: 'Returned(CReF)',
+                    qty: dashboardData?.breakdown_table?.creturnsummaryqty?.qty || 0,
+                    sales: dashboardData?.breakdown_table?.returnedcref?.amount || 0,
+                  },
+                  {
+                    label: 'Claimed',
+                    qty: dashboardData?.breakdown_table?.claim?.qty || 0,
+                    sales: dashboardData?.breakdown_table?.claim?.amount || 0,
+                  },
+                  {
+                    label: 'Standard Cost',
+                    qty: dashboardData?.breakdown_table?.claimqty?.qty || 0,
+                    sales: dashboardData?.breakdown_table?.claimsales?.amount || 0,
+                  },
+                ].map((row) => (
+                  <div key={row.label} className="grid grid-cols-3 px-4 py-3 text-[14px] border-b border-[#f1f5f9]">
+                    <span className="text-[#374151] font-semibold">{row.label}</span>
+
+                    <span className={`text-center font-medium ${row.red ? 'text-[#ef4444]' : 'text-[#111827]'}`}>
+                      {row.qty}
+                    </span>
+
+                    <span className={`text-right font-medium ${row.red ? 'text-[#ef4444]' : 'text-[#111827]'}`}>
+                      {row.sales}
+                    </span>
+                  </div>
+                ))}
+
+                {/* NET */}
+                <div className="grid grid-cols-3 px-4 py-3 mt-2 bg-[#f5f3ff] rounded-xl text-[15px] font-bold text-[#16a34a]">
+                  <span>Net</span>
+
+                  <span className="text-center">{dashboardData?.breakdown_table?.net?.qty || 0}</span>
+
+                  <span className="text-right">{dashboardData?.breakdown_table?.net?.amount || 0}</span>
+                </div>
+              </div>
+            </div>
+          </Col>
+
+          {/* ================= RIGHT 4 CHARTS ================= */}
+          <Col xs={24} lg={10}>
+            <Row gutter={[18, 18]}>
+              {[
+                {
+                  title: 'Quantity',
+                  color: '#3b82f6',
+                  value: dashboardData?.breakdown_table?.net?.qty || 0,
+                  icon: <InboxOutlined />,
+                  label: 'Total Quantity',
+                },
+                {
+                  title: 'Return',
+                  color: '#ef4444',
+                  value: dashboardData?.breakdown_table?.returned?.qty || 0,
+                  icon: <ReloadOutlined />,
+                  label: 'Total Return',
+                },
+                {
+                  title: 'Shipping',
+                  color: '#f59e0b',
+                  value: dashboardData?.header_metrics?.shipping || 0,
+                  icon: <CarOutlined />,
+                  label: 'Total Shipping',
+                },
+                {
+                  title: 'Profit',
+                  color: '#67c96d',
+                  value: dashboardData?.header_metrics?.profit || 0,
+                  icon: <BarChartOutlined />,
+                  label: 'Total Profit',
+                },
+              ].map((item) => (
+                <Col xs={24} sm={12} key={item.title}>
+                  <div className="bg-white rounded-[22px] border border-[#edf0f7] shadow-sm p-5 h-full">
+                    {/* HEADER */}
+                    <div className="flex items-center gap-3 mb-4">
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
+                        style={{
+                          background: `${item.color}15`,
+                          color: item.color,
+                        }}
+                      >
+                        {item.icon}
+                      </div>
+
+                      <h3 className="text-[15px] font-semibold text-[#111827]">{item.title}</h3>
+                    </div>
+
+                    {/* CIRCLE */}
+                    <div className="flex justify-center">
+                      <div className="relative w-[120px] h-[120px]">
+                        <div
+                          className="w-full h-full rounded-full"
+                          style={{
+                            background: `conic-gradient(${item.color} 0% 72%, #eef2f7 72% 100%)`,
+                          }}
+                        >
+                          <div className="absolute inset-[14px] bg-white rounded-full flex flex-col items-center justify-center">
+                            <h2 className="text-[15px] font-bold text-[#111827] leading-none">{item.value}</h2>
+
+                            <p className="text-[11px] text-[#6b7280] mt-2">100%</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* FOOTER */}
+                    <div className="mt-4 text-center">
+                      <div className="flex items-center justify-center gap-2 text-[12px] text-[#6b7280]">
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ background: item.color }} />
+
+                        {item.label}
+                      </div>
+
+                      <p className="text-[14px] font-semibold text-[#111827] mt-2">{item.value} (100%)</p>
+                    </div>
+                  </div>
+                </Col>
+              ))}
+            </Row>
+          </Col>
         </Row>
       </main>
     </>

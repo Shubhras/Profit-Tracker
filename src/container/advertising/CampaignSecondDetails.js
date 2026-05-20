@@ -188,27 +188,14 @@ function CampaignSecondDetails() {
   return (
     <>
       <div className="p-2">
-        <div
-          className="mt-3 mb-3 rounded-2xl
-          border border-[#e5e7eb]
-          bg-white shadow-sm overflow-hidden"
-        >
-          {/* Header */}
-          <div
-            className="flex items-center justify-between
-            border-b border-[#edf0f2]
-            px-6 py-4"
-          >
-            {/* Left */}
+        <div className="mt-3 mb-3 rounded-2xl border border-[#e5e7eb] bg-white shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between border-b border-[#edf0f2] px-6 py-4">
             <div className="flex items-center gap-4">
-              {/* Back */}
               <button
                 type="button"
                 onClick={() => navigate(-1)}
-                className="w-[42px] h-[42px]
-                rounded-xl border border-[#dbe1e8]
-                bg-white flex items-center justify-center
-                hover:bg-[#f8fafc]
+                className="w-[42px] h-[42px] rounded-xl border border-[#dbe1e8]
+                bg-white flex items-center justify-center hover:bg-[#f8fafc]
                 transition-all duration-200 shadow-sm"
               >
                 <ArrowLeftOutlined className="text-[#374151]" />
@@ -216,13 +203,7 @@ function CampaignSecondDetails() {
 
               {/* Title */}
               <div className="flex flex-col">
-                <h1
-                  className="text-[24px]
-                  font-semibold text-[#111827]
-                  leading-[30px] mb-1"
-                >
-                  Ad Products Details
-                </h1>
+                <h1 className="text-[24px] font-semibold text-[#111827] leading-[30px] mb-1">Ad Products Details</h1>
 
                 <div className="flex items-center gap-2 flex-wrap">
                   <span
@@ -243,11 +224,7 @@ function CampaignSecondDetails() {
             <div className="flex items-center gap-3">
               <Button
                 icon={<FilterOutlined />}
-                className="!h-[40px]
-                !rounded-xl !border-[#dbe1e8]
-                !text-[#374151]
-                !font-medium !flex
-                !items-center !justify-center"
+                className="!h-[40px] !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium !flex !items-center !justify-center"
               >
                 Filters
               </Button>
@@ -255,10 +232,7 @@ function CampaignSecondDetails() {
               <Button
                 type="primary"
                 icon={<ExportOutlined />}
-                className="!h-[40px]
-                !rounded-xl !bg-[#2563eb]
-                !font-medium !flex
-                !items-center !justify-center"
+                className="!h-[40px] !rounded-xl !bg-[#2563eb] !font-medium !flex !items-center !justify-center"
               >
                 Export
               </Button>

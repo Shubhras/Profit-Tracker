@@ -239,16 +239,7 @@ function AdProducts() {
                   className="w-full h-[42px] rounded-xl border bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm transition-all duration-200 focus:border-[#dbe1e8]"
                 />
 
-                <SearchOutlined
-                  className="
-              absolute
-              left-4
-              top-1/2
-              -translate-y-1/2
-              text-[#9ca3af]
-              text-[15px]
-            "
-                />
+                <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
               </div>
 
               {/* RIGHT SIDE BUTTONS */}

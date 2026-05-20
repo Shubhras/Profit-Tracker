@@ -20,13 +20,13 @@ export const HEADER_ACTIONS = {
 
   '/reconcile/return/ledger': ['export', 'sellerflex', 'inyourhand', 'resolved', 'orderDate'],
 
-  '/settings/product-setting/product-configuration': {
-    product: ['upload', 'export', 'stdcost'],
+  // '/settings/product-setting/product-configuration': {
+  //   product: ['upload', 'export', 'stdcost'],
 
-    inventory: ['upload', 'export', 'stdcost'],
+  //   inventory: ['upload', 'export', 'stdcost'],
 
-    pincode: ['upload', 'export'],
-  },
+  //   pincode: ['upload', 'export'],
+  // },
 
   // '/settings/product-setting/finance-configuration': ['export', 'upload', 'addexpense', 'recalculate', 'delete'],
   '/settings/product-setting/finance-configuration': {
