@@ -17,42 +17,53 @@ export default function ProductConfiguration() {
   const [uploadModal, setUploadModal] = useState(false);
 
   const dispatch = useDispatch();
-  const getPayloadByTab = (tab) => {
-    switch (tab) {
-      case 'product':
-        return {
-          type: 'inventorysettings',
-          method: 'get',
-        };
+  // const getPayloadByTab = (tab) => {
+  //   switch (tab) {
+  //     case 'product':
+  //       return {
+  //         type: 'inventorysettings',
+  //         method: 'get',
+  //       };
 
-      case 'inventory':
-        return {
-          type: 'inventorysettigstable',
-          method: 'get',
-          filters: {},
-          pagination: {
-            pageNo: 0,
-            pageSize: 25,
-          },
-        };
+  //     case 'inventory':
+  //       return {
+  //         type: 'inventorysettigstable',
+  //         method: 'get',
+  //         filters: {},
+  //         pagination: {
+  //           pageNo: 0,
+  //           pageSize: 25,
+  //         },
+  //       };
 
-      default:
-        return {};
-    }
-  };
+  //     default:
+  //       return {};
+  //   }
+  // };
+
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+  });
+
   useEffect(() => {
     setLoading(true);
+    if (activeTab === 'product') {
+      const payload = {
+        search: '',
+        marketplace_id: '',
+        product_type: '',
+      };
 
-    const payload = getPayloadByTab(activeTab);
-
-    dispatch(getProductConfiguration(payload));
+      dispatch(getProductConfiguration(pagination.current, pagination.pageSize, payload));
+    }
 
     const timer = setTimeout(() => {
       setLoading(false);
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [activeTab]);
+  }, [activeTab, dispatch, pagination]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -93,7 +104,7 @@ export default function ProductConfiguration() {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'product':
-        return <ProductConfigTab />;
+        return <ProductConfigTab pagination={pagination} setPagination={setPagination} />;
       case 'inventory':
         return <InventoryMastertab />;
       case 'pincode':

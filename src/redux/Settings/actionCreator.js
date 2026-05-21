@@ -36,6 +36,14 @@ const {
   adduserBegin,
   adduserSuccess,
   adduserErr,
+
+  exportproductconfigurationBegin,
+  exportproductconfigurationSuccess,
+  exportproductconfigurationErr,
+
+  uploadproductconfigurationBegin,
+  uploadproductconfigurationSuccess,
+  uploadproductconfigurationErr,
 } = actions;
 
 const mockService = async (payload) => {
@@ -71,24 +79,6 @@ export const getOverviewSettings = (payload) => {
       }
     } catch (err) {
       dispatch(overviewsettingErr(err.message));
-    }
-  };
-};
-
-export const getProductConfiguration = (payload) => {
-  return async (dispatch) => {
-    dispatch(productconfigBegin());
-
-    try {
-      const response = await mockService(payload);
-
-      if (response.data.status === 'success') {
-        dispatch(productconfigSuccess(response.data));
-      } else {
-        dispatch(productconfigErr('Something went wrong'));
-      }
-    } catch (err) {
-      dispatch(productconfigErr(err.message));
     }
   };
 };
@@ -215,6 +205,96 @@ export const addUser = (payload) => {
       }
     } catch (err) {
       dispatch(adduserErr(err.message));
+    }
+  };
+};
+
+export const getProductConfiguration = (page = 1, pageSize = 10, payload = {}) => {
+  return async (dispatch) => {
+    dispatch(productconfigBegin());
+
+    try {
+      const finalPayload = {
+        ...payload,
+        pagination: {
+          page,
+          page_size: pageSize,
+        },
+      };
+      const response = await DataService.post(`/amazon/amazon-listing-items/`, finalPayload);
+
+      if (response.data.status === true) {
+        dispatch(productconfigSuccess(response.data));
+      } else {
+        dispatch(productconfigErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(productconfigErr(err.message));
+    }
+  };
+};
+
+export const exportProductConfiguration = () => {
+  return async (dispatch) => {
+    dispatch(exportproductconfigurationBegin());
+
+    try {
+      const response = await DataService.get('/amazon/export-amazon-listing-excel/', {
+        responseType: 'blob',
+      });
+      console.log('rddddddddddd', response);
+      console.log(response.headers['content-type']);
+
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+
+      link.href = url;
+
+      link.setAttribute('download', 'product_configuration.xlsx');
+
+      document.body.appendChild(link);
+
+      link.click();
+
+      link.remove();
+
+      dispatch(exportproductconfigurationSuccess(response.data));
+    } catch (err) {
+      dispatch(exportproductconfigurationErr(err.message));
+    }
+  };
+};
+
+export const uploadProductConfiguration = (file) => {
+  return async (dispatch) => {
+    dispatch(uploadproductconfigurationBegin());
+
+    try {
+      const formData = new FormData();
+
+      formData.append('file', file);
+
+      const response = await DataService.post('/amazon/upload-amazon-listing-excel/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.data?.status === true) {
+        dispatch(uploadproductconfigurationSuccess(response.data));
+      } else {
+        dispatch(uploadproductconfigurationErr('Something went wrong'));
+      }
+
+      return response.data;
+    } catch (err) {
+      dispatch(uploadproductconfigurationErr(err.message));
+      throw err;
     }
   };
 };

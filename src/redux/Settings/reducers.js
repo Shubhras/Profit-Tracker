@@ -35,6 +35,12 @@ const initialState = {
   adduserData: [],
   adduserLoading: false,
   adduserError: null,
+
+  exportLoading: false,
+
+  uploadLoading: false,
+  uploadError: null,
+  uploadSuccess: false,
 };
 
 const {
@@ -73,6 +79,10 @@ const {
   ADD_USER_BEGIN,
   ADD_USER_SUCCESS,
   ADD_USER_ERR,
+
+  UPLOAD_PRODUCT_CONFIGURATION_BEGIN,
+  UPLOAD_PRODUCT_CONFIGURATION_SUCCESS,
+  UPLOAD_PRODUCT_CONFIGURATION_ERR,
 } = actions;
 
 const settingsReducer = (state = initialState, action) => {
@@ -257,6 +267,47 @@ const settingsReducer = (state = initialState, action) => {
         adduserError: err,
         adduserLoading: false,
       };
+
+    case actions.EXPORT_PRODUCT_CONFIGURATION_BEGIN:
+      return {
+        ...state,
+        exportLoading: true,
+      };
+
+    case actions.EXPORT_PRODUCT_CONFIGURATION_SUCCESS:
+      return {
+        ...state,
+        exportLoading: false,
+      };
+
+    case actions.EXPORT_PRODUCT_CONFIGURATION_ERR:
+      return {
+        ...state,
+        exportLoading: false,
+      };
+
+    case UPLOAD_PRODUCT_CONFIGURATION_BEGIN:
+      return {
+        ...state,
+        uploadLoading: true,
+        uploadError: null,
+        uploadSuccess: false,
+      };
+
+    case UPLOAD_PRODUCT_CONFIGURATION_SUCCESS:
+      return {
+        ...state,
+        uploadLoading: false,
+        uploadSuccess: true,
+      };
+
+    case UPLOAD_PRODUCT_CONFIGURATION_ERR:
+      return {
+        ...state,
+        uploadLoading: false,
+        uploadError: err,
+      };
+
     default:
       return state;
   }

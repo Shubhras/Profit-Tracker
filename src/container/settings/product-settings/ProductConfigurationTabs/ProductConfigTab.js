@@ -1,13 +1,21 @@
 import React, { useState } from 'react';
-import { Table, Tag, Button, Tooltip, Popover, Checkbox, Modal, Select, DatePicker } from 'antd';
-import { SettingOutlined, EditOutlined } from '@ant-design/icons';
+import { useSelector, useDispatch } from 'react-redux';
+import { Table, Tag, Button, Tooltip, Modal, message } from 'antd';
+import { UploadOutlined, ExportOutlined } from '@ant-design/icons';
+// import { EditOutlined } from '@ant-design/icons';
 import { PageHeader } from '../../../../components/page-headers/page-headers';
 import amazon from '../../../../assets/icons/amazon.svg';
-import flipkart from '../../../../assets/icons/flipkart.svg';
+import { exportProductConfiguration, uploadProductConfiguration } from '../../../../redux/Settings/actionCreator';
+// import flipkart from '../../../../assets/icons/flipkart.svg';
 
-export default function ProductConfigTab() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+export default function ProductConfigTab({ pagination, setPagination }) {
+  const { productconfigData, productconfigLoading, exportLoading, uploadLoading } = useSelector(
+    (state) => state.settings,
+  );
+
   const [isFieldModalOpen, setIsFieldModalOpen] = useState(false);
+  const dispatch = useDispatch();
+  const [selectedFile, setSelectedFile] = useState(null);
   // const PageRoutes = [
   //   {
   //     path: 'index',
@@ -22,129 +30,194 @@ export default function ProductConfigTab() {
   //     breadcrumbName: 'Product Configuration',
   //   },
   // ];
-  const columnSettingsContent = (
-    <div className="w-[650px]">
-      {/* Title */}
-      <div className="text-center font-semibold py-2 border-b">Customize Your Columns</div>
 
-      {/* Select All Row */}
-      <div className="flex items-center gap-2 bg-gray-100 px-3 py-2 border-b">
-        <Checkbox>Select All</Checkbox>
-      </div>
-
-      {/* Checkbox Grid */}
-      <div className="grid grid-cols-3 gap-3 p-3">
-        <Checkbox defaultChecked>Channel</Checkbox>
-        <Checkbox>Account</Checkbox>
-        <Checkbox defaultChecked>Product Id</Checkbox>
-
-        <Checkbox defaultChecked>SKU</Checkbox>
-        <Checkbox defaultChecked>Status</Checkbox>
-        <Checkbox defaultChecked>Name</Checkbox>
-
-        <Checkbox>Parent ID</Checkbox>
-        <Checkbox defaultChecked>MRP</Checkbox>
-        <Checkbox defaultChecked>Std Cost</Checkbox>
-
-        <Checkbox defaultChecked>Std Cost Tax %</Checkbox>
-        <Checkbox>Category Ids</Checkbox>
-        <Checkbox defaultChecked>Inv Master</Checkbox>
-
-        <Checkbox>Storage Master</Checkbox>
-        <Checkbox>Length(cm)</Checkbox>
-        <Checkbox>Breadth(cm)</Checkbox>
-
-        <Checkbox>Weight(kg)</Checkbox>
-        <Checkbox>Height(cm)</Checkbox>
-      </div>
-    </div>
-  );
   const columns = [
+    // {
+    //   title: '',
+    //   dataIndex: 'icon',
+    //   width: 60,
+    //   fixed: 'left',
+    //   render: (v) => <img src={v} alt="channel" className="w-6 h-6 object-contain mx-auto" />,
+    // },
     {
-      title: (
-        <Popover content={columnSettingsContent} trigger="click" placement="bottomLeft">
-          <SettingOutlined className="cursor-pointer" />
-        </Popover>
-      ),
-      dataIndex: 'icon',
-      width: 70,
-      render: (v) => <img src={v} alt="" className="w-6 h-6" />,
+      title: 'Image',
+      dataIndex: 'image',
+      width: 90,
+      align: 'center',
+      fixed: 'left',
+      render: (img) => <img src={img} alt="product" className="w-12 h-12 object-cover rounded-md" />,
     },
     {
-      title: 'Channel',
-      dataIndex: 'channel',
-    },
-    {
-      title: 'Product Id',
+      title: 'ASIN',
       dataIndex: 'productId',
+      align: 'center',
+      render: (v) => <span className="text-[#2563eb] font-medium">{v}</span>,
     },
     {
       title: 'SKU',
       dataIndex: 'sku',
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      render: () => <Tag color="green">ACTIVE</Tag>,
-    },
-    {
-      title: 'Name',
-      dataIndex: 'name',
-      sorter: (a, b) => a.name - b.name,
+      width: 150,
+      align: 'center',
       render: (text) => (
-        <Tooltip title={text}>
-          <span className="truncate block max-w-[250px]">{text}</span>
+        <Tooltip title={text} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span className="truncate block cursor-pointer max-w-[130px] mx-auto">{text}</span>
         </Tooltip>
       ),
     },
     {
-      title: 'MRP',
-      dataIndex: 'mrp',
-      sorter: (a, b) => a.mrp - b.mrp,
+      title: 'Status',
+      dataIndex: 'status',
+      align: 'center',
+      render: (status) => <Tag color={status === 'ACTIVE' ? 'green' : 'red'}>{status || '-'}</Tag>,
     },
     {
-      title: 'Std Cost',
-      dataIndex: 'cost',
-      sorter: (a, b) => a.cost - b.cost,
+      title: 'Name',
+      dataIndex: 'name',
+      align: 'center',
+      // sorter: (a, b) => a.name - b.name,
+      render: (text) => (
+        <Tooltip title={text} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span className="truncate cursor-pointer block max-w-[250px]">{text}</span>
+        </Tooltip>
+      ),
     },
     {
-      title: 'Std Cost Tax %',
-      dataIndex: 'tax',
-      sorter: (a, b) => a.tax - b.tax,
+      title: 'Item Weight',
+      dataIndex: 'itemWeight',
+      align: 'center',
     },
     {
-      title: 'Inv Master',
-      dataIndex: 'inv',
-      sorter: (a, b) => a.inv - b.inv,
+      title: 'Item Pkg Weight',
+      dataIndex: 'itempkgWeight',
+      align: 'center',
+    },
+
+    // {
+    //   title: 'Length',
+    //   dataIndex: 'length',
+    //   align: 'center',
+    // },
+
+    // {
+    //   title: 'Width',
+    //   dataIndex: 'width',
+    //   align: 'center',
+    // },
+
+    // {
+    //   title: 'Height',
+    //   dataIndex: 'height',
+    //   align: 'center',
+    // },
+
+    {
+      title: 'Pkg Length',
+      dataIndex: 'pkgLength',
+      align: 'center',
+    },
+
+    {
+      title: 'Pkg Width',
+      dataIndex: 'pkgWidth',
+      align: 'center',
+    },
+
+    {
+      title: 'Pkg Height',
+      dataIndex: 'pkgHeight',
+      align: 'center',
+    },
+    {
+      title: 'Shipping Estimate Charges',
+      dataIndex: 'shippinCharge',
+      align: 'center',
+    },
+
+    {
+      title: 'Region',
+      dataIndex: 'region',
+      align: 'center',
+    },
+
+    {
+      title: 'Step Level',
+      dataIndex: 'stateLevel',
+      align: 'center',
+    },
+
+    {
+      title: 'Product Cost',
+      dataIndex: 'productcost',
+      align: 'center',
+    },
+    {
+      title: 'GST Rate%',
+      dataIndex: 'gstrate',
+      align: 'center',
+    },
+    {
+      title: 'TCS',
+      dataIndex: 'tcs',
+      align: 'center',
     },
   ];
 
-  const data = [
-    {
-      key: 1,
+  const data =
+    productconfigData?.data?.map((item) => ({
+      key: item.id,
+
       icon: amazon,
-      channel: 'Amazon',
-      productId: 'BOCS6PXFDT',
-      sku: 'shortcami-skin-XL',
-      name: 'Fshway Basic Camisole Adjustable...',
-      mrp: 499,
-      cost: 65,
-      tax: '-',
-      inv: '-',
-    },
-    {
-      key: 2,
-      icon: flipkart,
-      channel: 'Flipkart',
-      productId: 'SPWG7DGS...',
-      sku: 'tummy slimmer belt-3XL',
-      name: 'Fshway Unisex Shapewear',
-      mrp: 699,
-      cost: 145,
-      tax: '-',
-      inv: '-',
-    },
-  ];
+
+      // channel: 'Amazon',
+
+      productId: item.asin || '-',
+
+      sku: item.sku || '-',
+
+      status: item.status?.[0] || '-',
+
+      name: item.item_name || '-',
+
+      image: item.image_url || '',
+      productcost: item.standard_cost || 0,
+      gstrate: item.gst_rate || 0,
+      tcs: item.tcs || 0,
+      stateLevel: item.step_level || 0,
+      shippinCharge: item.shiping_estimate || 0,
+      region: item.region || '-',
+
+      itemWeight: item.attributes?.item_weight?.[0]
+        ? `${item.attributes.item_weight[0].value} ${item.attributes.item_weight[0].unit}`
+        : '-',
+
+      itempkgWeight: item.attributes?.item_package_weight?.[0]
+        ? `${item.attributes.item_package_weight[0].value} ${item.attributes.item_package_weight[0].unit}`
+        : '-',
+
+      length: item.attributes?.item_dimensions?.[0]?.length
+        ? `${item.attributes.item_dimensions[0].length.value} ${item.attributes.item_dimensions[0].length.unit}`
+        : '-',
+
+      width: item.attributes?.item_dimensions?.[0]?.width
+        ? `${item.attributes.item_dimensions[0].width.value} ${item.attributes.item_dimensions[0].width.unit}`
+        : '-',
+
+      height: item.attributes?.item_dimensions?.[0]?.height
+        ? `${item.attributes.item_dimensions[0].height.value} ${item.attributes.item_dimensions[0].height.unit}`
+        : '-',
+
+      pkgLength: item.attributes?.item_package_dimensions?.[0]?.length
+        ? `${item.attributes.item_package_dimensions[0].length.value} ${item.attributes.item_package_dimensions[0].length.unit}`
+        : '-',
+
+      pkgWidth: item.attributes?.item_package_dimensions?.[0]?.width
+        ? `${item.attributes.item_package_dimensions[0].width.value} ${item.attributes.item_package_dimensions[0].width.unit}`
+        : '-',
+
+      pkgHeight: item.attributes?.item_package_dimensions?.[0]?.height
+        ? `${item.attributes.item_package_dimensions[0].height.value} ${item.attributes.item_package_dimensions[0].height.unit}`
+        : '-',
+    })) || [];
   return (
     <>
       <PageHeader
@@ -152,7 +225,7 @@ export default function ProductConfigTab() {
         // title="Product Configuration"
         className="flex  justify-between items-center px-8 xl:px-[15px] pt-2 pb-2 sm:pb-[30px] bg-transparent sm:flex-col"
       />
-      <main className="min-h-[715px] px-8 xl:px-[15px] pb-[30px]">
+      <main className="min-h-[715px] px-5 xl:px-[15px] pb-[30px]">
         {/* Tabs */}
         {/* <Tabs
           defaultActiveKey="1"
@@ -176,15 +249,26 @@ export default function ProductConfigTab() {
         /> */}
 
         {/* Top Bar */}
-        <div className="flex justify-between items-center mb-4">
-          <span className="text-gray-500 text-sm">Double-click a cell to edit</span>
+        <div className="flex justify-end items-center mb-4">
+          {/* <span className="text-gray-500 text-sm">Double-click a cell to edit</span> */}
 
           <div className="flex gap-2">
-            <Button type="primary" className="font-bold" onClick={() => setIsModalOpen(true)}>
-              Order Missing Update
+            <Button
+              type="primary"
+              icon={<ExportOutlined className="!text-[16px] !font-bold" />}
+              className="!h-[40px] !rounded-xl !border-[#dbe1e8] !text-white !font-bold !flex !items-center !justify-center"
+              loading={exportLoading}
+              onClick={() => dispatch(exportProductConfiguration())}
+            >
+              Export
             </Button>
-            <Button type="primary" className="font-bold" onClick={() => setIsFieldModalOpen(true)}>
-              Field Settings
+            <Button
+              type="primary"
+              icon={<UploadOutlined className="!text-[16px] !font-bold" />}
+              className="!h-[40px] !rounded-xl !border-[#dbe1e8] !text-white !font-bold !flex !items-center !justify-center"
+              onClick={() => setIsFieldModalOpen(true)}
+            >
+              Upload
             </Button>
           </div>
         </div>
@@ -193,107 +277,91 @@ export default function ProductConfigTab() {
         <Table
           columns={columns}
           dataSource={data}
-          pagination={false}
+          loading={productconfigLoading}
           showSorterTooltip={false}
           size="small"
           bordered
           scroll={{ x: 'max-content' }}
           className="bg-white rounded-lg shadow-sm"
+          pagination={{
+            total: productconfigData?.totalCount || 0,
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            showSizeChanger: true,
+            pageSizeOptions: ['10', '20', '50', '100'],
+            showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
+          }}
+          onChange={(pag) => {
+            setPagination({
+              current: pag.current,
+              pageSize: pag.pageSize,
+            });
+          }}
         />
       </main>
       <Modal
-        title="Order Missing Update"
-        open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
+        title="Upload Excel File"
+        open={isFieldModalOpen}
+        onCancel={() => {
+          setIsFieldModalOpen(false);
+          setSelectedFile(null);
+        }}
         footer={null}
+        width={500}
         centered
       >
         <div className="flex flex-col gap-4">
-          {/* Order Missing Key */}
-          <div>
-            <label className="block mb-1 text-sm font-medium">Order Missing Key:</label>
-            <Select
-              placeholder="Select key"
-              className="w-full"
-              options={[
-                { label: 'Option 1', value: '1' },
-                { label: 'Option 2', value: '2' },
-              ]}
-            />
-          </div>
+          <input
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
 
-          <div>
-            <label className="block mb-1 text-sm font-medium">Effective Date:</label>
-            <DatePicker className="w-full" />
-          </div>
+              if (!file) return;
 
-          {/* Footer Buttons */}
-          <div className="flex justify-end gap-2 pt-2">
-            <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button type="primary" onClick={() => setIsModalOpen(false)}>
-              OK
-            </Button>
-          </div>
-        </div>
-      </Modal>
-      <Modal
-        title="Field Settings"
-        open={isFieldModalOpen}
-        onCancel={() => setIsFieldModalOpen(false)}
-        footer={null}
-        width={700}
-        centered
-      >
-        <div className="border rounded-lg p-4">
-          {/* Static Fields */}
-          <div className="mb-4">
-            <div className="font-semibold mb-2 border-b pb-1">Static Fields</div>
+              const validTypes = [
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'application/vnd.ms-excel',
+              ];
 
-            {['Standard Cost', 'Storage Master', 'MRP', 'Dimensions'].map((item, index) => (
-              <div key={index} className="flex justify-between items-center py-2 border-b text-sm">
-                <div className="flex gap-3">
-                  <span className="text-gray-500">{String(index + 1).padStart(2, '0')}</span>
-                  <span>{item}</span>
-                </div>
+              if (!validTypes.includes(file.type)) {
+                message.error('Only Excel files are allowed');
+                return;
+              }
 
-                <div className="flex items-center gap-3 text-gray-500">
-                  <span>Channel, SKU</span>
-                  <EditOutlined className="text-blue-500 cursor-pointer" />{' '}
-                </div>
-              </div>
-            ))}
-          </div>
+              setSelectedFile(file);
+            }}
+          />
 
-          {/* Master SKU Config */}
-          <div>
-            <div className="font-semibold mb-2 border-b pb-1">Master SKU Configuration</div>
-
-            <div className="text-gray-400 text-sm mb-3">01 &nbsp; Empty slot</div>
-
-            {/* Add Master SKU */}
-            <div className="bg-gray-50 p-3 rounded-lg border">
-              <div className="mb-2 font-medium">Add Master SKU</div>
-
-              <div className="flex items-center gap-4 mb-3">
-                <label className="flex items-center gap-1">
-                  <input type="radio" defaultChecked />
-                  Channel, SKU
-                </label>
-
-                <label className="flex items-center gap-1">
-                  <input type="radio" />
-                  Inventory Master SKU
-                </label>
-              </div>
-
-              <div className="flex gap-2">
-                <input placeholder="Enter Master SKU Title Here" className="flex-1 border rounded px-2 py-1 text-sm" />
-
-                <Button type="primary">✓</Button>
-                <Button danger>✕</Button>
-              </div>
+          {selectedFile && (
+            <div className="text-sm text-[#374151]">
+              Selected File:
+              <span className="font-semibold ml-1">{selectedFile.name}</span>
             </div>
-          </div>
+          )}
+
+          <Button
+            type="primary"
+            loading={uploadLoading}
+            disabled={!selectedFile}
+            onClick={async () => {
+              try {
+                await dispatch(uploadProductConfiguration(selectedFile));
+
+                message.success('Excel uploaded successfully');
+
+                setIsFieldModalOpen(false);
+
+                setSelectedFile(null);
+
+                window.location.reload();
+              } catch (err) {
+                message.error('Upload failed');
+              }
+            }}
+          >
+            Upload File
+          </Button>
         </div>
       </Modal>
     </>

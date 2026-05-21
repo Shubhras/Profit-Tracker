@@ -11,6 +11,10 @@ const actions = {
   KEYWORDS_SUCCESS: 'KEYWORDS_SUCCESS',
   KEYWORDS_ERR: 'KEYWORDS_ERR',
 
+  ADS_PRODUCTS_BEGIN: 'ADS_PRODUCTS_BEGIN',
+  ADS_PRODUCTS_SUCCESS: 'ADS_PRODUCTS_SUCCESS',
+  ADS_PRODUCTS_ERR: 'ADS_PRODUCTS_ERR',
+
   campaignsBegin: () => {
     return {
       type: actions.CAMPAIGNS_BEGIN,
@@ -67,6 +71,26 @@ const actions = {
   keywordsErr: (err) => {
     return {
       type: actions.KEYWORDS_ERR,
+      err,
+    };
+  },
+
+  adsproductsBegin: () => {
+    return {
+      type: actions.ADS_PRODUCTS_BEGIN,
+    };
+  },
+
+  adsproductsSuccess: (data) => {
+    return {
+      type: actions.ADS_PRODUCTS_SUCCESS,
+      data,
+    };
+  },
+
+  adsproductsErr: (err) => {
+    return {
+      type: actions.ADS_PRODUCTS_ERR,
       err,
     };
   },

@@ -1,17 +1,10 @@
 import React, { useEffect } from 'react';
 import { Table, Card, Modal, Checkbox, Tooltip, Button } from 'antd';
-import {
-  RightOutlined,
-  EyeOutlined,
-  SettingOutlined,
-  BarChartOutlined,
-  FilterOutlined,
-  EyeInvisibleOutlined,
-  SearchOutlined,
-} from '@ant-design/icons';
+import { RightOutlined, EyeOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 // import ProfitFilterBar from './component/ProfitFilterBar';
+import CalculationModal from './component/Calculations';
 import ProfitModal from './component/ProfitModal';
 import amazon from '../../assets/icons/amazon.svg';
 // import flipkart from "../../assets/icons/flipkart.png";
@@ -28,12 +21,16 @@ export default function ProfitViewSecondTable() {
   const totals = profitData?.totals || {};
   //   const profitType = location.state?.profitType || 'all';
   const channels = location.state?.channels?.length > 0 ? location.state.channels : globalChannel || [];
-  const [openSettings, setOpenSettings] = React.useState(false);
-  const [columnSearch, setColumnSearch] = React.useState('');
   const [detailModal, setDetailModal] = React.useState({
     open: false,
     record: null,
     type: '',
+  });
+
+  const [calculationModal, setCalculationModal] = React.useState({
+    open: false,
+    type: '',
+    record: null,
   });
   const [previewImage, setPreviewImage] = React.useState('');
   const [previewOpen, setPreviewOpen] = React.useState(false);
@@ -124,7 +121,10 @@ export default function ProfitViewSecondTable() {
         stdcost: item.stdcost || 0,
         shipping: item.shippingfees || 0,
         adSpend: item.ads || 0,
-        gst: item.gst || 0,
+        gst_to_pay_amount: item.gst_to_pay_amount || 0,
+        taxableValue: item.taxable_value,
+        gst_to_pay_perc: item.gst_to_pay_perc || 0,
+        settleAmount: item.exp_settlement,
 
         // grossprofit: Number(sitem.grossprofit) || 0,
         profit: item.profit || 0,
@@ -146,6 +146,14 @@ export default function ProfitViewSecondTable() {
         percentOfSales: item.percent_of_sales || 0,
         drr: item.drr || 0,
         lastOrderDate: item.last_order_date || '',
+        referral_fee: item.referral_fee || 0,
+        closing_fee: item.closing_fee || 0,
+        per_item_fee: item.per_item_fee || 0,
+        fba_fee: item.fba_fee || 0,
+        fba_pick_pack_fee: item.fba_pick_pack_fee || 0,
+        fba_weight_handling_fee: item.fba_weight_handling_fee || 0,
+        tax_amount: item.tax_amount || 0,
+        other_charges: item.other_charges || 0,
 
         // settledamount: Number(item.profit_settled_amount) || 0,
       })) || [];
@@ -265,80 +273,37 @@ export default function ProfitViewSecondTable() {
     //   align: 'center',
     //   sorter: (a, b) => a.qty - b.qty,
     // },
-    {
-      title: 'Gross Qty',
-      dataIndex: 'grossQty',
-      align: 'center',
-      sorter: (a, b) => a.grossqty - b.grossqty,
-      // render: (v) => v ?? 0,
-    },
+    // {
+    //   title: 'Gross Qty',
+    //   dataIndex: 'grossQty',
+    //   align: 'center',
+    //   sorter: (a, b) => a.grossqty - b.grossqty,
+    //   // render: (v) => v ?? 0,
+    // },
     {
       title: 'Net Qty',
       dataIndex: 'netQty',
       align: 'center',
       sorter: (a, b) => a.netQty - b.netQty,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
-          }
-        >
-          {v}
-        </button>
-      ),
     },
     {
       title: 'Return Qty',
       dataIndex: 'returnqty',
       align: 'center',
       sorter: (a, b) => a.returnqty - b.returnqty,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'returns', modalLabel: 'SKU', modalValue: record.view })
-          }
-        >
-          {v}
-        </button>
-      ),
     },
     {
       title: 'Return %',
       dataIndex: 'returnPercent',
       align: 'center',
       sorter: (a, b) => a.returnPercent - b.returnPercent,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'returns', modalLabel: 'SKU', modalValue: record.view })
-          }
-        >
-          {v}%
-        </button>
-      ),
+      render: (value) => `${Number(value || 0).toFixed(2)}%`,
     },
     {
       title: 'Net Sales',
       dataIndex: 'netsales',
       align: 'center',
       sorter: (a, b) => a.netsales - b.netsales,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
-          }
-        >
-          {v}
-        </button>
-      ),
     },
     {
       title: 'MP fees',
@@ -348,10 +313,14 @@ export default function ProfitViewSecondTable() {
       render: (v, record) => (
         <button
           type="button"
-          className="cursor-pointer bg-transparent border-none"
           onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
+            setCalculationModal({
+              open: true,
+              type: 'mpfees',
+              record,
+            })
           }
+          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none"
         >
           {v}
         </button>
@@ -365,10 +334,14 @@ export default function ProfitViewSecondTable() {
       render: (v, record) => (
         <button
           type="button"
-          className="cursor-pointer bg-transparent border-none"
           onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
+            setCalculationModal({
+              open: true,
+              type: 'shipping',
+              record,
+            })
           }
+          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none"
         >
           {v}
         </button>
@@ -396,17 +369,6 @@ export default function ProfitViewSecondTable() {
       dataIndex: 'mp_gst',
       align: 'center',
       sorter: (a, b) => a.mp_gst - b.mp_gst,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
-          }
-        >
-          {v ?? 0}
-        </button>
-      ),
     },
 
     {
@@ -414,34 +376,12 @@ export default function ProfitViewSecondTable() {
       dataIndex: 'tcs',
       align: 'center',
       sorter: (a, b) => a.tcs - b.tcs,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
-          }
-        >
-          {v ?? 0}
-        </button>
-      ),
     },
     {
       title: 'Ad Spend',
       dataIndex: 'adSpend',
       align: 'center',
       sorter: (a, b) => a.adSpend - b.adSpend,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
-          }
-        >
-          {v}
-        </button>
-      ),
     },
     // {
     //   title: 'Net asp',
@@ -457,38 +397,36 @@ export default function ProfitViewSecondTable() {
     // },
 
     {
-      title: 'GST to Pay',
-      dataIndex: 'gst',
+      title: 'Taxable Value',
+      dataIndex: 'taxableValue',
       align: 'center',
-      sorter: (a, b) => a.gst - b.gst,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
-          }
-        >
-          {v}
-        </button>
-      ),
+      sorter: (a, b) => a.taxableValue - b.taxableValue,
+    },
+
+    {
+      title: 'GST to Pay',
+      dataIndex: 'gst_to_pay_amount',
+      align: 'center',
+      sorter: (a, b) => a.gst_to_pay_amount - b.gst_to_pay_amount,
+    },
+    {
+      title: 'GST to Pay %',
+      dataIndex: 'gst_to_pay_perc',
+      align: 'center',
+      sorter: (a, b) => a.gst_to_pay_perc - b.gst_to_pay_perc,
+      render: (v) => <span>{v}%</span>,
+    },
+    {
+      title: 'Expected Settlement',
+      dataIndex: 'settleAmount',
+      align: 'center',
+      sorter: (a, b) => a.settleAmount - b.settleAmount,
     },
     {
       title: 'Product Cost',
       dataIndex: 'stdcost',
       align: 'center',
       sorter: (a, b) => a.stdcost - b.stdcost,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
-          }
-        >
-          {v}
-        </button>
-      ),
     },
 
     // {
@@ -515,10 +453,16 @@ export default function ProfitViewSecondTable() {
       render: (v, record) => (
         <button
           type="button"
-          className="cursor-pointer bg-transparent border-none"
           onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: record.channel, modalValue: record.view })
+            setCalculationModal({
+              open: true,
+              type: 'profit',
+              record,
+            })
           }
+          // className={`font-medium underline cursor-pointer bg-transparent border-none ${
+          //   String(v).includes('-') ? 'text-red-500' : 'text-green-600'
+          // }`}
         >
           {v}
         </button>
@@ -529,223 +473,14 @@ export default function ProfitViewSecondTable() {
       dataIndex: 'profitPercent',
       align: 'center',
       sorter: (a, b) => a.profitPercent - b.profitPercent,
-      render: (v, record) => {
-        const value = Math.round(v || 0);
-
-        return (
-          <button
-            type="button"
-            className="cursor-pointer bg-transparent border-none"
-            onClick={() =>
-              setDetailModal({
-                open: true,
-                record,
-                type: 'qty',
-                modalLabel: 'SKU',
-                modalValue: record.view,
-              })
-            }
-          >
-            <span
-              style={{
-                color: value < 0 ? 'red' : 'green',
-              }}
-            >
-              {value}%
-            </span>
-          </button>
-        );
-      },
-    },
-    {
-      title: 'Net MRP',
-      dataIndex: 'netmrp',
-      align: 'center',
-      sorter: (a, b) => a.netmrp - b.netmrp,
-      // render: (v) => v ?? 0,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
-          }
+      render: (value) => (
+        <span
+          className={`font-semibold ${
+            Number(value) > 0 ? 'text-green-600' : Number(value) < 0 ? 'text-red-600' : 'text-gray-600'
+          }`}
         >
-          {v ?? 0}
-        </button>
-      ),
-    },
-    {
-      title: 'Gross Sales',
-      dataIndex: 'grossSales',
-      align: 'center',
-      sorter: (a, b) => a.grossSales - b.grossSales,
-      // render: (v) => v ?? 0,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
-          }
-        >
-          {v ?? 0}
-        </button>
-      ),
-    },
-    {
-      title: 'MRP Net Discount%',
-      dataIndex: 'mrpNetDiscount',
-      align: 'center',
-      sorter: (a, b) => a.mrpNetDiscount - b.mrpNetDiscount,
-      // render: (v) => v ?? 0,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
-          }
-        >
-          {v ?? 0}
-        </button>
-      ),
-    },
-    {
-      title: 'MRP Customer Discount%',
-      dataIndex: 'mrpCustomerDiscount',
-      align: 'center',
-      sorter: (a, b) => a.mrpCustomerDiscount - b.mrpCustomerDiscount,
-      // render: (v) => v ?? 0,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
-          }
-        >
-          {v ?? 0}
-        </button>
-      ),
-    },
-    {
-      title: 'Account Charges',
-      dataIndex: 'accountCharges',
-      align: 'center',
-      sorter: (a, b) => a.accountCharges - b.accountCharges,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
-          }
-        >
-          {v ?? 0}
-        </button>
-      ),
-    },
-    {
-      title: 'Other Expenses',
-      dataIndex: 'otherExpenses',
-      align: 'center',
-      sorter: (a, b) => a.otherExpenses - b.otherExpenses,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
-          }
-        >
-          {v ?? 0}
-        </button>
-      ),
-    },
-    {
-      title: 'TACOS',
-      dataIndex: 'tacos',
-      align: 'center',
-      sorter: (a, b) => a.tacos - b.tacos,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
-          }
-        >
-          {v ?? 0}
-        </button>
-      ),
-    },
-    {
-      title: 'Gross Profit %',
-      dataIndex: 'grossProfitPercent',
-      align: 'center',
-      sorter: (a, b) => a.grossProfitPercent - b.grossProfitPercent,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
-          }
-        >
-          {v ?? 0}
-        </button>
-      ),
-    },
-    {
-      title: '% of Sales',
-      dataIndex: 'percentOfSales',
-      align: 'center',
-      sorter: (a, b) => a.percentOfSales - b.percentOfSales,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
-          }
-        >
-          {v ?? 0}
-        </button>
-      ),
-    },
-    {
-      title: 'DRR',
-      dataIndex: 'drr',
-      align: 'center',
-      sorter: (a, b) => a.drr - b.drr,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
-          }
-        >
-          {v ?? 0}
-        </button>
-      ),
-    },
-    {
-      title: 'Last Order Date',
-      dataIndex: 'lastOrderDate',
-      align: 'center',
-      sorter: (a, b) => a.lastOrderDate - b.lastOrderDate,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'SKU', modalValue: record.view })
-          }
-        >
-          {v ?? '-'}
-        </button>
+          {Number(value || 0).toFixed(2)}%
+        </span>
       ),
     },
 
@@ -777,8 +512,7 @@ export default function ProfitViewSecondTable() {
             //   border: '1px solid #d9d9d9',
             //   background: 'rgb(202, 221, 254)',
             // }}
-            className="w-[34px] h-[34px] rounded-full border border-[#dbe1e8]
-  flex items-center justify-center cursor-pointer hover:text-black transition-all duration-200 mx-auto"
+            className="w-[34px] h-[34px] rounded-full border border-[#dbe1e8] flex items-center justify-center cursor-pointer hover:text-black transition-all duration-200 mx-auto"
           >
             <RightOutlined style={{ fontSize: 12 }} />
           </button>
@@ -850,63 +584,64 @@ export default function ProfitViewSecondTable() {
   //   });
   // };
 
-  const allColumnsList = [
-    { key: 'grossQty', label: 'Gross Qty' },
-    { key: 'netQty', label: 'Net Qty' },
-    { key: 'returnqty', label: 'Return Qty' },
-    { key: 'returnPercent', label: 'Return %' },
+  // const allColumnsList = [
+  //   { key: 'grossQty', label: 'Gross Qty' },
+  //   { key: 'netQty', label: 'Net Qty' },
+  //   { key: 'returnqty', label: 'Return Qty' },
+  //   { key: 'returnPercent', label: 'Return %' },
 
-    { key: 'netMRP', label: 'Net MRP' },
-    { key: 'mrpNetDiscount', label: 'MRP Net Discount%' },
-    { key: 'mrpCustomerDiscount', label: 'MRP Customer Discount%' },
+  //   { key: 'netMRP', label: 'Net MRP' },
+  //   { key: 'mrpNetDiscount', label: 'MRP Net Discount%' },
+  //   { key: 'mrpCustomerDiscount', label: 'MRP Customer Discount%' },
 
-    { key: 'grossSales', label: 'Gross Sales' },
-    { key: 'netsales', label: 'Net Sales' },
-    { key: 'mp_gst', label: 'MP-GST' },
+  //   { key: 'grossSales', label: 'Gross Sales' },
+  //   { key: 'netsales', label: 'Net Sales' },
+  //   { key: 'mp_gst', label: 'MP-GST' },
 
-    { key: 'mpfees', label: 'mpfees' },
-    // { key: 'stdcost', label: 'Std Cost' },
+  //   { key: 'mpfees', label: 'mpfees' },
+  //   // { key: 'stdcost', label: 'Std Cost' },
 
-    { key: 'shipping', label: 'Shipping' },
-    { key: 'adSpend', label: 'Ad spend' },
-    { key: 'stdCost', label: 'Product Cost' },
+  //   { key: 'shipping', label: 'Shipping' },
+  //   { key: 'adSpend', label: 'Ad spend' },
+  //   { key: 'stdCost', label: 'Product Cost' },
 
-    { key: 'stdCostMS', label: 'Std Cost M/S %' },
-    { key: 'accountCharges', label: 'Account Charges' },
-    { key: 'otherExpenses', label: 'Other Expenses' },
+  //   { key: 'stdCostMS', label: 'Std Cost M/S %' },
+  //   { key: 'accountCharges', label: 'Account Charges' },
+  //   { key: 'otherExpenses', label: 'Other Expenses' },
 
-    { key: 'gst', label: 'GST to Pay' },
-    // { key: 'grossprofit', label: 'Gross Profit' },
-    { key: 'profit', label: 'Profit' },
+  //   { key: 'gst', label: 'GST to Pay' },
+  //   // { key: 'grossprofit', label: 'Gross Profit' },
+  //   { key: 'profit', label: 'Profit' },
 
-    // { key: 'settledAmount', label: 'Settled Amount' },
-    { key: 'tacos', label: 'TACOS' },
-    { key: 'grossProfitPercent', label: 'Gross Profit %' },
+  //   // { key: 'settledAmount', label: 'Settled Amount' },
+  //   { key: 'tacos', label: 'TACOS' },
+  //   { key: 'grossProfitPercent', label: 'Gross Profit %' },
 
-    { key: 'profitPercent', label: 'Profit %' },
-    { key: 'percentOfSales', label: '% of Sales' },
-    { key: 'drr', label: 'DRR (Daily Run Rate)' },
+  //   { key: 'profitPercent', label: 'Profit %' },
+  //   { key: 'percentOfSales', label: '% of Sales' },
+  //   { key: 'drr', label: 'DRR (Daily Run Rate)' },
 
-    { key: 'lastOrderDate', label: 'Last Order Date' },
-  ];
-  const [visibleColumns, setVisibleColumns] = React.useState([
-    'view',
-    // 'grossQty',
-    'netQty',
-    'returnqty',
-    'returnPercent',
-    'mp_gst',
-    'tcs',
-    'mpfees',
-    'netsales',
-    'stdcost',
-    'shipping',
-    'adSpend',
-    'gst',
-    // 'grossprofit',
-    'profit',
-    'profitPercent',
-  ]);
+  //   { key: 'lastOrderDate', label: 'Last Order Date' },
+  // ];
+
+  // const [visibleColumns, setVisibleColumns] = React.useState([
+  //   'view',
+  //   // 'grossQty',
+  //   'netQty',
+  //   'returnqty',
+  //   'returnPercent',
+  //   'mp_gst',
+  //   'tcs',
+  //   'mpfees',
+  //   'netsales',
+  //   'stdcost',
+  //   'shipping',
+  //   'adSpend',
+  //   'gst',
+  //   // 'grossprofit',
+  //   'profit',
+  //   'profitPercent',
+  // ]);
   // const handleSelectAll = (checked) => {
   //   if (checked) {
   //     setVisibleColumns(allColumnsList.map((col) => col.key));
@@ -914,15 +649,17 @@ export default function ProfitViewSecondTable() {
   //     setVisibleColumns([]);
   //   }
   // };
-  const filteredColumns = columns.filter((col) => {
-    if (col.dataIndex === 'image' || col.dataIndex === 'channel' || col.key === 'action') return true;
 
-    return visibleColumns.some(
-      (key) =>
-        key === col.dataIndex || // direct match
-        key.toLowerCase() === col.dataIndex.toLowerCase(), // handle grossQty vs grossqty
-    );
-  });
+  // const filteredColumns = columns.filter((col) => {
+  //   if (col.dataIndex === 'image' || col.dataIndex === 'channel' || col.key === 'action') return true;
+
+  //   return visibleColumns.some(
+  //     (key) =>
+  //       key === col.dataIndex || // direct match
+  //       key.toLowerCase() === col.dataIndex.toLowerCase(), // handle grossQty vs grossqty
+  //   );
+  // });
+
   return (
     <>
       <PageHeader
@@ -947,18 +684,7 @@ export default function ProfitViewSecondTable() {
               <input
                 type="text"
                 placeholder="Search..."
-                className="
-        w-full
-        h-[42px]
-        rounded-xl
-        border border-[#e5e7eb]
-        bg-white
-        pl-4
-        pr-10
-        text-[13px]
-        outline-none
-        shadow-sm
-      "
+                className="w-full h-[42px] rounded-xl border border-[#e5e7eb] bg-white pl-4 pr-10 text-[13px] outline-none shadow-sm "
               />
 
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af]">
@@ -966,7 +692,6 @@ export default function ProfitViewSecondTable() {
               </span>
             </div>
 
-            {/* Filter Dropdown */}
             <div className="flex items-center gap-3">
               <div className="relative">
                 <button
@@ -1094,20 +819,10 @@ export default function ProfitViewSecondTable() {
                   </div>
                 )}
               </div>
-
-              {/* Columns Button */}
-              <button
-                type="button"
-                onClick={() => setOpenSettings(true)}
-                className=" h-[42px] px-4 rounded-xl border border-[#e5e7eb] bg-white  flex items-center gap-2 text-[15px] font-medium shadow-sm transition-all"
-              >
-                <SettingOutlined style={{ fontSize: 14 }} />
-                Manage Columns
-              </button>
             </div>
           </div>
           <Table
-            columns={filteredColumns}
+            columns={columns}
             dataSource={dataSource}
             showSorterTooltip={false}
             loading={loading}
@@ -1126,250 +841,206 @@ export default function ProfitViewSecondTable() {
             }}
             size="small"
             scroll={{ x: 'max-content' }}
-            summary={() => {
-              const summaryItems = filteredColumns
-                .filter(
-                  (col) => !['image', 'channel', 'view', 'lastOrderDate', 'action'].includes(col.dataIndex || col.key),
-                )
-                // const summaryItems = filteredColumns
-                //   .filter((col) => !['image', 'channel', 'view'].includes(col.dataIndex))
-                .map((col) => {
-                  const keyMap = {
-                    netQty: 'netqty',
-                    returnqty: 'totalreturn',
-                    returnPercent: 'totalreturnper',
-                    netsales: 'netsales',
-                    tcs: 'tcs',
-                    mp_gst: 'mp_gst',
-                    mpfees: 'estimatefees',
-                    stdcost: 'stdcost',
-                    shipping: 'shippingfees',
-                    adSpend: 'ads',
-                    gst: 'totalgst',
-                    profit: 'profit',
-                    profitPercent: 'grossprofitper',
+            // summary={() => {
+            //   const summaryItems = columns
+            //     .filter(
+            //       (col) => !['image', 'channel', 'view', 'lastOrderDate', 'action'].includes(col.dataIndex || col.key),
+            //     )
+            //     .map((col) => {
+            //       const keyMap = {
+            //         netQty: 'netqty',
+            //         returnqty: 'totalreturn',
+            //         returnPercent: 'totalreturnper',
+            //         netsales: 'netsales',
+            //         tcs: 'tcs',
+            //         mp_gst: 'mp_gst',
+            //         mpfees: 'estimatefees',
+            //         stdcost: 'stdcost',
+            //         shipping: 'shippingfees',
+            //         adSpend: 'ads',
+            //         gst: 'totalgst',
+            //         profit: 'profit',
+            //         profitPercent: 'grossprofitper',
 
-                    grossQty: 'grossqty',
-                    netmrp: 'netmrp',
-                    mrpNetDiscount: 'mrp_net_discount',
-                    mrpCustomerDiscount: 'mrpCustomerDiscount',
-                    accountCharges: 'account_charges',
-                    otherExpenses: 'other_expenses',
-                    tacos: 'tacos',
-                    grossProfitPercent: 'grossprofit_percent',
-                    percentOfSales: 'percent_of_sales',
-                    drr: 'drr',
-                    lastOrderDate: 'lastOrderDate',
-                  };
+            //         grossQty: 'grossqty',
+            //         netmrp: 'netmrp',
+            //         mrpNetDiscount: 'mrp_net_discount',
+            //         mrpCustomerDiscount: 'mrpCustomerDiscount',
+            //         accountCharges: 'account_charges',
+            //         otherExpenses: 'other_expenses',
+            //         tacos: 'tacos',
+            //         grossProfitPercent: 'grossprofit_percent',
+            //         percentOfSales: 'percent_of_sales',
+            //         drr: 'drr',
+            //         lastOrderDate: 'lastOrderDate',
+            //       };
 
-                  return {
-                    label: col.title,
-                    dataIndex: col.dataIndex,
-                    value: totals[keyMap[col.dataIndex]],
-                  };
-                });
+            //       return {
+            //         label: col.title,
+            //         dataIndex: col.dataIndex,
+            //         value: totals[keyMap[col.dataIndex]],
+            //       };
+            //     });
 
-              return (
-                <Table.Summary fixed>
-                  <Table.Summary.Row>
-                    <Table.Summary.Cell
-                      index={0}
-                      colSpan={filteredColumns.length}
-                      style={{
-                        background: '#fff',
-                        zIndex: 20,
-                        minWidth: 220,
-                        left: 0,
-                        position: 'sticky',
-                        padding: '14px',
-                      }}
-                    >
-                      <div
-                        className="w-full rounded-2xl border border-dashed border-[#8b5cf6]
-            bg-gradient-to-r from-[#faf7ff] to-[#ffffff]
-            px-4 py-1"
-                      >
-                        <div className="flex items-center gap-4 overflow-x-auto">
-                          {/* Left Summary Card */}
-                          <div
-                            className="min-w-[360px] h-[88px] rounded-2xl bg-white border border-[#ede9fe]
-                flex items-center gap-3 px-4 shadow-sm"
-                          >
-                            <div
-                              className="w-11 h-11 rounded-xl bg-[#f3e8ff]
-                  flex items-center justify-center"
-                            >
-                              <BarChartOutlined
-                                style={{
-                                  color: '#7c3aed',
-                                  fontSize: 18,
-                                }}
-                              />
-                            </div>
+            //   return (
+            //     <Table.Summary fixed>
+            //       <Table.Summary.Row>
+            //         <Table.Summary.Cell
+            //           index={0}
+            //           colSpan={columns.length}
+            //           style={{
+            //             background: '#fff',
+            //             zIndex: 20,
+            //             minWidth: 220,
+            //             left: 0,
+            //             position: 'sticky',
+            //             padding: '14px',
+            //           }}
+            //         >
+            //           <div className="w-full rounded-2xl border border-dashed border-[#8b5cf6] bg-gradient-to-r from-[#faf7ff] to-[#ffffff] px-4 py-1">
+            //             <div className="flex items-center gap-4 overflow-x-auto">
+            //               <div className="min-w-[320px] h-[88px] rounded-2xl bg-white border border-[#ede9fe] flex items-center gap-3 px-4 shadow-sm">
+            //                 <div className="w-11 h-11 rounded-xl bg-[#f3e8ff] flex items-center justify-center">
+            //                   <BarChartOutlined
+            //                     style={{
+            //                       color: '#7c3aed',
+            //                       fontSize: 18,
+            //                     }}
+            //                   />
+            //                 </div>
 
-                            <div>
-                              <h3 className="text-[17px] font-semibold text-[#111827] mb-1">Total Summary</h3>
+            //                 <div>
+            //                   <h3 className="text-[17px] font-semibold text-[#111827] mb-1">Total Summary</h3>
 
-                              <p className="text-[12px] text-[#6b7280]">For selected period</p>
-                            </div>
-                          </div>
-
-                          {/* Metrics */}
-                          <div className="flex items-stretch gap-3">
-                            {/* {summaryItems.map((item, index) => { */}
-                            {summaryItems
-                              .filter((item) => item.dataIndex !== 'lastOrderDate')
-                              .map((item, index) => {
-                                const isNegative = Number(item.value) < 0;
-
-                                const isPercent = [
-                                  'profitPercent',
-                                  'grossProfitPercent',
-                                  'mrpNetDiscount',
-                                  'percentOfSales',
-                                  'tacos',
-                                  // 'returnPercent',
-                                ].includes(item.dataIndex);
-
-                                return (
-                                  <Table.Summary.Cell
-                                    key={index}
-                                    index={index + 3}
-                                    align="center"
-                                    style={{
-                                      background: '#fff',
-                                      padding: '10px 8px',
-                                      minWidth: 140,
-                                    }}
-                                  >
-                                    <div
-                                      className="min-w-[135px] h-[88px]
-rounded-2xl bg-white border border-[#f3f4f6]
-px-4 py-3 flex flex-col justify-center
-shadow-sm hover:shadow-md transition-all"
-                                    >
-                                      <div
-                                        className={`text-[18px] font-bold mb-1 ${
-                                          isNegative
-                                            ? 'text-[#ef4444]'
-                                            : item.dataIndex === 'profit'
-                                            ? 'text-[#16a34a]'
-                                            : 'text-[#111827]'
-                                        }`}
-                                      >
-                                        {item.value ?? 0}
-                                        {isPercent ? '%' : ''}
-                                      </div>
-
-                                      <div className="text-[12px] font-medium text-[#6b7280] whitespace-nowrap">
-                                        {item.label}
-                                      </div>
-                                    </div>
-                                  </Table.Summary.Cell>
-                                );
-                              })}
-                          </div>
-                        </div>
-                      </div>
-                    </Table.Summary.Cell>
-                  </Table.Summary.Row>
-                </Table.Summary>
-              );
-            }}
-
-            // summary={() => (
-            //   <Table.Summary.Row style={{ background: '#fafafa', fontWeight: 600 }}>
-            //     <Table.Summary.Cell index={0}>Total</Table.Summary.Cell>
-            //     <Table.Summary.Cell index={1} fixed="left" />
-            //     <Table.Summary.Cell index={2} fixed="left" />
-
-            //     {filteredColumns
-            //       .filter((col) => !['image', 'channel', 'view'].includes(col.dataIndex))
-            //       .map((col, index) => {
-            //         const keyMap = {
-            //           netQty: 'netqty',
-            //           returnqty: 'totalreturn',
-            //           returnPercent: 'totalreturnper',
-            //           netsales: 'netsales',
-            //           tcs: 'tcs',
-            //           mpfees: 'estimatefees',
-            //           stdcost: 'stdcost',
-            //           shipping: 'shippingfees',
-            //           adSpend: 'ads',
-            //           gst: 'totalgst',
-            //           // grossprofit: 'grossprofit',
-            //           profit: 'profit',
-            //           profitPercent: 'grossprofitper',
-
-            //           grossQty: 'grossqty',
-            //           netmrp: 'netmrp',
-            //           mrpNetDiscount: 'mrp_net_discount',
-            //           mrpCustomerDiscount: 'mrpCustomerDiscount',
-            //           accountCharges: 'account_charges',
-            //           otherExpenses: 'other_expenses',
-            //           tacos: 'tacos',
-            //           grossProfitPercent: 'grossprofit_percent',
-            //           percentOfSales: 'percent_of_sales',
-            //           drr: 'drr',
-            //           lastOrderDate: 'lastOrderDate',
-            //         };
-
-            //         const value = totals[keyMap[col.dataIndex]];
-
-            //         return (
-            //           <Table.Summary.Cell key={col.key || index} index={index + 3} fixed={col.fixed} align="center">
-            //             {col.key === 'action' ? (
-            //               <div className="flex gap-2 justify-end">
-            //                 <button
-            //                   type="button"
-            //                   onClick={() =>
-            //                     setDetailModal({
-            //                       open: true,
-            //                       record: totals,
-            //                       type: 'qty',
-            //                       modalLabel: 'SKU',
-            //                       modalValue: 'Total',
-            //                     })
-            //                   }
-            //                   className="w-[30px] h-[30px] border border-[#ffc0cb] rounded-[4px] bg-[#ffe4e9] flex items-center justify-center"
-            //                 >
-            //                   <BarChartOutlined style={{ fontSize: 14, color: '#ff4d6d' }} />
-            //                 </button>
+            //                   <p className="text-[12px] text-[#6b7280]">For selected period</p>
+            //                 </div>
             //               </div>
-            //             ) : ['profitPercent'].includes(col.dataIndex) ? (
-            //               <span
-            //                 style={{
-            //                   color: (value ?? 0) >= 0 ? 'green' : 'red',
-            //                   fontWeight: 600,
-            //                 }}
-            //               >
-            //                 {col.dataIndex === 'profitPercent' ? `${value ?? 0}%` : value ?? 0}
-            //               </span>
-            //             ) : (
-            //               <button
-            //                 type="button"
-            //                 className="cursor-pointer bg-transparent border-none"
-            //                 onClick={() =>
-            //                   setDetailModal({
-            //                     open: true,
-            //                     record: totals,
-            //                     type: 'qty',
-            //                     modalLabel: ' SKU',
-            //                     modalValue: 'Total',
-            //                   })
-            //                 }
-            //               >
-            //                 {value ?? 0}
-            //               </button>
-            //             )}
-            //           </Table.Summary.Cell>
-            //         );
-            //       })}
-            //   </Table.Summary.Row>
-            // )}
+
+            //               {/* Metrics */}
+            //               <div className="flex items-stretch gap-3">
+            //                 {/* {summaryItems.map((item, index) => { */}
+            //                 {summaryItems
+            //                   .filter((item) => item.dataIndex !== 'lastOrderDate')
+            //                   .map((item, index) => {
+            //                     const isNegative = Number(item.value) < 0;
+
+            //                     const isPercent = [
+            //                       'profitPercent',
+            //                       'grossProfitPercent',
+            //                       'mrpNetDiscount',
+            //                       'percentOfSales',
+            //                       'tacos',
+            //                       // 'returnPercent',
+            //                     ].includes(item.dataIndex);
+
+            //                     return (
+            //                       <Table.Summary.Cell
+            //                         key={index}
+            //                         index={index + 3}
+            //                         align="center"
+            //                         style={{
+            //                           background: '#fff',
+            //                           padding: '10px 8px',
+            //                           minWidth: 140,
+            //                         }}
+            //                       >
+            //                         <div className="min-w-[135px] h-[88px] rounded-2xl bg-white border border-[#f3f4f6] px-4 py-3 flex flex-col justify-center shadow-sm hover:shadow-md transition-all">
+            //                           <div
+            //                             className={`text-[18px] font-bold mb-1 ${
+            //                               isNegative
+            //                                 ? 'text-[#ef4444]'
+            //                                 : item.dataIndex === 'profitPercent'
+            //                                 ? 'text-[#16a34a]'
+            //                                 : 'text-[#111827]'
+            //                             }`}
+            //                           >
+            //                             {item.value ?? 0}
+            //                             {isPercent ? '%' : ''}
+            //                           </div>
+
+            //                           <div className="text-[12px] font-medium text-[#6b7280] whitespace-nowrap">
+            //                             {item.label}
+            //                           </div>
+            //                         </div>
+            //                       </Table.Summary.Cell>
+            //                     );
+            //                   })}
+            //               </div>
+            //             </div>
+            //           </div>
+            //         </Table.Summary.Cell>
+            //       </Table.Summary.Row>
+            //     </Table.Summary>
+            //   );
+            // }}
+
+            summary={() => (
+              <Table.Summary.Row style={{ background: '#fafafa', fontWeight: 600 }}>
+                <Table.Summary.Cell index={0}>Total</Table.Summary.Cell>
+                <Table.Summary.Cell index={1} fixed="left" />
+                <Table.Summary.Cell index={2} fixed="left" />
+
+                {columns
+                  .filter((col) => !['image', 'channel', 'view'].includes(col.dataIndex))
+                  .map((col, index) => {
+                    const keyMap = {
+                      netQty: 'netqty',
+                      returnqty: 'totalreturn',
+                      returnPercent: 'totalreturnper',
+                      netsales: 'netsales',
+                      tcs: 'tcs',
+                      mpfees: 'estimatefees',
+                      stdcost: 'stdcost',
+                      shipping: 'shippingfees',
+                      adSpend: 'ads',
+                      taxableValue: 'taxable_value',
+                      gst_to_pay_amount: 'gst_to_pay_amount',
+                      gst_to_pay_perc: 'gst_to_pay_perc',
+                      settleAmount: 'exp_settlement',
+                      // grossprofit: 'grossprofit',
+                      profit: 'profit',
+                      profitPercent: 'grossprofitper',
+                      mp_gst: 'mp_gst',
+
+                      grossQty: 'grossqty',
+                      netmrp: 'netmrp',
+                      mrpNetDiscount: 'mrp_net_discount',
+                      mrpCustomerDiscount: 'mrpCustomerDiscount',
+                      accountCharges: 'account_charges',
+                      otherExpenses: 'other_expenses',
+                      tacos: 'tacos',
+                      grossProfitPercent: 'grossprofit_percent',
+                      percentOfSales: 'percent_of_sales',
+                      drr: 'drr',
+                      lastOrderDate: 'lastOrderDate',
+                    };
+
+                    const value = totals[keyMap[col.dataIndex]];
+
+                    return (
+                      <Table.Summary.Cell key={col.key || index} index={index + 3} fixed={col.fixed} align="center">
+                        {col.key === 'action' ? (
+                          <div className="w-full h-full" />
+                        ) : ['profitPercent'].includes(col.dataIndex) ? (
+                          <span
+                            style={{
+                              color: (value ?? 0) >= 0 ? 'green' : 'red',
+                              fontWeight: 600,
+                            }}
+                          >
+                            {col.dataIndex === 'profitPercent' ? `${value ?? 0}%` : value ?? 0}
+                          </span>
+                        ) : (
+                          <span>{value ?? 0}</span>
+                        )}
+                      </Table.Summary.Cell>
+                    );
+                  })}
+              </Table.Summary.Row>
+            )}
           />
         </Card>
-        <Modal
+        {/* <Modal
           open={openSettings}
           onCancel={() => setOpenSettings(false)}
           footer={null}
@@ -1381,7 +1052,6 @@ shadow-sm hover:shadow-md transition-all"
             overflow: 'hidden',
           }}
         >
-          {/* Header */}
           <div className="flex items-center justify-between px-4 py-4 border-b border-[#f1f1f1]">
             <div className="flex items-center gap-2">
               <h2 className="text-[15px] font-semibold text-[#111827]">Manage Column</h2>
@@ -1391,16 +1061,9 @@ shadow-sm hover:shadow-md transition-all"
               </span>
             </div>
 
-            {/* <button
-              type="button"
-              onClick={() => setVisibleColumns([])}
-              className="text-[12px] font-medium text-[#7c3aed] hover:text-[#6d28d9]"
-            >
-              Restore
-            </button> */}
+           
           </div>
 
-          {/* Search */}
           <div className="px-4 py-3 border-b border-[#f5f5f5]">
             <div
               className="
@@ -1424,7 +1087,6 @@ shadow-sm hover:shadow-md transition-all"
             </div>
           </div>
 
-          {/* Column List */}
           <div className="max-h-[420px] overflow-y-auto">
             {allColumnsList
               .filter((col) => col.label.toLowerCase().includes(columnSearch.toLowerCase()))
@@ -1471,7 +1133,7 @@ shadow-sm hover:shadow-md transition-all"
                 );
               })}
           </div>
-        </Modal>
+        </Modal> */}
         {/* <Modal
           title="Customize Your Columns"
           open={openSettings}
@@ -1524,6 +1186,18 @@ shadow-sm hover:shadow-md transition-all"
         modalLabel={detailModal.modalLabel}
         modalValue={detailModal.modalValue}
         onClose={() => setDetailModal({ open: false, record: null, type: '' })}
+      />
+      <CalculationModal
+        open={calculationModal.open}
+        type={calculationModal.type}
+        data={calculationModal.record}
+        onClose={() =>
+          setCalculationModal({
+            open: false,
+            type: '',
+            record: null,
+          })
+        }
       />
     </>
   );
