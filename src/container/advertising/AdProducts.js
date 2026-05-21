@@ -1,11 +1,13 @@
 import React, { useEffect } from 'react';
 import { Button, Table, Tooltip, Tag } from 'antd';
-import { FilterOutlined, ExportOutlined, SearchOutlined } from '@ant-design/icons';
+import { FilterOutlined, ExportOutlined, SearchOutlined, RightOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { getAdProducts } from '../../redux/advertising/actionCreator';
 
 function AdProducts() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -30,15 +32,16 @@ function AdProducts() {
       asin: item.asin,
       sku: item.sku,
       state: item.state,
+      totalads: item.total_ads,
       campaignName: item.campaign_name,
       adGroupName: item.ad_group_name,
       countryCode: item.country_code,
       currencyCode: item.currency_code,
-      impressions: item.metrics?.impressions,
-      clicks: item.metrics?.clicks,
-      cost: item.metrics?.cost,
-      sales: item.metrics?.sales,
-      orders: item.metrics?.orders,
+      impressions: item.impressions,
+      clicks: item.clicks,
+      cost: item.cost,
+      sales: item.sales,
+      orders: item.orders,
       units: item.metrics?.units,
       acos: item.metrics?.acos,
       roas: item.metrics?.roas,
@@ -101,52 +104,58 @@ function AdProducts() {
       ),
     },
 
-    {
-      title: 'State',
-      dataIndex: 'state',
-      align: 'center',
-      render: (v) => (
-        <Tag color={v === 'ENABLED' ? 'success' : 'error'} className="!px-3 !py-[3px] !rounded-full">
-          {v}
-        </Tag>
-      ),
-    },
+    // {
+    //   title: 'State',
+    //   dataIndex: 'state',
+    //   align: 'center',
+    //   render: (v) => (
+    //     <Tag color={v === 'ENABLED' ? 'success' : 'error'} className="!px-3 !py-[3px] !rounded-full">
+    //       {v}
+    //     </Tag>
+    //   ),
+    // },
 
-    {
-      title: 'Campaign Name',
-      dataIndex: 'campaignName',
-      align: 'center',
-      render: (v) => (
-        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-          <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '190px' }}>
-            {v}
-          </span>
-        </Tooltip>
-      ),
-    },
-    {
-      title: 'Ad GroupName',
-      dataIndex: 'adGroupName',
-      align: 'center',
-      render: (v) => (
-        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-          <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
-            {v}
-          </span>
-        </Tooltip>
-      ),
-    },
+    // {
+    //   title: 'Campaign Name',
+    //   dataIndex: 'campaignName',
+    //   align: 'center',
+    //   render: (v) => (
+    //     <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+    //       <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '190px' }}>
+    //         {v}
+    //       </span>
+    //     </Tooltip>
+    //   ),
+    // },
+    // {
+    //   title: 'Ad GroupName',
+    //   dataIndex: 'adGroupName',
+    //   align: 'center',
+    //   render: (v) => (
+    //     <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+    //       <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
+    //         {v}
+    //       </span>
+    //     </Tooltip>
+    //   ),
+    // },
 
-    {
-      title: 'Country Code',
-      dataIndex: 'countryCode',
-      align: 'center',
-    },
+    // {
+    //   title: 'Country Code',
+    //   dataIndex: 'countryCode',
+    //   align: 'center',
+    // },
 
+    // {
+    //   title: 'Currency Code',
+    //   dataIndex: 'currencyCode',
+    //   align: 'center',
+    // },
     {
-      title: 'Currency Code',
-      dataIndex: 'currencyCode',
+      title: 'Total Ads',
+      dataIndex: 'totalads',
       align: 'center',
+      // render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
     {
       title: 'Impressions',
@@ -209,6 +218,25 @@ function AdProducts() {
         <Tag className="!px-3 !py-[3px] !rounded-full" color={v >= 1 ? 'success' : 'warning'}>
           {v ? v.toFixed(2) : '-'}
         </Tag>
+      ),
+    },
+    {
+      title: 'Action',
+      dataIndex: 'action',
+      width: 100,
+      fixed: 'right',
+      align: 'center',
+
+      render: (_, record) => (
+        <button
+          type="button"
+          onClick={() => {
+            navigate(`../AdProduct-Details/${record.sku}`);
+          }}
+          className="w-[34px] h-[34px] rounded-full border border-[#dbe1e8] flex items-center justify-center cursor-pointer hover:text-black transition-all duration-200 mx-auto"
+        >
+          <RightOutlined />
+        </button>
       ),
     },
   ];

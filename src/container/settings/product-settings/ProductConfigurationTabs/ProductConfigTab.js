@@ -82,6 +82,11 @@ export default function ProductConfigTab({ pagination, setPagination }) {
       ),
     },
     {
+      title: 'Fulfillment Channel Code',
+      dataIndex: 'fulfilments',
+      align: 'center',
+    },
+    {
       title: 'Item Weight',
       dataIndex: 'itemWeight',
       align: 'center',
@@ -188,6 +193,10 @@ export default function ProductConfigTab({ pagination, setPagination }) {
 
       itemWeight: item.attributes?.item_weight?.[0]
         ? `${item.attributes.item_weight[0].value} ${item.attributes.item_weight[0].unit}`
+        : '-',
+
+      fulfilments: item.attributes?.fulfillment_availability?.[0]
+        ? `${item.attributes.fulfillment_availability[0].fulfillment_channel_code}`
         : '-',
 
       itempkgWeight: item.attributes?.item_package_weight?.[0]
