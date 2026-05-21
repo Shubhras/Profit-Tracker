@@ -15,6 +15,22 @@ const actions = {
   ADS_PRODUCTS_SUCCESS: 'ADS_PRODUCTS_SUCCESS',
   ADS_PRODUCTS_ERR: 'ADS_PRODUCTS_ERR',
 
+  ADS_PRODUCTS_DETAILS_BEGIN: 'ADS_PRODUCTS_DETAILS_BEGIN',
+  ADS_PRODUCTS_DETAILS_SUCCESS: 'ADS_PRODUCTS_DETAILS_SUCCESS',
+  ADS_PRODUCTS_DETAILS_ERR: 'ADS_PRODUCTS_DETAILS_ERR',
+
+  PRODUCTS_ADS_BEGIN: 'PRODUCTS_ADS_BEGIN',
+  PRODUCTS_ADS_SUCCESS: 'PRODUCTS_ADS_SUCCESS',
+  PRODUCTS_ADS_ERR: 'PRODUCTS_ADS_ERR',
+
+  SEARCH_TERMS_BEGIN: 'SEARCH_TERMS_BEGIN',
+  SEARCH_TERMS_SUCCESS: 'SEARCH_TERMS_SUCCESS',
+  SEARCH_TERMS_ERR: 'SEARCH_TERMS_ERR',
+
+  RULES_BEGIN: 'RULES_BEGIN',
+  RULES_SUCCESS: 'RULES_SUCCESS',
+  RULES_ERR: 'RULES_ERR',
+
   campaignsBegin: () => {
     return {
       type: actions.CAMPAIGNS_BEGIN,
@@ -91,6 +107,86 @@ const actions = {
   adsproductsErr: (err) => {
     return {
       type: actions.ADS_PRODUCTS_ERR,
+      err,
+    };
+  },
+
+  adsproductsDetailsBegin: () => {
+    return {
+      type: actions.ADS_PRODUCTS_DETAILS_BEGIN,
+    };
+  },
+
+  adsproductsDetailsSuccess: (data) => {
+    return {
+      type: actions.ADS_PRODUCTS_DETAILS_SUCCESS,
+      data,
+    };
+  },
+
+  adsproductsDetailsErr: (err) => {
+    return {
+      type: actions.ADS_PRODUCTS_DETAILS_ERR,
+      err,
+    };
+  },
+
+  productsadsBegin: () => {
+    return {
+      type: actions.PRODUCTS_ADS_BEGIN,
+    };
+  },
+
+  productsadsSuccess: (data) => {
+    return {
+      type: actions.PRODUCTS_ADS_SUCCESS,
+      data,
+    };
+  },
+
+  productsadsErr: (err) => {
+    return {
+      type: actions.PRODUCTS_ADS_ERR,
+      err,
+    };
+  },
+
+  searchtermsBegin: () => {
+    return {
+      type: actions.SEARCH_TERMS_BEGIN,
+    };
+  },
+
+  searchtermsSuccess: (data) => {
+    return {
+      type: actions.SEARCH_TERMS_SUCCESS,
+      data,
+    };
+  },
+
+  searchtermsErr: (err) => {
+    return {
+      type: actions.SEARCH_TERMS_ERR,
+      err,
+    };
+  },
+
+  rulesBegin: () => {
+    return {
+      type: actions.RULES_BEGIN,
+    };
+  },
+
+  rulesSuccess: (data) => {
+    return {
+      type: actions.RULES_SUCCESS,
+      data,
+    };
+  },
+
+  rulesErr: (err) => {
+    return {
+      type: actions.RULES_ERR,
       err,
     };
   },

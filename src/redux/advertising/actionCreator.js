@@ -15,6 +15,22 @@ const {
   adsproductsBegin,
   adsproductsSuccess,
   adsproductsErr,
+
+  adsproductsDetailsBegin,
+  adsproductsDetailsSuccess,
+  adsproductsDetailsErr,
+
+  productsadsBegin,
+  productsadsSuccess,
+  productsadsErr,
+
+  searchtermsBegin,
+  searchtermsSuccess,
+  searchtermsErr,
+
+  rulesBegin,
+  rulesSuccess,
+  rulesErr,
 } = actions;
 
 export const getCampaigns = (page = 1, pageSize = 10) => {
@@ -86,6 +102,91 @@ export const getAdProducts = (page = 1, pageSize = 10, payload = {}) => {
       }
     } catch (err) {
       dispatch(adsproductsErr(err.response?.data?.message || err.message));
+    }
+  };
+};
+
+export const getAdProductsDetails = (page = 1, pageSize = 10, payload = {}) => {
+  return async (dispatch) => {
+    dispatch(adsproductsDetailsBegin());
+
+    try {
+      const response = await DataService.post(
+        `/amazon-ads/camping-by-sku/list/?page=${page}&page_size=${pageSize}`,
+        payload,
+      );
+
+      if (response.data.status === true) {
+        dispatch(adsproductsDetailsSuccess(response.data));
+      } else {
+        dispatch(adsproductsDetailsErr(response.data.message || 'Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(adsproductsDetailsErr(err.response?.data?.message || err.message));
+    }
+  };
+};
+
+export const getProductsAds = (page = 1, pageSize = 10, payload = {}) => {
+  return async (dispatch) => {
+    dispatch(productsadsBegin());
+
+    try {
+      const response = await DataService.post(
+        `/amazon-ads/adgroup-by-camping/?page=${page}&page_size=${pageSize}`,
+        payload,
+      );
+
+      if (response.data.status === true) {
+        dispatch(productsadsSuccess(response.data));
+      } else {
+        dispatch(productsadsErr(response.data.message || 'Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(productsadsErr(err.response?.data?.message || err.message));
+    }
+  };
+};
+
+export const getSearchTerms = (page = 1, pageSize = 10, payload = {}) => {
+  return async (dispatch) => {
+    dispatch(searchtermsBegin());
+
+    try {
+      const response = await DataService.post(
+        `/amazon-ads/search-term-metrics/?page=${page}&page_size=${pageSize}`,
+        payload,
+      );
+
+      if (response.data.status === true) {
+        dispatch(searchtermsSuccess(response.data));
+      } else {
+        dispatch(searchtermsErr(response.data.message || 'Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(searchtermsErr(err.response?.data?.message || err.message));
+    }
+  };
+};
+
+export const getRules = (page = 1, pageSize = 10, ruleType = '') => {
+  return async (dispatch) => {
+    dispatch(rulesBegin());
+
+    try {
+      const url = ruleType
+        ? `/amazon-ads/budget-rule-list/?page=${page}&page_size=${pageSize}&rule_type=${ruleType}`
+        : `/amazon-ads/budget-rule-list/?page=${page}&page_size=${pageSize}`;
+
+      const response = await DataService.get(url);
+
+      if (response.data.results.status === true) {
+        dispatch(rulesSuccess(response.data));
+      } else {
+        dispatch(rulesErr(response.data.results.message || 'Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(rulesErr(err.response?.data?.message || err.message));
     }
   };
 };

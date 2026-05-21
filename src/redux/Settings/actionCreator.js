@@ -239,37 +239,25 @@ export const exportProductConfiguration = () => {
     dispatch(exportproductconfigurationBegin());
 
     try {
-      const response = await DataService.get('/amazon/export-amazon-listing-excel/', {
-        responseType: 'blob',
-      });
-      console.log('rddddddddddd', response);
-      console.log(response.headers['content-type']);
+      const response = await DataService.get('/amazon/export-amazon-listing-excel/');
 
-      const blob = new Blob([response.data], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      });
+      console.log('Export Response:', response.data);
 
-      const url = window.URL.createObjectURL(blob);
+      if (response.data.status && response.data.download_url) {
+        // Direct download/open
+        window.open(response.data.download_url, '_blank');
 
-      const link = document.createElement('a');
-
-      link.href = url;
-
-      link.setAttribute('download', 'product_configuration.xlsx');
-
-      document.body.appendChild(link);
-
-      link.click();
-
-      link.remove();
-
-      dispatch(exportproductconfigurationSuccess(response.data));
+        dispatch(exportproductconfigurationSuccess(response.data));
+      } else {
+        throw new Error('Download URL not found');
+      }
     } catch (err) {
+      console.log(err);
+
       dispatch(exportproductconfigurationErr(err.message));
     }
   };
 };
-
 export const uploadProductConfiguration = (file) => {
   return async (dispatch) => {
     dispatch(uploadproductconfigurationBegin());
