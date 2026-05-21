@@ -491,27 +491,4 @@ class SPAPIManager:
             params=params
         )
     
-    # def list_returns(self, **kwargs):
-    #     path = "/externalFulfillment/2024-09-11/returns"
-        
-
-    #     params = {}
-
-    #     allowed_params = [
-    #         "returnLocationId",
-    #         "rmaId",
-    #         "status",
-    #         "reverseTrackingId",
-    #         "createdSince",
-    #         "createdUntil",
-    #         "lastUpdatedSince",
-    #         "lastUpdatedUntil",
-    #         "maxResults",
-    #         "nextToken"
-    #     ]
-
-    #     for key in allowed_params:
-    #         if key in kwargs and kwargs[key] is not None:
-    #             params[key] = kwargs[key]
-
-    #     return self.request("GET", path, params=params)
+  

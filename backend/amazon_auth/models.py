@@ -768,6 +768,13 @@ class AmazonListingItem(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    standard_cost = models.FloatField(default=0)
+    gst_rate = models.FloatField(default=0)
+    tcs = models.FloatField(default=0)
+    region = models.TextField(null=True, blank=True)
+    shiping_estimate = models.FloatField(default=0)
+    step_level = models.TextField(null=True, blank=True)
+
     class Meta:
         unique_together = ("amazon_account", "sku", "marketplace_id")
 
