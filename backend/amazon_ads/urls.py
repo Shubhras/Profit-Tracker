@@ -11,6 +11,7 @@ from .views import sync_campaigns_api
 from django.urls import path
 
 from .views import *
+from .budget_rules import *
 urlpatterns = [
 
     path("account/connect/",AmazonAdsConnectView.as_view()),
@@ -31,4 +32,10 @@ urlpatterns = [
 
     path("get-query-ads/",QueryAdsView.as_view()),
     path("sync-campaigns/",sync_campaigns_api),
+
+    path("search-term-metrics/",SearchTermMetricListView.as_view(),name="search-term-metrics"),
+
+    path("sync-budget-rules/",SyncBudgetRulesAPIView.as_view(),name="sync-budget-rules"),
+
+    path("budget-rule-list/",AdsBudgetRuleListAPIView.as_view(),name="budget-rule-list"),
 ]

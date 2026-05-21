@@ -1830,3 +1830,140 @@ class QueryAdsView(APIView):
         })    
     
 
+# views.py
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django.db.models import Q
+from django.core.paginator import Paginator
+
+from .models import SearchTermMetric
+
+
+class SearchTermMetricListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        data = request.data
+
+        filters = data.get("filters", {})
+        pagination = data.get("pagination", {})
+
+        page_no = int(pagination.get("pageNo", 1))
+        page_size = int(pagination.get("pageSize", 10))
+
+        queryset = SearchTermMetric.objects.select_related(
+            "campaign",
+            "campaign__amazon_account"
+        ).all().order_by("-report_date")
+
+        # ---------------- SEARCH ----------------
+
+        search = filters.get("search")
+
+        if search:
+            queryset = queryset.filter(
+                Q(search_term__icontains=search) |
+                Q(campaign__name__icontains=search)
+            )
+
+        # ---------------- FILTERS ----------------
+
+        campaign_id = filters.get("campaign_id")
+        if campaign_id:
+            queryset = queryset.filter(campaign_id=campaign_id)
+
+        from_date = filters.get("from_date")
+        to_date = filters.get("to_date")
+
+        if from_date and to_date:
+            queryset = queryset.filter(
+                report_date__range=[from_date, to_date]
+            )
+        elif from_date:
+            queryset = queryset.filter(report_date__gte=from_date)
+        elif to_date:
+            queryset = queryset.filter(report_date__lte=to_date)
+
+        min_acos = filters.get("min_acos")
+        max_acos = filters.get("max_acos")
+
+        if min_acos not in [None, ""]:
+            queryset = queryset.filter(acos__gte=min_acos)
+
+        if max_acos not in [None, ""]:
+            queryset = queryset.filter(acos__lte=max_acos)
+
+        min_roas = filters.get("min_roas")
+        max_roas = filters.get("max_roas")
+
+        if min_roas not in [None, ""]:
+            queryset = queryset.filter(roas__gte=min_roas)
+
+        if max_roas not in [None, ""]:
+            queryset = queryset.filter(roas__lte=max_roas)
+
+        # ---------------- SORTING ----------------
+
+        sort_by = filters.get("sort_by", "report_date")
+        sort_order = filters.get("sort_order", "desc")
+
+        allowed_sort_fields = [
+            "report_date",
+            "impressions",
+            "clicks",
+            "cost",
+            "sales",
+            "orders",
+            "acos",
+            "roas",
+        ]
+
+        if sort_by not in allowed_sort_fields:
+            sort_by = "report_date"
+
+        if sort_order == "desc":
+            sort_by = f"-{sort_by}"
+
+        queryset = queryset.order_by(sort_by)
+
+        # ---------------- PAGINATION ----------------
+
+        paginator = Paginator(queryset, page_size)
+        page_obj = paginator.get_page(page_no)
+
+        results = []
+
+        for item in page_obj:
+
+            results.append({
+                "id": item.id,
+                "campaign_id": item.campaign.id if item.campaign else None,
+                "campaign_name": item.campaign.name if item.campaign else None,
+                "search_term": item.search_term,
+                "report_date": item.report_date,
+                "impressions": item.impressions,
+                "clicks": item.clicks,
+                "cost": item.cost,
+                "sales": item.sales,
+                "orders": item.orders,
+                "acos": item.acos,
+                "roas": item.roas,
+                "raw_data": item.raw_data,
+            })
+
+        return Response({
+            "status": True,
+            "message": "Search term metrics fetched successfully",
+            "data": results,
+            "pagination": {
+                "pageNo": page_no,
+                "pageSize": page_size,
+                "totalPages": paginator.num_pages,
+                "totalItems": paginator.count,
+            }
+        })
+    
+    

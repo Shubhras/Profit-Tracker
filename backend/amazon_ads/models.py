@@ -301,60 +301,56 @@ class TargetMetric(models.Model):
     raw_data = models.JSONField(default=dict)       
 
 
-# amazon_ads/models.py
+# models.py
 
 class AdsBudgetRule(models.Model):
+
+    RULE_TYPE_CHOICES = (
+        ("sp", "Sponsored Products"),
+        ("sd", "Sponsored Display"),
+        ("sb", "Sponsored Brands"),
+    )
 
     amazon_account = models.ForeignKey(
         AmazonAdsAccount,
         on_delete=models.CASCADE
     )
 
-    rule_id = models.BigIntegerField(unique=True)
+    profile_id = models.CharField(max_length=100,null=True, blank=True)
 
-    name = models.CharField(
-        max_length=255,
-        null=True,
-        blank=True
-    )
+    budget_rule_id = models.CharField(max_length=255,null=True, blank=True)
 
     rule_type = models.CharField(
+        max_length=10,
+        choices=RULE_TYPE_CHOICES,default ="sp"
+    )
+
+    name = models.CharField(max_length=500, null=True, blank=True)
+
+    rule_state = models.CharField(max_length=50, null=True, blank=True)
+
+    rule_status = models.CharField(
         max_length=100,
         null=True,
         blank=True
     )
 
-    state = models.CharField(
-        max_length=50,
-        null=True,
-        blank=True
-    )
 
-    associated_campaigns_count = models.IntegerField(
-        default=0
-    )
+    created_date = models.BigIntegerField(null=True, blank=True)
 
-    budget_rule_details = models.JSONField(
-        default=dict,
-        blank=True
-    )
+    last_updated_date = models.BigIntegerField(null=True, blank=True)
 
-    created_at_amazon = models.DateTimeField(
-        null=True,
-        blank=True
-    )
-
-    last_updated_at_amazon = models.DateTimeField(
-        null=True,
-        blank=True
-    )
+    rule_details = models.JSONField(default=dict)
 
     raw_data = models.JSONField(default=dict)
 
-    created_at = models.DateTimeField(
-        auto_now_add=True
-    )
+    created_at = models.DateTimeField(auto_now_add=True)
 
-    updated_at = models.DateTimeField(
-        auto_now=True
-    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("amazon_account", "budget_rule_id", "rule_type")
+
+    def __str__(self):
+        return f"{self.rule_type} - {self.budget_rule_id}"
+    
