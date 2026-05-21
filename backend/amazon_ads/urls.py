@@ -21,9 +21,14 @@ urlpatterns = [
     path("campaigns/list/",CampaignListView.as_view()),
     path("ad-groups/list/",AdsAdGroupListView.as_view()),
     path("keywords/list/",AdsKeywordListView.as_view()),
-    path("product-ads/list/",AdsProductAdListView.as_view()),
+    # path("product-ads/list/",AdsProductAdListView.as_view()),
 
-    path("product-ads/list/",AdsProductAdListView.as_view()),
+    path("product-ads/list/",ProductSKUReportView.as_view()),
+
+    path("camping-by-sku/list/",CampaignBySKUView.as_view()),
+
+    path("adgroup-by-camping/",AdGroupByCampaignView.as_view()),
+
     path("get-query-ads/",QueryAdsView.as_view()),
     path("sync-campaigns/",sync_campaigns_api),
 ]

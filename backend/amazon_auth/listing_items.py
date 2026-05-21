@@ -24,6 +24,26 @@ from django.utils.timezone import localtime
 import json
 
 from openpyxl import load_workbook
+from zipfile import BadZipFile
+
+from openpyxl import load_workbook
+from io import BytesIO
+from openpyxl.utils import get_column_letter
+
+import os
+import uuid
+
+from django.conf import settings
+from django.http import JsonResponse
+from django.utils.timezone import localtime
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+
+from openpyxl import Workbook
+from openpyxl.styles import Font
+from openpyxl.utils import get_column_letter
+
 
 
 def sync_listing_items(user, account):
@@ -624,16 +644,379 @@ def export_amazon_listing_excel(request):
 
 
 
+# @api_view(["GET"])
+# @permission_classes([IsAuthenticated])
+# def export_amazon_listing_excel(request):
 
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from django.db import transaction
+#     user = request.user
 
-from openpyxl import load_workbook
-from zipfile import BadZipFile
+#     amazon_account_id = request.GET.get("amazon_account_id")
+#     sku = request.GET.get("sku")
+#     asin = request.GET.get("asin")
+#     marketplace_id = request.GET.get("marketplace_id")
 
-from .models import AmazonListingItem
+#     queryset = AmazonListingItem.objects.filter(
+#         user=user
+#     )
+
+#     # ============================================================
+#     # FILTERS
+#     # ============================================================
+
+#     if amazon_account_id:
+#         queryset = queryset.filter(
+#             amazon_account_id=amazon_account_id
+#         )
+
+#     if sku:
+#         queryset = queryset.filter(
+#             sku__icontains=sku
+#         )
+
+#     if asin:
+#         queryset = queryset.filter(
+#             asin__icontains=asin
+#         )
+
+#     if marketplace_id:
+#         queryset = queryset.filter(
+#             marketplace_id=marketplace_id
+#         )
+
+#     queryset = queryset.order_by(
+#         "-last_updated_date"
+#     )
+
+#     # ============================================================
+#     # CREATE WORKBOOK
+#     # ============================================================
+
+#     wb = Workbook()
+
+#     ws = wb.active
+#     ws.title = "Amazon Listing Items"
+
+#     # ============================================================
+#     # HEADERS
+#     # ============================================================
+
+#     headers = [
+
+#         "SKU",
+#         "ASIN",
+
+#         "Item Weight",
+#         "Item Weight Unit",
+
+#         "Package Weight",
+#         "Package Weight Unit",
+
+#         "Item Length",
+#         "Item Width",
+#         "Item Height",
+#         "Item Dimension Unit",
+
+#         "Package Length",
+#         "Package Width",
+#         "Package Height",
+#         "Package Dimension Unit",
+
+#         "Shipping Estimate",
+#         "Region",
+#         "Step Level",
+
+#         "Standard Cost",
+#         "GST Rate",
+#         "TCS",
+#     ]
+
+#     # ============================================================
+#     # WRITE HEADERS
+#     # ============================================================
+
+#     for col_num, header in enumerate(headers, 1):
+
+#         cell = ws.cell(
+#             row=1,
+#             column=col_num,
+#             value=header
+#         )
+
+#         cell.font = Font(bold=True)
+
+#     # ============================================================
+#     # WRITE DATA
+#     # ============================================================
+
+#     for row_num, item in enumerate(queryset, start=2):
+
+#         try:
+
+#             attributes = item.attributes or {}
+
+#             # ----------------------------------------------------
+#             # ITEM DIMENSIONS
+#             # ----------------------------------------------------
+
+#             item_dimensions = attributes.get(
+#                 "item_dimensions",
+#                 []
+#             )
+
+#             item_length = ""
+#             item_width = ""
+#             item_height = ""
+#             item_dimension_unit = ""
+
+#             if item_dimensions and isinstance(item_dimensions, list):
+
+#                 dimension_data = item_dimensions[0] or {}
+
+#                 item_length = (
+#                     dimension_data.get("length", {})
+#                     .get("value", "")
+#                 )
+
+#                 item_width = (
+#                     dimension_data.get("width", {})
+#                     .get("value", "")
+#                 )
+
+#                 item_height = (
+#                     dimension_data.get("height", {})
+#                     .get("value", "")
+#                 )
+
+#                 item_dimension_unit = (
+#                     dimension_data.get("length", {})
+#                     .get("unit", "")
+#                 )
+
+#             # ----------------------------------------------------
+#             # PACKAGE DIMENSIONS
+#             # ----------------------------------------------------
+
+#             package_dimensions = attributes.get(
+#                 "item_package_dimensions",
+#                 []
+#             )
+
+#             pkg_length = ""
+#             pkg_width = ""
+#             pkg_height = ""
+#             pkg_dimension_unit = ""
+
+#             if package_dimensions and isinstance(package_dimensions, list):
+
+#                 pkg_data = package_dimensions[0] or {}
+
+#                 pkg_length = (
+#                     pkg_data.get("length", {})
+#                     .get("value", "")
+#                 )
+
+#                 pkg_width = (
+#                     pkg_data.get("width", {})
+#                     .get("value", "")
+#                 )
+
+#                 pkg_height = (
+#                     pkg_data.get("height", {})
+#                     .get("value", "")
+#                 )
+
+#                 pkg_dimension_unit = (
+#                     pkg_data.get("length", {})
+#                     .get("unit", "")
+#                 )
+
+#             # ----------------------------------------------------
+#             # ITEM WEIGHT
+#             # ----------------------------------------------------
+
+#             item_weight = attributes.get(
+#                 "item_weight",
+#                 []
+#             )
+
+#             weight_value = ""
+#             weight_unit = ""
+
+#             if item_weight and isinstance(item_weight, list):
+
+#                 weight_data = item_weight[0] or {}
+
+#                 weight_value = weight_data.get(
+#                     "value",
+#                     ""
+#                 )
+
+#                 weight_unit = weight_data.get(
+#                     "unit",
+#                     ""
+#                 )
+
+#             # ----------------------------------------------------
+#             # PACKAGE WEIGHT
+#             # ----------------------------------------------------
+
+#             item_package_weight = attributes.get(
+#                 "item_package_weight",
+#                 []
+#             )
+
+#             package_weight_value = ""
+#             package_weight_unit = ""
+
+#             if item_package_weight and isinstance(item_package_weight, list):
+
+#                 package_data = item_package_weight[0] or {}
+
+#                 package_weight_value = package_data.get(
+#                     "value",
+#                     ""
+#                 )
+
+#                 package_weight_unit = package_data.get(
+#                     "unit",
+#                     ""
+#                 )
+
+#             # ----------------------------------------------------
+#             # ROW DATA
+#             # ----------------------------------------------------
+
+#             row_data = [
+
+#                 str(item.sku or ""),
+#                 str(item.asin or ""),
+
+#                 weight_value,
+#                 weight_unit,
+
+#                 package_weight_value,
+#                 package_weight_unit,
+
+#                 item_length,
+#                 item_width,
+#                 item_height,
+#                 item_dimension_unit,
+
+#                 pkg_length,
+#                 pkg_width,
+#                 pkg_height,
+#                 pkg_dimension_unit,
+
+#                 float(item.shiping_estimate or 0),
+#                 str(item.region or ""),
+#                 str(item.step_level or ""),
+
+#                 float(item.standard_cost or 0),
+#                 float(item.gst_rate or 0),
+#                 float(item.tcs or 0),
+#             ]
+
+#             for col_num, value in enumerate(row_data, 1):
+
+#                 ws.cell(
+#                     row=row_num,
+#                     column=col_num,
+#                     value=value
+#                 )
+
+#         except Exception as e:
+
+#             print(
+#                 f"Excel export error for SKU "
+#                 f"{item.sku}: {e}"
+#             )
+
+#     # ============================================================
+#     # AUTO WIDTH
+#     # ============================================================
+
+#     for column_cells in ws.columns:
+
+#         max_length = 0
+
+#         column_letter = get_column_letter(
+#             column_cells[0].column
+#         )
+
+#         for cell in column_cells:
+
+#             try:
+#                 if cell.value:
+#                     max_length = max(
+#                         max_length,
+#                         len(str(cell.value))
+#                     )
+#             except:
+#                 pass
+
+#         adjusted_width = min(
+#             max_length + 5,
+#             50
+#         )
+
+#         ws.column_dimensions[
+#             column_letter
+#         ].width = adjusted_width
+
+#     # ============================================================
+#     # CREATE EXPORT FOLDER
+#     # ============================================================
+
+#     export_dir = os.path.join(
+#         settings.MEDIA_ROOT,
+#         "exports"
+#     )
+
+#     os.makedirs(
+#         export_dir,
+#         exist_ok=True
+#     )
+
+#     # ============================================================
+#     # FILE NAME
+#     # ============================================================
+
+#     file_name = (
+#         f"amazon_listing_"
+#         f"{uuid.uuid4().hex}.xlsx"
+#     )
+
+#     file_path = os.path.join(
+#         export_dir,
+#         file_name
+#     )
+
+#     # ============================================================
+#     # SAVE FILE
+#     # ============================================================
+
+#     wb.save(file_path)
+
+#     # ============================================================
+#     # FILE URL
+#     # ============================================================
+
+#     file_url = (
+#         request.build_absolute_uri(
+#             settings.MEDIA_URL
+#         )
+#         + f"exports/{file_name}"
+#     )
+
+#     # ============================================================
+#     # RESPONSE
+#     # ============================================================
+
+#     return JsonResponse({
+#         "status": True,
+#         "message": "Excel exported successfully",
+#         "download_url": file_url
+#     })
 
 
 @api_view(["POST"])

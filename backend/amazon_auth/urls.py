@@ -10,6 +10,8 @@ from amazon_ads.views import AmazonAdsCallbackView
 from .product_pricing import  *
 from .catelog_details import *
 from .listing_items import *
+
+
 urlpatterns = [
     path('dashboard-stats/', views.get_full_dashboard, name='dashboard-stats'),
     path('pivot-stats/', views.get_pivot_dashboard, name='pivot-stats'),
@@ -89,3 +91,5 @@ urlpatterns = [
     path("upload-amazon-listing-excel/",upload_amazon_listing_excel,name="upload_amazon_listing_excel",),
  
 ]
+
+
