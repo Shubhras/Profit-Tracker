@@ -257,3 +257,79 @@ class TargetMetricAdmin(admin.ModelAdmin):
     )
     list_filter = ("report_date",)
     ordering = ("-report_date",)    
+
+
+# admin.py
+
+from django.contrib import admin
+from .models import AdsBudgetRule
+
+
+@admin.register(AdsBudgetRule)
+class AdsBudgetRuleAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "id",
+        "budget_rule_id",
+        "name",
+        "rule_type",
+        "rule_state",
+        "profile_id",
+        "amazon_account",
+        "created_at",
+    )
+
+    list_filter = (
+        "rule_type",
+        "rule_state",
+        "created_at",
+    )
+
+    search_fields = (
+        "budget_rule_id",
+        "name",
+        "profile_id",
+        "amazon_account__profile_id",
+        "amazon_account__user__email",
+        "amazon_account__user__username",
+    )
+
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+        "created_date",
+        "last_updated_date",
+    )
+
+    ordering = ("-created_at",)
+
+    list_per_page = 20
+
+    fieldsets = (
+        ("Basic Information", {
+            "fields": (
+                "amazon_account",
+                "profile_id",
+                "budget_rule_id",
+                "name",
+                "rule_type",
+                "rule_state",
+            )
+        }),
+
+        ("Dates", {
+            "fields": (
+                "created_date",
+                "last_updated_date",
+                "created_at",
+                "updated_at",
+            )
+        }),
+
+        ("JSON Data", {
+            "fields": (
+                "rule_details",
+                "raw_data",
+            )
+        }),
+    )    

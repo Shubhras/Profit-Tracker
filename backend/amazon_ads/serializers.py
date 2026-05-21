@@ -253,3 +253,32 @@ class AdsProductAdSerializer(serializers.ModelSerializer):
                 latest_metric
             ).data
         return None
+    
+
+
+class AdsBudgetRuleSerializer(serializers.ModelSerializer):
+
+    amazon_account_id = serializers.IntegerField(
+        source="amazon_account.id",
+        read_only=True
+    )
+
+    class Meta:
+        model = AdsBudgetRule
+
+        fields = [
+            "id",
+            "amazon_account_id",
+            "profile_id",
+            "budget_rule_id",
+            "rule_type",
+            "name",
+            "rule_state",
+            "rule_status",
+            "created_date",
+            "last_updated_date",
+            "rule_details",
+            
+            "created_at",
+            "updated_at",
+        ]    
