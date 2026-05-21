@@ -35,6 +35,16 @@ const actions = {
   ADD_USER_SUCCESS: 'ADD_USER_SUCCESS',
   ADD_USER_ERR: 'ADD_USER_ERR',
 
+  EXPORT_PRODUCT_CONFIGURATION_BEGIN: 'EXPORT_PRODUCT_CONFIGURATION_BEGIN',
+  EXPORT_PRODUCT_CONFIGURATION_SUCCESS: 'EXPORT_PRODUCT_CONFIGURATION_SUCCESS',
+  EXPORT_PRODUCT_CONFIGURATION_ERR: 'EXPORT_PRODUCT_CONFIGURATION_ERR',
+
+  UPLOAD_PRODUCT_CONFIGURATION_BEGIN: 'UPLOAD_PRODUCT_CONFIGURATION_BEGIN',
+
+  UPLOAD_PRODUCT_CONFIGURATION_SUCCESS: 'UPLOAD_PRODUCT_CONFIGURATION_SUCCESS',
+
+  UPLOAD_PRODUCT_CONFIGURATION_ERR: 'UPLOAD_PRODUCT_CONFIGURATION_ERR',
+
   overviewsettingBegin: () => {
     return {
       type: actions.OVERVIEW_SETTING_BEGIN,
@@ -210,6 +220,45 @@ const actions = {
   adduserErr: (err) => {
     return {
       type: actions.ADD_USER_ERR,
+      err,
+    };
+  },
+  exportproductconfigurationBegin: () => {
+    return {
+      type: actions.EXPORT_PRODUCT_CONFIGURATION_BEGIN,
+    };
+  },
+
+  exportproductconfigurationSuccess: (data) => {
+    return {
+      type: actions.EXPORT_PRODUCT_CONFIGURATION_SUCCESS,
+      data,
+    };
+  },
+
+  exportproductconfigurationErr: (err) => {
+    return {
+      type: actions.EXPORT_PRODUCT_CONFIGURATION_ERR,
+      err,
+    };
+  },
+
+  uploadproductconfigurationBegin: () => {
+    return {
+      type: actions.UPLOAD_PRODUCT_CONFIGURATION_BEGIN,
+    };
+  },
+
+  uploadproductconfigurationSuccess: (data) => {
+    return {
+      type: actions.UPLOAD_PRODUCT_CONFIGURATION_SUCCESS,
+      data,
+    };
+  },
+
+  uploadproductconfigurationErr: (err) => {
+    return {
+      type: actions.UPLOAD_PRODUCT_CONFIGURATION_ERR,
       err,
     };
   },

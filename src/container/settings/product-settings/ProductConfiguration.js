@@ -40,11 +40,22 @@ export default function ProductConfiguration() {
   //       return {};
   //   }
   // };
+
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+  });
+
   useEffect(() => {
     setLoading(true);
-
     if (activeTab === 'product') {
-      dispatch(getProductConfiguration(1, 10));
+      const payload = {
+        search: '',
+        marketplace_id: '',
+        product_type: '',
+      };
+
+      dispatch(getProductConfiguration(pagination.current, pagination.pageSize, payload));
     }
 
     const timer = setTimeout(() => {
@@ -52,7 +63,7 @@ export default function ProductConfiguration() {
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [activeTab, dispatch]);
+  }, [activeTab, dispatch, pagination]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -93,7 +104,7 @@ export default function ProductConfiguration() {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'product':
-        return <ProductConfigTab />;
+        return <ProductConfigTab pagination={pagination} setPagination={setPagination} />;
       case 'inventory':
         return <InventoryMastertab />;
       case 'pincode':
