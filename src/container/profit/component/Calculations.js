@@ -242,14 +242,14 @@ function CalculationModal({ open, onClose, type, data }) {
                 label: 'Other charges',
                 value: data?.other_charges || 0,
               },
-              {
-                label: 'Per Item Fee',
-                value: data?.per_item_fee || 0,
-              },
-              {
-                label: 'FBA Fee',
-                value: data?.fba_fee || 0,
-              },
+              // {
+              //   label: 'Per Item Fee',
+              //   value: data?.per_item_fee || 0,
+              // },
+              // {
+              //   label: 'FBA Fee',
+              //   value: data?.fba_fee || 0,
+              // },
             ].map((item, index) => (
               <div key={index} className="grid grid-cols-2 border-b last:border-b-0 border-[#e5e7eb]">
                 <div className="px-4 py-3 text-[14px] text-[#111827] border-r flex items-center gap-2 font-semibold">

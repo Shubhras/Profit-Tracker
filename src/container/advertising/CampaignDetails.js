@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Button, Table, Tag, Tooltip } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Button, Table, Tag, Tooltip, Modal, InputNumber } from 'antd';
 import { ArrowLeftOutlined, FilterOutlined, ExportOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -9,6 +9,9 @@ function CampaignDetails() {
   const { id } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [isBidModalOpen, setIsBidModalOpen] = useState(false);
+  const [selectedBid, setSelectedBid] = useState(null);
+  const [selectedRecord, setSelectedRecord] = useState(null);
 
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -88,7 +91,19 @@ function CampaignDetails() {
       title: 'Default Bid',
       dataIndex: 'defaultBid',
       align: 'center',
-      render: (v) => `₹${v}`,
+      render: (v, record) => (
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedBid(v);
+            setSelectedRecord(record);
+            setIsBidModalOpen(true);
+          }}
+          className="text-[#2563eb] font-semibold hover:underline cursor-pointer"
+        >
+          ₹{v}
+        </button>
+      ),
     },
 
     // {
@@ -231,48 +246,17 @@ function CampaignDetails() {
                 <input
                   type="text"
                   placeholder="Search ad groups..."
-                  className="
-          w-full
-          h-[42px]
-          rounded-xl
-          border border-[#dbe1e8]
-          bg-white
-          pl-11
-          pr-4
-          text-[14px]
-          text-[#111827]
-          outline-none
-          shadow-sm
-          focus:border-[#2563eb]
-        "
+                  className="w-full h-[42px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm focus:border-[#2563eb]"
                 />
 
-                <SearchOutlined
-                  className="
-          absolute
-          left-4
-          top-1/2
-          -translate-y-1/2
-          text-[#9ca3af]
-          text-[15px]
-        "
-                />
+                <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
               </div>
 
               {/* Right Buttons */}
               <div className="flex items-center gap-3">
                 <Button
                   icon={<FilterOutlined />}
-                  className="
-          !h-[40px]
-          !rounded-xl
-          !border-[#dbe1e8]
-          !text-[#374151]
-          !font-medium
-          !flex
-          !items-center
-          !justify-center
-        "
+                  className="!h-[40px] !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium !flex !items-center !justify-center"
                 >
                   Filters
                 </Button>
@@ -280,15 +264,7 @@ function CampaignDetails() {
                 <Button
                   type="primary"
                   icon={<ExportOutlined />}
-                  className="
-          !h-[40px]
-          !rounded-xl
-          !bg-[#2563eb]
-          !font-medium
-          !flex
-          !items-center
-          !justify-center
-        "
+                  className="!h-[40px] !rounded-xl !bg-[#2563eb] !font-medium !flex !items-center !justify-center"
                 >
                   Export
                 </Button>
@@ -321,6 +297,41 @@ function CampaignDetails() {
           />
         </div>
       </div>
+      <Modal
+        open={isBidModalOpen}
+        onCancel={() => setIsBidModalOpen(false)}
+        onOk={() => {
+          console.log('Updated Bid:', selectedBid);
+          console.log('Record:', selectedRecord);
+
+          setIsBidModalOpen(false);
+        }}
+        okText="Update"
+        centered
+        title="Update Default Bid"
+      >
+        <div className="mt-1">
+          <label className="block text-[16px] font-medium text-[#374151] mb-2">Default Bid</label>
+
+          <InputNumber
+            min={0}
+            step={1}
+            value={selectedBid}
+            onChange={(value) => setSelectedBid(value)}
+            className="!w-full !h-[42px]"
+            addonBefore="₹"
+            onKeyDown={(e) => {
+              // Allow only numbers + control keys
+              if (
+                !/[0-9]/.test(e.key) &&
+                !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'].includes(e.key)
+              ) {
+                e.preventDefault();
+              }
+            }}
+          />
+        </div>
+      </Modal>
     </>
   );
 }
