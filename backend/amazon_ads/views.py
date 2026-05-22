@@ -27,6 +27,7 @@ from django.db.models import (
     Sum,
     Count
 )
+from rest_framework import status
 
 AMAZON_ADS_REDIRECT_URI="https://trackmyprofit.com/api/amazon/callback/advertise"
 
@@ -1966,4 +1967,374 @@ class SearchTermMetricListView(APIView):
             }
         })
     
-    
+
+
+# views.py
+
+from django.db.models import Q, Sum, F, FloatField, ExpressionWrapper
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
+
+
+class ProductAdMetricListAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        try:
+
+            queryset = ProductAdMetric.objects.filter(
+                product_ad__amazon_account__user=request.user
+            ).select_related(
+                "product_ad",
+                "product_ad__campaign",
+                "product_ad__ad_group",
+            )
+
+            # =====================================================
+            # FILTERS
+            # =====================================================
+
+            campaign_id = request.GET.get("campaign_id")
+
+            ad_group_id = request.GET.get("ad_group_id")
+
+            product_ad_id = request.GET.get("product_ad_id")
+
+            sku = request.GET.get("sku")
+
+            asin = request.GET.get("asin")
+
+            state = request.GET.get("state")
+
+            search = request.GET.get("search")
+
+            start_date = request.GET.get("start_date")
+
+            end_date = request.GET.get("end_date")
+
+            ordering = request.GET.get("ordering", "-total_sales")
+
+            # =====================================================
+            # FILTER : CAMPAIGN
+            # =====================================================
+
+            if campaign_id:
+
+                queryset = queryset.filter(
+                    product_ad__campaign__campaign_id=campaign_id
+                )
+
+            # =====================================================
+            # FILTER : AD GROUP
+            # =====================================================
+
+            if ad_group_id:
+
+                queryset = queryset.filter(
+                    product_ad__ad_group__ad_group_id=ad_group_id
+                )
+
+            # =====================================================
+            # FILTER : PRODUCT AD
+            # =====================================================
+
+            if product_ad_id:
+
+                queryset = queryset.filter(
+                    product_ad__ad_id=product_ad_id
+                )
+
+            # =====================================================
+            # FILTER : SKU
+            # =====================================================
+
+            if sku:
+
+                queryset = queryset.filter(
+                    product_ad__sku__icontains=sku
+                )
+
+            # =====================================================
+            # FILTER : ASIN
+            # =====================================================
+
+            if asin:
+
+                queryset = queryset.filter(
+                    product_ad__asin__icontains=asin
+                )
+
+            # =====================================================
+            # FILTER : STATE
+            # =====================================================
+
+            if state:
+
+                queryset = queryset.filter(
+                    product_ad__state__iexact=state
+                )
+
+            # =====================================================
+            # FILTER : DATE RANGE
+            # =====================================================
+
+            if start_date and end_date:
+
+                queryset = queryset.filter(
+                    report_date__range=[start_date, end_date]
+                )
+
+            elif start_date:
+
+                queryset = queryset.filter(
+                    report_date__gte=start_date
+                )
+
+            elif end_date:
+
+                queryset = queryset.filter(
+                    report_date__lte=end_date
+                )
+
+            # =====================================================
+            # SEARCH
+            # =====================================================
+
+            if search:
+
+                queryset = queryset.filter(
+
+                    Q(product_ad__sku__icontains=search)
+
+                    |
+
+                    Q(product_ad__asin__icontains=search)
+
+                    |
+
+                    Q(product_ad__campaign__name__icontains=search)
+
+                    |
+
+                    Q(product_ad__ad_group__name__icontains=search)
+                )
+
+            # =====================================================
+            # GROUP BY PRODUCT AD
+            # =====================================================
+
+            queryset = queryset.values(
+
+                "product_ad_id",
+
+                "product_ad__ad_id",
+
+                "product_ad__sku",
+
+                "product_ad__asin",
+
+                "product_ad__state",
+
+                "product_ad__campaign__campaign_id",
+
+                "product_ad__campaign__name",
+
+                "product_ad__ad_group__ad_group_id",
+
+                "product_ad__ad_group__name",
+
+            ).annotate(
+
+                total_impressions=Sum("impressions"),
+
+                total_clicks=Sum("clicks"),
+
+                total_cost=Sum("cost"),
+
+                total_sales=Sum("sales"),
+
+                total_orders=Sum("orders"),
+
+            )
+
+            # =====================================================
+            # CALCULATED METRICS
+            # =====================================================
+
+            queryset = queryset.annotate(
+
+                ctr=ExpressionWrapper(
+
+                    (
+                        F("total_clicks") * 100.0
+                    ) / F("total_impressions"),
+
+                    output_field=FloatField()
+
+                ),
+
+                cpc=ExpressionWrapper(
+
+                    F("total_cost") / F("total_clicks"),
+
+                    output_field=FloatField()
+
+                ),
+
+                acos=ExpressionWrapper(
+
+                    (
+                        F("total_cost") * 100.0
+                    ) / F("total_sales"),
+
+                    output_field=FloatField()
+
+                ),
+
+                roas=ExpressionWrapper(
+
+                    F("total_sales") / F("total_cost"),
+
+                    output_field=FloatField()
+
+                ),
+            )
+
+            # =====================================================
+            # ORDERING
+            # =====================================================
+
+            allowed_ordering = [
+
+                "total_sales",
+                "-total_sales",
+
+                "total_cost",
+                "-total_cost",
+
+                "total_clicks",
+                "-total_clicks",
+
+                "total_impressions",
+                "-total_impressions",
+
+                "total_orders",
+                "-total_orders",
+
+                "roas",
+                "-roas",
+
+                "acos",
+                "-acos",
+            ]
+
+            if ordering not in allowed_ordering:
+
+                ordering = "-total_sales"
+
+            queryset = queryset.order_by(ordering)
+
+            # =====================================================
+            # SUMMARY
+            # =====================================================
+
+            summary = queryset.aggregate(
+
+                total_impressions=Sum("total_impressions"),
+
+                total_clicks=Sum("total_clicks"),
+
+                total_cost=Sum("total_cost"),
+
+                total_sales=Sum("total_sales"),
+
+                total_orders=Sum("total_orders"),
+            )
+
+            # =====================================================
+            # EXTRA SUMMARY METRICS
+            # =====================================================
+
+            total_impressions = summary.get("total_impressions") or 0
+
+            total_clicks = summary.get("total_clicks") or 0
+
+            total_cost = summary.get("total_cost") or 0
+
+            total_sales = summary.get("total_sales") or 0
+
+            summary["ctr"] = round(
+
+                (
+                    total_clicks * 100
+                ) / total_impressions,
+
+                2
+
+            ) if total_impressions else 0
+
+            summary["cpc"] = round(
+
+                total_cost / total_clicks,
+
+                2
+
+            ) if total_clicks else 0
+
+            summary["acos"] = round(
+
+                (
+                    total_cost * 100
+                ) / total_sales,
+
+                2
+
+            ) if total_sales else 0
+
+            summary["roas"] = round(
+
+                total_sales / total_cost,
+
+                2
+
+            ) if total_cost else 0
+
+            # =====================================================
+            # PAGINATION
+            # =====================================================
+
+            paginator = CustomPagination()
+
+            paginated_queryset = paginator.paginate_queryset(
+                queryset,
+                request
+            )
+
+            # =====================================================
+            # RESPONSE
+            # =====================================================
+
+            return paginator.get_paginated_response({
+
+                "status": True,
+
+                "message": "Product ad metrics fetched successfully",
+
+                "summary": summary,
+
+                "data": paginated_queryset
+            })
+
+        except Exception as e:
+
+            return Response(
+                {
+                    "status": False,
+                    "message": str(e)
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )    

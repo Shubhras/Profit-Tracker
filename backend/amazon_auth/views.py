@@ -41,7 +41,7 @@ from django.http import JsonResponse
 from amazon_auth.spapi_manager import SPAPIManager
 from amazon_auth.utils import safe_catalog_call
 
-
+from amazon_ads.models import ProductAdMetric
 
 # Load .env file
 load_dotenv()
@@ -87,88 +87,6 @@ def amazon_connect(request):
     return redirect(auth_url)
 
 
-# =========================================
-# 2. CALLBACK → Handle Amazon response
-# =========================================
-# def amazon_callback(request):
-#     state = request.GET.get("state")
-#     code = request.GET.get("spapi_oauth_code")
-#     seller_id = request.GET.get("selling_partner_id")
-    
-#     session_state = request.session.get("amazon_state")
-#     print("session_state//////",session_state)
-#     print("_state//////",state)
-#     # if not session_state or state != session_state:
-#     #     return JsonResponse({"error": "Invalid state parameter."}, status=400)
-    
-#     if not code:
-#         return JsonResponse({"error": "Authorization code missing"}, status=400)
-    
-#     if request.session.get("code_used"):
-#         return JsonResponse({"error": "Code already used"}, status=400)
-
-#     request.session["code_used"] = True
-
-#     lwa_token_url = "https://api.amazon.com/auth/o2/token"
-#     payload = {
-#         "grant_type": "authorization_code",
-#         "code": code,
-#         "client_id": AMAZON_CLIENT_ID,
-#         "client_secret": AMAZON_CLIENT_SECRET,
-#         "redirect_uri": REDIRECT_URI,
-#     }
- 
-#     try:
-#         response = requests.post(lwa_token_url, data=payload)
-#         # response.raise_for_status()
-#         print("STATUS:", response.status_code)
-#         print("RESPONSE BODY:", response.text)
-#         # data = response.json()
-#         response = requests.post(
-#             lwa_token_url,
-#             data=payload,
-#             headers={
-#                 "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
-#             }
-#         )
-
-#         print("STATUS:", response.status_code)
-#         print("RESPONSE BODY:", response.text)
-
-#         if response.status_code != 200:
-#             return JsonResponse({
-#                 "error": response.text
-#             }, status=400)
-
-#         data = response.json()
-#         refresh_token = data.get("refresh_token")
-        
-#         user = request.user if request.user.is_authenticated else User.objects.first()
-        
-#         # Link account to both user and seller_id to allow multiple unique accounts
-#         account, created = AmazonAccount.objects.get_or_create(
-#             user=user, 
-#             seller_central_id=seller_id,
-#             defaults={
-#                 'marketplace_id': "A21TJRUUN4KGV", # Default to India
-#                 'region': "EU"
-#             }
-#         )
-        
-#         account.app_client_id = AMAZON_CLIENT_ID
-#         print("CLIENT_ID:", AMAZON_CLIENT_ID)
-#         account.app_client_secret = AMAZON_CLIENT_SECRET
-#         account.set_refresh_token(refresh_token)
-#         account.save()
-
-#         return JsonResponse({
-#             "status": "success", 
-#             "message": "Amazon connected successfully", 
-#             "seller_id": seller_id,
-#             "is_new": created
-#         })
-#     except Exception as e:
-#         return JsonResponse({"error": str(e)}, status=500)
 
 
 def amazon_callback(request):
@@ -2192,22 +2110,32 @@ def get_full_dashboard(request):
     #     date__range=(start_date.date(), end_date.date())
     # )
 
-    ad_metrics_qs = AdCampaignMetrics.objects.filter(
-        campaign__user=user,
-        date__range=(start_date.date(), end_date.date())
+    # ============================================================
+    # ADS SPEND
+    # ============================================================
+
+    ads_metrics_qs = ProductAdMetric.objects.filter(
+        product_ad__amazon_account__user=user,
+        product_ad__amazon_account__is_primary=True,
+        report_date__range=(
+            start_date.date(),
+            end_date.date()
+        )
     )
 
     ads_amount = float(
-        ad_metrics_qs.aggregate(val=Sum('spend'))['val'] or 0
+        ads_metrics_qs.aggregate(
+            total=Sum("cost")
+        )["total"] or 0
     )
 
-    # 🔥 sanity cap (VERY IMPORTANT)
+    # make negative for expense
+    ads_amount = -abs(ads_amount)
+
+    # optional sanity cap
     if net_sales > 0 and abs(ads_amount) > net_sales:
-        ads_amount = - (net_sales * 0.3)  # cap at 30%
-
-
-
-    
+        ads_amount = -(net_sales * 0.3)
+        
 
     # ---------------- PROFIT ----------------
     # profit = net_sales - total_fees + returns_amount + claim_amount + ads_amount
@@ -2218,7 +2146,6 @@ def get_full_dashboard(request):
         - claim_amount       # claim loss
         + ads_amount         # ads negative
     )
-
 
 
     # ---------------- METRICS ----------------
@@ -2345,7 +2272,7 @@ def get_full_dashboard(request):
             "profit": round(profit, 2),
             "margin": f"{round(margin)}%",
             "roi": f"{round(roi)}%",
-            "ad_spend": round(ads_amount, 2),
+            "ad_spend": format_currency(ads_amount),
             "tacos": f"{round(tacos)}%"
         },
         "breakdown_table": {
@@ -4159,27 +4086,6 @@ def amazon_profitability_details(request):
 
     # ---------------- ORDER ITEM AGG ----------------
 
-    # items = (
-    #     OrderItem.objects
-    #     .filter(order_filter)
-    #     .exclude(order__order_status__icontains='Cancel')
-    #     .values('parent_asin')
-    #     .annotate(
-    #         title=Max('title'),
-    #         image_url=Max('image_url'),
-    #         grossqty=Sum('quantity_ordered'),
-    #         quantity_shipped=Sum('quantity_shipped'),
-    #         shipping_income=Sum('shipping_income'),
-    #         shipping_price=Sum('shipping_price'),
-    #         discount=Sum('discount'),
-    #         promotion_discount=Sum('promotion_discount'),
-    #         avg_cost=Avg('item_price'),
-    #         item_tax=Sum('item_tax'),
-    #         total_cost=Sum(F('cost_price') * F('quantity_ordered')),
-    #         # grosssales=Sum(F('item_price') * F('quantity_ordered'))
-    #         grosssales=Sum('item_price'),
-    #     )
-    # )
     listing_qs = AmazonListingItem.objects.filter(
             user=user,
             asin=OuterRef("asin")
@@ -4259,14 +4165,6 @@ def amazon_profitability_details(request):
             order_item__parent_asin__in=parent_ids
         )
 
-    # estimated_fee_data = (
-    #     estimated_fee_qs
-    #     .values('order_item__parent_asin')
-    #     .annotate(
-    #         estimated_fees=Sum('total_fees')
-    #     )
-    # )
-
     estimated_fee_data = (
         estimated_fee_qs
         .values('order_item__parent_asin')
@@ -4284,11 +4182,6 @@ def amazon_profitability_details(request):
             tax_amount=Sum('tax_amount'),
         )
     )
-
-    # estimated_fee_map = {
-    #     row['order_item__parent_asin']: float(row['estimated_fees'] or 0)
-    #     for row in estimated_fee_data
-    # }
 
     estimated_fee_map = {
         row['order_item__parent_asin']: {
@@ -4332,7 +4225,7 @@ def amazon_profitability_details(request):
         .annotate(
             refund=Sum('total_amount', filter=Q(event_group="REFUND")),
             rto=Sum('total_amount', filter=Q(event_group="RTO")),
-            ads=Sum('total_amount', filter=Q(event_type__icontains='Ad')),
+            # ads=Sum('total_amount', filter=Q(event_type__icontains='Ad')),
             commission=Sum('commission_fee'),
             fulfillment=Sum('fulfillment_fee'),
             other_fee=Sum('other_fee'),
@@ -4425,13 +4318,7 @@ def amazon_profitability_details(request):
         shipping_income = float(row.get('shipping_income') or 0)
         shipping_price = float(row.get('shipping_price') or 0)
 
-        # ---------------- GST / TAXABLE ----------------
-
-        # ==========================================================
-        # SKU LEVEL GST / TCS / COST
-        # ==========================================================
-
-
+        # ---------------- GST / TAXABLE ---------------
 
         # ==========================================================
         # GST / TAXABLE / TCS
@@ -4453,28 +4340,19 @@ def amazon_profitability_details(request):
         # ADJUSTED SALES
         # ----------------------------------------------------------
 
-        adjusted_gross_sales = (
-            gross_sales
-            + item_tax
-            - promo_discount
-            + shipping_price
-        )
+        adjusted_gross_sales = ( gross_sales + item_tax - promo_discount + shipping_price )
 
         # ----------------------------------------------------------
         # GST RATE
         # ----------------------------------------------------------
 
-        gst_rate = float(
-            str(row.get("sku_gst_rate") or 0)
-        )
+        gst_rate = float(str(row.get("sku_gst_rate") or 0))
 
         # ----------------------------------------------------------
         # TCS RATE
         # ----------------------------------------------------------
 
-        tcs_rate = float(
-            str(row.get("sku_tcs_rate") or 1)
-        )
+        tcs_rate = float(str(row.get("sku_tcs_rate") or 1))
 
         # ----------------------------------------------------------
         # TAXABLE VALUE
@@ -4528,6 +4406,68 @@ def amazon_profitability_details(request):
         gst = 0
         # tcs_total = 0  
         t_new_charge = 0   
+
+        # ==========================================================
+        # ADS SPEND (FROM PRODUCT AD METRICS)
+        # ==========================================================
+
+        ads_metrics_qs = ProductAdMetric.objects.filter(
+            product_ad__amazon_account__user=user,
+            product_ad__amazon_account__is_primary=True,
+        )
+
+        # DATE FILTER
+        if from_date:
+            ads_metrics_qs = ads_metrics_qs.filter(
+                report_date__gte=from_date.date()
+            )
+
+        if to_date:
+            ads_metrics_qs = ads_metrics_qs.filter(
+                report_date__lt=to_date.date()
+            )
+
+        # GET ALL CHILD ORDER ITEMS
+        order_items = (
+            OrderItem.objects
+            .filter(
+                order_filter,
+                parent_asin=parent_asin
+            )
+        )
+
+        # CHILD SKUS
+        child_skus = list(
+            order_items
+            .exclude(seller_sku__isnull=True)
+            .exclude(seller_sku__exact="")
+            .values_list("seller_sku", flat=True)
+            .distinct()
+        )
+
+        # MATCH ADS USING CHILD SKU
+        ads_metrics_qs = ads_metrics_qs.filter(
+            product_ad__sku__in=child_skus
+        ).distinct()
+
+        # AGGREGATE
+        ads_data = ads_metrics_qs.aggregate(
+            total_ads_cost=Sum("cost"),
+            total_ads_sales=Sum("sales"),
+            total_ads_clicks=Sum("clicks"),
+            total_ads_orders=Sum("orders"),
+            total_ads_impressions=Sum("impressions"),
+        )
+
+        ads = -abs(float(ads_data["total_ads_cost"] or 0))
+
+        # make negative because expense
+        ads = -abs(ads)
+
+        ads_sales = float(ads_data["total_ads_sales"] or 0)
+        ads_clicks = int(ads_data["total_ads_clicks"] or 0)
+        ads_orders = int(ads_data["total_ads_orders"] or 0)
+        ads_impressions = int(ads_data["total_ads_impressions"] or 0)
         
 
 
@@ -4543,7 +4483,7 @@ def amazon_profitability_details(request):
 
             refund += r
             rto += rto_amt
-            ads += float(f.get('ads') or 0)
+            # ads += float(f.get('ads') or 0)
 
             mpfees += (
                 float(f.get('commission') or 0) +
@@ -4582,8 +4522,7 @@ def amazon_profitability_details(request):
         # ---------------- CALCULATIONS ----------------
         # net_qty = max(gross_qty - return_units, 0)
         net_qty = max(gross_qty , 0)
-        # net_sales = gross_sales + refund + rto
-        # net_sales = adjusted_gross_sales + refund + rto
+    
         net_sales = adjusted_gross_sales
         shipping_final = shipping_price 
 
@@ -4625,6 +4564,7 @@ def amazon_profitability_details(request):
             - stdcost
             + tcs_total
             + mp_gst
+            + ads
         
         )
         exp_settlement = (
@@ -4635,7 +4575,10 @@ def amazon_profitability_details(request):
         )
         
         profit_margin = (profit / net_sales * 100) if net_sales else 0
-        tacos = (ads / gross_sales * 100) if gross_sales else 0
+        # tacos = (ads / gross_sales * 100) if gross_sales else 0
+        tacos = (
+            abs(ads) / gross_sales * 100
+        ) if gross_sales else 0
         ret_percent = (return_units / net_qty * 100) if net_qty else 0
 
 
@@ -4651,7 +4594,12 @@ def amazon_profitability_details(request):
             "netqty": net_qty,
             "grosssales": format_currency(gross_sales),
             "netsales": format_currency(net_sales),
+            # "ads": format_currency(ads),
             "ads": format_currency(ads),
+            "ads_sales": format_currency(ads_sales),
+            "ads_clicks": ads_clicks,
+            "ads_orders": ads_orders,
+            "ads_impressions": ads_impressions,
             "mpfees": round(mpfees, 2),
             "mp_gst": format_currency(mp_gst),
             "new_mpfees": format_currency(t_new_charge),
@@ -5255,28 +5203,7 @@ def amazon_profitability_parent(request):
         order_filter &= Q(order__purchase_date__lte=to_date)
 
 
-    # ---------------- CHILD ASIN DATA ----------------
-    # items = (
-    #     OrderItem.objects
-    #     .filter(order_filter)
-    #     .exclude(order__order_status__icontains='Cancel')
-    #     .values('asin', 'parent_asin')
-    #     .annotate(
-    #         title=Max('title'),
-    #         seller_sku=Max('seller_sku'),
-    #         image_url=Max('image_url'),
-    #         grossqty=Sum('quantity_ordered'),
-    #         quantity_shipped=Sum('quantity_shipped'),
-    #         shipping_price=Sum('shipping_price'),
-    #         total_cost=Sum(F('cost_price') * F('quantity_ordered')),
-    #         grosssales=Sum('item_price'),
-    #         promotion_discount=Sum('promotion_discount'),
-    #         avg_cost=Avg('item_price'),
-    #         item_tax=Sum('item_tax'),
-    #     )
-    # )
-
-        # ============================================================
+    # ============================================================
     # ITEMS QUERY WITH SKU LEVEL GST / COST / TCS
     # ============================================================
 
@@ -5422,7 +5349,7 @@ def amazon_profitability_parent(request):
         .annotate(
             refund=Sum('total_amount', filter=Q(event_group="REFUND")),
             rto=Sum('total_amount', filter=Q(event_group="RTO")),
-            ads=Sum('total_amount', filter=Q(event_type__icontains='Ad')),
+            # ads=Sum('total_amount', filter=Q(event_type__icontains='Ad')),
             commission=Sum('commission_fee'),
             fulfillment=Sum('fulfillment_fee'),
             other_fee=Sum('other_fee'),
@@ -5455,6 +5382,103 @@ def amazon_profitability_parent(request):
         normalize_sku(k): v
         for k, v in OrderItem.objects.filter(order_filter).values_list('seller_sku', 'asin')
     }
+
+    # ============================================================
+    # ADS DATA MAP
+    # ============================================================
+
+    ads_metrics_qs = ProductAdMetric.objects.filter(
+        product_ad__amazon_account__user=user,
+        product_ad__amazon_account__is_primary=True,
+    )
+
+    if from_date:
+        ads_metrics_qs = ads_metrics_qs.filter(
+            report_date__gte=from_date.date()
+        )
+
+    if to_date:
+        ads_metrics_qs = ads_metrics_qs.filter(
+            report_date__lte=to_date.date()
+        )
+
+    # ============================================================
+    # MAP ADS BY ASIN
+    # ============================================================
+
+    ads_data = (
+        ads_metrics_qs
+        .values(
+            "product_ad__asin",
+            "product_ad__sku",
+        )
+        .annotate(
+            total_ads_cost=Sum("cost"),
+            total_impressions=Sum("impressions"),
+            total_clicks=Sum("clicks"),
+            total_sales=Sum("sales"),
+            total_orders=Sum("orders"),
+        )
+    )
+
+    # ============================================================
+    # ASIN ADS MAP
+    # ============================================================
+
+    ads_map = {}
+
+    for row in ads_data:
+
+        asin_key = (
+            row["product_ad__asin"] or ""
+        ).strip()
+
+        sku_key = normalize_sku(
+            row["product_ad__sku"] or ""
+        )
+
+        cost = Decimal(
+            str(row["total_ads_cost"] or 0)
+        )
+
+        if asin_key not in ads_map:
+
+            ads_map[asin_key] = {
+                "cost": Decimal("0"),
+                "clicks": 0,
+                "impressions": 0,
+                "sales": Decimal("0"),
+                "orders": 0,
+            }
+
+        ads_map[asin_key]["cost"] += cost
+        ads_map[asin_key]["clicks"] += int(
+            row["total_clicks"] or 0
+        )
+        ads_map[asin_key]["impressions"] += int(
+            row["total_impressions"] or 0
+        )
+        ads_map[asin_key]["sales"] += Decimal(
+            str(row["total_sales"] or 0)
+        )
+        ads_map[asin_key]["orders"] += int(
+            row["total_orders"] or 0
+        )
+
+        # optional SKU mapping
+        if sku_key:
+
+            if sku_key not in ads_map:
+
+                ads_map[sku_key] = {
+                    "cost": Decimal("0"),
+                    "clicks": 0,
+                    "impressions": 0,
+                    "sales": Decimal("0"),
+                    "orders": 0,
+                }
+
+            ads_map[sku_key]["cost"] += cost
 
     # ---------------- BUILD RESPONSE ----------------
     results = []
@@ -5526,7 +5550,7 @@ def amazon_profitability_parent(request):
         # # adjusted_gross_sales = gross_sales + item_tax - promo_discount
         # adjusted_gross_sales = gross_sales + item_tax - promo_discount + shipping_price
 
-                # ------------------------------------------------------------
+        # ------------------------------------------------------------
         # ADJUSTED SALES
         # ------------------------------------------------------------
 
@@ -5603,10 +5627,39 @@ def amazon_profitability_parent(request):
                 if taxable_value else 1
             )  
 
-        refund = rto = ads = mpfees = shipping_fee = Decimal(0)
+
+
+
+        refund = rto = mpfees = shipping_fee = Decimal(0)
         return_units = Decimal(0)
         # tcs_total = Decimal(0)
         t_new_charge = Decimal(0)
+
+        refund = rto = mpfees = shipping_fee = Decimal(0)
+
+        # ============================================================
+        # ADS SPEND
+        # ============================================================
+
+        ads = Decimal("0")
+
+        # by child asin
+        ads_row = ads_map.get(asin)
+
+        if not ads_row:
+
+            # fallback by sku
+            ads_row = ads_map.get(
+                normalize_sku(child_sku)
+            )
+
+        if ads_row:
+
+            ads = -abs(
+                Decimal(
+                    str(ads_row["cost"] or 0)
+                )
+            )
 
         for o in orders:
             oid = o['order__amazon_order_id']
@@ -5616,7 +5669,7 @@ def amazon_profitability_parent(request):
 
             refund += Decimal(f.get('refund') or 0)
             rto += Decimal(f.get('rto') or 0)
-            ads += Decimal(f.get('ads') or 0)
+            # ads += Decimal(f.get('ads') or 0)
 
             mpfees += (
                 Decimal(f.get('commission') or 0) +
@@ -5670,10 +5723,12 @@ def amazon_profitability_parent(request):
 
         # profit = net_sales + t_new_charge + shipping_final - total_cost + tcs_total
         # profit = net_sales - estimated_fees - shipping_final - tcs_total + mp_gst - total_cost
+        
         profit = (
             net_sales
             - estimated_fees
             - shipping_final
+            + ads
             + tcs_total
             + mp_gst
             - total_cost
@@ -5686,6 +5741,11 @@ def amazon_profitability_parent(request):
             - mp_gst
         )
         profit_margin = (profit / net_sales * 100) if net_sales else 0
+
+        tacos = (
+            (abs(ads) / gross_sales) * 100
+            if gross_sales else 0
+        )
 
         ret_percent = (return_units / net_qty * 100) if net_qty else 0
         
@@ -5706,6 +5766,7 @@ def amazon_profitability_parent(request):
             "netsales": format_currency(net_sales),
 
             "ads": format_currency(ads),
+            "tacos": round(tacos, 2),
             "mp_gst": format_currency(mp_gst),
             "new_mpfees": format_currency(t_new_charge),
          
@@ -6377,30 +6438,6 @@ def sku_profit_report(request):
     if to_date:
         order_filter &= Q(order__purchase_date__lte=to_date)
 
-    # ---------------- ORDER ITEMS ----------------
-    # items = (
-    #     OrderItem.objects
-    #     .filter(order_filter)
-    #     .exclude(order__order_status__icontains='Cancel')
-    #     .values('order__amazon_order_id', 'order__purchase_date')
-    #     .annotate(
-    #         title=Max('title'),
-    #         image=Max('image_url'),
-
-    #         grossqty=Sum('quantity_ordered'),
-    #         grosssales=Sum('item_price'),
-    #         promotion_discount=Sum('promotion_discount'),
-    #         avg_cost=Avg('item_price'),
-    #         item_tax=Sum('item_tax'),
-
-    #         shipping_income=Sum('shipping_price'),
-    #         shipping_price=Sum('shipping_price'),
-    #         total_cost=Sum(F('cost_price') * F('quantity_ordered'))
-    #     )
-    #     .order_by('-order__purchase_date')
-    # )
-
-
     # ============================================================
     # ITEMS QUERY WITH THIS new gst and st cost
     # ============================================================
@@ -6534,7 +6571,7 @@ def sku_profit_report(request):
         .values('amazon_order_id')
         .annotate(
             refund=Sum('total_amount', filter=Q(event_group="REFUND")),
-            ads=Sum('total_amount', filter=Q(event_type__icontains='Ad')),
+            # ads=Sum('total_amount', filter=Q(event_type__icontains='Ad')),
 
             commission=Sum('commission_fee'),
             fulfillment=Sum('fulfillment_fee'),
@@ -6558,6 +6595,149 @@ def sku_profit_report(request):
     raw_data_map = {}
     for r in raw_map:
         raw_data_map.setdefault(r['amazon_order_id'], []).append(r['raw_data'])
+
+
+
+    # ============================================================
+    # ADS SPEND MAP (APPLY BEFORE BUILD RESPONSE)
+    # ============================================================
+
+    # GET ALL SKU LIST
+    sku_list = list(
+        OrderItem.objects
+        .filter(order_filter)
+        .exclude(seller_sku__isnull=True)
+        .exclude(seller_sku__exact="")
+        .values_list("seller_sku", flat=True)
+        .distinct()
+    )
+
+    normalized_skus = [
+        normalize_sku(sku)
+        for sku in sku_list
+    ]
+
+    # ------------------------------------------------------------
+    # GET ADS SPEND SKU LEVEL
+    # ------------------------------------------------------------
+
+    # ============================================================
+    # ADS SPEND MAP (APPLY BEFORE BUILD RESPONSE)
+    # ============================================================
+
+    # GET ALL SKU LIST
+    sku_list = list(
+        OrderItem.objects
+        .filter(order_filter)
+        .exclude(seller_sku__isnull=True)
+        .exclude(seller_sku__exact="")
+        .values_list("seller_sku", flat=True)
+        .distinct()
+    )
+
+    normalized_skus = [
+        normalize_sku(sku)
+        for sku in sku_list
+    ]
+
+    # ------------------------------------------------------------
+    # GET ADS SPEND SKU LEVEL
+    # ------------------------------------------------------------
+
+    ads_metrics_qs = (
+        ProductAdMetric.objects
+        .filter(
+            product_ad__amazon_account__user=user,
+            product_ad__amazon_account__is_primary=True,
+        )
+    )
+
+    if from_date:
+        ads_metrics_qs = ads_metrics_qs.filter(
+            report_date__gte=from_date.date()
+        )
+
+    if to_date:
+        ads_metrics_qs = ads_metrics_qs.filter(
+            report_date__lt=to_date.date()
+        )
+    # ============================================================
+    # ADS DATA
+    # ============================================================
+
+    ads_data = (
+        ads_metrics_qs
+        .values(
+            "product_ad__asin",
+            "product_ad__sku",
+        )
+        .annotate(
+            total_ads_cost=Sum("cost"),
+            total_impressions=Sum("impressions"),
+            total_clicks=Sum("clicks"),
+            total_sales=Sum("sales"),
+            total_orders=Sum("orders"),
+        )
+    )
+
+    # ============================================================
+    # ADS MAP
+    # ============================================================
+
+    ads_map = {}
+
+    for row in ads_data:
+
+        asin_key = (
+            row["product_ad__asin"] or ""
+        ).strip()
+
+        sku_key = normalize_sku(
+            row["product_ad__sku"] or ""
+        )
+
+        cost = float(
+            str(row["total_ads_cost"] or 0)
+        )
+
+        if asin_key not in ads_map:
+
+            ads_map[asin_key] = {
+                "cost": float("0"),
+                "clicks": 0,
+                "impressions": 0,
+                "sales": float("0"),
+                "orders": 0,
+            }
+
+        ads_map[asin_key]["cost"] += cost
+        ads_map[asin_key]["clicks"] += int(
+            row["total_clicks"] or 0
+        )
+        ads_map[asin_key]["impressions"] += int(
+            row["total_impressions"] or 0
+        )
+        ads_map[asin_key]["sales"] += float(
+            str(row["total_sales"] or 0)
+        )
+        ads_map[asin_key]["orders"] += int(
+            row["total_orders"] or 0
+        )
+
+        # OPTIONAL SKU MAP
+        if sku_key:
+
+            if sku_key not in ads_map:
+
+                ads_map[sku_key] = {
+                    "cost": float("0"),
+                    "clicks": 0,
+                    "impressions": 0,
+                    "sales": float("0"),
+                    "orders": 0,
+                }
+
+            ads_map[sku_key]["cost"] += cost    
 
     # ---------------- BUILD RESPONSE ----------------
     results = []
@@ -6608,6 +6788,32 @@ def sku_profit_report(request):
         shipping_income = float(row['shipping_income'] or 0)
         shipping_price = float(row['shipping_price'] or 0)
 
+        # ============================================================
+        # ADS SPEND
+        # ============================================================
+
+        ads = float("0")
+
+        child_sku = row.get("seller_sku")
+
+        # BY ASIN
+        ads_row = ads_map.get(asin)
+
+        # FALLBACK BY SKU
+        if not ads_row and child_sku:
+
+            ads_row = ads_map.get(
+                normalize_sku(child_sku)
+            )
+
+        if ads_row:
+
+            ads = -abs(
+                float(
+                    str(ads_row.get("cost") or 0)
+                )
+            )
+
         adjusted_gross_sales = gross_sales + item_tax - promo_discount + shipping_price
         
         # cost = float(row['total_cost'] or 0)
@@ -6620,7 +6826,7 @@ def sku_profit_report(request):
         f = finance_map.get(oid, {})
 
         refund = float(f.get('refund') or 0)
-        ads = float(f.get('ads') or 0)
+        # ads = float(f.get('ads') or 0)
 
         mpfees = (
             float(f.get('commission') or 0) +
@@ -6634,70 +6840,6 @@ def sku_profit_report(request):
         gst = float(f.get('gst') or 0)
 
         # ---------------- TCS ----------------
-
-        
-        # gst_to_pay_amount = item_tax
-
-        # # TCS = 1% of taxable value
-        # tcs = gst_to_pay_amount * 0.01
-
-        # # GST amount payable
-        # taxable_value = gross_sales
-
-        # # GST percentage
-        # gst_to_pay_perc = (
-        #     (gst_to_pay_amount / taxable_value) * 100
-        #     if taxable_value else 1
-        # )
-
-
-        # gst_rate = float(row.get("sku_gst_rate") or 0)
-        # tcs_rate = float(row.get("sku_tcs_rate") or 0)
-
-        # # ------------------------------------------------------------
-        # # TAXABLE VALUE
-        # # GST INCLUDED SALES -> REMOVE GST
-        # # Example:
-        # # gross_sales = 118
-        # # gst_rate = 18%
-        # # taxable = 100
-        # # ------------------------------------------------------------
-
-        # if gst_rate > 0:
-
-        #     taxable_value = (
-        #         adjusted_gross_sales / (1 + (gst_rate / 100))
-        #     )
-        #     gst_to_pay_amount = adjusted_gross_sales - taxable_value
-            
-        #     # taxable_value = gross_sales
-
-        # else:
-
-        #     taxable_value = gross_sales
-        #     gst_to_pay_amount = item_tax
-
-        # # ------------------------------------------------------------
-        # # GST TO PAY
-        # # ------------------------------------------------------------
-
-        # # gst_to_pay_amount = adjusted_gross_sales - taxable_value
-
-        # # ------------------------------------------------------------
-        # # TCS
-        # # ------------------------------------------------------------
-
-        # if tcs_rate:
-        #     tcs = (
-        #         gst_to_pay_amount *
-        #         (tcs_rate / Decimal("100"))
-        #     )
-        # else:
-        #     # default 1% TCS
-        #     tcs = (
-        #         gst_to_pay_amount *
-        #         (Decimal("1") / Decimal("100"))
-        #     )   
 
         gst_rate = float(str(row.get("sku_gst_rate") or 0))
         tcs_rate = float(str(row.get("sku_tcs_rate") or 0))
@@ -6791,26 +6933,26 @@ def sku_profit_report(request):
         # MP GST = 18% of (netsales + shipping)
         mp_gst = (net_sales + shipping_final) * 0.18
 
-        
-        # profit = net_sales + new_charge + shipping_final - cost + tcs
-        # profit = net_sales - estimated_fees - shipping_final - tcs
-        
-        # profit = net_sales - estimated_fees - shipping_final - tcs + mp_gst - cost
+
         profit = (
             net_sales
             - estimated_fees
             - shipping_final
+            + ads
             - cost
             + tcs
             + mp_gst
-        
         )
 
         exp_settlement = profit - cost - tcs - mp_gst
         
 
         profit_margin = (profit / net_sales * 100) if net_sales else 0
-        tacos = (ads / gross_sales * 100) if gross_sales else 0
+        # tacos = (ads / gross_sales * 100) if gross_sales else 0
+        tacos = (
+            (abs(ads) / gross_sales) * 100
+            if gross_sales else 0
+        )
         drr = tacos
         ret_percent = (return_units / net_qty * 100) if net_qty else 0
 
@@ -6893,6 +7035,8 @@ def sku_profit_report(request):
         total_gst_payable += gst_to_pay_amount
         total_exp_settlement += exp_settlement
 
+    print("totale ads spends",total_ads)    
+
     # ---------------- RESPONSE ----------------
     return Response({
         "status": True,
@@ -6913,7 +7057,7 @@ def sku_profit_report(request):
             # "totalprofitmargin": (total_profit / total_net_sales * 100) if total_net_sales else 0,
             "totalprofitmargin": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
 
-            "ads": format_currency(total_ads),
+            "adSpend": format_currency(total_ads),
             "mpfees": round(total_mpfees, 2),
             "mp_gst": format_currency(total_mp_gst),
             # "estimatefees": format_currency(total_estimatefees),
