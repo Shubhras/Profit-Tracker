@@ -282,3 +282,64 @@ class AdsBudgetRuleSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]    
+
+
+
+class ProductAdMetricSerializer(serializers.ModelSerializer):
+
+    campaign_id = serializers.IntegerField(
+        source="product_ad.campaign.id",
+        read_only=True
+    )
+
+    campaign_name = serializers.CharField(
+        source="product_ad.campaign.name",
+        read_only=True
+    )
+
+    ad_group_id = serializers.IntegerField(
+        source="product_ad.ad_group.id",
+        read_only=True
+    )
+
+    ad_group_name = serializers.CharField(
+        source="product_ad.ad_group.name",
+        read_only=True
+    )
+
+    sku = serializers.CharField(
+        source="product_ad.sku",
+        read_only=True
+    )
+
+    asin = serializers.CharField(
+        source="product_ad.asin",
+        read_only=True
+    )
+
+    class Meta:
+
+        model = ProductAdMetric
+
+        fields = [
+            "id",
+
+            "campaign_id",
+            "campaign_name",
+
+            "ad_group_id",
+            "ad_group_name",
+
+            "sku",
+            "asin",
+
+            "report_date",
+
+            "impressions",
+            "clicks",
+            "cost",
+            "sales",
+            "orders",
+
+            "raw_data",
+        ]        
