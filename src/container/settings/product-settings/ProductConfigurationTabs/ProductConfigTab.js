@@ -68,7 +68,7 @@ export default function ProductConfigTab({ pagination, setPagination }) {
       title: 'Status',
       dataIndex: 'status',
       align: 'center',
-      render: (status) => <Tag color={status === 'ACTIVE' ? 'green' : 'red'}>{status || '-'}</Tag>,
+      render: (status) => <Tag color={status === 'BUYABLE' ? 'green' : 'red'}>{status || '-'}</Tag>,
     },
     {
       title: 'Name',
@@ -85,6 +85,21 @@ export default function ProductConfigTab({ pagination, setPagination }) {
       title: 'Fulfillment Channel Code',
       dataIndex: 'fulfilments',
       align: 'center',
+      render: (fulfilments) => {
+        const channel = fulfilments?.[0]?.fulfillmentChannelCode;
+
+        const isFBM = channel === 'DEFAULT';
+
+        return (
+          <span
+            className={`px-3 py-1 rounded-full text-[12px] font-medium ${
+              isFBM ? 'bg-[#dbeafe] text-[#2563eb]' : 'bg-[#dcfce7] text-[#16a34a]'
+            }`}
+          >
+            {isFBM ? 'FBM' : 'FBA'}
+          </span>
+        );
+      },
     },
     {
       title: 'Item Weight',
@@ -132,17 +147,17 @@ export default function ProductConfigTab({ pagination, setPagination }) {
       dataIndex: 'pkgHeight',
       align: 'center',
     },
-    {
-      title: 'Shipping Estimate Charges',
-      dataIndex: 'shippinCharge',
-      align: 'center',
-    },
+    // {
+    //   title: 'Shipping Estimate Charges',
+    //   dataIndex: 'shippinCharge',
+    //   align: 'center',
+    // },
 
-    {
-      title: 'Region',
-      dataIndex: 'region',
-      align: 'center',
-    },
+    // {
+    //   title: 'Region',
+    //   dataIndex: 'region',
+    //   align: 'center',
+    // },
 
     {
       title: 'Step Level',
@@ -195,9 +210,10 @@ export default function ProductConfigTab({ pagination, setPagination }) {
         ? `${item.attributes.item_weight[0].value} ${item.attributes.item_weight[0].unit}`
         : '-',
 
-      fulfilments: item.attributes?.fulfillment_availability?.[0]
-        ? `${item.attributes.fulfillment_availability[0].fulfillment_channel_code}`
-        : '-',
+      // fulfilments: item.attributes?.fulfillment_availability?.[0]
+      //   ? `${item.attributes.fulfillment_availability[0].fulfillment_channel_code}`
+      //   : '-',
+      fulfilments: item.fulfillment_availability || '-',
 
       itempkgWeight: item.attributes?.item_package_weight?.[0]
         ? `${item.attributes.item_package_weight[0].value} ${item.attributes.item_package_weight[0].unit}`

@@ -175,7 +175,8 @@ function AdProducts() {
       title: 'Cost',
       dataIndex: 'cost',
       align: 'center',
-      render: (v) => <span className="font-medium text-[#dc2626]">₹{v ?? 0}</span>,
+      render: (v) => <span className="font-medium text-[#dc2626]">₹{Number(v ?? 0).toFixed(2)}</span>,
+      // render: (v) => <span className="font-medium text-[#dc2626]">₹{v ?? 0}</span>,
     },
 
     {
@@ -221,7 +222,7 @@ function AdProducts() {
       ),
     },
     {
-      title: 'Action',
+      title: '',
       dataIndex: 'action',
       width: 100,
       fixed: 'right',
