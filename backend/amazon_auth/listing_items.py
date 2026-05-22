@@ -725,7 +725,7 @@ def export_amazon_listing_excel(request):
         "Region",
         "Step Level",
 
-        "Standard Cost",
+        "Product Cost",
         "GST Rate",
         "TCS",
     ]
@@ -1370,3 +1370,4 @@ def upload_amazon_listing_excel(request):
             },
             status=400
         )
+    

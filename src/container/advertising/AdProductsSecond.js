@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Button, Table, Tooltip, Tag } from 'antd';
+import { Button, Table, Tooltip, Tag, Switch, Modal } from 'antd';
 import { FilterOutlined, ExportOutlined, SearchOutlined, RightOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { getAdProductsDetails } from '../../redux/advertising/actionCreator';
@@ -9,6 +9,9 @@ function AdProductsDetails() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { sku } = useParams();
+  const [budgetModal, setBudgetModal] = React.useState(false);
+  const [selectedBudget, setSelectedBudget] = React.useState(null);
+  const [budgetValue, setBudgetValue] = React.useState('');
 
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -57,6 +60,33 @@ function AdProductsDetails() {
     })) || [];
   const columns = [
     {
+      title: 'State',
+      dataIndex: 'active',
+      align: 'center',
+      width: 110,
+      fixed: 'left',
+
+      render: (_, record) => {
+        const isActive = record.state === 'ENABLED';
+
+        return (
+          <div className="flex justify-center">
+            <Switch
+              checked={isActive}
+              onChange={(checked) => {
+                console.log('STATUS:', checked ? 'ENABLED' : 'PAUSED', record);
+
+                // API CALL HERE
+              }}
+              style={{
+                transform: 'scale(1.15)',
+              }}
+            />
+          </div>
+        );
+      },
+    },
+    {
       title: 'Campaign ID',
       dataIndex: 'campaignId',
       align: 'center',
@@ -75,16 +105,16 @@ function AdProductsDetails() {
       ),
     },
 
-    {
-      title: 'State',
-      dataIndex: 'state',
-      align: 'center',
-      render: (v) => (
-        <Tag color={v === 'ENABLED' ? 'success' : 'error'} className="!rounded-full !px-3">
-          {v}
-        </Tag>
-      ),
-    },
+    // {
+    //   title: 'State',
+    //   dataIndex: 'state',
+    //   align: 'center',
+    //   render: (v) => (
+    //     <Tag color={v === 'ENABLED' ? 'success' : 'error'} className="!rounded-full !px-3">
+    //       {v}
+    //     </Tag>
+    //   ),
+    // },
 
     {
       title: 'Targeting Type',
@@ -92,17 +122,46 @@ function AdProductsDetails() {
       align: 'center',
     },
 
-    {
-      title: 'Daily Budget',
-      dataIndex: 'dailyBudget',
-      align: 'center',
-      render: (v) => <span className="font-medium">₹{v}</span>,
-    },
+    // {
+    //   title: 'Daily Budget',
+    //   dataIndex: 'dailyBudget',
+    //   align: 'center',
+    //   render: (v) => <span className="font-medium">₹{v}</span>,
+    // },
 
+    // {
+    //   title: 'Budget Type',
+    //   dataIndex: 'budgetType',
+    //   align: 'center',
+    // },
     {
-      title: 'Budget Type',
-      dataIndex: 'budgetType',
+      title: 'Budget',
       align: 'center',
+
+      render: (_, record) => (
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedBudget(record);
+              setBudgetValue(record?.dailyBudget || '');
+              setBudgetModal(true);
+            }}
+            className="group relative overflow-hidden min-w-[150px] px-5 py-[8px] rounded-2xl border border-[#dbeafe] bg-white hover:border-[#93c5fd] transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-[1px]"
+          >
+            {/* background */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#eff6ff] via-[#f8fafc] to-[#ecfeff] opacity-80" />
+
+            <div className="relative flex items-center justify-center gap-1 whitespace-nowrap">
+              <span className="text-[14px] font-bold text-[#0f172a]">
+                ₹{Number(record?.dailyBudget || 0).toFixed(2)}
+              </span>
+
+              <span className="text-[12px] uppercase tracking-wide text-[#64748b]">/ {record?.budgetType}</span>
+            </div>
+          </button>
+        </div>
+      ),
     },
 
     {
@@ -185,7 +244,7 @@ function AdProductsDetails() {
     },
 
     {
-      title: 'Action',
+      title: '',
       dataIndex: 'action',
       width: 100,
       fixed: 'right',
@@ -296,6 +355,96 @@ function AdProductsDetails() {
           />
         </div>
       </div>
+      <Modal
+        open={budgetModal}
+        onCancel={() => {
+          setBudgetModal(false);
+          setSelectedBudget(null);
+          setBudgetValue('');
+        }}
+        footer={null}
+        centered
+        width={430}
+        className="budget-modal"
+      >
+        <div className="p-1">
+          {/* Header */}
+          <div className="mb-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div
+                className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg"
+                style={{
+                  background: 'linear-gradient(135deg, rgb(16, 185, 129) 0%, rgb(15, 118, 110) 100%)',
+                }}
+              >
+                <span className="text-white text-lg font-bold">₹</span>
+              </div>
+
+              <div>
+                <h2 className="text-[22px] font-bold text-[#0f172a] leading-none mb-1">Edit Budget</h2>
+
+                <p className="text-[13px] text-[#64748b] mt-1">Update campaign daily budget</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Budget Type */}
+          <div className="mb-5">
+            <label className="block text-[15px] font-semibold text-[#334155] mb-2">Budget Type</label>
+
+            <div className="h-[48px] rounded-xl border border-[#e2e8f0] bg-[#f8fafc] flex items-center px-4 text-[#475569] font-medium">
+              {selectedBudget?.budgetType}
+            </div>
+          </div>
+
+          {/* Budget Input */}
+          <div className="mb-6">
+            <label className="block text-[15px] font-semibold text-[#334155] mb-2">Daily Budget</label>
+
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748b] font-semibold">₹</span>
+
+              <input
+                type="number"
+                value={budgetValue}
+                onChange={(e) => setBudgetValue(e.target.value)}
+                className="w-full h-[52px] rounded-2xl border border-[#cbd5e1] focus:border-[#10b981] focus:ring-4 focus:ring-[#d1fae5] outline-none pl-10 pr-4 text-[15px] font-semibold transition-all"
+                placeholder="Enter budget"
+              />
+            </div>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setBudgetModal(false);
+                setSelectedBudget(null);
+                setBudgetValue('');
+              }}
+              className="h-[44px] px-5 rounded-xl border border-[#e2e8f0] text-[#475569] font-medium hover:bg-[#f8fafc] transition-all"
+            >
+              Cancel
+            </button>
+
+            <Button
+              type="primary"
+              onClick={() => {
+                console.log('Updated Budget:', budgetValue);
+
+                setBudgetModal(false);
+              }}
+              className="!h-[44px] !px-6 !rounded-xl !border-0 text-white !font-semibold shadow-md"
+              style={{
+                background: 'linear-gradient(135deg, rgb(16, 185, 129) 0%, rgb(15, 118, 110) 100%)',
+              }}
+            >
+              Update Budget
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }

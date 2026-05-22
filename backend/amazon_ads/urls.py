@@ -38,4 +38,10 @@ urlpatterns = [
     path("sync-budget-rules/",SyncBudgetRulesAPIView.as_view(),name="sync-budget-rules"),
 
     path("budget-rule-list/",AdsBudgetRuleListAPIView.as_view(),name="budget-rule-list"),
+
+    path(
+        "product-ad-metric-list/",
+        ProductAdMetricListAPIView.as_view(),
+        name="product-ad-metric-list"
+    ),
 ]

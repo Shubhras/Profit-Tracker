@@ -809,7 +809,7 @@ export default function Summary() {
                         </div>
 
                         <h2 className="text-[28px] font-semibold mt-2 text-[#111827]">
-                          ₹ {dashboardData?.header_metrics?.ad_spend || 0}
+                          {dashboardData?.header_metrics?.ad_spend || 0}
                         </h2>
 
                         <div className="inline-flex mt-0 px-3 py-1 rounded-lg bg-[#fdf2f8] text-[#db2777] text-[12px]">

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Table, Tag, Tooltip, Modal, InputNumber } from 'antd';
+import { Button, Table, Tag, Tooltip, Modal, InputNumber, Switch } from 'antd';
 import { ArrowLeftOutlined, FilterOutlined, ExportOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -58,6 +58,33 @@ function CampaignDetails() {
 
   const columns = [
     {
+      title: 'State',
+      dataIndex: 'active',
+      align: 'center',
+      width: 110,
+      fixed: 'left',
+
+      render: (_, record) => {
+        const isActive = record.state === 'ENABLED';
+
+        return (
+          <div className="flex justify-center">
+            <Switch
+              checked={isActive}
+              onChange={(checked) => {
+                console.log('STATUS:', checked ? 'ENABLED' : 'PAUSED', record);
+
+                // API CALL HERE
+              }}
+              style={{
+                transform: 'scale(1.15)',
+              }}
+            />
+          </div>
+        );
+      },
+    },
+    {
       title: 'Ad Group ID',
       dataIndex: 'adGroupId',
       align: 'center',
@@ -77,16 +104,16 @@ function CampaignDetails() {
       ),
     },
 
-    {
-      title: 'State',
-      dataIndex: 'state',
-      align: 'center',
-      render: (v) => (
-        <Tag color={v === 'ENABLED' ? 'success' : 'error'} className="!px-3 !py-[3px] !rounded-full">
-          {v}
-        </Tag>
-      ),
-    },
+    // {
+    //   title: 'State',
+    //   dataIndex: 'state',
+    //   align: 'center',
+    //   render: (v) => (
+    //     <Tag color={v === 'ENABLED' ? 'success' : 'error'} className="!px-3 !py-[3px] !rounded-full">
+    //       {v}
+    //     </Tag>
+    //   ),
+    // },
     {
       title: 'Default Bid',
       dataIndex: 'defaultBid',

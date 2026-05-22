@@ -21,17 +21,15 @@ function Campaigns() {
   });
   const [tableData, setTableData] = useState([]);
   const [selectedRowKeys, setSelectedRowKeys] = React.useState([]);
+  const [budgetModal, setBudgetModal] = useState(false);
+  const [selectedBudget, setSelectedBudget] = useState(null);
+  const [budgetValue, setBudgetValue] = useState('');
 
   const [openFilter, setOpenFilter] = React.useState(false);
 
   const [filters, setFilters] = React.useState({
     state: '',
     type: '',
-  });
-  const [statusModal, setStatusModal] = useState({
-    open: false,
-    record: null,
-    newState: '',
   });
 
   const { campaignData, loading } = useSelector((state) => state.advertising);
@@ -271,13 +269,14 @@ function Campaigns() {
     },
 
     {
-      title: 'Active',
+      title: 'State',
       dataIndex: 'active',
       align: 'center',
       width: 110,
 
       render: (_, record) => {
-        const isActive = campaignStatus[record.key] ?? true;
+        const isActive =
+          campaignStatus[record.key] !== undefined ? campaignStatus[record.key] : record.state === 'ENABLED';
 
         return (
           <Switch
@@ -311,35 +310,35 @@ function Campaigns() {
       ),
     },
 
-    {
-      title: 'State',
-      dataIndex: 'state',
-      align: 'center',
-      width: 140,
+    // {
+    //   title: 'State',
+    //   dataIndex: 'state',
+    //   align: 'center',
+    //   width: 140,
 
-      render: (value, record) => {
-        const isEnabled = record.state === 'ENABLED';
+    //   render: (value, record) => {
+    //     const isEnabled = record.state === 'ENABLED';
 
-        return (
-          <button
-            type="button"
-            onClick={() => {
-              setStatusModal({
-                open: true,
-                record,
-                newState: isEnabled ? 'PAUSED' : 'ENABLED',
-              });
-            }}
-            className={`
-        px-4 h-[31px] rounded-full text-[12px] font-semibold border transition-all duration-200
-        ${isEnabled ? 'bg-[#f0fdf4] border-[#bbf7d0] text-[#16a34a]' : 'bg-[#fef2f2] border-[#fecaca] text-[#dc2626]'}
-      `}
-          >
-            {isEnabled ? 'Enabled' : 'Paused'}
-          </button>
-        );
-      },
-    },
+    //     return (
+    //       <button
+    //         type="button"
+    //         onClick={() => {
+    //           setStatusModal({
+    //             open: true,
+    //             record,
+    //             newState: isEnabled ? 'PAUSED' : 'ENABLED',
+    //           });
+    //         }}
+    //         className={`
+    //     px-4 h-[31px] rounded-full text-[12px] font-semibold border transition-all duration-200
+    //     ${isEnabled ? 'bg-[#f0fdf4] border-[#bbf7d0] text-[#16a34a]' : 'bg-[#fef2f2] border-[#fecaca] text-[#dc2626]'}
+    //   `}
+    //       >
+    //         {isEnabled ? 'Enabled' : 'Paused'}
+    //       </button>
+    //     );
+    //   },
+    // },
 
     // render: (v) => (
     //   <Tag color={v === 'ENABLED' ? 'success' : 'error'} className="!px-3 !py-[3px] !rounded-full">
@@ -369,11 +368,35 @@ function Campaigns() {
       title: 'Budget',
       dataIndex: 'budget',
       align: 'center',
+      // render: (_, record) => (
+      //   <div className="flex justify-center">
+      //     <div className="px-3 py-1 rounded-full text-[13px] font-medium border border-[#bfdbfe]">
+      //       ₹{record.dailyBudget} - {record.budgetType}
+      //     </div>
+      //   </div>
+      // ),
       render: (_, record) => (
         <div className="flex justify-center">
-          <div className="px-3 py-1 rounded-full text-[13px] font-medium border border-[#bfdbfe]">
-            ₹{record.dailyBudget} - {record.budgetType}
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedBudget(record);
+              setBudgetValue(record?.dailyBudget || '');
+              setBudgetModal(true);
+            }}
+            className="group relative overflow-hidden min-w-[150px] px-5 py-[8px] rounded-2xl border border-[#dbeafe] bg-white hover:border-[#93c5fd] transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-[1px]"
+          >
+            {/* background */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#eff6ff] via-[#f8fafc] to-[#ecfeff] opacity-80" />
+
+            <div className="relative flex items-center justify-center gap-1 whitespace-nowrap">
+              <span className="text-[14px] font-bold text-[#0f172a]">
+                ₹{Number(record?.dailyBudget || 0).toFixed(2)}
+              </span>
+
+              <span className="text-[12px] uppercase tracking-wide text-[#64748b]">/ {record?.budgetType}</span>
+            </div>
+          </button>
         </div>
       ),
     },
@@ -584,62 +607,88 @@ function Campaigns() {
         </div>
       </div>
       <Modal
-        open={statusModal.open}
+        open={budgetModal}
+        onCancel={() => {
+          setBudgetModal(false);
+          setSelectedBudget(null);
+          setBudgetValue('');
+        }}
         footer={null}
         centered
-        onCancel={() =>
-          setStatusModal({
-            open: false,
-            record: null,
-            newState: '',
-          })
-        }
+        width={430}
+        className="budget-modal"
       >
-        <div className="py-3">
-          <h2 className="text-[20px] font-semibold text-[#111827] mb-2">Confirm Status Change</h2>
+        <div className="p-1">
+          {/* Header */}
+          <div className="mb-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div
+                className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg"
+                style={{
+                  background: 'linear-gradient(135deg, rgb(16, 185, 129) 0%, rgb(15, 118, 110) 100%)',
+                }}
+              >
+                <span className="text-white text-lg font-bold">₹</span>
+              </div>
 
-          <p className="text-[#6b7280] text-[14px] leading-6">
-            Are you sure you want to{' '}
-            <span className="font-semibold text-[#111827]">
-              {statusModal.newState === 'ENABLED' ? 'enable' : 'pause'}
-            </span>{' '}
-            this campaign?
-          </p>
+              <div>
+                <h2 className="text-[22px] font-bold text-[#0f172a] leading-none mb-1">Edit Budget</h2>
 
-          <div className="flex justify-end gap-3 mt-6">
-            <Button
-              onClick={() =>
-                setStatusModal({
-                  open: false,
-                  record: null,
-                  newState: '',
-                })
-              }
-              className="!rounded-xl !h-[40px]"
+                <p className="text-[13px] text-[#64748b] mt-1">Update campaign daily budget</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Budget Type */}
+          <div className="mb-5">
+            <label className="block text-[15px] font-semibold text-[#334155] mb-2">Budget Type</label>
+
+            <div className="h-[48px] rounded-xl border border-[#e2e8f0] bg-[#f8fafc] flex items-center px-4 text-[#475569] font-medium">
+              {selectedBudget?.budgetType}
+            </div>
+          </div>
+
+          {/* Budget Input */}
+          <div className="mb-6">
+            <label className="block text-[15px] font-semibold text-[#334155] mb-2">Daily Budget</label>
+
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748b] font-semibold">₹</span>
+
+              <input
+                type="number"
+                value={budgetValue}
+                onChange={(e) => setBudgetValue(e.target.value)}
+                className="w-full h-[52px] rounded-2xl border border-[#cbd5e1] focus:border-[#2563eb] focus:ring-4 focus:ring-[#bfdbfe] outline-none pl-10 pr-4 text-[15px] font-semibold transition-all"
+                placeholder="Enter budget"
+              />
+            </div>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setBudgetModal(false);
+                setSelectedBudget(null);
+                setBudgetValue('');
+              }}
+              className="h-[44px] px-5 rounded-xl border border-[#e2e8f0] text-[#475569] font-medium hover:bg-[#f8fafc] transition-all"
             >
               Cancel
-            </Button>
+            </button>
 
             <Button
               type="primary"
-              className="!rounded-xl !h-[40px] !bg-[#2563eb]"
               onClick={() => {
-                setTableData((prev) =>
-                  prev.map((item) =>
-                    item.key === statusModal.record.key ? { ...item, state: statusModal.newState } : item,
-                  ),
-                );
+                console.log('Updated Budget:', budgetValue);
 
-                console.log('Updated:', statusModal.record, statusModal.newState);
-
-                setStatusModal({
-                  open: false,
-                  record: null,
-                  newState: '',
-                });
+                setBudgetModal(false);
               }}
+              className="h-[44px] px-6 rounded-xl text-white font-semibold shadow-md transition-all"
             >
-              Yes, Confirm
+              Update Budget
             </Button>
           </div>
         </div>
