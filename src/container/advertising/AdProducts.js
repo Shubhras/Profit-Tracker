@@ -31,6 +31,7 @@ function AdProducts() {
       adId: item.ad_id,
       asin: item.asin,
       sku: item.sku,
+      image: item.image_url,
       state: item.state,
       totalads: item.total_ads,
       campaignName: item.campaign_name,
@@ -82,11 +83,29 @@ function AdProducts() {
         />
       ),
     },
+    {
+      title: 'Image',
+      dataIndex: 'image',
+      width: 100,
+      align: 'center',
+      fixed: 'left',
+      render: (image) => (
+        <div className="flex justify-center">
+          <img
+            src={image}
+            alt="product"
+            className="w-[50px] h-[50px] rounded-xl object-cover border border-[#e5e7eb] p-[2px] bg-white shadow-sm"
+          />
+        </div>
+      ),
+    },
 
     {
       title: 'SKU',
       dataIndex: 'sku',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span
@@ -155,12 +174,16 @@ function AdProducts() {
       title: 'Total Ads',
       dataIndex: 'totalads',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       // render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
     {
       title: 'Impressions',
       dataIndex: 'impressions',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -168,6 +191,8 @@ function AdProducts() {
       title: 'Clicks',
       dataIndex: 'clicks',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -175,6 +200,8 @@ function AdProducts() {
       title: 'Cost',
       dataIndex: 'cost',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       render: (v) => <span className="font-medium text-[#dc2626]">₹{Number(v ?? 0).toFixed(2)}</span>,
       // render: (v) => <span className="font-medium text-[#dc2626]">₹{v ?? 0}</span>,
     },
@@ -183,13 +210,21 @@ function AdProducts() {
       title: 'Sales',
       dataIndex: 'sales',
       align: 'center',
-      render: (v) => <span className="font-medium text-[#16a34a]">₹{v ?? 0}</span>,
+      width: 100,
+      ellipsis: true,
+      render: (v) => {
+        const formattedValue = Number(v ?? 0).toLocaleString('en-IN');
+
+        return <span className="font-medium text-[#16a34a] block truncate">₹{formattedValue}</span>;
+      },
     },
 
     {
       title: 'Orders',
       dataIndex: 'orders',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -197,6 +232,8 @@ function AdProducts() {
       title: 'Units',
       dataIndex: 'units',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -204,6 +241,8 @@ function AdProducts() {
       title: 'ACOS',
       dataIndex: 'acos',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       render: (v) => (
         <Tag className="!px-3 !py-[3px] !rounded-full" color={v > 100 ? 'error' : 'processing'}>
           {v ? `${v.toFixed(2)}%` : '-'}
@@ -215,6 +254,8 @@ function AdProducts() {
       title: 'ROAS',
       dataIndex: 'roas',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       render: (v) => (
         <Tag className="!px-3 !py-[3px] !rounded-full" color={v >= 1 ? 'success' : 'warning'}>
           {v ? v.toFixed(2) : '-'}
@@ -224,7 +265,7 @@ function AdProducts() {
     {
       title: '',
       dataIndex: 'action',
-      width: 100,
+      width: 70,
       fixed: 'right',
       align: 'center',
 
@@ -298,6 +339,8 @@ function AdProducts() {
             columns={columns}
             dataSource={dataSource}
             loading={loading}
+            tableLayout="fixed"
+            scroll={{ x: 1400 }}
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
@@ -312,7 +355,7 @@ function AdProducts() {
                 pageSize: pag.pageSize,
               });
             }}
-            scroll={{ x: 'max-content' }}
+            // scroll={{ x: 'max-content' }}
             size="middle"
             bordered={false}
           />

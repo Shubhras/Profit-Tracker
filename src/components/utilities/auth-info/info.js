@@ -15,7 +15,7 @@ import moment from 'moment';
 // import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
-import Search from './Search';
+// import Search from './Search';
 import FilterDropdown from './FilterDropdown';
 // import Message from './Message';
 // import Notification from './Notification';
@@ -74,17 +74,17 @@ const AuthInfo = React.memo(() => {
   const { profile, profileLoading, profileError } = useSelector((state) => state.auth);
   const [selectedRows, setSelectedRows] = useState([]);
 
-  const HIDE_SEARCH = [
-    '/settings/product-setting/overview',
-    '/profit/profitMonthlyView',
-    '/reconcile/os-payment',
-    '/reconcile/b2c-reconciliation/invoice-reconciliation',
-    '/reconcile/return/summary',
-    '/reconcile/summary',
-    '/profit/profitTableView/second/',
-  ];
+  // const HIDE_SEARCH = [
+  //   '/settings/product-setting/overview',
+  //   '/profit/profitMonthlyView',
+  //   '/reconcile/os-payment',
+  //   '/reconcile/b2c-reconciliation/invoice-reconciliation',
+  //   '/reconcile/return/summary',
+  //   '/reconcile/summary',
+  //   '/profit/profitTableView/second/',
+  // ];
 
-  const hideSearch = HIDE_SEARCH.some((route) => location.pathname.includes(route));
+  // const hideSearch = HIDE_SEARCH.some((route) => location.pathname.includes(route));
   useEffect(() => {
     const handler = (e) => {
       setActiveTab(e.detail);
@@ -263,7 +263,7 @@ const AuthInfo = React.memo(() => {
             }}
           />
         ))}
-        {!hideSearch && <Search />}
+        {/* {!hideSearch && <Search />} */}
         {!hideCalendar && (
           <div className="relative">
             {/* ✅ BUTTON */}

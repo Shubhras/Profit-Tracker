@@ -376,11 +376,18 @@ function MenuItems({ toggleCollapsed }) {
         'keywords',
         null,
       ),
+      // getItem(
+      //   <NavLink onClick={toggleCollapsed} to={`${path}/advertising/placements`}>
+      //     {t('Placements')}
+      //   </NavLink>,
+      //   'placements',
+      //   null,
+      // ),
       getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/placements`}>
-          {t('Placements')}
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/targets`}>
+          {t('Targets')}
         </NavLink>,
-        'placements',
+        'targets',
         null,
       ),
       getItem(

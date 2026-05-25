@@ -225,9 +225,9 @@ function SearchTerms() {
 
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-[30px] font-semibold text-[#111827]">Search Terms</h1>
+          <h1 className="text-[30px] font-semibold text-[#111827] mb-1">Search Terms</h1>
 
-          <p className="text-[14px] text-[#6b7280] mt-2 max-w-[900px]">
+          <p className="text-[14px] text-[#6b7280] max-w-[900px]">
             Discover how customers search for your products and optimize your keywords by adding high-performing search
             terms as keywords and blocking irrelevant terms as negative keywords.
           </p>

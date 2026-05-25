@@ -31,6 +31,10 @@ const {
   rulesBegin,
   rulesSuccess,
   rulesErr,
+
+  targetsBegin,
+  targetsSuccess,
+  targetsErr,
 } = actions;
 
 export const getCampaigns = (page = 1, pageSize = 10) => {
@@ -69,11 +73,11 @@ export const getAdsGroup = (page = 1, pageSize = 10, payload = {}) => {
     }
   };
 };
-export const getKeywords = (page = 1, pageSize = 10) => {
+export const getKeywords = (page = 1, pageSize = 10, payload = {}) => {
   return async (dispatch) => {
     dispatch(keywordsBegin());
     try {
-      const response = await DataService.post(`/amazon-ads/keywords/list/?page=${page}&page_size=${pageSize}`);
+      const response = await DataService.post(`/amazon-ads/keywords/list/?page=${page}&page_size=${pageSize}`, payload);
       if (response.data.status === true) {
         dispatch(keywordsSuccess(response.data));
       } else {
@@ -187,6 +191,27 @@ export const getRules = (page = 1, pageSize = 10, ruleType = '') => {
       }
     } catch (err) {
       dispatch(rulesErr(err.response?.data?.message || err.message));
+    }
+  };
+};
+
+export const getTargets = (page = 1, pageSize = 10, payload = {}) => {
+  return async (dispatch) => {
+    dispatch(targetsBegin());
+
+    try {
+      const response = await DataService.post(
+        `/amazon-ads/get-ads-targeting/?page=${page}&page_size=${pageSize}`,
+        payload,
+      );
+
+      if (response.data.status === true) {
+        dispatch(targetsSuccess(response.data));
+      } else {
+        dispatch(targetsErr(response.data.message || 'Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(targetsErr(err.response?.data?.message || err.message));
     }
   };
 };

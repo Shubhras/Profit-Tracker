@@ -12,7 +12,7 @@ import {
   CarOutlined,
   BarChartOutlined,
 } from '@ant-design/icons';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { amazonAction } from '../../redux/amazonAPI/actionCreator';
@@ -179,10 +179,10 @@ export default function Summary() {
             </div>
           </div>
         }
-        className="flex justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 sm:pb-[30px] bg-transparent sm:flex-col"
+        className="flex justify-between items-center px-8 xl:px-[15px] pt-2 pb-2 sm:pb-[30px] bg-transparent sm:flex-col"
       />
 
-      <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-8 xl:px-[15px] pb-[30px] bg-transparent">
+      <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-3 xl:px-[15px] pb-[30px] bg-transparent">
         {/* ================= FILTER BAR ================= */}
         {/* <Card className="mb-4">
           <Row gutter={16} align="middle">
@@ -636,9 +636,10 @@ export default function Summary() {
         <Spin spinning={loading} size="large">
           <Row gutter={[18, 18]}>
             {/* ================= LEFT SECTION ================= */}
-            <Col xs={24} lg={13}>
+            <Col xs={24} lg={14}>
               <Row gutter={[18, 18]}>
-                <Col xs={24} md={14}>
+                {/* ================= SALES CARD ================= */}
+                <Col xs={24} md={12}>
                   <button
                     type="button"
                     onClick={() =>
@@ -646,74 +647,58 @@ export default function Summary() {
                         state: { channels: globalChannel, type: 'all' },
                       })
                     }
-                    className="relative overflow-hidden rounded-[24px] bg-white p-5 text-white shadow-sm w-full text-left border-0 h-[190px]"
-                    // style={{
-                    // background: 'linear-gradient(135deg, #8e9fff 0%, #b8c0ff 50%, #d4c2ff 100%)',
-                    // 'linear-gradient(135deg, rgb(168, 162, 229) 0%, rgb(168, 162, 229) 45%, rgb(107 75 163) 100%)',
-
-                    // 'linear-gradient(135deg, rgb(48 45 114) 0%, rgb(168 162 229) 45%, rgb(173 143 225) 100%)',
-                    // }}
+                    className="relative overflow-hidden rounded-[20px] bg-white p-3 shadow-sm w-full text-left border-0 h-[140px]"
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="w-11 h-11 rounded-2xl bg-white flex items-center justify-center shadow-md">
-                        <ShoppingCartOutlined className="text-[#4f46e5] text-[20px]" />
+                    <div className="flex items-start gap-3">
+                      {/* ICON */}
+                      <div className="w-9 h-9 rounded-xl mt-[2px] bg-[#eef2ff] flex items-center justify-center shadow-sm shrink-0">
+                        <ShoppingCartOutlined className="text-[#4f46e5] text-[16px]" />
                       </div>
 
-                      {/* <div className="px-3 py-1 rounded-lg bg-[#d9f99d] text-[#166534] text-[11px] font-semibold">
-                        GST Included
-                      </div> */}
-                    </div>
+                      {/* CONTENT */}
+                      <div className="flex flex-col justify-start flex-1 pt-[2px]">
+                        <p className="text-gray-500 text-[14px] font-semibold leading-none mb-1">Total Sales</p>
 
-                    <div className="mt-4">
-                      <p className="text-gray-500 text-[15px] mb-1 font-semibold">Total Sales</p>
+                        <h2 className="text-[21px] font-semibold leading-tight text-[#111827] mt-[2px]">
+                          {' '}
+                          ₹ {dashboardData?.header_metrics?.sales || 0}
+                        </h2>
 
-                      <h2 className="text-[28px] font-semibold tracking-tight leading-tight">
-                        ₹ {dashboardData?.header_metrics?.sales || 0}
-                      </h2>
-
-                      <div className="inline-flex items-center px-3 py-1 rounded-xl bg-[#dcfce780] backdrop-blur-sm border border-[#bbf7d0] text-[#166534] text-[11px] font-semibold">
-                        Units: {dashboardData?.breakdown_table?.net?.qty || 0}
+                        <div className="mt-2 inline-flex w-fit items-center px-2 py-[3px] rounded-lg bg-[#dcfce780] border border-[#bbf7d0] text-[#166534] text-[9px] font-semibold whitespace-nowrap">
+                          Units: {dashboardData?.breakdown_table?.net?.qty || 0}
+                        </div>
                       </div>
                     </div>
-                    {/* 
-                    <div className="absolute right-[-18px] bottom-[-34px] text-[140px] font-bold text-[#8e9fff]/20 leading-none select-none">
-                      $
-                    </div> */}
                   </button>
                 </Col>
 
                 {/* ================= PROFIT CARD ================= */}
-                <Col xs={24} md={10}>
-                  <div
-                    className="relative overflow-hidden rounded-[24px] bg-white p-5 text-white shadow-sm h-[190px]"
-                    // style={{
-                    // background:
-                    // 'linear-gradient(135deg, rgb(80 181 112) 0%, rgb(91 255 173) 100%, rgb(91 255 173) 100%)',
-                    //  'linear-gradient(135deg, #63d5c7 0%, #8be4d8 45%, #4fa38c 100%)',
-                    // 'linear-gradient(135deg, rgb(134 213 205) 0%, rgb(134 213 205) 45%, rgb(26 104 80) 100%)',
-
-                    // 'linear-gradient(135deg, rgb(37 104 97) 0%, rgb(87 197 160) 45%, rgb(107 209 177) 100%)',
-                    // }}
-                  >
-                    <div className="w-11 h-11 rounded-2xl bg-white flex items-center justify-center shadow-md">
-                      <RiseOutlined className="text-[#10b981] text-[20px]" />
-                    </div>
-
-                    <div className="mt-4">
-                      <p className="text-gray-500 text-[15px] mb-1 font-semibold">Total Profit</p>
-
-                      <h2 className="text-[28px] font-semibold leading-tight">
-                        ₹ {dashboardData?.header_metrics?.profit || 0}
-                      </h2>
-                    </div>
-
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <div className="inline-flex items-center px-3 py-1 rounded-xl bg-[#dcfce780] backdrop-blur-sm border border-[#bbf7d0] text-[#166534] text-[11px] font-semibold">
-                        Margin: {dashboardData?.header_metrics?.margin || '0%'}
+                <Col xs={24} md={12}>
+                  <div className="relative overflow-hidden rounded-[20px] bg-white p-3 shadow-sm h-[140px]">
+                    <div className="flex items-start gap-3 mt-3">
+                      {/* ICON */}
+                      <div className="w-9 h-9 rounded-xl mt-[2px] bg-[#ecfdf5] flex items-center justify-center shadow-sm shrink-0">
+                        <RiseOutlined className="text-[#10b981] text-[16px]" />
                       </div>
 
-                      <div className="inline-flex items-center px-3 py-1 rounded-xl bg-[#dcfce780] backdrop-blur-sm border border-[#bbf7d0] text-[#166534] text-[11px] font-semibold">
-                        ROI: {dashboardData?.header_metrics?.roi || '0%'}
+                      {/* CONTENT */}
+                      <div className="flex flex-col justify-start flex-1 pt-[2px]">
+                        <p className="text-gray-500 text-[14px] font-semibold leading-none mb-1">Total Profit</p>
+
+                        <h2 className="text-[21px] font-semibold leading-tight text-[#111827] mt-[2px]">
+                          {' '}
+                          ₹ {dashboardData?.header_metrics?.profit || 0}
+                        </h2>
+
+                        <div className="flex items-center gap-1 mt-2">
+                          <div className="inline-flex items-center px-2 py-[2px] rounded-lg bg-[#dcfce780] border border-[#bbf7d0] text-[#166534] text-[9px] font-semibold whitespace-nowrap">
+                            Margin: {dashboardData?.header_metrics?.margin || '0%'}
+                          </div>
+
+                          <div className="inline-flex items-center px-2 py-[2px] rounded-lg bg-[#dcfce780] border border-[#bbf7d0] text-[#166534] text-[9px] font-semibold whitespace-nowrap">
+                            ROI: {dashboardData?.header_metrics?.roi || '0%'}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -741,20 +726,18 @@ export default function Summary() {
                         }}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-2xl bg-[#dcfce7] flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-2xl bg-[#dcfce7] flex items-center justify-center">
                             <FileDoneOutlined className="text-[#16a34a] text-[20px]" />
                           </div>
 
-                          <p className="text-[15px] font-semibold text-[#16a34a]">Profit IDs</p>
+                          <p className="text-[13px] font-semibold text-[#16a34a]">Profit IDs</p>
                         </div>
 
-                        <h2 className="text-[28px] font-semibold mt-2 text-[#111827]">
+                        <h2 className="text-[21px] font-semibold mb-1 text-[#111827]">
                           #{dashboardData?.top_orders?.profitable?.total_count || 0}
                         </h2>
 
-                        <p className="text-[#4b5563] mt-2">
-                          {dashboardData?.top_orders?.profitable?.total_amount || 0}
-                        </p>
+                        <p className="text-[#4b5563]">{dashboardData?.top_orders?.profitable?.total_amount || 0}</p>
                       </button>
                     </Col>
 
@@ -777,18 +760,18 @@ export default function Summary() {
                         }}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-2xl bg-[#fee2e2] flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-2xl bg-[#fee2e2] flex items-center justify-center">
                             <FileExclamationOutlined className="text-[#ef4444] text-[20px]" />
                           </div>
 
-                          <p className="text-[15px] font-semibold text-[#ef4444]">Loss IDs</p>
+                          <p className="text-[13px] font-semibold text-[#ef4444]">Loss IDs</p>
                         </div>
 
-                        <h2 className="text-[28px] font-semibold mt-2 text-[#111827]">
+                        <h2 className="text-[21px] font-semibold mb-1 text-[#111827]">
                           #{dashboardData?.top_orders?.losing?.total_count || 0}
                         </h2>
 
-                        <p className="text-[#4b5563] mt-2">{dashboardData?.top_orders?.losing?.total_amount || 0}</p>
+                        <p className="text-[#4b5563]">{dashboardData?.top_orders?.losing?.total_amount || 0}</p>
                       </button>
                     </Col>
 
@@ -801,14 +784,14 @@ export default function Summary() {
                         }}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-2xl bg-[#ede9fe] flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-2xl bg-[#ede9fe] flex items-center justify-center">
                             <NotificationOutlined className="text-[#7c3aed] text-[20px]" />
                           </div>
 
-                          <p className="text-[15px] font-semibold text-[#111827]">Ad Spend</p>
+                          <p className="text-[13px] font-semibold text-[#111827]">Ad Spend</p>
                         </div>
 
-                        <h2 className="text-[28px] font-semibold mt-2 text-[#111827]">
+                        <h2 className="text-[21px] font-semibold mb-1 text-[#111827]">
                           {dashboardData?.header_metrics?.ad_spend || 0}
                         </h2>
 
@@ -822,131 +805,135 @@ export default function Summary() {
               </Row>
             </Col>
 
-            {/* ================= RIGHT CHART ================= */}
-            <Col xs={24} lg={11}>
-              <div className="bg-white rounded-[24px] border border-[#edf0f7] shadow-sm p-4 h-full">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-[19px] font-semibold text-[#111827]">Sales, Quantity & Profit Overview</h3>
+            <Col xs={24} lg={10}>
+              <div className="bg-white rounded-[20px] border border-[#edf0f7] shadow-sm p-2 h-full">
+                {/* HEADER */}
+                <div className="flex items-center gap-2 mb-[2px]">
+                  <div className="w-6 h-6 rounded-xl bg-[#ede9fe] flex items-center justify-center text-[#7c3aed] mb-1">
+                    <FileTextOutlined />
+                  </div>
 
-                  <Select size="small" defaultValue="daily" style={{ width: 100 }}>
-                    <Option value="daily">Daily</Option>
-                  </Select>
+                  <h3 className="text-[17px] font-semibold text-[#111827]">Sales Details</h3>
                 </div>
 
-                <ResponsiveContainer width="100%" height={320}>
-                  <BarChart data={stackedData}>
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
+                {/* SINGLE TABLE */}
+                <div>
+                  <div className="grid grid-cols-3 bg-[#f8fafc] rounded-xl px-4 py-1 text-[12px] font-bold text-[#374151] mb-2">
+                    <span>Item</span>
+                    <span className="text-center">Qty</span>
+                    <span className="text-right">Sales</span>
+                  </div>
 
-                    <Bar dataKey="sales" stackId="a" fill="#8e9fff" radius={[5, 5, 0, 0]} />
+                  {[
+                    {
+                      label: 'Gross',
+                      qty: dashboardData?.breakdown_table?.gross?.qty || 0,
+                      sales: dashboardData?.breakdown_table?.gross?.amount || 0,
+                    },
+                    {
+                      label: 'Cancelled',
+                      qty: dashboardData?.breakdown_table?.cancelled?.qty || 0,
+                      sales: dashboardData?.breakdown_table?.cancelled?.amount || 0,
+                      red: true,
+                    },
+                    {
+                      label: 'Returned(RTO)',
+                      qty: dashboardData?.breakdown_table?.returned?.qty || 0,
+                      sales: dashboardData?.breakdown_table?.returned?.amount || 0,
+                      red: true,
+                    },
+                    {
+                      label: 'Cancelled(RTO)',
+                      qty: dashboardData?.breakdown_table?.cancelledrtosummaryqty?.qty || 0,
+                      sales: dashboardData?.breakdown_table?.cancelledrtosummarysales?.amount || 0,
+                    },
+                    {
+                      label: 'Returned(CReF)',
+                      qty: dashboardData?.breakdown_table?.creturnsummaryqty?.qty || 0,
+                      sales: dashboardData?.breakdown_table?.returnedcref?.amount || 0,
+                    },
+                    {
+                      label: 'Claimed',
+                      qty: dashboardData?.breakdown_table?.claim?.qty || 0,
+                      sales: dashboardData?.breakdown_table?.claim?.amount || 0,
+                    },
+                    {
+                      label: 'Standard Cost',
+                      qty: dashboardData?.breakdown_table?.claimqty?.qty || 0,
+                      sales: dashboardData?.breakdown_table?.claimsales?.amount || 0,
+                    },
+                  ].map((row) => (
+                    <div key={row.label} className="grid grid-cols-3 px-4 py-1 text-[12px] border-b border-[#f1f5f9]">
+                      <span className="text-[#374151] font-semibold">{row.label}</span>
 
-                    {/* QUANTITY - SOFT GREEN */}
-                    <Bar dataKey="qty" stackId="a" fill="#7be0d4" radius={[5, 5, 0, 0]} />
+                      <span className={`text-center font-medium ${row.red ? 'text-[#ef4444]' : 'text-[#111827]'}`}>
+                        {row.qty}
+                      </span>
 
-                    {/* PROFIT - DARK GREEN */}
-                    <Bar dataKey="profit" stackId="a" fill="#5aa892" radius={[5, 5, 0, 0]} />
+                      <span className={`text-right font-medium ${row.red ? 'text-[#ef4444]' : 'text-[#111827]'}`}>
+                        {row.sales}
+                      </span>
+                    </div>
+                  ))}
 
-                    {/* <Bar dataKey="sales" stackId="a" fill="#fb7185" radius={[5, 5, 0, 0]} />
+                  {/* NET */}
+                  <div className="grid grid-cols-3 px-4 py-1 mt-1 bg-[#f5f3ff] rounded-xl text-[15px] font-bold text-[#16a34a]">
+                    <span>Net</span>
+
+                    <span className="text-center">{dashboardData?.breakdown_table?.net?.qty || 0}</span>
+
+                    <span className="text-right">{dashboardData?.breakdown_table?.net?.amount || 0}</span>
+                  </div>
+                </div>
+              </div>
+            </Col>
+
+            {/* ================= RIGHT CHART ================= */}
+          </Row>
+        </Spin>
+        <Row gutter={[16, 16]} className="mt-2">
+          <Col xs={24} lg={10}>
+            <div
+              className="bg-white rounded-[24px] border border-[#edf0f7] shadow-sm p-3"
+              style={{
+                height: '360px',
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-[16px] font-semibold text-[#111827]">Sales, Quantity & Profit Overview</h3>
+
+                <Select size="small" defaultValue="daily" style={{ width: 100 }}>
+                  <Option value="daily">Daily</Option>
+                </Select>
+              </div>
+
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={stackedData}>
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  {/* <Legend /> */}
+
+                  <Bar dataKey="sales" stackId="a" fill="#8e9fff" radius={[5, 5, 0, 0]} />
+
+                  {/* QUANTITY - SOFT GREEN */}
+                  <Bar dataKey="qty" stackId="a" fill="#7be0d4" radius={[5, 5, 0, 0]} />
+
+                  {/* PROFIT - DARK GREEN */}
+                  <Bar dataKey="profit" stackId="a" fill="#5aa892" radius={[5, 5, 0, 0]} />
+
+                  {/* <Bar dataKey="sales" stackId="a" fill="#fb7185" radius={[5, 5, 0, 0]} />
 
                     <Bar dataKey="qty" stackId="a" fill="#86efac" radius={[5, 5, 0, 0]} />
 
                     <Bar dataKey="profit" stackId="a" fill="#fdba74" radius={[5, 5, 0, 0]} /> */}
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </Col>
-          </Row>
-        </Spin>
-        <Row gutter={[18, 18]} className="mt-5">
-          {/* ================= LEFT TABLE ================= */}
-          <Col xs={24} lg={14}>
-            <div className="bg-white rounded-[22px] border border-[#edf0f7] shadow-sm p-5 h-full">
-              {/* HEADER */}
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-xl bg-[#ede9fe] flex items-center justify-center text-[#7c3aed]">
-                  <FileTextOutlined />
-                </div>
-
-                <h3 className="text-[20px] font-semibold text-[#111827]">Sales Details</h3>
-              </div>
-
-              {/* SINGLE TABLE */}
-              <div>
-                <div className="grid grid-cols-3 bg-[#f8fafc] rounded-xl px-4 py-3 text-[14px] font-bold text-[#374151] mb-2">
-                  <span>Item</span>
-                  <span className="text-center">Qty</span>
-                  <span className="text-right">Sales</span>
-                </div>
-
-                {[
-                  {
-                    label: 'Gross',
-                    qty: dashboardData?.breakdown_table?.gross?.qty || 0,
-                    sales: dashboardData?.breakdown_table?.gross?.amount || 0,
-                  },
-                  {
-                    label: 'Cancelled',
-                    qty: dashboardData?.breakdown_table?.cancelled?.qty || 0,
-                    sales: dashboardData?.breakdown_table?.cancelled?.amount || 0,
-                    red: true,
-                  },
-                  {
-                    label: 'Returned(RTO)',
-                    qty: dashboardData?.breakdown_table?.returned?.qty || 0,
-                    sales: dashboardData?.breakdown_table?.returned?.amount || 0,
-                    red: true,
-                  },
-                  {
-                    label: 'Cancelled(RTO)',
-                    qty: dashboardData?.breakdown_table?.cancelledrtosummaryqty?.qty || 0,
-                    sales: dashboardData?.breakdown_table?.cancelledrtosummarysales?.amount || 0,
-                  },
-                  {
-                    label: 'Returned(CReF)',
-                    qty: dashboardData?.breakdown_table?.creturnsummaryqty?.qty || 0,
-                    sales: dashboardData?.breakdown_table?.returnedcref?.amount || 0,
-                  },
-                  {
-                    label: 'Claimed',
-                    qty: dashboardData?.breakdown_table?.claim?.qty || 0,
-                    sales: dashboardData?.breakdown_table?.claim?.amount || 0,
-                  },
-                  {
-                    label: 'Standard Cost',
-                    qty: dashboardData?.breakdown_table?.claimqty?.qty || 0,
-                    sales: dashboardData?.breakdown_table?.claimsales?.amount || 0,
-                  },
-                ].map((row) => (
-                  <div key={row.label} className="grid grid-cols-3 px-4 py-3 text-[14px] border-b border-[#f1f5f9]">
-                    <span className="text-[#374151] font-semibold">{row.label}</span>
-
-                    <span className={`text-center font-medium ${row.red ? 'text-[#ef4444]' : 'text-[#111827]'}`}>
-                      {row.qty}
-                    </span>
-
-                    <span className={`text-right font-medium ${row.red ? 'text-[#ef4444]' : 'text-[#111827]'}`}>
-                      {row.sales}
-                    </span>
-                  </div>
-                ))}
-
-                {/* NET */}
-                <div className="grid grid-cols-3 px-4 py-3 mt-2 bg-[#f5f3ff] rounded-xl text-[15px] font-bold text-[#16a34a]">
-                  <span>Net</span>
-
-                  <span className="text-center">{dashboardData?.breakdown_table?.net?.qty || 0}</span>
-
-                  <span className="text-right">{dashboardData?.breakdown_table?.net?.amount || 0}</span>
-                </div>
-              </div>
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </Col>
-
           {/* ================= RIGHT 4 CHARTS ================= */}
-          <Col xs={24} lg={10}>
-            <Row gutter={[18, 18]}>
+          <Col xs={24} lg={14}>
+            <Row gutter={[12, 12]}>
               {[
                 {
                   title: 'Quantity',
@@ -978,11 +965,11 @@ export default function Summary() {
                 },
               ].map((item) => (
                 <Col xs={24} sm={12} key={item.title}>
-                  <div className="bg-white rounded-[22px] border border-[#edf0f7] shadow-sm p-5 h-full">
+                  <div className="bg-white rounded-[18px] border border-[#edf0f7] shadow-sm p-2">
                     {/* HEADER */}
-                    <div className="flex items-center gap-3 mb-4">
+                    <div className="flex items-center gap-2 mb-1">
                       <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
+                        className="w-8 h-8 rounded-xl flex items-center justify-center text-[15px]"
                         style={{
                           background: `${item.color}15`,
                           color: item.color,
@@ -996,18 +983,18 @@ export default function Summary() {
 
                     {/* CIRCLE */}
                     <div className="flex justify-center">
-                      <div className="relative w-[120px] h-[120px]">
+                      <div className="relative w-[68px] h-[68px]">
                         <div
                           className="w-full h-full rounded-full"
                           style={{
                             background: `conic-gradient(${item.color} 0% 72%, #eef2f7 72% 100%)`,
                           }}
                         >
-                          <div className="absolute inset-[14px] bg-white rounded-full flex flex-col items-center justify-center">
+                          {/* <div className="absolute inset-[10px] bg-white rounded-full flex flex-col items-center justify-center">
                             <h2 className="text-[15px] font-bold text-[#111827] leading-none">{item.value}</h2>
 
                             <p className="text-[11px] text-[#6b7280] mt-2">100%</p>
-                          </div>
+                          </div> */}
                         </div>
                       </div>
                     </div>

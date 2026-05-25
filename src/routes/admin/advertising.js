@@ -15,6 +15,7 @@ const AdProductsSecond = lazy(() => import('../../container/advertising/AdProduc
 const AdsProductsThird = lazy(() => import('../../container/advertising/AdsProductsThird'));
 
 const NegativeKey = lazy(() => import('../../container/advertising/NegativeKey'));
+const Targets = lazy(() => import('../../container/advertising/Targets'));
 
 const RulesAutomation = lazy(() => import('../../container/advertising/RulesAutomation'));
 
@@ -81,6 +82,15 @@ function AdvertisingRoutes() {
         element={
           <SubscriptionGate allowFree>
             <NegativeKey />
+          </SubscriptionGate>
+        }
+      />
+
+      <Route
+        path="targets"
+        element={
+          <SubscriptionGate allowFree>
+            <Targets />
           </SubscriptionGate>
         }
       />

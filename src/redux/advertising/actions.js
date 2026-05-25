@@ -31,6 +31,10 @@ const actions = {
   RULES_SUCCESS: 'RULES_SUCCESS',
   RULES_ERR: 'RULES_ERR',
 
+  TARGETS_BEGIN: 'TARGETS_BEGIN',
+  TARGETS_SUCCESS: 'TARGETS_SUCCESS',
+  TARGETS_ERR: 'TARGETS_ERR',
+
   campaignsBegin: () => {
     return {
       type: actions.CAMPAIGNS_BEGIN,
@@ -187,6 +191,26 @@ const actions = {
   rulesErr: (err) => {
     return {
       type: actions.RULES_ERR,
+      err,
+    };
+  },
+
+  targetsBegin: () => {
+    return {
+      type: actions.TARGETS_BEGIN,
+    };
+  },
+
+  targetsSuccess: (data) => {
+    return {
+      type: actions.TARGETS_SUCCESS,
+      data,
+    };
+  },
+
+  targetsErr: (err) => {
+    return {
+      type: actions.TARGETS_ERR,
       err,
     };
   },

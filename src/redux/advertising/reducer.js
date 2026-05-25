@@ -8,6 +8,7 @@ const initialState = {
   adsProductsDataDetails: [],
   productsAds: [],
   searchTerms: [],
+  targets: [],
   rules: [],
   loading: false,
   error: null,
@@ -43,6 +44,10 @@ const {
   RULES_BEGIN,
   RULES_SUCCESS,
   RULES_ERR,
+
+  TARGETS_BEGIN,
+  TARGETS_SUCCESS,
+  TARGETS_ERR,
 } = actions;
 
 const AdvertisingReducer = (state = initialState, action) => {
@@ -209,6 +214,27 @@ const AdvertisingReducer = (state = initialState, action) => {
       };
 
     case RULES_ERR:
+      return {
+        ...state,
+        error: err,
+        loading: false,
+      };
+
+    case TARGETS_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case TARGETS_SUCCESS:
+      return {
+        ...state,
+        targets: data,
+        loading: false,
+      };
+
+    case TARGETS_ERR:
       return {
         ...state,
         error: err,
