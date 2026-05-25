@@ -12,6 +12,7 @@ from django.urls import path
 
 from .views import *
 from .budget_rules import *
+from amazon_ads.services.reports import *
 urlpatterns = [
 
     path("account/connect/",AmazonAdsConnectView.as_view()),
@@ -39,9 +40,9 @@ urlpatterns = [
 
     path("budget-rule-list/",AdsBudgetRuleListAPIView.as_view(),name="budget-rule-list"),
 
-    path(
-        "product-ad-metric-list/",
-        ProductAdMetricListAPIView.as_view(),
-        name="product-ad-metric-list"
-    ),
+    path("product-ad-metric-list/",ProductAdMetricListAPIView.as_view(),name="product-ad-metric-list"),
+
+    path("create-daily-ads-reports/",CreateDailyAdsReportsAPIView.as_view(),name="create-missing-ads-reports"),
+
+    path("get-ads-targeting/",AdsTargetListAPIView.as_view(),name="get_ads_targeting"),
 ]

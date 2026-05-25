@@ -6,6 +6,8 @@ from .models import *
 from datetime import timedelta
 from django.utils import timezone
 import gzip
+from django.db.models.functions import Trim
+from django.db.models import Q
 
 REGION_URLS = {
     "NA": "https://advertising-api.amazon.com",
@@ -113,6 +115,29 @@ REPORT_CONFIGS = [
             "cost",
             "sales14d",
             "purchases14d",
+            "acosClicks14d",
+            "roasClicks14d"
+        ]
+    },
+    {
+        "report_type": "spKeywords",
+
+        "group_by": ["keyword"],
+
+        "columns": [
+
+            "date",
+            "campaignId",
+            "adGroupId",
+            "keywordId",
+            "keyword",
+            "matchType",
+            "impressions",
+            "clicks",
+            "cost",
+            "sales14d",
+            "purchases14d",
+            "unitsSoldClicks14d",
             "acosClicks14d",
             "roasClicks14d"
         ]
@@ -500,16 +525,11 @@ def sync_adgroups():
                 response = ads_matrix_api_request(
 
                     account=account,
-
                     method="POST",
-
                     endpoint="/sp/adGroups/list",
-
                     payload=payload,
-
                     content_type=
                     "application/vnd.spadgroup.v3+json",
-
                     accept_type=
                     "application/vnd.spadgroup.v3+json"
                 )
@@ -519,13 +539,10 @@ def sync_adgroups():
                     print(
                         f"ADGROUP ERROR: {campaign.campaign_id}"
                     )
-
                     print(response.text)
-
                     continue
 
                 data = response.json()
-
                 ad_groups = data.get(
                     "adGroups",
                     []
@@ -536,66 +553,39 @@ def sync_adgroups():
                 )
 
                 for item in ad_groups:
-
                     ad_group_id = str(
                         item["adGroupId"]
                     )
-
                     if ad_group_id in existing_adgroups:
-
                         obj = existing_adgroups[
                             ad_group_id
                         ]
-
                         obj.campaign = campaign
-
                         obj.name = item.get(
                             "name"
                         )
-
                         obj.state = item.get(
                             "state"
                         )
-
                         obj.default_bid = item.get(
                             "defaultBid",
                             0
                         )
-
                         obj.raw_data = item
-
                         update_objects.append(
                             obj
                         )
-
                     else:
 
                         create_objects.append(
 
                             AdsAdGroup(
-
-                                amazon_account=
-                                account,
-
-                                campaign=
-                                campaign,
-
-                                ad_group_id=
-                                ad_group_id,
-
-                                name=item.get(
-                                    "name"
-                                ),
-
-                                state=item.get(
-                                    "state"
-                                ),
-
-                                default_bid=item.get(
-                                    "defaultBid",
-                                    0
-                                ),
-
+                                amazon_account= account,
+                                campaign= campaign,
+                                ad_group_id= ad_group_id,
+                                name=item.get( "name"),
+                                state=item.get("state"),
+                                default_bid=item.get("defaultBid",0),
                                 raw_data=item
                             )
                         )
@@ -607,15 +597,11 @@ def sync_adgroups():
                 # -----------------------------------------
 
                 close_old_connections()
-
             except Exception as e:
-
                 print(
                     f"FAILED CAMPAIGN: {campaign.campaign_id}"
                 )
-
                 print(str(e))
-
                 continue
 
         # -------------------------------------------------
@@ -644,9 +630,7 @@ def sync_adgroups():
         if update_objects:
 
             AdsAdGroup.objects.bulk_update(
-
                 update_objects,
-
                 [
                     "campaign",
                     "name",
@@ -654,10 +638,8 @@ def sync_adgroups():
                     "default_bid",
                     "raw_data"
                 ],
-
                 batch_size=500
             )
-
             print(
                 f"UPDATED: {len(update_objects)}"
             )
@@ -669,155 +651,6 @@ def sync_adgroups():
     )
 
     return True
-
-# amazon_ads/sync_productads.py
-# working 
-# def sync_productads():
-
-#     accounts = AmazonAdsAccount.objects.all()
-
-#     total_saved = 0
-
-#     for account in accounts:
-
-#         campaigns = AdsCampaign.objects.filter(
-#             amazon_account=account
-#         )
-
-#         for campaign in campaigns:
-
-#             ad_groups = AdsAdGroup.objects.filter(
-#                 campaign=campaign
-#             )
-
-#             for ad_group in ad_groups:
-
-#                 payload = {
-#                     "maxResults": 1000,
-#                     "adGroupIdFilter": {
-#                         "include": [
-#                             str(ad_group.ad_group_id)
-#                         ]
-#                     }
-#                 }
-#                 response = ads_matrix_api_request(
-
-#                     account=account,
-
-#                     method="POST",
-
-#                     endpoint="/sp/productAds/list",  
-#                     payload=payload,
-
-#                     content_type="application/vnd.spproductad.v3+json",
-
-#                     accept_type="application/vnd.spproductad.v3+json"
-#                 )
-
-#                 if response.status_code != 200:
-
-#                     print(
-#                         f"PRODUCT AD ERROR: {ad_group.ad_group_id}"
-#                     )
-
-#                     print(response.text)
-
-#                     continue
-
-#                 data = response.json()
-
-#                 product_ads = data.get(
-#                     "productAds", []
-#                 )
-
-#                 from django.db import close_old_connections
-
-#                 for item in product_ads:
-
-#                     close_old_connections()
-
-#                     obj = AdsProductAd.objects.filter(
-#                         ad_id=item["adId"]
-#                     ).first()
-
-#                     if obj:
-
-#                         obj.amazon_account = account
-#                         obj.campaign = campaign
-#                         obj.ad_group = ad_group
-#                         obj.asin = item.get("asin")
-#                         obj.sku = item.get("sku")
-#                         obj.state = item.get("state")
-#                         obj.raw_data = item
-
-#                         obj.save()
-
-#                     else:
-
-#                         AdsProductAd.objects.create(
-
-#                             amazon_account=account,
-
-#                             campaign=campaign,
-
-#                             ad_group=ad_group,
-
-#                             ad_id=item["adId"],
-
-#                             asin=item.get("asin"),
-
-#                             sku=item.get("sku"),
-
-#                             state=item.get("state"),
-
-#                             raw_data=item
-#                         )
-
-#                     total_saved += 1
-
-#                 # for item in product_ads:
-
-#                 #     AdsProductAd.objects.update_or_create(
-
-#                 #         ad_id=item["adId"],
-
-#                 #         defaults={
-
-#                 #             "amazon_account":
-#                 #             account,
-
-#                 #             "campaign":
-#                 #             campaign,
-
-#                 #             "ad_group":
-#                 #             ad_group,
-
-#                 #             "asin":
-#                 #             item.get("asin"),
-
-#                 #             "sku":
-#                 #             item.get("sku"),
-
-#                 #             "state":
-#                 #             item.get("state"),
-
-#                 #             "raw_data":
-#                 #             item
-#                 #         }
-#                 #     )
-
-#                 #     total_saved += 1
-
-#                 print(
-#                     f"ADGROUP {ad_group.ad_group_id} -> {len(product_ads)} PRODUCT ADS"
-#                 )
-
-#     print(
-#         f"TOTAL PRODUCT ADS SAVED: {total_saved}"
-#     )
-
-#     return True
-
 
 # =====================================================
 # PRODUCT ADS SYNC
@@ -992,103 +825,247 @@ def sync_productads():
 
 def sync_targets():
 
-    # accounts = AmazonAdsAccount.objects.all()
+    """
+    Sync Sponsored Products Targets
+    from Amazon Ads API
+    """
+
     accounts = AmazonAdsAccount.objects.filter(
-                is_primary = True
+        is_primary=True
     )
 
+    print("\n" + "=" * 100)
+    print("STARTING TARGETS SYNC")
+    print("=" * 100)
+
     total_saved = 0
+    total_updated = 0
+    total_failed = 0
 
     for account in accounts:
+
+        print("\n" + "-" * 100)
+        print(f"ACCOUNT: {account.profile_id}")
+        print("-" * 100)
 
         campaigns = AdsCampaign.objects.filter(
             amazon_account=account
         )
 
+        print(f"TOTAL CAMPAIGNS: {campaigns.count()}")
+
         for campaign in campaigns:
+
+            print("\n" + "=" * 80)
+            print(f"CAMPAIGN: {campaign.name}")
+            print(f"CAMPAIGN ID: {campaign.campaign_id}")
+            print("=" * 80)
 
             ad_groups = AdsAdGroup.objects.filter(
                 campaign=campaign
             )
 
+            print(f"TOTAL AD GROUPS: {ad_groups.count()}")
+
             for ad_group in ad_groups:
 
-                payload = {
-                    "maxResults": 1000,
-                    "adGroupIdFilter": {
-                        "include": [
-                            str(ad_group.ad_group_id)
-                        ]
-                    }
-                }
+                print("\n" + "-" * 60)
+                print(f"AD GROUP: {ad_group.name}")
+                print(f"AD GROUP ID: {ad_group.ad_group_id}")
+                print("-" * 60)
 
-                # response = ads_api_request(
-                #     account=account,
-                #     method="POST",
-                #     endpoint="/sp/targets/list",
-                #     payload=payload
-                # )
+                try:
 
-                response = ads_matrix_api_request(
-                    account=account,
-                    method="POST",
-                    endpoint="/sp/targets/list",
-                    payload=payload,
-                    content_type="application/vnd.spproductad.v3+json",
-                    accept_type="application/vnd.spproductad.v3+json"
-                )
+                    payload = {
 
-                if response.status_code != 200:
-                    print(response.text)
-                    continue
+                        "maxResults": 1000,
 
-                data = response.json()
+                        "adGroupIdFilter": {
 
-                targets = data.get(
-                    "targets", []
-                )
-
-                for item in targets:
-
-                    AdsTarget.objects.update_or_create(
-
-                        target_id=item["targetId"],
-
-                        defaults={
-
-                            "amazon_account":
-                            account,
-
-                            "campaign":
-                            campaign,
-
-                            "ad_group":
-                            ad_group,
-
-                            "expression_type":
-                            item.get(
-                                "expressionType"
-                            ),
-
-                            "expression":
-                            item.get(
-                                "expression", []
-                            ),
-
-                            "bid":
-                            item.get("bid", 0),
-
-                            "state":
-                            item.get("state"),
-
-                            "raw_data":
-                            item
+                            "include": [
+                                str(ad_group.ad_group_id)
+                            ]
                         }
+                    }
+
+                    response = ads_matrix_api_request(
+
+                        account=account,
+
+                        method="POST",
+
+                        endpoint="/sp/targets/list",
+
+                        payload=payload,
+
+                        content_type=
+                        "application/vnd.sptargetingClause.v3+json",
+
+                        accept_type=
+                        "application/vnd.sptargetingClause.v3+json"
                     )
 
-                    total_saved += 1
+                    print(f"API STATUS: {response.status_code}")
 
-    print(f"TOTAL TARGETS: {total_saved}")
+                    # =====================================================
+                    # API FAILED
+                    # =====================================================
+
+                    if response.status_code != 200:
+
+                        print("FAILED TO FETCH TARGETS")
+                        print(response.text)
+
+                        total_failed += 1
+
+                        continue
+
+                    # =====================================================
+                    # RESPONSE DATA
+                    # =====================================================
+
+                    data = response.json()
+
+                    print("RESPONSE:", data)
+
+                    # IMPORTANT:
+                    # Amazon returns "targetingClauses"
+                    # NOT "targets"
+                    targets = data.get(
+                        "targetingClauses",
+                        []
+                    )
+
+                    print(f"TOTAL TARGETS FOUND: {len(targets)}")
+
+                    # =====================================================
+                    # NO TARGETS
+                    # =====================================================
+
+                    if not targets:
+
+                        print("NO TARGETS FOUND")
+
+                        continue
+
+                    # =====================================================
+                    # SAVE TARGETS
+                    # =====================================================
+
+                    for item in targets:
+
+                        try:
+
+                            target_id = item.get(
+                                "targetId"
+                            )
+
+                            if not target_id:
+
+                                print(
+                                    "TARGET ID NOT FOUND"
+                                )
+
+                                continue
+
+                            # convert to integer
+                            target_id = int(target_id)
+
+                            obj, created = (
+                                AdsTarget.objects.update_or_create(
+
+                                    target_id=target_id,
+
+                                    defaults={
+
+                                        "amazon_account":
+                                        account,
+
+                                        "campaign":
+                                        campaign,
+
+                                        "ad_group":
+                                        ad_group,
+
+                                        "expression_type":
+                                        item.get(
+                                            "expressionType"
+                                        ),
+
+                                        "expression":
+                                        item.get(
+                                            "expression",
+                                            []
+                                        ),
+
+                                        "bid":
+                                        item.get(
+                                            "bid",
+                                            0
+                                        ) or 0,
+
+                                        "state":
+                                        item.get(
+                                            "state"
+                                        ),
+
+                                        "raw_data":
+                                        item
+                                    }
+                                )
+                            )
+
+                            if created:
+
+                                total_saved += 1
+
+                                print(
+                                    f"CREATED TARGET: "
+                                    f"{target_id}"
+                                )
+
+                            else:
+
+                                total_updated += 1
+
+                                print(
+                                    f"UPDATED TARGET: "
+                                    f"{target_id}"
+                                )
+
+                        except Exception as e:
+
+                            total_failed += 1
+
+                            print(
+                                f"ERROR SAVING TARGET"
+                            )
+
+                            print(str(e))
+
+                            continue
+
+                except Exception as e:
+
+                    total_failed += 1
+
+                    print(
+                        "ERROR FETCHING TARGETS"
+                    )
+
+                    print(str(e))
+
+                    continue
+
+    print("\n" + "=" * 100)
+    print("TARGETS SYNC COMPLETED")
+    print("=" * 100)
+
+    print(f"TOTAL CREATED : {total_saved}")
+    print(f"TOTAL UPDATED : {total_updated}")
+    print(f"TOTAL FAILED  : {total_failed}")
+
+    print("=" * 100)
 
     return True
 
@@ -1665,6 +1642,7 @@ def process_reports():
                 print(
                     f"SEARCH TERM METRICS SAVED: {total_saved}"
                 )
+           
             # =================================================
             # KEYWORD REPORT
             # =================================================
@@ -1673,72 +1651,167 @@ def process_reports():
 
                 total_saved = 0
 
+                print("PROCESSING KEYWORD REPORT")
+
                 for row in rows:
 
-                    # keyword_id = row.get("keywordId")
-                    keyword_id = str(row.get("keywordId", "")).strip()
+                    try:
 
-                    if not keyword_id:
-                        continue
+                        keyword_id = str(
+                            row.get("keywordId", "")
+                        ).strip()
 
-                    keyword = AdsKeyword.objects.filter(
-                        keyword_id=keyword_id
-                    ).first()
+                        if not keyword_id:
 
-                    if not keyword:
+                            print("KEYWORD ID MISSING")
+                            continue
+
+                        print(f"KEYWORD ID: {keyword_id}")
+
+                        keyword = AdsKeyword.objects.filter(
+                            keyword_id=keyword_id
+                        ).first()
+
+                        if not keyword:
+
+                            print(
+                                f"KEYWORD NOT FOUND: {keyword_id}"
+                            )
+
+                            continue
+
+                        metric, created = KeywordMetric.objects.update_or_create(
+
+                            keyword=keyword,
+
+                            report_date=row.get("date"),
+
+                            defaults={
+
+                                "impressions":
+                                int(row.get("impressions", 0) or 0),
+
+                                "clicks":
+                                int(row.get("clicks", 0) or 0),
+
+                                "cost":
+                                float(row.get("cost", 0) or 0),
+
+                                "sales":
+                                float(row.get("sales14d", 0) or 0),
+
+                                "orders":
+                                int(row.get("purchases14d", 0) or 0),
+
+                                "acos":
+                                float(
+                                    row.get("acosClicks14d", 0) or 0
+                                ),
+
+                                "roas":
+                                float(
+                                    row.get("roasClicks14d", 0) or 0
+                                ),
+
+                                "raw_data":
+                                row
+                            }
+                        )
+
+                        total_saved += 1
+
+                        if created:
+                            print(
+                                f"CREATED KEYWORD METRIC: {keyword_id}"
+                            )
+                        else:
+                            print(
+                                f"UPDATED KEYWORD METRIC: {keyword_id}"
+                            )
+
+                    except Exception as e:
 
                         print(
-                            f"KEYWORD NOT FOUND: {keyword_id}"
+                            f"KEYWORD SAVE ERROR: {str(e)}"
                         )
 
                         continue
 
-                    KeywordMetric.objects.update_or_create(
-
-                        keyword=keyword,
-
-                        report_date=row.get("date"),
-
-                        defaults={
-
-                            "impressions":
-                            row.get("impressions", 0),
-
-                            "clicks":
-                            row.get("clicks", 0),
-
-                            "cost":
-                            row.get("cost", 0),
-
-                            "sales":
-                            row.get("sales14d", 0),
-
-                            "orders":
-                            row.get("purchases14d", 0),
-
-                            "acos": row.get("acosClicks14d") or 0,
-                            "roas": row.get("roasClicks14d") or 0,
-
-                            # "acos":
-                            # row.get(
-                            #     "acosClicks14d", 0
-                            # ),
-
-                            # "roas":
-                            # row.get(
-                            #     "roasClicks14d", 0
-                            # ),
-
-                            "raw_data":
-                            row
-                        }
-                    )
-
-                    total_saved += 1
-
                 print(
-                    f"KEYWORD METRICS SAVED: {total_saved}"
+                    f"TOTAL KEYWORD METRICS SAVED: {total_saved}"
                 )
+
+            # elif report.report_type == "spKeywords":
+
+            #     total_saved = 0
+
+            #     for row in rows:
+
+            #         # keyword_id = row.get("keywordId")
+            #         keyword_id = str(row.get("keywordId", "")).strip()
+
+            #         if not keyword_id:
+            #             continue
+
+            #         keyword = AdsKeyword.objects.filter(
+            #             keyword_id=keyword_id
+            #         ).first()
+
+            #         if not keyword:
+
+            #             print(
+            #                 f"KEYWORD NOT FOUND: {keyword_id}"
+            #             )
+
+            #             continue
+
+            #         KeywordMetric.objects.update_or_create(
+
+            #             keyword=keyword,
+
+            #             report_date=row.get("date"),
+
+            #             defaults={
+
+            #                 "impressions":
+            #                 row.get("impressions", 0),
+
+            #                 "clicks":
+            #                 row.get("clicks", 0),
+
+            #                 "cost":
+            #                 row.get("cost", 0),
+
+            #                 "sales":
+            #                 row.get("sales14d", 0),
+
+            #                 "orders":
+            #                 row.get("purchases14d", 0),
+
+            #                 "acos": row.get("acosClicks14d") or 0,
+            #                 "roas": row.get("roasClicks14d") or 0,
+
+            #                 # "acos":
+            #                 # row.get(
+            #                 #     "acosClicks14d", 0
+            #                 # ),
+
+            #                 # "roas":
+            #                 # row.get(
+            #                 #     "roasClicks14d", 0
+            #                 # ),
+
+            #                 "raw_data":
+            #                 row
+            #             }
+            #         )
+
+            #         total_saved += 1
+
+            #     print(
+            #         f"KEYWORD METRICS SAVED: {total_saved}"
+            #     )
+
 
             # =================================================
             # TARGET REPORT
@@ -1748,58 +1821,142 @@ def process_reports():
 
                 total_saved = 0
 
+                print("PROCESSING TARGET REPORT")
+
                 for row in rows:
 
-                    target_id = row.get("targetId")
+                    try:
 
-                    if not target_id:
-                        continue
+                        target_id = str(
+                            row.get("targetId", "")
+                        ).strip()
 
-                    target = AdsTarget.objects.filter(
-                        target_id=target_id
-                    ).first()
+                        if not target_id:
 
-                    if not target:
+                            print("TARGET ID MISSING")
+                            continue
+
+                        print(f"TARGET ID: {target_id}")
+
+                        target = AdsTarget.objects.filter(
+                            target_id=target_id
+                        ).first()
+
+                        if not target:
+
+                            print(
+                                f"TARGET NOT FOUND: {target_id}"
+                            )
+
+                            continue
+
+                        metric, created = TargetMetric.objects.update_or_create(
+
+                            target=target,
+
+                            report_date=row.get("date"),
+
+                            defaults={
+
+                                "impressions":
+                                int(row.get("impressions", 0) or 0),
+
+                                "clicks":
+                                int(row.get("clicks", 0) or 0),
+
+                                "cost":
+                                float(row.get("cost", 0) or 0),
+
+                                "sales":
+                                float(row.get("sales14d", 0) or 0),
+
+                                "orders":
+                                int(row.get("purchases14d", 0) or 0),
+
+                                "raw_data":
+                                row
+                            }
+                        )
+
+                        total_saved += 1
+
+                        if created:
+                            print(
+                                f"CREATED TARGET METRIC: {target_id}"
+                            )
+                        else:
+                            print(
+                                f"UPDATED TARGET METRIC: {target_id}"
+                            )
+
+                    except Exception as e:
 
                         print(
-                            f"TARGET NOT FOUND: {target_id}"
+                            f"TARGET SAVE ERROR: {str(e)}"
                         )
 
                         continue
 
-                    TargetMetric.objects.update_or_create(
-
-                        target=target,
-
-                        report_date=row.get("date"),
-
-                        defaults={
-
-                            "impressions":
-                            row.get("impressions", 0),
-
-                            "clicks":
-                            row.get("clicks", 0),
-
-                            "cost":
-                            row.get("cost", 0),
-
-                            "sales":
-                            row.get("sales14d", 0),
-
-                            "orders":
-                            row.get("purchases14d", 0),
-
-                            "raw_data":
-                            row
-                        }
-                    )
-
-                    total_saved += 1
-
                 print(
-                    f"TARGET METRICS SAVED: {total_saved}"
+                    f"TOTAL TARGET METRICS SAVED: {total_saved}"
                 )
+
+            # elif report.report_type == "spTargeting":
+
+            #     total_saved = 0
+
+            #     for row in rows:
+
+            #         target_id = row.get("targetId")
+
+            #         if not target_id:
+            #             continue
+
+            #         target = AdsTarget.objects.filter(
+            #             target_id=target_id
+            #         ).first()
+
+            #         if not target:
+
+            #             print(
+            #                 f"TARGET NOT FOUND: {target_id}"
+            #             )
+
+            #             continue
+
+            #         TargetMetric.objects.update_or_create(
+
+            #             target=target,
+
+            #             report_date=row.get("date"),
+
+            #             defaults={
+
+            #                 "impressions":
+            #                 row.get("impressions", 0),
+
+            #                 "clicks":
+            #                 row.get("clicks", 0),
+
+            #                 "cost":
+            #                 row.get("cost", 0),
+
+            #                 "sales":
+            #                 row.get("sales14d", 0),
+
+            #                 "orders":
+            #                 row.get("purchases14d", 0),
+
+            #                 "raw_data":
+            #                 row
+            #             }
+            #         )
+
+            #         total_saved += 1
+
+            #     print(
+            #         f"TARGET METRICS SAVED: {total_saved}"
+            #     )
 
             # =================================================
             # PRODUCT AD REPORT
@@ -1951,56 +2108,242 @@ def process_reports():
 #     return True
 
 
-# amazon_ads/check_reports.py
+
+# # amazon_ads/check_reports.py
+# def check_pending_reports():
+#     print("CHECK FUNCTION RUNNING FROM UPDATED FILE")
+
+#     reports = (
+#         AdsReportLog.objects
+#         .annotate(
+#             clean_status=Trim("status")
+#         )
+#         .filter(
+
+#             Q(clean_status__iexact="PENDING") |
+#             Q(clean_status__iexact="Penfind") |
+#             Q(clean_status__iexact="penfind") |
+#             Q(clean_status__iexact="PROCESSING") |
+#             Q(clean_status__iexact="Processing") |
+#             Q(clean_status__iexact="processing") |
+#             Q(clean_status__iexact="IN_PROGRESS") |
+#             Q(clean_status__iexact="QUEUED")
+
+#         )
+#     )
+
+#     # reports = AdsReportLog.objects.filter(
+#     #     status__in=[
+#     #         "PENDING",
+#     #         "PROCESSING",
+#     #         "IN_PROGRESS",
+#     #         "QUEUED",
+#     #         "Pending"
+#     #     ]
+#     # )
+
+#     print(f"TOTAL REPORTS TO CHECK: {reports.count()}")
+
+#     for report in reports:
+
+#         print("\n" + "=" * 80)
+
+#         print(f"CHECKING REPORT: {report.report_id}")
+
+#         try:
+
+#             response = ads_api_request(
+
+#                 account=report.amazon_account,
+
+#                 method="GET",
+
+#                 endpoint=f"/reporting/reports/{report.report_id}"
+#             )
+
+#             print("STATUS CODE:", response.status_code)
+
+#             if response.status_code != 200:
+
+#                 print("FAILED TO CHECK REPORT")
+
+#                 print(response.text)
+
+#                 continue
+
+#             data = response.json()
+
+#             print("RESPONSE:", data)
+
+#             # =====================================================
+#             # GET STATUS
+#             # =====================================================
+
+#             status = str(
+#                 data.get("status", "")
+#             ).strip().upper()
+
+#             print("AMAZON STATUS:", status)
+
+#             # =====================================================
+#             # UPDATE STATUS
+#             # =====================================================
+
+#             report.status = status
+
+#             # =====================================================
+#             # SAVE DOWNLOAD URL
+#             # =====================================================
+
+#             download_url = data.get("url")
+
+#             if download_url:
+
+#                 report.download_url = download_url
+
+#                 print("DOWNLOAD URL SAVED")
+
+#             # =====================================================
+#             # SAVE RAW RESPONSE
+#             # =====================================================
+
+#             report.raw_response = data
+
+#             report.save()
+
+#             print(
+#                 f"UPDATED REPORT: "
+#                 f"{report.report_id} -> {status}"
+#             )
+
+#         except Exception as e:
+
+#             print(
+#                 f"ERROR CHECKING REPORT: "
+#                 f"{report.report_id}"
+#             )
+
+#             print(str(e))
+
+#     print("\nALL REPORTS CHECKED")
+
+#     return True
+
+
+
+
 def check_pending_reports():
 
-    reports = AdsReportLog.objects.filter(
-        status__in=["PENDING", "PROCESSING"]
+    print("CHECK FUNCTION RUNNING")
+
+    reports = (
+        AdsReportLog.objects
+        .annotate(
+            clean_status=Trim("status")
+        )
+        .filter(
+            Q(clean_status__iexact="PENDING") |
+            Q(clean_status__iexact="PROCESSING") |
+            Q(clean_status__iexact="IN_PROGRESS") |
+            Q(clean_status__iexact="QUEUED")
+        )
     )
+
+    print(f"TOTAL REPORTS TO CHECK: {reports.count()}")
 
     for report in reports:
 
-        response = ads_api_request(
-            account=report.amazon_account,
-            method="GET",
-            endpoint=f"/reporting/reports/{report.report_id}"
-        )
+        print("\n" + "=" * 100)
 
-        if response.status_code != 200:
+        print(f"REPORT ID: {report.report_id}")
+        print(f"REPORT TYPE: {report.report_type}")
+
+        try:
+
+            # =====================================================
+            # IMPORTANT:
+            # USE ads_matrix_api_request
+            # =====================================================
+
+            response = ads_matrix_api_request(
+
+                account=report.amazon_account,
+
+                method="GET",
+
+                endpoint=f"/reporting/reports/{report.report_id}",
+
+                content_type="application/vnd.createasyncreportrequest.v3+json",
+
+                accept_type="application/vnd.createasyncreportrequest.v3+json"
+            )
+
+            print("STATUS CODE:", response.status_code)
+
+            if response.status_code != 200:
+
+                print("FAILED TO CHECK REPORT")
+                print(response.text)
+
+                continue
+
+            data = response.json()
+
+            print("FULL RESPONSE:")
+            print(data)
+
+            # =====================================================
+            # AMAZON STATUS
+            # =====================================================
+
+            amazon_status = str(
+                data.get("status", "")
+            ).strip().upper()
+
+            print("AMAZON STATUS:", amazon_status)
+
+            # =====================================================
+            # UPDATE STATUS
+            # =====================================================
+
+            report.status = amazon_status
+
+            # =====================================================
+            # SAVE DOWNLOAD URL
+            # =====================================================
+
+            download_url = data.get("url")
+
+            if download_url:
+
+                report.download_url = download_url
+
+                print("DOWNLOAD URL SAVED")
+
+            # =====================================================
+            # SAVE RAW RESPONSE
+            # =====================================================
+
+            report.raw_response = data
+
+            report.save()
 
             print(
-                f"REPORT CHECK ERROR: {report.report_id}"
+                f"UPDATED SUCCESSFULLY -> "
+                f"{report.report_id} : {amazon_status}"
             )
 
-            print(response.text)
+        except Exception as e:
 
-            continue
-
-        data = response.json()
-
-        status = data.get("status")
-
-        report.status = status
-
-        if status == "COMPLETED":
-
-            report.download_url = data.get(
-                "url"
+            print(
+                f"ERROR IN REPORT: {report.report_id}"
             )
 
-        report.raw_response = data
+            print(str(e))
 
-        report.save()
-
-        print(
-            f"REPORT {report.report_id} -> {status}"
-        )
-
-    print("ALL REPORTS CHECKED")
+    print("\nALL REPORTS CHECKED")
 
     return True
-
-
 
 def sync_keywords():
 

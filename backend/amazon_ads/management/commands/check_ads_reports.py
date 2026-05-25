@@ -1,4 +1,4 @@
-# amazon_ads/management/commands/check_pending_reports.py
+# amazon_ads/management/commands/check_ads_reports.py
 
 from django.core.management.base import BaseCommand
 

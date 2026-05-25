@@ -119,7 +119,7 @@ class AdsAdGroupAdmin(admin.ModelAdmin):
 @admin.register(AdsKeyword)
 class AdsKeywordAdmin(admin.ModelAdmin):
     list_display = (
-        "id",
+        "id","amazon_account",
         "keyword_id",
         "keyword_text",
         "match_type",
@@ -129,7 +129,7 @@ class AdsKeywordAdmin(admin.ModelAdmin):
         "state",
         "created_at",
     )
-    search_fields = ("keyword_text", "keyword_id")
+    search_fields = ("keyword_text", "keyword_id","amazon_account")
     list_filter = ("match_type", "state", "created_at")
     readonly_fields = ("created_at",)
     ordering = ("-created_at",)

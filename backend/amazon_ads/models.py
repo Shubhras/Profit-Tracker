@@ -145,7 +145,8 @@ class AdsKeyword(models.Model):
     amazon_account = models.ForeignKey(AmazonAdsAccount,on_delete=models.CASCADE)
     campaign = models.ForeignKey(AdsCampaign,on_delete=models.CASCADE)
     ad_group = models.ForeignKey(AdsAdGroup,on_delete=models.CASCADE)
-    keyword_id = models.BigIntegerField(unique=True)
+    # keyword_id = models.BigIntegerField(unique=True)
+    keyword_id = models.CharField(max_length=100,unique=True)
     keyword_text = models.TextField()
     match_type = models.CharField(max_length=20,choices=MATCH_TYPES)
     bid = models.FloatField(default=0)
@@ -162,7 +163,8 @@ class AdsTarget(models.Model):
 
     ad_group = models.ForeignKey(AdsAdGroup,on_delete=models.CASCADE)
 
-    target_id = models.BigIntegerField(unique=True)
+    # target_id = models.BigIntegerField(unique=True)
+    target_id = models.CharField(max_length=100,unique=True)
 
     expression_type = models.CharField(max_length=100,null=True,blank=True)
 
