@@ -258,13 +258,6 @@ class TargetMetricAdmin(admin.ModelAdmin):
     list_filter = ("report_date",)
     ordering = ("-report_date",)    
 
-
-# admin.py
-
-from django.contrib import admin
-from .models import AdsBudgetRule
-
-
 @admin.register(AdsBudgetRule)
 class AdsBudgetRuleAdmin(admin.ModelAdmin):
 
@@ -277,6 +270,7 @@ class AdsBudgetRuleAdmin(admin.ModelAdmin):
         "profile_id",
         "amazon_account",
         "created_at",
+        "is_deleted",
     )
 
     list_filter = (
@@ -308,7 +302,7 @@ class AdsBudgetRuleAdmin(admin.ModelAdmin):
     fieldsets = (
         ("Basic Information", {
             "fields": (
-                "amazon_account",
+                "amazon_account","campaign_ids",
                 "profile_id",
                 "budget_rule_id",
                 "name",
@@ -330,6 +324,7 @@ class AdsBudgetRuleAdmin(admin.ModelAdmin):
             "fields": (
                 "rule_details",
                 "raw_data",
+                "error_details",
             )
         }),
     )    

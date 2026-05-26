@@ -350,6 +350,12 @@ class AdsBudgetRule(models.Model):
 
     updated_at = models.DateTimeField(auto_now=True)
 
+    campaign_ids = models.JSONField(default=list, blank=True)
+
+    is_deleted = models.BooleanField(default=False)
+
+    error_details = models.JSONField(default=dict, blank=True)
+
     class Meta:
         unique_together = ("amazon_account", "budget_rule_id", "rule_type")
 
