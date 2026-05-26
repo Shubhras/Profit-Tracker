@@ -119,7 +119,7 @@ class AdsAdGroupAdmin(admin.ModelAdmin):
 @admin.register(AdsKeyword)
 class AdsKeywordAdmin(admin.ModelAdmin):
     list_display = (
-        "id",
+        "id","amazon_account",
         "keyword_id",
         "keyword_text",
         "match_type",
@@ -129,7 +129,7 @@ class AdsKeywordAdmin(admin.ModelAdmin):
         "state",
         "created_at",
     )
-    search_fields = ("keyword_text", "keyword_id")
+    search_fields = ("keyword_text", "keyword_id","amazon_account")
     list_filter = ("match_type", "state", "created_at")
     readonly_fields = ("created_at",)
     ordering = ("-created_at",)
@@ -258,13 +258,6 @@ class TargetMetricAdmin(admin.ModelAdmin):
     list_filter = ("report_date",)
     ordering = ("-report_date",)    
 
-
-# admin.py
-
-from django.contrib import admin
-from .models import AdsBudgetRule
-
-
 @admin.register(AdsBudgetRule)
 class AdsBudgetRuleAdmin(admin.ModelAdmin):
 
@@ -277,6 +270,7 @@ class AdsBudgetRuleAdmin(admin.ModelAdmin):
         "profile_id",
         "amazon_account",
         "created_at",
+        "is_deleted",
     )
 
     list_filter = (
@@ -308,7 +302,7 @@ class AdsBudgetRuleAdmin(admin.ModelAdmin):
     fieldsets = (
         ("Basic Information", {
             "fields": (
-                "amazon_account",
+                "amazon_account","campaign_ids",
                 "profile_id",
                 "budget_rule_id",
                 "name",
@@ -330,6 +324,7 @@ class AdsBudgetRuleAdmin(admin.ModelAdmin):
             "fields": (
                 "rule_details",
                 "raw_data",
+                "error_details",
             )
         }),
     )    

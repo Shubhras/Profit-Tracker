@@ -4550,13 +4550,17 @@ def amazon_profitability_details(request):
                 missing_qty += o['quantity_ordered']
 
         stdcost_missing_percentage = (missing_qty / gross_qty * 100) if gross_qty else 0
-
-        # profit = net_sales - abs(mpfees) + shipping_final - stdcost + tcs_total
-        # profit = net_sales - t_new_charge + shipping_final - stdcost + tcs_total
-        # profit = net_sales + t_new_charge + shipping_final - stdcost + tcs_total
-        # profit = net_sales - estimated_fees - shipping_final - stdcost - tcs_total + mp_gst
-
         
+        # profit = (
+        #     net_sales
+        #     - estimated_fees
+        #     - shipping_final
+        #     - stdcost
+        #     + tcs_total
+        #     + mp_gst
+        #     + ads
+        
+        # )
         profit = (
             net_sales
             - estimated_fees
@@ -4565,11 +4569,19 @@ def amazon_profitability_details(request):
             + tcs_total
             + mp_gst
             + ads
+            - gst_to_pay_amount
         
         )
+
+        # exp_settlement = (
+        #     profit
+        #     # - stdcost
+        #     - tcs_total
+        #     - mp_gst
+        # )
         exp_settlement = (
-            profit
-            - stdcost
+            net_sales
+            - shipping_final
             - tcs_total
             - mp_gst
         )
@@ -5732,11 +5744,19 @@ def amazon_profitability_parent(request):
             + tcs_total
             + mp_gst
             - total_cost
+            - gst_to_pay_amount
         )
 
+        # exp_settlement = (
+        #     profit
+        #     - total_cost
+        #     - tcs_total
+        #     - mp_gst
+        # )
+
         exp_settlement = (
-            profit
-            - total_cost
+            net_sales
+            - shipping_final
             - tcs_total
             - mp_gst
         )
@@ -5755,6 +5775,7 @@ def amazon_profitability_parent(request):
             "parent_asin": parent_asin,
             "name": row['title'],
             "child_sku": clean_sku(child_sku),
+            # "child_sku": row['child_sku'],
             "image_url": row['image_url'],
             "channel": "Amazon-India",
             "channel1": "Amazon-India",
@@ -6368,12 +6389,20 @@ def sku_profit_report(request):
 
     # ---------------- GET ASIN ----------------
     filters = data.get("filters", {})
-    asin = data.get("parentProductId") or filters.get("parentProductId")
+    # asin = data.get("parentProductId") or filters.get("parentProductId")
 
-    if not asin:
+    # if not asin:
+    #     return Response({
+    #         "status": False,
+    #         "message": "parentProductId is required"
+    #     }, status=400)
+
+    sku = data.get("sku") or filters.get("sku")
+
+    if not sku:
         return Response({
             "status": False,
-            "message": "parentProductId is required"
+            "message": "sku is required"
         }, status=400)
 
     pagination = data.get("pagination", {})
@@ -6408,7 +6437,11 @@ def sku_profit_report(request):
         .filter(order__user=user)
     )
 
-    order_filter = Q(order__user=user, asin=asin)
+    # order_filter = Q(order__user=user, asin=asin)
+    order_filter = Q(
+        order__user=user,
+        seller_sku=sku
+    )
 
     if from_date:
         order_filter &= Q(order__purchase_date__gte=from_date)
@@ -6492,8 +6525,9 @@ def sku_profit_report(request):
             'sku_step_level',
         )
         .annotate(
-            title=Max('title'),
+            title=Max('title'),  
             image=Max('image_url'),
+            asin=Max('asin'), 
 
             grossqty=Sum('quantity_ordered'),
             grosssales=Sum('item_price'),
@@ -6514,10 +6548,14 @@ def sku_profit_report(request):
 
 
     estimated_fee_data = (
-        AmazonEstimatedFee.objects
-        .filter(
+        # AmazonEstimatedFee.objects
+        # .filter(
+        #     order_item__order__user=user,
+        #     asin=asin
+        # )
+        AmazonEstimatedFee.objects.filter(
             order_item__order__user=user,
-            asin=asin
+            order_item__seller_sku=sku
         )
         .values('order_item__order__amazon_order_id')
         .annotate(
@@ -6765,6 +6803,8 @@ def sku_profit_report(request):
         gross_qty = int(row['grossqty'] or 0)
         gross_sales = float(row['grosssales'] or 0)
 
+        asin =row['asin']
+
         item_tax = float(row.get('item_tax') or 0)
         promo_discount = float(row.get('promotion_discount') or 0)
 
@@ -6797,7 +6837,10 @@ def sku_profit_report(request):
         child_sku = row.get("seller_sku")
 
         # BY ASIN
-        ads_row = ads_map.get(asin)
+        # ads_row = ads_map.get(asin)
+        ads_row = ads_map.get(
+            normalize_sku(sku)
+        )
 
         # FALLBACK BY SKU
         if not ads_row and child_sku:
@@ -6942,9 +6985,17 @@ def sku_profit_report(request):
             - cost
             + tcs
             + mp_gst
+            - gst_to_pay_amount
         )
 
-        exp_settlement = profit - cost - tcs - mp_gst
+        # exp_settlement = profit - cost - tcs - mp_gst
+
+        exp_settlement = (
+            net_sales
+            - shipping_final
+            - tcs
+            - mp_gst
+        )
         
 
         profit_margin = (profit / net_sales * 100) if net_sales else 0
@@ -6964,7 +7015,8 @@ def sku_profit_report(request):
 
             "channel": "Amazon-India",
             "channel1": "Amazon-India",
-            "redirecturl": f"https://www.amazon.in/dp/{asin}",
+            # "redirecturl": f"https://www.amazon.in/dp/{asin}",
+            "redirecturl": f"https://www.amazon.in/dp/{row['asin']}",
 
             "grossqty": gross_qty,
             "qty": net_qty,

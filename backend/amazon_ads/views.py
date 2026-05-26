@@ -21,11 +21,13 @@ from django.db.models import Avg
 from .serializers import *
 from rest_framework.views import APIView
 from user_auth.models import User 
-from amazon_auth.models import AmazonAccount 
+from amazon_auth.models import AmazonAccount , AmazonListingItem
 from django.db.models import (
     Q,
+    Count,
     Sum,
-    Count
+    OuterRef,
+    Subquery,
 )
 from rest_framework import status
 
@@ -935,7 +937,8 @@ class AdsKeywordListView(APIView):
         ad_group_id = data.get("ad_group_id")
         ordering = data.get("ordering", "-created_at")
         queryset = AdsKeyword.objects.filter(
-            amazon_account__user=user
+            amazon_account__user=user,
+            amazon_account__is_primary = True
         ).select_related(
             "amazon_account",
             "campaign",
@@ -1109,7 +1112,6 @@ class AdsKeywordListView(APIView):
 
 
 
-
 class ProductSKUReportView(APIView):
 
     permission_classes = [IsAuthenticated]
@@ -1193,6 +1195,15 @@ class ProductSKUReportView(APIView):
                 ]
             )
 
+        # =====================================================
+        # AMAZON LISTING SUBQUERY
+        # =====================================================
+
+        listing_queryset = AmazonListingItem.objects.filter(
+            sku=OuterRef("sku"),
+            user=user
+        ).order_by("-id")
+
         # GROUP BY SKU
         queryset = queryset.values(
 
@@ -1200,6 +1211,14 @@ class ProductSKUReportView(APIView):
             "asin"
 
         ).annotate(
+
+            item_name=Subquery(
+                listing_queryset.values("item_name")[:1]
+            ),
+
+            image_url=Subquery(
+                listing_queryset.values("image_url")[:1]
+            ),
 
             total_ads=Count(
                 "id",
@@ -1250,6 +1269,148 @@ class ProductSKUReportView(APIView):
         }
 
         return response
+    
+
+# class ProductSKUReportView(APIView):
+
+#     permission_classes = [IsAuthenticated]
+
+#     pagination_class = CustomPagination
+
+#     def post(self, request):
+
+#         user = request.user
+
+#         data = request.data
+
+#         search = data.get("search")
+
+#         state = data.get("state")
+
+#         campaign_id = data.get(
+#             "campaign_id"
+#         )
+
+#         ad_group_id = data.get(
+#             "ad_group_id"
+#         )
+
+#         start_date = data.get(
+#             "start_date"
+#         )
+
+#         end_date = data.get(
+#             "end_date"
+#         )
+
+#         ordering = data.get(
+#             "ordering",
+#             "-sales"
+#         )
+
+#         queryset = AdsProductAd.objects.filter(
+#             amazon_account__user=user,
+#             amazon_account__is_primary=True
+#         )
+
+#         # SEARCH FILTER
+#         if search:
+
+#             queryset = queryset.filter(
+
+#                 Q(sku__icontains=search) |
+
+#                 Q(asin__icontains=search)
+#             )
+
+#         # STATE FILTER
+#         if state:
+
+#             queryset = queryset.filter(
+#                 state=state
+#             )
+
+#         # CAMPAIGN FILTER
+#         if campaign_id:
+
+#             queryset = queryset.filter(
+#                 campaign__campaign_id=campaign_id
+#             )
+
+#         # AD GROUP FILTER
+#         if ad_group_id:
+
+#             queryset = queryset.filter(
+#                 ad_group__ad_group_id=ad_group_id
+#             )
+
+#         # DATE FILTER
+#         if start_date and end_date:
+
+#             queryset = queryset.filter(
+#                 productadmetric__report_date__range=[
+#                     start_date,
+#                     end_date
+#                 ]
+#             )
+
+#         # GROUP BY SKU
+#         queryset = queryset.values(
+
+#             "sku",
+#             "asin"
+
+#         ).annotate(
+
+#             total_ads=Count(
+#                 "id",
+#                 distinct=True
+#             ),
+
+#             impressions=Sum(
+#                 "productadmetric__impressions"
+#             ),
+
+#             clicks=Sum(
+#                 "productadmetric__clicks"
+#             ),
+
+#             cost=Sum(
+#                 "productadmetric__cost"
+#             ),
+
+#             sales=Sum(
+#                 "productadmetric__sales"
+#             ),
+
+#             orders=Sum(
+#                 "productadmetric__orders"
+#             )
+
+#         ).order_by(
+#             ordering
+#         )
+
+#         total_skus = queryset.count()
+
+#         paginator = self.pagination_class()
+
+#         paginated_queryset = paginator.paginate_queryset(
+#             queryset,
+#             request
+#         )
+
+#         response = paginator.get_paginated_response(
+#             paginated_queryset
+#         )
+
+#         response.data["summary"] = {
+
+#             "total_skus":
+#             total_skus
+#         }
+
+#         return response
 
 
 class CampaignBySKUView(APIView):
@@ -2338,3 +2499,138 @@ class ProductAdMetricListAPIView(APIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )    
+
+
+class AdsTargetListAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+    pagination_class = CustomPagination
+
+    def post(self, request):
+
+        try:
+
+            user = request.user
+            data = request.data
+            search = data.get("search")
+            state = data.get("state")
+            campaign_id = data.get(
+                "campaign_id"
+            )
+
+            ad_group_id = data.get(
+                "ad_group_id"
+            )
+
+            expression_type = data.get(
+                "expression_type"
+            )
+
+            ordering = data.get(
+                "ordering",
+                "-id"
+            )
+
+            queryset = AdsTarget.objects.filter(
+                amazon_account__user=user,
+                amazon_account__is_primary=True
+            ).select_related(
+                "campaign",
+                "ad_group",
+            )
+
+            # =====================================================
+            # SEARCH
+            # =====================================================
+
+            if search:
+
+                queryset = queryset.filter(
+                    Q(target_id__icontains=search) |
+                    Q(campaign__name__icontains=search) |
+                    Q(ad_group__name__icontains=search)
+                )
+
+            # =====================================================
+            # STATE FILTER
+            # =====================================================
+
+            if state:
+
+                queryset = queryset.filter(
+                    state=state
+                )
+
+            # =====================================================
+            # CAMPAIGN FILTER
+            # =====================================================
+
+            if campaign_id:
+
+                queryset = queryset.filter(
+                    campaign__campaign_id=campaign_id
+                )
+
+            # =====================================================
+            # AD GROUP FILTER
+            # =====================================================
+
+            if ad_group_id:
+
+                queryset = queryset.filter(
+                    ad_group__ad_group_id=ad_group_id
+                )
+
+            # =====================================================
+            # EXPRESSION TYPE FILTER
+            # =====================================================
+
+            if expression_type:
+
+                queryset = queryset.filter(
+                    expression_type=expression_type
+                )
+
+            queryset = queryset.values(
+
+                "id",
+                "target_id",
+                "expression_type",
+                "expression",
+                "bid",
+                "state",
+                "created_at",
+                "campaign__campaign_id",
+                "campaign__name",
+                "ad_group__ad_group_id",
+                "ad_group__name",
+
+            ).order_by(
+                ordering
+            )
+
+            total_targets = queryset.count()
+            paginator = self.pagination_class()
+            paginated_queryset = paginator.paginate_queryset(
+                queryset,
+                request
+            )
+            response = paginator.get_paginated_response(
+                paginated_queryset
+            )
+            response.data["summary"] = {
+                "total_targets":
+                total_targets
+            }
+
+            return response
+
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "message": str(e)
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
