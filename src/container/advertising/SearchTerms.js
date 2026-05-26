@@ -220,14 +220,14 @@ function SearchTerms() {
   ];
 
   return (
-    <div className="bg-[#f5f7fb] min-h-screen p-5">
+    <div className="bg-[#f5f7fb] min-h-screen p-4">
       {/* HEADER */}
 
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-start justify-between mb-2">
         <div>
-          <h1 className="text-[30px] font-semibold text-[#111827]">Search Terms</h1>
+          <h1 className="text-[30px] font-semibold text-[#111827] mb-1">Search Terms</h1>
 
-          <p className="text-[14px] text-[#6b7280] mt-2 max-w-[900px]">
+          <p className="text-[14px] text-[#6b7280] max-w-[900px]">
             Discover how customers search for your products and optimize your keywords by adding high-performing search
             terms as keywords and blocking irrelevant terms as negative keywords.
           </p>
@@ -246,9 +246,9 @@ function SearchTerms() {
         </div>
       </div>
 
-      <div className="grid grid-cols-6 gap-2 mb-5">
+      <div className="grid grid-cols-6 gap-2 mb-2">
         {metricCards.map((item) => (
-          <div key={item.title} className="bg-white rounded-2xl border border-[#e5e7eb] p-5 shadow-sm">
+          <div key={item.title} className="bg-white rounded-2xl border border-[#e5e7eb] p-4 shadow-sm">
             <div className="flex items-start justify-between">
               <p className="text-[15px] font-semibold text-[#6b7280]">{item.title}</p>
 
@@ -270,7 +270,7 @@ function SearchTerms() {
 
       {/* FILTER BAR */}
 
-      <div className="flex items-center gap-3 mb-5">
+      <div className="flex items-center gap-3 mb-2">
         <select className="h-[42px] px-4 rounded-xl border border-[#dbe1e8] bg-white text-[14px] outline-none">
           <option>All Campaigns</option>
         </select>
@@ -331,7 +331,7 @@ function SearchTerms() {
 
         {/* SIDEBAR */}
 
-        <div className="space-y-5">
+        <div className="space-y-2">
           {/* MATCH DISTRIBUTION */}
 
           <div className="bg-white rounded-2xl border border-[#e5e7eb] p-5">
@@ -339,7 +339,7 @@ function SearchTerms() {
 
             {/* PIE CHART */}
 
-            <div className="relative w-[180px] h-[180px] mx-auto">
+            <div className="relative w-[160px] h-[160px] mx-auto">
               <div
                 className="w-full h-full rounded-full"
                 style={{
@@ -355,7 +355,7 @@ function SearchTerms() {
 
               <div className="absolute inset-[18px] bg-white rounded-full flex items-center justify-center">
                 <div className="text-center">
-                  <h2 className="text-[32px] font-bold text-[#111827]">1,256</h2>
+                  <h2 className="text-[26px] font-bold text-[#111827]">1,256</h2>
 
                   <p className="text-[13px] text-[#6b7280]">Total Terms</p>
                 </div>
@@ -396,8 +396,8 @@ function SearchTerms() {
 
           {/* TOP TERMS */}
 
-          <div className="bg-white rounded-2xl border border-[#e5e7eb] p-5">
-            <h2 className="text-[17px] font-semibold text-[#111827] mb-4">Top Performing Terms</h2>
+          <div className="bg-white rounded-2xl border border-[#e5e7eb] p-4">
+            <h2 className="text-[17px] font-semibold text-[#111827] mb-2">Top Performing Terms</h2>
 
             {[
               'sony wh-1000xm5',
@@ -408,7 +408,7 @@ function SearchTerms() {
             ].map((item, index) => (
               <div
                 key={item}
-                className={`flex items-center justify-between py-3 ${index !== 4 ? 'border-b border-[#f1f5f9]' : ''}`}
+                className={`flex items-center justify-between py-2 ${index !== 4 ? 'border-b border-[#f1f5f9]' : ''}`}
               >
                 <p className="text-[14px] text-[#111827]">{item}</p>
 
@@ -416,15 +416,15 @@ function SearchTerms() {
               </div>
             ))}
 
-            <Button className="w-full !mt-4 !h-[42px] !rounded-xl">View All</Button>
+            <Button className="w-full !h-[40px] !rounded-xl">View All</Button>
           </div>
 
           {/* QUICK ACTIONS */}
 
           {/* QUICK ACTIONS */}
 
-          <div className="bg-white rounded-2xl border border-[#e5e7eb] p-5 shadow-sm">
-            <h2 className="text-[18px] font-semibold text-[#111827] mb-5">Quick Actions</h2>
+          <div className="bg-white rounded-2xl border border-[#e5e7eb] p-4 shadow-sm">
+            <h2 className="text-[18px] font-semibold text-[#111827] mb-2">Quick Actions</h2>
 
             <div className="space-y-1">
               {/* ADD KEYWORD */}
@@ -433,7 +433,7 @@ function SearchTerms() {
                 className="w-full flex items-center justify-between p-2 rounded-2xl bg-[#f0fdf4] border border-[#bbf7d0] transition-all group"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-2xl bg-[#dcfce7] flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-2xl bg-[#dcfce7] flex items-center justify-center">
                     <PlusOutlined className="text-[#16a34a] text-[18px]" />
                   </div>
 
@@ -454,7 +454,7 @@ function SearchTerms() {
                 className="w-full flex items-center justify-between p-3 rounded-2xl bg-[#fef2f2] border border-[#fecaca] transition-all group"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-2xl bg-[#fee2e2] flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-2xl bg-[#fee2e2] flex items-center justify-center">
                     <StopOutlined className="text-[#ef4444] text-[18px]" />
                   </div>
 
@@ -475,7 +475,7 @@ function SearchTerms() {
                 className="w-full flex items-center justify-between p-3 rounded-2xl bg-[#eff6ff] border border-[#bfdbfe] transition-all group"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-2xl bg-[#dbeafe] flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-2xl bg-[#dbeafe] flex items-center justify-center">
                     <DownloadOutlined className="text-[#2563eb] text-[18px]" />
                   </div>
 

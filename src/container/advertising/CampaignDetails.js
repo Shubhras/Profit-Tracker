@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Table, Tag, Tooltip, Modal, InputNumber, Switch } from 'antd';
+import { Button, Table, Tag, Tooltip, Modal, Switch } from 'antd';
 import { ArrowLeftOutlined, FilterOutlined, ExportOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -11,7 +11,7 @@ function CampaignDetails() {
   const navigate = useNavigate();
   const [isBidModalOpen, setIsBidModalOpen] = useState(false);
   const [selectedBid, setSelectedBid] = useState(null);
-  const [selectedRecord, setSelectedRecord] = useState(null);
+  // const [selectedRecord, setSelectedRecord] = useState(null);
 
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -88,6 +88,8 @@ function CampaignDetails() {
       title: 'Ad Group ID',
       dataIndex: 'adGroupId',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       render: (v) => <span className="text-[#2563eb] font-medium">{v}</span>,
     },
 
@@ -95,6 +97,8 @@ function CampaignDetails() {
       title: 'Name',
       dataIndex: 'name',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
@@ -118,15 +122,17 @@ function CampaignDetails() {
       title: 'Default Bid',
       dataIndex: 'defaultBid',
       align: 'center',
-      render: (v, record) => (
+      width: 100,
+      ellipsis: true,
+      render: (v) => (
         <button
           type="button"
           onClick={() => {
             setSelectedBid(v);
-            setSelectedRecord(record);
+            // setSelectedRecord(record);
             setIsBidModalOpen(true);
           }}
-          className="text-[#2563eb] font-semibold hover:underline cursor-pointer"
+          className="px-3 py-[6px] rounded-xl border border-transparent text-[#111827] font-medium bg-transparent hover:border-[#dbe1e8] hover:bg-white hover:shadow-sm transition-all duration-200"
         >
           ₹{v}
         </button>
@@ -143,17 +149,23 @@ function CampaignDetails() {
       title: 'Country Code',
       dataIndex: 'countryCode',
       align: 'center',
+      width: 100,
+      ellipsis: true,
     },
 
     {
       title: 'Currency Code',
       dataIndex: 'currencyCode',
       align: 'center',
+      width: 100,
+      ellipsis: true,
     },
     {
       title: 'Impressions',
       dataIndex: 'impressions',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -161,6 +173,8 @@ function CampaignDetails() {
       title: 'Clicks',
       dataIndex: 'clicks',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -168,6 +182,8 @@ function CampaignDetails() {
       title: 'Cost',
       dataIndex: 'cost',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       render: (v) => <span className="font-medium text-[#dc2626]">₹{v ?? 0}</span>,
     },
 
@@ -175,6 +191,8 @@ function CampaignDetails() {
       title: 'Sales',
       dataIndex: 'sales',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       render: (v) => <span className="font-medium text-[#16a34a]">₹{v ?? 0}</span>,
     },
 
@@ -182,6 +200,8 @@ function CampaignDetails() {
       title: 'Orders',
       dataIndex: 'orders',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -189,6 +209,8 @@ function CampaignDetails() {
       title: 'Units',
       dataIndex: 'units',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -196,6 +218,8 @@ function CampaignDetails() {
       title: 'ACOS',
       dataIndex: 'acos',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       render: (v) => (
         <Tag className="!px-3 !py-[3px] !rounded-full" color={v > 100 ? 'error' : 'processing'}>
           {v ? `${v.toFixed(2)}%` : '-'}
@@ -207,6 +231,8 @@ function CampaignDetails() {
       title: 'ROAS',
       dataIndex: 'roas',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       render: (v) => (
         <Tag className="!px-3 !py-[3px] !rounded-full" color={v >= 1 ? 'success' : 'warning'}>
           {v ? v.toFixed(2) : '-'}
@@ -216,7 +242,7 @@ function CampaignDetails() {
     {
       title: 'Action',
       dataIndex: 'action',
-      width: 100,
+      width: 70,
       fixed: 'right',
       align: 'center',
 
@@ -224,7 +250,12 @@ function CampaignDetails() {
         <button
           type="button"
           onClick={() => {
-            navigate(`../campaign-second-details/${record.adGroupId}`);
+            // navigate(`../campaign-second-details/${record.adGroupId}`);
+            navigate(`../campaign-second-details/${record.adGroupId}`, {
+              state: {
+                adGroupName: record.name,
+              },
+            });
           }}
           className="w-[34px] h-[34px] rounded-full border border-[#dbe1e8] flex items-center justify-center cursor-pointer hover:text-black transition-all duration-200 mx-auto"
         >
@@ -304,6 +335,7 @@ function CampaignDetails() {
             columns={columns}
             dataSource={dataSource}
             loading={loading}
+            tableLayout="fixed"
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
@@ -324,39 +356,54 @@ function CampaignDetails() {
           />
         </div>
       </div>
+      {/* ================= BID MODAL ================= */}
       <Modal
         open={isBidModalOpen}
-        onCancel={() => setIsBidModalOpen(false)}
-        onOk={() => {
-          console.log('Updated Bid:', selectedBid);
-          console.log('Record:', selectedRecord);
-
-          setIsBidModalOpen(false);
-        }}
-        okText="Update"
+        footer={null}
         centered
-        title="Update Default Bid"
+        closable={false}
+        onCancel={() => setIsBidModalOpen(false)}
+        width={340}
       >
-        <div className="mt-1">
-          <label className="block text-[16px] font-medium text-[#374151] mb-2">Default Bid</label>
+        <div className="pt-1">
+          {/* LABEL */}
+          <div className="flex items-center gap-1 mb-4">
+            <span className="text-[13px] font-semibold tracking-wide text-[#4b5563] uppercase">Default Bid</span>
 
-          <InputNumber
-            min={0}
-            step={1}
-            value={selectedBid}
-            onChange={(value) => setSelectedBid(value)}
-            className="!w-full !h-[42px]"
-            addonBefore="₹"
-            onKeyDown={(e) => {
-              // Allow only numbers + control keys
-              if (
-                !/[0-9]/.test(e.key) &&
-                !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'].includes(e.key)
-              ) {
-                e.preventDefault();
-              }
-            }}
-          />
+            <div className="w-[15px] h-[15px] rounded-full border border-[#d1d5db] flex items-center justify-center text-[10px] text-[#9ca3af]">
+              i
+            </div>
+          </div>
+
+          {/* INPUT BOX */}
+          <div className="relative">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6b7280] font-semibold text-[15px]">₹</div>
+
+            <input
+              type="number"
+              value={selectedBid}
+              onChange={(e) => setSelectedBid(e.target.value)}
+              className="w-full h-[54px] rounded-2xl border border-[#c7d2fe] bg-[#fafbff] pl-10 pr-4 text-[18px] font-semibold text-[#111827] outline-none transition-all duration-200 focus:border-[#4f46e5] focus:bg-white focus:shadow-[0_0_0_4px_rgba(99,102,241,0.12)]"
+            />
+          </div>
+
+          {/* BUTTONS */}
+          <div className="mt-6 pt-4 border-t border-[#eef1f5] flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setIsBidModalOpen(false)}
+              className="h-[42px] px-5 rounded-xl text-[#6b7280] font-medium hover:bg-[#f3f4f6] transition-all duration-200"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              className="h-[42px] px-6 rounded-xl bg-gradient-to-r from-[#111827] to-[#1f2937] text-white font-semibold shadow-md hover:scale-[1.02] transition-all duration-200"
+            >
+              Save
+            </button>
+          </div>
         </div>
       </Modal>
     </>

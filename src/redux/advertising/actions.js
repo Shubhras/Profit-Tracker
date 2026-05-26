@@ -31,6 +31,22 @@ const actions = {
   RULES_SUCCESS: 'RULES_SUCCESS',
   RULES_ERR: 'RULES_ERR',
 
+  TARGETS_BEGIN: 'TARGETS_BEGIN',
+  TARGETS_SUCCESS: 'TARGETS_SUCCESS',
+  TARGETS_ERR: 'TARGETS_ERR',
+
+  CREATERULE_BEGIN: 'CREATERULE_BEGIN',
+  CREATERULE_SUCCESS: 'CREATERULE_SUCCESS',
+  CREATERULE_ERR: 'CREATERULE_ERR',
+
+  UPDATERULE_BEGIN: 'UPDATERULE_BEGIN',
+  UPDATERULE_SUCCESS: 'UPDATERULE_SUCCESS',
+  UPDATERULE_ERR: 'UPDATERULE_ERR',
+
+  DELETERULE_BEGIN: 'DELETERULE_BEGIN',
+  DELETERULE_SUCCESS: 'DELETERULE_SUCCESS',
+  DELETERULE_ERR: 'DELETERULE_ERR',
+
   campaignsBegin: () => {
     return {
       type: actions.CAMPAIGNS_BEGIN,
@@ -187,6 +203,86 @@ const actions = {
   rulesErr: (err) => {
     return {
       type: actions.RULES_ERR,
+      err,
+    };
+  },
+
+  targetsBegin: () => {
+    return {
+      type: actions.TARGETS_BEGIN,
+    };
+  },
+
+  targetsSuccess: (data) => {
+    return {
+      type: actions.TARGETS_SUCCESS,
+      data,
+    };
+  },
+
+  targetsErr: (err) => {
+    return {
+      type: actions.TARGETS_ERR,
+      err,
+    };
+  },
+
+  createruleBegin: () => {
+    return {
+      type: actions.CREATERULE_BEGIN,
+    };
+  },
+
+  createruleSuccess: (data) => {
+    return {
+      type: actions.CREATERULE_SUCCESS,
+      data,
+    };
+  },
+
+  createruleErr: (err) => {
+    return {
+      type: actions.CREATERULE_ERR,
+      err,
+    };
+  },
+
+  updateruleBegin: () => {
+    return {
+      type: actions.UPDATERULE_BEGIN,
+    };
+  },
+
+  updateruleSuccess: (data) => {
+    return {
+      type: actions.UPDATERULE_SUCCESS,
+      data,
+    };
+  },
+
+  updateruleErr: (err) => {
+    return {
+      type: actions.UPDATERULE_ERR,
+      err,
+    };
+  },
+
+  deleteruleBegin: () => {
+    return {
+      type: actions.DELETERULE_BEGIN,
+    };
+  },
+
+  deleteruleSuccess: (data) => {
+    return {
+      type: actions.DELETERULE_SUCCESS,
+      data,
+    };
+  },
+
+  deleteruleErr: (err) => {
+    return {
+      type: actions.DELETERULE_ERR,
       err,
     };
   },

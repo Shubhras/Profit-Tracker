@@ -86,11 +86,11 @@ function PaymentReconcile() {
     <div className="min-h-screen bg-[#f5f7fb] p-6">
       {/* Header */}
       {/* <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6"> */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-start justify-between mb-2">
         <div className="flex flex-col">
           <h1 className="text-2xl font-bold text-gray-800 mb-1">Payment Reconciliation Dashboard</h1>
 
-          <p className="text-m text-gray-600 mt-1">
+          <p className="text-m text-gray-600">
             Overview of payments, settlements, leaks and amounts to recover from marketplaces.
           </p>
         </div>
@@ -109,17 +109,17 @@ function PaymentReconcile() {
       </div>
 
       {/* Top Cards */}
-      <div className="grid grid-cols-4 gap-5 mb-6">
+      <div className="grid grid-cols-4 gap-4 mb-2">
         {' '}
         {summaryCards.map((item, index) => (
-          <div key={index} className={`${item.bg} rounded-2xl p-5 border ${item.border} shadow-sm`}>
+          <div key={index} className={`${item.bg} rounded-2xl p-4 border ${item.border} shadow-sm`}>
             <div className="flex items-start justify-between">
               <div>
                 <p className={`text-sm font-medium ${item.text}`}>{item.title}</p>
 
-                <h2 className={`text-2xl font-bold mt-2 ${item.text}`}>{item.amount}</h2>
+                <h2 className={`text-2xl font-bold mt-2 mb-1 ${item.text}`}>{item.amount}</h2>
 
-                <p className="text-sm text-gray-500 mt-2">{item.subtitle}</p>
+                <p className="text-[13px] text-gray-500 mt-2">{item.subtitle}</p>
               </div>
 
               <div
@@ -133,7 +133,7 @@ function PaymentReconcile() {
       </div>
 
       {/* Middle Section */}
-      <div className="grid grid-cols-12 gap-6 mb-6">
+      <div className="grid grid-cols-12 gap-4 mb-2">
         {' '}
         {/* Payment Summary */}
         <div className="col-span-5 bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
@@ -185,7 +185,7 @@ function PaymentReconcile() {
         {/* Payment Leaks */}
         <div className="col-span-7 bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
           {' '}
-          <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-semibold text-gray-800">Payment Leaks</h2>
 
@@ -217,11 +217,11 @@ function PaymentReconcile() {
       </div>
 
       {/* Bottom Section */}
-      <div className="grid grid-cols-12 gap-6">
+      <div className="grid grid-cols-12 gap-4">
         {/* Table */}
         <div className="col-span-6 bg-white rounded-2xl p-5 shadow-sm border border-gray-100 overflow-auto">
           {' '}
-          <div className="flex items-center gap-2 mb-5">
+          <div className="flex items-center gap-2 mb-2">
             <h2 className="text-lg font-semibold text-gray-800">Marketplaces Recoverable</h2>
 
             <InfoCircleOutlined className="text-gray-400 mb-2" />
@@ -268,7 +268,7 @@ function PaymentReconcile() {
         </div>
 
         <div className="col-span-3 bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-          <div className="flex items-center gap-2 mb-5">
+          <div className="flex items-center gap-2 mb-2">
             <h2 className="text-lg font-semibold text-gray-800">Cashflow Snapshot</h2>
             <InfoCircleOutlined className="text-gray-400 mb-2" />{' '}
           </div>

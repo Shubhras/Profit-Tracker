@@ -1,12 +1,13 @@
 import React, { useEffect } from 'react';
-import { Button, Table, Tag, Tooltip } from 'antd';
+import { Button, Table, Tooltip } from 'antd';
 import { ArrowLeftOutlined, FilterOutlined, ExportOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { getAdProducts } from '../../redux/advertising/actionCreator';
 
 function CampaignSecondDetails() {
   const { id } = useParams();
+  const location = useLocation();
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -27,103 +28,98 @@ function CampaignSecondDetails() {
   }, [dispatch, pagination, id]);
 
   const dataSource =
-    adsProductsData?.results?.map((item) => ({
-      key: item.ad_id,
-      adId: item.ad_id,
-      asin: item.asin,
+    adsProductsData?.results?.map((item, index) => ({
+      key: index,
+
       sku: item.sku,
-      campaignName: item.campaign_name,
-      adGroupName: item.ad_group_name,
-      state: item.state,
-      servingStatus: item.serving_status,
-      creationDate: item.created_at,
-      countryCode: item.country_code,
-      currencyCode: item.currency_code,
-      impressions: item.metrics?.impressions,
-      clicks: item.metrics?.clicks,
-      cost: item.metrics?.cost,
-      sales: item.metrics?.sales,
-      orders: item.metrics?.orders,
-      units: item.metrics?.units,
-      acos: item.metrics?.acos,
-      roas: item.metrics?.roas,
+      asin: item.asin,
+      itemName: item.item_name,
+      image: item.image_url,
+
+      totalAds: item.total_ads,
+
+      impressions: item.impressions,
+      clicks: item.clicks,
+      cost: item.cost,
+      sales: item.sales,
+      orders: item.orders,
     })) || [];
 
-  const adGroupName = adsProductsData?.results?.[0]?.ad_group_name;
+  const adGroupName = location?.state?.adGroupName || '-';
 
   const columns = [
+    {
+      title: '',
+      dataIndex: 'image',
+      align: 'center',
+      width: 70,
+      fixed: 'left',
+
+      render: (_, record) => (
+        <div className="flex justify-center">
+          <img
+            src={record.image}
+            alt="product"
+            className="w-[52px] h-[52px] rounded-xl object-cover border border-[#e5e7eb]"
+          />
+        </div>
+      ),
+    },
+
     {
       title: 'SKU',
       dataIndex: 'sku',
       align: 'center',
+      width: 100,
+      ellipsis: true,
+
       render: (v) => (
-        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-          <span className="text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
-            {v}
-          </span>
-        </Tooltip>
+        <div className="flex justify-center">
+          <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+            <span
+              className="text-[#2563eb] block truncate cursor-pointer text-center font-medium"
+              style={{ maxWidth: '100px' }}
+            >
+              {v || '-'}
+            </span>
+          </Tooltip>
+        </div>
       ),
     },
 
     {
-      title: 'Campaign Name',
-      dataIndex: 'campaignName',
+      title: 'Item Name',
+      dataIndex: 'itemName',
       align: 'center',
+      width: 100,
+      ellipsis: true,
+
       render: (v) => (
-        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-          <span
-            className="font-medium text-[#111827]
-            block truncate cursor-pointer"
-            style={{ maxWidth: '220px' }}
-          >
-            {v}
-          </span>
-        </Tooltip>
+        <div className="flex justify-center">
+          <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+            <span className="text-[#111827] block truncate cursor-pointer text-center" style={{ maxWidth: '100px' }}>
+              {v || '-'}
+            </span>
+          </Tooltip>
+        </div>
       ),
     },
 
-    // {
-    //   title: 'Ad Group Name',
-    //   dataIndex: 'adGroupName',
-    //   align: 'center',
-    //   render: (v) => (
-    //     <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-    //       <span
-    //         className="text-[#111827]
-    //         block truncate cursor-pointer"
-    //         style={{ maxWidth: '220px' }}
-    //       >
-    //         {v}
-    //       </span>
-    //     </Tooltip>
-    //   ),
-    // },
+    {
+      title: 'Total Ads',
+      dataIndex: 'totalAds',
+      align: 'center',
+      width: 100,
 
-    {
-      title: 'State',
-      dataIndex: 'state',
-      align: 'center',
-      render: (v) => (
-        <Tag color={v === 'ENABLED' ? 'success' : 'error'} className="!px-3 !py-[3px] !rounded-full">
-          {v}
-        </Tag>
-      ),
-    },
-    {
-      title: 'Country Code',
-      dataIndex: 'countryCode',
-      align: 'center',
+      render: (v) => <span className="font-semibold text-[#2563eb]">{v ?? 0}</span>,
     },
 
-    {
-      title: 'Currency Code',
-      dataIndex: 'currencyCode',
-      align: 'center',
-    },
     {
       title: 'Impressions',
       dataIndex: 'impressions',
       align: 'center',
+      width: 100,
+
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -131,6 +127,8 @@ function CampaignSecondDetails() {
       title: 'Clicks',
       dataIndex: 'clicks',
       align: 'center',
+      width: 100,
+
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -138,50 +136,27 @@ function CampaignSecondDetails() {
       title: 'Cost',
       dataIndex: 'cost',
       align: 'center',
-      render: (v) => <span className="font-medium text-[#dc2626]">₹{v ?? 0}</span>,
+      width: 100,
+
+      render: (v) => <span className="font-medium text-[#dc2626]">₹{Number(v ?? 0).toFixed(2)}</span>,
     },
 
     {
       title: 'Sales',
       dataIndex: 'sales',
       align: 'center',
-      render: (v) => <span className="font-medium text-[#16a34a]">₹{v ?? 0}</span>,
+      width: 100,
+
+      render: (v) => <span className="font-medium text-[#16a34a]">₹{Number(v ?? 0).toFixed(2)}</span>,
     },
 
     {
       title: 'Orders',
       dataIndex: 'orders',
       align: 'center',
+      width: 100,
+
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
-    },
-
-    {
-      title: 'Units',
-      dataIndex: 'units',
-      align: 'center',
-      render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
-    },
-
-    {
-      title: 'ACOS',
-      dataIndex: 'acos',
-      align: 'center',
-      render: (v) => (
-        <Tag className="!px-3 !py-[3px] !rounded-full" color={v > 100 ? 'error' : 'processing'}>
-          {v ? `${v.toFixed(2)}%` : '-'}
-        </Tag>
-      ),
-    },
-
-    {
-      title: 'ROAS',
-      dataIndex: 'roas',
-      align: 'center',
-      render: (v) => (
-        <Tag className="!px-3 !py-[3px] !rounded-full" color={v >= 1 ? 'success' : 'warning'}>
-          {v ? v.toFixed(2) : '-'}
-        </Tag>
-      ),
     },
   ];
 

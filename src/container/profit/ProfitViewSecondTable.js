@@ -507,7 +507,14 @@ export default function ProfitViewSecondTable() {
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
           <button
             type="button"
-            onClick={() => navigate(`../third/${record.asin}`)}
+            // onClick={() => navigate(`../third/${record.asin}`)}
+            onClick={() =>
+              navigate(`../third/${record.asin}`, {
+                state: {
+                  sku: record.view,
+                },
+              })
+            }
             // style={{
             //   border: '1px solid #d9d9d9',
             //   background: 'rgb(202, 221, 254)',
