@@ -1,24 +1,57 @@
-import React, { useEffect } from 'react';
-import { Button, Table, Tag, Tooltip } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Modal, Input, Select, DatePicker, InputNumber, Button, Table, Tag, Switch, Tooltip } from 'antd';
 import {
-  SearchOutlined,
+  // SearchOutlined,
   EyeOutlined,
+  DeleteOutlined,
   PlusOutlined,
   ThunderboltOutlined,
   PlayCircleOutlined,
   DollarOutlined,
   // DownOutlined,
 } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import { useDispatch, useSelector } from 'react-redux';
-import { getRules } from '../../redux/advertising/actionCreator';
+import { getRules, getCreateRules, getUpdateRules, getDeleteRules } from '../../redux/advertising/actionCreator';
 
 function RulesAutomation() {
   const dispatch = useDispatch();
   // const [ruleType, setRuleType] = React.useState('');
+  const [openRuleModal, setOpenRuleModal] = useState(false);
   const [pagination, setPagination] = React.useState({
     current: 1,
     pageSize: 10,
   });
+  const [deleteModal, setDeleteModal] = useState(false);
+
+  const [deleteRuleId, setDeleteRuleId] = useState(null);
+  const [editRuleId, setEditRuleId] = useState(null);
+  const [selectedRuleData, setSelectedRuleData] = useState(null);
+  const initialRuleForm = {
+    adType: undefined,
+    name: '',
+    ruleType: undefined,
+
+    startDate: '',
+    endDate: '',
+    startDatePayload: '',
+    endDatePayload: '',
+
+    recurrenceType: 'DAILY',
+
+    selectedDays: [],
+    selectedMonthDates: [],
+
+    increaseType: 'PERCENT',
+    increaseValue: 20,
+
+    metricName: '',
+    threshold: 20,
+    comparisonOperator: 'LESS_THAN_OR_EQUAL_TO',
+  };
+
+  const [ruleForm, setRuleForm] = useState(initialRuleForm);
+
   const [selectedRowKeys, setSelectedRowKeys] = React.useState([]);
 
   const { rules, loading } = useSelector((state) => state.advertising);
@@ -38,8 +71,9 @@ function RulesAutomation() {
       name: item.name,
       ruleState: item.rule_state,
       ruleStatus: item.rule_status,
-      createdDate: item.created_date,
-      updatedDate: item.last_updated_date,
+      startDate: item.rule_details?.duration?.dateRangeTypeRuleDuration?.startDate,
+
+      endDate: item.rule_details?.duration?.dateRangeTypeRuleDuration?.endDate,
       ruleDetails: item.rule_details,
     })) || [];
 
@@ -78,39 +112,107 @@ function RulesAutomation() {
         />
       ),
     },
+    {
+      title: 'Status',
+      dataIndex: 'ruleState',
+      align: 'center',
+      fixed: 'left',
+      width: 90,
+
+      render: (v, record) => (
+        <Switch
+          checked={v === 'ACTIVE'}
+          size="small"
+          onChange={async (checked) => {
+            const updatePayload = {
+              budgetRulesDetails: [
+                {
+                  ruleId: record?.budgetRuleId,
+
+                  ruleState: checked ? 'ACTIVE' : 'PAUSED',
+
+                  ruleDetails: {
+                    name: record?.ruleDetails?.name || record?.name,
+
+                    recurrence: {
+                      type: record?.ruleDetails?.recurrence?.type,
+
+                      ...(record?.ruleDetails?.recurrence?.daysOfWeek && {
+                        daysOfWeek: record?.ruleDetails?.recurrence?.daysOfWeek,
+                      }),
+
+                      ...(record?.ruleDetails?.recurrence?.daysOfMonth && {
+                        daysOfMonth: record?.ruleDetails?.recurrence?.daysOfMonth,
+                      }),
+                    },
+
+                    budgetIncreaseBy: {
+                      type: record?.ruleDetails?.budgetIncreaseBy?.type,
+                      value: Number(record?.ruleDetails?.budgetIncreaseBy?.value),
+                    },
+
+                    ...(record?.ruleDetails?.performanceMeasureCondition && {
+                      performanceMeasureCondition: {
+                        metricName: record?.ruleDetails?.performanceMeasureCondition?.metricName,
+                        comparisonOperator: record?.ruleDetails?.performanceMeasureCondition?.comparisonOperator,
+                        threshold: Number(record?.ruleDetails?.performanceMeasureCondition?.threshold),
+                      },
+                    }),
+                  },
+                },
+              ],
+            };
+
+            const response = await dispatch(getUpdateRules(pagination.current, pagination.pageSize, updatePayload));
+
+            if (response?.status === true) {
+              dispatch(getRules(pagination.current, pagination.pageSize));
+            }
+          }}
+        />
+      ),
+    },
+    {
+      title: 'Rule Name',
+      dataIndex: 'name',
+      align: 'center',
+      width: 120,
+
+      render: (v) => (
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span
+            className="
+          block
+          truncate
+          cursor-pointer
+          text-[#111827]
+          font-medium
+          mx-auto
+        "
+            style={{ maxWidth: '100px' }}
+          >
+            {v}
+          </span>
+        </Tooltip>
+      ),
+    },
 
     // {
-    //   title: 'Amazon Account ID',
-    //   dataIndex: 'amazonAccountId',
+    //   title: 'Budget Rule ID',
+    //   dataIndex: 'budgetRuleId',
     //   align: 'center',
+    //   render: (v) => (
+    //     <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+    //       <span className="block truncate text-[#2563eb] font-medium cursor-pointer max-w-[220px] mx-auto">{v}</span>
+    //     </Tooltip>
+    //   ),
     // },
-
-    {
-      title: 'Profile ID',
-      dataIndex: 'profileId',
-      align: 'center',
-      render: (v) => (
-        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-          <span className="block truncate cursor-pointer max-w-[180px] mx-auto">{v}</span>
-        </Tooltip>
-      ),
-    },
-
-    {
-      title: 'Budget Rule ID',
-      dataIndex: 'budgetRuleId',
-      align: 'center',
-      render: (v) => (
-        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-          <span className="block truncate text-[#2563eb] font-medium cursor-pointer max-w-[220px] mx-auto">{v}</span>
-        </Tooltip>
-      ),
-    },
 
     {
       title: 'Rule Type',
       dataIndex: 'ruleType',
       align: 'center',
+
       render: (v) => {
         const ruleTypeMap = {
           sp: 'Sponsored Products',
@@ -119,17 +221,13 @@ function RulesAutomation() {
         };
 
         return (
-          <Tag color="processing" className="!text-[13px] !px-3 !py-[3px] !font-medium">
-            {ruleTypeMap[v] || v}
-          </Tag>
+          <Tooltip title={ruleTypeMap[v] || v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+            <Tag color="processing" className="!text-[13px] !px-3 !py-[3px] !font-medium cursor-pointer uppercase">
+              {v}
+            </Tag>
+          </Tooltip>
         );
       },
-    },
-
-    {
-      title: 'Rule Name',
-      dataIndex: 'name',
-      align: 'center',
     },
 
     {
@@ -155,294 +253,1143 @@ function RulesAutomation() {
     //   ),
     // },
 
-    // {
-    //   title: 'Created Date',
-    //   dataIndex: 'createdDate',
-    //   align: 'center',
-    //   render: (v) => new Date(v).toLocaleDateString(),
-    // },
+    {
+      title: 'Start Date',
+      dataIndex: 'startDate',
+      align: 'center',
+      render: (v) => {
+        if (!v) return '-';
 
-    // {
-    //   title: 'Last Updated',
-    //   dataIndex: 'updatedDate',
-    //   align: 'center',
-    //   render: (v) => new Date(v).toLocaleDateString(),
-    // },
+        return `${v.slice(6, 8)}/${v.slice(4, 6)}/${v.slice(0, 4)}`;
+      },
+    },
+
+    {
+      title: 'End Date',
+      dataIndex: 'endDate',
+      align: 'center',
+      render: (v) => {
+        if (!v) return '-';
+
+        return `${v.slice(6, 8)}/${v.slice(4, 6)}/${v.slice(0, 4)}`;
+      },
+    },
+    {
+      title: 'Action',
+      dataIndex: 'action',
+      align: 'center',
+
+      render: (_, record) => (
+        <div className="flex items-center justify-center gap-2">
+          <button
+            type="button"
+            className="w-[34px] h-[34px] rounded-xl border border-[#e5e7eb] bg-white shadow-sm flex items-center justify-center cursor-pointer hover:bg-[#eff6ff] hover:border-[#bfdbfe] transition-all "
+            onClick={() => {
+              setEditRuleId(record.key);
+
+              setSelectedRuleData(record);
+
+              setRuleForm({
+                adType: record.ruleType,
+                name: record.name,
+                ruleType: record.ruleDetails?.ruleType || 'PERFORMANCE',
+
+                startDate: record.startDate ? dayjs(record.startDate, 'YYYYMMDD') : null,
+
+                endDate: record.endDate ? dayjs(record.endDate, 'YYYYMMDD') : null,
+
+                recurrenceType: record.ruleDetails?.recurrence?.type || 'DAILY',
+
+                selectedDays: [],
+                selectedMonthDates: record.ruleDetails?.recurrence?.daysOfMonth || [],
+
+                increaseType: record.ruleDetails?.budgetIncreaseBy?.type || 'PERCENT',
+
+                increaseValue: record.ruleDetails?.budgetIncreaseBy?.value || 20,
+
+                metricName: record.ruleDetails?.performanceMeasureCondition?.metricName || '',
+
+                threshold: record.ruleDetails?.performanceMeasureCondition?.threshold || 20,
+
+                comparisonOperator:
+                  record.ruleDetails?.performanceMeasureCondition?.comparisonOperator || 'LESS_THAN_OR_EQUAL_TO',
+              });
+
+              setOpenRuleModal(true);
+            }}
+          >
+            <EyeOutlined className="text-[17px] text-[#2563eb]" />
+          </button>
+
+          <button
+            type="button"
+            className="w-[34px] h-[34px] rounded-xl border border-[#fee2e2] bg-white shadow-sm flex items-center justify-center cursor-pointer hover:bg-[#fef2f2] hover:border-[#fecaca] transition-all"
+            onClick={() => {
+              setDeleteModal(true);
+
+              setDeleteRuleId(record?.budgetRuleId);
+            }}
+          >
+            <DeleteOutlined className="text-[16px] text-red-500" />
+          </button>
+        </div>
+      ),
+    },
   ];
 
+  const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const daysMap = {
+    Mon: 'MONDAY',
+    Tue: 'TUESDAY',
+    Wed: 'WEDNESDAY',
+    Thu: 'THURSDAY',
+    Fri: 'FRIDAY',
+    Sat: 'SATURDAY',
+    Sun: 'SUNDAY',
+  };
+
+  const metricOptions =
+    ruleForm.adType === 'sd'
+      ? [{ label: 'ROAS', value: 'ROAS' }]
+      : [
+          { label: 'ROAS', value: 'ROAS' },
+          { label: 'ACOS', value: 'ACOS' },
+          { label: 'CTR', value: 'CTR' },
+          { label: 'CVR', value: 'CVR' },
+        ];
+
+  const handleCreateRule = async () => {
+    let response;
+
+    if (editRuleId) {
+      const updatePayload = {
+        budgetRulesDetails: [
+          {
+            ruleId: selectedRuleData?.budgetRuleId,
+
+            ruleState: 'ACTIVE',
+
+            ruleDetails: {
+              name: ruleForm.name,
+
+              recurrence: {
+                type: ruleForm.recurrenceType,
+
+                ...(ruleForm.recurrenceType === 'WEEKLY' && {
+                  daysOfWeek: ruleForm.selectedDays.map((day) => daysMap[day]),
+                }),
+
+                ...(ruleForm.recurrenceType === 'MONTHLY' && {
+                  daysOfMonth: ruleForm.selectedMonthDates,
+                }),
+              },
+
+              budgetIncreaseBy: {
+                type: ruleForm.increaseType,
+                value: Number(ruleForm.increaseValue),
+              },
+
+              performanceMeasureCondition: {
+                metricName: ruleForm.metricName,
+                comparisonOperator: ruleForm.comparisonOperator,
+                threshold: Number(ruleForm.threshold),
+              },
+            },
+          },
+        ],
+      };
+
+      response = await dispatch(getUpdateRules(pagination.current, pagination.pageSize, updatePayload));
+    } else {
+      const createPayload = {
+        ad_type: ruleForm.adType,
+
+        budgetRulesDetails: [
+          {
+            name: ruleForm.name,
+
+            ruleType: ruleForm.ruleType,
+
+            duration: {
+              dateRangeTypeRuleDuration: {
+                startDate: ruleForm.startDatePayload,
+                endDate: ruleForm.endDatePayload,
+              },
+            },
+
+            recurrence: {
+              type: ruleForm.recurrenceType,
+
+              ...(ruleForm.recurrenceType === 'WEEKLY' && {
+                daysOfWeek: ruleForm.selectedDays.map((day) => daysMap[day]),
+              }),
+
+              ...(ruleForm.recurrenceType === 'MONTHLY' && {
+                daysOfMonth: ruleForm.selectedMonthDates,
+              }),
+            },
+
+            budgetIncreaseBy: {
+              type: ruleForm.increaseType,
+              value: Number(ruleForm.increaseValue),
+            },
+
+            ...(ruleForm.ruleType === 'PERFORMANCE' && {
+              performanceMeasureCondition: {
+                metricName: ruleForm.metricName,
+                threshold: Number(ruleForm.threshold),
+                comparisonOperator: ruleForm.comparisonOperator,
+              },
+            }),
+          },
+        ],
+      };
+
+      response = await dispatch(getCreateRules(pagination.current, pagination.pageSize, createPayload));
+    }
+
+    if (response?.status === true) {
+      setOpenRuleModal(false);
+
+      setEditRuleId(null);
+
+      setSelectedRuleData(null);
+
+      setRuleForm(initialRuleForm);
+
+      dispatch(getRules(pagination.current, pagination.pageSize));
+    }
+  };
+
   return (
-    <div className="px-5 py-4 bg-[#f7f8fa] min-h-screen overflow-x-hidden">
-      {/* ================= HEADER ================= */}
+    <>
+      <div className="px-5 py-4 bg-[#f5f7fb] min-h-screen">
+        {/* ================= HEADER ================= */}
 
-      <div className="flex items-start justify-between mb-3">
-        <div>
-          <h1 className="text-[32px] font-bold text-[#111827] mb-1">Rules & Automation</h1>
+        <div className="flex items-start justify-between mb-2">
+          <div>
+            <h1 className="text-[26px] font-bold text-[#111827] mb-1">Rules & Automation</h1>
 
-          <p className="text-[#6b7280] text-[14px] mt-1">
-            Automate your Amazon advertising actions and save time while improving performance.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Button
-            className="
-            !h-[40px]
-            !px-5
-            !rounded-xl
-            !border
-            !border-[#dbe1e8]
-            !font-medium
-          "
-          >
-            Activity Log
-          </Button>
-
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            className="!h-[40px] !px-6 !rounded-xl !bg-[#22c55e] !border-none !font-medium"
-          >
-            Create Rule
-          </Button>
-        </div>
-      </div>
-
-      {/* ================= TABS ================= */}
-
-      <div className="flex items-center gap-8 border-b border-[#edf0f2] mb-5">
-        <button type="button" className="pb-4 text-[#22c55e] border-b-2 border-[#22c55e] font-semibold text-[14px]">
-          Overview
-        </button>
-
-        <button type="button" className="pb-4 text-[#6b7280] font-medium text-[14px]">
-          Active Rules
-        </button>
-
-        <button type="button" className="pb-4 text-[#6b7280] font-medium text-[14px]">
-          Rule History
-        </button>
-      </div>
-
-      {/* ================= MAIN LAYOUT ================= */}
-
-      <div className="flex gap-5 items-start w-full">
-        {/* ================= LEFT SECTION ================= */}
-
-        <div className="flex-1 min-w-0">
-          {/* ================= TOP CARDS ================= */}
-
-          <div className="grid grid-cols-4 gap-3 mb-4">
-            {' '}
-            {/* CARD */}
-            <div className="bg-white border border-[#edf0f2] rounded-xl px-4 py-3 w-full">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-[#6b7280] text-[16px] mb-2">Active Rules</p>
-
-                  <h2 className="text-[24px] font-bold text-[#111827] leading-none">12</h2>
-
-                  <p className="text-[#22c55e] text-[13px] mt-3 font-medium">↑ 20% vs last 30 days</p>
-                </div>
-
-                <div className="w-8 h-8 rounded-xl bg-[#ecfdf5] flex items-center justify-center shrink-0">
-                  <ThunderboltOutlined className="text-[#22c55e] text-[20px]" />
-                </div>
-              </div>
-            </div>
-            {/* CARD */}
-            <div className="bg-white border border-[#edf0f2] rounded-2xl p-5 min-w-0">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-[#6b7280] text-[16px] mb-2">Actions Executed</p>
-
-                  <h2 className="text-[24px] font-bold text-[#111827] leading-none">245</h2>
-
-                  <p className="text-[#22c55e] text-[13px] mt-3 font-medium">↑ 32% vs last 30 days</p>
-                </div>
-
-                <div className="w-8 h-8 rounded-xl bg-[#eff6ff] flex items-center justify-center shrink-0">
-                  <PlayCircleOutlined className="text-[#2563eb] text-[20px]" />
-                </div>
-              </div>
-            </div>
-            {/* CARD */}
-            <div className="bg-white border border-[#edf0f2] rounded-2xl p-5 min-w-0">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-[#6b7280] text-[16px] mb-2">Impressions Affected</p>
-
-                  <h2 className="text-[24px] font-bold text-[#111827] leading-none">1.2M</h2>
-
-                  <p className="text-[#22c55e] text-[13px] mt-3 font-medium">↑ 18% vs last 30 days</p>
-                </div>
-
-                <div className="w-8 h-8 rounded-xl bg-[#f5f3ff] flex items-center justify-center shrink-0">
-                  <EyeOutlined className="text-[#7c3aed] text-[20px]" />
-                </div>
-              </div>
-            </div>
-            {/* CARD */}
-            <div className="bg-white border border-[#edf0f2] rounded-2xl p-5 min-w-0">
-              <div className="flex items-start justify-between gap-1">
-                <div>
-                  <p className="text-[#6b7280] text-[16px] mb-2">Sales Impact</p>
-
-                  <h2 className="text-[24px] font-bold text-[#111827] leading-none">$48,612</h2>
-
-                  <p className="text-[#22c55e] text-[13px] mt-3 font-medium">↑ 24% vs last 30 days</p>
-                </div>
-
-                <div className="w-8 h-8 rounded-xl bg-[#ecfdf5] flex items-center justify-center shrink-0">
-                  <DollarOutlined className="text-[#22c55e] text-[20px]" />
-                </div>
-              </div>
-            </div>
+            <p className="text-[#6b7280] text-[14px]">
+              Automate your Amazon advertising actions and improve performance.
+            </p>
           </div>
 
-          {/* ================= TABLE ================= */}
-
-          <div className="bg-white border border-[#edf0f2] rounded-2xl overflow-hidden w-full">
-            {/* TABLE HEADER */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[#edf0f2]">
-              <h2 className="text-[18px] font-semibold text-[#111827]">Active Automation Rules</h2>
-
-              <div className="flex items-center gap-3">
-                <select className="h-[40px] min-w-[150px] px-4 rounded-xl border border-[#dbe1e8] outline-none text-[14px] bg-white">
-                  <option>All Types</option>
-                </select>
-
-                <div className="relative">
-                  <input
-                    placeholder="Search rules..."
-                    className="w-[180px] xl:w-[220px] h-[40px] rounded-xl border border-[#dbe1e8] pl-10 pr-4 outline-none text-[14px] bg-white"
-                  />
-
-                  <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
-                </div>
-              </div>
-            </div>
-
-            {/* TABLE */}
-
-            <Table
-              columns={columns}
-              dataSource={dataSource}
-              loading={loading}
-              scroll={{ x: 1000 }}
-              pagination={{
-                current: pagination.current,
-                pageSize: pagination.pageSize,
-                total: rules?.pagination?.total_records || 0,
-              }}
-              onChange={(pag) => {
-                setPagination({
-                  current: pag.current,
-                  pageSize: pag.pageSize,
-                });
-              }}
-            />
-          </div>
-        </div>
-
-        {/* ================= RIGHT SECTION ================= */}
-
-        <div className="w-[300px] shrink-0 space-y-4">
-          {/* CREATE RULE */}
-
-          <div className="bg-white border border-[#edf0f2] rounded-2xl p-5">
-            <div className="flex items-center justify-between">
-              <h2 className="text-[20px] font-semibold text-[#111827]">Create New Rule</h2>
-
-              {/* <DownOutlined className="text-[#6b7280]" /> */}
-            </div>
-
-            <div className="mt-3 space-y-3">
-              {/* OPTION */}
-
-              <div className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded-full border-2 border-[#22c55e] flex items-center justify-center mt-[2px]">
-                  <div className="w-2 h-2 rounded-full bg-[#22c55e]" />
-                </div>
-
-                <div>
-                  <h3 className="text-[15px] font-semibold text-[#111827] mb-1">Performance Based</h3>
-
-                  <p className="text-[13px] text-[#6b7280] mt-1 leading-6">
-                    Trigger actions based on performance metrics
-                  </p>
-                </div>
-              </div>
-
-              {/* OPTION */}
-
-              <div className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded-full border border-[#cbd5e1] mt-[2px]" />
-
-                <div>
-                  <h3 className="text-[15px] font-semibold text-[#111827] mb-1">Duration Based</h3>
-
-                  <p className="text-[13px] text-[#6b7280] mt-1 leading-6">Trigger actions based on time or date</p>
-                </div>
-              </div>
-
-              <Button
-                type="primary"
-                block
-                className="!h-[44px] !rounded-xl !bg-[#22c55e] !border-none !font-semibold mt-2"
-              >
-                Create Rule
-              </Button>
-            </div>
-          </div>
-
-          {/* QUICK PRESETS */}
-
-          <div className="bg-white border border-[#edf0f2] rounded-2xl p-5">
-            <h2 className="text-[20px] font-semibold text-[#111827]">Quick Presets</h2>
-
-            <div className="mt-5 space-y-4">
-              {[
-                'Increase Bid - High ACOS',
-                'Decrease Bid - Low CTR',
-                // 'Pause - High ACOS',
-                // 'Budget Increase - High Spend',
-                // 'Night Pause (12AM - 6AM)',
-              ].map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between border border-[#edf0f2] rounded-xl p-3 hover:bg-[#fafafa] transition-all"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-[#ecfdf5] flex items-center justify-center">
-                      <ThunderboltOutlined className="text-[#22c55e]" />
-                    </div>
-
-                    <div>
-                      <h3 className="text-[13px] font-semibold text-[#111827]">{item}</h3>
-
-                      <p className="text-[11px] text-[#6b7280] mt-1">Automation preset template</p>
-                    </div>
-                  </div>
-
-                  <Button shape="circle" icon={<PlusOutlined />} />
-                </div>
-              ))}
-            </div>
+          <div className="flex items-center gap-3">
+            <Button className="!h-[40px] !px-4 !rounded-xl !border-[#dbe1e8]">
+              <span className="text-[15px]">Activity Log</span>
+            </Button>
 
             <Button
-              block
-              className="
-              !h-[42px]
-              !rounded-xl
-              mt-5
-            "
+              type="primary"
+              icon={<PlusOutlined className="text-[13px]" />}
+              onClick={() => setOpenRuleModal(true)}
+              // loading={loading}
+              className="!h-[40px] !px-3 !rounded-xl !bg-[#2563eb] !border-none !flex !items-center !justify-center gap-0"
             >
-              View All Presets
+              <span className="font-semibold leading-none text-[15px]">Create Rule</span>
             </Button>
           </div>
         </div>
+
+        {/* ================= TOP 6 CARDS ================= */}
+
+        <div className="grid grid-cols-6 gap-2 mb-2">
+          {[
+            {
+              title: 'Active Rules',
+              value: '32',
+              sub: '↑ 18% vs last 30 days',
+              icon: <ThunderboltOutlined className="text-[#22c55e]" />,
+              bg: 'bg-[#ecfdf5]',
+            },
+            {
+              title: 'Pending',
+              value: '5',
+              sub: 'Waiting to run',
+              icon: <PlayCircleOutlined className="text-[#f97316]" />,
+              bg: 'bg-[#fff7ed]',
+            },
+            {
+              title: 'Actions',
+              value: '892',
+              sub: '↑ 24% vs last 30 days',
+              icon: <PlayCircleOutlined className="text-[#2563eb]" />,
+              bg: 'bg-[#eff6ff]',
+            },
+            {
+              title: 'Impressions',
+              value: '4.8M',
+              sub: '↑ 16% vs last 30 days',
+              icon: <EyeOutlined className="text-[#7c3aed]" />,
+              bg: 'bg-[#f5f3ff]',
+            },
+            {
+              title: 'Sales Impact',
+              value: '$125K',
+              sub: '↑ 22% vs last 30 days',
+              icon: <DollarOutlined className="text-[#16a34a]" />,
+              bg: 'bg-[#ecfdf5]',
+            },
+            {
+              title: 'Time Saved',
+              value: '48.5 hrs',
+              sub: '↑ 30% vs last 30 days',
+              icon: <PlayCircleOutlined className="text-[#f97316]" />,
+              bg: 'bg-[#fff7ed]',
+            },
+          ].map((card, index) => (
+            <div key={index} className="bg-white border border-[#edf0f2] rounded-2xl px-4 py-3">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[13px] text-[#6b7280] mb-1">{card.title}</p>
+
+                  <h2 className="text-[24px] font-bold text-[#111827] leading-none">{card.value}</h2>
+
+                  <p className="text-[11px] text-[#16a34a] mt-2 font-medium">{card.sub}</p>
+                </div>
+
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${card.bg}`}>{card.icon}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ================= MAIN CONTENT ================= */}
+
+        <div className="grid grid-cols-12 gap-2">
+          {/* ================= LEFT ================= */}
+
+          <div className="col-span-9 space-y-2">
+            <div className="bg-white border border-[#edf0f2] rounded-2xl overflow-hidden">
+              {/* HEADER */}
+
+              <div className="flex items-center justify-between px-5 py-3 border-b border-[#edf0f2]">
+                <div>
+                  <h2 className="text-[20px] font-semibold text-[#111827] mb-1">Pending Execution Rules</h2>
+
+                  <p className="text-[12px] text-[#6b7280]">Rules waiting to execute.</p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Button type="primary" className="!h-[38px] !rounded-xl !bg-[#2563eb]">
+                    <span className="font-semibold">Run All Rules</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* TABLE */}
+
+              <Table
+                columns={columns}
+                dataSource={dataSource}
+                loading={loading}
+                pagination={{
+                  current: pagination.current,
+                  pageSize: pagination.pageSize,
+                  total: rules?.pagination?.total_records || 0,
+                }}
+                onChange={(pag) => {
+                  setPagination({
+                    current: pag.current,
+                    pageSize: pag.pageSize,
+                  });
+                }}
+                scroll={{ x: 1000 }}
+              />
+            </div>
+
+            {/* ================= RULE TYPES BOX ================= */}
+
+            {/* ================= RULE TYPES ================= */}
+
+            <div className="bg-white border border-[#edf0f2] rounded-2xl p-3">
+              {/* HEADER */}
+
+              <div className="mb-1">
+                <h2 className="text-[20px] font-semibold text-[#111827] leading-none mb-1">Rule Types</h2>
+
+                <p className="text-[13px] text-[#6b7280] mt-[2px] leading-5">Choose a type to create a new rule</p>
+              </div>
+
+              {/* CARDS */}
+
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  {
+                    title: 'Bids Rules',
+                    desc: 'Automate bid adjustments to improve performance and achieve your targets',
+                    rules: '17 rules',
+                    icon: '📈',
+                    bg: 'bg-[#eef4ff]',
+                  },
+
+                  {
+                    title: 'Budget Rules',
+                    desc: 'Automate budget actions to control spend and maximize efficiency',
+                    rules: '8 rules',
+                    icon: '💵',
+                    bg: 'bg-[#edfdf3]',
+                  },
+
+                  {
+                    title: 'Targeting Rules',
+                    desc: 'Automate targeting actions for keywords, products and placements',
+                    rules: '12 rules',
+                    icon: '🎯',
+                    bg: 'bg-[#fff4ea]',
+                  },
+                ].map((item, index) => (
+                  <div
+                    key={index}
+                    className="border border-[#edf0f2] rounded-2xl p-3 hover:shadow-sm transition-all cursor-pointer min-h-[118px] flex flex-col justify-between"
+                  >
+                    {/* TOP */}
+
+                    <div className="flex items-start gap-3">
+                      {/* ICON */}
+
+                      <div
+                        className={`w-7 h-7 rounded-xl flex items-center justify-center text-[16px] shrink-0 ${item.bg}`}
+                      >
+                        {item.icon}
+                      </div>
+
+                      {/* CONTENT */}
+
+                      <div className="flex-1">
+                        <h3 className="text-[14px] font-semibold text-[#111827] leading-4">{item.title}</h3>
+
+                        <p className="text-[13px] text-[#6b7280] leading-4 mt-1">{item.desc}</p>
+                      </div>
+                    </div>
+
+                    {/* BOTTOM */}
+
+                    <p className="text-[#2563eb] text-[12px] font-semibold ml-[52px] mt-2">{item.rules}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ================= QUICK PRESETS ================= */}
+
+            <div className="bg-white border border-[#edf0f2] rounded-2xl p-3">
+              {/* HEADER */}
+
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <h2 className="text-[20px] font-semibold text-[#111827] mb-1">Quick Presets</h2>
+
+                  <p className="text-[13px] text-[#6b7280] mb-1">Use pre-built templates to get started quickly</p>
+                </div>
+
+                <button
+                  type="button"
+                  className="
+        text-[#2563eb]
+        text-[13px]
+        font-semibold
+        hover:underline
+      "
+                >
+                  View All Presets →
+                </button>
+              </div>
+
+              {/* PRESET CARDS */}
+
+              <div className="grid grid-cols-4 gap-3">
+                {[
+                  {
+                    title: 'Increase Bids - High ACOS',
+                    desc: 'Increase bids for keywords with high ACOS',
+                    rules: '6 rules',
+                    icon: '📈',
+                    bg: 'bg-[#eef4ff]',
+                  },
+
+                  {
+                    title: 'Decrease Bids - Low CTR',
+                    desc: 'Decrease bids for keywords with low CTR',
+                    rules: '6 rules',
+                    icon: '📉',
+                    bg: 'bg-[#edfdf3]',
+                  },
+
+                  {
+                    title: 'Boost Low Impressions',
+                    desc: 'Increase bids for keywords with low impressions',
+                    rules: '5 rules',
+                    icon: '👁️',
+                    bg: 'bg-[#f7efff]',
+                  },
+
+                  {
+                    title: 'Protect Budget',
+                    desc: 'Pause or reduce spend when budget is at risk',
+                    rules: '4 rules',
+                    icon: '🛡️',
+                    bg: 'bg-[#fff4ea]',
+                  },
+                ].map((item, index) => (
+                  <div
+                    key={index}
+                    className="border border-[#edf0f2] rounded-2xl p-3 hover:shadow-sm transition-all cursor-pointer min-h-[112px] flex flex-col justify-between"
+                  >
+                    {/* TOP */}
+
+                    <div className="flex items-start gap-2">
+                      {/* ICON */}
+
+                      <div
+                        className={`w-7 h-7 rounded-xl flex items-center justify-center text-[15px] shrink-0 ${item.bg}`}
+                      >
+                        {item.icon}
+                      </div>
+
+                      {/* CONTENT */}
+
+                      <div className="flex-1">
+                        <h3 className="text-[14px] font-semibold text-[#111827] leading-4">{item.title}</h3>
+
+                        <p className="text-[13px] text-[#6b7280] leading-4 mt-1">{item.desc}</p>
+                      </div>
+                    </div>
+
+                    {/* BOTTOM */}
+
+                    <p className="text-[#2563eb] text-[12px] font-semibold ml-[44px] mt-2">{item.rules}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* ================= RIGHT ================= */}
+
+          <div className="col-span-3 space-y-2">
+            {/* ================= CREATE RULE ================= */}
+
+            <div className="bg-white border border-[#edf0f2] rounded-2xl p-5">
+              <h2 className="text-[18px] font-semibold text-[#111827] mb-4">Create New Rule</h2>
+
+              <div className="space-y-3">
+                <div className="border border-[#dbeafe] bg-[#f8fbff] rounded-xl p-4">
+                  <h3 className="text-[15px] font-semibold text-[#111827]">Performance Based</h3>
+
+                  <p className="text-[12px] text-[#6b7280] mt-1">Trigger actions using metrics</p>
+                </div>
+
+                <div className="border border-[#edf0f2] bg-[#f8fbff] rounded-xl p-4">
+                  <h3 className="text-[15px] font-semibold text-[#111827]">Duration Based</h3>
+
+                  <p className="text-[12px] text-[#6b7280] mt-1">Time & schedule based actions</p>
+                </div>
+
+                <div className="border border-[#edf0f2] bg-[#f8fbff] rounded-xl p-4">
+                  <h3 className="text-[15px] font-semibold text-[#111827]">Schedule Based</h3>
+
+                  <p className="text-[12px] text-[#6b7280] mt-1">Execute on fixed schedules</p>
+                </div>
+
+                <Button type="primary" block className="!h-[44px] !rounded-xl !bg-[#2563eb] !border-none mt-2">
+                  Create Rule
+                </Button>
+              </div>
+            </div>
+
+            {/* ================= SMALL RULE TYPES ================= */}
+
+            <div className="space-y-2">
+              {/* ================= RULE TYPES ================= */}
+
+              <div className="bg-white border border-[#edf0f2] rounded-2xl p-5">
+                {/* HEADER */}
+
+                <div className="mb-4">
+                  <h2 className="text-[18px] font-semibold text-[#111827]">Rule Types</h2>
+
+                  <p className="text-[12px] text-[#9ca3af] mt-1">All available rule types</p>
+                </div>
+
+                {/* LIST */}
+
+                <div className="space-y-4">
+                  {[
+                    {
+                      label: 'Bids Rules',
+                      count: 17,
+                      bg: 'bg-[#eff6ff]',
+                      text: 'text-[#2563eb]',
+                    },
+
+                    {
+                      label: 'Budget Rules',
+                      count: 8,
+                      bg: 'bg-[#ecfdf5]',
+                      text: 'text-[#16a34a]',
+                    },
+
+                    {
+                      label: 'Targeting Rules',
+                      count: 12,
+                      bg: 'bg-[#fff7ed]',
+                      text: 'text-[#f97316]',
+                    },
+                  ].map((item, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <span className="text-[14px] font-semibold text-[#111827]">{item.label}</span>
+
+                      <div
+                        className={`
+              min-w-[28px]
+              h-[28px]
+              px-2
+              rounded-full
+              flex items-center justify-center
+              text-[12px]
+              font-semibold
+              ${item.bg}
+              ${item.text}
+            `}
+                      >
+                        {item.count}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* FOOTER LINK */}
+
+                <button
+                  type="button"
+                  className="
+        mt-5
+        text-[#2563eb]
+        text-[13px]
+        font-semibold
+        hover:underline
+      "
+                >
+                  View All Rule Types →
+                </button>
+              </div>
+
+              {/* ================= RECENT ACTIVITY ================= */}
+
+              <div className="bg-white border border-[#edf0f2] rounded-2xl p-5">
+                {/* HEADER */}
+
+                <div className="mb-3">
+                  <h2 className="text-[18px] font-semibold text-[#111827]">Recent Activity</h2>
+                </div>
+
+                {/* ACTIVITIES */}
+
+                <div className="space-y-2">
+                  {[
+                    {
+                      title: 'High ACOS Control executed',
+                      time: '2 min ago',
+                    },
+
+                    {
+                      title: 'Daily Budget Protection executed',
+                      time: '15 min ago',
+                    },
+
+                    {
+                      title: 'Low CTR Optimization executed',
+                      time: '1 hour ago',
+                    },
+                  ].map((item, index) => (
+                    <div key={index} className="flex items-start gap-3">
+                      {/* DOT */}
+
+                      <div className="w-[8px] h-[8px] rounded-full bg-[#22c55e] mt-[6px]" />
+
+                      {/* CONTENT */}
+
+                      <div>
+                        <h3 className="text-[14px] font-medium text-[#111827] leading-5">{item.title}</h3>
+
+                        <p className="text-[11px] text-[#9ca3af] mt-1">{item.time}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* FOOTER */}
+
+                <button
+                  type="button"
+                  className="
+        mt-5
+        text-[#2563eb]
+        text-[13px]
+        font-semibold
+        hover:underline
+      "
+                >
+                  View All Activity →
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+
+      <Modal open={openRuleModal} onCancel={() => setOpenRuleModal(false)} footer={null} width={820} centered>
+        <div className="p-1">
+          {/* ================= HEADER ================= */}
+
+          <div className="mb-5">
+            <h2 className="text-[23px] font-bold text-[#111827] mb-1">Create Budget Rule</h2>
+
+            <p className="text-[#6b7280] text-[13px] mt-1">Configure automation rules for your advertising campaigns</p>
+          </div>
+
+          {/* ================= BODY ================= */}
+
+          <div className="bg-[#fafbfc] border border-[#edf0f2] rounded-2xl p-5 space-y-5">
+            {/* TOP ROW */}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[15px] font-medium text-[#374151] block mb-1">Advertising Type</label>
+
+                <Select
+                  value={ruleForm.adType || undefined}
+                  onChange={(value) =>
+                    setRuleForm({
+                      ...ruleForm,
+                      adType: value,
+                    })
+                  }
+                  className="w-full !text-[13px]"
+                  size="large"
+                  placeholder="Select"
+                  options={[
+                    {
+                      label: 'Sponsored Products (SP)',
+                      value: 'sp',
+                    },
+                    {
+                      label: 'Sponsored Brands (SB)',
+                      value: 'sb',
+                    },
+                    {
+                      label: 'Sponsored Display (SD)',
+                      value: 'sd',
+                    },
+                  ]}
+                />
+              </div>
+
+              <div>
+                <label className="text-[15px] font-medium text-[#374151] block mb-1">Rule Type</label>
+
+                <Select
+                  value={ruleForm.ruleType || undefined}
+                  placeholder="Select Rule Type"
+                  onChange={(value) =>
+                    setRuleForm({
+                      ...ruleForm,
+                      ruleType: value,
+                    })
+                  }
+                  className="w-full !text-[13px]"
+                  size="large"
+                  options={[
+                    {
+                      label: 'Performance',
+                      value: 'PERFORMANCE',
+                    },
+                    {
+                      label: 'Schedule',
+                      value: 'SCHEDULE',
+                    },
+                  ]}
+                />
+              </div>
+            </div>
+
+            {/* RULE NAME */}
+
+            <div>
+              <label className="text-[15px] font-medium text-[#374151] block mb-1">Rule Name</label>
+
+              <Input
+                placeholder="Enter rule name"
+                value={ruleForm.name}
+                onChange={(e) =>
+                  setRuleForm({
+                    ...ruleForm,
+                    name: e.target.value,
+                  })
+                }
+                className="!h-[44px] !rounded-xl !text-[13px]"
+              />
+            </div>
+
+            {/* DATE RANGE */}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[15px] font-medium text-[#374151] block mb-1">Start Date</label>
+
+                <DatePicker
+                  value={ruleForm.startDate}
+                  className="w-full !h-[44px] !rounded-xl"
+                  onChange={(date, dateString) =>
+                    setRuleForm({
+                      ...ruleForm,
+                      startDate: date,
+                      startDatePayload: dateString.replaceAll('-', ''),
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="text-[15px] font-medium text-[#374151] block mb-1">End Date</label>
+
+                <DatePicker
+                  value={ruleForm.endDate}
+                  className="w-full !h-[44px] !rounded-xl"
+                  onChange={(date, dateString) =>
+                    setRuleForm({
+                      ...ruleForm,
+                      endDate: date,
+                      endDatePayload: dateString.replaceAll('-', ''),
+                    })
+                  }
+                />
+              </div>
+            </div>
+
+            {/* ACTIONS */}
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* RECURRENCE */}
+
+              <div>
+                <label className="text-[15px] font-medium text-[#374151] block mb-1">Recurrence</label>
+
+                <Select
+                  className="w-full !text-[13px]"
+                  size="large"
+                  value={ruleForm.recurrenceType}
+                  onChange={(value) =>
+                    setRuleForm({
+                      ...ruleForm,
+                      recurrenceType: value,
+                      selectedDays: [],
+                      monthlyDate: null,
+                    })
+                  }
+                  options={[
+                    { label: 'Daily', value: 'DAILY' },
+                    { label: 'Weekly', value: 'WEEKLY' },
+                    { label: 'Monthly', value: 'MONTHLY' },
+                  ]}
+                />
+
+                {/* WEEKLY DAYS */}
+
+                {ruleForm.recurrenceType === 'WEEKLY' && (
+                  <div className="flex items-center gap-2 mt-3 flex-wrap">
+                    {weekDays.map((day) => {
+                      const active = ruleForm.selectedDays.includes(day);
+
+                      return (
+                        <button
+                          type="button"
+                          key={day}
+                          onClick={() => {
+                            const updatedDays = active
+                              ? ruleForm.selectedDays.filter((d) => d !== day)
+                              : [...ruleForm.selectedDays, day];
+
+                            setRuleForm({
+                              ...ruleForm,
+                              selectedDays: updatedDays,
+                            });
+                          }}
+                          className={`
+                px-3 py-2 rounded-xl text-[13px]
+                font-medium cursor-pointer transition-all
+                border
+                ${active ? 'bg-[#2563eb] text-white border-[#2563eb]' : 'bg-[#f3f4f6] text-[#374151] border-[#e5e7eb]'}
+              `}
+                        >
+                          {day}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* MONTHLY DATE */}
+
+                {ruleForm.recurrenceType === 'MONTHLY' && (
+                  <div className="mt-3">
+                    <DatePicker
+                      className="w-full !h-[42px] !rounded-xl"
+                      placeholder="Select monthly date"
+                      onChange={(date) => {
+                        if (!date) return;
+
+                        const selectedDate = date.date();
+
+                        if (!ruleForm.selectedMonthDates.includes(selectedDate)) {
+                          setRuleForm({
+                            ...ruleForm,
+                            selectedMonthDates: [...ruleForm.selectedMonthDates, selectedDate],
+                          });
+                        }
+                      }}
+                    />
+
+                    {/* SELECTED DATES */}
+
+                    {ruleForm.selectedMonthDates.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {ruleForm.selectedMonthDates.map((d) => (
+                          <div
+                            key={d}
+                            className="
+              px-3 py-1.5 rounded-xl
+              bg-[#2563eb]
+              text-white text-[13px]
+              font-medium
+              flex items-center gap-2
+            "
+                          >
+                            {d}
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setRuleForm({
+                                  ...ruleForm,
+                                  selectedMonthDates: ruleForm.selectedMonthDates.filter((item) => item !== d),
+                                })
+                              }
+                              className="text-white"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* INCREASE TYPE */}
+
+              <div>
+                <label className="text-[15px] font-medium text-[#374151] block mb-1">Increase Type</label>
+
+                <Select
+                  className="w-full text-[13px]"
+                  size="large"
+                  value={ruleForm.increaseType}
+                  onChange={(value) =>
+                    setRuleForm({
+                      ...ruleForm,
+                      increaseType: value,
+                    })
+                  }
+                  options={[
+                    {
+                      label: 'Percentage',
+                      value: 'PERCENT',
+                    },
+                    {
+                      label: 'Fixed Amount',
+                      value: 'FIXED',
+                    },
+                  ]}
+                />
+              </div>
+            </div>
+
+            {/* VALUE */}
+
+            <div>
+              <label className="text-[15px] font-medium text-[#374151] block mb-1">Increase Value</label>
+
+              <InputNumber
+                className="w-full !h-[44px]"
+                placeholder="20"
+                value={ruleForm.increaseValue}
+                onChange={(value) =>
+                  setRuleForm({
+                    ...ruleForm,
+                    increaseValue: value,
+                  })
+                }
+              />
+            </div>
+
+            {/* PERFORMANCE CONDITIONS */}
+
+            {ruleForm.ruleType === 'PERFORMANCE' && (
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="text-[15px] font-medium text-[#374151] block mb-1">Performance Metric</label>
+
+                  <Select
+                    className="w-full !text-[13px]"
+                    size="large"
+                    value={ruleForm.metricName}
+                    onChange={(value) =>
+                      setRuleForm({
+                        ...ruleForm,
+                        metricName: value,
+                      })
+                    }
+                    options={metricOptions}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[15px] font-medium text-[#374151] block mb-1">Operator</label>
+
+                  <Select
+                    className="w-full !text-[13px]"
+                    size="large"
+                    value={ruleForm.comparisonOperator}
+                    onChange={(value) =>
+                      setRuleForm({
+                        ...ruleForm,
+                        comparisonOperator: value,
+                      })
+                    }
+                    options={[
+                      {
+                        label: 'Less Than',
+                        value: 'LESS_THAN',
+                      },
+                      {
+                        label: 'Less Than Equal',
+                        value: 'LESS_THAN_OR_EQUAL_TO',
+                      },
+                      {
+                        label: 'Greater Than',
+                        value: 'GREATER_THAN',
+                      },
+                    ]}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[15px] font-medium text-[#374151] block mb-1">Threshold</label>
+
+                  <InputNumber
+                    className="w-full !h-[44px]"
+                    placeholder="20"
+                    value={ruleForm.threshold}
+                    onChange={(value) =>
+                      setRuleForm({
+                        ...ruleForm,
+                        threshold: value,
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ================= FOOTER ================= */}
+
+          <div className="flex items-center justify-end gap-3 mt-3">
+            <Button className="!h-[42px] !px-5 !rounded-xl" onClick={() => setOpenRuleModal(false)}>
+              Cancel
+            </Button>
+
+            <Button
+              type="primary"
+              onClick={handleCreateRule}
+              loading={loading}
+              className="!h-[42px] !px-6 !rounded-xl !bg-[#2563eb] !border-none"
+            >
+              {editRuleId ? 'Update Rule' : 'Create Rule'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={deleteModal}
+        onCancel={() => {
+          setDeleteModal(false);
+
+          setDeleteRuleId(null);
+        }}
+        footer={null}
+        centered
+        width={420}
+      >
+        <div className="py-3 px-1">
+          {/* ICON */}
+
+          <div className="w-[62px] h-[62px] rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+            <DeleteOutlined className="text-[28px] text-red-500" />
+          </div>
+
+          {/* TEXT */}
+
+          <h2 className="text-[22px] font-bold text-[#111827] text-center mb-2">Delete Rule</h2>
+
+          <p className="text-[14px] text-[#6b7280] text-center leading-6">
+            Are you sure you want to delete this rule?
+            <br />
+            This action cannot be undone.
+          </p>
+
+          {/* BUTTONS */}
+
+          <div className="flex items-center justify-center gap-3 mt-6">
+            <Button
+              className="!h-[42px] !px-5 !rounded-xl"
+              onClick={() => {
+                setDeleteModal(false);
+
+                setDeleteRuleId(null);
+              }}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              danger
+              type="primary"
+              loading={loading}
+              className="!h-[42px] !px-6 !rounded-xl"
+              onClick={async () => {
+                const response = await dispatch(getDeleteRules(deleteRuleId));
+
+                if (response?.status === true) {
+                  setDeleteModal(false);
+
+                  setDeleteRuleId(null);
+
+                  dispatch(getRules(pagination.current, pagination.pageSize));
+                }
+              }}
+            >
+              <span className="font-semibold"> Yes, Delete</span>
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </>
   );
 }
 

@@ -1,4 +1,4 @@
-# sync_ads_searchterms.py
+# sync_ads_searchterms.py  , process_ads_reports
 
 from django.core.management.base import BaseCommand
 from amazon_ads.utils import (

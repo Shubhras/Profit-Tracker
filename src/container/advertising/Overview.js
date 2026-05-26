@@ -68,9 +68,9 @@ function Overview() {
     <div className="min-h-screen bg-[#f5f7fb] p-6">
       {/* Header */}
       {/* Header */}
-      <div className="mb-6 flex items-start justify-between">
+      <div className="mb-2 flex items-start justify-between">
         <div>
-          <h1 className="mb-1 text-[32px] font-bold text-[#111827]">Advertising Dashboard</h1>
+          <h1 className="mb-1 text-[27px] font-bold text-[#111827]">Advertising Dashboard</h1>
 
           <p className="text-sm text-gray-500">
             Overview of your advertising performance and opportunities to improve.
@@ -114,7 +114,7 @@ function Overview() {
       </div>
 
       {/* Top Cards */}
-      <div className="grid grid-cols-5 gap-4">
+      <div className="grid grid-cols-5 gap-2">
         {cards.map((item, index) => (
           <div key={index} className="rounded-2xl border border-[#e5e7eb] bg-white px-5 py-4">
             {/* Top */}
@@ -148,7 +148,7 @@ function Overview() {
       </div>
 
       {/* Middle Section */}
-      <div className="mt-6 grid grid-cols-12 gap-5">
+      <div className="mt-2 grid grid-cols-12 gap-2">
         <div className="col-span-4 rounded-2xl border border-[#e5e7eb] bg-white p-5">
           {/* Header */}
           <div className="mb-6 flex items-center justify-between">
@@ -361,11 +361,11 @@ function Overview() {
       </div>
 
       {/* Bottom Section */}
-      <div className="mt-6 grid grid-cols-12 gap-5">
+      <div className="mt-2 grid grid-cols-12 gap-2">
         {/* Top Campaigns */}
         <div className="col-span-5 rounded-2xl border border-[#e5e7eb] bg-white p-5">
           {/* Header */}
-          <div className="mb-5 flex items-center justify-between">
+          <div className="mb-2 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-[#111827]">Top Campaigns</h2>
           </div>
 
@@ -387,7 +387,7 @@ function Overview() {
                   {
                     campaign: 'SP - Auto - Best Sellers',
                     spend: '₹52,348.21',
-                    sales: '₹3,45,284.60',
+                    sales: '₹3,284.60',
                     acos: '15.17%',
                     roas: '6.59',
                     status: 'Good',
@@ -421,14 +421,14 @@ function Overview() {
                     color: 'bg-yellow-100 text-yellow-600',
                   },
                 ].map((item, index) => (
-                  <tr key={index} className="border-b border-gray-100 text-sm text-gray-700">
+                  <tr key={index} className="border-b border-gray-100 text-[12px] text-gray-700">
                     {' '}
-                    <td className="px-4 py-4 font-medium text-gray-700"> {item.campaign}</td>
-                    <td className="px-4 py-4 text-gray-600">{item.spend}</td>
-                    <td className="px-4 py-4 text-gray-600">{item.sales}</td>
-                    <td className="px-4 py-4 text-gray-600">{item.acos}</td>
-                    <td className="px-4 py-4 text-gray-600">{item.roas}</td>
-                    <td className="px-4 py-4">
+                    <td className="px-4 py-3 font-medium text-gray-700"> {item.campaign}</td>
+                    <td className="px-4 py-3 text-gray-600">{item.spend}</td>
+                    <td className="px-4 py-3 text-gray-600">{item.sales}</td>
+                    <td className="px-4 py-3 text-gray-600">{item.acos}</td>
+                    <td className="px-4 py-3 text-gray-600">{item.roas}</td>
+                    <td className="px-4 py-3">
                       {' '}
                       <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${item.color}`}>
                         {' '}
@@ -450,7 +450,7 @@ function Overview() {
 
         {/* AI Recommendations */}
         <div className="col-span-4 rounded-2xl border border-[#e5e7eb] bg-white p-5">
-          <h2 className="mb-6 text-lg font-semibold text-[#111827]">AI Recommendations</h2>
+          <h2 className="mb-2 text-lg font-semibold text-[#111827]">AI Recommendations</h2>
 
           <div className="space-y-4">
             {[1, 2, 3].map((item) => (
@@ -491,7 +491,7 @@ function Overview() {
         {/* Auto Rules */}
         <div className="col-span-3 rounded-2xl border border-[#e5e7eb] bg-white p-5">
           {/* Header */}
-          <div className="mb-5 flex items-center justify-between">
+          <div className="mb-2 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-[#111827]">Auto Optimization Rules</h2>
 
             {/* <div className="flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 text-[10px] text-gray-500">

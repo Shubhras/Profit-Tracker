@@ -263,6 +263,8 @@ class AdsBudgetRuleSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
+    associated_campaigns = serializers.SerializerMethodField()
+
     class Meta:
         model = AdsBudgetRule
 
@@ -278,11 +280,33 @@ class AdsBudgetRuleSerializer(serializers.ModelSerializer):
             "created_date",
             "last_updated_date",
             "rule_details",
-            
+
+            # NEW
+            "associated_campaigns",
+
             "created_at",
             "updated_at",
-        ]    
+        ]
 
+    def get_associated_campaigns(self, obj):
+
+        campaign_ids = obj.campaign_ids or []
+
+        campaigns = AdsCampaign.objects.filter(
+            campaign_id__in=campaign_ids
+        )
+
+        return [
+            {
+                "id": campaign.id,
+                "campaign_id": campaign.campaign_id,
+                "name": campaign.name,
+                "state": campaign.state,
+                "budget": campaign.daily_budget,
+            }
+            for campaign in campaigns
+        ]
+    
 
 
 class ProductAdMetricSerializer(serializers.ModelSerializer):

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Table, Card, Modal, Tooltip, Checkbox, Button } from 'antd';
 import { EyeOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 // import ProfitFilterBar from './component/ProfitFilterBar';
 import ProfitModal from './component/ProfitModal';
@@ -13,6 +13,8 @@ import amazon from '../../assets/icons/amazon.svg';
 export default function ProfitDetailsView() {
   const { id } = useParams();
   const dispatch = useDispatch();
+  const location = useLocation();
+  const sku = location.state?.sku || '';
   // const [openSettings, setOpenSettings] = React.useState(false);
   const [detailModal, setDetailModal] = React.useState({
     open: false,
@@ -78,6 +80,7 @@ export default function ProfitDetailsView() {
         IN: globalChannel,
       },
       parentProductId: id,
+      sku,
     },
     //   "metric": {
     //     "ctaaction": "(profit != 0)",

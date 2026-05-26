@@ -1,17 +1,10 @@
 from django.urls import path
 from .views import sync_campaigns_api
-
-# urlpatterns = [
-#     path(
-#         "sync-campaigns/",
-#         sync_campaigns_api
-#     ),
-# ]
-
 from django.urls import path
 
 from .views import *
 from .budget_rules import *
+from amazon_ads.services.reports import *
 urlpatterns = [
 
     path("account/connect/",AmazonAdsConnectView.as_view()),
@@ -35,13 +28,31 @@ urlpatterns = [
 
     path("search-term-metrics/",SearchTermMetricListView.as_view(),name="search-term-metrics"),
 
-    path("sync-budget-rules/",SyncBudgetRulesAPIView.as_view(),name="sync-budget-rules"),
-
     path("budget-rule-list/",AdsBudgetRuleListAPIView.as_view(),name="budget-rule-list"),
 
+    path("product-ad-metric-list/",ProductAdMetricListAPIView.as_view(),name="product-ad-metric-list"),
+
+    path("create-daily-ads-reports/",CreateDailyAdsReportsAPIView.as_view(),name="create-missing-ads-reports"),
+
+    path("get-ads-targeting/",AdsTargetListAPIView.as_view(),name="get_ads_targeting"),
+    
+
+    # SyncBudgetRulesAPIs
+    
+    path("sync-budget-rules/",SyncBudgetRulesAPIView.as_view(),name="sync-budget-rules"),
+
     path(
-        "product-ad-metric-list/",
-        ProductAdMetricListAPIView.as_view(),
-        name="product-ad-metric-list"
+        "budget-rules/create/",
+        CreateBudgetRuleAPIView.as_view()
+    ),
+
+    path(
+        "budget-rules/update/",
+        UpdateBudgetRuleAPIView.as_view()
+    ),
+
+    path(
+        "budget-rules/<str:budget_rule_id>/delete/",
+        DeleteBudgetRuleAPIView.as_view()
     ),
 ]

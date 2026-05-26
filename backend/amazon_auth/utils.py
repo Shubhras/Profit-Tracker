@@ -547,4 +547,4 @@ def normalize_sku(sku):
 def clean_sku(sku):
     if not sku:
         return sku
-    return sku.replace("-Copy", "").strip()
+    return sku.replace("       ", "").strip()

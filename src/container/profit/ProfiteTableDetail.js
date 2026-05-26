@@ -236,6 +236,8 @@ export default function ProfitDetailsView() {
       title: 'View',
       dataIndex: 'view',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       sorter: (a, b) => a.view.localeCompare(b.view),
       render: (v, record) => {
         if (!record.redirecturl) return <span>{v}</span>;
@@ -270,18 +272,24 @@ export default function ProfitDetailsView() {
       title: 'Net Qty',
       dataIndex: 'netQty',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       sorter: (a, b) => a.netQty - b.netQty,
     },
     {
       title: 'Return Qty',
       dataIndex: 'returnqty',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       sorter: (a, b) => a.returnqty - b.returnqty,
     },
     {
       title: 'Return %',
       dataIndex: 'returnPercent',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       sorter: (a, b) => a.returnPercent - b.returnPercent,
       render: (v) => <span>{v}%</span>,
     },
@@ -289,6 +297,8 @@ export default function ProfitDetailsView() {
       title: 'Net Sales',
       dataIndex: 'netsales',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       sorter: (a, b) => a.netsales - b.netsales,
     },
     // {
@@ -312,6 +322,8 @@ export default function ProfitDetailsView() {
       title: 'MP fees',
       dataIndex: 'mpfees',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       sorter: (a, b) => a.mpfees - b.mpfees,
       render: (v, record) => (
         <button
@@ -333,6 +345,8 @@ export default function ProfitDetailsView() {
       title: 'Shipping',
       dataIndex: 'shipping',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       sorter: (a, b) => a.shipping - b.shipping,
       render: (v, record) => (
         <button
@@ -354,6 +368,8 @@ export default function ProfitDetailsView() {
       title: 'MP-GST',
       dataIndex: 'mp_gst',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       sorter: (a, b) => a.mp_gst - b.mp_gst,
     },
 
@@ -361,6 +377,8 @@ export default function ProfitDetailsView() {
       title: 'TCS',
       dataIndex: 'tcs',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       sorter: (a, b) => a.tcs - b.tcs,
     },
     // {
@@ -380,6 +398,8 @@ export default function ProfitDetailsView() {
       title: 'Ad Spend',
       dataIndex: 'adSpend',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       sorter: (a, b) => a.adSpend - b.adSpend,
     },
 
@@ -387,6 +407,8 @@ export default function ProfitDetailsView() {
       title: 'Taxable Value',
       dataIndex: 'taxableValue',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       sorter: (a, b) => a.taxableValue - b.taxableValue,
     },
 
@@ -394,12 +416,16 @@ export default function ProfitDetailsView() {
       title: 'GST to Pay',
       dataIndex: 'gst_to_pay_amount',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       sorter: (a, b) => a.gst_to_pay_amount - b.gst_to_pay_amount,
     },
     {
       title: 'GST to Pay %',
       dataIndex: 'gst_to_pay_perc',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       sorter: (a, b) => a.gst_to_pay_perc - b.gst_to_pay_perc,
       render: (v) => <span>{v}%</span>,
     },
@@ -407,12 +433,16 @@ export default function ProfitDetailsView() {
       title: 'Expected Settlement',
       dataIndex: 'settleAmount',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       sorter: (a, b) => a.settleAmount - b.settleAmount,
     },
     {
       title: 'Product Cost',
       dataIndex: 'stdcost',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       sorter: (a, b) => a.stdcost - b.stdcost,
     },
 
@@ -435,6 +465,8 @@ export default function ProfitDetailsView() {
       title: 'Profit',
       dataIndex: 'profit',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       sorter: (a, b) => a.profit - b.profit,
       // render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>₹{v}</span>,
       render: (v, record) => (
@@ -459,6 +491,8 @@ export default function ProfitDetailsView() {
       title: 'Profit %',
       dataIndex: 'profitPercent',
       align: 'center',
+      width: 100,
+      ellipsis: true,
       sorter: (a, b) => a.profitPercent - b.profitPercent,
       render: (v) => {
         const value = Math.round(v || 0);
@@ -807,6 +841,7 @@ export default function ProfitDetailsView() {
             dataSource={dataSource}
             showSorterTooltip={false}
             loading={loading}
+            tableLayout="fixed"
             locale={{ emptyText: 'No Data Found' }}
             pagination={{
               ...pagination,
@@ -818,7 +853,7 @@ export default function ProfitDetailsView() {
               setPagination(pag);
             }}
             size="small"
-            scroll={{ x: 'max-content' }}
+            scroll={{ x: 2200 }}
             summary={() => {
               return (
                 <Table.Summary fixed>

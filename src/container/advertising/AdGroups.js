@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Button, Table, Tag, Tooltip } from 'antd';
+import { Button, Table, Tag, Tooltip, Modal } from 'antd';
 import { FilterOutlined, ExportOutlined, SearchOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { getAdsGroup } from '../../redux/advertising/actionCreator';
@@ -11,6 +11,8 @@ function AdGroups() {
     current: 1,
     pageSize: 10,
   });
+  const [isBidModalOpen, setIsBidModalOpen] = React.useState(false);
+  const [selectedBid, setSelectedBid] = React.useState('');
 
   const [selectedRowKeys, setSelectedRowKeys] = React.useState([]);
 
@@ -128,7 +130,18 @@ function AdGroups() {
       title: 'Default Bid',
       dataIndex: 'defaultBid',
       align: 'center',
-      render: (v) => `₹${v}`,
+      render: (v) => (
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedBid(v);
+            setIsBidModalOpen(true);
+          }}
+          className="px-3 py-[6px] rounded-xl border border-transparent text-[#111827] font-medium bg-transparent hover:border-[#dbe1e8] hover:bg-white hover:shadow-sm transition-all duration-200"
+        >
+          ₹{Number(v ?? 0).toLocaleString('en-IN')}
+        </button>
+      ),
     },
 
     {
@@ -227,74 +240,115 @@ function AdGroups() {
   ];
 
   return (
-    <div className="p-2">
-      <div className="mt-3 mb-3 rounded-2xl border border-[#e5e7eb] bg-white shadow-sm overflow-hidden">
-        {/* Header */}
-        <div className="border-b border-[#edf0f2] px-6 py-4">
-          {/* TOP CONTENT */}
-          <div>
-            <h1 className="text-[23px] font-semibold text-[#111827] mb-1">Ads Group Performance</h1>
+    <>
+      <div className="p-2">
+        <div className="mt-3 mb-3 rounded-2xl border border-[#e5e7eb] bg-white shadow-sm overflow-hidden">
+          {/* Header */}
+          <div className="border-b border-[#edf0f2] px-6 py-4">
+            {/* TOP CONTENT */}
+            <div>
+              <h1 className="text-[23px] font-semibold text-[#111827] mb-1">Ads Group Performance</h1>
 
-            <p className="mt-1 text-sm text-[#6b7280]">
-              Track ad group performance, bids, campaigns and marketplace activity.
-            </p>
+              <p className="mt-1 text-sm text-[#6b7280]">
+                Track ad group performance, bids, campaigns and marketplace activity.
+              </p>
+            </div>
+
+            <div className="mt-5 flex items-center justify-between gap-3">
+              <div className="relative w-[280px]">
+                <input
+                  type="text"
+                  placeholder="Search ad groups..."
+                  className="w-full h-[42px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none"
+                />
+
+                <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button
+                  icon={<FilterOutlined />}
+                  className="!h-[42px] !px-5 !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium hover:!border-[#2563eb] hover:!text-[#2563eb] !shadow-sm !flex !items-center !justify-center"
+                >
+                  Filters
+                </Button>
+
+                <Button
+                  type="primary"
+                  icon={<ExportOutlined />}
+                  className="!h-[42px] !px-5 !rounded-xl !font-medium !flex !items-center !justify-center"
+                >
+                  Export
+                </Button>
+              </div>
+            </div>
           </div>
 
-          <div className="mt-5 flex items-center justify-between gap-3">
-            <div className="relative w-[280px]">
-              <input
-                type="text"
-                placeholder="Search ad groups..."
-                className="w-full h-[42px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none"
-              />
+          {/* Table */}
+          <Table
+            columns={columns}
+            dataSource={dataSource}
+            loading={loading}
+            pagination={{
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: adsGroupData?.pagination?.total_records || 0,
+              showSizeChanger: true,
+              pageSizeOptions: ['10', '20', '50', '100'],
+              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
+            }}
+            onChange={(pag) => {
+              setPagination({
+                current: pag.current,
+                pageSize: pag.pageSize,
+              });
+            }}
+            scroll={{ x: 'max-content' }}
+            size="middle"
+            bordered={false}
+          />
+        </div>
+      </div>
+      <Modal
+        open={isBidModalOpen}
+        footer={null}
+        centered
+        closable={false}
+        onCancel={() => setIsBidModalOpen(false)}
+        width={340}
+      >
+        <div className="pt-1">
+          <div className="flex items-center gap-1 mb-4">
+            <span className="text-[13px] font-semibold tracking-wide text-[#4b5563] uppercase">Default Bid</span>
+          </div>
 
-              <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
-            </div>
+          <div className="relative">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6b7280] font-semibold text-[15px]">₹</div>
 
-            <div className="flex items-center gap-3">
-              <Button
-                icon={<FilterOutlined />}
-                className="!h-[42px] !px-5 !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium hover:!border-[#2563eb] hover:!text-[#2563eb] !shadow-sm !flex !items-center !justify-center"
-              >
-                Filters
-              </Button>
+            <input
+              type="number"
+              value={selectedBid}
+              onChange={(e) => setSelectedBid(e.target.value)}
+              className="w-full h-[54px] rounded-2xl border border-[#c7d2fe] bg-[#fafbff] pl-10 pr-4 text-[18px] font-semibold text-[#111827] outline-none"
+            />
+          </div>
 
-              <Button
-                type="primary"
-                icon={<ExportOutlined />}
-                className="!h-[42px] !px-5 !rounded-xl !font-medium !flex !items-center !justify-center"
-              >
-                Export
-              </Button>
-            </div>
+          <div className="mt-6 pt-4 border-t border-[#eef1f5] flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setIsBidModalOpen(false)}
+              className="h-[42px] px-5 rounded-xl text-[#6b7280] font-medium hover:bg-[#f3f4f6]"
+            >
+              Cancel
+            </button>
+
+            <button type="button" className="h-[42px] px-6 rounded-xl bg-[#111827] text-white font-semibold">
+              Save
+            </button>
           </div>
         </div>
-
-        {/* Table */}
-        <Table
-          columns={columns}
-          dataSource={dataSource}
-          loading={loading}
-          pagination={{
-            current: pagination.current,
-            pageSize: pagination.pageSize,
-            total: adsGroupData?.pagination?.total_records || 0,
-            showSizeChanger: true,
-            pageSizeOptions: ['10', '20', '50', '100'],
-            showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
-          }}
-          onChange={(pag) => {
-            setPagination({
-              current: pag.current,
-              pageSize: pag.pageSize,
-            });
-          }}
-          scroll={{ x: 'max-content' }}
-          size="middle"
-          bordered={false}
-        />
-      </div>
-    </div>
+      </Modal>
+    </>
   );
 }
 

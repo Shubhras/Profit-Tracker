@@ -376,11 +376,18 @@ function MenuItems({ toggleCollapsed }) {
         'keywords',
         null,
       ),
+      // getItem(
+      //   <NavLink onClick={toggleCollapsed} to={`${path}/advertising/placements`}>
+      //     {t('Placements')}
+      //   </NavLink>,
+      //   'placements',
+      //   null,
+      // ),
       getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/placements`}>
-          {t('Placements')}
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/targets`}>
+          {t('Targets')}
         </NavLink>,
-        'placements',
+        'targets',
         null,
       ),
       getItem(
@@ -542,13 +549,13 @@ function MenuItems({ toggleCollapsed }) {
         'myservices',
         null,
       ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/invoicebilling`}>
-          {t('Invoices & Billing')}
-        </NavLink>,
-        'invoicebilling',
-        null,
-      ),
+      // getItem(
+      //   <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/invoicebilling`}>
+      //     {t('Invoices & Billing')}
+      //   </NavLink>,
+      //   'invoicebilling',
+      //   null,
+      // ),
     ]),
 
     getItem(
@@ -584,6 +591,13 @@ function MenuItems({ toggleCollapsed }) {
             {t('financeConfiguration')}
           </NavLink>,
           'financeConfiguration',
+        ),
+        getItem(
+          <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/invoicebilling`}>
+            {t('Invoices & Billing')}
+          </NavLink>,
+          'invoicebilling',
+          null,
         ),
       ]),
 
