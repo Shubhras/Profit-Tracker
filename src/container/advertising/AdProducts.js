@@ -86,7 +86,7 @@ function AdProducts() {
     {
       title: 'Image',
       dataIndex: 'image',
-      width: 100,
+      width: 70,
       align: 'center',
       fixed: 'left',
       render: (image) => (
@@ -104,7 +104,7 @@ function AdProducts() {
       title: 'SKU',
       dataIndex: 'sku',
       align: 'center',
-      width: 100,
+      width: 80,
       ellipsis: true,
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
@@ -174,7 +174,7 @@ function AdProducts() {
       title: 'Total Ads',
       dataIndex: 'totalads',
       align: 'center',
-      width: 100,
+      width: 80,
       ellipsis: true,
       // render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
@@ -182,7 +182,7 @@ function AdProducts() {
       title: 'Impressions',
       dataIndex: 'impressions',
       align: 'center',
-      width: 100,
+      width: 80,
       ellipsis: true,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
@@ -191,7 +191,7 @@ function AdProducts() {
       title: 'Clicks',
       dataIndex: 'clicks',
       align: 'center',
-      width: 100,
+      width: 80,
       ellipsis: true,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
@@ -200,7 +200,7 @@ function AdProducts() {
       title: 'Cost',
       dataIndex: 'cost',
       align: 'center',
-      width: 100,
+      width: 80,
       ellipsis: true,
       render: (v) => <span className="font-medium text-[#dc2626]">₹{Number(v ?? 0).toFixed(2)}</span>,
       // render: (v) => <span className="font-medium text-[#dc2626]">₹{v ?? 0}</span>,
@@ -210,7 +210,7 @@ function AdProducts() {
       title: 'Sales',
       dataIndex: 'sales',
       align: 'center',
-      width: 100,
+      width: 80,
       ellipsis: true,
       render: (v) => {
         const formattedValue = Number(v ?? 0).toLocaleString('en-IN');
@@ -223,7 +223,7 @@ function AdProducts() {
       title: 'Orders',
       dataIndex: 'orders',
       align: 'center',
-      width: 100,
+      width: 80,
       ellipsis: true,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
@@ -232,7 +232,7 @@ function AdProducts() {
       title: 'Units',
       dataIndex: 'units',
       align: 'center',
-      width: 100,
+      width: 80,
       ellipsis: true,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
@@ -241,7 +241,7 @@ function AdProducts() {
       title: 'ACOS',
       dataIndex: 'acos',
       align: 'center',
-      width: 100,
+      width: 80,
       ellipsis: true,
       render: (v) => (
         <Tag className="!px-3 !py-[3px] !rounded-full" color={v > 100 ? 'error' : 'processing'}>
@@ -254,7 +254,7 @@ function AdProducts() {
       title: 'ROAS',
       dataIndex: 'roas',
       align: 'center',
-      width: 100,
+      width: 80,
       ellipsis: true,
       render: (v) => (
         <Tag className="!px-3 !py-[3px] !rounded-full" color={v >= 1 ? 'success' : 'warning'}>
@@ -265,7 +265,7 @@ function AdProducts() {
     {
       title: '',
       dataIndex: 'action',
-      width: 70,
+      width: 40,
       fixed: 'right',
       align: 'center',
 

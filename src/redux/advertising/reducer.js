@@ -9,6 +9,9 @@ const initialState = {
   productsAds: [],
   searchTerms: [],
   targets: [],
+  createrule: [],
+  updaterule: [],
+  deleterule: [],
   rules: [],
   loading: false,
   error: null,
@@ -48,6 +51,18 @@ const {
   TARGETS_BEGIN,
   TARGETS_SUCCESS,
   TARGETS_ERR,
+
+  CREATERULE_BEGIN,
+  CREATERULE_SUCCESS,
+  CREATERULE_ERR,
+
+  UPDATERULE_BEGIN,
+  UPDATERULE_SUCCESS,
+  UPDATERULE_ERR,
+
+  DELETERULE_BEGIN,
+  DELETERULE_SUCCESS,
+  DELETERULE_ERR,
 } = actions;
 
 const AdvertisingReducer = (state = initialState, action) => {
@@ -235,6 +250,69 @@ const AdvertisingReducer = (state = initialState, action) => {
       };
 
     case TARGETS_ERR:
+      return {
+        ...state,
+        error: err,
+        loading: false,
+      };
+
+    case CREATERULE_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case CREATERULE_SUCCESS:
+      return {
+        ...state,
+        createrule: data,
+        loading: false,
+      };
+
+    case CREATERULE_ERR:
+      return {
+        ...state,
+        error: err,
+        loading: false,
+      };
+
+    case UPDATERULE_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case UPDATERULE_SUCCESS:
+      return {
+        ...state,
+        updaterule: data,
+        loading: false,
+      };
+
+    case UPDATERULE_ERR:
+      return {
+        ...state,
+        error: err,
+        loading: false,
+      };
+
+    case DELETERULE_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case DELETERULE_SUCCESS:
+      return {
+        ...state,
+        deleterule: data,
+        loading: false,
+      };
+
+    case DELETERULE_ERR:
       return {
         ...state,
         error: err,

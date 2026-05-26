@@ -92,11 +92,11 @@ function Overview() {
   return (
     <div className="min-h-screen bg-[#f5f7fb] p-6">
       {/* Header */}
-      <div className="mb-6 flex items-start justify-between">
+      <div className="mb-3 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#111827]">Value Added Services</h1>
+          <h1 className="text-2xl font-bold text-[#111827] mb-1">Value Added Services</h1>
 
-          <p className="mt-1 text-sm text-[#6b7280]">
+          <p className="text-sm text-[#6b7280]">
             Choose expert services to grow your e-commerce business with end-to-end account management and marketing
             solutions.
           </p>
@@ -114,12 +114,12 @@ function Overview() {
       {/* Main Layout */}
       <div className="grid grid-cols-12 gap-2">
         {/* Left Section */}
-        <div className="col-span-9 space-y-5">
+        <div className="col-span-9 space-y-2">
           {/* Marketplace Expertise */}
-          <div className="rounded-2xl border border-[#e5e7eb] bg-white p-5">
-            <h2 className="mb-5 text-base font-semibold text-[#111827]">Our Marketplaces Expertise</h2>
+          <div className="rounded-2xl border border-[#e5e7eb] bg-white p-3">
+            <h2 className="mb-2 text-base font-semibold text-[#111827]">Our Marketplaces Expertise</h2>
 
-            <div className="grid grid-cols-7 gap-4">
+            <div className="grid grid-cols-7 gap-2">
               {marketplaces.map((item) => (
                 <div
                   key={item.name}
@@ -141,7 +141,8 @@ function Overview() {
             {/* Cards */}
             <div className="grid grid-cols-3 gap-5">
               {/* Account Management */}
-              <div className="rounded-2xl border border-[#dff5e8] bg-[#fcfffd] p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
+              <div className="flex flex-col rounded-2xl border border-[#dff5e8] bg-[#fcfffd] p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
+                {' '}
                 {/* Top */}
                 <div className="mb-1 flex items-start gap-4">
                   <div className="flex h-12 w-12 min-w-[56px] items-center justify-center rounded-2xl bg-[#eafaf1]">
@@ -156,7 +157,6 @@ function Overview() {
                     </p>
                   </div>
                 </div>
-
                 {/* Services */}
                 <div className="space-y-3">
                   {accountServices.map((service) => (
@@ -166,20 +166,21 @@ function Overview() {
                     </div>
                   ))}
                 </div>
-
                 {/* Footer */}
-                <div className="mt-7 flex items-end justify-between">
-                  <div>
-                    <p className="text-xs text-[#6b7280]">Starting at</p>
+                <div className="mt-6 flex items-center justify-between">
+                  {/* Price */}
+                  <div className="flex flex-col">
+                    <span className="text-[13px] text-[#6b7280] leading-none">Starting at</span>
 
-                    <h3 className="text-[22px] font-bold leading-none text-[#16a34a]">₹ 24,999</h3>
+                    <h3 className="mt-2 text-[20px] font-bold leading-none text-[#16a34a]">₹ 24,999</h3>
 
-                    <span className="text-sm text-[#6b7280]">/ month</span>
+                    <span className="text-[12px] text-[#6b7280] leading-none">/ month</span>
                   </div>
 
+                  {/* Button */}
                   <button
                     type="button"
-                    className="rounded-xl bg-[#16a34a] px-2 py-2 text-sm font-medium text-white transition-all hover:opacity-90"
+                    className="h-[42px] rounded-xl bg-[#16a34a] px-2 text-[13px] font-medium text-white whitespace-nowrap transition-all hover:opacity-90"
                   >
                     View Packages
                   </button>
@@ -187,7 +188,8 @@ function Overview() {
               </div>
 
               {/* Digital Marketing */}
-              <div className="rounded-2xl border border-[#dce9ff] bg-[#fcfdff] p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
+              <div className="flex flex-col rounded-2xl border border-[#dce9ff] bg-[#fcfdff] p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
+                {' '}
                 <div className="mb-1 flex items-start gap-4">
                   <div className="flex h-12 w-12 min-w-[56px] items-center justify-center rounded-2xl bg-[#edf4ff]">
                     <UilMegaphone size="26" color="#2563eb" />
@@ -201,7 +203,6 @@ function Overview() {
                     </p>
                   </div>
                 </div>
-
                 <div className="space-y-3">
                   {marketingServices.map((service) => (
                     <div key={service} className="flex items-center gap-2 text-[13px] text-[#374151]">
@@ -210,19 +211,20 @@ function Overview() {
                     </div>
                   ))}
                 </div>
+                <div className="mt-auto pt-6 flex items-center justify-between">
+                  {' '}
+                  {/* Price */}
+                  <div className="flex flex-col">
+                    <span className="text-[13px] text-[#6b7280] leading-none">Starting at</span>
 
-                <div className="mt-7 flex items-end justify-between">
-                  <div>
-                    <p className="text-xs text-[#6b7280]">Starting at</p>
+                    <h3 className="mt-2 text-[20px] font-bold leading-none text-[#2563eb]">₹ 14,999</h3>
 
-                    <h3 className="text-[22px] font-bold leading-none text-[#2563eb]">₹ 14,999</h3>
-
-                    <span className="text-sm text-[#6b7280]">/ month</span>
+                    <span className="text-[12px] text-[#6b7280] leading-none">/ month</span>
                   </div>
-
+                  {/* Button */}
                   <button
                     type="button"
-                    className="rounded-xl bg-[#2563eb] px-2 py-2 text-sm font-medium text-white transition-all hover:opacity-90"
+                    className="h-[42px] rounded-xl bg-[#2563eb] px-2 text-[13px] font-medium text-white whitespace-nowrap transition-all hover:opacity-90"
                   >
                     View Packages
                   </button>
@@ -230,7 +232,8 @@ function Overview() {
               </div>
 
               {/* Quick Commerce */}
-              <div className="rounded-2xl border border-[#eddcff] bg-[#fffcff] p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
+              <div className="flex flex-col rounded-2xl border border-[#eddcff] bg-[#fffcff] p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
+                {' '}
                 <div className="mb-1 flex items-start gap-4">
                   <div className="flex h-12 w-12 min-w-[56px] items-center justify-center rounded-2xl bg-[#f5efff]">
                     <UilShoppingCartAlt size="26" color="#9333ea" />
@@ -244,7 +247,6 @@ function Overview() {
                     </p>
                   </div>
                 </div>
-
                 <div className="space-y-3">
                   {commerceServices.map((service) => (
                     <div key={service} className="flex items-center gap-2 text-[13px] text-[#374151]">
@@ -253,19 +255,20 @@ function Overview() {
                     </div>
                   ))}
                 </div>
+                <div className="mt-auto pt-6 flex items-center justify-between">
+                  {' '}
+                  {/* Price */}
+                  <div className="flex flex-col">
+                    <span className="text-[13px] text-[#6b7280] leading-none">Starting at</span>
 
-                <div className="mt-7 flex items-end justify-between">
-                  <div>
-                    <p className="text-xs text-[#6b7280]">Starting at</p>
+                    <h3 className="mt-2 text-[20px] font-bold leading-none text-[#9333ea]">₹ 19,999</h3>
 
-                    <h3 className="text-[22px] font-bold leading-none text-[#9333ea]">₹ 19,999</h3>
-
-                    <span className="text-sm text-[#6b7280]">/ month</span>
+                    <span className="text-[12px] text-[#6b7280] leading-none">/ month</span>
                   </div>
-
+                  {/* Button */}
                   <button
                     type="button"
-                    className="rounded-xl bg-[#9333ea] px-2 py-2 text-sm font-medium text-white transition-all hover:opacity-90"
+                    className="h-[42px] rounded-xl bg-[#9333ea] px-2 text-[13px] font-medium text-white whitespace-nowrap transition-all hover:opacity-90"
                   >
                     View Packages
                   </button>
@@ -276,7 +279,7 @@ function Overview() {
         </div>
 
         {/* Right Sidebar */}
-        <div className="col-span-3 space-y-5">
+        <div className="col-span-3 space-y-3">
           {/* Why Choose */}
           <div className="rounded-2xl border border-[#e5e7eb] bg-white p-5">
             <h2 className="mb-5 text-base font-semibold text-[#111827]">Why Choose TrackMyProfit Services?</h2>
@@ -329,12 +332,12 @@ function Overview() {
           </div>
         </div>
       </div>
-      <div className="mt-3 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="mt-1 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
         {/* Heading */}
         <div className="mb-8">
-          <h2 className="text-xl font-bold text-[#111827]">Account Management – How It Works</h2>
+          <h2 className="text-xl font-bold text-[#111827] mb-1">Account Management – How It Works</h2>
 
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="text-sm text-gray-500">
             We assign a dedicated account manager who works on your account like your extended team.
           </p>
         </div>
@@ -417,7 +420,7 @@ function Overview() {
         </div>
 
         {/* Bottom Help Box */}
-        <div className="mt-10 flex items-start justify-between gap-5 rounded-2xl border border-gray-200 bg-gray-50 p-5 md:flex-row">
+        <div className="mt-5 flex items-start justify-between gap-5 rounded-2xl border border-gray-200 bg-gray-50 p-3 md:flex-row">
           <div className="flex items-center gap-4">
             {/* Avatar */}
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#eafaf1] shadow-sm">

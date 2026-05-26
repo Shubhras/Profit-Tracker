@@ -12,7 +12,7 @@ import {
   CarOutlined,
   BarChartOutlined,
 } from '@ant-design/icons';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { amazonAction } from '../../redux/amazonAPI/actionCreator';
@@ -896,10 +896,10 @@ export default function Summary() {
             <div
               className="bg-white rounded-[24px] border border-[#edf0f7] shadow-sm p-3"
               style={{
-                height: '360px',
+                height: '415px',
               }}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-4">
                 <h3 className="text-[16px] font-semibold text-[#111827]">Sales, Quantity & Profit Overview</h3>
 
                 <Select size="small" defaultValue="daily" style={{ width: 100 }}>
@@ -912,7 +912,7 @@ export default function Summary() {
                   <XAxis dataKey="date" />
                   <YAxis />
                   <Tooltip />
-                  {/* <Legend /> */}
+                  <Legend />
 
                   <Bar dataKey="sales" stackId="a" fill="#8e9fff" radius={[5, 5, 0, 0]} />
 

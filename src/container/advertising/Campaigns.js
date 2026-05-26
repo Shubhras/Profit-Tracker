@@ -290,12 +290,12 @@ function Campaigns() {
       },
     },
 
-    {
-      title: 'Campaign ID',
-      dataIndex: 'campaignId',
-      align: 'center',
-      render: (v) => <span className="text-[#2563eb] font-medium">{v}</span>,
-    },
+    // {
+    //   title: 'Campaign ID',
+    //   dataIndex: 'campaignId',
+    //   align: 'center',
+    //   render: (v) => <span className="text-[#2563eb] font-medium">{v}</span>,
+    // },
 
     {
       title: 'Name',
@@ -428,6 +428,16 @@ function Campaigns() {
       title: 'Currency Code',
       dataIndex: 'currencyCode',
       align: 'center',
+    },
+    {
+      title: 'Portfolio',
+      dataIndex: 'portfolio',
+      align: 'center',
+      render: (v) => (
+        <span className="font-medium text-[#111827] block truncate" style={{ maxWidth: '220px' }}>
+          {v || '-'}
+        </span>
+      ),
     },
     {
       title: 'Impressions',

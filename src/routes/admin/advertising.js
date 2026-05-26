@@ -17,7 +17,7 @@ const AdsProductsThird = lazy(() => import('../../container/advertising/AdsProdu
 const NegativeKey = lazy(() => import('../../container/advertising/NegativeKey'));
 const Targets = lazy(() => import('../../container/advertising/Targets'));
 
-const RulesAutomation = lazy(() => import('../../container/advertising/RulesAutomation'));
+const RulesAutomationPage = lazy(() => import('../../container/advertising/RulesAutomation'));
 
 const NotFound = lazy(() => import('../../container/pages/404'));
 
@@ -99,7 +99,7 @@ function AdvertisingRoutes() {
         path="rulesAuto"
         element={
           <SubscriptionGate allowFree>
-            <RulesAutomation />
+            <RulesAutomationPage />
           </SubscriptionGate>
         }
       />

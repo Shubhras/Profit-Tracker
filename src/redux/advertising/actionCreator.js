@@ -35,6 +35,18 @@ const {
   targetsBegin,
   targetsSuccess,
   targetsErr,
+
+  createruleBegin,
+  createruleSuccess,
+  createruleErr,
+
+  updateruleBegin,
+  updateruleSuccess,
+  updateruleErr,
+
+  deleteruleBegin,
+  deleteruleSuccess,
+  deleteruleErr,
 } = actions;
 
 export const getCampaigns = (page = 1, pageSize = 10) => {
@@ -212,6 +224,90 @@ export const getTargets = (page = 1, pageSize = 10, payload = {}) => {
       }
     } catch (err) {
       dispatch(targetsErr(err.response?.data?.message || err.message));
+    }
+  };
+};
+
+export const getCreateRules = (page = 1, pageSize = 10, payload = {}) => {
+  return async (dispatch) => {
+    dispatch(createruleBegin());
+
+    try {
+      const response = await DataService.post(
+        `/amazon-ads/budget-rules/create/?page=${page}&page_size=${pageSize}`,
+        payload,
+      );
+
+      if (response.data.status === true) {
+        dispatch(createruleSuccess(response.data));
+        return response.data;
+      }
+
+      dispatch(createruleErr(response.data.message || 'Something went wrong'));
+
+      return response.data;
+    } catch (err) {
+      dispatch(createruleErr(err.response?.data?.message || err.message));
+
+      return {
+        status: false,
+        message: err.response?.data?.message || err.message,
+      };
+    }
+  };
+};
+
+export const getUpdateRules = (page = 1, pageSize = 10, payload = {}) => {
+  return async (dispatch) => {
+    dispatch(updateruleBegin());
+
+    try {
+      const response = await DataService.put(
+        `/amazon-ads/budget-rules/update/?page=${page}&page_size=${pageSize}`,
+        payload,
+      );
+
+      if (response.data.status === true) {
+        dispatch(updateruleSuccess(response.data));
+        return response.data;
+      }
+
+      dispatch(updateruleErr(response.data.message || 'Something went wrong'));
+
+      return response.data;
+    } catch (err) {
+      dispatch(updateruleErr(err.response?.data?.message || err.message));
+
+      return {
+        status: false,
+        message: err.response?.data?.message || err.message,
+      };
+    }
+  };
+};
+export const getDeleteRules = (budgetRuleId) => {
+  return async (dispatch) => {
+    dispatch(deleteruleBegin());
+
+    try {
+      const response = await DataService.delete(`/amazon-ads/budget-rules/${budgetRuleId}/delete/`);
+
+      if (response.data.status === true) {
+        dispatch(deleteruleSuccess(response.data));
+
+        return response.data;
+      }
+
+      dispatch(deleteruleErr(response.data.message || 'Something went wrong'));
+
+      return response.data;
+    } catch (err) {
+      dispatch(deleteruleErr(err.response?.data?.message || err.message));
+
+      return {
+        status: false,
+        message: err.response?.data?.message || err.message,
+      };
     }
   };
 };

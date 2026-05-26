@@ -549,13 +549,13 @@ function MenuItems({ toggleCollapsed }) {
         'myservices',
         null,
       ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/invoicebilling`}>
-          {t('Invoices & Billing')}
-        </NavLink>,
-        'invoicebilling',
-        null,
-      ),
+      // getItem(
+      //   <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/invoicebilling`}>
+      //     {t('Invoices & Billing')}
+      //   </NavLink>,
+      //   'invoicebilling',
+      //   null,
+      // ),
     ]),
 
     getItem(
@@ -591,6 +591,13 @@ function MenuItems({ toggleCollapsed }) {
             {t('financeConfiguration')}
           </NavLink>,
           'financeConfiguration',
+        ),
+        getItem(
+          <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/invoicebilling`}>
+            {t('Invoices & Billing')}
+          </NavLink>,
+          'invoicebilling',
+          null,
         ),
       ]),
 
