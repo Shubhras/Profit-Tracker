@@ -47,6 +47,18 @@ const actions = {
   DELETERULE_SUCCESS: 'DELETERULE_SUCCESS',
   DELETERULE_ERR: 'DELETERULE_ERR',
 
+  CAMPAIGN_RULE_LIST_BEGIN: 'CAMPAIGN_RULE_LIST_BEGIN',
+  CAMPAIGN_RULE_LIST_SUCCESS: 'CAMPAIGN_RULE_LIST_SUCCESS',
+  CAMPAIGN_RULE_LIST_ERR: 'CAMPAIGN_RULE_LIST_ERR',
+
+  EDIT_BID_BEGIN: 'EDIT_BID_BEGIN',
+  EDIT_BID_SUCCESS: 'EDIT_BID_SUCCESS',
+  EDIT_BID_ERR: 'EDIT_BID_ERR',
+
+  CAMPAIGN_UPDATE_BEGIN: 'CAMPAIGN_UPDATE_BEGIN',
+  CAMPAIGN_UPDATE_SUCCESS: 'CAMPAIGN_UPDATE_SUCCESS',
+  CAMPAIGN_UPDATE_ERR: 'CAMPAIGN_UPDATE_ERR',
+
   campaignsBegin: () => {
     return {
       type: actions.CAMPAIGNS_BEGIN,
@@ -283,6 +295,66 @@ const actions = {
   deleteruleErr: (err) => {
     return {
       type: actions.DELETERULE_ERR,
+      err,
+    };
+  },
+
+  campaignruleListBegin: () => {
+    return {
+      type: actions.CAMPAIGN_RULE_LIST_BEGIN,
+    };
+  },
+
+  campaignruleListSuccess: (data) => {
+    return {
+      type: actions.CAMPAIGN_RULE_LIST_SUCCESS,
+      data,
+    };
+  },
+
+  campaignruleListErr: (err) => {
+    return {
+      type: actions.CAMPAIGN_RULE_LIST_ERR,
+      err,
+    };
+  },
+
+  editbidBegin: () => {
+    return {
+      type: actions.EDIT_BID_BEGIN,
+    };
+  },
+
+  editbidSuccess: (data) => {
+    return {
+      type: actions.EDIT_BID_SUCCESS,
+      data,
+    };
+  },
+
+  editbidErr: (err) => {
+    return {
+      type: actions.EDIT_BID_ERR,
+      err,
+    };
+  },
+
+  campaignupdateBegin: () => {
+    return {
+      type: actions.CAMPAIGN_UPDATE_BEGIN,
+    };
+  },
+
+  campaignupdateSuccess: (data) => {
+    return {
+      type: actions.CAMPAIGN_UPDATE_SUCCESS,
+      data,
+    };
+  },
+
+  campaignupdateErr: (err) => {
+    return {
+      type: actions.CAMPAIGN_UPDATE_ERR,
       err,
     };
   },

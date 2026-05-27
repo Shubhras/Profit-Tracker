@@ -47,6 +47,18 @@ const {
   deleteruleBegin,
   deleteruleSuccess,
   deleteruleErr,
+
+  campaignruleListBegin,
+  campaignruleListSuccess,
+  campaignruleListErr,
+
+  editbidBegin,
+  editbidSuccess,
+  editbidErr,
+
+  campaignupdateBegin,
+  campaignupdateSuccess,
+  campaignupdateErr,
 } = actions;
 
 export const getCampaigns = (page = 1, pageSize = 10) => {
@@ -185,17 +197,14 @@ export const getSearchTerms = (page = 1, pageSize = 10, payload = {}) => {
   };
 };
 
-export const getRules = (page = 1, pageSize = 10, ruleType = '') => {
+export const getRules = (page = 1, pageSize = 10) => {
   return async (dispatch) => {
     dispatch(rulesBegin());
 
     try {
-      const url = ruleType
-        ? `/amazon-ads/budget-rule-list/?page=${page}&page_size=${pageSize}&rule_type=${ruleType}`
-        : `/amazon-ads/budget-rule-list/?page=${page}&page_size=${pageSize}`;
-
-      const response = await DataService.get(url);
-
+      const response = await DataService.get(
+        `/amazon-ads/budget-rule-list/?page=${page}&page_size=${pageSize}&rule_state=ACTIVE`,
+      );
       if (response.data.results.status === true) {
         dispatch(rulesSuccess(response.data));
       } else {
@@ -285,6 +294,7 @@ export const getUpdateRules = (page = 1, pageSize = 10, payload = {}) => {
     }
   };
 };
+
 export const getDeleteRules = (budgetRuleId) => {
   return async (dispatch) => {
     dispatch(deleteruleBegin());
@@ -303,6 +313,84 @@ export const getDeleteRules = (budgetRuleId) => {
       return response.data;
     } catch (err) {
       dispatch(deleteruleErr(err.response?.data?.message || err.message));
+
+      return {
+        status: false,
+        message: err.response?.data?.message || err.message,
+      };
+    }
+  };
+};
+
+export const getCampaignsRulesList = () => {
+  return async (dispatch) => {
+    dispatch(campaignruleListBegin());
+
+    try {
+      const response = await DataService.post(`/amazon-ads/campaigns-id/list/`);
+
+      if (response.data.status === true) {
+        dispatch(campaignruleListSuccess(response.data));
+        return response.data;
+      }
+
+      dispatch(campaignruleListErr(response.data.message || 'Something went wrong'));
+
+      return response.data;
+    } catch (err) {
+      dispatch(campaignruleListErr(err.response?.data?.message || err.message));
+
+      return {
+        status: false,
+        message: err.response?.data?.message || err.message,
+      };
+    }
+  };
+};
+
+export const getEditBid = (payload) => {
+  return async (dispatch) => {
+    dispatch(editbidBegin());
+
+    try {
+      const response = await DataService.put(`/amazon-ads/adgroup-update/`, payload);
+
+      if (response.data.status === true) {
+        dispatch(editbidSuccess(response.data));
+        return response.data;
+      }
+
+      dispatch(editbidErr(response.data.message || 'Something went wrong'));
+
+      return response.data;
+    } catch (err) {
+      dispatch(editbidErr(err.response?.data?.message || err.message));
+
+      return {
+        status: false,
+        message: err.response?.data?.message || err.message,
+      };
+    }
+  };
+};
+
+export const getCampaignUpdate = (payload) => {
+  return async (dispatch) => {
+    dispatch(campaignupdateBegin());
+
+    try {
+      const response = await DataService.put(`/amazon-ads/campaigns-update/`, payload);
+
+      if (response.data.status === true) {
+        dispatch(campaignupdateSuccess(response.data));
+        return response.data;
+      }
+
+      dispatch(campaignupdateErr(response.data.message || 'Something went wrong'));
+
+      return response.data;
+    } catch (err) {
+      dispatch(campaignupdateErr(err.response?.data?.message || err.message));
 
       return {
         status: false,
