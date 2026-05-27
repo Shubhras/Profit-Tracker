@@ -12,120 +12,15 @@ from amazon_ads.services.buged_rules import *
 from rest_framework.pagination import PageNumberPagination
 from .serializers import *
 from rest_framework.permissions import IsAuthenticated
-class AdsBudgetRulePagination(PageNumberPagination):
+from .utils import refresh_ads_access_token
 
+class AdsBudgetRulePagination(PageNumberPagination):
     page_size = 10
 
     page_size_query_param = "page_size"
 
     max_page_size = 100
 
-# from amazon_ads.utils import ads_matrix_api_request,ads_rules_api_request
-
-
-
-# class AmazonBudgetRuleService:
-
-#     BASE_URLS = {
-#         "eu": "https://advertising-api-eu.amazon.com",
-#         "na": "https://advertising-api.amazon.com",
-#         "fe": "https://advertising-api-fe.amazon.com",
-#     }
-
-#     ENDPOINTS = {
-#         "sp": "/sp/budgetRules",
-#         "sd": "/sd/budgetRules",
-#         "sb": "/sb/budgetRules",
-#     }
-
-#     @classmethod
-#     def sync_budget_rules(
-#         cls,
-#         amazon_account,
-#         access_token,
-#         profile_id,
-#         client_id,
-#         region="eu",
-#         ad_type="sd"
-#     ):
-
-#         base_url = cls.BASE_URLS.get(region)
-#         endpoint = cls.ENDPOINTS.get(ad_type)
-
-#         url = f"{base_url}{endpoint}"
-
-#         headers = {
-#             "Authorization": f"Bearer {access_token}",
-#             "Amazon-Advertising-API-ClientId": client_id,
-#             "Amazon-Advertising-API-Scope": str(profile_id),
-#             "Accept": "application/json",
-#         }
-
-#         next_token = None
-#         total_synced = 0
-
-#         while True:
-
-#             params = {
-#                 "pageSize": 30
-#             }
-
-#             if next_token:
-#                 params["nextToken"] = next_token
-
-#             response = requests.get(
-#                 url,
-#                 headers=headers,
-#                 params=params
-#             )
-
-#             print("STATUS:", response.status_code)
-#             print("RESPONSE:", response.text)
-
-#             response.raise_for_status()
-
-#             data = response.json()
-
-#             rules = data.get(
-#                 "budgetRulesForAdvertiserResponse",
-#                 []
-#             )
-
-#             for item in rules:
-
-#                 rule_id = item.get("ruleId")
-
-#                 AdsBudgetRule.objects.update_or_create(
-#                     amazon_account=amazon_account,
-#                     budget_rule_id=rule_id,
-#                     rule_type=ad_type,
-#                     defaults={
-#                         "profile_id": profile_id,
-#                         "name": item.get("ruleDetails", {}).get("name"),
-#                         "rule_state": item.get("ruleState"),
-#                         "rule_status": item.get("ruleStatus"),
-#                         "created_date": item.get("createdDate"),
-#                         "last_updated_date": item.get("lastUpdatedDate"),
-#                         "rule_details": item.get("ruleDetails", {}),
-#                         "raw_data": item,
-#                     }
-#                 )
-
-#                 total_synced += 1
-
-#             next_token = data.get("nextToken")
-#             print("PROFILE ID:", profile_id)
-#             print("REGION:", region)
-#             print("AD TYPE:", ad_type)
-
-#             if not next_token:
-#                 break
-
-#         return {
-#             "success": True,
-#             "total_synced": total_synced,
-#             "ad_type": ad_type
-#         }
     
 class SyncBudgetRulesAPIView(APIView):
 
@@ -203,13 +98,15 @@ class AdsBudgetRuleListAPIView(APIView):
                 is_primary=True
             )
 
+            access_token = refresh_ads_access_token(amazon_account)
+
             # ---------------------------------
             # AUTO SYNC BEFORE LISTING
             # ---------------------------------
 
             AmazonBudgetRuleService.sync_budget_rules(
                 amazon_account=amazon_account,
-                access_token=amazon_account.access_token,
+                access_token= access_token,
                 profile_id=amazon_account.profile_id,
                 client_id=amazon_account.client_id,
                 region=amazon_account.region.lower(),
@@ -344,9 +241,11 @@ class CreateBudgetRuleAPIView(APIView):
                 is_primary=True
             )
 
+            access_token = refresh_ads_access_token(amazon_account)
+
             result = AmazonBudgetRuleService.create_budget_rule(
                 amazon_account=amazon_account,
-                access_token=amazon_account.access_token,
+                access_token= access_token,
                 profile_id=amazon_account.profile_id,
                 client_id=amazon_account.client_id,
                 payload=payload,
@@ -410,9 +309,11 @@ class UpdateBudgetRuleAPIView(APIView):
                 is_primary=True
             )
 
+            access_token = refresh_ads_access_token(amazon_account)
+
             result = AmazonBudgetRuleService.update_budget_rule(
                 amazon_account=amazon_account,
-                access_token=amazon_account.access_token,
+                access_token= access_token,
                 profile_id=amazon_account.profile_id,
                 client_id=amazon_account.client_id,
                 payload=request.data,
@@ -508,9 +409,11 @@ class DeleteBudgetRuleAPIView(APIView):
                 is_primary=True
             )
 
+            access_token = refresh_ads_access_token(amazon_account)
+
             result = AmazonBudgetRuleService.delete_budget_rule(
                 amazon_account=amazon_account,
-                access_token=amazon_account.access_token,
+                access_token= access_token,
                 profile_id=amazon_account.profile_id,
                 client_id=amazon_account.client_id,
                 budget_rule_id=budget_rule_id,
@@ -536,4 +439,106 @@ class DeleteBudgetRuleAPIView(APIView):
                 },
                 status=400
             )
+        
+
+
+class CampaignIdNameListView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        try:
+
+            user = request.user
+            data = request.data
+
+            search = data.get("search")
+            state = data.get("state")
+
+            campaign_type = data.get("campaign_type")
+            targeting_type = data.get("targeting_type")
+
+            ordering = data.get(
+                "ordering",
+                "-start_date"
+            )
+
+            queryset = AdsCampaign.objects.filter(
+                amazon_account__user=user,
+                amazon_account__is_primary=True
+            )
+
+            # =========================
+            # SEARCH
+            # =========================
+
+            if search:
+
+                queryset = queryset.filter(
+
+                    Q(name__icontains=search) |
+                    Q(campaign_id__icontains=search)
+
+                )
+
+            # =========================
+            # FILTERS
+            # =========================
+
+            if state:
+
+                queryset = queryset.filter(
+                    state=state
+                )
+
+            if campaign_type:
+
+                queryset = queryset.filter(
+                    campaign_type=campaign_type
+                )
+
+            if targeting_type:
+
+                queryset = queryset.filter(
+                    targeting_type=targeting_type
+                )
+
+            queryset = queryset.order_by(
+                ordering
+            )
+
+            # =========================
+            # RESPONSE DATA
+            # =========================
+
+            response_data = list(
+
+                queryset.values(
+                    "campaign_id",
+                    "name",
+                    "state"
+                )
+
+            )
+
+            return Response({
+
+                "status": True,
+                "message": "Campaign list fetched successfully",
+                "count": len(response_data),
+                "data": response_data
+
+            })
+
+        except Exception as e:
+
+            return Response({
+
+                "status": False,
+                "message": str(e),
+                "data": []
+
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
         

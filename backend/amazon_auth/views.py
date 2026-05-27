@@ -2362,10 +2362,15 @@ def get_pivot_dashboard(request):
         
     search_data = {}
     search_data.update(data_source)
-    f_child = search_data.get('filters')
+
+    f_child = (
+        search_data.get('filters')
+        or search_data.get('filter')
+    )
+
     if isinstance(f_child, dict):
         search_data.update(f_child)
-
+        
     def find_key(keys):
         for k in keys:
             val = search_data.get(k)
@@ -2411,10 +2416,29 @@ def get_pivot_dashboard(request):
     orders_qs = Order.objects.filter(user=user, purchase_date__range=(start_date, end_date))
     
     # 2. Aggregation
+    # db_trends = orders_qs.annotate(
+    #     day=TruncDate('purchase_date')
+    # ).values('marketplace_id', 'day').annotate(
+    #     grossqty=Sum('items_shipped'),
+    #     netqty=Count('id'),
+    #     revenue=Sum('total_amount')
+    # )
+
     db_trends = orders_qs.annotate(
         day=TruncDate('purchase_date')
-    ).values('marketplace_id', 'day').annotate(
-        grossqty=Sum('items_shipped'),
+    ).values(
+        'marketplace_id',
+        'day'
+    ).annotate(
+        # grossqty=Sum(
+        #     'items_shipped',
+        #     filter=Q(order_status='Shipped')
+        # ),
+
+        grossqty=Count(
+            'id',
+            filter=Q(order_status__iexact='shipped')
+        ),
         netqty=Count('id'),
         revenue=Sum('total_amount')
     )
@@ -2534,152 +2558,712 @@ def home(request):
         }
     })
 
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def get_amazon_data_profi_tability(request):
+#     """
+#     Returns Amazon profit data in the specific format requested by the user.
+#     Handles POST requests with filters and pagination.
+#     """
+#     user = request.user
+#     # 1. EXTRACT PARAMS (Robust logic)
+#     data_source_raw = request.data if request.method == 'POST' else request.GET
+    
+#     data_source = {}
+#     if data_source_raw:
+#         if hasattr(data_source_raw, 'dict'):
+#             data_source.update(data_source_raw.dict())
+#         else:
+#             data_source.update(data_source_raw)
+    
+#     # Try parsing raw body if still empty
+#     if not data_source:
+#         try:
+#             import json
+#             body_data = json.loads(request._request.body)
+#             if isinstance(body_data, dict):
+#                 data_source.update(body_data)
+#         except: pass
+        
+#     search_data = {}
+#     search_data.update(data_source)
+#     f_child = search_data.get('filters')
+#     if isinstance(f_child, dict):
+#         search_data.update(f_child)
+
+#     def find_key(keys):
+#         for k in keys:
+#             val = search_data.get(k)
+#             if isinstance(val, list) and len(val) > 0: val = val[0]
+#             if val and str(val).strip(): return str(val).strip()
+#             # Case-insensitive
+#             for sk, sv in search_data.items():
+#                 if sk.lower() == k.lower():
+#                     if isinstance(sv, list) and len(sv) > 0: sv = sv[0]
+#                     if sv and str(sv).strip(): return str(sv).strip()
+#         return None
+
+#     from_date_str = find_key(['fromDate', 'start_date', 'from_date', 'startDate'])
+#     to_date_str = find_key(['toDate', 'end_date', 'to_date', 'endDate', 'toDate'])
+
+#     # New specific filters
+#     sku_f = find_key(['SKU', 'sku', 'seller_sku'])
+#     product_f = find_key(['ProductId', 'productId', 'product_id'])
+#     parent_f = find_key(['ParentId', 'parentId', 'parent_id'])
+#     mkt_cat_f = find_key(['MKT category', 'mkt_category', 'category'])
+#     master_sku_f = find_key(['Inv MasterSku', 'master_sku', 'masterSku'])
+    
+#     pagination = search_data.get('pagination', {})
+#     metric_options = search_data.get('metric', {})
+#     summary_metric = metric_options.get('summarymetric', 'channel')
+
+#     def parse_iso_date(date_str, default_delta):
+#         if not date_str or not isinstance(date_str, (str, bytes, date, datetime)) or len(str(date_str)) < 10:
+#             return timezone.now() + default_delta
+#         try:
+#             if isinstance(date_str, (datetime, date)):
+#                 dt = date_str
+#             else:
+#                 # Handle YYYY-MM-DD or ISO formats
+#                 s = str(date_str)[:10]
+#                 dt = datetime.strptime(s, '%Y-%m-%d')
+            
+#             if timezone.is_naive(dt):
+#                 return timezone.make_aware(dt)
+#             return dt
+#         except Exception:
+#             return timezone.now() + default_delta
+  
+#     from_date = parse_iso_date(from_date_str, timedelta(days=-30))
+#     to_date = parse_iso_date(to_date_str, timedelta(days=0))
+#     if to_date:
+#         to_date = to_date.replace(hour=23, minute=59, second=59)
+ 
+#     # Channel filtering
+#     channels = search_data.get('channel', {}).get('IN', []) if isinstance(search_data.get('channel'), dict) else []
+#     # Check if Amazon is requested
+#     is_amazon_requested = not channels or any("Amazon" in c for c in channels)
+    
+#     if not is_amazon_requested:
+#          return JsonResponse({
+#             "status": True,
+#             "message": "Success",
+#             "message_code": "E1",
+#             "pagination": {"pageNo": 0, "pageSize": pagination.get('pageSize', 25), "count": 0},
+#             "totals": {},
+#             "response": []
+#         })
+ 
+#     # Base querysets
+#     orders_qs = Order.objects.filter(user=user, purchase_date__range=(from_date, to_date))
+#     items_qs = OrderItem.objects.filter(order__user=user, order__purchase_date__range=(from_date, to_date))
+#     finances_qs = FinancialEvent.objects.filter(user=user, posted_date__range=(from_date, to_date))
+
+#     # Apply product filters
+#     if sku_f:
+#         orders_qs = orders_qs.filter(items__seller_sku__icontains=sku_f)
+#         items_qs = items_qs.filter(seller_sku__icontains=sku_f)
+#     if product_f:
+#         orders_qs = orders_qs.filter(items__order_item_id__icontains=product_f)
+#         items_qs = items_qs.filter(order_item_id__icontains=product_f)
+#     if parent_f or mkt_cat_f or master_sku_f:
+#         search_term = parent_f or mkt_cat_f or master_sku_f
+#         orders_qs = orders_qs.filter(items__title__icontains=search_term)
+#         items_qs = items_qs.filter(title__icontains=search_term)
+    
+#     # Ensure distinct orders after M2M filter
+#     orders_qs = orders_qs.distinct()
+ 
+#     # Grouping Logic
+#     if summary_metric == 'channel':
+#         # Group by Amazon Account (Seller Central ID)
+#         grouped_data = Order.objects.filter(user=user, purchase_date__range=(from_date, to_date)).values('amazon_account__seller_central_id').annotate(
+#             # grossqty=Sum('items_shipped'),
+#             grossqty=Count(
+#                 'id',
+#                 filter=Q(order_status__iexact='shipped')
+#             ),
+#             grosssales=Sum('total_amount'),
+#             min_date=Min('purchase_date'),
+#             max_date=Max('purchase_date'),
+#             order_count=Count('id')
+#         )
+#     else:
+#         # Default: Group by SKU
+#         grouped_data = items_qs.values('seller_sku', 'title').annotate(
+#             # grossqty=Sum('quantity_ordered'),
+#             shippingqty=Sum('quantity_shipped'),
+#             grossqty=Count(
+#                 'id',
+#                 filter=Q(order_status__iexact='shipped')
+#             ),
+#             grosssales=Sum('item_price'),
+#             min_date=Min('order__purchase_date'),
+#             max_date=Max('order__purchase_date')
+#         )
+ 
+#     total_count = grouped_data.count()
+#     page_no = pagination.get('pageNo', 0)
+#     page_size = pagination.get('pageSize', 25)
+#     start_idx = page_no * page_size
+#     end_idx = start_idx + page_size
+    
+#     paged_data = grouped_data[start_idx:end_idx]
+#     response_data = []
+    
+#     # Global Totals Init
+#     total_ads = 0
+#     total_gross_sales = 0
+#     total_net_sales = 0
+#     total_profit = 0
+#     total_qty = 0
+#     total_mp_fees = 0
+#     total_shipping_fees = 0
+#     total_cogs = 0
+ 
+#     for p in paged_data:
+#         if summary_metric == 'channel':
+#             display_name = "Amazon-India" # User seems to expect this label
+#             gross_sales = float(p['grosssales'] or 0)
+#             gross_qty = p['grossqty'] or 0
+            
+#             # Filters for this specific account
+#             p_orders = orders_qs.filter(amazon_account__seller_central_id=p['amazon_account__seller_central_id'])
+#             p_order_ids = p_orders.values_list('amazon_order_id', flat=True)
+#             p_finances = finances_qs.filter(Q(amazon_order_id__in=p_order_ids) | Q(amazon_account__seller_central_id=p['amazon_account__seller_central_id']))
+#             id_val = display_name
+#         else:
+#             sku = p['seller_sku']
+#             display_name = p['title']
+#             gross_sales = float(p['grosssales'] or 0)
+#             gross_qty = p['grossqty'] or 0
+            
+#             # Filters for this SKU
+#             sku_items = items_qs.filter(seller_sku=sku)
+#             p_order_ids = sku_items.values_list('order__amazon_order_id', flat=True)
+#             p_finances = finances_qs.filter(amazon_order_id__in=p_order_ids)
+#             id_val = sku
+ 
+#         # CORRECT FINANCIAL LOGIC
+#         if p_finances.exists():
+#             shipments = p_finances.filter(event_type__icontains='Shipment')
+#             refund_evs = p_finances.filter(event_type__icontains='Refund')
+            
+#             settled_income = float(shipments.aggregate(val=Sum('total_amount'))['val'] or 0)
+#             refunds = float(refund_evs.aggregate(val=Sum('total_amount'))['val'] or 0)
+            
+#             # 2. Marketplace Fees (The difference between what customer paid and what we got in shipments)
+#             # gross_sales is what customer paid (from Order model)
+#             mp_fees = (settled_income - gross_sales) if settled_income > 0 else -(gross_sales * 0.18)
+            
+#             shipping_fees = float(p_finances.filter(event_type__icontains='Shipping').aggregate(val=Sum('total_amount'))['val'] or 0)
+#             ads = float(p_finances.filter(Q(event_type__icontains='Ad') | Q(raw_data__icontains='Sponsored') | Q(event_type__icontains='ServiceFee')).aggregate(val=Sum('total_amount'))['val'] or 0)
+#             storage_fees = float(p_finances.filter(event_type__icontains='Storage').aggregate(val=Sum('total_amount'))['val'] or 0)
+#             other_fees = float(p_finances.filter(event_type__icontains='Adjustment').aggregate(val=Sum('total_amount'))['val'] or 0)
+#             return_qty = refund_evs.count()
+#         else:
+#             # Fallback estimates
+#             mp_fees = -(gross_sales * 0.18)
+#             shipping_fees = -(gross_qty * 65)
+#             ads = -(gross_sales * 0.05)
+#             refunds = 0
+#             storage_fees = -(gross_sales * 0.01)
+#             other_fees = 0
+#             return_qty = 0
+
+#         # Derived Metrics
+#         cogs = -(gross_sales * 0.35) # Reduced estimate to 35% for better realism
+#         net_sales = gross_sales + refunds
+#         # Profit = Gross Sales + Fees (neg) + Refunds (neg) + Ads (neg) + COGS (neg) + Storage + Other
+#         profit = gross_sales + mp_fees + shipping_fees + ads + cogs + refunds + storage_fees + other_fees
+#         profit_margin = (profit / gross_sales * 100) if gross_sales > 0 else 0
+#         grossprofit = gross_sales + mp_fees + shipping_fees
+        
+#         item = {
+#             "ads": f"{round(ads, 2)}",
+#             "channel": display_name,
+#             "channel1": display_name,
+#             "claims": "-352", # Placeholder or derived from finances if available
+#             "customerdiscount": f"{round(gross_sales * 0.1, 2)}",
+#             "drr": f"{round(gross_sales / 30, 2)}",
+#             "grossmrp": f"{round(gross_sales * 2.5, 2)}",
+#             "grossmrpdiscount": "60.0",
+#             "grossprofit": round(grossprofit, 2),
+#             "grossprofitper": round((grossprofit / gross_sales * 100), 2) if gross_sales > 0 else 0,
+#             "grossqty": f"{gross_qty}",
+#             "grosssales": f"{round(gross_sales, 2)}",
+#             "gsttopay": 0.0,
+#             "id": id_val,
+#             "imageurl": "https://m.media-amazon.com/images/I/81yIRz4tPNL.jpg", # Sample
+#             "maxorderdate": p['max_date'].strftime('%Y-%m-%d') if p['max_date'] else None,
+#             "minorderdate": p['min_date'].strftime('%Y-%m-%d') if p['min_date'] else None,
+#             "mpfees": f"{round(mp_fees, 2)}",
+#             "mpfees_with_claims": f"{round(mp_fees - 352, 2)}",
+#             "mrp": f"{round(gross_sales * 2.5, 2)}",
+#             "mrp_customer_discount": "60.0",
+#             "mrp_grosssales": f"{round(gross_sales, 2)}",
+#             "mrp_netsales": f"{round(net_sales, 2)}",
+#             "name": display_name,
+#             "net_discount": "0",
+#             "netasp": f"{round(net_sales / gross_qty, 2)}" if gross_qty > 0 else "0",
+#             "netqty": f"{gross_qty}",
+#             "netsales": f"{round(net_sales, 2)}",
+#             "orderdate": p['max_date'].strftime('%Y-%m-%d') if p['max_date'] else None,
+#             "otherfees": f"{round(other_fees, 2)}",
+#             "per_of_sale": "100.00",
+#             "productid": id_val if summary_metric != 'channel' else "B0GTMH4RFJ",
+#             "productidentifier": None,
+#             "producttitle": display_name,
+#             "profit": round(profit, 2),
+#             "profit_settled_amount": f"{round(grossprofit + refunds, 2)}",
+#             "profitcogs": f"{round(cogs, 2)}",
+#             "profitmargin": profit_margin,
+#             "redirecturl": None,
+#             "replacedqty": "0",
+#             "retpercent": round((abs(refunds)/gross_sales*100), 2) if gross_sales > 0 else 0,
+#             "returnestqty": "0",
+#             "returnqty": f"{return_qty}",
+#             "rowcount": 1,
+#             "shippingfees": f"{round(shipping_fees, 2)}",
+#             "stdcost_missing_percentage": "0",
+#             "stdcostmissingqty": "0",
+#             "storagefees": f"{round(storage_fees, 2)}",
+#             "tacos": f"{round((abs(ads)/gross_sales*100), 2)}" if gross_sales > 0 else "0",
+#             "tcsinc": "0",
+#             "total_gross_gstdiff_component": 0,
+#             "total_gross_profit_component": round(grossprofit, 2),
+#             "total_gstdiff_component": 0,
+#             "total_profit_component": round(profit, 2)
+#         }
+#         response_data.append(item)
+        
+#         # Accumulate totals
+#         total_ads += ads
+#         total_gross_sales += gross_sales
+#         total_net_sales += net_sales
+#         total_profit += profit
+#         total_qty += gross_qty
+#         total_mp_fees += mp_fees
+#         total_shipping_fees += shipping_fees
+#         total_cogs += cogs
+ 
+#     result = {
+#         "status": True,
+#         "message": "Success",
+#         "message_code": "E1",
+#         "pagination": {
+#             "pageNo": page_no,
+#             "pageSize": page_size,
+#             "count": total_count
+#         },
+#         "totals": {
+#             "ads": f"{round(total_ads, 2)}",
+#             "claims": "-352",
+#             "drr": f"{round(total_gross_sales / 30, 2)}",
+#             "grossmrp": f"{round(total_gross_sales * 2.5, 2)}",
+#             "grossmrpdiscount": "60.0",
+#             "grossprofit": round(total_gross_sales + total_mp_fees + total_shipping_fees, 2),
+#             "grossprofitper": (total_gross_sales + total_mp_fees + total_shipping_fees) / total_gross_sales * 100 if total_gross_sales > 0 else 0,
+#             "grossqty": f"{total_qty}",
+#             "grosssales": f"{round(total_gross_sales, 2)}",
+#             "gsttopay": 0.0,
+#             "mpfees": f"{round(total_mp_fees, 2)}",
+#             "mpfees_with_claims": f"{round(total_mp_fees - 352, 2)}",
+#             "mrp": f"{round(total_gross_sales * 2.5, 2)}",
+#             "mrp_customer_discount": "60.0",
+#             "net_discount": "0",
+#             "netasp": f"{round(total_net_sales / total_qty, 2)}" if total_qty > 0 else "0",
+#             "netqty": f"{total_qty}",
+#             "netsales": f"{round(total_net_sales, 2)}",
+#             "otherfees": "0",
+#             "profit": round(total_profit, 2),
+#             "profit_settled_amount": f"{round(total_net_sales + total_mp_fees + total_shipping_fees, 2)}",
+#             "profitcogs": f"{round(total_cogs, 2)}",
+#             "profitmargin": (total_profit / total_gross_sales * 100) if total_gross_sales > 0 else 0,
+#             "replacedqty": "0",
+#             "retpercent": "0",
+#             "returnestqty": "0",
+#             "returnqty": "0",
+#             "shippingfees": f"{round(total_shipping_fees, 2)}",
+#             "stdcost_missing_percentage": "0",
+#             "storagefees": "0",
+#             "tacos": f"{round((abs(total_ads)/total_gross_sales*100), 2)}" if total_gross_sales > 0 else "0",
+#             "tcsinc": "0"
+#         },
+#         "response": response_data
+#     }
+    
+#     return JsonResponse(result)
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def get_amazon_data_profi_tability(request):
+
     """
-    Returns Amazon profit data in the specific format requested by the user.
-    Handles POST requests with filters and pagination.
+    Returns Amazon profitability data
+    without changing existing response structure.
     """
+
     user = request.user
-    # 1. EXTRACT PARAMS (Robust logic)
-    data_source_raw = request.data if request.method == 'POST' else request.GET
-    
+
+    # ============================================================
+    # REQUEST DATA
+    # ============================================================
+
+    data_source_raw = (
+        request.data
+        if request.method == 'POST'
+        else request.GET
+    )
+
     data_source = {}
+
     if data_source_raw:
+
         if hasattr(data_source_raw, 'dict'):
             data_source.update(data_source_raw.dict())
+
         else:
             data_source.update(data_source_raw)
-    
-    # Try parsing raw body if still empty
+
     if not data_source:
+
         try:
             import json
-            body_data = json.loads(request._request.body)
+
+            body_data = json.loads(
+                request._request.body
+            )
+
             if isinstance(body_data, dict):
                 data_source.update(body_data)
-        except: pass
-        
+
+        except Exception:
+            pass
+
     search_data = {}
     search_data.update(data_source)
-    f_child = search_data.get('filters')
-    if isinstance(f_child, dict):
-        search_data.update(f_child)
+
+    filters_data = search_data.get("filters")
+
+    if isinstance(filters_data, dict):
+        search_data.update(filters_data)
+
+    # ============================================================
+    # FIND KEY
+    # ============================================================
 
     def find_key(keys):
+
         for k in keys:
+
             val = search_data.get(k)
-            if isinstance(val, list) and len(val) > 0: val = val[0]
-            if val and str(val).strip(): return str(val).strip()
-            # Case-insensitive
+
+            if isinstance(val, list) and val:
+                val = val[0]
+
+            if val and str(val).strip():
+                return str(val).strip()
+
             for sk, sv in search_data.items():
+
                 if sk.lower() == k.lower():
-                    if isinstance(sv, list) and len(sv) > 0: sv = sv[0]
-                    if sv and str(sv).strip(): return str(sv).strip()
+
+                    if isinstance(sv, list) and sv:
+                        sv = sv[0]
+
+                    if sv and str(sv).strip():
+                        return str(sv).strip()
+
         return None
 
-    from_date_str = find_key(['fromDate', 'start_date', 'from_date', 'startDate'])
-    to_date_str = find_key(['toDate', 'end_date', 'to_date', 'endDate', 'toDate'])
+    # ============================================================
+    # DATE FILTERS
+    # ============================================================
 
-    # New specific filters
-    sku_f = find_key(['SKU', 'sku', 'seller_sku'])
-    product_f = find_key(['ProductId', 'productId', 'product_id'])
-    parent_f = find_key(['ParentId', 'parentId', 'parent_id'])
-    mkt_cat_f = find_key(['MKT category', 'mkt_category', 'category'])
-    master_sku_f = find_key(['Inv MasterSku', 'master_sku', 'masterSku'])
-    
-    pagination = search_data.get('pagination', {})
-    metric_options = search_data.get('metric', {})
-    summary_metric = metric_options.get('summarymetric', 'channel')
+    from_date_str = find_key([
+        'fromDate',
+        'from_date',
+        'startDate',
+        'start_date'
+    ])
 
-    def parse_iso_date(date_str, default_delta):
-        if not date_str or not isinstance(date_str, (str, bytes, date, datetime)) or len(str(date_str)) < 10:
+    to_date_str = find_key([
+        'toDate',
+        'to_date',
+        'endDate',
+        'end_date'
+    ])
+
+    def parse_date(date_str, default_delta):
+
+        if not date_str:
             return timezone.now() + default_delta
+
         try:
+
             if isinstance(date_str, (datetime, date)):
                 dt = date_str
+
             else:
-                # Handle YYYY-MM-DD or ISO formats
-                s = str(date_str)[:10]
-                dt = datetime.strptime(s, '%Y-%m-%d')
-            
+                dt = datetime.strptime(
+                    str(date_str)[:10],
+                    "%Y-%m-%d"
+                )
+
             if timezone.is_naive(dt):
-                return timezone.make_aware(dt)
+                dt = timezone.make_aware(dt)
+
             return dt
+
         except Exception:
             return timezone.now() + default_delta
-  
-    from_date = parse_iso_date(from_date_str, timedelta(days=-30))
-    to_date = parse_iso_date(to_date_str, timedelta(days=0))
-    if to_date:
-        to_date = to_date.replace(hour=23, minute=59, second=59)
- 
-    # Channel filtering
-    channels = search_data.get('channel', {}).get('IN', []) if isinstance(search_data.get('channel'), dict) else []
-    # Check if Amazon is requested
-    is_amazon_requested = not channels or any("Amazon" in c for c in channels)
-    
-    if not is_amazon_requested:
-         return JsonResponse({
-            "status": True,
-            "message": "Success",
-            "message_code": "E1",
-            "pagination": {"pageNo": 0, "pageSize": pagination.get('pageSize', 25), "count": 0},
-            "totals": {},
-            "response": []
-        })
- 
-    # Base querysets
-    orders_qs = Order.objects.filter(user=user, purchase_date__range=(from_date, to_date))
-    items_qs = OrderItem.objects.filter(order__user=user, order__purchase_date__range=(from_date, to_date))
-    finances_qs = FinancialEvent.objects.filter(user=user, posted_date__range=(from_date, to_date))
 
-    # Apply product filters
+    from_date = parse_date(
+        from_date_str,
+        timedelta(days=-30)
+    )
+
+    to_date = parse_date(
+        to_date_str,
+        timedelta(days=0)
+    )
+
+    if to_date:
+
+        to_date = to_date.replace(
+            hour=23,
+            minute=59,
+            second=59
+        )
+
+    # ============================================================
+    # PAGINATION
+    # ============================================================
+
+    pagination = search_data.get("pagination", {})
+
+    page_no = int(
+        pagination.get("pageNo", 0)
+    )
+
+    page_size = int(
+        pagination.get("pageSize", 25)
+    )
+
+    # ============================================================
+    # FILTERS
+    # ============================================================
+
+    sku_f = find_key([
+        "sku",
+        "SKU",
+        "seller_sku"
+    ])
+
+    product_f = find_key([
+        "productId",
+        "ProductId",
+        "product_id"
+    ])
+
+    parent_f = find_key([
+        "parentId",
+        "ParentId",
+        "parent_id"
+    ])
+
+    master_sku_f = find_key([
+        "master_sku",
+        "masterSku"
+    ])
+
+    category_f = find_key([
+        "category",
+        "mkt_category"
+    ])
+
+    metric_options = search_data.get("metric", {})
+
+    summary_metric = metric_options.get(
+        "summarymetric",
+        "channel"
+    )
+
+    # ============================================================
+    # BASE QUERYSETS
+    # ============================================================
+
+    orders_qs = (
+        Order.objects
+        .filter(
+            user=user,
+            purchase_date__range=(
+                from_date,
+                to_date
+            )
+        )
+        .exclude(
+            order_status__icontains="cancel"
+        )
+    )
+
+    items_qs = (
+        OrderItem.objects
+        .filter(
+            order__user=user,
+            order__purchase_date__range=(
+                from_date,
+                to_date
+            )
+        )
+        .exclude(
+            order__order_status__icontains="cancel"
+        )
+    )
+
+    finances_qs = FinancialEvent.objects.filter(
+        user=user,
+        posted_date__range=(
+            from_date,
+            to_date
+        )
+    )
+
+    estimated_fee_qs = (
+        AmazonEstimatedFee.objects
+        .filter(
+            order_item__order__user=user,
+            order_item__order__purchase_date__range=(
+                from_date,
+                to_date
+            )
+        )
+    )
+
+    # ============================================================
+    # APPLY FILTERS
+    # ============================================================
+
     if sku_f:
-        orders_qs = orders_qs.filter(items__seller_sku__icontains=sku_f)
-        items_qs = items_qs.filter(seller_sku__icontains=sku_f)
+
+        orders_qs = orders_qs.filter(
+            items__seller_sku__icontains=sku_f
+        )
+
+        items_qs = items_qs.filter(
+            seller_sku__icontains=sku_f
+        )
+
+        estimated_fee_qs = estimated_fee_qs.filter(
+            order_item__seller_sku__icontains=sku_f
+        )
+
     if product_f:
-        orders_qs = orders_qs.filter(items__order_item_id__icontains=product_f)
-        items_qs = items_qs.filter(order_item_id__icontains=product_f)
-    if parent_f or mkt_cat_f or master_sku_f:
-        search_term = parent_f or mkt_cat_f or master_sku_f
-        orders_qs = orders_qs.filter(items__title__icontains=search_term)
-        items_qs = items_qs.filter(title__icontains=search_term)
-    
-    # Ensure distinct orders after M2M filter
+
+        orders_qs = orders_qs.filter(
+            items__order_item_id__icontains=product_f
+        )
+
+        items_qs = items_qs.filter(
+            order_item_id__icontains=product_f
+        )
+
+    if parent_f or master_sku_f or category_f:
+
+        search_term = (
+            parent_f or
+            master_sku_f or
+            category_f
+        )
+
+        orders_qs = orders_qs.filter(
+            items__title__icontains=search_term
+        )
+
+        items_qs = items_qs.filter(
+            title__icontains=search_term
+        )
+
     orders_qs = orders_qs.distinct()
- 
-    # Grouping Logic
-    if summary_metric == 'channel':
-        # Group by Amazon Account (Seller Central ID)
-        grouped_data = Order.objects.filter(user=user, purchase_date__range=(from_date, to_date)).values('amazon_account__seller_central_id').annotate(
-            grossqty=Sum('items_shipped'),
-            grosssales=Sum('total_amount'),
-            min_date=Min('purchase_date'),
-            max_date=Max('purchase_date'),
-            order_count=Count('id')
+
+    # ============================================================
+    # GROUPING
+    # ============================================================
+
+    if summary_metric == "channel":
+
+        grouped_data = (
+            orders_qs
+            .values(
+                'amazon_account__seller_central_id'
+            )
+            .annotate(
+
+                grossqty=Count(
+                    'id',
+                    filter=Q(
+                        order_status__iexact='shipped'
+                    )
+                ),
+
+                grosssales=Sum(
+                    'total_amount'
+                ),
+
+                min_date=Min(
+                    'purchase_date'
+                ),
+
+                max_date=Max(
+                    'purchase_date'
+                )
+            )
         )
+
     else:
-        # Default: Group by SKU
-        grouped_data = items_qs.values('seller_sku', 'title').annotate(
-            grossqty=Sum('quantity_ordered'),
-            shippingqty=Sum('quantity_shipped'),
-            grosssales=Sum('item_price'),
-            min_date=Min('order__purchase_date'),
-            max_date=Max('order__purchase_date')
+
+        grouped_data = (
+            items_qs
+            .values(
+                'seller_sku',
+                'title'
+            )
+            .annotate(
+
+                grossqty=Sum(
+                    'quantity_shipped'
+                ),
+
+                grosssales=Sum(
+                    'item_price'
+                ),
+
+                min_date=Min(
+                    'order__purchase_date'
+                ),
+
+                max_date=Max(
+                    'order__purchase_date'
+                )
+            )
         )
- 
+
     total_count = grouped_data.count()
-    page_no = pagination.get('pageNo', 0)
-    page_size = pagination.get('pageSize', 25)
+
     start_idx = page_no * page_size
+
     end_idx = start_idx + page_size
-    
-    paged_data = grouped_data[start_idx:end_idx]
-    response_data = []
-    
-    # Global Totals Init
+
+    paged_data = grouped_data[
+        start_idx:end_idx
+    ]
+
+    # ============================================================
+    # TOTALS
+    # ============================================================
+
     total_ads = 0
     total_gross_sales = 0
     total_net_sales = 0
@@ -2687,180 +3271,529 @@ def get_amazon_data_profi_tability(request):
     total_qty = 0
     total_mp_fees = 0
     total_shipping_fees = 0
+    total_return_qty = 0
     total_cogs = 0
- 
-    for p in paged_data:
-        if summary_metric == 'channel':
-            display_name = "Amazon-India" # User seems to expect this label
-            gross_sales = float(p['grosssales'] or 0)
-            gross_qty = p['grossqty'] or 0
-            
-            # Filters for this specific account
-            p_orders = orders_qs.filter(amazon_account__seller_central_id=p['amazon_account__seller_central_id'])
-            p_order_ids = p_orders.values_list('amazon_order_id', flat=True)
-            p_finances = finances_qs.filter(Q(amazon_order_id__in=p_order_ids) | Q(amazon_account__seller_central_id=p['amazon_account__seller_central_id']))
-            id_val = display_name
-        else:
-            sku = p['seller_sku']
-            display_name = p['title']
-            gross_sales = float(p['grosssales'] or 0)
-            gross_qty = p['grossqty'] or 0
-            
-            # Filters for this SKU
-            sku_items = items_qs.filter(seller_sku=sku)
-            p_order_ids = sku_items.values_list('order__amazon_order_id', flat=True)
-            p_finances = finances_qs.filter(amazon_order_id__in=p_order_ids)
-            id_val = sku
- 
-        # CORRECT FINANCIAL LOGIC
-        if p_finances.exists():
-            shipments = p_finances.filter(event_type__icontains='Shipment')
-            refund_evs = p_finances.filter(event_type__icontains='Refund')
-            
-            settled_income = float(shipments.aggregate(val=Sum('total_amount'))['val'] or 0)
-            refunds = float(refund_evs.aggregate(val=Sum('total_amount'))['val'] or 0)
-            
-            # 2. Marketplace Fees (The difference between what customer paid and what we got in shipments)
-            # gross_sales is what customer paid (from Order model)
-            mp_fees = (settled_income - gross_sales) if settled_income > 0 else -(gross_sales * 0.18)
-            
-            shipping_fees = float(p_finances.filter(event_type__icontains='Shipping').aggregate(val=Sum('total_amount'))['val'] or 0)
-            ads = float(p_finances.filter(Q(event_type__icontains='Ad') | Q(raw_data__icontains='Sponsored') | Q(event_type__icontains='ServiceFee')).aggregate(val=Sum('total_amount'))['val'] or 0)
-            storage_fees = float(p_finances.filter(event_type__icontains='Storage').aggregate(val=Sum('total_amount'))['val'] or 0)
-            other_fees = float(p_finances.filter(event_type__icontains='Adjustment').aggregate(val=Sum('total_amount'))['val'] or 0)
-            return_qty = refund_evs.count()
-        else:
-            # Fallback estimates
-            mp_fees = -(gross_sales * 0.18)
-            shipping_fees = -(gross_qty * 65)
-            ads = -(gross_sales * 0.05)
-            refunds = 0
-            storage_fees = -(gross_sales * 0.01)
-            other_fees = 0
-            return_qty = 0
 
-        # Derived Metrics
-        cogs = -(gross_sales * 0.35) # Reduced estimate to 35% for better realism
-        net_sales = gross_sales + refunds
-        # Profit = Gross Sales + Fees (neg) + Refunds (neg) + Ads (neg) + COGS (neg) + Storage + Other
-        profit = gross_sales + mp_fees + shipping_fees + ads + cogs + refunds + storage_fees + other_fees
-        profit_margin = (profit / gross_sales * 100) if gross_sales > 0 else 0
-        grossprofit = gross_sales + mp_fees + shipping_fees
-        
+    response_data = []
+
+    # ============================================================
+    # LOOP
+    # ============================================================
+
+    for p in paged_data:
+
+        p_order_ids = []
+
+        # ========================================================
+        # CHANNEL
+        # ========================================================
+
+        if summary_metric == "channel":
+
+            display_name = "Amazon-India"
+
+            gross_sales = float(
+                p.get("grosssales") or 0
+            )
+
+            gross_qty = int(
+                p.get("grossqty") or 0
+            )
+
+            account_orders = orders_qs.filter(
+                amazon_account__seller_central_id=
+                p.get(
+                    'amazon_account__seller_central_id'
+                )
+            )
+
+            p_order_ids = list(
+                account_orders.values_list(
+                    "amazon_order_id",
+                    flat=True
+                )
+            )
+
+            id_val = display_name
+
+        # ========================================================
+        # SKU
+        # ========================================================
+
+        else:
+
+            sku = p.get("seller_sku")
+
+            display_name = p.get("title")
+
+            gross_sales = float(
+                p.get("grosssales") or 0
+            )
+
+            gross_qty = int(
+                p.get("grossqty") or 0
+            )
+
+            sku_items = items_qs.filter(
+                seller_sku=sku
+            )
+
+            p_order_ids = list(
+                sku_items.values_list(
+                    "order__amazon_order_id",
+                    flat=True
+                )
+            )
+
+            id_val = sku
+
+        # ========================================================
+        # FINANCE DATA
+        # ========================================================
+
+        p_finances = finances_qs.filter(
+            amazon_order_id__in=p_order_ids
+        )
+
+        # ========================================================
+        # ESTIMATED FEES
+        # ========================================================
+
+        estimated_fee_total = float(
+            estimated_fee_qs.filter(
+                order_item__order__amazon_order_id__in=
+                p_order_ids
+            ).aggregate(
+                total=Sum("total_fees")
+            )["total"] or 0
+        )
+
+        # USE ESTIMATED FEES AS MP FEES
+        mp_fees = abs(estimated_fee_total)
+
+        # ========================================================
+        # SHIPPING
+        # ========================================================
+
+        shipping_fees = abs(float(
+
+            p_finances.aggregate(
+                total=Sum("shipping_fee")
+            )["total"] or 0
+
+        ))
+
+        # ========================================================
+        # ADS
+        # ========================================================
+
+        ads = abs(float(
+
+            p_finances.filter(
+
+                Q(event_type__icontains='Ad') |
+                Q(raw_data__icontains='Sponsored')
+
+            ).aggregate(
+
+                total=Sum('total_amount')
+
+            )['total'] or 0
+
+        ))
+
+        # ========================================================
+        # OTHER FEES
+        # ========================================================
+
+        other_fees = abs(float(
+
+            p_finances.filter(
+                event_type__icontains='Adjustment'
+            ).aggregate(
+                total=Sum('total_amount')
+            )['total'] or 0
+
+        ))
+
+        storage_fees = abs(float(
+
+            p_finances.filter(
+                event_type__icontains='Storage'
+            ).aggregate(
+                total=Sum('total_amount')
+            )['total'] or 0
+
+        ))
+
+        # ========================================================
+        # RETURNS
+        # ========================================================
+
+        refund_amount = abs(float(
+
+            p_finances.aggregate(
+
+                total=Sum(
+                    'total_amount',
+                    filter=Q(
+                        event_group='REFUND'
+                    )
+                )
+
+            )['total'] or 0
+
+        ))
+
+        avg_order_value = (
+            gross_sales / gross_qty
+            if gross_qty else 0
+        )
+
+        return_qty = 0
+
+        if avg_order_value > 0:
+
+            return_qty = int(round(
+                refund_amount / avg_order_value
+            ))
+
+        net_qty = max(
+            gross_qty - return_qty,
+            0
+        )
+
+        retpercent = (
+            (return_qty / gross_qty) * 100
+            if gross_qty else 0
+        )
+
+        # ========================================================
+        # SALES
+        # ========================================================
+
+        net_sales = (
+            gross_sales - refund_amount
+        )
+
+        # ========================================================
+        # COGS
+        # ========================================================
+
+        cogs = gross_sales * 0.35
+
+        # ========================================================
+        # PROFIT
+        # ========================================================
+
+        profit = (
+            net_sales
+            - mp_fees
+            - shipping_fees
+            - ads
+            - storage_fees
+            - other_fees
+            - cogs
+        )
+
+        profit_margin = (
+            (profit / net_sales) * 100
+            if net_sales else 0
+        )
+
+        grossprofit = (
+            gross_sales
+            - mp_fees
+            - shipping_fees
+        )
+
+        tacos = (
+            (ads / gross_sales) * 100
+            if gross_sales else 0
+        )
+
+        # ========================================================
+        # RESPONSE ITEM
+        # ========================================================
+
         item = {
-            "ads": f"{round(ads, 2)}",
+
+            "ads": f"{round(-ads, 2)}",
+
             "channel": display_name,
+
             "channel1": display_name,
-            "claims": "-352", # Placeholder or derived from finances if available
+
+            "claims": "-352",
+
             "customerdiscount": f"{round(gross_sales * 0.1, 2)}",
-            "drr": f"{round(gross_sales / 30, 2)}",
+
+            "drr": f"{round(tacos, 2)}",
+
             "grossmrp": f"{round(gross_sales * 2.5, 2)}",
+
             "grossmrpdiscount": "60.0",
+
             "grossprofit": round(grossprofit, 2),
-            "grossprofitper": round((grossprofit / gross_sales * 100), 2) if gross_sales > 0 else 0,
+
+            "grossprofitper": round(
+                (
+                    grossprofit / gross_sales * 100
+                ) if gross_sales else 0,
+                2
+            ),
+
             "grossqty": f"{gross_qty}",
+
             "grosssales": f"{round(gross_sales, 2)}",
+
             "gsttopay": 0.0,
+
             "id": id_val,
-            "imageurl": "https://m.media-amazon.com/images/I/81yIRz4tPNL.jpg", # Sample
-            "maxorderdate": p['max_date'].strftime('%Y-%m-%d') if p['max_date'] else None,
-            "minorderdate": p['min_date'].strftime('%Y-%m-%d') if p['min_date'] else None,
-            "mpfees": f"{round(mp_fees, 2)}",
-            "mpfees_with_claims": f"{round(mp_fees - 352, 2)}",
+
+            "imageurl": "https://m.media-amazon.com/images/I/81yIRz4tPNL.jpg",
+
+            "maxorderdate": (
+                p['max_date'].strftime('%Y-%m-%d')
+                if p['max_date'] else None
+            ),
+
+            "minorderdate": (
+                p['min_date'].strftime('%Y-%m-%d')
+                if p['min_date'] else None
+            ),
+
+            "mpfees": f"{round(-mp_fees, 2)}",
+
+            "mpfees_with_claims": f"{round((-mp_fees - 352), 2)}",
+
             "mrp": f"{round(gross_sales * 2.5, 2)}",
+
             "mrp_customer_discount": "60.0",
+
             "mrp_grosssales": f"{round(gross_sales, 2)}",
+
             "mrp_netsales": f"{round(net_sales, 2)}",
+
             "name": display_name,
+
             "net_discount": "0",
-            "netasp": f"{round(net_sales / gross_qty, 2)}" if gross_qty > 0 else "0",
-            "netqty": f"{gross_qty}",
+
+            "netasp": (
+                f"{round(net_sales / net_qty, 2)}"
+                if net_qty > 0 else "0"
+            ),
+
+            "netqty": f"{net_qty}",
+
             "netsales": f"{round(net_sales, 2)}",
-            "orderdate": p['max_date'].strftime('%Y-%m-%d') if p['max_date'] else None,
-            "otherfees": f"{round(other_fees, 2)}",
+
+            "orderdate": (
+                p['max_date'].strftime('%Y-%m-%d')
+                if p['max_date'] else None
+            ),
+
+            "otherfees": f"{round(-other_fees, 2)}",
+
             "per_of_sale": "100.00",
-            "productid": id_val if summary_metric != 'channel' else "B0GTMH4RFJ",
+
+            "productid": (
+                id_val
+                if summary_metric != 'channel'
+                else "B0GTMH4RFJ"
+            ),
+
             "productidentifier": None,
+
             "producttitle": display_name,
+
             "profit": round(profit, 2),
-            "profit_settled_amount": f"{round(grossprofit + refunds, 2)}",
-            "profitcogs": f"{round(cogs, 2)}",
-            "profitmargin": profit_margin,
+
+            "profit_settled_amount": f"{round(net_sales - mp_fees - shipping_fees, 2)}",
+
+            "profitcogs": f"{round(-cogs, 2)}",
+
+            "profitmargin": round(
+                profit_margin,
+                2
+            ),
+
             "redirecturl": None,
+
             "replacedqty": "0",
-            "retpercent": round((abs(refunds)/gross_sales*100), 2) if gross_sales > 0 else 0,
+
+            "retpercent": round(
+                retpercent,
+                2
+            ),
+
             "returnestqty": "0",
+
             "returnqty": f"{return_qty}",
+
             "rowcount": 1,
-            "shippingfees": f"{round(shipping_fees, 2)}",
+
+            "shippingfees": f"{round(-shipping_fees, 2)}",
+
             "stdcost_missing_percentage": "0",
+
             "stdcostmissingqty": "0",
-            "storagefees": f"{round(storage_fees, 2)}",
-            "tacos": f"{round((abs(ads)/gross_sales*100), 2)}" if gross_sales > 0 else "0",
+
+            "storagefees": f"{round(-storage_fees, 2)}",
+
+            "tacos": f"{round(tacos, 2)}",
+
             "tcsinc": "0",
+
             "total_gross_gstdiff_component": 0,
-            "total_gross_profit_component": round(grossprofit, 2),
+
+            "total_gross_profit_component": round(
+                grossprofit,
+                2
+            ),
+
             "total_gstdiff_component": 0,
-            "total_profit_component": round(profit, 2)
+
+            "total_profit_component": round(
+                profit,
+                2
+            )
         }
+
         response_data.append(item)
-        
-        # Accumulate totals
+
+        # ========================================================
+        # TOTALS
+        # ========================================================
+
         total_ads += ads
         total_gross_sales += gross_sales
         total_net_sales += net_sales
         total_profit += profit
-        total_qty += gross_qty
+        total_qty += net_qty
         total_mp_fees += mp_fees
         total_shipping_fees += shipping_fees
+        total_return_qty += return_qty
         total_cogs += cogs
- 
+
+    # ============================================================
+    # FINAL RESPONSE
+    # ============================================================
+
     result = {
+
         "status": True,
+
         "message": "Success",
+
         "message_code": "E1",
+
         "pagination": {
+
             "pageNo": page_no,
+
             "pageSize": page_size,
+
             "count": total_count
         },
+
         "totals": {
-            "ads": f"{round(total_ads, 2)}",
+
+            "ads": f"{round(-total_ads, 2)}",
+
             "claims": "-352",
-            "drr": f"{round(total_gross_sales / 30, 2)}",
+
+            "drr": f"{round((total_ads / total_gross_sales * 100) if total_gross_sales else 0, 2)}",
+
             "grossmrp": f"{round(total_gross_sales * 2.5, 2)}",
+
             "grossmrpdiscount": "60.0",
-            "grossprofit": round(total_gross_sales + total_mp_fees + total_shipping_fees, 2),
-            "grossprofitper": (total_gross_sales + total_mp_fees + total_shipping_fees) / total_gross_sales * 100 if total_gross_sales > 0 else 0,
+
+            "grossprofit": round(
+                total_gross_sales
+                - total_mp_fees
+                - total_shipping_fees,
+                2
+            ),
+
+            "grossprofitper": round(
+                (
+                    (
+                        total_gross_sales
+                        - total_mp_fees
+                        - total_shipping_fees
+                    ) / total_gross_sales
+                ) * 100 if total_gross_sales else 0,
+                2
+            ),
+
             "grossqty": f"{total_qty}",
+
             "grosssales": f"{round(total_gross_sales, 2)}",
+
             "gsttopay": 0.0,
-            "mpfees": f"{round(total_mp_fees, 2)}",
-            "mpfees_with_claims": f"{round(total_mp_fees - 352, 2)}",
+
+            "mpfees": f"{round(-total_mp_fees, 2)}",
+
+            "mpfees_with_claims": f"{round((-total_mp_fees - 352), 2)}",
+
             "mrp": f"{round(total_gross_sales * 2.5, 2)}",
+
             "mrp_customer_discount": "60.0",
+
             "net_discount": "0",
-            "netasp": f"{round(total_net_sales / total_qty, 2)}" if total_qty > 0 else "0",
+
+            "netasp": (
+                f"{round(total_net_sales / total_qty, 2)}"
+                if total_qty > 0 else "0"
+            ),
+
             "netqty": f"{total_qty}",
+
             "netsales": f"{round(total_net_sales, 2)}",
+
             "otherfees": "0",
+
             "profit": round(total_profit, 2),
-            "profit_settled_amount": f"{round(total_net_sales + total_mp_fees + total_shipping_fees, 2)}",
-            "profitcogs": f"{round(total_cogs, 2)}",
-            "profitmargin": (total_profit / total_gross_sales * 100) if total_gross_sales > 0 else 0,
+
+            "profit_settled_amount": f"{round(total_net_sales - total_mp_fees - total_shipping_fees, 2)}",
+
+            "profitcogs": f"{round(-total_cogs, 2)}",
+
+            "profitmargin": round(
+                (
+                    total_profit / total_net_sales
+                ) * 100 if total_net_sales else 0,
+                2
+            ),
+
             "replacedqty": "0",
-            "retpercent": "0",
+
+            "retpercent": round(
+                (
+                    total_return_qty / total_qty
+                ) * 100 if total_qty else 0,
+                2
+            ),
+
             "returnestqty": "0",
-            "returnqty": "0",
-            "shippingfees": f"{round(total_shipping_fees, 2)}",
+
+            "returnqty": f"{total_return_qty}",
+
+            "shippingfees": f"{round(-total_shipping_fees, 2)}",
+
             "stdcost_missing_percentage": "0",
+
             "storagefees": "0",
-            "tacos": f"{round((abs(total_ads)/total_gross_sales*100), 2)}" if total_gross_sales > 0 else "0",
+
+            "tacos": f"{round((total_ads / total_gross_sales * 100) if total_gross_sales else 0, 2)}",
+
             "tcsinc": "0"
         },
+
         "response": response_data
     }
-    
+
     return JsonResponse(result)
 
 
@@ -3106,7 +4039,724 @@ def get_profitability_monthwise(request):
         "response": response_list
     })
  
- 
+# @api_view(['POST', 'GET'])
+# @permission_classes([AllowAny])
+# def get_profitability_monthwise(request):
+
+#     """
+#     Returns monthly summarized profitability data
+#     without changing response structure.
+#     """
+
+#     user = request.user
+
+#     if user.is_anonymous:
+
+#         from django.contrib.auth.models import User
+
+#         user = User.objects.first()
+
+#     # ============================================================
+#     # REQUEST DATA
+#     # ============================================================
+
+#     data_source_raw = (
+#         request.data
+#         if request.method == 'POST'
+#         else request.GET
+#     )
+
+#     data_source = {}
+
+#     if data_source_raw:
+
+#         if hasattr(data_source_raw, 'dict'):
+#             data_source.update(data_source_raw.dict())
+
+#         else:
+#             data_source.update(data_source_raw)
+
+#     if not data_source:
+
+#         try:
+#             import json
+
+#             body_data = json.loads(
+#                 request._request.body
+#             )
+
+#             if isinstance(body_data, dict):
+#                 data_source.update(body_data)
+
+#         except Exception:
+#             pass
+
+#     search_data = {}
+
+#     search_data.update(data_source)
+
+#     child_filters = search_data.get('filters', {})
+
+#     if isinstance(child_filters, dict):
+#         search_data.update(child_filters)
+
+#     # ============================================================
+#     # FIND KEY
+#     # ============================================================
+
+#     def find_key(keys):
+
+#         for k in keys:
+
+#             val = search_data.get(k)
+
+#             if isinstance(val, list) and val:
+#                 val = val[0]
+
+#             if val and str(val).strip():
+#                 return str(val).strip()
+
+#             for sk, sv in search_data.items():
+
+#                 if sk.lower() == k.lower():
+
+#                     if isinstance(sv, list) and sv:
+#                         sv = sv[0]
+
+#                     if sv and str(sv).strip():
+#                         return str(sv).strip()
+
+#         return None
+
+#     # ============================================================
+#     # FILTERS
+#     # ============================================================
+
+#     from_date_str = find_key([
+#         'fromDate',
+#         'from_date',
+#         'startDate',
+#         'start_date'
+#     ])
+
+#     to_date_str = find_key([
+#         'toDate',
+#         'to_date',
+#         'endDate',
+#         'end_date'
+#     ])
+
+#     sku_f = find_key([
+#         'SKU',
+#         'sku',
+#         'seller_sku'
+#     ])
+
+#     product_f = find_key([
+#         'ProductId',
+#         'productId',
+#         'product_id'
+#     ])
+
+#     parent_f = find_key([
+#         'ParentId',
+#         'parentId',
+#         'parent_id'
+#     ])
+
+#     mkt_cat_f = find_key([
+#         'MKT category',
+#         'mkt_category',
+#         'category'
+#     ])
+
+#     master_sku_f = find_key([
+#         'Inv MasterSku',
+#         'master_sku',
+#         'masterSku'
+#     ])
+
+#     # ============================================================
+#     # DATE PARSER
+#     # ============================================================
+
+#     def parse_dt_robust(dt_str, is_end=False):
+
+#         if not dt_str:
+
+#             return (
+#                 timezone.now() - timedelta(days=60)
+#             ) if not is_end else timezone.now()
+
+#         try:
+
+#             if isinstance(dt_str, (datetime, date)):
+#                 dt = dt_str
+
+#             else:
+
+#                 clean_str = str(dt_str).split('T')[0]
+
+#                 dt = datetime.strptime(
+#                     clean_str,
+#                     '%Y-%m-%d'
+#                 )
+
+#             if is_end:
+
+#                 dt = dt.replace(
+#                     hour=23,
+#                     minute=59,
+#                     second=59
+#                 )
+
+#             if timezone.is_naive(dt):
+#                 dt = timezone.make_aware(dt)
+
+#             return dt
+
+#         except Exception:
+
+#             return (
+#                 timezone.now() - timedelta(days=60)
+#             ) if not is_end else timezone.now()
+
+#     start_date = parse_dt_robust(
+#         from_date_str
+#     )
+
+#     end_date = parse_dt_robust(
+#         to_date_str,
+#         True
+#     )
+
+#     # ============================================================
+#     # BASE QUERYSETS
+#     # ============================================================
+
+#     orders_qs = (
+#         Order.objects
+#         .filter(
+#             user=user,
+#             purchase_date__range=(
+#                 start_date,
+#                 end_date
+#             )
+#         )
+#         .exclude(
+#             order_status__icontains='cancel'
+#         )
+#     )
+
+#     items_qs = (
+#         OrderItem.objects
+#         .filter(
+#             order__user=user,
+#             order__purchase_date__range=(
+#                 start_date,
+#                 end_date
+#             )
+#         )
+#         .exclude(
+#             order__order_status__icontains='cancel'
+#         )
+#     )
+
+#     finances_qs = FinancialEvent.objects.filter(
+#         user=user,
+#         posted_date__range=(
+#             start_date,
+#             end_date
+#         )
+#     )
+
+#     estimated_fee_qs = (
+#         AmazonEstimatedFee.objects
+#         .filter(
+#             order_item__order__user=user,
+#             order_item__order__purchase_date__range=(
+#                 start_date,
+#                 end_date
+#             )
+#         )
+#     )
+
+#     # ============================================================
+#     # APPLY FILTERS
+#     # ============================================================
+
+#     if sku_f:
+
+#         orders_qs = orders_qs.filter(
+#             items__seller_sku__icontains=sku_f
+#         )
+
+#         items_qs = items_qs.filter(
+#             seller_sku__icontains=sku_f
+#         )
+
+#         estimated_fee_qs = estimated_fee_qs.filter(
+#             order_item__seller_sku__icontains=sku_f
+#         )
+
+#     if product_f:
+
+#         orders_qs = orders_qs.filter(
+#             items__order_item_id__icontains=product_f
+#         )
+
+#         items_qs = items_qs.filter(
+#             order_item_id__icontains=product_f
+#         )
+
+#     if parent_f or mkt_cat_f or master_sku_f:
+
+#         search_term = (
+#             parent_f or
+#             mkt_cat_f or
+#             master_sku_f
+#         )
+
+#         orders_qs = orders_qs.filter(
+#             items__title__icontains=search_term
+#         )
+
+#         items_qs = items_qs.filter(
+#             title__icontains=search_term
+#         )
+
+#     orders_qs = orders_qs.distinct()
+
+#     # ============================================================
+#     # MONTH GROUPING
+#     # ============================================================
+
+#     from django.db.models.functions import TruncMonth
+
+#     orders_month_qs = (
+#         orders_qs
+#         .annotate(
+#             month_trunc=TruncMonth(
+#                 'purchase_date'
+#             )
+#         )
+#         .values('month_trunc')
+#         .annotate(
+
+#             grossqty=Sum(
+#                 'items_shipped'
+#             ),
+
+#             grosssales=Sum(
+#                 'total_amount'
+#             )
+#         )
+#     )
+
+#     orders_lookup = {
+
+#         m['month_trunc'].date().replace(day=1): m
+
+#         for m in orders_month_qs
+#     }
+
+#     # ============================================================
+#     # LOOP MONTHS
+#     # ============================================================
+
+#     response_list = []
+
+#     curr = start_date.replace(day=1).date()
+
+#     last = end_date.date()
+
+#     while curr <= last:
+
+#         month_key = curr.strftime('%m-%Y')
+
+#         month_data = orders_lookup.get(curr)
+
+#         # ========================================================
+#         # MONTH FINANCE
+#         # ========================================================
+
+#         month_finances = finances_qs.filter(
+#             posted_date__year=curr.year,
+#             posted_date__month=curr.month
+#         )
+
+#         # ========================================================
+#         # ORDER IDS
+#         # ========================================================
+
+#         month_order_ids = list(
+
+#             orders_qs.filter(
+#                 purchase_date__year=curr.year,
+#                 purchase_date__month=curr.month
+#             ).values_list(
+#                 'amazon_order_id',
+#                 flat=True
+#             )
+
+#         )
+
+#         # ========================================================
+#         # ESTIMATED FEES
+#         # ========================================================
+
+#         estimated_mp_fees = float(
+
+#             estimated_fee_qs.filter(
+#                 order_item__order__amazon_order_id__in=
+#                 month_order_ids
+#             ).aggregate(
+#                 total=Sum('total_fees')
+#             )['total'] or 0
+
+#         )
+
+#         # ========================================================
+#         # SALES & QTY
+#         # ========================================================
+
+#         gsales = float(
+#             month_data['grosssales'] or 0
+#         ) if month_data else 0
+
+#         gqty = int(
+#             month_data['grossqty'] or 0
+#         ) if month_data else 0
+
+#         # ========================================================
+#         # REFUNDS
+#         # ========================================================
+
+#         refund_amount = abs(float(
+
+#             month_finances.aggregate(
+
+#                 total=Sum(
+#                     'total_amount',
+#                     filter=Q(
+#                         event_group='REFUND'
+#                     )
+#                 )
+
+#             )['total'] or 0
+
+#         ))
+
+#         avg_order_value = (
+#             gsales / gqty
+#             if gqty else 0
+#         )
+
+#         return_qty = 0
+
+#         if avg_order_value > 0:
+
+#             return_qty = int(round(
+#                 refund_amount / avg_order_value
+#             ))
+
+#         # ========================================================
+#         # CLAIMS
+#         # ========================================================
+
+#         claim_sales = abs(float(
+
+#             month_finances.filter(
+
+#                 Q(event_type__icontains='Adjustment') |
+#                 Q(raw_data__icontains='Reimbursement')
+
+#             ).aggregate(
+
+#                 total=Sum('total_amount')
+
+#             )['total'] or 0
+
+#         ))
+
+#         # ========================================================
+#         # ADS
+#         # ========================================================
+
+#         ads_val = abs(float(
+
+#             month_finances.filter(
+
+#                 Q(event_type__icontains='ServiceFee') |
+#                 Q(event_type__icontains='Ad') |
+#                 Q(raw_data__icontains='Sponsored')
+
+#             ).aggregate(
+
+#                 total=Sum('total_amount')
+
+#             )['total'] or 0
+
+#         ))
+
+#         # ========================================================
+#         # SHIPPING
+#         # ========================================================
+
+#         ship_val = abs(float(
+
+#             month_finances.aggregate(
+#                 total=Sum('shipping_fee')
+#             )['total'] or 0
+
+#         ))
+
+#         # ========================================================
+#         # OTHER FEES
+#         # ========================================================
+
+#         other_fees = abs(float(
+
+#             month_finances.filter(
+#                 event_type__icontains='Adjustment'
+#             ).aggregate(
+#                 total=Sum('other_fee')
+#             )['total'] or 0
+
+#         ))
+
+#         # ========================================================
+#         # COGS
+#         # ========================================================
+
+#         cogs_val = (
+#             gsales * 0.35
+#         ) if gsales else 0
+
+#         # ========================================================
+#         # CANCELLED
+#         # ========================================================
+
+#         cancelled_orders = orders_qs.filter(
+#             purchase_date__year=curr.year,
+#             purchase_date__month=curr.month,
+#             order_status__icontains='cancel'
+#         )
+
+#         can_qty = cancelled_orders.count()
+
+#         can_sales = float(
+
+#             cancelled_orders.aggregate(
+#                 total=Sum('total_amount')
+#             )['total'] or 0
+
+#         )
+
+#         # ========================================================
+#         # NET SALES
+#         # ========================================================
+
+#         net_sales_val = (
+#             gsales - refund_amount
+#         )
+
+#         # ========================================================
+#         # NET QTY
+#         # ========================================================
+
+#         net_qty = max(
+#             gqty - return_qty - can_qty,
+#             0
+#         )
+
+#         # ========================================================
+#         # PROFIT
+#         # ========================================================
+
+#         profit_val = (
+
+#             net_sales_val
+
+#             - estimated_mp_fees
+
+#             - ads_val
+
+#             - ship_val
+
+#             - other_fees
+
+#             - cogs_val
+
+#             + claim_sales
+
+#         )
+
+#         # ========================================================
+#         # GROSS PROFIT
+#         # ========================================================
+
+#         settled_amount = (
+#             gsales
+#             - estimated_mp_fees
+#             - ship_val
+#         )
+
+#         # ========================================================
+#         # PERCENTAGES
+#         # ========================================================
+
+#         retpercent = (
+
+#             (return_qty / gqty) * 100
+
+#             if gqty else 0
+
+#         )
+
+#         tacos = (
+
+#             (ads_val / gsales) * 100
+
+#             if gsales else 0
+
+#         )
+
+#         profit_margin = (
+
+#             (profit_val / net_sales_val) * 100
+
+#             if net_sales_val else 0
+
+#         )
+
+#         gross_asp = (
+#             gsales / gqty
+#             if gqty else 0
+#         )
+
+#         net_asp = (
+#             net_sales_val / net_qty
+#             if net_qty else 0
+#         )
+
+#         # ========================================================
+#         # RESPONSE
+#         # ========================================================
+
+#         response_list.append({
+
+#             "month": month_key,
+
+#             "grossqty": gqty,
+
+#             "netqty": net_qty,
+
+#             "cancelledcanqty": can_qty,
+
+#             "cancelledrtoqty": 0,
+
+#             "returnedrtoqty": 0,
+
+#             "returnedcreturnqty": return_qty,
+
+#             "claimqty": 0,
+
+#             "replacedqty": 0,
+
+#             "stdcostmissingqty": 0,
+
+#             "customerdiscount": round(
+#                 gsales * 0.05,
+#                 2
+#             ),
+
+#             "grosssales": f"{round(gsales, 2)}",
+
+#             "cancelledcansales": f"{round(can_sales, 2)}",
+
+#             "cancelledrtosales": "0",
+
+#             "returnedrtosales": "0",
+
+#             "returnedcreturnsales": f"{round(refund_amount, 2)}",
+
+#             "claimsales": f"{round(claim_sales, 2)}",
+
+#             "netsales": f"{round(net_sales_val, 2)}",
+
+#             "mpfees": f"{round(-estimated_mp_fees, 2)}",
+
+#             "shipfees": f"{round(-ship_val, 2)}",
+
+#             "ads": f"{round(-ads_val, 2)}",
+
+#             "stdcost": f"{round(-cogs_val, 0)}",
+
+#             "otherfees": f"{round(-other_fees, 2)}",
+
+#             "accountcharges": "0",
+
+#             "settledamount": f"{round(settled_amount, 2)}",
+
+#             "profit": f"{round(profit_val, 2)}",
+
+#             "gsttopay": 0.0,
+
+#             "mpfees_with_claims": f"{round((-estimated_mp_fees + claim_sales), 2)}",
+
+#             "mrp": f"{round(gsales * 2.2, 0)}",
+
+#             "netmrpdiscount": "0.0",
+
+#             "retpercent": f"{round(retpercent, 2)}",
+
+#             "tacos": f"{round(tacos, 2)}",
+
+#             "profitmargin": f"{round(profit_margin, 2)}",
+
+#             "grossasp": f"{round(gross_asp, 2)}",
+
+#             "stdcost_missing_percentage": "0.00",
+
+#             "mrp_customer_discount": "0.0",
+
+#             "netasp": f"{round(net_asp, 2)}"
+#         })
+
+#         # ========================================================
+#         # NEXT MONTH
+#         # ========================================================
+
+#         if curr.month == 12:
+
+#             curr = curr.replace(
+#                 year=curr.year + 1,
+#                 month=1
+#             )
+
+#         else:
+
+#             curr = curr.replace(
+#                 month=curr.month + 1
+#             )
+
+#     # ============================================================
+#     # FINAL RESPONSE
+#     # ============================================================
+
+#     return JsonResponse({
+
+#         "status": True,
+
+#         "message": "Success",
+
+#         "message_code": "E1",
+
+#         "response": response_list
+#     })
+
+
 
 
 @api_view(['POST'])
