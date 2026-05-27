@@ -23,7 +23,8 @@ function AdProducts() {
 
   useEffect(() => {
     dispatch(getAdProducts(pagination.current, pagination.pageSize));
-  }, [dispatch, pagination]);
+    // }, [dispatch, pagination]);
+  }, [dispatch, pagination.current, pagination.pageSize]);
 
   const dataSource =
     adsProductsData?.results?.map((item) => ({
@@ -66,6 +67,7 @@ function AdProducts() {
       ),
       dataIndex: 'checkbox',
       width: 60,
+      align: 'center',
       fixed: 'left',
 
       render: (_, record) => (
@@ -104,8 +106,9 @@ function AdProducts() {
       title: 'SKU',
       dataIndex: 'sku',
       align: 'center',
-      width: 80,
+      width: 70,
       ellipsis: true,
+      sorter: (a, b) => String(a.sku || '').localeCompare(String(b.sku || '')),
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span
@@ -174,7 +177,8 @@ function AdProducts() {
       title: 'Total Ads',
       dataIndex: 'totalads',
       align: 'center',
-      width: 80,
+      width: 70,
+      sorter: (a, b) => Number(a.totalads || 0) - Number(b.totalads || 0),
       ellipsis: true,
       // render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
@@ -182,7 +186,8 @@ function AdProducts() {
       title: 'Impressions',
       dataIndex: 'impressions',
       align: 'center',
-      width: 80,
+      width: 70,
+      sorter: (a, b) => Number(a.impressions || 0) - Number(b.impressions || 0),
       ellipsis: true,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
@@ -191,7 +196,8 @@ function AdProducts() {
       title: 'Clicks',
       dataIndex: 'clicks',
       align: 'center',
-      width: 80,
+      width: 70,
+      sorter: (a, b) => Number(a.clicks || 0) - Number(b.clicks || 0),
       ellipsis: true,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
@@ -200,7 +206,8 @@ function AdProducts() {
       title: 'Cost',
       dataIndex: 'cost',
       align: 'center',
-      width: 80,
+      width: 70,
+      sorter: (a, b) => Number(a.cost || 0) - Number(b.cost || 0),
       ellipsis: true,
       render: (v) => <span className="font-medium text-[#dc2626]">₹{Number(v ?? 0).toFixed(2)}</span>,
       // render: (v) => <span className="font-medium text-[#dc2626]">₹{v ?? 0}</span>,
@@ -210,7 +217,8 @@ function AdProducts() {
       title: 'Sales',
       dataIndex: 'sales',
       align: 'center',
-      width: 80,
+      width: 70,
+      sorter: (a, b) => Number(a.sales || 0) - Number(b.sales || 0),
       ellipsis: true,
       render: (v) => {
         const formattedValue = Number(v ?? 0).toLocaleString('en-IN');
@@ -223,7 +231,8 @@ function AdProducts() {
       title: 'Orders',
       dataIndex: 'orders',
       align: 'center',
-      width: 80,
+      width: 70,
+      sorter: (a, b) => Number(a.orders || 0) - Number(b.orders || 0),
       ellipsis: true,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
@@ -232,7 +241,8 @@ function AdProducts() {
       title: 'Units',
       dataIndex: 'units',
       align: 'center',
-      width: 80,
+      width: 70,
+      sorter: (a, b) => Number(a.units || 0) - Number(b.units || 0),
       ellipsis: true,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
@@ -241,7 +251,8 @@ function AdProducts() {
       title: 'ACOS',
       dataIndex: 'acos',
       align: 'center',
-      width: 80,
+      width: 70,
+      sorter: (a, b) => Number(a.acos || 0) - Number(b.acos || 0),
       ellipsis: true,
       render: (v) => (
         <Tag className="!px-3 !py-[3px] !rounded-full" color={v > 100 ? 'error' : 'processing'}>
@@ -254,7 +265,8 @@ function AdProducts() {
       title: 'ROAS',
       dataIndex: 'roas',
       align: 'center',
-      width: 80,
+      width: 70,
+      sorter: (a, b) => Number(a.roas || 0) - Number(b.roas || 0),
       ellipsis: true,
       render: (v) => (
         <Tag className="!px-3 !py-[3px] !rounded-full" color={v >= 1 ? 'success' : 'warning'}>
@@ -340,6 +352,7 @@ function AdProducts() {
             dataSource={dataSource}
             loading={loading}
             tableLayout="fixed"
+            showSorterTooltip={false}
             scroll={{ x: 1400 }}
             pagination={{
               current: pagination.current,

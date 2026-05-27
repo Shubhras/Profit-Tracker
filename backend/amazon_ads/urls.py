@@ -5,6 +5,8 @@ from django.urls import path
 from .views import *
 from .budget_rules import *
 from amazon_ads.services.reports import *
+from .adgroup import *
+from amazon_ads.services.campaigns import *
 urlpatterns = [
 
     path("account/connect/",AmazonAdsConnectView.as_view()),
@@ -22,6 +24,7 @@ urlpatterns = [
     path("camping-by-sku/list/",CampaignBySKUView.as_view()),
 
     path("adgroup-by-camping/",AdGroupByCampaignView.as_view()),
+    path("adgroup-update/",UpdateSPAdGroupView.as_view()),
 
     path("get-query-ads/",QueryAdsView.as_view()),
     path("sync-campaigns/",sync_campaigns_api),
@@ -38,6 +41,10 @@ urlpatterns = [
     
 
     # SyncBudgetRulesAPIs
+
+    path("campaigns-id/list/",CampaignIdNameListView.as_view()),
+
+    path("campaigns-update/",UpdateSPCampaignView.as_view()),
     
     path("sync-budget-rules/",SyncBudgetRulesAPIView.as_view(),name="sync-budget-rules"),
 

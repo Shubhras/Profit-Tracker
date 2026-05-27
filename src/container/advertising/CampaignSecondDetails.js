@@ -25,7 +25,8 @@ function CampaignSecondDetails() {
         ad_group_id: id,
       }),
     );
-  }, [dispatch, pagination, id]);
+    // }, [dispatch, pagination, id]);
+  }, [dispatch, pagination.current, pagination.pageSize, id]);
 
   const dataSource =
     adsProductsData?.results?.map((item, index) => ({
@@ -60,7 +61,7 @@ function CampaignSecondDetails() {
           <img
             src={record.image}
             alt="product"
-            className="w-[52px] h-[52px] rounded-xl object-cover border border-[#e5e7eb]"
+            className="w-[40px] h-[40px] rounded-xl object-cover border border-[#e5e7eb]"
           />
         </div>
       ),
@@ -70,7 +71,8 @@ function CampaignSecondDetails() {
       title: 'SKU',
       dataIndex: 'sku',
       align: 'center',
-      width: 100,
+      width: 80,
+      sorter: (a, b) => String(a.sku || '').localeCompare(String(b.sku || '')),
       ellipsis: true,
 
       render: (v) => (
@@ -78,7 +80,7 @@ function CampaignSecondDetails() {
           <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
             <span
               className="text-[#2563eb] block truncate cursor-pointer text-center font-medium"
-              style={{ maxWidth: '100px' }}
+              style={{ maxWidth: '70px' }}
             >
               {v || '-'}
             </span>
@@ -91,7 +93,8 @@ function CampaignSecondDetails() {
       title: 'Item Name',
       dataIndex: 'itemName',
       align: 'center',
-      width: 100,
+      width: 80,
+      sorter: (a, b) => String(a.itemName || '').localeCompare(String(b.itemName || '')),
       ellipsis: true,
 
       render: (v) => (
@@ -109,7 +112,8 @@ function CampaignSecondDetails() {
       title: 'Total Ads',
       dataIndex: 'totalAds',
       align: 'center',
-      width: 100,
+      width: 80,
+      sorter: (a, b) => Number(a.totalAds || 0) - Number(b.totalAds || 0),
 
       render: (v) => <span className="font-semibold text-[#2563eb]">{v ?? 0}</span>,
     },
@@ -118,7 +122,8 @@ function CampaignSecondDetails() {
       title: 'Impressions',
       dataIndex: 'impressions',
       align: 'center',
-      width: 100,
+      width: 80,
+      sorter: (a, b) => Number(a.impressions || 0) - Number(b.impressions || 0),
 
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
@@ -127,7 +132,8 @@ function CampaignSecondDetails() {
       title: 'Clicks',
       dataIndex: 'clicks',
       align: 'center',
-      width: 100,
+      width: 80,
+      sorter: (a, b) => Number(a.clicks || 0) - Number(b.clicks || 0),
 
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
@@ -136,8 +142,8 @@ function CampaignSecondDetails() {
       title: 'Cost',
       dataIndex: 'cost',
       align: 'center',
-      width: 100,
-
+      width: 80,
+      sorter: (a, b) => Number(a.cost || 0) - Number(b.cost || 0),
       render: (v) => <span className="font-medium text-[#dc2626]">₹{Number(v ?? 0).toFixed(2)}</span>,
     },
 
@@ -145,7 +151,8 @@ function CampaignSecondDetails() {
       title: 'Sales',
       dataIndex: 'sales',
       align: 'center',
-      width: 100,
+      width: 80,
+      sorter: (a, b) => Number(a.sales || 0) - Number(b.sales || 0),
 
       render: (v) => <span className="font-medium text-[#16a34a]">₹{Number(v ?? 0).toFixed(2)}</span>,
     },
@@ -154,8 +161,8 @@ function CampaignSecondDetails() {
       title: 'Orders',
       dataIndex: 'orders',
       align: 'center',
-      width: 100,
-
+      width: 80,
+      sorter: (a, b) => Number(a.orders || 0) - Number(b.orders || 0),
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
   ];
@@ -219,6 +226,7 @@ function CampaignSecondDetails() {
             columns={columns}
             dataSource={dataSource}
             loading={loading}
+            showSorterTooltip={false}
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,

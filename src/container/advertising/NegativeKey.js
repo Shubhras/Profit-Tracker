@@ -201,14 +201,14 @@ function NegativeKey() {
   ];
 
   return (
-    <div className="bg-[#f5f7fb] min-h-screen p-5">
+    <div className="bg-[#f5f7fb] min-h-screen p-3">
       {/* HEADER */}
 
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-start justify-between mb-2">
         <div>
-          <h1 className="text-[30px] font-semibold text-[#111827] mb-1">Negative Keywords</h1>
+          <h1 className="text-[26px] font-semibold text-[#111827] mb-1">Negative Keywords</h1>
 
-          <p className="text-[14px] text-[#6b7280] max-w-[900px]">
+          <p className="text-[13px] text-[#6b7280] max-w-[900px]">
             Discover, analyze and manage negative keywords to prevent wasted ad spend and improve campaign performance.
           </p>
         </div>
@@ -226,25 +226,46 @@ function NegativeKey() {
         </div>
       </div>
 
-      <div className="grid grid-cols-5 gap-2 mb-6">
+      <div className="grid grid-cols-5 gap-2 mb-3">
         {metricCards.map((item) => (
-          <div key={item.title} className="bg-white rounded-2xl border border-[#e5e7eb] p-4 shadow-sm">
-            <div className="flex items-start justify-between">
-              <p className="text-[15px] text-[#6b7280]">{item.title}</p>
+          <div
+            key={item.title}
+            className="
+        bg-white
+        rounded-2xl
+        border border-[#e5e7eb]
+        px-4 py-3
+        shadow-sm
+        min-h-[118px]
+        flex flex-col justify-between
+      "
+          >
+            {/* TOP */}
 
-              <div className={`w-8 h-8 rounded-xl ${item.iconBg} flex items-center justify-center`}>{item.icon}</div>
+            <div>
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-[13px] text-[#6b7280] leading-4 line-clamp-2 min-h-[32px] font-medium">
+                  {item.title}
+                </p>
+
+                <div className={`w-8 h-8 rounded-xl ${item.iconBg} flex items-center justify-center shrink-0`}>
+                  {item.icon}
+                </div>
+              </div>
+
+              <h2 className="text-[24px] font-bold text-[#111827] leading-none mt-1 whitespace-nowrap">{item.value}</h2>
             </div>
 
-            <h2 className="text-[24px] font-semibold text-[#111827] mt-3">{item.value}</h2>
+            {/* BOTTOM */}
 
-            <p className="text-[12px] text-[#16a34a] mt-2">{item.growth}</p>
+            <p className="text-[11px] text-[#16a34a] leading-4 font-medium mt-1">{item.growth}</p>
           </div>
         ))}
       </div>
 
       {/* TABS */}
 
-      <div className="flex items-center gap-8 border-b border-[#e5e7eb] mb-5">
+      <div className="flex items-center gap-8 border-b border-[#e5e7eb] mb-2">
         {['Negative Keywords', 'Negative Phrases', 'Negative Exact', 'ASIN Targeting', 'Auto Suggestions'].map(
           (item, index) => (
             <button
@@ -291,7 +312,7 @@ function NegativeKey() {
 
       {/* MAIN CONTENT */}
 
-      <div className="grid grid-cols-[1fr_320px] gap-5">
+      <div className="grid grid-cols-[1fr_320px] gap-2">
         {/* TABLE */}
 
         <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden">
@@ -307,7 +328,7 @@ function NegativeKey() {
 
         {/* SIDEBAR */}
 
-        <div className="space-y-5">
+        <div className="space-y-2">
           {/* WASTED TERMS */}
 
           <div className="bg-white rounded-2xl border border-[#e5e7eb] p-5">
