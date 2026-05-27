@@ -33,8 +33,8 @@ function AdProductsDetails() {
     };
 
     dispatch(getAdProductsDetails(pagination.current, pagination.pageSize, payload));
-  }, [dispatch, pagination, sku]);
-
+    // }, [dispatch, pagination, sku]);
+  }, [dispatch, pagination.current, pagination.pageSize, sku]);
   const dataSource =
     adsProductsDataDetails?.results?.map((item) => ({
       key: item.id,
@@ -90,6 +90,8 @@ function AdProductsDetails() {
       title: 'Campaign ID',
       dataIndex: 'campaignId',
       align: 'center',
+      width: '70',
+      sorter: (a, b) => Number(a.campaignId || 0) - Number(b.campaignId || 0),
     },
 
     {

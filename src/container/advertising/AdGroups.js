@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
-import { Button, Table, Tag, Tooltip, Modal } from 'antd';
+import { Button, Table, Tag, Tooltip, Modal, Switch } from 'antd';
 import { FilterOutlined, ExportOutlined, SearchOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { getAdsGroup } from '../../redux/advertising/actionCreator';
+import { getAdsGroup, getEditBid } from '../../redux/advertising/actionCreator';
 
 function AdGroups() {
   const dispatch = useDispatch();
@@ -13,6 +13,7 @@ function AdGroups() {
   });
   const [isBidModalOpen, setIsBidModalOpen] = React.useState(false);
   const [selectedBid, setSelectedBid] = React.useState('');
+  const [selectedRowData, setSelectedRowData] = React.useState(null);
 
   const [selectedRowKeys, setSelectedRowKeys] = React.useState([]);
 
@@ -20,7 +21,8 @@ function AdGroups() {
 
   useEffect(() => {
     dispatch(getAdsGroup(pagination.current, pagination.pageSize));
-  }, [dispatch, pagination]);
+    // }, [dispatch, pagination]);
+  }, [dispatch, pagination.current, pagination.pageSize]);
 
   const dataSource =
     adsGroupData?.results?.map((item) => ({
@@ -86,9 +88,45 @@ function AdGroups() {
     },
 
     {
+      title: 'State',
+      dataIndex: 'state',
+      align: 'center',
+      width: '70',
+      render: (v, record) => (
+        <Switch
+          checked={v === 'ENABLED'}
+          onChange={(checked) => {
+            const updatedState = checked ? 'ENABLED' : 'PAUSED';
+
+            const payload = {
+              profile_id: record.profileId,
+              ad_groups: [
+                {
+                  adGroupId: record.adGroupId,
+                  name: record.name,
+                  state: updatedState,
+                  defaultBid: Number(record.defaultBid),
+                },
+              ],
+            };
+
+            dispatch(getEditBid(payload)).then((response) => {
+              if (response?.status) {
+                dispatch(getAdsGroup(pagination.current, pagination.pageSize));
+              }
+            });
+          }}
+        />
+      ),
+    },
+
+    {
       title: 'Ad Group ID',
       dataIndex: 'adGroupId',
       align: 'center',
+      sorter: (a, b) => Number(a.adGroupId || 0) - Number(b.adGroupId || 0),
+      width: '70',
+      ellipsis: true,
       render: (v) => {
         const text = String(v);
 
@@ -106,6 +144,9 @@ function AdGroups() {
       title: 'Name',
       dataIndex: 'name',
       align: 'center',
+      sorter: (a, b) => String(a.name || '').localeCompare(String(b.name || '')),
+      width: '70',
+      ellipsis: true,
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '240px' }}>
@@ -116,25 +157,18 @@ function AdGroups() {
     },
 
     {
-      title: 'State',
-      dataIndex: 'state',
-      align: 'center',
-      render: (v) => (
-        <Tag color={v === 'ENABLED' ? 'success' : 'error'} className="!px-3 !py-[3px] !rounded-full">
-          {v}
-        </Tag>
-      ),
-    },
-
-    {
       title: 'Default Bid',
       dataIndex: 'defaultBid',
       align: 'center',
-      render: (v) => (
+      sorter: (a, b) => Number(a.defaultBid || 0) - Number(b.defaultBid || 0),
+      width: '70',
+      ellipsis: true,
+      render: (v, record) => (
         <button
           type="button"
           onClick={() => {
             setSelectedBid(v);
+            setSelectedRowData(record);
             setIsBidModalOpen(true);
           }}
           className="px-3 py-[6px] rounded-xl border border-transparent text-[#111827] font-medium bg-transparent hover:border-[#dbe1e8] hover:bg-white hover:shadow-sm transition-all duration-200"
@@ -148,6 +182,9 @@ function AdGroups() {
       title: 'Campaign Name',
       dataIndex: 'campaignName',
       align: 'center',
+      sorter: (a, b) => String(a.campaignName || '').localeCompare(String(b.campaignName || '')),
+      width: '70',
+      ellipsis: true,
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span className="text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
@@ -161,23 +198,40 @@ function AdGroups() {
       title: 'Campaign ID',
       dataIndex: 'campaignId',
       align: 'center',
+      sorter: (a, b) => Number(a.campaignId || 0) - Number(b.campaignId || 0),
+      width: '70',
+      ellipsis: true,
+      render: (v) => (
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span className="cursor-pointer block truncate">{v}</span>
+        </Tooltip>
+      ),
     },
 
     {
       title: 'Country Code',
       dataIndex: 'countryCode',
       align: 'center',
+      sorter: (a, b) => String(a.countryCode || '').localeCompare(String(b.countryCode || '')),
+      width: '70',
+      ellipsis: true,
     },
 
     {
       title: 'Currency Code',
       dataIndex: 'currencyCode',
       align: 'center',
+      sorter: (a, b) => String(a.currencyCode || '').localeCompare(String(b.currencyCode || '')),
+      width: '70',
+      ellipsis: true,
     },
     {
       title: 'Impressions',
       dataIndex: 'impressions',
       align: 'center',
+      sorter: (a, b) => Number(a.impressions || 0) - Number(b.impressions || 0),
+      width: '70',
+      ellipsis: true,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -185,6 +239,8 @@ function AdGroups() {
       title: 'Clicks',
       dataIndex: 'clicks',
       align: 'center',
+      sorter: (a, b) => Number(a.clicks || 0) - Number(b.clicks || 0),
+      width: '70',
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -192,6 +248,8 @@ function AdGroups() {
       title: 'Cost',
       dataIndex: 'cost',
       align: 'center',
+      sorter: (a, b) => Number(a.cost || 0) - Number(b.cost || 0),
+      width: '70',
       render: (v) => <span className="font-medium text-[#dc2626]">₹{v ?? 0}</span>,
     },
 
@@ -199,6 +257,8 @@ function AdGroups() {
       title: 'Sales',
       dataIndex: 'sales',
       align: 'center',
+      sorter: (a, b) => Number(a.sales || 0) - Number(b.sales || 0),
+      width: '70',
       render: (v) => <span className="font-medium text-[#16a34a]">₹{v ?? 0}</span>,
     },
 
@@ -206,6 +266,8 @@ function AdGroups() {
       title: 'Orders',
       dataIndex: 'orders',
       align: 'center',
+      sorter: (a, b) => Number(a.orders || 0) - Number(b.orders || 0),
+      width: '70',
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -213,6 +275,8 @@ function AdGroups() {
       title: 'Units',
       dataIndex: 'units',
       align: 'center',
+      sorter: (a, b) => Number(a.units || 0) - Number(b.units || 0),
+      width: '70',
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -220,6 +284,8 @@ function AdGroups() {
       title: 'ACOS',
       dataIndex: 'acos',
       align: 'center',
+      sorter: (a, b) => Number(a.acos || 0) - Number(b.acos || 0),
+      width: '70',
       render: (v) => (
         <Tag className="!px-3 !py-[3px] !rounded-full" color={v > 100 ? 'error' : 'processing'}>
           {v ? `${v.toFixed(2)}%` : '-'}
@@ -231,6 +297,8 @@ function AdGroups() {
       title: 'ROAS',
       dataIndex: 'roas',
       align: 'center',
+      sorter: (a, b) => Number(a.roas || 0) - Number(b.roas || 0),
+      width: '70',
       render: (v) => (
         <Tag className="!px-3 !py-[3px] !rounded-full" color={v >= 1 ? 'success' : 'warning'}>
           {v ? v.toFixed(2) : '-'}
@@ -238,6 +306,30 @@ function AdGroups() {
       ),
     },
   ];
+
+  const handleSaveBid = async () => {
+    if (!selectedRowData) return;
+
+    const payload = {
+      profile_id: selectedRowData.profileId,
+      ad_groups: [
+        {
+          adGroupId: selectedRowData.adGroupId,
+          name: selectedRowData.name,
+          state: selectedRowData.state,
+          defaultBid: Number(selectedBid),
+        },
+      ],
+    };
+
+    const response = await dispatch(getEditBid(payload));
+
+    if (response?.status) {
+      setIsBidModalOpen(false);
+
+      dispatch(getAdsGroup(pagination.current, pagination.pageSize));
+    }
+  };
 
   return (
     <>
@@ -289,6 +381,8 @@ function AdGroups() {
             columns={columns}
             dataSource={dataSource}
             loading={loading}
+            showSorterTooltip={false}
+            tableLayout="fixed"
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
@@ -303,7 +397,7 @@ function AdGroups() {
                 pageSize: pag.pageSize,
               });
             }}
-            scroll={{ x: 'max-content' }}
+            scroll={{ x: 2000 }}
             size="middle"
             bordered={false}
           />
@@ -342,7 +436,11 @@ function AdGroups() {
               Cancel
             </button>
 
-            <button type="button" className="h-[42px] px-6 rounded-xl bg-[#111827] text-white font-semibold">
+            <button
+              type="button"
+              onClick={handleSaveBid}
+              className="h-[42px] px-6 rounded-xl bg-[#111827] text-white font-semibold"
+            >
               Save
             </button>
           </div>

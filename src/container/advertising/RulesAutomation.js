@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Input, Select, DatePicker, InputNumber, Button, Table, Tag, Switch, Tooltip } from 'antd';
+import { Modal, Input, Select, DatePicker, InputNumber, Button, Table, Tag, Tooltip } from 'antd';
 import {
   // SearchOutlined,
+  EditOutlined,
   EyeOutlined,
   DeleteOutlined,
   PlusOutlined,
@@ -10,17 +11,24 @@ import {
   DollarOutlined,
   // DownOutlined,
 } from '@ant-design/icons';
-import dayjs from 'dayjs';
 import { useDispatch, useSelector } from 'react-redux';
-import { getRules, getCreateRules, getUpdateRules, getDeleteRules } from '../../redux/advertising/actionCreator';
+
+import dayjs from 'dayjs';
+import weekday from 'dayjs/plugin/weekday';
+import localeData from 'dayjs/plugin/localeData';
+import { getRules, getCreateRules, getUpdateRules, getCampaignsRulesList } from '../../redux/advertising/actionCreator';
+
+dayjs.extend(weekday);
+dayjs.extend(localeData);
 
 function RulesAutomation() {
   const dispatch = useDispatch();
   // const [ruleType, setRuleType] = React.useState('');
   const [openRuleModal, setOpenRuleModal] = useState(false);
+  const [campaignOptions, setCampaignOptions] = useState([]);
   const [pagination, setPagination] = React.useState({
     current: 1,
-    pageSize: 10,
+    pageSize: 30,
   });
   const [deleteModal, setDeleteModal] = useState(false);
 
@@ -48,6 +56,7 @@ function RulesAutomation() {
     metricName: '',
     threshold: 20,
     comparisonOperator: 'LESS_THAN_OR_EQUAL_TO',
+    campaign_ids: [],
   };
 
   const [ruleForm, setRuleForm] = useState(initialRuleForm);
@@ -59,6 +68,26 @@ function RulesAutomation() {
   useEffect(() => {
     dispatch(getRules(pagination.current, pagination.pageSize));
   }, [dispatch, pagination]);
+
+  const fetchCampaigns = async () => {
+    const response = await dispatch(getCampaignsRulesList());
+
+    if (response?.status === true) {
+      const formatted =
+        response?.data?.map((item) => ({
+          label: item.name,
+          value: item.campaign_id,
+        })) || [];
+
+      setCampaignOptions(formatted);
+    }
+  };
+
+  useEffect(() => {
+    if (openRuleModal) {
+      fetchCampaigns();
+    }
+  }, [openRuleModal]);
 
   const dataSource =
     rules?.results?.data?.map((item) => ({
@@ -72,7 +101,7 @@ function RulesAutomation() {
       ruleState: item.rule_state,
       ruleStatus: item.rule_status,
       startDate: item.rule_details?.duration?.dateRangeTypeRuleDuration?.startDate,
-
+      associated_campaigns: item.associated_campaigns,
       endDate: item.rule_details?.duration?.dateRangeTypeRuleDuration?.endDate,
       ruleDetails: item.rule_details,
     })) || [];
@@ -112,70 +141,71 @@ function RulesAutomation() {
         />
       ),
     },
-    {
-      title: 'Status',
-      dataIndex: 'ruleState',
-      align: 'center',
-      fixed: 'left',
-      width: 90,
+    // {
+    //   title: 'Status',
+    //   dataIndex: 'ruleState',
+    //   align: 'center',
+    //   fixed: 'left',
+    //   width: 90,
 
-      render: (v, record) => (
-        <Switch
-          checked={v === 'ACTIVE'}
-          size="small"
-          onChange={async (checked) => {
-            const updatePayload = {
-              budgetRulesDetails: [
-                {
-                  ruleId: record?.budgetRuleId,
+    //   render: (v, record) => (
+    //     <Switch
+    //       checked={v === 'ACTIVE'}
+    //       size="small"
+    //       onChange={async (checked) => {
+    //         const updatePayload = {
+    //           budgetRulesDetails: [
+    //             {
+    //               ruleId: record?.budgetRuleId,
 
-                  ruleState: checked ? 'ACTIVE' : 'PAUSED',
+    //               ruleState: checked ? 'ACTIVE' : 'PAUSED',
 
-                  ruleDetails: {
-                    name: record?.ruleDetails?.name || record?.name,
+    //               ruleDetails: {
+    //                 name: record?.ruleDetails?.name || record?.name,
 
-                    recurrence: {
-                      type: record?.ruleDetails?.recurrence?.type,
+    //                 recurrence: {
+    //                   type: record?.ruleDetails?.recurrence?.type,
 
-                      ...(record?.ruleDetails?.recurrence?.daysOfWeek && {
-                        daysOfWeek: record?.ruleDetails?.recurrence?.daysOfWeek,
-                      }),
+    //                   ...(record?.ruleDetails?.recurrence?.daysOfWeek && {
+    //                     daysOfWeek: record?.ruleDetails?.recurrence?.daysOfWeek,
+    //                   }),
 
-                      ...(record?.ruleDetails?.recurrence?.daysOfMonth && {
-                        daysOfMonth: record?.ruleDetails?.recurrence?.daysOfMonth,
-                      }),
-                    },
+    //                   ...(record?.ruleDetails?.recurrence?.daysOfMonth && {
+    //                     daysOfMonth: record?.ruleDetails?.recurrence?.daysOfMonth,
+    //                   }),
+    //                 },
 
-                    budgetIncreaseBy: {
-                      type: record?.ruleDetails?.budgetIncreaseBy?.type,
-                      value: Number(record?.ruleDetails?.budgetIncreaseBy?.value),
-                    },
+    //                 budgetIncreaseBy: {
+    //                   type: record?.ruleDetails?.budgetIncreaseBy?.type,
+    //                   value: Number(record?.ruleDetails?.budgetIncreaseBy?.value),
+    //                 },
 
-                    ...(record?.ruleDetails?.performanceMeasureCondition && {
-                      performanceMeasureCondition: {
-                        metricName: record?.ruleDetails?.performanceMeasureCondition?.metricName,
-                        comparisonOperator: record?.ruleDetails?.performanceMeasureCondition?.comparisonOperator,
-                        threshold: Number(record?.ruleDetails?.performanceMeasureCondition?.threshold),
-                      },
-                    }),
-                  },
-                },
-              ],
-            };
+    //                 ...(record?.ruleDetails?.performanceMeasureCondition && {
+    //                   performanceMeasureCondition: {
+    //                     metricName: record?.ruleDetails?.performanceMeasureCondition?.metricName,
+    //                     comparisonOperator: record?.ruleDetails?.performanceMeasureCondition?.comparisonOperator,
+    //                     threshold: Number(record?.ruleDetails?.performanceMeasureCondition?.threshold),
+    //                   },
+    //                 }),
+    //               },
+    //             },
+    //           ],
+    //         };
 
-            const response = await dispatch(getUpdateRules(pagination.current, pagination.pageSize, updatePayload));
+    //         const response = await dispatch(getUpdateRules(pagination.current, pagination.pageSize, updatePayload));
 
-            if (response?.status === true) {
-              dispatch(getRules(pagination.current, pagination.pageSize));
-            }
-          }}
-        />
-      ),
-    },
+    //         if (response?.status === true) {
+    //           dispatch(getRules(pagination.current, pagination.pageSize));
+    //         }
+    //       }}
+    //     />
+    //   ),
+    // },
     {
       title: 'Rule Name',
       dataIndex: 'name',
       align: 'center',
+      sorter: (a, b) => a.name - b.name,
       width: 120,
 
       render: (v) => (
@@ -212,6 +242,7 @@ function RulesAutomation() {
       title: 'Rule Type',
       dataIndex: 'ruleType',
       align: 'center',
+      sorter: (a, b) => a.ruleType - b.ruleType,
 
       render: (v) => {
         const ruleTypeMap = {
@@ -234,6 +265,7 @@ function RulesAutomation() {
       title: 'Rule State',
       dataIndex: 'ruleState',
       align: 'center',
+      sorter: (a, b) => a.ruleState - b.ruleState,
       render: (v) => <Tag color={v === 'ACTIVE' ? 'success' : 'default'}>{v}</Tag>,
     },
 
@@ -241,6 +273,7 @@ function RulesAutomation() {
       title: 'Rule Status',
       dataIndex: 'ruleStatus',
       align: 'center',
+      sorter: (a, b) => a.ruleStatus - b.ruleStatus,
       render: (v) => <Tag color={v === 'EXPIRED' ? 'error' : 'processing'}>{v}</Tag>,
     },
     // {
@@ -257,6 +290,7 @@ function RulesAutomation() {
       title: 'Start Date',
       dataIndex: 'startDate',
       align: 'center',
+      sorter: (a, b) => a.startDate - b.startDate,
       render: (v) => {
         if (!v) return '-';
 
@@ -268,6 +302,7 @@ function RulesAutomation() {
       title: 'End Date',
       dataIndex: 'endDate',
       align: 'center',
+      sorter: (a, b) => a.endDate - b.endDate,
       render: (v) => {
         if (!v) return '-';
 
@@ -310,7 +345,7 @@ function RulesAutomation() {
                 metricName: record.ruleDetails?.performanceMeasureCondition?.metricName || '',
 
                 threshold: record.ruleDetails?.performanceMeasureCondition?.threshold || 20,
-
+                campaign_ids: record?.associated_campaigns?.map((item) => item.campaign_id) || [],
                 comparisonOperator:
                   record.ruleDetails?.performanceMeasureCondition?.comparisonOperator || 'LESS_THAN_OR_EQUAL_TO',
               });
@@ -318,7 +353,7 @@ function RulesAutomation() {
               setOpenRuleModal(true);
             }}
           >
-            <EyeOutlined className="text-[17px] text-[#2563eb]" />
+            <EditOutlined className="text-[17px] text-[#2563eb]" />
           </button>
 
           <button
@@ -327,7 +362,8 @@ function RulesAutomation() {
             onClick={() => {
               setDeleteModal(true);
 
-              setDeleteRuleId(record?.budgetRuleId);
+              // setDeleteRuleId(record?.budgetRuleId);
+              setDeleteRuleId(record);
             }}
           >
             <DeleteOutlined className="text-[16px] text-red-500" />
@@ -388,7 +424,7 @@ function RulesAutomation() {
                 type: ruleForm.increaseType,
                 value: Number(ruleForm.increaseValue),
               },
-
+              campaign_ids: ruleForm.campaign_ids,
               performanceMeasureCondition: {
                 metricName: ruleForm.metricName,
                 comparisonOperator: ruleForm.comparisonOperator,
@@ -433,6 +469,7 @@ function RulesAutomation() {
               type: ruleForm.increaseType,
               value: Number(ruleForm.increaseValue),
             },
+            campaign_ids: ruleForm.campaign_ids,
 
             ...(ruleForm.ruleType === 'PERFORMANCE' && {
               performanceMeasureCondition: {
@@ -463,7 +500,7 @@ function RulesAutomation() {
 
   return (
     <>
-      <div className="px-5 py-4 bg-[#f5f7fb] min-h-screen">
+      <div className="px-3 py-4 bg-[#f5f7fb] min-h-screen">
         {/* ================= HEADER ================= */}
 
         <div className="flex items-start justify-between mb-2">
@@ -492,9 +529,47 @@ function RulesAutomation() {
           </div>
         </div>
 
+        <div className="border border-[#edf0f2] rounded-2xl px-4 pt-3 pb-0 mb-2">
+          <div className="flex items-center gap-8 overflow-x-auto">
+            {[
+              { label: 'Overview' },
+              { label: 'Active Rules' },
+              { label: 'Pending Execution', count: rules?.count || 0 },
+              { label: 'Rule History' },
+              { label: 'Rule Templates' },
+            ].map((tab, index) => {
+              const active = tab.label === 'Pending Execution';
+
+              return (
+                <div
+                  key={index}
+                  className={`relative flex items-center gap-2 pb-3 cursor-pointer whitespace-nowrap transition-all ${
+                    active ? 'text-[#16a34a] font-semibold' : 'text-[#6b7280] font-medium'
+                  }`}
+                >
+                  <span className="text-[14px]">{tab.label}</span>
+
+                  {tab.count && (
+                    <div
+                      className={`min-w-[20px] h-5 px-[6px] rounded-full flex items-center justify-center text-[11px] font-semibold ${
+                        active ? 'bg-[#dbeafe] text-[#16a34a]' : 'bg-[#f3f4f6] text-[#6b7280]'
+                      }`}
+                    >
+                      {tab.count}
+                    </div>
+                  )}
+
+                  {active && <div className="absolute bottom-0 left-0 w-full h-[2.5px] bg-[#16a34a] rounded-full" />}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         {/* ================= TOP 6 CARDS ================= */}
 
-        <div className="grid grid-cols-6 gap-2 mb-2">
+        {/* <div className="grid grid-cols-6 gap-2 mb-2"> */}
+        <div className="flex flex-wrap gap-2 mb-2">
           {[
             {
               title: 'Active Rules',
@@ -539,17 +614,30 @@ function RulesAutomation() {
               bg: 'bg-[#fff7ed]',
             },
           ].map((card, index) => (
-            <div key={index} className="bg-white border border-[#edf0f2] rounded-2xl px-4 py-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-[13px] text-[#6b7280] mb-1">{card.title}</p>
+            <div
+              key={index}
+              // className="bg-white border border-[#edf0f2] rounded-2xl px-4 py-3"
+              // className="bg-white border border-[#edf0f2] rounded-2xl px-4 py-[10px]"
+              className="bg-white border border-[#edf0f2] rounded-2xl px-3 py-3 flex flex-col justify-between w-[calc(16.66%-7px)] max-[1100px]:w-[calc(33.33%-6px)] max-[600px]:w-[calc(50%-4px)] min-h-[110px]"
+            >
+              <div className="flex items-start justify-between h-full">
+                <div className="flex flex-col justify-between h-full">
+                  <div>
+                    <p className="text-[12px] sm:text-[13px] text-[#6b7280] mb-[2px] leading-4">{card.title}</p>
 
-                  <h2 className="text-[24px] font-bold text-[#111827] leading-none">{card.value}</h2>
+                    <h2 className="text-[21px] sm:text-[23px] font-bold text-[#111827] leading-tight mt-1 break-words">
+                      {card.value}
+                    </h2>
+                  </div>
 
-                  <p className="text-[11px] text-[#16a34a] mt-2 font-medium">{card.sub}</p>
+                  <p className="text-[10px] sm:text-[11px] text-[#16a34a] font-medium leading-4">{card.sub}</p>
                 </div>
 
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${card.bg}`}>{card.icon}</div>
+                <div
+                  className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center shrink-0 ${card.bg}`}
+                >
+                  {card.icon}
+                </div>
               </div>
             </div>
           ))}
@@ -561,7 +649,7 @@ function RulesAutomation() {
           {/* ================= LEFT ================= */}
 
           <div className="col-span-9 space-y-2">
-            <div className="bg-white border border-[#edf0f2] rounded-2xl overflow-hidden">
+            <div className="bg-white border border-[#edf0f2] rounded-2xl shadow-sm overflow-hidden">
               {/* HEADER */}
 
               <div className="flex items-center justify-between px-5 py-3 border-b border-[#edf0f2]">
@@ -587,7 +675,13 @@ function RulesAutomation() {
                 pagination={{
                   current: pagination.current,
                   pageSize: pagination.pageSize,
-                  total: rules?.pagination?.total_records || 0,
+                  total: rules?.count || 0,
+
+                  showSizeChanger: true,
+
+                  pageSizeOptions: ['10', '20', '30', '50', '100'],
+
+                  showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
                 }}
                 onChange={(pag) => {
                   setPagination({
@@ -595,11 +689,12 @@ function RulesAutomation() {
                     pageSize: pag.pageSize,
                   });
                 }}
-                scroll={{ x: 1000 }}
+                // scroll={{ x: 1000 }}
+                scroll={{ x: 1000, y: 500 }}
+                size="middle"
+                bordered={false}
               />
             </div>
-
-            {/* ================= RULE TYPES BOX ================= */}
 
             {/* ================= RULE TYPES ================= */}
 
@@ -684,15 +779,7 @@ function RulesAutomation() {
                   <p className="text-[13px] text-[#6b7280] mb-1">Use pre-built templates to get started quickly</p>
                 </div>
 
-                <button
-                  type="button"
-                  className="
-        text-[#2563eb]
-        text-[13px]
-        font-semibold
-        hover:underline
-      "
-                >
+                <button type="button" className="text-[#2563eb] text-[13px] font-semibold hover:underline">
                   View All Presets →
                 </button>
               </div>
@@ -771,29 +858,29 @@ function RulesAutomation() {
           <div className="col-span-3 space-y-2">
             {/* ================= CREATE RULE ================= */}
 
-            <div className="bg-white border border-[#edf0f2] rounded-2xl p-5">
-              <h2 className="text-[18px] font-semibold text-[#111827] mb-4">Create New Rule</h2>
+            <div className="bg-white border border-[#edf0f2] rounded-2xl p-3">
+              <h2 className="text-[18px] font-semibold text-[#111827] mb-2">Create New Rule</h2>
 
-              <div className="space-y-3">
-                <div className="border border-[#dbeafe] bg-[#f8fbff] rounded-xl p-4">
+              <div className="space-y-2">
+                <div className="border border-[#dbeafe] bg-[#f8fbff] rounded-xl p-2">
                   <h3 className="text-[15px] font-semibold text-[#111827]">Performance Based</h3>
 
                   <p className="text-[12px] text-[#6b7280] mt-1">Trigger actions using metrics</p>
                 </div>
 
-                <div className="border border-[#edf0f2] bg-[#f8fbff] rounded-xl p-4">
+                <div className="border border-[#edf0f2] bg-[#f8fbff] rounded-xl p-2">
                   <h3 className="text-[15px] font-semibold text-[#111827]">Duration Based</h3>
 
                   <p className="text-[12px] text-[#6b7280] mt-1">Time & schedule based actions</p>
                 </div>
 
-                <div className="border border-[#edf0f2] bg-[#f8fbff] rounded-xl p-4">
+                <div className="border border-[#edf0f2] bg-[#f8fbff] rounded-xl p-2">
                   <h3 className="text-[15px] font-semibold text-[#111827]">Schedule Based</h3>
 
                   <p className="text-[12px] text-[#6b7280] mt-1">Execute on fixed schedules</p>
                 </div>
 
-                <Button type="primary" block className="!h-[44px] !rounded-xl !bg-[#2563eb] !border-none mt-2">
+                <Button type="primary" block className="!h-[40px] !rounded-xl !bg-[#2563eb] !border-none mt-2">
                   Create Rule
                 </Button>
               </div>
@@ -802,20 +889,18 @@ function RulesAutomation() {
             {/* ================= SMALL RULE TYPES ================= */}
 
             <div className="space-y-2">
-              {/* ================= RULE TYPES ================= */}
-
-              <div className="bg-white border border-[#edf0f2] rounded-2xl p-5">
+              <div className="bg-white border border-[#edf0f2] rounded-2xl p-3">
                 {/* HEADER */}
 
-                <div className="mb-4">
-                  <h2 className="text-[18px] font-semibold text-[#111827]">Rule Types</h2>
+                <div className="mb-2">
+                  <h2 className="text-[18px] font-semibold text-[#111827] mb-1">Rule Types</h2>
 
                   <p className="text-[12px] text-[#9ca3af] mt-1">All available rule types</p>
                 </div>
 
                 {/* LIST */}
 
-                <div className="space-y-4">
+                <div className="space-y-2">
                   {[
                     {
                       label: 'Bids Rules',
@@ -878,7 +963,7 @@ function RulesAutomation() {
 
               {/* ================= RECENT ACTIVITY ================= */}
 
-              <div className="bg-white border border-[#edf0f2] rounded-2xl p-5">
+              <div className="bg-white border border-[#edf0f2] rounded-2xl p-3">
                 {/* HEADER */}
 
                 <div className="mb-3">
@@ -922,16 +1007,7 @@ function RulesAutomation() {
 
                 {/* FOOTER */}
 
-                <button
-                  type="button"
-                  className="
-        mt-5
-        text-[#2563eb]
-        text-[13px]
-        font-semibold
-        hover:underline
-      "
-                >
+                <button type="button" className="mt-5 text-[#2563eb] text-[13px] font-semibold hover:underline">
                   View All Activity →
                 </button>
               </div>
@@ -1235,7 +1311,30 @@ function RulesAutomation() {
                 }
               />
             </div>
+            {/* ================= CAMPAIGNS ================= */}
 
+            {/* ================= CAMPAIGNS ================= */}
+
+            <div>
+              <label className="text-[15px] font-medium text-[#374151] block mb-1">Associated Campaigns</label>
+
+              <Select
+                mode="multiple"
+                size="large"
+                placeholder="Select campaigns"
+                value={ruleForm.campaign_ids}
+                options={campaignOptions}
+                className="w-full text-[13px]"
+                onChange={(value) =>
+                  setRuleForm({
+                    ...ruleForm,
+                    campaign_ids: value,
+                  })
+                }
+                optionFilterProp="label"
+                showSearch
+              />
+            </div>
             {/* PERFORMANCE CONDITIONS */}
 
             {ruleForm.ruleType === 'PERFORMANCE' && (
@@ -1373,7 +1472,50 @@ function RulesAutomation() {
               loading={loading}
               className="!h-[42px] !px-6 !rounded-xl"
               onClick={async () => {
-                const response = await dispatch(getDeleteRules(deleteRuleId));
+                const updatePayload = {
+                  budgetRulesDetails: [
+                    {
+                      ruleId: deleteRuleId?.budgetRuleId,
+
+                      ruleState: 'PAUSED',
+
+                      ruleDetails: {
+                        name: deleteRuleId?.ruleDetails?.name || deleteRuleId?.name,
+
+                        recurrence: {
+                          type: deleteRuleId?.ruleDetails?.recurrence?.type,
+
+                          ...(deleteRuleId?.ruleDetails?.recurrence?.daysOfWeek && {
+                            daysOfWeek: deleteRuleId?.ruleDetails?.recurrence?.daysOfWeek,
+                          }),
+
+                          ...(deleteRuleId?.ruleDetails?.recurrence?.daysOfMonth && {
+                            daysOfMonth: deleteRuleId?.ruleDetails?.recurrence?.daysOfMonth,
+                          }),
+                        },
+
+                        budgetIncreaseBy: {
+                          type: deleteRuleId?.ruleDetails?.budgetIncreaseBy?.type,
+
+                          value: Number(deleteRuleId?.ruleDetails?.budgetIncreaseBy?.value),
+                        },
+
+                        ...(deleteRuleId?.ruleDetails?.performanceMeasureCondition && {
+                          performanceMeasureCondition: {
+                            metricName: deleteRuleId?.ruleDetails?.performanceMeasureCondition?.metricName,
+
+                            comparisonOperator:
+                              deleteRuleId?.ruleDetails?.performanceMeasureCondition?.comparisonOperator,
+
+                            threshold: Number(deleteRuleId?.ruleDetails?.performanceMeasureCondition?.threshold),
+                          },
+                        }),
+                      },
+                    },
+                  ],
+                };
+
+                const response = await dispatch(getUpdateRules(pagination.current, pagination.pageSize, updatePayload));
 
                 if (response?.status === true) {
                   setDeleteModal(false);

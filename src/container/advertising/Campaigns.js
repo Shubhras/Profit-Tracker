@@ -10,7 +10,7 @@ import {
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { getCampaigns } from '../../redux/advertising/actionCreator';
+import { getCampaigns, getCampaignUpdate } from '../../redux/advertising/actionCreator';
 
 function Campaigns() {
   const dispatch = useDispatch();
@@ -36,16 +36,17 @@ function Campaigns() {
 
   useEffect(() => {
     dispatch(getCampaigns(pagination.current, pagination.pageSize));
-  }, [dispatch, pagination]);
+    // }, [dispatch, pagination]);
+  }, [dispatch, pagination.current, pagination.pageSize]);
 
-  const [campaignStatus, setCampaignStatus] = useState({});
+  // const [campaignStatus, setCampaignStatus] = useState({});
 
-  const handleToggleStatus = (key) => {
-    setCampaignStatus((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-  };
+  // const handleToggleStatus = (key) => {
+  //   setCampaignStatus((prev) => ({
+  //     ...prev,
+  //     [key]: !prev[key],
+  //   }));
+  // };
 
   // const dataSource =
   //   campaignData?.results?.map((item) => ({
@@ -84,6 +85,7 @@ function Campaigns() {
       setTableData(
         campaignData.results.map((item) => ({
           key: item.campaign_id,
+          profileId: item.profile_id,
           checkbox: item.id,
           campaignId: item.campaign_id,
           name: item.name,
@@ -249,6 +251,7 @@ function Campaigns() {
       ),
       dataIndex: 'checkbox',
       width: 60,
+      align: 'center',
       fixed: 'left',
 
       render: (_, record) => (
@@ -270,24 +273,46 @@ function Campaigns() {
 
     {
       title: 'State',
-      dataIndex: 'active',
+      dataIndex: 'state',
       align: 'center',
-      width: 110,
+      width: 70,
 
-      render: (_, record) => {
-        const isActive =
-          campaignStatus[record.key] !== undefined ? campaignStatus[record.key] : record.state === 'ENABLED';
+      render: (v, record) => (
+        <Switch
+          checked={v === 'ENABLED'}
+          onChange={async (checked) => {
+            const updatedState = checked ? 'ENABLED' : 'PAUSED';
 
-        return (
-          <Switch
-            checked={isActive}
-            onChange={() => handleToggleStatus(record.key)}
-            style={{
-              transform: 'scale(1.25)', // size increase
-            }}
-          />
-        );
-      },
+            const payload = {
+              profile_id: record.profileId,
+              campaigns: [
+                {
+                  campaignId: record.campaignId,
+                  state: updatedState,
+
+                  budget: {
+                    budget: Number(record.dailyBudget),
+                    budgetType: record.budgetType,
+                  },
+
+                  dynamicBidding: {
+                    strategy: record.biddingStrategy,
+                  },
+                },
+              ],
+            };
+
+            const response = await dispatch(getCampaignUpdate(payload));
+
+            if (response?.status) {
+              dispatch(getCampaigns(pagination.current, pagination.pageSize));
+            }
+          }}
+          style={{
+            transform: 'scale(1.15)',
+          }}
+        />
+      ),
     },
 
     // {
@@ -301,6 +326,9 @@ function Campaigns() {
       title: 'Name',
       dataIndex: 'name',
       align: 'center',
+      // sorter: (a, b) => a.name - b.name,
+      width: 70,
+      sorter: (a, b) => String(a.name).localeCompare(String(b.name)),
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
@@ -350,6 +378,9 @@ function Campaigns() {
       title: 'Targeting Type',
       dataIndex: 'targetingType',
       align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => String(a.targetingType).localeCompare(String(b.targetingType)),
     },
 
     // {
@@ -366,8 +397,10 @@ function Campaigns() {
     // },
     {
       title: 'Budget',
-      dataIndex: 'budget',
+      dataIndex: 'dailyBudget',
       align: 'center',
+      width: 80,
+      sorter: (a, b) => a.dailyBudget - b.dailyBudget,
       // render: (_, record) => (
       //   <div className="flex justify-center">
       //     <div className="px-3 py-1 rounded-full text-[13px] font-medium border border-[#bfdbfe]">
@@ -384,17 +417,17 @@ function Campaigns() {
               setBudgetValue(record?.dailyBudget || '');
               setBudgetModal(true);
             }}
-            className="group relative overflow-hidden min-w-[150px] px-5 py-[8px] rounded-2xl border border-[#dbeafe] bg-white hover:border-[#93c5fd] transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-[1px]"
+            className="group relative overflow-hidden px-3 py-[8px] rounded-2xl border border-transparent bg-transparent hover:border-[#dbeafe] hover:bg-[#f8fbff] transition-all duration-300"
           >
             {/* background */}
             <div className="absolute inset-0 bg-gradient-to-r from-[#eff6ff] via-[#f8fafc] to-[#ecfeff] opacity-80" />
 
-            <div className="relative flex items-center justify-center gap-1 whitespace-nowrap">
-              <span className="text-[14px] font-bold text-[#0f172a]">
+            <div className="relative flex items-center justify-center gap-1">
+              <span className="text-[10px] font-bold text-[#0f172a]">
                 ₹{Number(record?.dailyBudget || 0).toFixed(2)}
               </span>
 
-              <span className="text-[12px] uppercase tracking-wide text-[#64748b]">/ {record?.budgetType}</span>
+              <span className="text-[11px] uppercase tracking-wide text-[#64748b]">/ {record?.budgetType}</span>
             </div>
           </button>
         </div>
@@ -405,34 +438,50 @@ function Campaigns() {
       title: 'Bidding Strategy',
       dataIndex: 'biddingStrategy',
       align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => String(a.biddingStrategy).localeCompare(String(b.biddingStrategy)),
     },
 
     {
       title: 'Marketplace Budget Allocation',
       dataIndex: 'marketplaceBudgetAllocation',
       align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => String(a.marketplaceBudgetAllocation).localeCompare(String(b.marketplaceBudgetAllocation)),
     },
 
     {
       title: 'Start Date',
       dataIndex: 'startDate',
       align: 'center',
+      width: 70,
+      sorter: (a, b) => a.startDate - b.startDate,
     },
     {
       title: 'Country Code',
       dataIndex: 'countryCode',
       align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.countryCode - b.countryCode,
     },
 
     {
       title: 'Currency Code',
       dataIndex: 'currencyCode',
       align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.currencyCode - b.currencyCode,
     },
     {
       title: 'Portfolio',
       dataIndex: 'portfolio',
       align: 'center',
+      width: 70,
+      sorter: (a, b) => a.portfolio - b.portfolio,
       render: (v) => (
         <span className="font-medium text-[#111827] block truncate" style={{ maxWidth: '220px' }}>
           {v || '-'}
@@ -443,6 +492,9 @@ function Campaigns() {
       title: 'Impressions',
       dataIndex: 'impressions',
       align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.impressions - b.impressions,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -450,6 +502,8 @@ function Campaigns() {
       title: 'Clicks',
       dataIndex: 'clicks',
       align: 'center',
+      width: 70,
+      sorter: (a, b) => a.clicks - b.clicks,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -457,6 +511,8 @@ function Campaigns() {
       title: 'Cost',
       dataIndex: 'cost',
       align: 'center',
+      width: 70,
+      sorter: (a, b) => a.cost - b.cost,
       render: (v) => <span className="font-medium text-[#dc2626]">₹{v ?? 0}</span>,
     },
 
@@ -464,6 +520,8 @@ function Campaigns() {
       title: 'Sales',
       dataIndex: 'sales',
       align: 'center',
+      width: 70,
+      sorter: (a, b) => a.sales - b.sales,
       render: (v) => <span className="font-medium text-[#16a34a]">₹{v ?? 0}</span>,
     },
 
@@ -471,6 +529,8 @@ function Campaigns() {
       title: 'Orders',
       dataIndex: 'orders',
       align: 'center',
+      width: 70,
+      sorter: (a, b) => a.orders - b.orders,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -478,6 +538,8 @@ function Campaigns() {
       title: 'Units',
       dataIndex: 'units',
       align: 'center',
+      width: 70,
+      sorter: (a, b) => a.units - b.units,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -485,6 +547,8 @@ function Campaigns() {
       title: 'ACOS',
       dataIndex: 'acos',
       align: 'center',
+      width: 70,
+      sorter: (a, b) => a.acos - b.acos,
       render: (v) => (
         <Tag className="!px-3 !py-[3px] !rounded-full" color={v > 100 ? 'error' : 'processing'}>
           {v ? `${v.toFixed(2)}%` : '-'}
@@ -496,6 +560,8 @@ function Campaigns() {
       title: 'ROAS',
       dataIndex: 'roas',
       align: 'center',
+      width: 70,
+      sorter: (a, b) => a.roas - b.roas,
       render: (v) => (
         <Tag className="!px-3 !py-[3px] !rounded-full" color={v >= 1 ? 'success' : 'warning'}>
           {v ? v.toFixed(2) : '-'}
@@ -506,7 +572,7 @@ function Campaigns() {
     {
       title: 'Action',
       dataIndex: 'action',
-      width: 100,
+      width: 60,
       fixed: 'right',
       align: 'center',
 
@@ -531,6 +597,39 @@ function Campaigns() {
     //   render: (v) => <Switch checked={v === 'ENABLED'} />,
     // },
   ];
+  const handleUpdateBudget = async () => {
+    if (!selectedBudget) return;
+
+    const payload = {
+      profile_id: selectedBudget.profileId,
+
+      campaigns: [
+        {
+          campaignId: selectedBudget.campaignId,
+          state: selectedBudget.state,
+
+          budget: {
+            budget: Number(budgetValue),
+            budgetType: selectedBudget.budgetType,
+          },
+
+          dynamicBidding: {
+            strategy: selectedBudget.biddingStrategy,
+          },
+        },
+      ],
+    };
+
+    const response = await dispatch(getCampaignUpdate(payload));
+
+    if (response?.status) {
+      setBudgetModal(false);
+      setSelectedBudget(null);
+      setBudgetValue('');
+
+      dispatch(getCampaigns(pagination.current, pagination.pageSize));
+    }
+  };
 
   return (
     <>
@@ -595,6 +694,8 @@ function Campaigns() {
             columns={columns}
             dataSource={dataSource}
             loading={loading}
+            showSorterTooltip={false}
+            tableLayout="fixed"
             pagination={{
               // ...pagination,
               current: pagination.current,
@@ -610,7 +711,8 @@ function Campaigns() {
                 pageSize: pag.pageSize,
               });
             }}
-            scroll={{ x: 'max-content' }}
+            // scroll={{ x: 'max-content' }}
+            scroll={{ x: 2200 }}
             size="middle"
             bordered={false}
           />
@@ -632,14 +734,14 @@ function Campaigns() {
           {/* Header */}
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-2">
-              <div
+              {/* <div
                 className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg"
                 style={{
                   background: 'linear-gradient(135deg, rgb(16, 185, 129) 0%, rgb(15, 118, 110) 100%)',
                 }}
               >
                 <span className="text-white text-lg font-bold">₹</span>
-              </div>
+              </div> */}
 
               <div>
                 <h2 className="text-[22px] font-bold text-[#0f172a] leading-none mb-1">Edit Budget</h2>
@@ -691,11 +793,7 @@ function Campaigns() {
 
             <Button
               type="primary"
-              onClick={() => {
-                console.log('Updated Budget:', budgetValue);
-
-                setBudgetModal(false);
-              }}
+              onClick={handleUpdateBudget}
               className="h-[44px] px-6 rounded-xl text-white font-semibold shadow-md transition-all"
             >
               Update Budget

@@ -12,7 +12,10 @@ const initialState = {
   createrule: [],
   updaterule: [],
   deleterule: [],
+  editbid: [],
+  updatecampaign: [],
   rules: [],
+  campginrulelist: [],
   loading: false,
   error: null,
 };
@@ -63,6 +66,18 @@ const {
   DELETERULE_BEGIN,
   DELETERULE_SUCCESS,
   DELETERULE_ERR,
+
+  CAMPAIGN_RULE_LIST_BEGIN,
+  CAMPAIGN_RULE_LIST_SUCCESS,
+  CAMPAIGN_RULE_LIST_ERR,
+
+  EDIT_BID_BEGIN,
+  EDIT_BID_SUCCESS,
+  EDIT_BID_ERR,
+
+  CAMPAIGN_UPDATE_BEGIN,
+  CAMPAIGN_UPDATE_SUCCESS,
+  CAMPAIGN_UPDATE_ERR,
 } = actions;
 
 const AdvertisingReducer = (state = initialState, action) => {
@@ -313,6 +328,69 @@ const AdvertisingReducer = (state = initialState, action) => {
       };
 
     case DELETERULE_ERR:
+      return {
+        ...state,
+        error: err,
+        loading: false,
+      };
+
+    case CAMPAIGN_RULE_LIST_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case CAMPAIGN_RULE_LIST_SUCCESS:
+      return {
+        ...state,
+        campginrulelist: data,
+        loading: false,
+      };
+
+    case CAMPAIGN_RULE_LIST_ERR:
+      return {
+        ...state,
+        error: err,
+        loading: false,
+      };
+
+    case EDIT_BID_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case EDIT_BID_SUCCESS:
+      return {
+        ...state,
+        editbid: data,
+        loading: false,
+      };
+
+    case EDIT_BID_ERR:
+      return {
+        ...state,
+        error: err,
+        loading: false,
+      };
+
+    case CAMPAIGN_UPDATE_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case CAMPAIGN_UPDATE_SUCCESS:
+      return {
+        ...state,
+        updatecampaign: data,
+        loading: false,
+      };
+
+    case CAMPAIGN_UPDATE_ERR:
       return {
         ...state,
         error: err,

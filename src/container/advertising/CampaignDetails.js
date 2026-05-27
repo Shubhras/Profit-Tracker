@@ -29,7 +29,8 @@ function CampaignDetails() {
         // ordering: '-created_at',
       }),
     );
-  }, [dispatch, pagination, id]);
+    // }, [dispatch, pagination, id]);
+  }, [dispatch, pagination.current, pagination.pageSize, id]);
 
   const dataSource =
     adsGroupData?.results?.map((item) => ({
@@ -89,6 +90,7 @@ function CampaignDetails() {
       dataIndex: 'adGroupId',
       align: 'center',
       width: 100,
+      sorter: (a, b) => a.adGroupId - b.adGroupId,
       ellipsis: true,
       render: (v) => <span className="text-[#2563eb] font-medium">{v}</span>,
     },
@@ -98,6 +100,7 @@ function CampaignDetails() {
       dataIndex: 'name',
       align: 'center',
       width: 100,
+      sorter: (a, b) => String(a.name || '').localeCompare(String(b.name || '')),
       ellipsis: true,
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
@@ -123,6 +126,7 @@ function CampaignDetails() {
       dataIndex: 'defaultBid',
       align: 'center',
       width: 100,
+      sorter: (a, b) => a.defaultBid - b.defaultBid,
       ellipsis: true,
       render: (v) => (
         <button
@@ -150,6 +154,7 @@ function CampaignDetails() {
       dataIndex: 'countryCode',
       align: 'center',
       width: 100,
+      sorter: (a, b) => a.countryCode - b.countryCode,
       ellipsis: true,
     },
 
@@ -158,6 +163,7 @@ function CampaignDetails() {
       dataIndex: 'currencyCode',
       align: 'center',
       width: 100,
+      sorter: (a, b) => String(a.currencyCode || '').localeCompare(String(b.currencyCode || '')),
       ellipsis: true,
     },
     {
@@ -165,6 +171,7 @@ function CampaignDetails() {
       dataIndex: 'impressions',
       align: 'center',
       width: 100,
+      sorter: (a, b) => a.impressions - b.impressions,
       ellipsis: true,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
@@ -174,6 +181,7 @@ function CampaignDetails() {
       dataIndex: 'clicks',
       align: 'center',
       width: 100,
+      sorter: (a, b) => a.clicks - b.clicks,
       ellipsis: true,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
@@ -183,6 +191,7 @@ function CampaignDetails() {
       dataIndex: 'cost',
       align: 'center',
       width: 100,
+      sorter: (a, b) => a.cost - b.cost,
       ellipsis: true,
       render: (v) => <span className="font-medium text-[#dc2626]">₹{v ?? 0}</span>,
     },
@@ -192,6 +201,7 @@ function CampaignDetails() {
       dataIndex: 'sales',
       align: 'center',
       width: 100,
+      sorter: (a, b) => a.sales - b.sales,
       ellipsis: true,
       render: (v) => <span className="font-medium text-[#16a34a]">₹{v ?? 0}</span>,
     },
@@ -200,6 +210,7 @@ function CampaignDetails() {
       title: 'Orders',
       dataIndex: 'orders',
       align: 'center',
+      sorter: (a, b) => a.orders - b.orders,
       width: 100,
       ellipsis: true,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
@@ -209,6 +220,7 @@ function CampaignDetails() {
       title: 'Units',
       dataIndex: 'units',
       align: 'center',
+      sorter: (a, b) => a.units - b.units,
       width: 100,
       ellipsis: true,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
@@ -219,6 +231,7 @@ function CampaignDetails() {
       dataIndex: 'acos',
       align: 'center',
       width: 100,
+      sorter: (a, b) => a.acos - b.acos,
       ellipsis: true,
       render: (v) => (
         <Tag className="!px-3 !py-[3px] !rounded-full" color={v > 100 ? 'error' : 'processing'}>
@@ -231,6 +244,7 @@ function CampaignDetails() {
       title: 'ROAS',
       dataIndex: 'roas',
       align: 'center',
+      sorter: (a, b) => a.roas - b.roas,
       width: 100,
       ellipsis: true,
       render: (v) => (
@@ -336,6 +350,7 @@ function CampaignDetails() {
             dataSource={dataSource}
             loading={loading}
             tableLayout="fixed"
+            showSorterTooltip={false}
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
