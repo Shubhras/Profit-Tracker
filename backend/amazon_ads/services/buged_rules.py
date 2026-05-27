@@ -15,98 +15,6 @@ class AmazonBudgetRuleService:
         "sb": "/sb/budgetRules",
     }
 
-    
-
-    # @classmethod
-    # def sync_budget_rules(
-    #     cls,
-    #     amazon_account,
-    #     access_token,
-    #     profile_id,
-    #     client_id,
-    #     region="eu",
-    #     ad_type="sd"
-    # ):
-
-    #     base_url = cls.BASE_URLS.get(region)
-    #     endpoint = cls.ENDPOINTS.get(ad_type)
-
-    #     url = f"{base_url}{endpoint}"
-
-    #     headers = {
-    #         "Authorization": f"Bearer {access_token}",
-    #         "Amazon-Advertising-API-ClientId": client_id,
-    #         "Amazon-Advertising-API-Scope": str(profile_id),
-    #         "Accept": "application/json",
-    #     }
-
-    #     next_token = None
-    #     total_synced = 0
-
-    #     while True:
-
-    #         params = {
-    #             "pageSize": 30
-    #         }
-
-    #         if next_token:
-    #             params["nextToken"] = next_token
-
-    #         response = requests.get(
-    #             url,
-    #             headers=headers,
-    #             params=params
-    #         )
-
-    #         print("STATUS:", response.status_code)
-    #         print("RESPONSE:", response.text)
-
-    #         response.raise_for_status()
-
-    #         data = response.json()
-
-    #         rules = data.get(
-    #             "budgetRulesForAdvertiserResponse",
-    #             []
-    #         )
-
-    #         for item in rules:
-
-    #             rule_id = item.get("ruleId")
-
-    #             AdsBudgetRule.objects.update_or_create(
-    #                 amazon_account=amazon_account,
-    #                 budget_rule_id=rule_id,
-    #                 rule_type=ad_type,
-    #                 defaults={
-    #                     "profile_id": profile_id,
-    #                     "name": item.get("ruleDetails", {}).get("name"),
-    #                     "rule_state": item.get("ruleState"),
-    #                     "rule_status": item.get("ruleStatus"),
-    #                     "created_date": item.get("createdDate"),
-    #                     "last_updated_date": item.get("lastUpdatedDate"),
-    #                     "rule_details": item.get("ruleDetails", {}),
-    #                     "raw_data": item,
-    #                     "campaign_ids": item.get("associatedCampaignIds", [])
-    #                 }
-    #             )
-
-    #             total_synced += 1
-
-    #         next_token = data.get("nextToken")
-    #         print("PROFILE ID:", profile_id)
-    #         print("REGION:", region)
-    #         print("AD TYPE:", ad_type)
-
-    #         if not next_token:
-    #             break
-
-    #     return {
-    #         "success": True,
-    #         "total_synced": total_synced,
-    #         "ad_type": ad_type
-    #     }
-    
 
 
     @classmethod
@@ -381,7 +289,396 @@ class AmazonBudgetRuleService:
             "total_campaigns": len(all_campaigns),
             "ad_type": ad_type
         }
+    
+
+    # @classmethod
+    # def sync_budget_rules(
+    #     cls,
+    #     amazon_account,
+    #     access_token,
+    #     profile_id,
+    #     client_id,
+    #     region="eu",
+    #     ad_type="sp"
+    # ):
+
+    #     base_url = cls.BASE_URLS.get(region)
+
+    #     # -----------------------------------------
+    #     # GET ALL CAMPAIGNS
+    #     # -----------------------------------------
+
+    #     campaign_url = f"{base_url}/sp/campaigns/list"
+
+    #     campaign_headers = {
+    #         "Authorization": f"Bearer {access_token}",
+    #         "Amazon-Advertising-API-ClientId": client_id,
+    #         "Amazon-Advertising-API-Scope": str(profile_id),
+
+    #         # IMPORTANT
+    #         "Content-Type": "application/vnd.spCampaign.v3+json",
+    #         "Accept": "application/vnd.spCampaign.v3+json",
+    #     }
+
+    #     all_campaigns = []
+    #     next_token = None
+
+    #     while True:
+
+    #         campaign_payload = {
+    #             "maxResults": 30
+    #         }
+
+    #         if next_token:
+    #             campaign_payload["nextToken"] = next_token
+
+    #         campaign_response = requests.post(
+    #             campaign_url,
+    #             headers=campaign_headers,
+    #             json=campaign_payload
+    #         )
+
+    #         print("CAMPAIGN STATUS:", campaign_response.status_code)
+    #         print("CAMPAIGN RESPONSE:", campaign_response.text)
+
+    #         if campaign_response.status_code != 200:
+    #             break
+
+    #         campaign_data = campaign_response.json()
+
+    #         campaigns = campaign_data.get("campaigns", [])
+
+    #         all_campaigns.extend(campaigns)
+
+    #         next_token = campaign_data.get("nextToken")
+
+    #         if not next_token:
+    #             break
+
+    #     print("TOTAL CAMPAIGNS MAPPED:", len(all_campaigns))
+
+    #     # -----------------------------------------
+    #     # GET RULES
+    #     # -----------------------------------------
+
+    #     rules_url = f"{base_url}/sp/budgetRules"
+
+    #     rule_headers = {
+    #         "Authorization": f"Bearer {access_token}",
+    #         "Amazon-Advertising-API-ClientId": client_id,
+    #         "Amazon-Advertising-API-Scope": str(profile_id),
+    #         "Accept": "application/json",
+    #     }
+
+    #     next_token = None
+    #     total_synced = 0
+
+    #     while True:
+
+    #         params = {
+    #             "pageSize": 30,
+
+    #             # IMPORTANT
+    #             # sync all rule states
+    #             "ruleStateFilter": [
+    #                 "ACTIVE",
+    #                 "PAUSED"
+    #             ],
+
+    #             # optional
+    #             "ruleStatusFilter": [
+    #                 "ACTIVE",
+    #                 "PENDING_START",
+    #                 "PAUSED",
+    #                 "EXPIRED"
+    #             ]
+    #         }
+
+    #         if next_token:
+    #             params["nextToken"] = next_token
+
+    #         response = requests.get(
+    #             rules_url,
+    #             headers=rule_headers,
+    #             params=params
+    #         )
+
+    #         print("RULE STATUS:", response.status_code)
+    #         print("RULE RESPONSE:", response.text)
+
+    #         response.raise_for_status()
+
+    #         data = response.json()
+
+    #         rules = data.get(
+    #             "budgetRulesForAdvertiserResponse",
+    #             []
+    #         )
+
+    #         # -----------------------------------------
+    #         # PROCESS RULES
+    #         # -----------------------------------------
+
+    #         for item in rules:
+
+    #             rule_id = item.get("ruleId")
+
+    #             associated_campaign_ids = []
+
+    #             # -----------------------------------------
+    #             # ASSOCIATION API
+    #             # -----------------------------------------
+
+    #             # assoc_url = (
+    #             #     f"{base_url}/sp/budgetRules/"
+    #             #     f"{rule_id}/campaigns"
+    #             # )
+    #             # -----------------------------------------
+    #             # GET ASSOCIATED CAMPAIGNS
+    #             # -----------------------------------------
+
+    #             assoc_url = (
+    #                 f"{base_url}/sp/budgetRules/"
+    #                 f"{rule_id}/campaigns"
+    #             )
+
+    #             assoc_params = {
+    #                 "pageSize": 30
+    #             }
+
+    #             assoc_response = requests.get(
+    #                 assoc_url,
+    #                 headers=rule_headers,
+    #                 params=assoc_params
+    #             )
+
+    #             print(
+    #                 f"ASSOC STATUS FOR {rule_id}:",
+    #                 assoc_response.status_code
+    #             )
+
+    #             print(
+    #                 "ASSOC RESPONSE:",
+    #                 assoc_response.text
+    #             )
+
+    #             if assoc_response.status_code == 200:
+
+    #                 assoc_data = assoc_response.json()
+
+    #                 campaign_items = assoc_data.get(
+    #                     "associatedCampaigns",
+    #                     []
+    #                 )
+
+    #                 associated_campaign_ids = [
+    #                     str(c.get("campaignId"))
+    #                     for c in campaign_items
+    #                 ]
+
+    #             # -----------------------------------------
+    #             # FALLBACK MATCHING
+    #             # -----------------------------------------
+
+    #             # if not associated_campaign_ids:
+
+    #             #     rule_name = (
+    #             #         item.get("ruleDetails", {})
+    #             #         .get("name", "")
+    #             #         .lower()
+    #             #     )
+
+    #             #     for campaign in all_campaigns:
+
+    #             #         campaign_name = (
+    #             #             campaign.get("name", "")
+    #             #             .lower()
+    #             #         )
+
+    #             #         if (
+    #             #             any(
+    #             #                 word in campaign_name
+    #             #                 for word in rule_name.split()
+    #             #                 if len(word) > 3
+    #             #             )
+    #             #         ):
+    #             #             associated_campaign_ids.append(
+    #             #                 str(campaign.get("campaignId"))
+    #             #             )
+
+    #             # associated_campaign_ids = list(
+    #             #     set(associated_campaign_ids)
+    #             # )
+
+    #             # -----------------------------------------
+    #             # SAVE RULE
+    #             # -----------------------------------------
+
+    #             AdsBudgetRule.objects.update_or_create(
+    #                 amazon_account=amazon_account,
+    #                 budget_rule_id=rule_id,
+    #                 rule_type=ad_type,
+    #                 defaults={
+    #                     "profile_id": profile_id,
+    #                     "name": item.get(
+    #                         "ruleDetails",
+    #                         {}
+    #                     ).get("name"),
+
+    #                     "rule_state": item.get(
+    #                         "ruleState"
+    #                     ),
+
+    #                     "rule_status": item.get(
+    #                         "ruleStatus"
+    #                     ),
+
+    #                     "created_date": item.get(
+    #                         "createdDate"
+    #                     ),
+
+    #                     "last_updated_date": item.get(
+    #                         "lastUpdatedDate"
+    #                     ),
+
+    #                     "rule_details": item.get(
+    #                         "ruleDetails",
+    #                         {}
+    #                     ),
+
+    #                     "raw_data": item,
+
+    #                     "campaign_ids": associated_campaign_ids
+    #                 }
+    #             )
+
+    #             total_synced += 1
+
+    #         next_token = data.get("nextToken")
+
+    #         if not next_token:
+    #             break
+
+    #     return {
+    #         "success": True,
+    #         "total_synced": total_synced,
+    #         "total_campaigns": len(all_campaigns),
+    #         "ad_type": ad_type
+    #     }
+    
+    # main working
     # create new rules 
+    # @classmethod
+    # def create_budget_rule(
+    #     cls,
+    #     amazon_account,
+    #     access_token,
+    #     profile_id,
+    #     client_id,
+    #     payload,
+    #     region="eu",
+    #     ad_type="sp"
+    # ):
+
+    #     url = (
+    #         cls.BASE_URLS[region]
+    #         + cls.ENDPOINTS[ad_type]
+    #     )
+
+    #     headers = {
+    #         "Authorization": f"Bearer {access_token}",
+    #         "Amazon-Advertising-API-ClientId": client_id,
+    #         "Amazon-Advertising-API-Scope": str(profile_id),
+    #         "Content-Type": "application/json",
+    #         "Accept": "application/json",
+    #     }
+        
+    #     campaign_ids = payload.pop("campaign_ids", [])
+    #     response = requests.post(
+    #         url,
+    #         headers=headers,
+    #         json=payload
+    #     )
+
+    #     print(response.status_code)
+    #     print(response.text)
+
+
+
+    #     response.raise_for_status()
+
+    #     response_data = response.json()
+
+    #     created_rules = response_data.get(
+    #         "budgetRulesDetails",
+    #         []
+    #     )
+
+    #     synced_rules = []
+
+    #     for item in created_rules:
+
+    #         rule_id = item.get("ruleId")
+
+    #         obj, _ = AdsBudgetRule.objects.update_or_create(
+    #             amazon_account=amazon_account,
+    #             budget_rule_id=rule_id,
+    #             rule_type=ad_type,
+    #             defaults={
+    #                 "profile_id": profile_id,
+    #                 "name": item.get("name"),
+    #                 "rule_state": item.get("ruleState"),
+    #                 "rule_status": item.get("ruleStatus"),
+    #                 "rule_details": item,
+    #                 "raw_data": item,
+    #                 "campaign_ids": campaign_ids,
+                    
+    #             }
+    #         )
+
+    #         synced_rules.append(obj.id)
+
+    #     for item in created_rules:
+
+    #         rule_id = item.get("ruleId")
+
+    #         # -----------------------------------
+    #         # ASSOCIATE CAMPAIGNS
+    #         # -----------------------------------
+
+    #         if campaign_ids:
+
+    #             assoc_url = (
+    #                 f"{cls.BASE_URLS[region]}"
+    #                 f"/sp/budgetRules/{rule_id}/campaigns"
+    #             )
+
+    #             assoc_payload = {
+    #                 "campaignIds": campaign_ids
+    #             }
+
+    #             assoc_headers = {
+    #                 "Authorization": f"Bearer {access_token}",
+    #                 "Amazon-Advertising-API-ClientId": client_id,
+    #                 "Amazon-Advertising-API-Scope": str(profile_id),
+    #                 "Content-Type": "application/json",
+    #                 "Accept": "application/json",
+    #             }
+
+    #             assoc_response = requests.post(
+    #                 assoc_url,
+    #                 headers=assoc_headers,
+    #                 json=assoc_payload
+    #             )
+
+    #             print("ASSOC STATUS:", assoc_response.status_code)
+    #             print("ASSOC RESPONSE:", assoc_response.text)
+
+    #             # optional
+    #             assoc_response.raise_for_status()    
+
+    #     return response_data
+    
     @classmethod
     def create_budget_rule(
         cls,
@@ -393,6 +690,11 @@ class AmazonBudgetRuleService:
         region="eu",
         ad_type="sp"
     ):
+
+        print("\n============================")
+        print("STEP 1 : ORIGINAL PAYLOAD")
+        print("============================")
+        print(payload)
 
         url = (
             cls.BASE_URLS[region]
@@ -407,23 +709,79 @@ class AmazonBudgetRuleService:
             "Accept": "application/json",
         }
 
+        # -----------------------------------
+        # EXTRACT CAMPAIGN IDS
+        # -----------------------------------
+
+        budget_rules = payload.get(
+            "budgetRulesDetails",
+            []
+        )
+
+        campaign_ids = []
+
+        for rule in budget_rules:
+
+            campaign_ids = rule.pop(
+                "campaign_ids",
+                []
+            )
+
+        print("\n============================")
+        print("STEP 2 : PAYLOAD AFTER POP")
+        print("============================")
+        print(payload)
+
+        print("\n============================")
+        print("STEP 3 : EXTRACTED CAMPAIGN IDS")
+        print("============================")
+        print(campaign_ids)
+
+        # -----------------------------------
+        # CREATE RULE
+        # -----------------------------------
+
+        print("\n============================")
+        print("STEP 4 : AMAZON CREATE API")
+        print("============================")
+        print("URL:", url)
+        print("HEADERS:", headers)
+        print("BODY:", payload)
+
         response = requests.post(
             url,
             headers=headers,
             json=payload
         )
 
-        print(response.status_code)
-        print(response.text)
+        print("\n============================")
+        print("STEP 5 : CREATE RESPONSE")
+        print("============================")
+        print("STATUS:", response.status_code)
+        print("BODY:", response.text)
 
         response.raise_for_status()
 
         response_data = response.json()
 
+        print("\n============================")
+        print("STEP 6 : PARSED RESPONSE")
+        print("============================")
+        print(response_data)
+
+        # IMPORTANT
+        # Amazon returns "responses"
+        # not "budgetRulesDetails"
+
         created_rules = response_data.get(
-            "budgetRulesDetails",
+            "responses",
             []
         )
+
+        print("\n============================")
+        print("STEP 7 : CREATED RULES")
+        print("============================")
+        print(created_rules)
 
         synced_rules = []
 
@@ -442,115 +800,64 @@ class AmazonBudgetRuleService:
                     "rule_status": item.get("ruleStatus"),
                     "rule_details": item,
                     "raw_data": item,
+                    "campaign_ids": campaign_ids,
                 }
             )
 
             synced_rules.append(obj.id)
 
-        return response_data
-    
-    # create new rules  and sync  
-    # @classmethod
-    # def create_budget_rule(
-    #     cls,
-    #     amazon_account,
-    #     access_token,
-    #     profile_id,
-    #     client_id,
-    #     payload,
-    #     region="eu",
-    #     ad_type="sp"
-    # ):
+            
+            # -----------------------------------
+            # ASSOCIATE CAMPAIGNS
+            # -----------------------------------
 
-    #     base_url = cls.BASE_URLS.get(region)
+            if campaign_ids:
 
-    #     endpoint = cls.ENDPOINTS.get(ad_type)
+                assoc_url = (
+                    f"{cls.BASE_URLS[region]}"
+                    f"/sp/budgetRulesAssociation"
+                )
 
-    #     url = f"{base_url}{endpoint}"
+                assoc_payload = {
+                    "budgetRulesAssociations": []
+                }
 
-    #     headers = {
-    #         "Authorization": f"Bearer {access_token}",
-    #         "Amazon-Advertising-API-ClientId": client_id,
-    #         "Amazon-Advertising-API-Scope": str(profile_id),
-    #         "Content-Type": "application/json",
-    #         "Accept": "application/json",
-    #     }
+                for campaign_id in campaign_ids:
 
-    #     response = requests.post(
-    #         url,
-    #         headers=headers,
-    #         json=payload
-    #     )
+                    assoc_payload["budgetRulesAssociations"].append({
+                        "campaignId": int(campaign_id),
+                        "ruleId": rule_id
+                    })
 
-    #     print("STATUS:", response.status_code)
-    #     print("RESPONSE:", response.text)
+                print("\n============================")
+                print("STEP 10 : ASSOCIATE API")
+                print("============================")
+                print("URL:", assoc_url)
+                print("BODY:", assoc_payload)
 
-    #     response.raise_for_status()
+                assoc_response = requests.post(
+                    assoc_url,
+                    headers=headers,
+                    json=assoc_payload
+                )
 
-    #     response_data = response.json()
+                print("\n============================")
+                print("STEP 11 : ASSOC RESPONSE")
+                print("============================")
+                print("STATUS:", assoc_response.status_code)
+                print("BODY:", assoc_response.text)
 
-    #     responses = response_data.get(
-    #         "responses",
-    #         []
-    #     )
+                assoc_response.raise_for_status()
 
-    #     request_rules = payload.get(
-    #         "budgetRulesDetails",
-    #         []
-    #     )
+        print("\n============================")
+        print("STEP 12 : FINAL RETURN")
+        print("============================")
 
-    #     synced_rules = []
+        return {
+            "amazon_response": response_data,
+            "synced_rules": synced_rules
+        }
 
-    #     for index, item in enumerate(responses):
-
-    #         rule_id = item.get("ruleId")
-
-    #         if not rule_id:
-    #             continue
-
-    #         request_item = request_rules[index]
-
-    #         obj, created = AdsBudgetRule.objects.update_or_create(
-
-    #             amazon_account=amazon_account,
-
-    #             budget_rule_id=rule_id,
-
-    #             rule_type=ad_type,
-
-    #             defaults={
-
-    #                 "profile_id": profile_id,
-
-    #                 "name": request_item.get("name"),
-
-    #                 "rule_state": "ACTIVE",
-
-    #                 "rule_status": "ACTIVE",
-
-    #                 "rule_details": request_item,
-
-    #                 "raw_data": item,
-
-    #                 "is_deleted": False,
-
-    #                 "error_details": {}
-    #             }
-    #         )
-
-    #         synced_rules.append(
-    #             {
-    #                 "id": obj.id,
-    #                 "rule_id": rule_id,
-    #                 "created": created
-    #             }
-    #         )
-
-    #     return {
-    #         "success": True,
-    #         "amazon_response": response_data,
-    #         "synced_rules": synced_rules
-    #     }
 
     @classmethod
     def update_budget_rule(
