@@ -107,85 +107,92 @@ function AutoClaims() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] p-5">
-      <div className="rounded-[28px] border border-[#e5e7eb] bg-white p-6 shadow-sm">
+    <div className="min-h-screen bg-[#f8fafc] p-3 text-[12px] px-2">
+      <div className="rounded-[24px] border border-[#e5e7eb] bg-white p-4 shadow-sm">
         {/* Header */}
         <div className="flex items-start justify-between">
           {/* Left */}
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-[28px] font-bold text-[#111827] mb-1">Auto Claims</h1>
+              <h1 className="text-[20px] font-bold text-[#111827] mb-[2px]">Auto Claims</h1>
 
-              <InfoCircleFilled className="text-[#94a3b8]" />
+              <InfoCircleFilled className="text-[#94a3b8] text-[13px]" />
             </div>
 
-            <p className="max-w-[850px] text-sm leading-7 text-[#6b7280]">
+            <p className="max-w-[850px] text-[12px] leading-[20px] text-[#6b7280]">
               Track, manage and recover your eligible refunds for returns, lost orders, damaged items and other claim
               types across all marketplaces.
             </p>
           </div>
 
           {/* Right Buttons */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
-              className="flex items-center gap-2 rounded-xl border border-[#d1fae5] bg-white px-4 py-2.5 text-sm font-medium text-[#16a34a] transition-all hover:bg-[#f0fdf4]"
+              className="flex items-center gap-2 rounded-l border border-[#d1fae5] bg-white px-3 py-1 text-[12px] font-medium text-[#16a34a] transition-all hover:bg-[#f0fdf4]"
             >
-              <ReloadOutlined />
+              <ReloadOutlined className="text-[11px]" />
               Refresh
             </button>
 
             <button
               type="button"
-              className="flex items-center gap-2 rounded-xl bg-[#16a34a] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#15803d]"
+              className="flex items-center gap-2 rounded-l bg-[#16a34a] px-3 py-1 text-[12px] font-semibold text-white shadow-sm transition-all hover:bg-[#15803d]"
             >
-              <PlusOutlined />
+              <PlusOutlined className="text-[11px]" />
               Create Claim
             </button>
           </div>
         </div>
+
         {/* Stats */}
-        <div className="mt-7">
-          <div className="grid grid-cols-5 gap-4">
+        <div className="mt-2">
+          <div className="grid grid-cols-5 gap-2">
             {stats.map((item, index) => (
               <div
                 key={index}
-                className="min-w-0 rounded-2xl border border-[#edf0f2] bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
+                className="min-w-0 rounded-2xl border border-[#edf0f2] bg-white p-3 flex flex-col justify-between"
               >
-                <div className="flex items-start justify-between">
-                  <div
-                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-[20px] ${item.bg} ${item.iconColor}`}
-                  >
-                    {item.icon}
+                {/* TOP */}
+                <div>
+                  <div className="flex items-start justify-between">
+                    <div
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-[16px] ${item.bg} ${item.iconColor}`}
+                    >
+                      {item.icon}
+                    </div>
+
+                    <span className={`text-[12px] font-semibold ${item.growthColor}`}>{item.growth}</span>
                   </div>
 
-                  <span className={`text-[15px] font-semibold ${item.growthColor}`}>{item.growth}</span>
+                  <div className="mt-2">
+                    <p className="text-[12px] font-medium text-[#6b7280] leading-[16px]">{item.title}</p>
+
+                    <h2 className="mt-[2px] text-[17px] font-bold text-[#111827] break-words leading-none">
+                      {item.value}
+                    </h2>
+                  </div>
                 </div>
 
-                <div className="mt-4">
-                  <p className="text-[14px] font-medium text-[#6b7280]">{item.title}</p>
-
-                  <h2 className="mt-1 text-[22px] font-bold text-[#111827] break-words">{item.value}</h2>
-
-                  <p className="mt-1 text-xs text-[#9ca3af] font-semibold">vs last 30 days</p>
-                </div>
+                {/* BOTTOM */}
+                <p className="mt-1 text-[10px] text-[#9ca3af] font-medium leading-none">vs last 30 days</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* Filters */}
-        <div className="mt-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex flex-1 flex-wrap gap-3">
-            <select className="min-w-[100px] rounded-xl border border-[#e5e7eb] bg-white px-4 py-3 text-sm text-[#374151] outline-none">
+        <div className="mt-3 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex flex-1 flex-wrap gap-2">
+            <select className="min-w-[100px] rounded-xl border border-[#e5e7eb] bg-white px-3 py-2 text-[12px] text-[#374151] outline-none">
               <option>All Marketplaces</option>
             </select>
 
-            <select className="min-w-[100px] rounded-xl border border-[#e5e7eb] bg-white px-4 py-3 text-sm text-[#374151] outline-none">
+            <select className="min-w-[100px] rounded-xl border border-[#e5e7eb] bg-white px-3 py-2 text-[12px] text-[#374151] outline-none">
               <option>All Claim Types</option>
             </select>
 
-            <select className="min-w-[100px] rounded-xl border border-[#e5e7eb] bg-white px-4 py-3 text-sm text-[#374151] outline-none">
+            <select className="min-w-[100px] rounded-xl border border-[#e5e7eb] bg-white px-3 py-2 text-[12px] text-[#374151] outline-none">
               <option>All Status</option>
             </select>
 
@@ -193,57 +200,42 @@ function AutoClaims() {
               type="text"
               value="01/05/2026 - 31/05/2026"
               readOnly
-              className="min-w-[220px] rounded-xl border border-[#e5e7eb] bg-white px-4 py-3 text-sm text-[#374151] outline-none"
+              className="min-w-[220px] rounded-xl border border-[#e5e7eb] bg-white px-3 py-2 text-[12px] text-[#374151] outline-none"
             />
+
             <div className="relative">
               <input
                 type="text"
                 placeholder="Search by Order ID, ASIN, SKU..."
-                className="w-[180px] rounded-xl border border-[#e5e7eb] bg-white py-3 pl-4 pr-10 text-sm outline-none"
+                className="w-[180px] rounded-xl border border-[#e5e7eb] bg-white py-2 pl-3 pr-9 text-[12px] outline-none"
               />
 
-              <SearchOutlined className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
+              <SearchOutlined className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[11px]" />
             </div>
+
             <button
               type="button"
-              className="flex items-center gap-2 rounded-xl border border-[#e5e7eb] bg-white px-4 py-3 text-sm font-medium text-[#374151] transition-all hover:bg-[#f9fafb]"
+              className="flex items-center gap-2 rounded-xl border border-[#e5e7eb] bg-white px-3 py-2 text-[12px] font-medium text-[#374151] transition-all hover:bg-[#f9fafb]"
             >
-              <FilterOutlined />
+              <FilterOutlined className="text-[11px]" />
               Filters
             </button>
           </div>
-
-          {/* <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              className="flex items-center gap-2 rounded-xl border border-[#e5e7eb] bg-white px-4 py-3 text-sm font-medium text-[#374151] transition-all hover:bg-[#f9fafb]"
-            >
-              <FilterOutlined />
-              Filters
-            </button>
-
-            <button
-              type="button"
-              className="flex items-center gap-2 rounded-xl border border-[#e5e7eb] bg-white px-4 py-3 text-sm font-medium text-[#374151] transition-all hover:bg-[#f9fafb]"
-            >
-              <AppstoreOutlined />
-              Columns
-            </button>
-          </div> */}
         </div>
 
         {/* Charts */}
-        {/* Charts */}
-        <div className="mt-7 grid grid-cols-3 gap-5">
+        <div className="mt-2 grid grid-cols-3 gap-2">
           {/* Chart 1 */}
-          <div className="rounded-2xl border border-[#edf0f2] bg-white p-5">
-            <h3 className="text-[13px] font-semibold text-[#111827]">Claim Amount by Type</h3>
+          {/* Chart 1 */}
+          <div className="rounded-2xl border border-[#edf0f2] bg-white p-4">
+            <h3 className="text-[14px] font-semibold text-[#111827]">Claim Amount by Type</h3>
 
-            <div className="mt-4 flex items-center justify-between gap-4">
-              <div className="relative h-[230px] w-[230px]">
+            <div className="mt-3 flex flex-col items-center">
+              {/* Pie Chart */}
+              <div className="relative h-[190px] w-[190px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={claimTypeData} dataKey="value" innerRadius={62} outerRadius={88} paddingAngle={2}>
+                    <Pie data={claimTypeData} dataKey="value" innerRadius={52} outerRadius={74} paddingAngle={2}>
                       {claimTypeData.map((entry, index) => (
                         <Cell key={index} fill={entry.color} />
                       ))}
@@ -252,37 +244,64 @@ function AutoClaims() {
                 </ResponsiveContainer>
 
                 <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
-                  <span className="text-[21px] font-bold text-[#111827]">₹2,45,680</span>
+                  <span className="text-[17px] font-bold text-[#111827]">₹2,45,680</span>
 
-                  <span className="text-xs text-[#6b7280]">Total Claimable</span>
+                  <span className="text-[10px] text-[#6b7280]">Total Claimable</span>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                {claimTypeData.map((item, index) => (
-                  <div key={index} className="flex items-start gap-2">
-                    <div className="mt-[5px] h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+              {/* Bottom Values */}
+              {/* Bottom Values */}
+              <div className="mt-2 w-full flex flex-col items-center">
+                {/* First Row */}
+                <div className="flex items-start justify-center gap-1">
+                  {claimTypeData.slice(0, 3).map((item, index) => (
+                    <div key={index} className="flex items-start gap-1 min-w-[95px]">
+                      <div
+                        className="mt-[3px] h-2 w-2 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: item.color }}
+                      />
 
-                    <div>
-                      <p className="text-xs font-medium text-[#111827]">{item.name}</p>
+                      <div className="leading-tight">
+                        <p className="text-[10px] font-medium text-[#111827] whitespace-nowrap">{item.name}</p>
 
-                      <p className="text-[11px] text-[#6b7280]">₹{item.value.toLocaleString()}</p>
+                        <p className="text-[9px] text-[#6b7280]">₹{item.value.toLocaleString()}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+
+                {/* Second Row */}
+                <div className="mt-1 flex items-start justify-center gap-0">
+                  {claimTypeData.slice(3, 5).map((item, index) => (
+                    <div key={index} className="flex items-start gap-1 min-w-[95px]">
+                      <div
+                        className="mt-[3px] h-2 w-2 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: item.color }}
+                      />
+
+                      <div className="leading-tight">
+                        <p className="text-[10px] font-medium text-[#111827] whitespace-nowrap">{item.name}</p>
+
+                        <p className="text-[9px] text-[#6b7280]">₹{item.value.toLocaleString()}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Chart 2 */}
-          <div className="rounded-2xl border border-[#edf0f2] bg-white p-5">
-            <h3 className="text-[16px] font-semibold text-[#111827]">Claim Status Overview</h3>
+          <div className="rounded-2xl border border-[#edf0f2] bg-white p-4">
+            <h3 className="text-[14px] font-semibold text-[#111827]">Claim Status Overview</h3>
 
-            <div className="mt-4 flex items-center justify-between gap-4">
-              <div className="relative h-[230px] w-[230px]">
+            <div className="mt-3 flex flex-col items-center">
+              {/* Pie Chart */}
+              <div className="relative h-[190px] w-[190px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={statusData} dataKey="value" innerRadius={62} outerRadius={88} paddingAngle={2}>
+                    <Pie data={statusData} dataKey="value" innerRadius={52} outerRadius={74} paddingAngle={2}>
                       {statusData.map((entry, index) => (
                         <Cell key={index} fill={entry.color} />
                       ))}
@@ -291,59 +310,84 @@ function AutoClaims() {
                 </ResponsiveContainer>
 
                 <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
-                  <span className="text-[21px] font-bold text-[#111827]">2,845</span>
+                  <span className="text-[17px] font-bold text-[#111827]">2,845</span>
 
-                  <span className="text-xs text-[#6b7280]">Total Claims</span>
+                  <span className="text-[10px] text-[#6b7280]">Total Claims</span>
                 </div>
               </div>
 
-              <div className="space-y-4">
-                {statusData.map((item, index) => (
-                  <div key={index} className="flex items-start gap-2">
-                    <div className="mt-[5px] h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+              {/* Bottom Values */}
+              {/* Bottom Values */}
+              <div className="mt-2 w-full flex flex-col items-center">
+                {/* First Row */}
+                <div className="flex items-start justify-center gap-0">
+                  {statusData.slice(0, 3).map((item, index) => (
+                    <div key={index} className="flex items-start gap-1 min-w-[95px]">
+                      <div
+                        className="mt-[3px] h-2 w-2 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: item.color }}
+                      />
 
-                    <div>
-                      <p className="text-xs font-medium text-[#111827]">{item.name}</p>
+                      <div className="leading-tight">
+                        <p className="text-[10px] font-medium text-[#111827] whitespace-nowrap">{item.name}</p>
 
-                      <p className="text-[11px] text-[#6b7280]">{item.value} Claims</p>
+                        <p className="text-[9px] text-[#6b7280]">{item.value} Claims</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+
+                {/* Second Row */}
+                <div className="mt-1 flex items-start justify-center gap-0">
+                  {statusData.slice(3, 5).map((item, index) => (
+                    <div key={index} className="flex items-start gap-1 min-w-[95px]">
+                      <div
+                        className="mt-[3px] h-2 w-2 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: item.color }}
+                      />
+
+                      <div className="leading-tight">
+                        <p className="text-[10px] font-medium text-[#111827] whitespace-nowrap">{item.name}</p>
+
+                        <p className="text-[9px] text-[#6b7280]">{item.value} Claims</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-
           {/* Chart 3 */}
-          <div className="rounded-2xl border border-[#edf0f2] bg-white p-5">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-[16px] font-semibold text-[#111827]">Claim Amount by Marketplace</h3>
+          <div className="rounded-2xl border border-[#edf0f2] bg-white p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-[14px] font-semibold text-[#111827]">Claim Amount by Marketplace</h3>
 
-              <select className="rounded-lg border border-[#e5e7eb] px-2 py-1 text-xs outline-none">
+              <select className="rounded-lg border border-[#e5e7eb] px-2 py-1 text-[11px] outline-none">
                 <option>Amount</option>
               </select>
             </div>
 
-            <div className="h-[250px]">
+            <div className="h-[230px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={marketplaceChartData}>
                   <CartesianGrid vertical={false} strokeDasharray="3 3" />
 
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
 
-                  <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
 
                   <Tooltip />
 
-                  <Bar dataKey="amount" radius={[6, 6, 0, 0]} fill="#10b981" barSize={34} />
+                  <Bar dataKey="amount" radius={[6, 6, 0, 0]} fill="#10b981" barSize={28} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
         </div>
         {/* Claims Table Section */}
-        <div className="mt-7 rounded-2xl border border-[#edf0f2] bg-white">
+        <div className="mt-3 rounded-l border border-[#edf0f2] bg-white overflow-hidden">
           {/* Top Tabs */}
-          <div className="flex items-center gap-8 border-b border-[#edf0f2] px-5 py-4 overflow-x-auto">
+          <div className="flex items-center gap-5 border-b border-[#edf0f2] px-3 py-2 overflow-x-auto">
             {[
               'All Claims (2,845)',
               'Customer Returns (1,456)',
@@ -356,7 +400,7 @@ function AutoClaims() {
               <button
                 type="button"
                 key={index}
-                className={`whitespace-nowrap text-[14px] font-semibold transition-all ${
+                className={`whitespace-nowrap text-[11px] font-semibold transition-all ${
                   index === 0 ? 'text-[#10b981]' : 'text-[#6b7280] hover:text-[#111827]'
                 }`}
               >
@@ -366,25 +410,25 @@ function AutoClaims() {
           </div>
 
           {/* Toolbar */}
-          <div className="flex items-center justify-between border-b border-[#edf0f2] px-5 py-4">
-            <div className="flex items-center gap-3">
-              <label className="flex items-center gap-2 text-[13px] text-[#374151]">
-                <input type="checkbox" className="rounded border-[#d1d5db]" />
+          <div className="flex items-center justify-between border-b border-[#edf0f2] px-3 py-2">
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-1 text-[12px] text-[#374151]">
+                <input type="checkbox" className="w-[12px] h-[12px] rounded border-[#d1d5db]" />
                 Select All
               </label>
 
-              <span className="text-[13px] text-[#6b7280]">2,845 claims selected</span>
+              <span className="text-[10px] text-[#6b7280]">2,845 claims selected</span>
 
               <button
                 type="button"
-                className="rounded-lg bg-[#16a34a] px-4 py-2 text-xs font-medium text-white hover:bg-[#15803d]"
+                className="rounded-lg bg-[#16a34a] px-3 py-[2px] text-[10px] font-medium text-white hover:bg-[#15803d]"
               >
                 Process All Claims
               </button>
 
               <button
                 type="button"
-                className="rounded-lg border border-[#e5e7eb] px-4 py-2 text-xs font-medium text-[#374151] hover:bg-[#f9fafb]"
+                className="rounded-lg border border-[#e5e7eb] px-3 py-[6px] text-[10px] font-medium text-[#374151] hover:bg-[#f9fafb]"
               >
                 Mark as Reviewed
               </button>
@@ -392,7 +436,7 @@ function AutoClaims() {
 
             <button
               type="button"
-              className="rounded-lg border border-[#e5e7eb] px-4 py-2 text-xs font-medium text-[#374151] hover:bg-[#f9fafb]"
+              className="rounded-lg border border-[#e5e7eb] px-3 py-[2px] text-[10px] font-medium text-[#374151] hover:bg-[#f9fafb]"
             >
               Export
             </button>
@@ -400,7 +444,7 @@ function AutoClaims() {
 
           {/* Table */}
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1400px]">
+            <table className="w-full min-w-[1200px]">
               <thead>
                 <tr className="border-b border-[#edf0f2] bg-[#fafafa]">
                   {[
@@ -418,7 +462,7 @@ function AutoClaims() {
                   ].map((head, index) => (
                     <th
                       key={index}
-                      className="whitespace-nowrap px-5 py-4 text-left text-[13px] font-semibold text-dark"
+                      className="whitespace-nowrap px-3 py-2 text-left text-[11px] font-semibold text-[#374151]"
                     >
                       {head}
                     </th>
@@ -439,6 +483,7 @@ function AutoClaims() {
                     status: 'Approved',
                     payout: '₹1,299.00',
                   },
+
                   {
                     sku: 'TS-KT-WHT',
                     order: '405-2112845-7789123',
@@ -450,6 +495,7 @@ function AutoClaims() {
                     status: 'Pending',
                     payout: '₹849.00',
                   },
+
                   {
                     sku: 'NL-SIZZ-AT',
                     order: '408-3123456-8891024',
@@ -461,6 +507,7 @@ function AutoClaims() {
                     status: 'Under Review',
                     payout: '₹1,599.00',
                   },
+
                   {
                     sku: 'COMB-AT-SGL',
                     order: '407-4123456-9912035',
@@ -474,33 +521,35 @@ function AutoClaims() {
                   },
                 ].map((row, index) => (
                   <tr key={index} className="border-b border-[#f1f5f9] hover:bg-[#fafafa]">
-                    <td className="px-5 py-4">
-                      <label className="flex items-center">
-                        <input type="checkbox" aria-label="Select claim" className="rounded border-[#d1d5db]" />
-                      </label>
+                    <td className="px-3 py-2">
+                      <input
+                        type="checkbox"
+                        aria-label="Select claim"
+                        className="w-[12px] h-[12px] rounded border-[#d1d5db]"
+                      />
                     </td>
 
-                    <td className="whitespace-nowrap px-5 py-4 text-[13px] font-medium text-[#111827]">{row.sku}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-[11px] font-medium text-[#111827]">{row.sku}</td>
 
-                    <td className="whitespace-nowrap px-5 py-4 text-[13px] text-[#374151]">{row.order}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-[11px] text-[#374151]">{row.order}</td>
 
-                    <td className="whitespace-nowrap px-5 py-4 text-[13px] text-[#374151]">{row.marketplace}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-[11px] text-[#374151]">{row.marketplace}</td>
 
-                    <td className="px-5 py-4">
-                      <span className="rounded-full bg-[#eef2ff] px-3 py-1 text-[11px] font-medium text-[#4f46e5]">
+                    <td className="px-3 py-2">
+                      <span className="rounded-full bg-[#eef2ff] px-2 py-[3px] text-[10px] font-medium text-[#4f46e5]">
                         {row.type}
                       </span>
                     </td>
 
-                    <td className="whitespace-nowrap px-5 py-4 text-[13px] text-[#374151]">{row.reason}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-[11px] text-[#374151]">{row.reason}</td>
 
-                    <td className="whitespace-nowrap px-5 py-4 text-[13px] text-[#374151]">{row.date}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-[11px] text-[#374151]">{row.date}</td>
 
-                    <td className="whitespace-nowrap px-5 py-4 text-[13px] font-medium text-[#111827]">{row.amount}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-[11px] font-medium text-[#111827]">{row.amount}</td>
 
-                    <td className="px-5 py-4">
+                    <td className="px-3 py-2">
                       <span
-                        className={`rounded-full px-3 py-1 text-[11px] font-medium ${
+                        className={`rounded-full px-2 py-[3px] text-[10px] font-medium ${
                           row.status === 'Approved'
                             ? 'bg-[#ecfdf3] text-[#16a34a]'
                             : row.status === 'Pending'
@@ -514,10 +563,10 @@ function AutoClaims() {
                       </span>
                     </td>
 
-                    <td className="whitespace-nowrap px-5 py-4 text-[13px] font-medium text-[#111827]">{row.payout}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-[11px] font-medium text-[#111827]">{row.payout}</td>
 
-                    <td className="px-5 py-4">
-                      <button type="button" className="text-[#94a3b8] hover:text-[#111827]">
+                    <td className="px-3 py-2">
+                      <button type="button" className="text-[#94a3b8] hover:text-[#111827] text-[14px]">
                         ⋮
                       </button>
                     </td>
@@ -528,15 +577,15 @@ function AutoClaims() {
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between px-5 py-4">
-            <p className="text-[12px] text-[#6b7280]">Showing 1 to 4 of 2,845 claims</p>
+          <div className="flex items-center justify-between px-3 py-2">
+            <p className="text-[10px] text-[#6b7280]">Showing 1 to 4 of 2,845 claims</p>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               {[1, 2, 3, 4].map((page) => (
                 <button
                   type="button"
                   key={page}
-                  className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm ${
+                  className={`flex h-6 w-6 items-center justify-center rounded-md text-[10px] ${
                     page === 1 ? 'bg-[#16a34a] text-white' : 'border border-[#e5e7eb] text-[#374151]'
                   }`}
                 >

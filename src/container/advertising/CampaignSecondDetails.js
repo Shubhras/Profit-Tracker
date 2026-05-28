@@ -61,7 +61,7 @@ function CampaignSecondDetails() {
           <img
             src={record.image}
             alt="product"
-            className="w-[40px] h-[40px] rounded-xl object-cover border border-[#e5e7eb]"
+            className="w-[35px] h-[35px] rounded-xl object-cover border border-[#e5e7eb]"
           />
         </div>
       ),
@@ -176,7 +176,7 @@ function CampaignSecondDetails() {
               <button
                 type="button"
                 onClick={() => navigate(-1)}
-                className="w-[42px] h-[42px] rounded-xl border border-[#dbe1e8]
+                className="w-[35px] h-[35px] rounded-xl border border-[#dbe1e8]
                 bg-white flex items-center justify-center hover:bg-[#f8fafc]
                 transition-all duration-200 shadow-sm"
               >
@@ -185,7 +185,7 @@ function CampaignSecondDetails() {
 
               {/* Title */}
               <div className="flex flex-col">
-                <h1 className="text-[24px] font-semibold text-[#111827] leading-[30px] mb-1">Ad Products Details</h1>
+                <h1 className="text-[18px] font-semibold text-[#111827] leading-[30px] mb-1">Ad Products Details</h1>
 
                 <div className="flex items-center gap-2 flex-wrap">
                   <span
@@ -195,7 +195,7 @@ function CampaignSecondDetails() {
                     Ad Group Name:
                   </span>
 
-                  <div className="min-w-[120px] h-[28px] px-3 rounded-full bg-[#eff6ff] border border-[#bfdbfe] text-[#2563eb] text-[12px] font-semibold flex items-center justify-center">
+                  <div className="min-w-[120px] h-[23px] px-2 rounded-full bg-[#eff6ff] border border-[#bfdbfe] text-[#2563eb] text-[12px] font-semibold flex items-center justify-center">
                     {adGroupName || 'Campaign Details'}
                   </div>
                 </div>
@@ -206,7 +206,7 @@ function CampaignSecondDetails() {
             <div className="flex items-center gap-3">
               <Button
                 icon={<FilterOutlined />}
-                className="!h-[40px] !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium !flex !items-center !justify-center"
+                className="!h-[30px] text-[13px] !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium !flex !items-center !justify-center"
               >
                 Filters
               </Button>
@@ -214,7 +214,7 @@ function CampaignSecondDetails() {
               <Button
                 type="primary"
                 icon={<ExportOutlined />}
-                className="!h-[40px] !rounded-xl !bg-[#2563eb] !font-medium !flex !items-center !justify-center"
+                className="!h-[30px] text-[13px] !rounded-xl !bg-[#2563eb] !font-medium !flex !items-center !justify-center"
               >
                 Export
               </Button>
@@ -245,6 +245,13 @@ function CampaignSecondDetails() {
             scroll={{ x: 900 }}
             size="middle"
             bordered={false}
+            className="
+    [&_.ant-table-thead>tr>th]:!text-[12px]
+    [&_.ant-table-thead>tr>th]:!font-semibold
+    [&_.ant-table-tbody>tr>td]:!text-[12px]
+    [&_.ant-table-cell]:!px-2
+    [&_.ant-table-cell]:!py-2
+  "
           />
         </div>
       </div>

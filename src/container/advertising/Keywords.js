@@ -88,11 +88,12 @@ function Keywords() {
               setSelectedRowKeys([]);
             }
           }}
-          className="w-[15px] h-[15px] cursor-pointer accent-[#2563eb]"
+          className="w-[13px] h-[13px] cursor-pointer accent-[#2563eb]"
         />
       ),
       dataIndex: 'checkbox',
       width: 60,
+      align: 'center',
       fixed: 'left',
       render: (_, record) => (
         <input
@@ -105,7 +106,7 @@ function Keywords() {
               setSelectedRowKeys(selectedRowKeys.filter((key) => key !== record.key));
             }
           }}
-          className="w-[15px] h-[15px] cursor-pointer accent-[#2563eb]"
+          className="w-[13px] h-[13px] cursor-pointer accent-[#2563eb]"
         />
       ),
     },
@@ -131,10 +132,10 @@ function Keywords() {
       title: 'Keyword',
       dataIndex: 'keywordText',
       align: 'center',
-      width: 100,
+      width: 70,
       ellipsis: true,
       render: (v) => (
-        <span className="font-medium text-[#111827] block truncate" style={{ maxWidth: '220px' }}>
+        <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
           {v}
         </span>
       ),
@@ -144,7 +145,7 @@ function Keywords() {
       title: 'Match Type',
       dataIndex: 'matchType',
       align: 'center',
-      width: 100,
+      width: 70,
       ellipsis: true,
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
@@ -159,10 +160,10 @@ function Keywords() {
       title: 'State',
       dataIndex: 'state',
       align: 'center',
-      width: 100,
+      width: 70,
       ellipsis: true,
       render: (v) => (
-        <Tag color={v === 'ENABLED' ? 'success' : 'error'} className="!px-3 !py-[3px] !rounded-full">
+        <Tag color={v === 'ENABLED' ? 'success' : 'error'} className="!px-2 !py-[1px] text-[10px] !rounded-full">
           {v}
         </Tag>
       ),
@@ -172,7 +173,8 @@ function Keywords() {
       title: 'Bid',
       dataIndex: 'bid',
       align: 'center',
-      width: 100,
+      width: 70,
+      sorter: (a, b) => Number(a.bid || 0) - Number(b.bid || 0),
       ellipsis: true,
       render: (v) => (
         <button
@@ -192,7 +194,7 @@ function Keywords() {
       title: 'Campaign Name',
       dataIndex: 'campaignName',
       align: 'center',
-      width: 100,
+      width: 70,
       ellipsis: true,
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
@@ -207,7 +209,7 @@ function Keywords() {
       title: 'Ad Group Name',
       dataIndex: 'adGroupName',
       align: 'center',
-      width: 100,
+      width: 70,
       ellipsis: true,
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
@@ -222,7 +224,7 @@ function Keywords() {
       title: 'Country Code',
       dataIndex: 'countryCode',
       align: 'center',
-      width: 100,
+      width: 70,
       ellipsis: true,
     },
 
@@ -230,14 +232,14 @@ function Keywords() {
       title: 'Currency Code',
       dataIndex: 'currencyCode',
       align: 'center',
-      width: 100,
+      width: 70,
       ellipsis: true,
     },
     {
       title: 'Impressions',
       dataIndex: 'impressions',
       align: 'center',
-      width: 100,
+      width: 70,
       ellipsis: true,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
@@ -246,8 +248,7 @@ function Keywords() {
       title: 'Clicks',
       dataIndex: 'clicks',
       align: 'center',
-      width: 100,
-      ellipsis: true,
+      width: 70,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -255,8 +256,8 @@ function Keywords() {
       title: 'Cost',
       dataIndex: 'cost',
       align: 'center',
-      width: 100,
-      ellipsis: true,
+      width: 70,
+      sorter: (a, b) => Number(a.cost || 0) - Number(b.cost || 0),
       render: (v) => <span className="font-medium text-[#dc2626]">₹{v ?? 0}</span>,
     },
 
@@ -264,8 +265,8 @@ function Keywords() {
       title: 'Sales',
       dataIndex: 'sales',
       align: 'center',
-      width: 100,
-      ellipsis: true,
+      width: 70,
+      sorter: (a, b) => Number(a.sales || 0) - Number(b.sales || 0),
       render: (v) => <span className="font-medium text-[#16a34a]">₹{v ?? 0}</span>,
     },
 
@@ -273,8 +274,8 @@ function Keywords() {
       title: 'Orders',
       dataIndex: 'orders',
       align: 'center',
-      width: 100,
-      ellipsis: true,
+      sorter: (a, b) => Number(a.orders || 0) - Number(b.orders || 0),
+      width: 70,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -282,8 +283,8 @@ function Keywords() {
       title: 'Units',
       dataIndex: 'units',
       align: 'center',
-      width: 100,
-      ellipsis: true,
+      width: 70,
+      sorter: (a, b) => Number(a.units || 0) - Number(b.units || 0),
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -291,8 +292,8 @@ function Keywords() {
       title: 'ACOS',
       dataIndex: 'acos',
       align: 'center',
-      width: 100,
-      ellipsis: true,
+      width: 70,
+      sorter: (a, b) => Number(a.acos || 0) - Number(b.acos || 0),
       render: (v) => (
         <Tag className="!px-3 !py-[3px] !rounded-full" color={v > 100 ? 'error' : 'processing'}>
           {v ? `${v.toFixed(2)}%` : '-'}
@@ -304,8 +305,8 @@ function Keywords() {
       title: 'ROAS',
       dataIndex: 'roas',
       align: 'center',
-      width: 100,
-      ellipsis: true,
+      width: 70,
+      sorter: (a, b) => Number(a.roas || 0) - Number(b.raos || 0),
       render: (v) => (
         <Tag className="!px-3 !py-[3px] !rounded-full" color={v >= 1 ? 'success' : 'warning'}>
           {v ? v.toFixed(2) : '-'}
@@ -319,10 +320,10 @@ function Keywords() {
       <div className="p-2">
         <div className="mt-3 mb-3 rounded-2xl border border-[#e5e7eb] bg-white shadow-sm overflow-visible">
           {/* Header */}
-          <div className="border-b border-[#edf0f2] px-6 py-4">
+          <div className="border-b border-[#edf0f2] px-3 py-3">
             {/* TOP CONTENT */}
             <div>
-              <h1 className="text-[23px] font-semibold text-[#111827] mb-1">Keywords Performance</h1>
+              <h1 className="text-[19px] font-semibold text-[#111827] mb-1">Keywords Performance</h1>
 
               <p className="mt-1 text-sm text-[#6b7280]">
                 Track keyword bids, targeting, ad group performance and marketplace activity.
@@ -336,7 +337,7 @@ function Keywords() {
                   placeholder="Search keywords..."
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
-                  className="w-full h-[42px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm transition-all duration-200 focus:border-[#dbe1e8] hover:border-[#dbe1e8]"
+                  className="w-full h-[30px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm transition-all duration-200 focus:border-[#dbe1e8] hover:border-[#dbe1e8]"
                 />
 
                 <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
@@ -347,7 +348,7 @@ function Keywords() {
                   <Button
                     icon={<FilterOutlined />}
                     onClick={() => setShowFilters(!showFilters)}
-                    className={`!h-[42px] !px-5 !rounded-xl !font-medium !shadow-sm !flex !items-center !justify-center transition-all
+                    className={`!h-[30px] text-[13px] !px-5 !rounded-xl !font-medium !shadow-sm !flex !items-center !justify-center transition-all
       ${
         showFilters
           ? '!border-[#2563eb] !text-[#2563eb] !bg-[#eff6ff]'
@@ -450,7 +451,7 @@ function Keywords() {
                 <Button
                   type="primary"
                   icon={<ExportOutlined />}
-                  className="!h-[42px] !px-5 !rounded-xl !bg-[#2563eb] !border-[#2563eb] !font-medium hover:!bg-[#1d4ed8] hover:!border-[#1d4ed8] !shadow-sm !flex !items-center !justify-center"
+                  className="!h-[30px] text-[13px] !px-5 !rounded-xl !bg-[#2563eb] !border-[#2563eb] !font-medium hover:!bg-[#1d4ed8] hover:!border-[#1d4ed8] !shadow-sm !flex !items-center !justify-center"
                 >
                   Export
                 </Button>
@@ -478,9 +479,16 @@ function Keywords() {
                 pageSize: pag.pageSize,
               });
             }}
-            scroll={{ x: 'max-content' }}
+            scroll={{ x: 1200 }}
             size="middle"
             bordered={false}
+            className="
+    [&_.ant-table-thead>tr>th]:!text-[12px]
+    [&_.ant-table-thead>tr>th]:!font-semibold
+    [&_.ant-table-tbody>tr>td]:!text-[12px]
+    [&_.ant-table-cell]:!px-2
+    [&_.ant-table-cell]:!py-2
+  "
           />
           {/* </div> */}
         </div>

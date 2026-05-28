@@ -8,8 +8,8 @@ import {
   SafetyCertificateOutlined,
   CheckCircleOutlined,
   ArrowRightOutlined,
-  FileSearchOutlined,
-  CloseCircleOutlined,
+  // FileSearchOutlined,
+  // CloseCircleOutlined,
 } from '@ant-design/icons';
 import Amazon from '../../assets/icons/amazon.svg';
 import Flipkart from '../../assets/icons/flipkart.svg';
@@ -158,55 +158,55 @@ function DailtyOperations() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] p-5">
+    <div className="min-h-screen bg-[#f8fafc] p-4 text-[12px]">
       {/* HEADER */}
-      <div className="mb-5 flex items-start justify-between">
+      <div className="mb-4 flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-[24px] font-semibold text-[#111827]">Daily Operations Dashboard</h1>
+            <h1 className="text-[22px] font-semibold text-[#111827]">Daily Operations Dashboard</h1>
 
-            <InfoCircleOutlined className="text-[#9ca3af] mb-2" />
+            <InfoCircleOutlined className="mb-[1px] text-[12px] text-[#9ca3af]" />
           </div>
 
-          <p className="text-sm text-[#6b7280]">
+          <p className="text-[11px] leading-[17px] text-[#6b7280]">
             Process orders, sync inventory and manage auto claims across all marketplaces in one place.
           </p>
         </div>
 
-        <div className="flex items-center gap-5">
-          <div className="flex items-center gap-2 text-xs text-[#6b7280]">
-            <ClockCircleOutlined />
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-[10px] text-[#6b7280]">
+            <ClockCircleOutlined className="text-[10px]" />
 
             <span>Last Updated: 31 May 2026, 09:00 AM</span>
           </div>
 
           <button
             type="button"
-            className="flex items-center gap-2 rounded-xl bg-[#16a34a] px-5 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-[#15803d]"
+            className="flex items-center gap-2 rounded-xl bg-[#16a34a] px-4 py-2 text-[11px] font-medium text-white shadow-sm transition-all duration-200 hover:bg-[#15803d]"
           >
-            <ArrowRightOutlined />
-            Run Daily Operations (All in One)
+            <ArrowRightOutlined className="text-[10px]" />
+            Run Daily Operations
           </button>
         </div>
       </div>
 
       {/* TOP CARDS */}
-      <div className="grid grid-cols-12 gap-4">
+      <div className="grid grid-cols-12 gap-3">
         {/* SUMMARY CARDS */}
         {summaryCards.map((item, index) => (
           <div
             key={index}
-            className="col-span-3 flex min-h-[235px] flex-col rounded-2xl border border-[#e5e7eb] p-5"
+            className="col-span-3 flex min-h-[165px] flex-col rounded-2xl border border-[#e5e7eb] p-3"
             style={{
               background: item.bg,
             }}
           >
-            {/* TOP CONTENT */}
+            {/* TOP */}
             <div className="flex-1">
-              <div className="flex items-start gap-4">
-                {/* LEFT ICON */}
+              <div className="flex items-start gap-3">
+                {/* ICON */}
                 <div
-                  className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl text-[26px]"
+                  className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl text-[17px]"
                   style={{
                     background: item.bg,
                     color: item.color,
@@ -215,79 +215,75 @@ function DailtyOperations() {
                   {item.icon}
                 </div>
 
-                {/* RIGHT CONTENT */}
+                {/* CONTENT */}
                 <div className="flex flex-1 items-start justify-between">
                   <div>
-                    {/* TITLE */}
-                    <p className="text-[15px] font-semibold text-[#374151]">{item.title}</p>
+                    <p className="text-[11px] font-semibold leading-[15px] text-[#374151]">{item.title}</p>
 
-                    {/* VALUE */}
-                    <h2 className="mt-2 text-[28px] font-bold leading-none text-[#111827]">{item.value}</h2>
+                    <h2 className="mt-[2px] text-[21px] font-bold leading-none text-[#111827]">{item.value}</h2>
 
-                    {/* SUB TEXT */}
-                    <p className="mt-2 text-[13px] text-[#9ca3af]">{item.sub}</p>
+                    <p className="mt-[1px] text-[10px] text-[#9ca3af]">{item.sub}</p>
 
-                    {/* GROWTH */}
-                    <p className="mt-3 text-[12px] font-semibold text-[#16a34a]">{item.growth}</p>
+                    <p className="mt-2 text-[10px] font-semibold text-[#16a34a]">{item.growth}</p>
                   </div>
 
-                  {/* TOP RIGHT ICON */}
+                  {/* STATUS ICON */}
                   <div
-                    className="flex h-8 w-8 items-center justify-center rounded-full"
+                    className="flex h-7 w-7 items-center justify-center rounded-full"
                     style={{
                       background: item.bg,
                       color: item.color,
                     }}
                   >
-                    <CheckCircleOutlined className="text-[14px]" />
+                    <CheckCircleOutlined className="text-[11px]" />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* BOTTOM LINK */}
+            {/* LINK */}
             <button
               type="button"
-              className="mt-auto flex items-center gap-2 text-[14px] font-semibold"
+              className="mt-2 flex items-center gap-1 text-[11px] font-semibold"
               style={{
                 color: item.color,
               }}
             >
               {item.link}
 
-              <ArrowRightOutlined className="text-[12px]" />
+              <ArrowRightOutlined className="text-[10px]" />
             </button>
           </div>
         ))}
 
         {/* OPERATION STATUS */}
-        <div className="col-span-3 flex min-h-[235px] flex-col rounded-2xl border border-[#e5e7eb] bg-white p-5">
-          {/* TOP CONTENT */}
+        <div className="col-span-3 flex min-h-[165px] flex-col rounded-2xl border border-[#e5e7eb] bg-white p-3">
+          {/* TOP */}
           <div className="flex-1">
             {/* HEADER */}
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-[16px] font-semibold text-[#92400e]">Operations Status</h2>
+                <h2 className="text-[13px] font-semibold text-[#92400e]">Operations Status</h2>
 
-                <h3 className="mt-2 text-[28px] font-bold text-[#16a34a]">Completed</h3>
+                <h3 className="mt-1 text-[22px] font-bold text-[#16a34a]">Completed</h3>
               </div>
 
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff7ed] text-[#f97316]">
-                <CheckCircleOutlined className="text-[18px]" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#fff7ed] text-[#f97316]">
+                <CheckCircleOutlined className="text-[14px]" />
               </div>
             </div>
 
             {/* STATUS LIST */}
-            <div className="space-y-3">
+            <div className="mt-3 space-y-2">
               {['Order Processing', 'Inventory Sync', 'Auto Claims'].map((item, index) => (
                 <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <CheckCircleOutlined className="text-[#16a34a]" />
+                  <div className="flex items-center gap-2">
+                    <CheckCircleOutlined className="text-[11px] text-[#16a34a]" />
 
-                    <span className="text-[13px] font-medium text-[#374151]">{item}</span>
+                    <span className="text-[11px] font-medium text-[#374151]">{item}</span>
                   </div>
 
-                  <span className="rounded-md border border-[#dcfce7] bg-[#f0fdf4] px-3 py-[5px] text-[11px] font-semibold text-[#16a34a]">
+                  <span className="rounded-md border border-[#dcfce7] bg-[#f0fdf4] px-2 py-[3px] text-[9px] font-semibold text-[#16a34a]">
                     Completed
                   </span>
                 </div>
@@ -295,21 +291,21 @@ function DailtyOperations() {
             </div>
           </div>
 
-          {/* FOOTER BUTTON */}
-          <button type="button" className="mt-auto flex items-center gap-2 text-[13px] font-semibold text-[#f97316]">
+          {/* FOOTER */}
+          <button type="button" className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-[#f97316]">
             View Logs
-            <ArrowRightOutlined className="text-[12px]" />
+            <ArrowRightOutlined className="text-[10px]" />
           </button>
         </div>
       </div>
 
       {/* TABS */}
-      <div className="mt-6 flex items-center gap-8 border-b border-[#e5e7eb]">
+      <div className="mt-5 flex items-center gap-6 border-b border-[#e5e7eb]">
         {['Order', 'Inventory Sync', 'Auto Claims'].map((item, index) => (
           <button
             type="button"
             key={index}
-            className={`border-b-2 pb-3 text-sm font-medium ${
+            className={`border-b-2 pb-2 text-[11px] font-medium ${
               index === 0 ? 'border-[#16a34a] text-[#16a34a]' : 'border-transparent text-[#6b7280]'
             }`}
           >
@@ -319,15 +315,17 @@ function DailtyOperations() {
       </div>
 
       {/* TABLE SECTION */}
-      <div className="mt-5 grid grid-cols-12 gap-4">
+      <div className="mt-4 grid grid-cols-12 gap-3">
         {/* ORDER TABLE */}
-        <div className="col-span-6 rounded-2xl border border-[#e5e7eb] bg-white p-5">
-          <div className="mb-5 flex items-center justify-between">
+        <div className="col-span-6 rounded-2xl border border-[#e5e7eb] bg-white p-4">
+          <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h2 className="text-[16px] font-semibold text-[#111827]">Order Summary by Marketplace</h2>
-              <InfoCircleOutlined className="text-[#9ca3af] mb-2" />
+              <h2 className="text-[13px] font-semibold text-[#111827]">Order Summary by Marketplace</h2>
+
+              <InfoCircleOutlined className="text-[11px] text-[#9ca3af]" />
             </div>
-            <select className="rounded-lg border border-[#e5e7eb] px-3 py-2 text-sm outline-none">
+
+            <select className="rounded-lg border border-[#e5e7eb] px-2 py-1 text-[10px] outline-none">
               <option>Today</option>
             </select>
           </div>
@@ -336,9 +334,9 @@ function DailtyOperations() {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-[#f3f4f6]">
-                  {['Marketplace', 'New Orders', 'Processed', 'Shipped', 'Cancelled', 'Pending', 'Total Orders'].map(
+                  {['Marketplace', 'New', 'Processed', 'Shipped', 'Cancelled', 'Pending', 'Total'].map(
                     (head, index) => (
-                      <th key={index} className="pb-3 text-left text-[11px] font-semibold text-[#6b7280]">
+                      <th key={index} className="pb-2 text-left text-[10px] font-semibold text-[#6b7280]">
                         {head}
                       </th>
                     ),
@@ -349,46 +347,47 @@ function DailtyOperations() {
               <tbody>
                 {orderTable.map((row, index) => (
                   <tr key={index} className="border-b border-[#f9fafb]">
-                    <td className="py-4">
-                      <div className="flex items-center gap-3">
-                        <img src={row.logo} alt={row.marketplace} className="h-5 w-5 object-contain" />
+                    <td className="py-3">
+                      <div className="flex items-center gap-2">
+                        <img src={row.logo} alt={row.marketplace} className="h-4 w-4 object-contain" />
 
-                        <span className="text-sm font-medium text-[#111827]">{row.marketplace}</span>
+                        <span className="text-[11px] font-medium text-[#111827]">{row.marketplace}</span>
                       </div>
                     </td>
 
-                    <td className="text-sm text-[#374151]">{row.newOrders}</td>
+                    <td className="text-[11px] text-[#374151]">{row.newOrders}</td>
 
-                    <td className="text-sm text-[#374151]">{row.processed}</td>
+                    <td className="text-[11px] text-[#374151]">{row.processed}</td>
 
-                    <td className="text-sm text-[#374151]">{row.shipped}</td>
+                    <td className="text-[11px] text-[#374151]">{row.shipped}</td>
 
-                    <td className="text-sm text-[#374151]">{row.cancelled}</td>
+                    <td className="text-[11px] text-[#374151]">{row.cancelled}</td>
 
-                    <td className="text-sm text-[#374151]">{row.pending}</td>
+                    <td className="text-[11px] text-[#374151]">{row.pending}</td>
 
-                    <td className="text-sm font-semibold text-[#111827]">{row.total}</td>
+                    <td className="text-[11px] font-semibold text-[#111827]">{row.total}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <button type="button" className="mt-5 flex items-center gap-2 text-sm font-medium text-[#2563eb]">
+          <button type="button" className="mt-4 flex items-center gap-1 text-[11px] font-medium text-[#2563eb]">
             View all orders
-            <ArrowRightOutlined />
+            <ArrowRightOutlined className="text-[10px]" />
           </button>
         </div>
 
         {/* INVENTORY TABLE */}
-        <div className="col-span-6 rounded-2xl border border-[#e5e7eb] bg-white p-5">
-          <div className="mb-5 flex items-center justify-between">
+        <div className="col-span-6 rounded-2xl border border-[#e5e7eb] bg-white p-4">
+          <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h2 className="text-[16px] font-semibold text-[#111827]">Inventory Sync Summary by Marketplace</h2>
-              <InfoCircleOutlined className="text-[#9ca3af] mb-2" />
+              <h2 className="text-[13px] font-semibold text-[#111827]">Inventory Sync Summary</h2>
+
+              <InfoCircleOutlined className="text-[11px] text-[#9ca3af]" />
             </div>
 
-            <select className="rounded-lg border border-[#e5e7eb] px-3 py-2 text-sm outline-none">
+            <select className="rounded-lg border border-[#e5e7eb] px-2 py-1 text-[10px] outline-none">
               <option>Today</option>
             </select>
           </div>
@@ -397,9 +396,9 @@ function DailtyOperations() {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-[#f3f4f6]">
-                  {['Marketplace', 'Total SKUs', 'Updated', 'Success', 'Failed', 'Not Changed', 'Last Sync'].map(
+                  {['Marketplace', 'Total', 'Updated', 'Success', 'Failed', 'Not Changed', 'Last Sync'].map(
                     (head, index) => (
-                      <th key={index} className="pb-3 text-left text-[11px] font-semibold text-[#6b7280]">
+                      <th key={index} className="pb-2 text-left text-[10px] font-semibold text-[#6b7280]">
                         {head}
                       </th>
                     ),
@@ -410,246 +409,36 @@ function DailtyOperations() {
               <tbody>
                 {inventoryTable.map((row, index) => (
                   <tr key={index} className="border-b border-[#f9fafb]">
-                    <td className="py-4">
-                      <div className="flex items-center gap-3">
-                        <img src={row.logo} alt={row.marketplace} className="h-5 w-5 object-contain" />
+                    <td className="py-3">
+                      <div className="flex items-center gap-2">
+                        <img src={row.logo} alt={row.marketplace} className="h-4 w-4 object-contain" />
 
-                        <span className="text-sm font-medium text-[#111827]">{row.marketplace}</span>
+                        <span className="text-[11px] font-medium text-[#111827]">{row.marketplace}</span>
                       </div>
                     </td>
 
-                    <td className="text-sm text-[#374151]">{row.totalSkus}</td>
+                    <td className="text-[11px] text-[#374151]">{row.totalSkus}</td>
 
-                    <td className="text-sm text-[#374151]">{row.updated}</td>
+                    <td className="text-[11px] text-[#374151]">{row.updated}</td>
 
-                    <td className="text-sm font-medium text-[#16a34a]">{row.success}</td>
+                    <td className="text-[11px] font-medium text-[#16a34a]">{row.success}</td>
 
-                    <td className="text-sm text-[#ef4444]">{row.failed}</td>
+                    <td className="text-[11px] text-[#ef4444]">{row.failed}</td>
 
-                    <td className="text-sm text-[#374151]">{row.notChanged}</td>
+                    <td className="text-[11px] text-[#374151]">{row.notChanged}</td>
 
-                    <td className="text-sm text-[#374151]">{row.time}</td>
+                    <td className="text-[10px] text-[#6b7280]">{row.time}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <button type="button" className="mt-5 flex items-center gap-2 text-sm font-medium text-[#2563eb]">
+          <button type="button" className="mt-4 flex items-center gap-1 text-[11px] font-medium text-[#2563eb]">
             View inventory sync logs
-            <ArrowRightOutlined />
+            <ArrowRightOutlined className="text-[10px]" />
           </button>
         </div>
-      </div>
-      {/* THIRD ROW - AUTO CLAIMS SUMMARY */}
-      <div className="mt-5 rounded-2xl border border-[#e5e7eb] bg-white p-5">
-        {/* HEADER */}
-        <div className="mb-2 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h2 className="text-[16px] font-semibold text-[#111827]">Auto Claims Summary</h2>
-
-            <InfoCircleOutlined className="text-[#9ca3af]" />
-          </div>
-
-          <select className="rounded-lg border border-[#e5e7eb] bg-white px-3 py-2 text-sm outline-none">
-            <option>Today</option>
-          </select>
-        </div>
-
-        {/* TOP SUMMARY BOXES */}
-        <div className="grid grid-cols-4 gap-4">
-          {[
-            {
-              title: 'Total Claims Found',
-              value: '402',
-              growth: '+9.31% vs yesterday',
-              color: '#16a34a',
-              bg: '#ecfdf5',
-              icon: <FileSearchOutlined />,
-            },
-            {
-              title: 'Claims Processed',
-              value: '325',
-              growth: '+6.18% vs yesterday',
-              color: '#2563eb',
-              bg: '#eff6ff',
-              icon: <SafetyCertificateOutlined />,
-            },
-            {
-              title: 'Successful Claims',
-              value: '298',
-              growth: '+7.02% vs yesterday',
-              color: '#f59e0b',
-              bg: '#fff7ed',
-              icon: <CheckCircleOutlined />,
-            },
-            {
-              title: 'Failed Claims',
-              value: '27',
-              growth: '-3.57% vs yesterday',
-              color: '#ef4444',
-              bg: '#fef2f2',
-              icon: <CloseCircleOutlined />,
-            },
-          ].map((item, index) => (
-            <div
-              key={index}
-              className="rounded-xl border border-[#f3f4f6] p-4"
-              style={{
-                background: item.bg,
-              }}
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <p
-                    className="text-[15px] font-semibold"
-                    style={{
-                      color: item.color,
-                    }}
-                  >
-                    {item.title}
-                  </p>
-
-                  <h3
-                    className="mt-2 text-[28px] font-bold leading-none"
-                    style={{
-                      color: item.color,
-                    }}
-                  >
-                    {item.value}
-                  </h3>
-                </div>
-
-                <div
-                  className="flex h-14 w-14 items-center justify-center rounded-full text-[18px]"
-                  style={{
-                    background: item.bg,
-                    color: item.color,
-                  }}
-                >
-                  {item.icon}
-                </div>
-              </div>
-
-              <p
-                className="text-[13px] font-medium"
-                style={{
-                  color: item.color,
-                }}
-              >
-                ↑ {item.growth}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* TABLE */}
-        <div className="mt-5 overflow-x-auto">
-          <table className="w-full border-collapse">
-            {/* TABLE HEAD */}
-            <thead>
-              <tr className="border-b border-[#f3f4f6]">
-                {[
-                  'Marketplace',
-                  'Claims Found',
-                  'Processed',
-                  'Successful',
-                  'Failed',
-                  'Amount Recovered',
-                  'Last Run',
-                  '',
-                ].map((head, index) => (
-                  <th key={index} className="pb-3 text-left text-[13px] font-semibold text-[#111827]">
-                    {head}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-
-            {/* TABLE BODY */}
-            <tbody>
-              {[
-                {
-                  marketplace: 'Amazon',
-                  found: '226',
-                  processed: '182',
-                  success: '168',
-                  failed: '14',
-                  amount: '₹ 45,230.50',
-                },
-                {
-                  marketplace: 'Flipkart',
-                  found: '102',
-                  processed: '84',
-                  success: '76',
-                  failed: '8',
-                  amount: '₹ 18,450.20',
-                },
-                {
-                  marketplace: 'Meesho',
-                  found: '48',
-                  processed: '38',
-                  success: '36',
-                  failed: '2',
-                  amount: '₹ 7,860.75',
-                },
-                {
-                  marketplace: 'Others',
-                  found: '26',
-                  processed: '21',
-                  success: '18',
-                  failed: '3',
-                  amount: '₹ 3,125.30',
-                },
-              ].map((row, index) => (
-                <tr key={index} className="border-b border-[#f9fafb]">
-                  <td className="py-4 text-sm font-medium text-[#111827]">{row.marketplace}</td>
-
-                  <td className="text-sm text-[#374151]">{row.found}</td>
-
-                  <td className="text-sm text-[#374151]">{row.processed}</td>
-
-                  <td className="text-sm font-medium text-[#16a34a]">{row.success}</td>
-
-                  <td className="text-sm text-[#ef4444]">{row.failed}</td>
-
-                  <td className="text-sm font-semibold text-[#111827]">{row.amount}</td>
-
-                  <td className="text-sm text-[#6b7280]">31 May, 08:50 AM</td>
-
-                  <td aria-label="empty-cell">
-                    <div className="h-2 w-2 rounded-full bg-[#10b981]" />
-                  </td>
-                </tr>
-              ))}
-
-              {/* TOTAL ROW */}
-              <tr className="bg-[#fafafa]">
-                <td className="py-4 text-sm font-bold text-[#111827]">Total</td>
-
-                <td className="text-sm font-bold text-[#111827]">402</td>
-
-                <td className="text-sm font-bold text-[#111827]">325</td>
-
-                <td className="text-sm font-bold text-[#16a34a]">298</td>
-
-                <td className="text-sm font-bold text-[#ef4444]">27</td>
-
-                <td className="text-sm font-bold text-[#111827]">₹ 74,666.75</td>
-
-                <td aria-label="empty-cell" />
-
-                <td aria-label="empty-cell" />
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        {/* FOOTER LINK */}
-        <button type="button" className="mt-5 flex items-center gap-2 text-[13px] font-semibold text-[#2563eb]">
-          View all claims
-          <ArrowRightOutlined className="text-[12px]" />
-        </button>
       </div>
     </div>
   );

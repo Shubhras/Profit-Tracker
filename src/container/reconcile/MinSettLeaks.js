@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Row, Col, Card, Table, Empty, Spin } from 'antd';
-import FilterBar from './component/FilterBar';
+// import FilterBar from './component/FilterBar';
 import { getFeeleaksconciliation } from '../../redux/reconcilePayment/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
@@ -80,19 +80,19 @@ export default function MinSettLeaks() {
       breadcrumbName: 'Min. Sett. Leaks',
     },
   ];
-  const handleApply = () => {
-    setLoading(true);
+  // const handleApply = () => {
+  //   setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
-    }, 800);
-  };
-  const handleClear = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-    }, 800);
-  };
+  //   setTimeout(() => {
+  //     setLoading(false);
+  //   }, 800);
+  // };
+  // const handleClear = () => {
+  //   setLoading(true);
+  //   setTimeout(() => {
+  //     setLoading(false);
+  //   }, 800);
+  // };
   return (
     <>
       <PageHeader
@@ -101,7 +101,7 @@ export default function MinSettLeaks() {
         className="flex  justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 sm:pb-[30px] bg-transparent sm:flex-col"
       />
       <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-8 xl:px-[15px] pb-[30px] bg-transparent">
-        <FilterBar onApply={handleApply} onClear={handleClear} />
+        {/* <FilterBar onApply={handleApply} onClear={handleClear} /> */}
         <Spin spinning={loading} size="large">
           <Row gutter={[16, 16]}>
             {/* LEFT TABLE */}

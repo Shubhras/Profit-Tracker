@@ -63,11 +63,12 @@ function AdGroups() {
             }
           }}
           aria-label="Select all"
-          className="w-[15px] h-[15px] cursor-pointer accent-[#2563eb]"
+          className="w-[13px] h-[13px] cursor-pointer accent-[#2563eb]"
         />
       ),
       dataIndex: 'checkbox',
       width: 60,
+      align: 'center',
       fixed: 'left',
 
       render: (_, record) => (
@@ -82,7 +83,7 @@ function AdGroups() {
             }
           }}
           aria-label="Select row"
-          className="w-[15px] h-[15px] cursor-pointer accent-[#2563eb]"
+          className="w-[13px] h-[13px] cursor-pointer accent-[#2563eb]"
         />
       ),
     },
@@ -94,6 +95,7 @@ function AdGroups() {
       width: '70',
       render: (v, record) => (
         <Switch
+          size="small"
           checked={v === 'ENABLED'}
           onChange={(checked) => {
             const updatedState = checked ? 'ENABLED' : 'PAUSED';
@@ -336,10 +338,10 @@ function AdGroups() {
       <div className="p-2">
         <div className="mt-3 mb-3 rounded-2xl border border-[#e5e7eb] bg-white shadow-sm overflow-hidden">
           {/* Header */}
-          <div className="border-b border-[#edf0f2] px-6 py-4">
+          <div className="border-b border-[#edf0f2] px-3 py-3">
             {/* TOP CONTENT */}
             <div>
-              <h1 className="text-[23px] font-semibold text-[#111827] mb-1">Ads Group Performance</h1>
+              <h1 className="text-[19px] font-semibold text-[#111827] mb-1">Ads Group Performance</h1>
 
               <p className="mt-1 text-sm text-[#6b7280]">
                 Track ad group performance, bids, campaigns and marketplace activity.
@@ -351,7 +353,7 @@ function AdGroups() {
                 <input
                   type="text"
                   placeholder="Search ad groups..."
-                  className="w-full h-[42px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none"
+                  className="w-full h-[30px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none"
                 />
 
                 <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
@@ -360,7 +362,7 @@ function AdGroups() {
               <div className="flex items-center gap-3">
                 <Button
                   icon={<FilterOutlined />}
-                  className="!h-[42px] !px-5 !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium hover:!border-[#2563eb] hover:!text-[#2563eb] !shadow-sm !flex !items-center !justify-center"
+                  className="!h-[30px] text-[13px] !px-5 !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium hover:!border-[#2563eb] hover:!text-[#2563eb] !shadow-sm !flex !items-center !justify-center"
                 >
                   Filters
                 </Button>
@@ -368,7 +370,7 @@ function AdGroups() {
                 <Button
                   type="primary"
                   icon={<ExportOutlined />}
-                  className="!h-[42px] !px-5 !rounded-xl !font-medium !flex !items-center !justify-center"
+                  className="!h-[30px] text-[13px] !px-5 !rounded-xl !font-medium !flex !items-center !justify-center"
                 >
                   Export
                 </Button>
@@ -397,9 +399,16 @@ function AdGroups() {
                 pageSize: pag.pageSize,
               });
             }}
-            scroll={{ x: 2000 }}
+            scroll={{ x: 1400 }}
             size="middle"
             bordered={false}
+            className="
+    [&_.ant-table-thead>tr>th]:!text-[12px]
+    [&_.ant-table-thead>tr>th]:!font-semibold
+    [&_.ant-table-tbody>tr>td]:!text-[12px]
+    [&_.ant-table-cell]:!px-2
+    [&_.ant-table-cell]:!py-2
+  "
           />
         </div>
       </div>
