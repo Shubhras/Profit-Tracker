@@ -89,6 +89,8 @@ function RulesAutomation() {
     }
   }, [openRuleModal]);
 
+  const allCampaignIds = campaignOptions.map((item) => item.value);
+
   const dataSource =
     rules?.results?.data?.map((item) => ({
       key: item.id,
@@ -1323,16 +1325,47 @@ function RulesAutomation() {
                 size="large"
                 placeholder="Select campaigns"
                 value={ruleForm.campaign_ids}
-                options={campaignOptions}
-                className="w-full text-[13px]"
-                onChange={(value) =>
-                  setRuleForm({
-                    ...ruleForm,
-                    campaign_ids: value,
-                  })
-                }
                 optionFilterProp="label"
                 showSearch
+                maxTagCount="responsive"
+                className="
+    w-full text-[12px]
+    [&_.ant-select-selector]:min-h-[42px]
+    [&_.ant-select-selector]:py-[4px]
+    [&_.ant-select-selection-item]:h-[24px]
+    [&_.ant-select-selection-item]:rounded-md
+    [&_.ant-select-selection-item]:flex
+    [&_.ant-select-selection-item]:items-center
+    [&_.ant-select-selection-item]:px-2
+    [&_.ant-select-selection-item]:text-[12px]
+    [&_.ant-select-selection-item-content]:flex
+    [&_.ant-select-selection-item-content]:items-center
+    [&_.ant-select-selection-item-content]:leading-none
+    [&_.ant-select-selection-item-remove]:flex
+    [&_.ant-select-selection-item-remove]:items-center
+    [&_.ant-select-selection-item-remove]:ml-1
+    [&_.ant-select-selection-item-remove]:text-[11px]
+  "
+                onChange={(value) => {
+                  if (value.includes('ALL')) {
+                    setRuleForm({
+                      ...ruleForm,
+                      campaign_ids: ruleForm.campaign_ids.length === allCampaignIds.length ? [] : allCampaignIds,
+                    });
+                  } else {
+                    setRuleForm({
+                      ...ruleForm,
+                      campaign_ids: value,
+                    });
+                  }
+                }}
+                options={[
+                  {
+                    label: ruleForm.campaign_ids.length === allCampaignIds.length ? 'Deselect All' : 'Select All',
+                    value: 'ALL',
+                  },
+                  ...campaignOptions,
+                ]}
               />
             </div>
             {/* PERFORMANCE CONDITIONS */}

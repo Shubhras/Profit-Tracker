@@ -65,12 +65,12 @@ function Overview() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f5f7fb] p-6">
+    <div className="min-h-screen bg-[#f5f7fb] p-3">
       {/* Header */}
       {/* Header */}
       <div className="mb-2 flex items-start justify-between">
         <div>
-          <h1 className="mb-1 text-[27px] font-bold text-[#111827]">Advertising Dashboard</h1>
+          <h1 className="mb-1 text-[26px] font-bold text-[#111827]">Advertising Dashboard</h1>
 
           <p className="text-sm text-gray-500">
             Overview of your advertising performance and opportunities to improve.
@@ -78,7 +78,6 @@ function Overview() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Ad Account Dropdown Button */}
           {/* Ad Account */}
           <div className="flex items-center gap-3 text-sm font-medium">
             <span className="text-gray-500">Ad Account:</span>

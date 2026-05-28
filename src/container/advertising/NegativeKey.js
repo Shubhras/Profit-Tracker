@@ -206,22 +206,22 @@ function NegativeKey() {
 
       <div className="flex items-start justify-between mb-2">
         <div>
-          <h1 className="text-[26px] font-semibold text-[#111827] mb-1">Negative Keywords</h1>
+          <h1 className="text-[22px] font-semibold text-[#111827] mb-[2px]">Negative Keywords</h1>
 
-          <p className="text-[13px] text-[#6b7280] max-w-[900px]">
+          <p className="text-[11px] text-[#6b7280] max-w-[900px] leading-[16px]">
             Discover, analyze and manage negative keywords to prevent wasted ad spend and improve campaign performance.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <Button className="!h-[42px] !rounded-xl !border-[#dbe1e8]">
-            <DownloadOutlined />
-            Amazon Search Term Report
+          <Button className="!h-[32px] !rounded-xl !border-[#dbe1e8]">
+            <DownloadOutlined className="!text-[11px]" />
+            <span className="text-[12px]">Amazon Search Term Report</span>
           </Button>
 
-          <Button type="primary" className="!h-[42px] !rounded-xl !bg-[#059669]">
-            <PlusOutlined />
-            Add Negative Keywords
+          <Button type="primary" className="!h-[35px] !rounded-xl !bg-[#059669]">
+            <PlusOutlined className="!text-[11px]" />
+            <span className="text-[12px]">Add Negative Keywords</span>
           </Button>
         </div>
       </div>
@@ -234,31 +234,29 @@ function NegativeKey() {
         bg-white
         rounded-2xl
         border border-[#e5e7eb]
-        px-4 py-3
+        px-3 py-2
         shadow-sm
-        min-h-[118px]
+        min-h-[92px]
         flex flex-col justify-between
       "
           >
             {/* TOP */}
-
             <div>
               <div className="flex items-start justify-between gap-2">
-                <p className="text-[13px] text-[#6b7280] leading-4 line-clamp-2 min-h-[32px] font-medium">
+                <p className="text-[11px] text-[#6b7280] leading-[14px] line-clamp-2 min-h-[20px] font-medium">
                   {item.title}
                 </p>
 
-                <div className={`w-8 h-8 rounded-xl ${item.iconBg} flex items-center justify-center shrink-0`}>
+                <div className={`w-7 h-7 rounded-lg ${item.iconBg} flex items-center justify-center shrink-0`}>
                   {item.icon}
                 </div>
               </div>
 
-              <h2 className="text-[24px] font-bold text-[#111827] leading-none mt-1 whitespace-nowrap">{item.value}</h2>
+              <h2 className="text-[18px] font-bold text-[#111827] leading-none mt-1 whitespace-nowrap">{item.value}</h2>
             </div>
 
             {/* BOTTOM */}
-
-            <p className="text-[11px] text-[#16a34a] leading-4 font-medium mt-1">{item.growth}</p>
+            <p className="text-[10px] text-[#16a34a] leading-3 font-medium mt-1">{item.growth}</p>
           </div>
         ))}
       </div>
@@ -284,19 +282,19 @@ function NegativeKey() {
       {/* FILTERS */}
 
       <div className="flex items-center gap-3 mb-5">
-        <select className="h-[42px] px-4 rounded-xl border border-[#dbe1e8] bg-white text-[14px] outline-none">
+        <select className="h-[35px] px-4 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none">
           <option>All Campaigns</option>
         </select>
 
-        <select className="h-[42px] px-4 rounded-xl border border-[#dbe1e8] bg-white text-[14px] outline-none">
+        <select className="h-[35px] px-4 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none">
           <option>All Ad Groups</option>
         </select>
 
-        <select className="h-[42px] px-4 rounded-xl border border-[#dbe1e8] bg-white text-[14px] outline-none">
+        <select className="h-[35px] px-4 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none">
           <option>All Match Types</option>
         </select>
 
-        <select className="h-[42px] px-4 rounded-xl border border-[#dbe1e8] bg-white text-[14px] outline-none">
+        <select className="h-[35px] px-4 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none">
           <option>01/05/2026 - 31/05/2026</option>
         </select>
 
@@ -323,6 +321,13 @@ function NegativeKey() {
               pageSize: 10,
             }}
             scroll={{ x: 'max-content' }}
+            className="
+    [&_.ant-table-thead>tr>th]:!text-[12px]
+    [&_.ant-table-thead>tr>th]:!font-semibold
+    [&_.ant-table-tbody>tr>td]:!text-[12px]
+    [&_.ant-table-cell]:!px-2
+    [&_.ant-table-cell]:!py-2
+  "
           />
         </div>
 
@@ -331,8 +336,8 @@ function NegativeKey() {
         <div className="space-y-2">
           {/* WASTED TERMS */}
 
-          <div className="bg-white rounded-2xl border border-[#e5e7eb] p-5">
-            <h2 className="text-[17px] font-semibold text-[#111827] mb-4">Top Wasted Search Terms</h2>
+          <div className="bg-white rounded-2xl border border-[#e5e7eb] p-3">
+            <h2 className="text-[14px] font-semibold text-[#111827] mb-2">Top Wasted Search Terms</h2>
 
             {[
               {
@@ -376,27 +381,27 @@ function NegativeKey() {
               </div>
             ))}
 
-            <Button className="w-full !mt-4 !h-[42px] !rounded-xl">View All Search Terms</Button>
+            <Button className="w-full !mt-2 !h-[35px] !rounded-xl">View All Search Terms</Button>
           </div>
 
-          <div className="bg-white rounded-2xl border border-[#e5e7eb] p-5">
-            <h2 className="text-[17px] font-semibold text-[#111827] mb-2">Add Negative Keywords</h2>
+          <div className="bg-white rounded-2xl border border-[#e5e7eb] p-3">
+            <h2 className="text-[14px] font-semibold text-[#111827]">Add Negative Keywords</h2>
 
-            <p className="text-[13px] text-[#6b7280] mb-4">Add multiple keywords or phrases (one per line)</p>
+            <p className="text-[13px] text-[#6b7280] mb-2">Add multiple keywords or phrases (one per line)</p>
 
             <textarea
               rows={5}
               placeholder="Enter negative keywords..."
-              className="w-full rounded-xl border border-[#dbe1e8] p-4 text-[14px] outline-none resize-none"
+              className="w-full rounded-xl border border-[#dbe1e8] p-2 text-[14px] outline-none resize-none"
             />
 
-            <select className="w-full h-[42px] mt-4 px-4 rounded-xl border border-[#dbe1e8] bg-white text-[14px] outline-none">
+            <select className="w-full h-[35px] mt-2 px-4 rounded-xl border border-[#dbe1e8] bg-white text-[14px] outline-none">
               <option>Broad Match</option>
               <option>Phrase Match</option>
               <option>Exact Match</option>
             </select>
 
-            <Button type="primary" className="w-full !mt-4 !h-[44px] !rounded-xl !bg-[#059669]">
+            <Button type="primary" className="w-full !mt-4 !h-[35px] !rounded-xl !bg-[#059669]">
               Add Keywords
             </Button>
           </div>
