@@ -72,6 +72,7 @@ function AdProductsDetails() {
         return (
           <div className="flex justify-center">
             <Switch
+              size="small"
               checked={isActive}
               onChange={(checked) => {
                 console.log('STATUS:', checked ? 'ENABLED' : 'PAUSED', record);
@@ -309,7 +310,7 @@ function AdProductsDetails() {
           onClick={() => {
             navigate(`../AdsProducts/${record.campaignId}`);
           }}
-          className="w-[34px] h-[34px] rounded-full border border-[#dbe1e8] flex items-center justify-center cursor-pointer hover:text-black transition-all duration-200 mx-auto"
+          className="w-[28px] h-[28px] rounded-full border border-[#dbe1e8] flex items-center justify-center cursor-pointer hover:text-black transition-all duration-200 mx-auto"
         >
           <RightOutlined />
         </button>
@@ -323,7 +324,7 @@ function AdProductsDetails() {
         <div className="mt-3 mb-3 rounded-2xl border border-[#e5e7eb] bg-white shadow-sm overflow-hidden">
           {/* Header */}
           {/* Header */}
-          <div className="border-b border-[#edf0f2] px-6 py-4">
+          <div className="border-b border-[#edf0f2] px-3 py-3">
             {/* Top Content */}
             <div className="flex items-start justify-between gap-4">
               {/* LEFT SECTION */}
@@ -332,16 +333,16 @@ function AdProductsDetails() {
                 <button
                   type="button"
                   onClick={() => navigate(-1)}
-                  className="w-[42px] h-[42px] rounded-xl border border-[#dbe1e8] bg-white flex items-center justify-center hover:bg-[#f8fafc] transition-all duration-200 shadow-sm"
+                  className="w-[35px] h-[35px] rounded-xl border border-[#dbe1e8] bg-white flex items-center justify-center hover:bg-[#f8fafc] transition-all duration-200 shadow-sm"
                 >
                   <ArrowLeftOutlined className="text-[#374151]" />
                 </button>
 
                 {/* HEADING */}
                 <div className="flex flex-col">
-                  <h1 className="text-[23px] font-semibold text-[#111827] leading-[30px] mb-1">Campaigns Products</h1>
+                  <h1 className="text-[19px] font-semibold text-[#111827] mb-1">Campaigns Products</h1>
 
-                  <p className="mt-1 text-sm text-[#6b7280]">
+                  <p className="text-sm text-[#6b7280]">
                     Track ad products performance and marketplace level product data.
                   </p>
                 </div>
@@ -355,7 +356,7 @@ function AdProductsDetails() {
                 <input
                   type="text"
                   placeholder="Search ad products..."
-                  className="w-full h-[42px] rounded-xl border bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm transition-all duration-200 focus:border-[#dbe1e8]"
+                  className="w-full h-[30px] rounded-xl border bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm transition-all duration-200 focus:border-[#dbe1e8]"
                 />
 
                 <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
@@ -366,7 +367,7 @@ function AdProductsDetails() {
                 {/* FILTER */}
                 <Button
                   icon={<FilterOutlined />}
-                  className="!h-[42px] !px-5 !rounded-xl border border-[#dbe1e8] bg-white !text-[#111827] !font-medium !flex !items-center !justify-center"
+                  className="!h-[30px] text-[13px] !px-5 !rounded-xl border border-[#dbe1e8] bg-white !text-[#111827] !font-medium !flex !items-center !justify-center"
                 >
                   Filters
                 </Button>
@@ -375,7 +376,7 @@ function AdProductsDetails() {
                 <Button
                   type="primary"
                   icon={<ExportOutlined />}
-                  className="!h-[42px] !px-5 !rounded-xl !font-medium !flex !items-center !justify-center "
+                  className="!h-[30px] text-[13px] !px-5 !rounded-xl !font-medium !flex !items-center !justify-center "
                 >
                   Export
                 </Button>
@@ -407,6 +408,13 @@ function AdProductsDetails() {
             scroll={{ x: 1900 }}
             size="middle"
             bordered={false}
+            className="
+    [&_.ant-table-thead>tr>th]:!text-[12px]
+    [&_.ant-table-thead>tr>th]:!font-semibold
+    [&_.ant-table-tbody>tr>td]:!text-[12px]
+    [&_.ant-table-cell]:!px-2
+    [&_.ant-table-cell]:!py-2
+  "
           />
         </div>
       </div>
