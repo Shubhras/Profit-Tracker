@@ -193,17 +193,23 @@ function MenuItems({ toggleCollapsed }) {
 
     getItem(t('paymentreconcile'), 'reconcile', !topMenu && <UilCreateDashboard />, [
       getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-overview`}>
+          {t('Overview')}
+        </NavLink>,
+        'payment-overview',
+      ),
+      getItem(
         <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-reconcile`}>
-          {t('Payment Reconciliation')}
+          {t('Payment')}
         </NavLink>,
         'payment-reconcile',
       ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/summary`}>
-          {t('summary')}
-        </NavLink>,
-        'reconcile-summary',
-      ),
+      // getItem(
+      //   <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/summary`}>
+      //     {t('summary')}
+      //   </NavLink>,
+      //   'reconcile-summary',
+      // ),
 
       getItem(
         <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/ordersettlement`}>
@@ -227,8 +233,8 @@ function MenuItems({ toggleCollapsed }) {
       ),
 
       getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/paymentLeaks`}>
-          {t('Payment Leaks')}
+        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/allLeaks`}>
+          {t('All Leaks')}
         </NavLink>,
         'payment-leaks',
       ),

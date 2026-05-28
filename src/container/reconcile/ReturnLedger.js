@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux';
 import { Card, Table, Checkbox, Popover, Empty, Pagination, Switch, Spin, Modal, Button, Select } from 'antd';
 import { SettingOutlined, DownloadOutlined, UploadOutlined } from '@ant-design/icons';
 import { ResponsiveContainer, ComposedChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend, Cell } from 'recharts';
-import ReturnFilterBar from './component/ReturnFilterBar';
+// import ReturnFilterBar from './component/ReturnFilterBar';
 import { getReturnSummary } from '../../redux/reconcilePayment/actionCreator';
 
 import { PageHeader } from '../../components/page-headers/page-headers';
@@ -271,19 +271,19 @@ export default function ReturnLedger() {
       </div>
     </div>
   );
-  const handleApply = () => {
-    setLoading(true);
+  // const handleApply = () => {
+  //   setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
-    }, 800);
-  };
-  const handleClear = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-    }, 800);
-  };
+  //   setTimeout(() => {
+  //     setLoading(false);
+  //   }, 800);
+  // };
+  // const handleClear = () => {
+  //   setLoading(true);
+  //   setTimeout(() => {
+  //     setLoading(false);
+  //   }, 800);
+  // };
 
   return (
     <>
@@ -295,7 +295,7 @@ export default function ReturnLedger() {
 
       <main className="min-h-[715px] flex-1 px-8 xl:px-[15px] pb-[30px] bg-transparent space-y-5">
         {/* -------- Filters -------- */}
-        <ReturnFilterBar onApply={handleApply} onClear={handleClear} />
+        {/* <ReturnFilterBar onApply={handleApply} onClear={handleClear} /> */}
         <Spin spinning={loading} size="large">
           <div className="grid grid-cols-2 md:grid-cols-1 gap-5">
             {/* -------- Channel Summary -------- */}

@@ -62,7 +62,7 @@ function AdProducts() {
               setSelectedRowKeys([]);
             }
           }}
-          className="w-[15px] h-[15px] cursor-pointer accent-[#2563eb]"
+          className="w-[13px] h-[13px] cursor-pointer accent-[#2563eb]"
         />
       ),
       dataIndex: 'checkbox',
@@ -81,7 +81,7 @@ function AdProducts() {
               setSelectedRowKeys(selectedRowKeys.filter((key) => key !== record.key));
             }
           }}
-          className="w-[15px] h-[15px] cursor-pointer accent-[#2563eb]"
+          className="w-[13px] h-[13px] cursor-pointer accent-[#2563eb]"
         />
       ),
     },
@@ -96,7 +96,7 @@ function AdProducts() {
           <img
             src={image}
             alt="product"
-            className="w-[50px] h-[50px] rounded-xl object-cover border border-[#e5e7eb] p-[2px] bg-white shadow-sm"
+            className="w-[35px] h-[35px] rounded-xl object-cover border border-[#e5e7eb] p-[2px] bg-white shadow-sm"
           />
         </div>
       ),
@@ -287,7 +287,7 @@ function AdProducts() {
           onClick={() => {
             navigate(`../AdProduct-Details/${record.sku}`);
           }}
-          className="w-[34px] h-[34px] rounded-full border border-[#dbe1e8] flex items-center justify-center cursor-pointer hover:text-black transition-all duration-200 mx-auto"
+          className="w-[28px] h-[28px] rounded-full border border-[#dbe1e8] flex items-center justify-center cursor-pointer hover:text-black transition-all duration-200 mx-auto"
         >
           <RightOutlined />
         </button>
@@ -301,10 +301,10 @@ function AdProducts() {
         <div className="mt-3 mb-3 rounded-2xl border border-[#e5e7eb] bg-white shadow-sm overflow-hidden">
           {/* Header */}
           {/* Header */}
-          <div className="border-b border-[#edf0f2] px-6 py-4">
+          <div className="border-b border-[#edf0f2] px-4 py-3">
             {/* Top Content */}
             <div>
-              <h1 className="text-[23px] font-semibold text-[#111827] mb-1">Ad Products</h1>
+              <h1 className="text-[19px] font-semibold text-[#111827] mb-1">Ad Products</h1>
 
               <p className="mt-1 text-sm text-[#6b7280]">
                 Track ad products performance and marketplace level product data.
@@ -318,7 +318,7 @@ function AdProducts() {
                 <input
                   type="text"
                   placeholder="Search ad products..."
-                  className="w-full h-[42px] rounded-xl border bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm transition-all duration-200 focus:border-[#dbe1e8]"
+                  className="w-full h-[30px] rounded-xl border bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm transition-all duration-200 focus:border-[#dbe1e8]"
                 />
 
                 <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
@@ -329,7 +329,7 @@ function AdProducts() {
                 {/* FILTER */}
                 <Button
                   icon={<FilterOutlined />}
-                  className="!h-[42px] !px-5 !rounded-xl border border-[#dbe1e8] bg-white !text-[#111827] !font-medium !flex !items-center !justify-center"
+                  className="!h-[30px] text-[13px] !px-5 !rounded-xl border border-[#dbe1e8] bg-white !text-[#111827] !font-medium !flex !items-center !justify-center"
                 >
                   Filters
                 </Button>
@@ -338,7 +338,7 @@ function AdProducts() {
                 <Button
                   type="primary"
                   icon={<ExportOutlined />}
-                  className="!h-[42px] !px-5 !rounded-xl !font-medium !flex !items-center !justify-center "
+                  className="!h-[30px] text-[13px] !px-5 !rounded-xl !font-medium !flex !items-center !justify-center "
                 >
                   Export
                 </Button>
@@ -353,7 +353,7 @@ function AdProducts() {
             loading={loading}
             tableLayout="fixed"
             showSorterTooltip={false}
-            scroll={{ x: 1400 }}
+            scroll={{ x: 900 }}
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
@@ -371,6 +371,13 @@ function AdProducts() {
             // scroll={{ x: 'max-content' }}
             size="middle"
             bordered={false}
+            className="
+    [&_.ant-table-thead>tr>th]:!text-[12px]
+    [&_.ant-table-thead>tr>th]:!font-semibold
+    [&_.ant-table-tbody>tr>td]:!text-[12px]
+    [&_.ant-table-cell]:!px-2
+    [&_.ant-table-cell]:!py-2
+  "
           />
         </div>
       </div>

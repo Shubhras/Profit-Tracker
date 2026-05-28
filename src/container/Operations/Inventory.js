@@ -119,61 +119,60 @@ function Inventory() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] p-5">
-      <div className="rounded-[28px] border border-[#e5e7eb] bg-white p-6 shadow-sm">
+    <div className="min-h-screen bg-[#f8fafc] p-3 px-2 text-[12px]">
+      <div className="rounded-[24px] border border-[#e5e7eb] bg-white p-3 shadow-sm">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-[28px] font-bold text-[#111827]">Inventory Sync</h1>
+              <h1 className="text-[20px] font-bold text-[#111827] mb-1">Inventory Sync</h1>
 
-              <InfoCircleFilled className="text-[#94a3b8]" />
+              <InfoCircleFilled className="text-[#94a3b8] text-[13px]" />
             </div>
 
-            <p className="mt-1 text-sm text-[#6b7280]">
+            <p className="mt-[2px] text-[12px] leading-[18px] text-[#6b7280]">
               Sync inventory across all marketplaces in real-time. View sync status, success, failed and pending counts.
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
-            <span className="text-xs text-[#6b7280]">Last Sync: 31 May 2026, 08:45 AM</span>
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] text-[#6b7280]">Last Sync: 31 May 2026, 08:45 AM</span>
 
             <button
               type="button"
-              className="flex items-center gap-2 rounded-xl bg-[#16a34a] px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-[#15803d]"
+              className="flex items-center gap-2 rounded-l bg-[#16a34a] px-3 py-1 text-[11px] font-medium text-white shadow-sm hover:bg-[#15803d]"
             >
-              <SyncOutlined />
+              <SyncOutlined className="text-[11px]" />
               Sync All Marketplaces
             </button>
           </div>
         </div>
 
         {/* Top Cards */}
-        {/* Top Cards */}
-        <div className="mt-7 grid grid-cols-5 gap-4">
+        <div className="mt-1 grid grid-cols-5 gap-3">
           {stats.map((item, index) => (
             <div
               key={index}
-              className={`relative overflow-hidden rounded-2xl border border-[#edf0f2] px-5 py-4 ${item.lightBg}`}
+              className={`relative overflow-hidden rounded-2xl border border-[#edf0f2] px-3 py-3 ${item.lightBg}`}
             >
-              {/* Background Glow */}
-              <div className={`absolute -right-6 -top-6 h-20 w-20 rounded-full blur-3xl opacity-40 ${item.glowBg}`} />
+              {/* Glow */}
+              <div className={`absolute -right-6 -top-6 h-16 w-16 rounded-full blur-3xl opacity-40 ${item.glowBg}`} />
 
-              <div className="relative flex items-center gap-3">
+              <div className="relative flex items-center gap-2">
                 {/* Icon */}
                 <div
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[18px] ${item.bg} ${item.iconColor}`}
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-[15px] ${item.bg} ${item.iconColor}`}
                 >
                   {item.icon}
                 </div>
 
                 {/* Content */}
                 <div>
-                  <p className="mb-[2px] text-[13px] font-medium text-[#6b7280]">{item.title}</p>
+                  <p className="mb-[1px] text-[11px] font-medium text-[#6b7280]">{item.title}</p>
 
-                  <h2 className="text-[24px] font-bold leading-none text-[#111827]">{item.value}</h2>
+                  <h2 className="text-[20px] font-bold leading-none text-[#111827]">{item.value}</h2>
 
-                  <p className={`mt-1 text-[11px] font-medium ${item.subColor}`}>{item.sub}</p>
+                  <p className={`mt-[2px] text-[10px] font-medium ${item.subColor}`}>{item.sub}</p>
                 </div>
               </div>
             </div>
@@ -181,17 +180,17 @@ function Inventory() {
         </div>
 
         {/* Filters */}
-        <div className="mt-4 flex items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <select className="rounded-xl border border-[#e5e7eb] px-4 py-2 text-sm outline-none">
+        <div className="mt-2 flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <select className="rounded-xl border border-[#e5e7eb] px-3 py-1 text-[10px] outline-none">
               <option>All Marketplaces</option>
             </select>
 
-            <select className="rounded-xl border border-[#e5e7eb] px-4 py-2 text-sm outline-none">
+            <select className="rounded-xl border border-[#e5e7eb] px-3 py-1 text-[10px] outline-none">
               <option>All Channels</option>
             </select>
 
-            <select className="rounded-xl border border-[#e5e7eb] px-4 py-2 text-sm outline-none">
+            <select className="rounded-xl border border-[#e5e7eb] px-3 py-1 text-[10px] outline-none">
               <option>All Status</option>
             </select>
 
@@ -199,36 +198,36 @@ function Inventory() {
               <input
                 type="text"
                 placeholder="Search by SKU, Title, ASIN..."
-                className="w-[260px] rounded-xl border border-[#e5e7eb] py-2 pl-4 pr-10 text-sm outline-none"
+                className="w-[240px] rounded-xl border border-[#e5e7eb] py-1 pl-3 pr-9 text-[11px] outline-none"
               />
 
-              <SearchOutlined className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94a3b8]" />
+              <SearchOutlined className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-[#94a3b8]" />
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              className="flex items-center gap-2 rounded-xl border border-[#e5e7eb] px-4 py-2 text-sm font-medium text-[#374151]"
+              className="flex items-center gap-2 rounded-xl border border-[#e5e7eb] px-3 py-1 text-[10px] font-medium text-[#374151]"
             >
-              <FilterOutlined />
+              <FilterOutlined className="text-[11px]" />
               Filters
             </button>
 
             <button
               type="button"
-              className="flex items-center gap-2 rounded-xl border border-[#e5e7eb] px-4 py-2 text-sm font-medium text-[#374151]"
+              className="flex items-center gap-2 rounded-xl border border-[#e5e7eb] px-3 py-1 text-[10px] font-medium text-[#374151]"
             >
-              <AppstoreOutlined />
+              <AppstoreOutlined className="text-[11px]" />
               Columns
             </button>
           </div>
         </div>
 
         {/* Table */}
-        <div className="mt-7 overflow-hidden rounded-2xl border border-[#edf0f2]">
+        <div className="mt-2 overflow-hidden rounded-2xl border border-[#edf0f2]">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1400px]">
+            <table className="w-full min-w-[1200px]">
               <thead className="bg-[#fafafa]">
                 <tr className="border-b border-[#edf0f2]">
                   {[
@@ -245,7 +244,7 @@ function Inventory() {
                   ].map((head, index) => (
                     <th
                       key={index}
-                      className="whitespace-nowrap px-5 py-4 text-left text-[12px] font-semibold text-[#6b7280]"
+                      className="whitespace-nowrap px-3 py-2 text-left text-[11px] font-semibold text-[#6b7280]"
                     >
                       {head}
                     </th>
@@ -256,27 +255,27 @@ function Inventory() {
               <tbody>
                 {tableData.map((row, index) => (
                   <tr key={index} className="border-b border-[#f1f5f9] hover:bg-[#fafafa]">
-                    <td className="whitespace-nowrap px-5 py-4 text-[13px] font-medium text-[#111827]">{row.sku}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-[11px] font-medium text-[#111827]">{row.sku}</td>
 
-                    <td className="whitespace-nowrap px-5 py-4 text-[13px] text-[#374151]">{row.title}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-[11px] text-[#374151]">{row.title}</td>
 
-                    <td className="px-5 py-4 text-[13px]">{row.marketplace}</td>
+                    <td className="px-3 py-2 text-[11px]">{row.marketplace}</td>
 
-                    <td className="px-5 py-4">
-                      <span className="rounded-full bg-[#eef2ff] px-3 py-1 text-[11px] font-medium text-[#4f46e5]">
+                    <td className="px-3 py-2">
+                      <span className="rounded-full bg-[#eef2ff] px-2 py-[3px] text-[10px] font-medium text-[#4f46e5]">
                         {row.channel}
                       </span>
                     </td>
 
-                    <td className="px-5 py-4 text-[13px] text-[#374151]">{row.mapped}</td>
+                    <td className="px-3 py-2 text-[11px] text-[#374151]">{row.mapped}</td>
 
-                    <td className="px-5 py-4 text-[13px] font-medium text-[#111827]">{row.qty}</td>
+                    <td className="px-3 py-2 text-[11px] font-medium text-[#111827]">{row.qty}</td>
 
-                    <td className="whitespace-nowrap px-5 py-4 text-[13px] text-[#374151]">{row.synced}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-[11px] text-[#374151]">{row.synced}</td>
 
-                    <td className="px-5 py-4">
+                    <td className="px-3 py-2">
                       <span
-                        className={`rounded-full px-3 py-1 text-[11px] font-medium ${
+                        className={`rounded-full px-2 py-[3px] text-[10px] font-medium ${
                           row.status === 'Synced'
                             ? 'bg-[#ecfdf3] text-[#16a34a]'
                             : row.status === 'Pending'
@@ -288,9 +287,9 @@ function Inventory() {
                       </span>
                     </td>
 
-                    <td className="whitespace-nowrap px-5 py-4 text-[13px] text-[#6b7280]">{row.message}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-[11px] text-[#6b7280]">{row.message}</td>
 
-                    <td className="px-5 py-4 text-[#94a3b8]">⋮</td>
+                    <td className="px-3 py-2 text-[#94a3b8] text-[14px]">⋮</td>
                   </tr>
                 ))}
               </tbody>
@@ -298,15 +297,15 @@ function Inventory() {
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between border-t border-[#edf0f2] px-5 py-4">
-            <p className="text-[12px] text-[#6b7280]">Showing 1 to 10 of 2,845 entries</p>
+          <div className="flex items-center justify-between border-t border-[#edf0f2] px-3 py-2">
+            <p className="text-[10px] text-[#6b7280]">Showing 1 to 10 of 2,845 entries</p>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               {[1, 2, 3, 4, 5].map((page) => (
                 <button
                   type="button"
                   key={page}
-                  className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm ${
+                  className={`flex h-6 w-6 items-center justify-center rounded-md text-[10px] ${
                     page === 1 ? 'bg-[#dcfce7] text-[#16a34a]' : 'border border-[#e5e7eb] text-[#374151]'
                   }`}
                 >
@@ -315,7 +314,7 @@ function Inventory() {
               ))}
             </div>
 
-            <select className="rounded-lg border border-[#e5e7eb] px-3 py-2 text-sm outline-none">
+            <select className="rounded-md border border-[#e5e7eb] px-2 py-1 text-[10px] outline-none">
               <option>10 / page</option>
             </select>
           </div>

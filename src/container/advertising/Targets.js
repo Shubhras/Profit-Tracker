@@ -95,11 +95,12 @@ function Targets() {
               setSelectedRowKeys([]);
             }
           }}
-          className="w-[15px] h-[15px] cursor-pointer accent-[#2563eb]"
+          className="w-[13px] h-[13px] cursor-pointer accent-[#2563eb]"
         />
       ),
       dataIndex: 'checkbox',
-      width: 60,
+      width: 50,
+      align: 'center',
       fixed: 'left',
 
       render: (_, record) => (
@@ -113,7 +114,7 @@ function Targets() {
               setSelectedRowKeys(selectedRowKeys.filter((key) => key !== record.key));
             }
           }}
-          className="w-[15px] h-[15px] cursor-pointer accent-[#2563eb]"
+          className="w-[13px] h-[13px] cursor-pointer accent-[#2563eb]"
         />
       ),
     },
@@ -121,7 +122,7 @@ function Targets() {
     {
       title: 'Target ID',
       dataIndex: 'targetId',
-      width: 100,
+      width: 50,
       ellipsis: true,
       fixed: 'left',
       align: 'center',
@@ -144,7 +145,7 @@ function Targets() {
       title: 'Expression',
       dataIndex: 'expression',
       align: 'center',
-      width: 100,
+      width: 50,
       ellipsis: true,
       sorter: (a, b) => a.expression - b.expression,
 
@@ -166,7 +167,7 @@ function Targets() {
       title: 'Expression Type',
       dataIndex: 'expressionType',
       align: 'center',
-      width: 100,
+      width: 50,
       sorter: (a, b) => a.profiexpressionTypetPercent - b.expressionType,
       ellipsis: true,
       render: (v) => (
@@ -180,7 +181,7 @@ function Targets() {
       title: 'State',
       dataIndex: 'state',
       align: 'center',
-      width: 100,
+      width: 50,
       ellipsis: true,
       sorter: (a, b) => a.state - b.state,
 
@@ -195,7 +196,7 @@ function Targets() {
       title: 'Bid',
       dataIndex: 'bid',
       align: 'center',
-      width: 100,
+      width: 50,
       ellipsis: true,
       sorter: (a, b) => a.bid - b.bid,
       render: (v) => (
@@ -215,7 +216,7 @@ function Targets() {
       title: 'Campaign Name',
       dataIndex: 'campaignName',
       align: 'center',
-      width: 100,
+      width: 50,
       sorter: (a, b) => a.campaignName - b.campaignName,
       ellipsis: true,
       render: (v) => (
@@ -233,7 +234,7 @@ function Targets() {
       title: 'Ad Group Name',
       dataIndex: 'adGroupName',
       align: 'center',
-      width: 100,
+      width: 50,
       sorter: (a, b) => a.adGroupName - b.adGroupName,
       ellipsis: true,
       render: (v) => (
@@ -253,10 +254,10 @@ function Targets() {
       <div className="p-2">
         <div className="mt-3 mb-3 rounded-2xl border border-[#e5e7eb] bg-white shadow-sm overflow-visible">
           {/* Header */}
-          <div className="border-b border-[#edf0f2] px-6 py-4">
+          <div className="border-b border-[#edf0f2] px-3 py-3">
             {/* TOP CONTENT */}
             <div>
-              <h1 className="text-[23px] font-semibold text-[#111827] mb-1">Targets</h1>
+              <h1 className="text-[19px] font-semibold text-[#111827] mb-1">Targets</h1>
 
               <p className="mt-1 text-sm text-[#6b7280]">
                 Track keyword bids, targeting, ad group performance and marketplace activity.
@@ -270,7 +271,7 @@ function Targets() {
                   placeholder="Search keywords..."
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
-                  className="w-full h-[42px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm transition-all duration-200 focus:border-[#dbe1e8] hover:border-[#dbe1e8]"
+                  className="w-full h-[30px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm transition-all duration-200 focus:border-[#dbe1e8] hover:border-[#dbe1e8]"
                 />
 
                 <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
@@ -281,7 +282,7 @@ function Targets() {
                   <Button
                     icon={<FilterOutlined />}
                     onClick={() => setShowFilters(!showFilters)}
-                    className={`!h-[42px] !px-5 !rounded-xl !font-medium !shadow-sm !flex !items-center !justify-center transition-all
+                    className={`!h-[30px] text-[13px] !px-5 !rounded-xl !font-medium !shadow-sm !flex !items-center !justify-center transition-all
       ${
         showFilters
           ? '!border-[#2563eb] !text-[#2563eb] !bg-[#eff6ff]'
@@ -384,7 +385,7 @@ function Targets() {
                 <Button
                   type="primary"
                   icon={<ExportOutlined />}
-                  className="!h-[42px] !px-5 !rounded-xl !bg-[#2563eb] !border-[#2563eb] !font-semibold hover:!bg-[#1d4ed8] hover:!border-[#1d4ed8] !shadow-sm !flex !items-center !justify-center"
+                  className="!h-[30px] text-[13px] !px-5 !rounded-xl !bg-[#2563eb] !border-[#2563eb] !font-semibold hover:!bg-[#1d4ed8] hover:!border-[#1d4ed8] !shadow-sm !flex !items-center !justify-center"
                 >
                   Export
                 </Button>
@@ -415,9 +416,16 @@ function Targets() {
                 pageSize: pag.pageSize,
               }));
             }}
-            scroll={{ x: 'max-content' }}
+            scroll={{ x: 600 }}
             size="middle"
             bordered={false}
+            className="
+    [&_.ant-table-thead>tr>th]:!text-[12px]
+    [&_.ant-table-thead>tr>th]:!font-semibold
+    [&_.ant-table-tbody>tr>td]:!text-[12px]
+    [&_.ant-table-cell]:!px-2
+    [&_.ant-table-cell]:!py-2
+  "
           />
           {/* </div> */}
         </div>

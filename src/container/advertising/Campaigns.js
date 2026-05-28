@@ -399,37 +399,33 @@ function Campaigns() {
       align: 'center',
       width: 80,
       sorter: (a, b) => a.dailyBudget - b.dailyBudget,
-      // render: (_, record) => (
-      //   <div className="flex justify-center">
-      //     <div className="px-3 py-1 rounded-full text-[13px] font-medium border border-[#bfdbfe]">
-      //       ₹{record.dailyBudget} - {record.budgetType}
-      //     </div>
-      //   </div>
-      // ),
-      render: (_, record) => (
-        <div className="flex justify-center">
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedBudget(record);
-              setBudgetValue(record?.dailyBudget || '');
-              setBudgetModal(true);
-            }}
-            className="group relative overflow-hidden px-3 py-[8px] rounded-2xl border border-transparent bg-transparent hover:border-[#dbeafe] hover:bg-[#f8fbff] transition-all duration-300"
-          >
-            {/* background */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#eff6ff] via-[#f8fafc] to-[#ecfeff] opacity-80" />
 
-            <div className="relative flex items-center justify-center gap-1">
-              <span className="text-[10px] font-bold text-[#0f172a]">
-                ₹{Number(record?.dailyBudget || 0).toFixed(2)}
-              </span>
+      render: (_, record) => {
+        const budgetText = `₹${Number(record?.dailyBudget || 0).toFixed(2)} / ${record?.budgetType}`;
 
-              <span className="text-[11px] uppercase tracking-wide text-[#64748b]">/ {record?.budgetType}</span>
-            </div>
-          </button>
-        </div>
-      ),
+        return (
+          <div className="flex justify-center">
+            <Tooltip title={budgetText} color="black" overlayInnerStyle={{ color: '#fff' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedBudget(record);
+                  setBudgetValue(record?.dailyBudget || '');
+                  setBudgetModal(true);
+                }}
+                className="group relative overflow-hidden w-[72px] px-2 py-[7px] rounded-2xl border border-transparent bg-transparent hover:border-[#dbeafe] hover:bg-[#f8fbff] transition-all duration-300"
+              >
+                {/* background */}
+                <div className="absolute inset-0 bg-gradient-to-r from-[#eff6ff] via-[#f8fafc] to-[#ecfeff] opacity-80" />
+
+                <div className="relative w-full truncate text-center">
+                  <span className="text-[10px] font-bold text-[#0f172a] truncate block">{budgetText}</span>
+                </div>
+              </button>
+            </Tooltip>
+          </div>
+        );
+      },
     },
 
     {
@@ -580,7 +576,7 @@ function Campaigns() {
           onClick={() => {
             navigate(`../campaign-details/${record.campaignId}`);
           }}
-          className="w-[34px] h-[34px] rounded-full border border-[#dbe1e8] flex items-center justify-center cursor-pointer hover:text-black transition-all duration-200 mx-auto"
+          className="w-[28px] h-[28px] rounded-full border border-[#dbe1e8] flex items-center justify-center cursor-pointer hover:text-black transition-all duration-200 mx-auto"
         >
           <RightOutlined />
         </button>
@@ -710,7 +706,7 @@ function Campaigns() {
               });
             }}
             // scroll={{ x: 'max-content' }}
-            scroll={{ x: 2200 }}
+            scroll={{ x: 1800 }}
             size="middle"
             bordered={false}
             className="
