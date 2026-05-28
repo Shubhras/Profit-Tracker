@@ -246,11 +246,11 @@ function Campaigns() {
             }
           }}
           aria-label="Select all campaigns"
-          className="w-[15px] h-[15px] cursor-pointer accent-[#2563eb]"
+          className="w-[13px] h-[13px] cursor-pointer accent-[#2563eb]"
         />
       ),
       dataIndex: 'checkbox',
-      width: 60,
+      width: 45,
       align: 'center',
       fixed: 'left',
 
@@ -266,7 +266,7 @@ function Campaigns() {
             }
           }}
           aria-label="Select campaign"
-          className="w-[15px] h-[15px] cursor-pointer accent-[#2563eb]"
+          className="w-[13px] h-[13px] cursor-pointer accent-[#2563eb]"
         />
       ),
     },
@@ -275,11 +275,12 @@ function Campaigns() {
       title: 'State',
       dataIndex: 'state',
       align: 'center',
-      width: 70,
+      width: 55,
 
       render: (v, record) => (
         <Switch
           checked={v === 'ENABLED'}
+          size="small"
           onChange={async (checked) => {
             const updatedState = checked ? 'ENABLED' : 'PAUSED';
 
@@ -307,9 +308,6 @@ function Campaigns() {
             if (response?.status) {
               dispatch(getCampaigns(pagination.current, pagination.pageSize));
             }
-          }}
-          style={{
-            transform: 'scale(1.15)',
           }}
         />
       ),
@@ -570,9 +568,9 @@ function Campaigns() {
     },
 
     {
-      title: 'Action',
+      title: '',
       dataIndex: 'action',
-      width: 60,
+      width: 40,
       fixed: 'right',
       align: 'center',
 
@@ -636,12 +634,12 @@ function Campaigns() {
       <div className="p-2">
         <div className="mt-3 mb-3 rounded-2xl border border-[#e5e7eb] bg-white shadow-sm overflow-hidden">
           {/* Header */}
-          <div className="border-b border-[#edf0f2] px-6 py-4">
+          <div className="border-b border-[#edf0f2] px-3 py-2">
             {/* Top Content */}
             <div>
-              <h1 className="text-[23px] font-semibold text-[#111827] mb-1">Campaigns Performance</h1>
+              <h1 className="text-[19px] font-semibold text-[#111827] mb-1">Campaigns Performance</h1>
 
-              <p className="mt-1 text-sm text-[#6b7280]">
+              <p className="mt-1 text-[12px] text-[#6b7280]">
                 Track campaign orders, revenue, discounts and overall marketplace performance.
               </p>
             </div>
@@ -653,7 +651,7 @@ function Campaigns() {
                 <input
                   type="text"
                   placeholder="Search campaigns..."
-                  className="w-full h-[42px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none"
+                  className="w-full h-[30px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none"
                 />
 
                 <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
@@ -673,7 +671,7 @@ function Campaigns() {
                 >
                   <Button
                     icon={<FilterOutlined />}
-                    className="!h-[40px] !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium hover:!border-[#2563eb] hover:!text-[#2563eb] !flex !items-center !justify-center"
+                    className="!h-[30px] text-[13px] !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium hover:!border-[#2563eb] hover:!text-[#2563eb] !flex !items-center !justify-center"
                   >
                     Filters
                   </Button>
@@ -682,7 +680,7 @@ function Campaigns() {
                 <Button
                   type="primary"
                   icon={<ExportOutlined />}
-                  className="!h-[40px] !rounded-xl !bg-[#2563eb] !font-medium !flex !items-center !justify-center"
+                  className="!h-[30px] text-[13px] !rounded-xl !bg-[#2563eb] !font-medium !flex !items-center !justify-center"
                 >
                   Export
                 </Button>
@@ -715,6 +713,13 @@ function Campaigns() {
             scroll={{ x: 2200 }}
             size="middle"
             bordered={false}
+            className="
+    [&_.ant-table-thead>tr>th]:!text-[12px]
+    [&_.ant-table-thead>tr>th]:!font-semibold
+    [&_.ant-table-tbody>tr>td]:!text-[12px]
+    [&_.ant-table-cell]:!px-2
+    [&_.ant-table-cell]:!py-2
+  "
           />
         </div>
       </div>
@@ -727,58 +732,51 @@ function Campaigns() {
         }}
         footer={null}
         centered
-        width={430}
+        width={390} // thoda chota
         className="budget-modal"
       >
         <div className="p-1">
           {/* Header */}
-          <div className="mb-6">
+          <div className="mb-1">
             <div className="flex items-center gap-3 mb-2">
-              {/* <div
-                className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg"
-                style={{
-                  background: 'linear-gradient(135deg, rgb(16, 185, 129) 0%, rgb(15, 118, 110) 100%)',
-                }}
-              >
-                <span className="text-white text-lg font-bold">₹</span>
-              </div> */}
-
               <div>
-                <h2 className="text-[22px] font-bold text-[#0f172a] leading-none mb-1">Edit Budget</h2>
+                <h2 className="text-[20px] font-bold text-[#0f172a] leading-none mb-1">Edit Budget</h2>
 
-                <p className="text-[13px] text-[#64748b] mt-1">Update campaign daily budget</p>
+                <p className="text-[12px] text-[#64748b] mt-1">Update campaign daily budget</p>
               </div>
             </div>
           </div>
 
           {/* Budget Type */}
-          <div className="mb-5">
-            <label className="block text-[15px] font-semibold text-[#334155] mb-2">Budget Type</label>
+          <div className="mb-4">
+            <label className="block text-[14px] font-semibold text-[#334155] mb-2">Budget Type</label>
 
-            <div className="h-[48px] rounded-xl border border-[#e2e8f0] bg-[#f8fafc] flex items-center px-4 text-[#475569] font-medium">
+            <div className="h-[40px] rounded-xl border border-[#e2e8f0] bg-[#f8fafc] flex items-center px-4 text-[#475569] text-[14px] font-medium">
               {selectedBudget?.budgetType}
             </div>
           </div>
 
           {/* Budget Input */}
-          <div className="mb-6">
-            <label className="block text-[15px] font-semibold text-[#334155] mb-2">Daily Budget</label>
+          <div className="mb-5">
+            <label className="block text-[14px] font-semibold text-[#334155] mb-2">Daily Budget</label>
 
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748b] font-semibold">₹</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748b] text-[14px] font-semibold">
+                ₹
+              </span>
 
               <input
                 type="number"
                 value={budgetValue}
                 onChange={(e) => setBudgetValue(e.target.value)}
-                className="w-full h-[52px] rounded-2xl border border-[#cbd5e1] focus:border-[#2563eb] focus:ring-4 focus:ring-[#bfdbfe] outline-none pl-10 pr-4 text-[15px] font-semibold transition-all"
+                className="w-full h-[40px] rounded-xl border border-[#cbd5e1] focus:border-[#2563eb] focus:ring-4 focus:ring-[#bfdbfe] outline-none pl-10 pr-4 text-[14px] font-semibold transition-all"
                 placeholder="Enter budget"
               />
             </div>
           </div>
 
           {/* Buttons */}
-          <div className="flex items-center justify-end gap-3">
+          <div className="flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={() => {
@@ -786,7 +784,7 @@ function Campaigns() {
                 setSelectedBudget(null);
                 setBudgetValue('');
               }}
-              className="h-[44px] px-5 rounded-xl border border-[#e2e8f0] text-[#475569] font-medium hover:bg-[#f8fafc] transition-all"
+              className="h-[40px] px-4 rounded-xl border border-[#e2e8f0] text-[#475569] text-[14px] font-medium hover:bg-[#f8fafc] transition-all"
             >
               Cancel
             </button>
@@ -794,7 +792,7 @@ function Campaigns() {
             <Button
               type="primary"
               onClick={handleUpdateBudget}
-              className="h-[44px] px-6 rounded-xl text-white font-semibold shadow-md transition-all"
+              className="h-[40px] px-3 rounded-xl text-white text-[14px] font-semibold shadow-md transition-all"
             >
               Update Budget
             </Button>

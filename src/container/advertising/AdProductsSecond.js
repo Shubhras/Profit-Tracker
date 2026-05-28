@@ -63,7 +63,7 @@ function AdProductsDetails() {
       title: 'State',
       dataIndex: 'active',
       align: 'center',
-      width: 110,
+      width: 90,
       fixed: 'left',
 
       render: (_, record) => {
@@ -91,17 +91,28 @@ function AdProductsDetails() {
       dataIndex: 'campaignId',
       align: 'center',
       width: '70',
+      ellipsis: true,
       sorter: (a, b) => Number(a.campaignId || 0) - Number(b.campaignId || 0),
+      render: (v) => (
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span className="block truncate mx-auto max-w-[70px] cursor-pointer font-medium text-[#111827]">
+            {v || '-'}
+          </span>
+        </Tooltip>
+      ),
     },
 
     {
       title: 'Campaign Name',
       dataIndex: 'name',
       align: 'center',
+      width: '70',
+      ellipsis: true,
+      sorter: (a, b) => String(a.name).localeCompare(String(b.name)),
       render: (v) => (
-        <Tooltip title={v}>
-          <span className="block truncate font-medium text-[#111827] mx-auto" style={{ maxWidth: '220px' }}>
-            {v}
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span className="block truncate font-medium text-[#111827] mx-auto max-w-[100px] cursor-pointer">
+            {v || '-'}
           </span>
         </Tooltip>
       ),
@@ -122,6 +133,9 @@ function AdProductsDetails() {
       title: 'Targeting Type',
       dataIndex: 'targetingType',
       align: 'center',
+      width: '70',
+      ellipsis: true,
+      sorter: (a, b) => String(a.targetingType).localeCompare(String(b.targetingType)),
     },
 
     // {
@@ -139,7 +153,9 @@ function AdProductsDetails() {
     {
       title: 'Budget',
       align: 'center',
-
+      dataIndex: 'dailyBudget',
+      width: '70',
+      sorter: (a, b) => a.dailyBudget - b.dailyBudget,
       render: (_, record) => (
         <div className="flex justify-center">
           <button
@@ -149,17 +165,17 @@ function AdProductsDetails() {
               setBudgetValue(record?.dailyBudget || '');
               setBudgetModal(true);
             }}
-            className="group relative overflow-hidden min-w-[150px] px-5 py-[8px] rounded-2xl border border-[#dbeafe] bg-white hover:border-[#93c5fd] transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-[1px]"
+            className="group relative overflow-hidden px-3 py-[8px] rounded-2xl border border-transparent bg-transparent hover:border-[#dbeafe] hover:bg-[#f8fbff] transition-all duration-300"
           >
             {/* background */}
             <div className="absolute inset-0 bg-gradient-to-r from-[#eff6ff] via-[#f8fafc] to-[#ecfeff] opacity-80" />
 
             <div className="relative flex items-center justify-center gap-1 whitespace-nowrap">
-              <span className="text-[14px] font-bold text-[#0f172a]">
+              <span className="text-[11px] font-bold text-[#0f172a]">
                 ₹{Number(record?.dailyBudget || 0).toFixed(2)}
               </span>
 
-              <span className="text-[12px] uppercase tracking-wide text-[#64748b]">/ {record?.budgetType}</span>
+              <span className="text-[11px] uppercase tracking-wide text-[#64748b]">/ {record?.budgetType}</span>
             </div>
           </button>
         </div>
@@ -170,37 +186,55 @@ function AdProductsDetails() {
       title: 'Bidding Strategy',
       dataIndex: 'biddingStrategy',
       align: 'center',
-      render: (v) => <span className="text-[#2563eb] font-medium">{v || '-'}</span>,
+      width: '70',
+      ellipsis: true,
+      sorter: (a, b) => String(a.biddingStrategy).localeCompare(String(b.biddingStrategy)),
+
+      render: (v) => <span className=" font-medium">{v || '-'}</span>,
     },
 
     {
       title: 'Start Date',
       dataIndex: 'startDate',
       align: 'center',
+      width: '70',
+      ellipsis: true,
+      sorter: (a, b) => a.startDate - b.startDate,
     },
 
     {
       title: 'Total Ads',
       dataIndex: 'totalAds',
       align: 'center',
+      width: '70',
+      ellipsis: true,
+      sorter: (a, b) => a.totalAds - b.totalAds,
     },
 
     {
       title: 'Impressions',
       dataIndex: 'impressions',
       align: 'center',
+      width: '70',
+      sorter: (a, b) => a.impressions - b.impressions,
+      ellipsis: true,
     },
 
     {
       title: 'Clicks',
       dataIndex: 'clicks',
       align: 'center',
+      width: '70',
+      sorter: (a, b) => a.clicks - b.clicks,
     },
 
     {
       title: 'Cost',
       dataIndex: 'cost',
       align: 'center',
+      width: '70',
+      sorter: (a, b) => a.cost - b.cost,
+
       render: (v) => <span className="font-medium text-[#dc2626]">₹{v}</span>,
     },
 
@@ -208,25 +242,39 @@ function AdProductsDetails() {
       title: 'Sales',
       dataIndex: 'sales',
       align: 'center',
-      render: (v) => <span className="font-medium text-[#16a34a]">₹{v}</span>,
+      width: '70',
+      sorter: (a, b) => a.sales - b.sales,
+
+      // render: (v) => <span className="font-medium text-[#16a34a]">₹{v}</span>,
+
+      render: (v) => (
+        <span className="font-semibold text-[#16a34a] whitespace-nowrap">₹{Math.round(Number(v || 0))}</span>
+      ),
     },
 
     {
       title: 'Orders',
       dataIndex: 'orders',
       align: 'center',
+      width: '70',
+      sorter: (a, b) => a.orders - b.orders,
     },
 
     {
       title: 'Units',
       dataIndex: 'units',
       align: 'center',
+      width: '70',
+      sorter: (a, b) => a.units - b.units,
     },
 
     {
       title: 'ACOS',
       dataIndex: 'acos',
       align: 'center',
+      width: '70',
+      sorter: (a, b) => a.acos - b.acos,
+
       render: (v) => (
         <Tag color={v > 40 ? 'error' : 'processing'} className="!rounded-full !px-3">
           {v}%
@@ -238,6 +286,9 @@ function AdProductsDetails() {
       title: 'ROAS',
       dataIndex: 'roas',
       align: 'center',
+      width: '70',
+      sorter: (a, b) => a.roas - b.roas,
+
       render: (v) => (
         <Tag color={v >= 1 ? 'success' : 'warning'} className="!rounded-full !px-3">
           {v}
@@ -248,7 +299,7 @@ function AdProductsDetails() {
     {
       title: '',
       dataIndex: 'action',
-      width: 100,
+      width: 60,
       fixed: 'right',
       align: 'center',
 
@@ -288,7 +339,7 @@ function AdProductsDetails() {
 
                 {/* HEADING */}
                 <div className="flex flex-col">
-                  <h1 className="text-[24px] font-semibold text-[#111827] leading-[30px] mb-1">Campaigns Products</h1>
+                  <h1 className="text-[23px] font-semibold text-[#111827] leading-[30px] mb-1">Campaigns Products</h1>
 
                   <p className="mt-1 text-sm text-[#6b7280]">
                     Track ad products performance and marketplace level product data.
@@ -337,6 +388,8 @@ function AdProductsDetails() {
             columns={columns}
             dataSource={dataSource}
             loading={loading}
+            showSorterTooltip={false}
+            tableLayout="fixed"
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
@@ -351,7 +404,7 @@ function AdProductsDetails() {
                 pageSize: pag.pageSize,
               });
             }}
-            scroll={{ x: 'max-content' }}
+            scroll={{ x: 1900 }}
             size="middle"
             bordered={false}
           />

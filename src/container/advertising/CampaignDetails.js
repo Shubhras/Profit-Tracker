@@ -62,7 +62,7 @@ function CampaignDetails() {
       title: 'State',
       dataIndex: 'active',
       align: 'center',
-      width: 110,
+      width: 70,
       fixed: 'left',
 
       render: (_, record) => {
@@ -89,7 +89,7 @@ function CampaignDetails() {
       title: 'Ad Group ID',
       dataIndex: 'adGroupId',
       align: 'center',
-      width: 100,
+      width: 70,
       sorter: (a, b) => a.adGroupId - b.adGroupId,
       ellipsis: true,
       render: (v) => <span className="text-[#2563eb] font-medium">{v}</span>,
@@ -99,7 +99,7 @@ function CampaignDetails() {
       title: 'Name',
       dataIndex: 'name',
       align: 'center',
-      width: 100,
+      width: 70,
       sorter: (a, b) => String(a.name || '').localeCompare(String(b.name || '')),
       ellipsis: true,
       render: (v) => (
@@ -125,7 +125,7 @@ function CampaignDetails() {
       title: 'Default Bid',
       dataIndex: 'defaultBid',
       align: 'center',
-      width: 100,
+      width: 70,
       sorter: (a, b) => a.defaultBid - b.defaultBid,
       ellipsis: true,
       render: (v) => (
@@ -153,7 +153,7 @@ function CampaignDetails() {
       title: 'Country Code',
       dataIndex: 'countryCode',
       align: 'center',
-      width: 100,
+      width: 70,
       sorter: (a, b) => a.countryCode - b.countryCode,
       ellipsis: true,
     },
@@ -162,7 +162,7 @@ function CampaignDetails() {
       title: 'Currency Code',
       dataIndex: 'currencyCode',
       align: 'center',
-      width: 100,
+      width: 70,
       sorter: (a, b) => String(a.currencyCode || '').localeCompare(String(b.currencyCode || '')),
       ellipsis: true,
     },
@@ -170,7 +170,7 @@ function CampaignDetails() {
       title: 'Impressions',
       dataIndex: 'impressions',
       align: 'center',
-      width: 100,
+      width: 70,
       sorter: (a, b) => a.impressions - b.impressions,
       ellipsis: true,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
@@ -180,9 +180,8 @@ function CampaignDetails() {
       title: 'Clicks',
       dataIndex: 'clicks',
       align: 'center',
-      width: 100,
+      width: 70,
       sorter: (a, b) => a.clicks - b.clicks,
-      ellipsis: true,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -190,9 +189,8 @@ function CampaignDetails() {
       title: 'Cost',
       dataIndex: 'cost',
       align: 'center',
-      width: 100,
+      width: 70,
       sorter: (a, b) => a.cost - b.cost,
-      ellipsis: true,
       render: (v) => <span className="font-medium text-[#dc2626]">₹{v ?? 0}</span>,
     },
 
@@ -200,9 +198,8 @@ function CampaignDetails() {
       title: 'Sales',
       dataIndex: 'sales',
       align: 'center',
-      width: 100,
+      width: 70,
       sorter: (a, b) => a.sales - b.sales,
-      ellipsis: true,
       render: (v) => <span className="font-medium text-[#16a34a]">₹{v ?? 0}</span>,
     },
 
@@ -211,8 +208,7 @@ function CampaignDetails() {
       dataIndex: 'orders',
       align: 'center',
       sorter: (a, b) => a.orders - b.orders,
-      width: 100,
-      ellipsis: true,
+      width: 70,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -221,8 +217,7 @@ function CampaignDetails() {
       dataIndex: 'units',
       align: 'center',
       sorter: (a, b) => a.units - b.units,
-      width: 100,
-      ellipsis: true,
+      width: 70,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -230,9 +225,8 @@ function CampaignDetails() {
       title: 'ACOS',
       dataIndex: 'acos',
       align: 'center',
-      width: 100,
+      width: 70,
       sorter: (a, b) => a.acos - b.acos,
-      ellipsis: true,
       render: (v) => (
         <Tag className="!px-3 !py-[3px] !rounded-full" color={v > 100 ? 'error' : 'processing'}>
           {v ? `${v.toFixed(2)}%` : '-'}
@@ -245,8 +239,7 @@ function CampaignDetails() {
       dataIndex: 'roas',
       align: 'center',
       sorter: (a, b) => a.roas - b.roas,
-      width: 100,
-      ellipsis: true,
+      width: 70,
       render: (v) => (
         <Tag className="!px-3 !py-[3px] !rounded-full" color={v >= 1 ? 'success' : 'warning'}>
           {v ? v.toFixed(2) : '-'}
@@ -254,9 +247,9 @@ function CampaignDetails() {
       ),
     },
     {
-      title: 'Action',
+      title: '',
       dataIndex: 'action',
-      width: 70,
+      width: 40,
       fixed: 'right',
       align: 'center',
 
@@ -365,7 +358,7 @@ function CampaignDetails() {
                 pageSize: pag.pageSize,
               });
             }}
-            scroll={{ x: 'max-content' }}
+            scroll={{ x: 1800 }}
             size="middle"
             bordered={false}
           />

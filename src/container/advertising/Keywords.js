@@ -109,26 +109,26 @@ function Keywords() {
         />
       ),
     },
-    {
-      title: 'Keyword ID',
-      dataIndex: 'keywordId',
-      width: 100,
-      ellipsis: true,
-      render: (v) => {
-        const text = String(v);
+    // {
+    //   title: 'Keyword ID',
+    //   dataIndex: 'keywordId',
+    //   width: 100,
+    //   ellipsis: true,
+    //   render: (v) => {
+    //     const text = String(v);
 
-        return (
-          <Tooltip title={text} color="black" overlayInnerStyle={{ color: '#fff' }}>
-            <span className="text-[#2563eb] font-medium cursor-pointer">
-              {text.length > 9 ? `${text.slice(0, 9)}...` : text}
-            </span>
-          </Tooltip>
-        );
-      },
-    },
+    //     return (
+    //       <Tooltip title={text} color="black" overlayInnerStyle={{ color: '#fff' }}>
+    //         <span className="text-[#2563eb] font-medium cursor-pointer">
+    //           {text.length > 9 ? `${text.slice(0, 9)}...` : text}
+    //         </span>
+    //       </Tooltip>
+    //     );
+    //   },
+    // },
 
     {
-      title: 'Keyword Text',
+      title: 'Keyword',
       dataIndex: 'keywordText',
       align: 'center',
       width: 100,
