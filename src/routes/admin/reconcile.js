@@ -22,6 +22,7 @@ const MarketPayment = lazy(() => import('../../container/reconcile/MarketPayment
 const ReturnAdjust = lazy(() => import('../../container/reconcile/ReturnAdjust'));
 const FeeLeaks = lazy(() => import('../../container/reconcile/FeeLeaks'));
 const Cashflow = lazy(() => import('../../container/reconcile/Cashflow'));
+const ReimbursementPlan = lazy(() => import('../../container/reconcile/ReimbursementPlan'));
 
 const NotFound = lazy(() => import('../../container/pages/404'));
 
@@ -37,6 +38,7 @@ function ReconcileRoutes() {
       <Route path="returnsAdjust" element={<ReturnAdjust />} />
       <Route path="allLeaks" element={<FeeLeaks />} />
       <Route path="cashflow" element={<Cashflow />} />
+      <Route path="reimbursement" element={<ReimbursementPlan />} />
 
       {/* <Route path="os-payment" element={<OsPayment />} /> */}
       {/* <Route path="fee-leaks" element={<FeeLeaks />} /> */}

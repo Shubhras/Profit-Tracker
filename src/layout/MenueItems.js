@@ -246,6 +246,13 @@ function MenuItems({ toggleCollapsed }) {
         'cashflow-planning',
       ),
 
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/reimbursement`}>
+          {t('Reimbursement Planning')}
+        </NavLink>,
+        'reimbursement-planning',
+      ),
+
       // getItem(
       //   <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/os-payment`}>
       //     {t('osPayment')}
