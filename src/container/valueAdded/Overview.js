@@ -90,13 +90,16 @@ function Overview() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f5f7fb] p-6">
+    <div className="min-h-screen bg-[#f5f7fb] p-4 lg:p-4 md:p-3 sm:p-2 px-3">
+      {' '}
       {/* Header */}
-      <div className="mb-3 flex items-start justify-between">
+      <div className="mb-3 flex items-start justify-between md:flex-col md:gap-3 px-2">
         <div>
-          <h1 className="text-2xl font-bold text-[#111827] mb-1">Value Added Services</h1>
+          <h1 className="text-[20px] lg:text-[20px] md:text-[18px] sm:text-[16px] font-bold text-[#111827] mb-0">
+            Value Added Services
+          </h1>
 
-          <p className="text-sm text-[#6b7280]">
+          <p className="text-[13px] lg:text-[12px] text-[#6b7280]">
             Choose expert services to grow your e-commerce business with end-to-end account management and marketing
             solutions.
           </p>
@@ -104,26 +107,25 @@ function Overview() {
 
         <button
           type="button"
-          className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-[#2563eb] transition-all hover:bg-[#f9fafb]"
+          className="flex items-center gap-2 rounded-lg px-3 py-2 text-[12px] font-medium text-[#2563eb]"
         >
           <UilQuestionCircle size="16" />
           How It Works
         </button>
       </div>
-
       {/* Main Layout */}
-      <div className="grid grid-cols-12 gap-2">
+      <div className="grid grid-cols-12 gap-2 lg:grid-cols-1">
         {/* Left Section */}
-        <div className="col-span-9 space-y-2">
+        <div className="col-span-9 lg:col-span-12 space-y-2">
           {/* Marketplace Expertise */}
           <div className="rounded-2xl border border-[#e5e7eb] bg-white p-3">
             <h2 className="mb-2 text-base font-semibold text-[#111827]">Our Marketplaces Expertise</h2>
 
-            <div className="grid grid-cols-7 gap-2">
+            <div className="grid grid-cols-7 lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 gap-2">
               {marketplaces.map((item) => (
                 <div
                   key={item.name}
-                  className="flex h-[82px] items-center justify-center rounded-xl border border-[#edf0f5] bg-[#fcfcfd] overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md"
+                  className="flex h-[50px] md:h-[65px] sm:h-[60px]items-center justify-center rounded-xl border border-[#edf0f5] bg-[#fcfcfd] overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md"
                 >
                   <img src={item.logo} alt={item.name} className="h-[70%] w-[90%] object-contain" />
                 </div>
@@ -132,16 +134,16 @@ function Overview() {
           </div>
 
           {/* Services */}
-          <div className="rounded-2xl border border-[#e5e7eb] bg-white p-5">
+          <div className="rounded-2xl border border-[#e5e7eb] bg-white p-3">
             {/* Heading */}
             <div className="mb-1 flex items-center justify-between">
               <h2 className="text-[17px] font-semibold text-[#111827]">Our Services</h2>
             </div>
 
             {/* Cards */}
-            <div className="grid grid-cols-3 gap-5">
+            <div className="grid grid-cols-3 lg:grid-cols-1 gap-4">
               {/* Account Management */}
-              <div className="flex flex-col rounded-2xl border border-[#dff5e8] bg-[#fcfffd] p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
+              <div className="flex flex-col rounded-2xl border border-[#dff5e8] bg-[#fcfffd] p-4 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
                 {' '}
                 {/* Top */}
                 <div className="mb-1 flex items-start gap-4">
@@ -150,9 +152,9 @@ function Overview() {
                   </div>
 
                   <div className="flex-1">
-                    <h3 className="text-[17px] font-semibold text-[#111827]">Account Management</h3>
+                    <h3 className="text-[15px] font-semibold text-[#111827]">Account Management</h3>
 
-                    <p className="mt-1 min-h-[52px] text-[13px] leading-6 text-[#6b7280]">
+                    <p className="mt-1 min-h-[52px] text-[12px] leading-5 text-[#6b7280]">
                       Dedicated account manager to grow your business through organic & advertising strategies.
                     </p>
                   </div>
@@ -172,7 +174,7 @@ function Overview() {
                   <div className="flex flex-col">
                     <span className="text-[13px] text-[#6b7280] leading-none">Starting at</span>
 
-                    <h3 className="mt-2 text-[20px] font-bold leading-none text-[#16a34a]">₹ 24,999</h3>
+                    <h3 className="mt-2 text-[18px] font-bold leading-none text-[#16a34a]">₹ 24,999</h3>
 
                     <span className="text-[12px] text-[#6b7280] leading-none">/ month</span>
                   </div>
@@ -279,7 +281,8 @@ function Overview() {
         </div>
 
         {/* Right Sidebar */}
-        <div className="col-span-3 space-y-3">
+        <div className="col-span-3 lg:col-span-12 space-y-3">
+          {' '}
           {/* Why Choose */}
           <div className="rounded-2xl border border-[#e5e7eb] bg-white p-5">
             <h2 className="mb-5 text-base font-semibold text-[#111827]">Why Choose TrackMyProfit Services?</h2>
@@ -296,7 +299,6 @@ function Overview() {
               ))}
             </div>
           </div>
-
           {/* Summary */}
           <div className="rounded-2xl border border-[#e5e7eb] bg-white p-5">
             <h2 className="mb-5 text-base font-semibold text-[#111827]">Your Service Summary</h2>
@@ -343,7 +345,7 @@ function Overview() {
         </div>
 
         {/* Steps */}
-        <div className="grid grid-cols-5 items-start gap-4">
+        <div className="grid grid-cols-5 lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1 gap-4">
           {' '}
           {[
             {
@@ -401,7 +403,8 @@ function Overview() {
 
                   {/* Arrow */}
                   {index !== arr.length - 1 && (
-                    <div className="absolute left-[72%] top-1/2 -translate-y-1/2">
+                    <div className="absolute left-[72%] top-1/2 -translate-y-1/2 md:hidden">
+                      {' '}
                       <ArrowRightOutlined className="text-[18px] text-[#2563eb]" />
                     </div>
                   )}
@@ -420,7 +423,7 @@ function Overview() {
         </div>
 
         {/* Bottom Help Box */}
-        <div className="mt-5 flex items-start justify-between gap-5 rounded-2xl border border-gray-200 bg-gray-50 p-3 md:flex-row">
+        <div className="mt-5 flex items-start justify-between gap-4 lg:flex-col rounded-2xl border border-gray-200 bg-gray-50 p-3 md:flex-row">
           <div className="flex items-center gap-4">
             {/* Avatar */}
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#eafaf1] shadow-sm">
@@ -440,7 +443,7 @@ function Overview() {
           {/* Button */}
           <button
             type="button"
-            className="rounded-xl border border-green-500 bg-white px-6 py-3 text-sm font-semibold text-green-600 transition-all hover:bg-green-50"
+            className="w-full lg:w-auto rounded-xl border border-green-500 bg-white px-5 py-2.5 text-[13px] font-semibold text-green-600"
           >
             Talk to Expert
           </button>
