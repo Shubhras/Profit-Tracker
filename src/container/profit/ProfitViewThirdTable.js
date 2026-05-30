@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import ProfitModal from './component/ProfitModal';
 import CalculationModal from './component/Calculations';
 import { getProfitDetailsByParentId } from '../../redux/dashboard/actionCreator';
-import { PageHeader } from '../../components/page-headers/page-headers';
+// import { PageHeader } from '../../components/page-headers/page-headers';
 import amazon from '../../assets/icons/amazon.svg';
 
 export default function ProfitDetailsView() {
@@ -67,10 +67,10 @@ export default function ProfitDetailsView() {
     'Amazon-India': amazon,
   };
 
-  const PageRoutes = [
-    { path: 'index', breadcrumbName: 'Profit' },
-    { path: '', breadcrumbName: 'Profit Details' },
-  ];
+  // const PageRoutes = [
+  //   { path: 'index', breadcrumbName: 'Profit' },
+  //   { path: '', breadcrumbName: 'Profit Details' },
+  // ];
 
   const apipayload = {
     filters: {
@@ -219,7 +219,7 @@ export default function ProfitDetailsView() {
     {
       title: '',
       dataIndex: 'channel',
-      width: 70,
+      width: 60,
       fixed: 'left',
       render: (value) => {
         const logo = channelLogoMap[value];
@@ -235,6 +235,8 @@ export default function ProfitDetailsView() {
       title: 'View',
       dataIndex: 'view',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.view - b.view,
       render: (v, record) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
@@ -263,18 +265,23 @@ export default function ProfitDetailsView() {
       title: 'Net Qty',
       dataIndex: 'netqty',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.netqty - b.netqty,
     },
     {
       title: 'Return Qty',
       dataIndex: 'returnqty',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.returnqty - b.returnqty,
     },
     {
       title: 'Return %',
       dataIndex: 'returnPercent',
       align: 'center',
+      width: 70,
       sorter: (a, b) => a.returnPercent - b.returnPercent,
       render: (v) => <span>{v}%</span>,
     },
@@ -282,12 +289,16 @@ export default function ProfitDetailsView() {
       title: 'Net Sales',
       dataIndex: 'netsales',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.netsales - b.netsales,
     },
     {
       title: 'MP fees',
       dataIndex: 'mpfees',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.mpfees - b.mpfees,
       render: (v, record) => (
         <button
@@ -309,6 +320,7 @@ export default function ProfitDetailsView() {
       title: 'Shipping',
       dataIndex: 'shipping',
       align: 'center',
+      width: 70,
       sorter: (a, b) => a.shipping - b.shipping,
       render: (v, record) => (
         <button
@@ -330,6 +342,7 @@ export default function ProfitDetailsView() {
       title: 'MP-GST',
       dataIndex: 'mp_gst',
       align: 'center',
+      width: 70,
       sorter: (a, b) => a.mp_gst - b.mp_gst,
     },
 
@@ -337,30 +350,39 @@ export default function ProfitDetailsView() {
       title: 'TCS',
       dataIndex: 'tcs',
       align: 'center',
+      width: 70,
       sorter: (a, b) => a.tcs - b.tcs,
     },
     {
       title: 'Ad Spend',
       dataIndex: 'adSpend',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.adSpend - b.adSpend,
     },
     {
       title: 'Taxable Value',
       dataIndex: 'taxableValue',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.taxableValue - b.taxableValue,
     },
     {
       title: 'GST to Pay',
       dataIndex: 'gst_to_pay_amount',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.gst_to_pay_amount - b.gst_to_pay_amount,
     },
     {
       title: 'GST to Pay %',
       dataIndex: 'gst_to_pay_perc',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.gst_to_pay_perc - b.gst_to_pay_perc,
       render: (v) => <span>{v}%</span>,
     },
@@ -368,12 +390,16 @@ export default function ProfitDetailsView() {
       title: 'Expected Settlement',
       dataIndex: 'settleAmount',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.settleAmount - b.settleAmount,
     },
     {
       title: 'Product Cost',
       dataIndex: 'std',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.std - b.std,
     },
 
@@ -381,6 +407,8 @@ export default function ProfitDetailsView() {
       title: 'Profit',
       dataIndex: 'profit',
       align: 'center',
+      width: 70,
+
       sorter: (a, b) => a.profit - b.profit,
       // render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>{v}</span>,
       render: (v, record) => (
@@ -405,6 +433,8 @@ export default function ProfitDetailsView() {
       title: 'Profit %',
       dataIndex: 'profitPercent',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.profitPercent - b.profitPercent,
       render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>{v}%</span>,
     },
@@ -505,13 +535,16 @@ export default function ProfitDetailsView() {
 
   return (
     <>
-      <PageHeader
+      {/* <PageHeader
         routes={PageRoutes}
         // title={`Profit Third Table - ${id}`}
         className="flex justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 bg-transparent"
-      />
+      /> */}
 
-      <main className="min-h-[600px] px-8 pb-[30px]">
+      <main className="min-h-[600px] px-3 py-3 pb-[10px]">
+        {/* <div className="mb-3 px-2">
+          <h1 className="text-[20px] font-semibold text-[#111827]">Details</h1>
+        </div> */}
         <Card bordered={false}>
           {/* <ProfitFilterBar
             filters={filters}
@@ -527,7 +560,7 @@ export default function ProfitDetailsView() {
               <input
                 type="text"
                 placeholder="Search..."
-                className="w-full h-[42px] rounded-xl border border-[#e5e7eb] bg-white pl-4 pr-10 text-[13px] outline-none shadow-sm"
+                className="w-full h-[35px] rounded-xl border border-[#e5e7eb] bg-white pl-4 pr-10 text-[12px] outline-none shadow-sm"
               />
 
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af]">
@@ -540,13 +573,13 @@ export default function ProfitDetailsView() {
                 <button
                   type="button"
                   onClick={() => setShowFilters(!showFilters)}
-                  className="h-[42px] px-4 rounded-xl border border-[#e5e7eb] bg-white flex items-center gap-2 text-[13px] font-medium shadow-sm transition-all"
+                  className="h-[35px] px-2 rounded-xl border border-[#e5e7eb] bg-white flex items-center gap-2 text-[12px] font-medium shadow-sm transition-all"
                 >
-                  <FilterOutlined style={{ fontSize: 15 }} />
+                  <FilterOutlined style={{ fontSize: 14 }} />
 
                   <span>Filters</span>
 
-                  <span className="min-w-[20px] h-[20px] rounded-full bg-[#22c55e] text-white text-[12px] font-semibold flex items-center justify-center px-1">
+                  <span className="min-w-[18px] h-[18px] rounded-full bg-[#22c55e] text-white text-[11px] font-semibold flex items-center justify-center px-1">
                     {
                       [
                         filters.ads === 'with',
@@ -615,6 +648,7 @@ export default function ProfitDetailsView() {
             dataSource={dataSource}
             showSorterTooltip={false}
             loading={loading}
+            tableLayout="fixed"
             locale={{ emptyText: 'No Data Found' }}
             pagination={{
               // ...pagination,
@@ -629,7 +663,14 @@ export default function ProfitDetailsView() {
               setPagination(pag);
             }}
             size="small"
-            scroll={{ x: 'max-content' }}
+            scroll={{ x: 1800 }}
+            className="
+    [&_.ant-table-thead>tr>th]:!text-[12px]
+    [&_.ant-table-thead>tr>th]:!font-semibold
+    [&_.ant-table-tbody>tr>td]:!text-[12px]
+    [&_.ant-table-cell]:!px-2
+    [&_.ant-table-cell]:!py-[6px]
+  "
             // summary={() => {
             //   const summaryItems = columns
             //     .filter(
@@ -795,7 +836,7 @@ export default function ProfitDetailsView() {
             //   );
             // }}
             summary={() => (
-              <Table.Summary.Row style={{ background: '#fafafa', fontWeight: 600 }}>
+              <Table.Summary.Row style={{ background: '#fafafa', fontWeight: 500, fontSize: '13px', color: 'black' }}>
                 <Table.Summary.Cell index={0} fixed="left">
                   Total
                 </Table.Summary.Cell>

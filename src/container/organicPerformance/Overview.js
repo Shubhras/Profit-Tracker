@@ -85,45 +85,47 @@ function Overview() {
   //   ];
 
   return (
-    <div className="bg-[#f5f7fb] p-5">
+    <div className="bg-[#f5f7fb] p-3 px-3">
       {/* HEADER */}
-      <div className="mb-5 flex items-center justify-between">
+      <div className="mb-3 flex flex-col gap-3 min-lg:flex-row min-lg:items-center min-lg:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-[22px] font-semibold text-[#111827]">Organic Performance Dashboard</h1>
+            <h1 className="text-[20px] mb-0 lg:text-[16px] font-bold text-[#111827]">Organic Performance Dashboard</h1>
 
-            <InfoCircleOutlined className="text-[#9ca3af] mb-2" />
+            <InfoCircleOutlined className="text-[#9ca3af] text-[12px]" />
           </div>
 
-          <p className="mt-1 text-sm text-[#6b7280]">Track your organic sales performance and key growth drivers.</p>
+          <p className="mb-0 text-[11px] text-[#6b7280]">
+            Track your organic sales performance and key growth drivers.
+          </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg border border-[#e5e7eb] bg-white px-4 py-2 text-sm">Channel : Amazon</div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="rounded-md border border-[#e5e7eb] bg-white px-3 py-1.5 text-[11px]">Channel : Amazon</div>
 
           <button
             type="button"
-            className="flex items-center gap-2 rounded-lg border border-[#e5e7eb] bg-white px-4 py-2 text-sm"
+            className="flex items-center gap-1 rounded-md border border-[#e5e7eb] bg-white px-3 py-1.5 text-[11px]"
           >
             <ReloadOutlined />
             Refresh
           </button>
 
-          <span className="text-xs text-[#6b7280]">Last Updated : 31 May 2026, 09:00 AM</span>
+          <span className="text-[10px] text-[#6b7280]">Last Updated : 31 May 2026, 09:00 AM</span>
         </div>
       </div>
 
       {/* FIRST ROW - 6 CARDS */}
-      <div className="grid grid-cols-6 gap-2">
+      <div className="grid grid-cols-6 xl:grid-cols-3 md:grid-cols-2 sm:grid-cols-1 gap-2">
         {cards.map((item, index) => (
-          <div key={index} className="rounded-xl border border-[#e5e7eb] bg-white px-4 pt-4 pb-2">
-            <p className="text-[17px] font-medium text-[#111827]">{item.title}</p>
+          <div key={index} className="rounded-xl border border-[#e5e7eb] bg-white px-3 py-3">
+            <p className="text-[12px] font-medium text-[#111827] leading-4">{item.title}</p>
 
-            <h2 className="mt-3 text-[20px] font-bold" style={{ color: item.color }}>
+            <h2 className="mt-3 text-[16px] font-bold" style={{ color: item.color }}>
               {item.value}
             </h2>
 
-            <div className="mt-3 flex items-center gap-2">
+            <div className="mt-2 flex items-center gap-1">
               <span className="text-xs font-semibold" style={{ color: item.color }}>
                 {item.growth}
               </span>
@@ -132,7 +134,7 @@ function Overview() {
             </div>
 
             {/* MINI GRAPH */}
-            <div className="mt-4 h-[32px] w-full">
+            <div className="mt-4 h-[26px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart
                   data={[
@@ -163,20 +165,19 @@ function Overview() {
       </div>
 
       {/* SECOND ROW */}
-      <div className="mt-5 grid grid-cols-12 gap-4">
+      <div className="mt-2 grid grid-cols-12 gap-2">
         {/* PIE CHART */}
-        {/* PIE CHART */}
-        <div className="col-span-3 rounded-xl border border-[#e5e7eb] bg-white p-4">
-          <div className="mb-4">
-            <h2 className="text-[17px] font-semibold text-[#111827]">Organic Sales by Source / Driver</h2>
+        <div className="col-span-3 xl:col-span-12 rounded-xl border border-[#e5e7eb] bg-white p-3">
+          <div className="mb-2">
+            <h2 className="text-[15px] font-semibold text-[#111827]">Organic Sales by Source / Driver</h2>
           </div>
 
           {/* PIE CHART TOP */}
           <div className="flex justify-center">
-            <div className="h-[180px] w-full">
+            <div className="h-[150px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={pieData} innerRadius={45} outerRadius={75} dataKey="value" paddingAngle={2}>
+                  <Pie data={pieData} innerRadius={35} outerRadius={60} dataKey="value" paddingAngle={2}>
                     {pieData.map((entry, index) => (
                       <Cell key={index} fill={entry.color} />
                     ))}
@@ -215,9 +216,10 @@ function Overview() {
 
         {/* GRAPH */}
         {/* GRAPH */}
-        <div className="col-span-6 rounded-xl border border-[#e5e7eb] bg-white p-4">
+        <div className="col-span-6 xl:col-span-12 rounded-xl border border-[#e5e7eb] bg-white p-3">
+          {' '}
           {/* HEADER */}
-          <div className="mb-5 flex items-start justify-between">
+          <div className="col-span-6 xl:col-span-12 rounded-xl border border-[#e5e7eb] bg-white p-3">
             <div>
               <h2 className="text-[17px] font-semibold text-[#111827]">Sales Drivers Trend</h2>
 
@@ -264,11 +266,10 @@ function Overview() {
             </div>
 
             {/* DROPDOWN */}
-            <select className="rounded-md border border-[#e5e7eb] bg-white px-3 py-[6px] text-sm text-[#374151] outline-none">
+            <select className="rounded-md border border-[#e5e7eb] bg-white px-2 py-[2px] mt-2 text-sm text-[#374151] outline-none">
               <option>Daily</option>
             </select>
           </div>
-
           {/* CHART */}
           <div className="h-[270px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -393,147 +394,112 @@ function Overview() {
         </div>
 
         {/* RIGHT SIDE DATA BOX */}
-        <div className="col-span-3 rounded-xl border border-[#e5e7eb] bg-white p-4">
-          <h2 className="mb-5 text-[17px] font-semibold text-[#111827]">Sales from Coupons & Promotions</h2>
+        <div className="col-span-3 xl:col-span-12 rounded-xl border border-[#e5e7eb] bg-white p-3">
+          <h2 className="mb-3 text-[15px] font-semibold text-[#111827]">Sales from Coupons & Promotions</h2>
 
-          <div className="flex h-[320px] flex-col justify-between">
-            <div className="border-b border-[#f3f4f6] pb-4">
+          <div className="flex h-auto gap-2 flex-col justify-between">
+            <div className="border-b border-[#f3f4f6] pb-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-[#6b7280]">Total Sales</span>
+                <span className="text-[13px] text-[#6b7280]">Total Sales</span>
 
-                <span className="text-sm font-semibold text-[#111827]">₹ 8,45,230.10</span>
+                <span className="text-[13px] font-semibold text-[#111827]">₹ 8,45,230.10</span>
               </div>
             </div>
 
-            <div className="border-b border-[#f3f4f6] pb-4">
+            <div className="border-b border-[#f3f4f6] pb-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-[#6b7280]">Orders</span>
+                <span className="text-[13px] text-[#6b7280]">Orders</span>
 
-                <span className="text-sm font-semibold text-[#111827]">745</span>
+                <span className="text-[13px] font-semibold text-[#111827]">745</span>
               </div>
             </div>
 
-            <div className="border-b border-[#f3f4f6] pb-4">
+            <div className="border-b border-[#f3f4f6] pb-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-[#6b7280]">Units Sold</span>
+                <span className="text-[13px] text-[#6b7280]">Units Sold</span>
 
-                <span className="text-sm font-semibold text-[#111827]">1,025</span>
+                <span className="text-[13px] font-semibold text-[#111827]">1,025</span>
               </div>
             </div>
 
-            <div className="border-b border-[#f3f4f6] pb-4">
+            <div className="border-b border-[#f3f4f6] pb-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-[#6b7280]">Avg. Discount</span>
+                <span className="text-[13px] text-[#6b7280]">Avg. Discount</span>
 
-                <span className="text-sm font-semibold text-[#111827]">₹ 118.65</span>
+                <span className="text-[13px] font-semibold text-[#111827]">₹ 118.65</span>
               </div>
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[#6b7280]">Redemption Rate</span>
+              <span className="text-[13px] text-[#6b7280]">Redemption Rate</span>
 
               <div className="flex items-center gap-3">
                 {/* <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#ecfdf5] text-[#16a34a]">
                   %
                 </div> */}
 
-                <span className="text-lg font-bold text-[#111827]">21.45%</span>
+                <span className="text-[13px] font-semibold text-[#111827]">21.45%</span>
               </div>
             </div>
           </div>
         </div>
       </div>
       {/* THIRD ROW */}
-      <div className="mt-5 grid grid-cols-12 gap-4">
+
+      <div className="mt-3 grid grid-cols-12 gap-2">
         {/* REVIEWS & RATINGS */}
-        <div className="col-span-3 rounded-xl border border-[#e5e7eb] bg-white p-4">
-          {/* HEADER */}
-          <div className="mb-4 flex items-center gap-2">
-            <StarOutlined className="text-[15px] text-[#f59e0b] mb-2" />
-
-            <h2 className="text-[17px] font-semibold text-[#111827]">Reviews & Ratings</h2>
+        <div className="col-span-3 xl:col-span-6 md:col-span-12 rounded-xl border border-[#e5e7eb] bg-white p-3">
+          <div className="mb-3 flex items-center gap-2">
+            <StarOutlined className="text-[13px] text-[#f59e0b] mb-2" />
+            <h2 className="text-[15px] font-semibold text-[#111827]">Reviews & Ratings</h2>
           </div>
 
-          {/* TOP STATS */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <p className="text-[11px] text-[#9ca3af]">Average Rating</p>
-
-              <h3 className="mt-1 text-[24px] font-bold text-[#111827]">4.3</h3>
-
-              <p className="mt-1 text-[11px] font-medium text-[#16a34a]">+0.12 vs 01 Apr - 30 Apr</p>
+              <p className="mb-0 text-[11px] text-[#9ca3af]">Average Rating</p>
+              <h3 className="text-[18px] font-bold text-[#111827]">4.3</h3>
+              <p className="mt-1 text-[10px] font-medium text-[#16a34a]">+0.12 vs previous</p>
             </div>
 
             <div>
-              <p className="text-[11px] text-[#9ca3af]">Total Reviews</p>
-
-              <h3 className="mt-1 text-[24px] font-bold text-[#111827]">1,258</h3>
-
-              <p className="mt-1 text-[11px] font-medium text-[#16a34a]">+8.45% vs 01 Apr - 30 Apr</p>
+              <p className="text-[11px] mb-0 text-[#9ca3af]">Total Reviews</p>
+              <h3 className="text-[18px] font-bold text-[#111827]">1,258</h3>
+              <p className="mt-1 text-[10px] font-medium text-[#16a34a]">+8.45% vs previous</p>
             </div>
           </div>
 
-          {/* POSITIVE / NEGATIVE */}
-          <div className="mt-3 flex items-center justify-between">
+          <div className="mt-1 flex items-center justify-between">
             <div>
-              <p className="text-[11px] text-[#9ca3af]">Positive Reviews</p>
-
-              <h4 className="mt-1 text-[18px] font-semibold text-[#111827]">
-                1,032 <span className="text-sm">(82%)</span>
+              <p className="text-[11px] text-[#9ca3af] mb-0">Positive Reviews</p>
+              <h4 className="text-[14px] font-semibold mt-1 text-[#111827]">
+                1,032 <span className="text-[11px]">(82%)</span>
               </h4>
             </div>
 
             <div>
-              <p className="text-[11px] text-[#9ca3af]">Negative Reviews</p>
-
-              <h4 className="mt-1 text-[18px] font-semibold text-[#111827]">
-                226 <span className="text-sm">(18%)</span>
+              <p className="text-[11px] text-[#9ca3af] mb-0">Negative Reviews</p>
+              <h4 className="mt-1 text-[14px] font-semibold text-[#111827]">
+                226 <span className="text-[11px]">(18%)</span>
               </h4>
             </div>
           </div>
 
-          {/* RATING DISTRIBUTION */}
           <div className="mt-3">
-            <p className="mb-3 text-[12px] font-semibold text-[#374151]">Rating Distribution</p>
+            <p className="mb-2 text-[13px] font-semibold text-[#374151]">Rating Distribution</p>
 
             {[
-              {
-                star: '5 Star',
-                width: '100%',
-                color: '#22c55e',
-                value: 712,
-              },
-              {
-                star: '4 Star',
-                width: '70%',
-                color: '#84cc16',
-                value: 320,
-              },
-              {
-                star: '3 Star',
-                width: '40%',
-                color: '#facc15',
-                value: 126,
-              },
-              {
-                star: '2 Star',
-                width: '20%',
-                color: '#fb923c',
-                value: 55,
-              },
-              {
-                star: '1 Star',
-                width: '12%',
-                color: '#ef4444',
-                value: 45,
-              },
+              { star: '5 Star', width: '100%', color: '#22c55e', value: 712 },
+              { star: '4 Star', width: '70%', color: '#84cc16', value: 320 },
+              { star: '3 Star', width: '40%', color: '#facc15', value: 126 },
+              { star: '2 Star', width: '20%', color: '#fb923c', value: 55 },
+              { star: '1 Star', width: '12%', color: '#ef4444', value: 45 },
             ].map((item, index) => (
-              <div key={index} className="mb-2 flex items-center gap-3">
-                <span className="w-[45px] text-[11px] text-[#6b7280]">{item.star}</span>
+              <div key={index} className="mb-2 flex items-center gap-2">
+                <span className="w-[42px] text-[10px] text-[#6b7280]">{item.star}</span>
 
-                <div className="h-[6px] flex-1 rounded-full bg-[#f3f4f6]">
+                <div className="h-[5px] flex-1 rounded-full bg-[#f3f4f6]">
                   <div
-                    className="h-[6px] rounded-full"
+                    className="h-[5px] rounded-full"
                     style={{
                       width: item.width,
                       background: item.color,
@@ -541,28 +507,24 @@ function Overview() {
                   />
                 </div>
 
-                <span className="w-[28px] text-right text-[11px] text-[#6b7280]">{item.value}</span>
+                <span className="w-[25px] text-right text-[10px] text-[#6b7280]">{item.value}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* PRODUCT RANKING */}
-        <div className="col-span-3 rounded-xl border border-[#e5e7eb] bg-white p-4">
-          <div className="mb-4 flex items-center gap-2">
-            <BarChartOutlined className="text-[15px] text-[#2563eb] mb-2" />
-
-            <h2 className="text-[17px] font-semibold text-[#111827]">Product Ranking Overview</h2>
+        <div className="col-span-3 xl:col-span-6 md:col-span-12 rounded-xl border border-[#e5e7eb] bg-white p-3">
+          <div className="mb-3 flex items-center gap-2">
+            <BarChartOutlined className="text-[13px] text-[#2563eb] mb-2" />
+            <h2 className="text-[15px] font-semibold text-[#111827]">Product Ranking Overview</h2>
           </div>
 
           <div className="overflow-hidden rounded-lg border border-[#f3f4f6]">
-            {/* HEADER */}
-            <div className="grid grid-cols-3 border-b border-[#f3f4f6] bg-[#f9fafb] px-3 py-2">
-              <span className="text-[11px] font-semibold text-[#6b7280]">Rank Position</span>
-
-              <span className="text-center text-[11px] font-semibold text-[#6b7280]">No. of Products</span>
-
-              <span className="text-right text-[11px] font-semibold text-[#6b7280]">%</span>
+            <div className="grid grid-cols-3 border-b border-[#f3f4f6] bg-[#f9fafb] px-2 py-2">
+              <span className="text-[10px] font-semibold text-[#6b7280]">Rank Position</span>
+              <span className="text-center text-[10px] font-semibold text-[#6b7280]">Products</span>
+              <span className="text-right text-[10px] font-semibold text-[#6b7280]">%</span>
             </div>
 
             {[
@@ -572,35 +534,34 @@ function Overview() {
               ['#21 - #50', '64', '21.3%'],
               ['#51+', '18', '6.0%'],
             ].map((item, index) => (
-              <div key={index} className="grid grid-cols-3 border-b border-[#f9fafb] px-3 py-3">
-                <span className="text-[12px] font-medium text-[#374151]">{item[0]}</span>
+              <div key={index} className="grid grid-cols-3 border-b border-[#f9fafb] px-2 py-2">
+                <span className="text-[11px] font-medium text-[#374151]">{item[0]}</span>
 
-                <span className="text-center text-[12px] text-[#374151]">{item[1]}</span>
+                <span className="text-center text-[11px] text-[#374151]">{item[1]}</span>
 
-                <span className="text-right text-[12px] text-[#374151]">{item[2]}</span>
+                <span className="text-right text-[11px] text-[#374151]">{item[2]}</span>
               </div>
             ))}
 
-            {/* TOTAL */}
-            <div className="grid grid-cols-3 bg-[#f9fafb] px-3 py-3">
-              <span className="text-[12px] font-semibold text-[#111827]">Total</span>
+            <div className="grid grid-cols-3 bg-[#f9fafb] px-2 py-2">
+              <span className="text-[11px] font-semibold text-[#111827]">Total</span>
 
-              <span className="text-center text-[12px] font-semibold text-[#111827]">300</span>
+              <span className="text-center text-[11px] font-semibold text-[#111827]">300</span>
 
-              <span className="text-right text-[12px] font-semibold text-[#111827]">100%</span>
+              <span className="text-right text-[11px] font-semibold text-[#111827]">100%</span>
             </div>
           </div>
         </div>
 
         {/* TOP GAINING KEYWORDS */}
-        <div className="col-span-3 rounded-xl border border-[#e5e7eb] bg-white p-4">
-          <div className="mb-4 flex items-center gap-2">
-            <RiseOutlined className="text-[15px] text-[#16a34a] mb-2" />
+        <div className="col-span-3 xl:col-span-6 md:col-span-12 rounded-xl border border-[#e5e7eb] bg-white p-3">
+          <div className="mb-3 flex items-center gap-2">
+            <RiseOutlined className="text-[13px] text-[#16a34a]" />
 
-            <h2 className="text-[17px] font-semibold text-[#111827]">Top Gaining Keywords (Organic)</h2>
+            <h2 className="text-[15px] font-semibold text-[#111827]">Top Gaining Keywords (Organic)</h2>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-2">
             {[
               {
                 keyword: 'wireless earphones',
@@ -627,33 +588,33 @@ function Overview() {
                 clicks: '512',
               },
             ].map((item, index) => (
-              <div key={index} className="flex items-center justify-between border-b border-[#f9fafb] pb-1">
+              <div key={index} className="flex items-center justify-between border-b border-[#f3f4f6] pb-2">
                 <div>
-                  <p className="text-[14px] font-semibold text-[#111827]">{item.keyword}</p>
+                  <p className="text-[12px] font-semibold text-[#111827]">{item.keyword}</p>
 
-                  <p className="mt-1 text-[13px] text-[#9ca3af]">Search Volume : {item.volume}</p>
+                  <p className="mt-0.5 text-[10px] text-[#9ca3af]">Search Volume : {item.volume}</p>
                 </div>
 
                 <div className="text-right">
-                  <p className="text-[13px] font-semibold text-[#16a34a]">Rank: {item.change}</p>
+                  <p className="text-[11px] font-semibold text-[#16a34a]">Rank: {item.change}</p>
 
-                  <p className="mt-1 text-[13px] text-[#9ca3af]">Clicks : {item.clicks}</p>
+                  <p className="mt-0.5 text-[10px] text-[#9ca3af]">Clicks : {item.clicks}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          <button type="button" className="text-[13px] font-semibold text-[#2563eb]">
+          <button type="button" className="mt-2 text-[11px] font-semibold text-[#2563eb]">
             View all keywords →
           </button>
         </div>
 
         {/* TRAFFIC & VISIBILITY */}
-        <div className="col-span-3 rounded-xl border border-[#e5e7eb] bg-white p-4">
-          <div className="mb-5 flex items-center gap-2">
-            <EyeOutlined className="text-[15px] text-[#7c3aed] mb-2" />
+        <div className="col-span-3 xl:col-span-6 md:col-span-12 rounded-xl border border-[#e5e7eb] bg-white p-3">
+          <div className="mb-3 flex items-center gap-2">
+            <EyeOutlined className="text-[13px] text-[#7c3aed] mb-2" />
 
-            <h2 className="text-[17px] font-semibold text-[#111827]">Traffic & Visibility</h2>
+            <h2 className="text-[15px] font-semibold text-[#111827]">Traffic & Visibility</h2>
           </div>
 
           {[
@@ -676,14 +637,14 @@ function Overview() {
               color: '#10b981',
             },
           ].map((item, index) => (
-            <div key={index} className="mb-6 flex items-center justify-between">
+            <div key={index} className="mb-4 flex items-center justify-between last:mb-0">
               <div>
-                <p className="text-[14px] font-semibold mb-1">{item.title}</p>
+                <p className="mb-0.5 text-[12px] font-semibold text-[#374151]">{item.title}</p>
 
-                <h3 className="text-[20px] font-bold text-[#111827] mb-1">{item.value}</h3>
+                <h3 className="mb-0.5 text-[16px] font-bold text-[#111827]">{item.value}</h3>
 
                 <p
-                  className="text-[13px] font-medium"
+                  className="text-[10px] font-medium"
                   style={{
                     color: item.color,
                   }}
@@ -692,12 +653,11 @@ function Overview() {
                 </p>
               </div>
 
-              {/* MINI GRAPH */}
               <div className="flex items-end gap-[2px]">
                 {[8, 10, 7, 14, 12, 18, 10, 20].map((h, i) => (
                   <div
                     key={i}
-                    className="w-[6px] rounded-full"
+                    className="w-[5px] rounded-full"
                     style={{
                       height: `${h}px`,
                       background: '#22c55e',
@@ -710,17 +670,18 @@ function Overview() {
           ))}
         </div>
       </div>
-      {/* FOURTH ROW */}
-      <div className="mt-5 rounded-xl border border-[#e5e7eb] bg-white p-4">
-        {/* HEADER */}
-        <div className="mb-4 flex items-center gap-2">
-          <BulbOutlined className="text-[16px] text-[#f59e0b] mb-2" />
 
-          <h2 className="text-[17px] font-semibold text-[#111827]">Insights & Recommendations</h2>
+      {/* FOURTH ROW */}
+      <div className="mt-3 rounded-xl border border-[#e5e7eb] bg-white p-3">
+        {/* HEADER */}
+        <div className="mb-3 flex items-center gap-2">
+          <BulbOutlined className="text-[14px] text-[#f59e0b] mb-2" />
+
+          <h2 className="text-[15px] font-semibold text-[#111827]">Insights & Recommendations</h2>
         </div>
 
         {/* CARDS */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-4 xl:grid-cols-2 sm:grid-cols-1 gap-3">
           {[
             {
               icon: <TrophyOutlined />,
@@ -753,13 +714,12 @@ function Overview() {
           ].map((item, index) => (
             <div
               key={index}
-              className="rounded-lg border border-[#f3f4f6] p-4 transition-all duration-200 hover:shadow-sm"
+              className="rounded-lg border border-[#f3f4f6] p-3 transition-all duration-200 hover:shadow-sm"
             >
-              {/* TOP */}
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-2">
                 {/* ICON */}
                 <div
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-[15px]"
+                  className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-[13px]"
                   style={{
                     background: item.bg,
                     color: item.color,
@@ -770,9 +730,9 @@ function Overview() {
 
                 {/* CONTENT */}
                 <div>
-                  <h3 className="text-[15px] font-semibold text-[#111827]">{item.title}</h3>
+                  <h3 className="text-[13px] font-semibold text-[#111827]">{item.title}</h3>
 
-                  <p className="mt-1 text-[13px] leading-5 text-[#6b7280]">{item.desc}</p>
+                  <p className="mt-0.5 text-[11px] leading-4 text-[#6b7280]">{item.desc}</p>
                 </div>
               </div>
             </div>

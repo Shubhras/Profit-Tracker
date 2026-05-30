@@ -241,12 +241,12 @@ function TrafficVisibility() {
   ];
 
   return (
-    <div className="space-y-2 mt-3 mb-3 px-2">
+    <div className="space-y-2 mt-3 mb-3 px-3">
       {/* HEADER */}
 
       <div className="flex items-start justify-between gap-3 lg:flex-col">
         <div>
-          <h1 className="text-[20px] font-semibold mb-0 text-dark">Traffic & Visibility</h1>
+          <h1 className="text-[20px] font-bold mb-0 text-dark">Traffic & Visibility</h1>
 
           <p className="text-[12px] text-light max-w-[700px]">
             Track your organic traffic performance and visibility metrics. Analyze impressions, clicks, CTR and search

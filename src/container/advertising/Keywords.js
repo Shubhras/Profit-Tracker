@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
-import { Button, Table, Tag, Tooltip, Modal } from 'antd';
+import { Button, Table, Tag, Tooltip, Modal, Switch } from 'antd';
 import { FilterOutlined, ExportOutlined, SearchOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { getKeywords } from '../../redux/advertising/actionCreator';
+import { getKeywords, KeywordBidUpdate } from '../../redux/advertising/actionCreator';
 
 function Keywords() {
   const dispatch = useDispatch();
@@ -15,6 +15,8 @@ function Keywords() {
     pageSize: 10,
   });
   const [showFilters, setShowFilters] = React.useState(false);
+  const [selectedKeyword, setSelectedKeyword] = React.useState(null);
+  const [savingBid, setSavingBid] = React.useState(false);
 
   const [filters, setFilters] = React.useState({
     state: '',
@@ -51,12 +53,43 @@ function Keywords() {
 
     return () => clearTimeout(timer);
   }, [searchText]);
+
+  const handleStateUpdate = async (record, checked) => {
+    const payload = {
+      profile_id: record.profileId, // ya jahan se aa raha ho
+      keywords: [
+        {
+          keywordId: record.keywordId,
+          state: checked ? 'ENABLED' : 'PAUSED',
+          bid: Number(record.bid),
+        },
+      ],
+    };
+
+    try {
+      const res = await dispatch(KeywordBidUpdate(payload));
+
+      if (res?.status) {
+        dispatch(
+          getKeywords(pagination.current, pagination.pageSize, {
+            search: debouncedSearch,
+            state: appliedFilters.state,
+            match_type: appliedFilters.match_type,
+          }),
+        );
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   const dataSource =
     keywordsData?.results?.map((item) => ({
       // key: index,
       key: item.keyword_id,
       keywordId: item.keyword_id,
       keywordText: item.keyword_text,
+      profileId: item.profile_id,
       matchType: item.match_type,
       state: item.state,
       bid: item.bid,
@@ -129,15 +162,33 @@ function Keywords() {
     // },
 
     {
+      title: '',
+      dataIndex: 'state',
+      align: 'center',
+      size: 'small',
+      width: 90,
+      render: (value, record) => (
+        <Switch
+          checked={value === 'ENABLED'}
+          checkedChildren=""
+          unCheckedChildren=""
+          onChange={(checked) => handleStateUpdate(record, checked)}
+        />
+      ),
+    },
+
+    {
       title: 'Keyword',
       dataIndex: 'keywordText',
       align: 'center',
       width: 70,
       ellipsis: true,
       render: (v) => (
-        <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
-          {v}
-        </span>
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
+            {v}
+          </span>
+        </Tooltip>
       ),
     },
 
@@ -156,18 +207,18 @@ function Keywords() {
       ),
     },
 
-    {
-      title: 'State',
-      dataIndex: 'state',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      render: (v) => (
-        <Tag color={v === 'ENABLED' ? 'success' : 'error'} className="!px-2 !py-[1px] text-[10px] !rounded-full">
-          {v}
-        </Tag>
-      ),
-    },
+    // {
+    //   title: 'State',
+    //   dataIndex: 'state',
+    //   align: 'center',
+    //   width: 70,
+    //   ellipsis: true,
+    //   render: (v) => (
+    //     <Tag color={v === 'ENABLED' ? 'success' : 'error'} className="!px-2 !py-[1px] text-[10px] !rounded-full">
+    //       {v}
+    //     </Tag>
+    //   ),
+    // },
 
     {
       title: 'Bid',
@@ -176,11 +227,12 @@ function Keywords() {
       width: 70,
       sorter: (a, b) => Number(a.bid || 0) - Number(b.bid || 0),
       ellipsis: true,
-      render: (v) => (
+      render: (v, record) => (
         <button
           type="button"
           onClick={() => {
             setSelectedBid(v);
+            setSelectedKeyword(record);
             setIsBidModalOpen(true);
           }}
           className="px-3 py-[6px] rounded-xl border border-transparent text-[#111827] font-medium bg-transparent hover:border-[#dbe1e8] hover:bg-white hover:shadow-sm transition-all duration-200"
@@ -314,6 +366,43 @@ function Keywords() {
       ),
     },
   ];
+
+  const handleBidUpdate = async () => {
+    if (!selectedKeyword) return;
+
+    setSavingBid(true);
+
+    const payload = {
+      profile_id: selectedKeyword.profileId,
+      keywords: [
+        {
+          keywordId: selectedKeyword.keywordId,
+          state: selectedKeyword.state,
+          bid: Number(selectedBid),
+        },
+      ],
+    };
+
+    try {
+      const res = await dispatch(KeywordBidUpdate(payload));
+
+      if (res?.status) {
+        setIsBidModalOpen(false);
+
+        dispatch(
+          getKeywords(pagination.current, pagination.pageSize, {
+            search: debouncedSearch,
+            state: appliedFilters.state,
+            match_type: appliedFilters.match_type,
+          }),
+        );
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setSavingBid(false);
+    }
+  };
 
   return (
     <>
@@ -464,6 +553,7 @@ function Keywords() {
           <Table
             columns={columns}
             dataSource={dataSource}
+            showSorterTooltip={false}
             loading={loading}
             pagination={{
               current: pagination.current,
@@ -526,8 +616,13 @@ function Keywords() {
               Cancel
             </button>
 
-            <button type="button" className="h-[42px] px-6 rounded-xl bg-[#111827] text-white font-semibold">
-              Save
+            <button
+              type="button"
+              onClick={handleBidUpdate}
+              disabled={savingBid}
+              className="h-[42px] px-6 rounded-xl bg-[#111827] text-white font-semibold disabled:opacity-50"
+            >
+              {savingBid ? 'Saving...' : 'Save'}
             </button>
           </div>
         </div>

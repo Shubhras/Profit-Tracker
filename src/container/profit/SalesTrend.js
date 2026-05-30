@@ -1,31 +1,31 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Card, Button } from 'antd';
+import { Table, Card } from 'antd';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { RightOutlined, CheckOutlined, CloseOutlined, CaretDownOutlined, CaretUpOutlined } from '@ant-design/icons';
+import { RightOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { PageHeader } from '../../components/page-headers/page-headers';
+// import { PageHeader } from '../../components/page-headers/page-headers';
 import { getPivotStats, exportProfitData } from '../../redux/dashboard/actionCreator';
 
 export default function SalesTrend() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [showChart, setShowChart] = React.useState(false);
-  const [showFilters, setShowFilters] = useState(false);
+  // const [showFilters, setShowFilters] = useState(false);
   const [selectedChannel, setSelectedChannel] = useState('all');
   const [pagination, setPagination] = React.useState({
     current: 1,
     pageSize: 10,
   });
-  const [filters, setFilters] = React.useState({
-    channel: '',
-    qty: 'grossqty',
-    sku: '',
-    productId: '',
-    parentId: '',
-    mktCategory: '',
-    invMasterSku: '',
-  });
+  // const [filters, setFilters] = React.useState({
+  //   channel: '',
+  //   qty: 'grossqty',
+  //   sku: '',
+  //   productId: '',
+  //   parentId: '',
+  //   mktCategory: '',
+  //   invMasterSku: '',
+  // });
   const { pivotData, loading, dateRange, search, channel: globalChannel } = useSelector((state) => state.dashboard);
   // const graphData = React.useMemo(() => {
   //   if (!pivotData?.results?.length) return [];
@@ -100,14 +100,14 @@ export default function SalesTrend() {
       search,
     },
 
-    metrics: {
-      sku: filters.sku,
-      productId: filters.productId,
-      ParentId: filters.parentId,
-      mkt: filters.mktCategory,
-      qty: filters.qty,
-      invMasterSku: filters.invMasterSku,
-    },
+    // metrics: {
+    //   sku: filters.sku,
+    //   productId: filters.productId,
+    //   ParentId: filters.parentId,
+    //   mkt: filters.mktCategory,
+    //   qty: filters.qty,
+    //   invMasterSku: filters.invMasterSku,
+    // },
     pagination: {
       pageNo: 0,
       pageSize: 25,
@@ -130,16 +130,16 @@ export default function SalesTrend() {
       window.removeEventListener('headerAction', handleHeaderAction);
     };
   }, [dispatch, payload]);
-  const PageRoutes = [
-    {
-      path: 'index',
-      breadcrumbName: 'Profit',
-    },
-    {
-      path: '',
-      breadcrumbName: 'Sales Trend',
-    },
-  ];
+  // const PageRoutes = [
+  //   {
+  //     path: 'index',
+  //     breadcrumbName: 'Profit',
+  //   },
+  //   {
+  //     path: '',
+  //     breadcrumbName: 'Sales Trend',
+  //   },
+  // ];
 
   // const generateDates = (start, end) => {
   //   const dates = [];
@@ -248,40 +248,40 @@ export default function SalesTrend() {
             border: '1px solid #d9d9d9',
             background: 'rgb(202, 221, 254)',
           }}
-          className="w-[30px] h-[30px] rounded-[4px] cursor-pointer flex-items-center justify-center  mx-auto"
+          className="w-[28px] h-[28px] rounded-[4px] cursor-pointer flex-items-center justify-center  mx-auto"
         >
           <RightOutlined style={{ fontSize: 12 }} />
         </button>
       ),
     },
   ];
-  const handleChange = (key, value) => {
-    setFilters((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
+  // const handleChange = (key, value) => {
+  //   setFilters((prev) => ({
+  //     ...prev,
+  //     [key]: value,
+  //   }));
+  // };
 
-  const handleApply = () => {
-    const newPayload = {
-      ...payload,
-      ...filters,
-    };
-    dispatch(getPivotStats(newPayload));
-    setShowFilters(false);
-  };
+  // const handleApply = () => {
+  //   const newPayload = {
+  //     ...payload,
+  //     ...filters,
+  //   };
+  //   dispatch(getPivotStats(newPayload));
+  //   setShowFilters(false);
+  // };
 
-  const handleClear = () => {
-    setFilters({
-      channel: '',
-      qty: 'grossqty',
-      sku: '',
-      productId: '',
-      parentId: '',
-      mktCategory: '',
-      invMasterSku: '',
-    });
-  };
+  // const handleClear = () => {
+  //   setFilters({
+  //     channel: '',
+  //     qty: 'grossqty',
+  //     sku: '',
+  //     productId: '',
+  //     parentId: '',
+  //     mktCategory: '',
+  //     invMasterSku: '',
+  //   });
+  // };
   // const formatKey = (key) => {
   //   const d = new Date(key);
   //   return d.toISOString().split('T')[0];
@@ -304,14 +304,14 @@ export default function SalesTrend() {
 
   return (
     <>
-      <PageHeader
+      {/* <PageHeader
         routes={PageRoutes}
         title="Sales Trend"
         className="flex  justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 sm:pb-[30px] bg-transparent sm:flex-col"
-      />
-      <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-8 xl:px-[15px] pb-[30px] bg-transparent">
+      /> */}
+      <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-3 py-3 xl:px-[15px] pb-[30px] bg-transparent">
         <Card bordered={false} className="sales-table-wrapper">
-          <div className="mb-3 p-3 border border-gray-200 rounded-xl bg-gray-50">
+          {/* <div className="mb-3 p-3 border border-gray-200 rounded-xl bg-gray-50">
             <div className="flex flex-wrap items-center gap-4">
               <select
                 className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none"
@@ -418,7 +418,7 @@ export default function SalesTrend() {
                 </div>
               </div>
             )}
-          </div>
+          </div> */}
           <div className="flex justify-between items-center mb-4">
             {' '}
             <div className="font-medium text-[15px] text-black">
@@ -427,7 +427,7 @@ export default function SalesTrend() {
             <button
               type="button"
               onClick={() => setShowChart(!showChart)}
-              className="border border-gray-300 rounded-lg px-2 py-1 bg-white hover:bg-gray-100 transition"
+              className="border border-gray-300 rounded-lg px-2 py-1 text-[12px] bg-white hover:bg-gray-100 transition"
             >
               {showChart ? 'Hide Chart' : 'View Chart'}
             </button>
@@ -436,7 +436,7 @@ export default function SalesTrend() {
             <Card className="mb-5 bg-gray-100 rounded-xl">
               <div style={{ marginBottom: 10, fontWeight: 500 }}>Chart View - Total</div>
 
-              <ResponsiveContainer width="100%" height={260}>
+              <ResponsiveContainer width="100%" height={240}>
                 <LineChart data={graphData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis
@@ -479,9 +479,16 @@ export default function SalesTrend() {
             }}
             scroll={{ x: 'max-content' }}
             size="small"
+            className="
+    [&_.ant-table-thead>tr>th]:!text-[12px]
+    [&_.ant-table-thead>tr>th]:!font-semibold
+    [&_.ant-table-tbody>tr>td]:!text-[12px]
+    [&_.ant-table-cell]:!px-2
+    [&_.ant-table-cell]:!py-[6px]
+  "
             summary={() => (
               <Table.Summary.Row className="custom-total-row">
-                <Table.Summary.Cell index={0} fixed="left" className="text-black">
+                <Table.Summary.Cell index={0} fixed="left" className="text-black text-[13px]">
                   Total
                 </Table.Summary.Cell>
 

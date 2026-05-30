@@ -119,41 +119,36 @@ function Inventory() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] p-3 px-2 text-[12px]">
-      <div className="rounded-[24px] border border-[#e5e7eb] bg-white p-3 shadow-sm">
+    <div className="min-h-screen bg-[#f8fafc] py-3 px-3">
+      <div className="shadow-sm">
         {/* Header */}
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-3 mb-1">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-[20px] font-bold text-[#111827] mb-1">Inventory Sync</h1>
-
-              <InfoCircleFilled className="text-[#94a3b8] text-[13px]" />
+              <h1 className="text-[20px] lg:text-[20px] font-bold mb-0">Inventory Sync</h1>
+              <InfoCircleFilled className="text-[#94a3b8] text-[12px]" />
             </div>
 
-            <p className="mt-[2px] text-[12px] leading-[18px] text-[#6b7280]">
+            <p className="text-[12px] lg:text-[12px] leading-[16px] text-[#6b7280]">
               Sync inventory across all marketplaces in real-time. View sync status, success, failed and pending counts.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="text-[10px] text-[#6b7280]">Last Sync: 31 May 2026, 08:45 AM</span>
-
-            <button
-              type="button"
-              className="flex items-center gap-2 rounded-l bg-[#16a34a] px-3 py-1 text-[11px] font-medium text-white shadow-sm hover:bg-[#15803d]"
-            >
-              <SyncOutlined className="text-[11px]" />
-              Sync All Marketplaces
-            </button>
-          </div>
+          <button
+            type="button"
+            className="flex items-center gap-2 rounded-lg bg-[#16a34a] px-3 py-1.5 text-[11px] font-medium text-white whitespace-nowrap"
+          >
+            <SyncOutlined className="text-[11px]" />
+            Sync All Marketplaces
+          </button>
         </div>
 
         {/* Top Cards */}
-        <div className="mt-1 grid grid-cols-5 gap-3">
+        <div className="mt-2 grid grid-cols-5 xl:grid-cols-3 md:grid-cols-2 sm:grid-cols-1 gap-2">
           {stats.map((item, index) => (
             <div
               key={index}
-              className={`relative overflow-hidden rounded-2xl border border-[#edf0f2] px-3 py-3 ${item.lightBg}`}
+              className={`relative overflow-hidden rounded-xl border border-[#edf0f3] px-3 py-2 ${item.lightBg}`}
             >
               {/* Glow */}
               <div className={`absolute -right-6 -top-6 h-16 w-16 rounded-full blur-3xl opacity-40 ${item.glowBg}`} />
@@ -161,18 +156,18 @@ function Inventory() {
               <div className="relative flex items-center gap-2">
                 {/* Icon */}
                 <div
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-[15px] ${item.bg} ${item.iconColor}`}
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-[13px] ${item.bg} ${item.iconColor}`}
                 >
                   {item.icon}
                 </div>
 
                 {/* Content */}
                 <div>
-                  <p className="mb-[1px] text-[11px] font-medium text-[#6b7280]">{item.title}</p>
+                  <p className="mb-[2px] text-[12px] font-medium text-[#6b7280]">{item.title}</p>
 
-                  <h2 className="text-[20px] font-bold leading-none text-[#111827]">{item.value}</h2>
+                  <h2 className="text-[18px] font-bold leading-none text-[#111827]">{item.value}</h2>
 
-                  <p className={`mt-[2px] text-[10px] font-medium ${item.subColor}`}>{item.sub}</p>
+                  <p className={`mt-[2px] text-[11px] font-medium ${item.subColor}`}>{item.sub}</p>
                 </div>
               </div>
             </div>
@@ -180,17 +175,18 @@ function Inventory() {
         </div>
 
         {/* Filters */}
-        <div className="mt-2 flex items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <select className="rounded-xl border border-[#e5e7eb] px-3 py-1 text-[10px] outline-none">
+        <div className="mt-2 flex items-center justify-between gap-3 flex-wrap">
+          {/* LEFT */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <select className="bg-white border border-[#e5e7eb] px-3 h-[30px] text-[11px] outline-none rounded-lg">
               <option>All Marketplaces</option>
             </select>
 
-            <select className="rounded-xl border border-[#e5e7eb] px-3 py-1 text-[10px] outline-none">
+            <select className="bg-white border border-[#e5e7eb] px-3 h-[30px] text-[11px] outline-none rounded-lg">
               <option>All Channels</option>
             </select>
 
-            <select className="rounded-xl border border-[#e5e7eb] px-3 py-1 text-[10px] outline-none">
+            <select className="bg-white border border-[#e5e7eb] px-3 h-[30px] text-[11px] outline-none rounded-lg">
               <option>All Status</option>
             </select>
 
@@ -198,17 +194,17 @@ function Inventory() {
               <input
                 type="text"
                 placeholder="Search by SKU, Title, ASIN..."
-                className="w-[240px] rounded-xl border border-[#e5e7eb] py-1 pl-3 pr-9 text-[11px] outline-none"
+                className="w-[240px] rounded-lg border border-[#e5e7eb] py-1.5 pl-3 pr-9 text-[11px] outline-none"
               />
-
               <SearchOutlined className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-[#94a3b8]" />
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* RIGHT */}
+          <div className="flex items-center gap-2 ml-auto">
             <button
               type="button"
-              className="flex items-center gap-2 rounded-xl border border-[#e5e7eb] px-3 py-1 text-[10px] font-medium text-[#374151]"
+              className="flex items-center gap-2 rounded-lg bg-white border border-[#e5e7eb] px-3 h-[30px] text-[11px] font-medium text-[#374151]"
             >
               <FilterOutlined className="text-[11px]" />
               Filters
@@ -216,7 +212,7 @@ function Inventory() {
 
             <button
               type="button"
-              className="flex items-center gap-2 rounded-xl border border-[#e5e7eb] px-3 py-1 text-[10px] font-medium text-[#374151]"
+              className="flex items-center gap-2 rounded-lg bg-white border border-[#e5e7eb] px-3 h-[30px] text-[11px] font-medium text-[#374151]"
             >
               <AppstoreOutlined className="text-[11px]" />
               Columns
@@ -225,7 +221,7 @@ function Inventory() {
         </div>
 
         {/* Table */}
-        <div className="mt-2 overflow-hidden rounded-2xl border border-[#edf0f2]">
+        <div className="mt-2 overflow-hidden rounded-xl border border-[#edf0f2] bg-white">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1200px]">
               <thead className="bg-[#fafafa]">
@@ -297,9 +293,9 @@ function Inventory() {
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between border-t border-[#edf0f2] px-3 py-2">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between border-t border-[#edf0f2] px-3 py-2">
+            {' '}
             <p className="text-[10px] text-[#6b7280]">Showing 1 to 10 of 2,845 entries</p>
-
             <div className="flex items-center gap-1">
               {[1, 2, 3, 4, 5].map((page) => (
                 <button
@@ -313,10 +309,9 @@ function Inventory() {
                 </button>
               ))}
             </div>
-
-            <select className="rounded-md border border-[#e5e7eb] px-2 py-1 text-[10px] outline-none">
+            {/* <select className="rounded-md border border-[#e5e7eb] px-2 py-1 text-[10px] outline-none">
               <option>10 / page</option>
-            </select>
+            </select> */}
           </div>
         </div>
       </div>

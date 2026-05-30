@@ -4,8 +4,8 @@ import { RightOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 // import ProfitFilterBar from './component/ProfitFilterBar';
-import ProfitModal from './component/ProfitModal';
-import { PageHeader } from '../../components/page-headers/page-headers';
+// import ProfitModal from './component/ProfitModal';
+// import { PageHeader } from '../../components/page-headers/page-headers';
 import { getProfitData, exportProfitData } from '../../redux/dashboard/actionCreator';
 import amazon from '../../assets/icons/amazon.svg';
 // import flipkartLogo from '../../assets/flipkart.png';
@@ -21,11 +21,11 @@ export default function ProfitTableView() {
     pageSize: 10,
   });
   const [openSettings, setOpenSettings] = React.useState(false);
-  const [detailModal, setDetailModal] = React.useState({
-    open: false,
-    record: null,
-    type: '',
-  });
+  // const [detailModal, setDetailModal] = React.useState({
+  //   open: false,
+  //   record: null,
+  //   type: '',
+  // });
 
   const getLogo = (channel) => {
     if (channel?.includes('Amazon-India')) return amazon;
@@ -171,16 +171,16 @@ export default function ProfitTableView() {
   }, [dispatch, dateRange, globalChannel]);
 
   // console.log(data);
-  const PageRoutes = [
-    {
-      path: 'index',
-      breadcrumbName: 'Profit',
-    },
-    {
-      path: '',
-      breadcrumbName: 'Profit Table View',
-    },
-  ];
+  // const PageRoutes = [
+  //   {
+  //     path: 'index',
+  //     breadcrumbName: 'Profit',
+  //   },
+  //   {
+  //     path: '',
+  //     breadcrumbName: 'Profit Table View',
+  //   },
+  // ];
 
   const tableData =
     profitData?.response?.map((item, index) => ({
@@ -222,7 +222,7 @@ export default function ProfitTableView() {
     {
       title: '',
       dataIndex: 'channel',
-      width: 70,
+      width: 60,
       fixed: 'left',
       align: 'center',
       render: (value, record) => {
@@ -232,7 +232,7 @@ export default function ProfitTableView() {
 
         return (
           <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-            {logo && <img src={logo} alt={value} style={{ width: 28, height: 28, objectFit: 'contain' }} />}
+            {logo && <img src={logo} alt={value} style={{ width: 25, height: 25, objectFit: 'contain' }} />}
           </div>
         );
       },
@@ -241,6 +241,8 @@ export default function ProfitTableView() {
       title: 'View',
       dataIndex: 'channel',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.channel - b.channel,
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
@@ -254,225 +256,111 @@ export default function ProfitTableView() {
       title: 'Qty',
       dataIndex: 'qty',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.qty - b.qty,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
-        >
-          {v}
-        </button>
-      ),
     },
     {
       title: 'Net Qty',
       dataIndex: 'netQty',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.netQty - b.netQty,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v}
-        </button>
-      ),
     },
     {
       title: 'Return Qty',
       dataIndex: 'returnqty',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.returnqty - b.returnqty,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v}
-        </button>
-      ),
     },
     {
       title: 'Return %',
       dataIndex: 'returnPercent',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.returnPercent - b.returnPercent,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'returns', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v}
-        </button>
-      ),
     },
     {
       title: 'Net Sales',
       dataIndex: 'netsales',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.netsales - b.netsales,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v}
-        </button>
-      ),
     },
     {
       title: 'Net asp',
       dataIndex: 'netasp',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.netasp - b.netasp,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v}
-        </button>
-      ),
     },
     {
       title: 'Net discount',
       dataIndex: 'net_discount',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.net_discount - b.net_discount,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v}
-        </button>
-      ),
     },
     {
       title: 'MP fees',
       dataIndex: 'mpfees',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.mpfees - b.mpfees,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v}
-        </button>
-      ),
     },
     {
       title: 'Shipping',
       dataIndex: 'shipping',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.shipping - b.shipping,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'returns', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v}
-        </button>
-      ),
     },
     {
       title: 'Ad Spend',
       dataIndex: 'adSpend',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.adSpend - b.adSpend,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'ads', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v}
-        </button>
-      ),
     },
     {
       title: 'Std Cost',
       dataIndex: 'stdCost',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.stdCost - b.stdCost,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'stdcost', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v}
-        </button>
-      ),
     },
     {
       title: 'Gst to Pay',
       dataIndex: 'gst',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.gst - b.gst,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v}
-        </button>
-      ),
     },
     {
       title: 'Gross Profit',
       dataIndex: 'grossprofit',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.grossprofit - b.grossprofit,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v}
-        </button>
-      ),
     },
     {
       title: 'Profit',
       dataIndex: 'profit',
       align: 'center',
+      width: 70,
       sorter: (a, b) => a.profit - b.profit,
       // render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>₹{v}</span>,
     },
@@ -480,242 +368,20 @@ export default function ProfitTableView() {
       title: 'Profit %',
       dataIndex: 'profitPercent',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.profitPercent - b.profitPercent,
-      render: (v, record) => (
+      render: (v) => (
         <button
           type="button"
           className="cursor-pointer bg-transparent border-none"
           style={{ color: v < 0 ? 'red' : 'green' }}
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
-          }
         >
           {v}%
         </button>
       ),
     },
-    {
-      title: 'Gross Qty',
-      dataIndex: 'grossqty',
-      align: 'center',
-      sorter: (a, b) => a.grossqty - b.grossqty,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v ?? 0}
-        </button>
-      ),
-    },
-    {
-      title: 'Net MRP',
-      dataIndex: 'netmrp',
-      align: 'center',
-      sorter: (a, b) => a.netmrp - b.netmrp,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v ?? 0}
-        </button>
-      ),
-    },
-    {
-      title: 'MRP Net Discount %',
-      dataIndex: 'mrpNetDiscount',
-      align: 'center',
-      sorter: (a, b) => a.mrpNetDiscount - b.mrpNetDiscount,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v ?? 0}
-        </button>
-      ),
-    },
-    {
-      title: 'MRP Customer Discount %',
-      dataIndex: 'mrp_customer_discount',
-      align: 'center',
-      sorter: (a, b) => a.mrp_customer_discount - b.mrp_customer_discount,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v ?? 0}
-        </button>
-      ),
-    },
-    {
-      title: 'Account Charges',
-      dataIndex: 'accountCharges',
-      align: 'center',
-      sorter: (a, b) => a.accountCharges - b.accountCharges,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v ?? 0}
-        </button>
-      ),
-    },
-    {
-      title: 'Other Expenses',
-      dataIndex: 'otherExpenses',
-      align: 'center',
-      sorter: (a, b) => a.otherExpenses - b.otherExpenses,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v ?? 0}
-        </button>
-      ),
-    },
-    {
-      title: 'TACOS',
-      dataIndex: 'tacos',
-      align: 'center',
-      sorter: (a, b) => a.tacos - b.tacos,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v ?? 0}
-        </button>
-      ),
-    },
-    {
-      title: 'Gross Profit %',
-      dataIndex: 'grossprofitper',
-      align: 'center',
-      sorter: (a, b) => a.grossprofitper - b.grossprofitper,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v ?? 0}
-        </button>
-      ),
-    },
-    {
-      title: '% of Sales',
-      dataIndex: 'percentOfSales',
-      align: 'center',
-      sorter: (a, b) => a.percentOfSales - b.percentOfSales,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v ?? 0}
-        </button>
-      ),
-    },
-    {
-      title: 'DRR (Daily Run Rate)',
-      dataIndex: 'drr',
-      align: 'center',
-      sorter: (a, b) => a.drr - b.drr,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v ?? 0}
-        </button>
-      ),
-    },
-    {
-      title: 'Gross Sales',
-      dataIndex: 'grosssales',
-      align: 'center',
-      sorter: (a, b) => a.grosssales - b.grosssales,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v ?? 0}
-        </button>
-      ),
-    },
 
-    {
-      title: 'Std Cost M/S %',
-      dataIndex: 'stdcost_missing_percentage',
-      align: 'center',
-      sorter: (a, b) => a.stdcost_missing_percentage - b.stdcost_missing_percentage,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v ?? 0}
-        </button>
-      ),
-    },
-    {
-      title: 'Last Order Date',
-      dataIndex: 'lastOrderDate',
-      align: 'center',
-      sorter: (a, b) => a.lastOrderDate - b.lastOrderDate,
-      render: (v, record) => (
-        <button
-          type="button"
-          className="cursor-pointer bg-transparent border-none"
-          onClick={() =>
-            setDetailModal({ open: true, record, type: 'qty', modalLabel: 'Channel', modalValue: record.channel })
-          }
-        >
-          {v ?? 0}
-        </button>
-      ),
-    },
     // {
     //   title: 'Settled amount',
     //   dataIndex: 'settledamount',
@@ -749,7 +415,7 @@ export default function ProfitTableView() {
             //   border: '1px solid #d9d9d9',
             //   background: 'rgb(202, 221, 254)',
             // }}
-            className="w-[34px] h-[34px] rounded-full border border-[#dbe1e8]
+            className="w-[28px] h-[28px] rounded-full border border-[#dbe1e8]
   flex items-center justify-center cursor-pointer hover:text-black transition-all duration-200 mx-auto"
           >
             <RightOutlined style={{ fontSize: 12 }} />
@@ -877,12 +543,15 @@ export default function ProfitTableView() {
   // };
   return (
     <>
-      <PageHeader
+      {/* <PageHeader
         routes={PageRoutes}
         title="Profit Table"
         className="flex  justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 sm:pb-[30px] bg-transparent sm:flex-col"
-      />
-      <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-8 xl:px-[15px] pb-[30px] bg-transparent">
+      /> */}
+      <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-3 py-3 xl:px-[15px] pb-[10px] bg-transparent">
+        <div className="mb-3">
+          <h1 className="text-[20px] font-semibold text-[#111827]">Sales Details</h1>
+        </div>
         <Card bordered={false} className="sales-table-wrapper">
           {/* <ProfitFilterBar
             filters={filters}
@@ -898,6 +567,7 @@ export default function ProfitTableView() {
             dataSource={tableData}
             showSorterTooltip={false}
             loading={loading}
+            tableLayout="fixed"
             locale={{ emptyText: 'No Data Found' }}
             pagination={{
               ...pagination,
@@ -909,10 +579,17 @@ export default function ProfitTableView() {
               setPagination(pag);
             }}
             size="small"
-            scroll={{ x: 'max-content' }}
+            scroll={{ x: 800 }}
+            className="
+    [&_.ant-table-thead>tr>th]:!text-[12px]
+    [&_.ant-table-thead>tr>th]:!font-semibold
+    [&_.ant-table-tbody>tr>td]:!text-[12px]
+    [&_.ant-table-cell]:!px-2
+    [&_.ant-table-cell]:!py-[6px]
+  "
             summary={() => (
               <Table.Summary.Row className="font-semibold bg-gray-50">
-                <Table.Summary.Cell index={0} fixed="left">
+                <Table.Summary.Cell index={0} fixed="left" className="font-bold text-[13px] text-[#111827]">
                   Total
                 </Table.Summary.Cell>
 
@@ -968,19 +645,7 @@ export default function ProfitTableView() {
                       ) : col.dataIndex === 'profitPercent' ? (
                         <span style={{ color: Number(value) < 0 ? 'red' : 'green' }}>{value ?? ''}%</span>
                       ) : (
-                        <button
-                          type="button"
-                          className="cursor-pointer bg-transparent border-none"
-                          onClick={() =>
-                            setDetailModal({
-                              open: true,
-                              record: totals,
-                              type: 'qty',
-                              modalLabel: ' Channel',
-                              modalValue: 'Total',
-                            })
-                          }
-                        >
+                        <button type="button" className="text-[13px] text-black border-none">
                           {value ?? ''}
                         </button>
                       )}
@@ -1035,14 +700,14 @@ export default function ProfitTableView() {
           </div>
         </Modal>
       </main>
-      <ProfitModal
+      {/* <ProfitModal
         open={detailModal.open}
         record={detailModal.record}
         type={detailModal.type}
         modalLabel={detailModal.modalLabel}
         modalValue={detailModal.modalValue}
         onClose={() => setDetailModal({ open: false, record: null, type: '' })}
-      />
+      /> */}
     </>
   );
 }

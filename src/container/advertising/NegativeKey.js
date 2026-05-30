@@ -206,7 +206,7 @@ function NegativeKey() {
 
       <div className="flex items-start justify-between mb-2">
         <div>
-          <h1 className="text-[22px] font-semibold text-[#111827] mb-[2px]">Negative Keywords</h1>
+          <h1 className="text-[20px] font-semibold text-[#111827] mb-[2px]">Negative Keywords</h1>
 
           <p className="text-[11px] text-[#6b7280] max-w-[900px] leading-[16px]">
             Discover, analyze and manage negative keywords to prevent wasted ad spend and improve campaign performance.
@@ -221,7 +221,7 @@ function NegativeKey() {
 
           <Button type="primary" className="!h-[35px] !rounded-xl !bg-[#059669]">
             <PlusOutlined className="!text-[11px]" />
-            <span className="text-[12px]">Add Negative Keywords</span>
+            <span className="text-[12px] font-semibold">Add Negative Keywords</span>
           </Button>
         </div>
       </div>

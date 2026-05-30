@@ -232,7 +232,7 @@ function ReturnAdjust() {
           <div key={index} className="bg-white border border-normal rounded-10 shadow-regular px-4 py-3">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[14px] text-light font-medium">{item.title}</p>
+                <p className="text-[13px] text-light font-medium">{item.title}</p>
 
                 <h2 className="text-[20px] font-semibold text-dark mt-2 leading-none">{item.value}</h2>
 
