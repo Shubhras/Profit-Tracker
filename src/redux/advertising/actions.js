@@ -59,6 +59,10 @@ const actions = {
   CAMPAIGN_UPDATE_SUCCESS: 'CAMPAIGN_UPDATE_SUCCESS',
   CAMPAIGN_UPDATE_ERR: 'CAMPAIGN_UPDATE_ERR',
 
+  KEYWORD_BID_BEGIN: 'KEYWORD_BID_BEGIN',
+  KEYWORD_BID_SUCCESS: 'KEYWORD_BID_SUCCESS',
+  KEYWORD_BID_ERR: 'KEYWORD_BID_ERR',
+
   campaignsBegin: () => {
     return {
       type: actions.CAMPAIGNS_BEGIN,
@@ -355,6 +359,26 @@ const actions = {
   campaignupdateErr: (err) => {
     return {
       type: actions.CAMPAIGN_UPDATE_ERR,
+      err,
+    };
+  },
+
+  keywordBidBegin: () => {
+    return {
+      type: actions.KEYWORD_BID_BEGIN,
+    };
+  },
+
+  keywordBidSuccess: (data) => {
+    return {
+      type: actions.KEYWORD_BID_SUCCESS,
+      data,
+    };
+  },
+
+  keywordBidErr: (err) => {
+    return {
+      type: actions.KEYWORD_BID_ERR,
       err,
     };
   },

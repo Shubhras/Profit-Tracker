@@ -524,7 +524,7 @@ function RulesAutomation() {
           {/* LEFT */}
 
           <div>
-            <h1 className="text-[21px] font-semibold text-[#111827] leading-none mb-[2px]">Rules & Automation</h1>
+            <h1 className="text-[20px] font-semibold text-[#111827] leading-none mb-[2px]">Rules & Automation</h1>
 
             <p className="text-[#6b7280] text-[11px] leading-4">
               Automate your Amazon advertising actions and improve performance.
@@ -559,7 +559,7 @@ function RulesAutomation() {
         !shadow-none
       "
             >
-              <span className="font-medium leading-none text-[12px]">Create Rule</span>
+              <span className="font-semibold leading-none text-[12px]">Create Rule</span>
             </Button>
           </div>
         </div>

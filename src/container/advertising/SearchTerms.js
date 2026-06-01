@@ -67,7 +67,7 @@ function SearchTerms() {
               setSelectedRowKeys([]);
             }
           }}
-          className="w-[15px] h-[15px] accent-[#2563eb]"
+          className="w-[12px] h-[12px] accent-[#2563eb]"
         />
       ),
 
@@ -86,7 +86,7 @@ function SearchTerms() {
               setSelectedRowKeys(selectedRowKeys.filter((key) => key !== record.key));
             }
           }}
-          className="w-[15px] h-[15px] accent-[#2563eb]"
+          className="w-[12px] h-[12px] accent-[#2563eb]"
         />
       ),
     },
@@ -98,7 +98,7 @@ function SearchTerms() {
 
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-          <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
+          <span className="text-[11px] text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
             {v}
           </span>
         </Tooltip>
@@ -108,35 +108,38 @@ function SearchTerms() {
     {
       title: 'Impressions',
       dataIndex: 'impressions',
-      width: 130,
+      width: 70,
+      render: (v) => <span className="text-[11px]">{v}</span>,
     },
 
     {
       title: 'Clicks',
       dataIndex: 'clicks',
-      width: 100,
+      width: 70,
+      render: (v) => <span className="text-[11px]">{v}</span>,
     },
 
     {
       title: 'Cost',
       dataIndex: 'cost',
-      width: 120,
+      width: 70,
 
-      render: (v) => <span className="font-medium">₹{Number(v || 0).toLocaleString()}</span>,
+      render: (v) => <span className="font-medium text-[11px]">₹{Number(v || 0).toLocaleString()}</span>,
     },
 
     {
       title: 'Orders',
       dataIndex: 'orders',
-      width: 100,
+      width: 70,
+      render: (v) => <span className="text-[11px]">{v}</span>,
     },
 
     {
       title: 'Sales',
       dataIndex: 'sales',
-      width: 130,
+      width: 70,
 
-      render: (v) => <span className="font-medium text-[#15803d]">₹{Number(v || 0).toLocaleString()}</span>,
+      render: (v) => <span className="font-medium text-[#15803d] text-[11px]">₹{Number(v || 0).toLocaleString()}</span>,
     },
 
     {
@@ -154,8 +157,8 @@ function SearchTerms() {
         }
 
         return (
-          <span style={{ color }} className="font-semibold">
-            {v}%
+          <span style={{ color }} className="font-semibold text-[11px]">
+            {Number(v || 0).toFixed(1)}%
           </span>
         );
       },
@@ -223,45 +226,44 @@ function SearchTerms() {
     <div className="bg-[#f5f7fb] min-h-screen p-4">
       {/* HEADER */}
 
-      <div className="flex items-start justify-between mb-2">
+      <div className="flex flex-col gap-3 min-lg:flex-row min-lg:items-start min-lg:justify-between mb-1">
+        {' '}
         <div>
-          <h1 className="text-[30px] font-semibold text-[#111827] mb-1">Search Terms</h1>
+          <h1 className="text-[20px] lg:text-[18px] font-semibold text-[#111827] mb-0">Search Terms</h1>
 
-          <p className="text-[14px] text-[#6b7280] max-w-[900px]">
+          <p className="text-[12px] text-[#6b7280] max-w-[850px] leading-5">
             Discover how customers search for your products and optimize your keywords by adding high-performing search
             terms as keywords and blocking irrelevant terms as negative keywords.
           </p>
         </div>
-
-        <div className="flex items-center gap-3">
-          <Button className="!h-[42px] !rounded-xl !border-[#dbe1e8]">
+        <div className="flex items-center gap-2 shrink-0">
+          <Button className="!h-[30px] !rounded-lg !border-[#dbe1e8] !text-[11px] whitespace-nowrap">
             <DownloadOutlined />
             Search Term Report
           </Button>
 
-          <Button type="primary" className="!h-[42px] !rounded-xl !bg-[#0f766e]">
+          <Button
+            type="primary"
+            className="!h-[30px] !rounded-lg !bg-[#0f766e] !text-[11px] whitespace-nowrap font-semibold"
+          >
             <PlusOutlined />
             Add as Keyword
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-6 gap-2 mb-2">
+      <div className="grid grid-cols-6 xl:grid-cols-3 md:grid-cols-2 sm:grid-cols-1 gap-2 mb-2">
         {metricCards.map((item) => (
-          <div key={item.title} className="bg-white rounded-2xl border border-[#e5e7eb] p-4 shadow-sm">
+          <div key={item.title} className="bg-white rounded-xl border border-[#e5e7eb] px-3 py-3">
             <div className="flex items-start justify-between">
-              <p className="text-[15px] font-semibold text-[#6b7280]">{item.title}</p>
+              <p className="text-[12px] font-medium text-[#6b7280]">{item.title}</p>
 
-              <div className={`w-8 h-8 rounded-xl ${item.iconBg} flex items-center justify-center`}>{item.icon}</div>
+              <div className={`w-7 h-7 rounded-lg ${item.iconBg} flex items-center justify-center`}>{item.icon}</div>
             </div>
 
-            {/* VALUE */}
+            <h2 className="text-[18px] font-semibold text-[#111827] mt-2">{item.value}</h2>
 
-            <h2 className="text-[24px] font-semibold text-[#111827] mt-3">{item.value}</h2>
-
-            {/* GROWTH */}
-
-            <p className={`text-[12px] mt-2 ${item.growth.includes('↓') ? 'text-[#dc2626]' : 'text-[#16a34a]'}`}>
+            <p className={`text-[10px] mt-1 ${item.growth.includes('↓') ? 'text-[#dc2626]' : 'text-[#16a34a]'}`}>
               {item.growth}
             </p>
           </div>
@@ -270,41 +272,42 @@ function SearchTerms() {
 
       {/* FILTER BAR */}
 
-      <div className="flex items-center gap-3 mb-2">
-        <select className="h-[42px] px-4 rounded-xl border border-[#dbe1e8] bg-white text-[14px] outline-none">
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <select className="h-[36px] px-3 rounded-lg border border-[#dbe1e8] bg-white text-[11px] outline-none">
           <option>All Campaigns</option>
         </select>
 
-        <select className="h-[42px] px-4 rounded-xl border border-[#dbe1e8] bg-white text-[14px] outline-none">
+        <select className="h-[36px] px-3 rounded-lg border border-[#dbe1e8] bg-white text-[11px] outline-none">
           <option>All Ad Groups</option>
         </select>
 
-        <select className="h-[42px] px-4 rounded-xl border border-[#dbe1e8] bg-white text-[14px] outline-none">
+        <select className="h-[36px] px-3 rounded-lg border border-[#dbe1e8] bg-white text-[11px] outline-none">
           <option>Broad Match, Phrase Match, Exact Match</option>
         </select>
 
-        <select className="h-[42px] px-4 rounded-xl border border-[#dbe1e8] bg-white text-[14px] outline-none">
+        <select className="h-[36px] px-3 rounded-lg border border-[#dbe1e8] bg-white text-[11px] outline-none">
           <option>01/05/2026 - 31/05/2026</option>
         </select>
 
-        <div className="relative ml-auto w-[260px]">
+        <div className="relative ml-auto lg:w-full min-lg:w-[220px]">
           <input
             placeholder="Search term..."
-            className="w-full h-[42px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] outline-none"
+            className="w-full h-[36px] rounded-lg border border-[#dbe1e8] bg-white pl-9 pr-3 text-[11px] outline-none"
           />
 
-          <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
+          <SearchOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[12px]" />
         </div>
       </div>
-
       {/* MAIN CONTENT */}
 
-      <div className="grid grid-cols-[1fr_320px] gap-5">
+      <div className="grid grid-cols-[1fr_300px] xl:grid-cols-1 gap-3">
         {/* TABLE */}
 
-        <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden">
+        <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
           <Table
+            className="[&_.ant-table-thead>tr>th]:text-[11px] [&_.ant-table-thead>tr>th]:font-medium"
             columns={columns}
+            size="small"
             dataSource={dataSource}
             loading={loading}
             pagination={{
@@ -334,12 +337,10 @@ function SearchTerms() {
         <div className="space-y-2">
           {/* MATCH DISTRIBUTION */}
 
-          <div className="bg-white rounded-2xl border border-[#e5e7eb] p-5">
-            <h2 className="text-[17px] font-semibold text-[#111827] mb-5">Match Type Distribution</h2>
+          <div className="bg-white rounded-xl border border-[#e5e7eb] p-3">
+            <h2 className="text-[15px] font-semibold text-[#111827] mb-3">Match Type Distribution</h2>
 
-            {/* PIE CHART */}
-
-            <div className="relative w-[160px] h-[160px] mx-auto">
+            <div className="relative w-[120px] h-[120px] mx-auto">
               <div
                 className="w-full h-full rounded-full"
                 style={{
@@ -351,41 +352,37 @@ function SearchTerms() {
                 }}
               />
 
-              {/* INNER CIRCLE */}
-
-              <div className="absolute inset-[18px] bg-white rounded-full flex items-center justify-center">
+              <div className="absolute inset-[14px] bg-white rounded-full flex items-center justify-center">
                 <div className="text-center">
-                  <h2 className="text-[26px] font-bold text-[#111827]">1,256</h2>
+                  <h2 className="text-[18px] font-bold text-[#111827]">1,256</h2>
 
-                  <p className="text-[13px] text-[#6b7280]">Total Terms</p>
+                  <p className="text-[10px] text-[#6b7280]">Total Terms</p>
                 </div>
               </div>
             </div>
 
-            {/* LEGENDS */}
-
-            <div className="mt-6 space-y-3">
-              <div className="flex items-center justify-between text-[14px]">
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-between text-[11px]">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-[#0f766e]" />
+                  <div className="w-2 h-2 rounded-full bg-[#0f766e]" />
                   Broad Match
                 </div>
 
                 <span className="font-medium text-[#111827]">742 (59%)</span>
               </div>
 
-              <div className="flex items-center justify-between text-[14px]">
+              <div className="flex items-center justify-between text-[11px]">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-[#2563eb]" />
+                  <div className="w-2 h-2 rounded-full bg-[#2563eb]" />
                   Phrase Match
                 </div>
 
                 <span className="font-medium text-[#111827]">372 (30%)</span>
               </div>
 
-              <div className="flex items-center justify-between text-[14px]">
+              <div className="flex items-center justify-between text-[11px]">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-[#d97706]" />
+                  <div className="w-2 h-2 rounded-full bg-[#d97706]" />
                   Exact Match
                 </div>
 
@@ -396,8 +393,8 @@ function SearchTerms() {
 
           {/* TOP TERMS */}
 
-          <div className="bg-white rounded-2xl border border-[#e5e7eb] p-4">
-            <h2 className="text-[17px] font-semibold text-[#111827] mb-2">Top Performing Terms</h2>
+          <div className="bg-white rounded-xl border border-[#e5e7eb] p-3">
+            <h2 className="text-[15px] font-semibold text-[#111827] mb-2">Top Performing Terms</h2>
 
             {[
               'sony wh-1000xm5',
@@ -410,83 +407,82 @@ function SearchTerms() {
                 key={item}
                 className={`flex items-center justify-between py-2 ${index !== 4 ? 'border-b border-[#f1f5f9]' : ''}`}
               >
-                <p className="text-[14px] text-[#111827]">{item}</p>
+                <p className="text-[11px] text-[#111827] truncate max-w-[180px]">{item}</p>
 
-                <span className="text-[13px] font-medium text-[#16a34a]">{22 + index}%</span>
+                <span className="text-[11px] font-semibold text-[#16a34a]">{22 + index}%</span>
               </div>
             ))}
 
-            <Button className="w-full !h-[40px] !rounded-xl">View All</Button>
+            <Button className="w-full !h-[34px] !rounded-lg !text-[11px] mt-2">View All</Button>
           </div>
 
           {/* QUICK ACTIONS */}
 
-          {/* QUICK ACTIONS */}
+          <div className="bg-white rounded-xl border border-[#e5e7eb] p-3">
+            <h2 className="text-[15px] font-semibold text-[#111827] mb-2">Quick Actions</h2>
 
-          <div className="bg-white rounded-2xl border border-[#e5e7eb] p-4 shadow-sm">
-            <h2 className="text-[18px] font-semibold text-[#111827] mb-2">Quick Actions</h2>
-
-            <div className="space-y-1">
+            <div className="space-y-2">
               {/* ADD KEYWORD */}
+
               <button
                 type="button"
-                className="w-full flex items-center justify-between p-2 rounded-2xl bg-[#f0fdf4] border border-[#bbf7d0] transition-all group"
+                className="w-full flex items-center justify-between p-2 rounded-xl bg-[#f0fdf4] border border-[#bbf7d0]"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-9 h-9 rounded-2xl bg-[#dcfce7] flex items-center justify-center">
-                    <PlusOutlined className="text-[#16a34a] text-[18px]" />
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-[#dcfce7] flex items-center justify-center">
+                    <PlusOutlined className="text-[#16a34a] text-[13px]" />
                   </div>
 
                   <div className="text-left">
-                    <h3 className="text-[15px] font-semibold text-[#111827] mb-1">Add as Keyword</h3>
+                    <h3 className="text-[11px] font-semibold text-[#111827]">Add as Keyword</h3>
 
-                    <p className="text-[13px] text-[#6b7280]">Add selected terms as keywords</p>
+                    <p className="text-[10px] text-[#6b7280]">Add selected terms</p>
                   </div>
                 </div>
 
-                <RightOutlined className="text-[#94a3b8]" />
+                <RightOutlined className="text-[11px] text-[#94a3b8]" />
               </button>
 
-              {/* ADD NEGATIVE */}
+              {/* NEGATIVE */}
 
               <button
                 type="button"
-                className="w-full flex items-center justify-between p-3 rounded-2xl bg-[#fef2f2] border border-[#fecaca] transition-all group"
+                className="w-full flex items-center justify-between p-2 rounded-xl bg-[#fef2f2] border border-[#fecaca]"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-9 h-9 rounded-2xl bg-[#fee2e2] flex items-center justify-center">
-                    <StopOutlined className="text-[#ef4444] text-[18px]" />
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-[#fee2e2] flex items-center justify-center">
+                    <StopOutlined className="text-[#ef4444] text-[13px]" />
                   </div>
 
                   <div className="text-left">
-                    <h3 className="text-[15px] font-semibold text-[#111827] mb-1">Add as Negative</h3>
+                    <h3 className="text-[11px] font-semibold text-[#111827]">Add as Negative</h3>
 
-                    <p className="text-[13px] text-[#6b7280]">Add selected terms as negative</p>
+                    <p className="text-[10px] text-[#6b7280]">Block irrelevant terms</p>
                   </div>
                 </div>
 
-                <RightOutlined className="text-[#94a3b8]" />
+                <RightOutlined className="text-[11px] text-[#94a3b8]" />
               </button>
 
-              {/* DOWNLOAD REPORT */}
+              {/* DOWNLOAD */}
 
               <button
                 type="button"
-                className="w-full flex items-center justify-between p-3 rounded-2xl bg-[#eff6ff] border border-[#bfdbfe] transition-all group"
+                className="w-full flex items-center justify-between p-2 rounded-xl bg-[#eff6ff] border border-[#bfdbfe]"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-9 h-9 rounded-2xl bg-[#dbeafe] flex items-center justify-center">
-                    <DownloadOutlined className="text-[#2563eb] text-[18px]" />
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-[#dbeafe] flex items-center justify-center">
+                    <DownloadOutlined className="text-[#2563eb] text-[13px]" />
                   </div>
 
                   <div className="text-left">
-                    <h3 className="text-[15px] font-semibold text-[#111827] mb-1">Download Report</h3>
+                    <h3 className="text-[11px] font-semibold text-[#111827]">Download Report</h3>
 
-                    <p className="text-[13px] text-[#6b7280]">Get detailed search term report</p>
+                    <p className="text-[10px] text-[#6b7280]">Export search data</p>
                   </div>
                 </div>
 
-                <RightOutlined className="text-[#94a3b8]" />
+                <RightOutlined className="text-[11px] text-[#94a3b8]" />
               </button>
             </div>
           </div>

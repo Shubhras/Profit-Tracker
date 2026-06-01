@@ -9,7 +9,7 @@ import ProfitModal from './component/ProfitModal';
 import amazon from '../../assets/icons/amazon.svg';
 // import flipkart from "../../assets/icons/flipkart.png";
 import { getSecondDetials } from '../../redux/dashboard/actionCreator';
-import { PageHeader } from '../../components/page-headers/page-headers';
+// import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function ProfitViewSecondTable() {
   const { asin } = useParams();
@@ -89,10 +89,10 @@ export default function ProfitViewSecondTable() {
     dispatch(getSecondDetials(buildPayload()));
   }, [dispatch]);
 
-  const PageRoutes = [
-    { path: 'index', breadcrumbName: 'Profit' },
-    { path: '', breadcrumbName: 'Profit Details' },
-  ];
+  // const PageRoutes = [
+  //   { path: 'index', breadcrumbName: 'Profit' },
+  //   { path: '', breadcrumbName: 'Profit Details' },
+  // ];
 
   const dataSource = React.useMemo(() => {
     const rows =
@@ -223,7 +223,7 @@ export default function ProfitViewSecondTable() {
     {
       title: '',
       dataIndex: 'channel',
-      width: 70,
+      width: 50,
       fixed: 'left',
       render: (value) => {
         const logo = channelLogoMap[value];
@@ -240,6 +240,7 @@ export default function ProfitViewSecondTable() {
       title: 'View',
       dataIndex: 'view',
       align: 'center',
+      width: 100,
       sorter: (a, b) => a.view.localeCompare(b.view),
       render: (v, record) => {
         if (!record.redirecturl) return <span>{v}</span>;
@@ -261,7 +262,7 @@ export default function ProfitViewSecondTable() {
               onClick={() => window.open(record.redirecturl, '_blank')}
               className="text-blue-500 hover:text-blue-600 underline font-medium bg-transparent border-none p-0 cursor-pointer"
             >
-              {v?.length > 15 ? `${v.slice(0, 15)}...` : v}
+              {v?.length > 15 ? `${v.slice(0, 8)}...` : v}
             </button>
           </Tooltip>
         );
@@ -284,18 +285,24 @@ export default function ProfitViewSecondTable() {
       title: 'Net Qty',
       dataIndex: 'netQty',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.netQty - b.netQty,
     },
     {
       title: 'Return Qty',
       dataIndex: 'returnqty',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.returnqty - b.returnqty,
     },
     {
       title: 'Return %',
       dataIndex: 'returnPercent',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.returnPercent - b.returnPercent,
       render: (value) => `${Number(value || 0).toFixed(2)}%`,
     },
@@ -303,12 +310,16 @@ export default function ProfitViewSecondTable() {
       title: 'Net Sales',
       dataIndex: 'netsales',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.netsales - b.netsales,
     },
     {
       title: 'MP fees',
       dataIndex: 'mpfees',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.mpfees - b.mpfees,
       render: (v, record) => (
         <button
@@ -330,6 +341,8 @@ export default function ProfitViewSecondTable() {
       title: 'Shipping',
       dataIndex: 'shipping',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.shipping - b.shipping,
       render: (v, record) => (
         <button
@@ -368,6 +381,8 @@ export default function ProfitViewSecondTable() {
       title: 'MP-GST',
       dataIndex: 'mp_gst',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.mp_gst - b.mp_gst,
     },
 
@@ -375,12 +390,16 @@ export default function ProfitViewSecondTable() {
       title: 'TCS',
       dataIndex: 'tcs',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.tcs - b.tcs,
     },
     {
       title: 'Ad Spend',
       dataIndex: 'adSpend',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.adSpend - b.adSpend,
     },
     // {
@@ -400,6 +419,8 @@ export default function ProfitViewSecondTable() {
       title: 'Taxable Value',
       dataIndex: 'taxableValue',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.taxableValue - b.taxableValue,
     },
 
@@ -407,12 +428,16 @@ export default function ProfitViewSecondTable() {
       title: 'GST to Pay',
       dataIndex: 'gst_to_pay_amount',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.gst_to_pay_amount - b.gst_to_pay_amount,
     },
     {
       title: 'GST to Pay %',
       dataIndex: 'gst_to_pay_perc',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.gst_to_pay_perc - b.gst_to_pay_perc,
       render: (v) => <span>{v}%</span>,
     },
@@ -420,12 +445,16 @@ export default function ProfitViewSecondTable() {
       title: 'Expected Settlement',
       dataIndex: 'settleAmount',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.settleAmount - b.settleAmount,
     },
     {
       title: 'Product Cost',
       dataIndex: 'stdcost',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.stdcost - b.stdcost,
     },
 
@@ -448,6 +477,8 @@ export default function ProfitViewSecondTable() {
       title: 'Profit',
       dataIndex: 'profit',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.profit - b.profit,
       // render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>₹{v}</span>,
       render: (v, record) => (
@@ -472,6 +503,8 @@ export default function ProfitViewSecondTable() {
       title: 'Profit %',
       dataIndex: 'profitPercent',
       align: 'center',
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.profitPercent - b.profitPercent,
       render: (value) => (
         <span
@@ -519,7 +552,7 @@ export default function ProfitViewSecondTable() {
             //   border: '1px solid #d9d9d9',
             //   background: 'rgb(202, 221, 254)',
             // }}
-            className="w-[34px] h-[34px] rounded-full border border-[#dbe1e8] flex items-center justify-center cursor-pointer hover:text-black transition-all duration-200 mx-auto"
+            className="w-[28px] h-[28px] rounded-full border border-[#dbe1e8] flex items-center justify-center cursor-pointer hover:text-black transition-all duration-200 mx-auto"
           >
             <RightOutlined style={{ fontSize: 12 }} />
           </button>
@@ -669,13 +702,24 @@ export default function ProfitViewSecondTable() {
 
   return (
     <>
-      <PageHeader
+      {/* <PageHeader
         routes={PageRoutes}
-        // title="Profit Details"
         className="flex justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 bg-transparent"
-      />
+      /> */}
 
-      <main className="min-h-[600px] px-8 pb-[30px]">
+      <main className="min-h-[600px] px-3 pb-[10px] py-3">
+        {/* <div className="mb-3 px-2 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="w-[35px] h-[35px] rounded-xl border border-[#dbe1e8] bg-white flex items-center justify-center hover:bg-[#f8fafc] transition-all duration-200 shadow-sm"
+          >
+            <ArrowLeftOutlined className="text-[#374151]" />
+          </button>
+
+          <h1 className="text-[20px] font-semibold text-[#111827] m-0">Details</h1>
+        </div> */}
+
         <Card bordered={false}>
           {/* <ProfitFilterBar
             filters={filters}
@@ -691,7 +735,7 @@ export default function ProfitViewSecondTable() {
               <input
                 type="text"
                 placeholder="Search..."
-                className="w-full h-[42px] rounded-xl border border-[#e5e7eb] bg-white pl-4 pr-10 text-[13px] outline-none shadow-sm "
+                className="w-full h-[35px] rounded-xl border border-[#e5e7eb] bg-white pl-4 pr-10 text-[12px] outline-none shadow-sm "
               />
 
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af]">
@@ -704,16 +748,16 @@ export default function ProfitViewSecondTable() {
                 <button
                   type="button"
                   onClick={() => setShowFilters(!showFilters)}
-                  className="h-[42px] px-4 rounded-xl  border border-[#e5e7eb] bg-white flex items-center gap-2 text-[13px]font-medium shadow-sm transition-all"
+                  className="h-[35px] px-2 rounded-xl  border border-[#e5e7eb] bg-white flex items-center gap-2 text-[12px] font-medium shadow-sm transition-all"
                 >
                   <span className="flex items-center">
-                    <FilterOutlined style={{ fontSize: 15 }} />
+                    <FilterOutlined style={{ fontSize: 14 }} />
                   </span>
 
                   <span>Filters</span>
 
                   {/* Selected Count */}
-                  <span className=" min-w-[20px] h-[20px] rounded-full bg-[#22c55e] text-white text-[15px]font-semiboldflex items-center justify-center   px-1   ">
+                  <span className=" min-w-[18px] h-[18px] rounded-full bg-[#22c55e] text-white text-[14px] font-semiboldflex items-center justify-center   px-1   ">
                     {
                       [
                         filters.ads === 'with',
@@ -833,6 +877,7 @@ export default function ProfitViewSecondTable() {
             dataSource={dataSource}
             showSorterTooltip={false}
             loading={loading}
+            tableLayout="fixed"
             locale={{ emptyText: 'No Data Found' }}
             pagination={{
               // ...pagination,
@@ -847,7 +892,14 @@ export default function ProfitViewSecondTable() {
               setPagination(pag);
             }}
             size="small"
-            scroll={{ x: 'max-content' }}
+            scroll={{ x: 1800 }}
+            className="
+    [&_.ant-table-thead>tr>th]:!text-[12px]
+    [&_.ant-table-thead>tr>th]:!font-semibold
+    [&_.ant-table-tbody>tr>td]:!text-[12px]
+    [&_.ant-table-cell]:!px-2
+    [&_.ant-table-cell]:!py-[6px]
+  "
             // summary={() => {
             //   const summaryItems = columns
             //     .filter(
@@ -982,7 +1034,7 @@ export default function ProfitViewSecondTable() {
             // }}
 
             summary={() => (
-              <Table.Summary.Row style={{ background: '#fafafa', fontWeight: 600 }}>
+              <Table.Summary.Row style={{ background: '#fafafa', fontWeight: 500, fontSize: '13px', color: 'black' }}>
                 <Table.Summary.Cell index={0}>Total</Table.Summary.Cell>
                 <Table.Summary.Cell index={1} fixed="left" />
                 <Table.Summary.Cell index={2} fixed="left" />

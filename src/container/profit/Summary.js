@@ -16,7 +16,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } fro
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { amazonAction } from '../../redux/amazonAPI/actionCreator';
-import { PageHeader } from '../../components/page-headers/page-headers';
+// import { PageHeader } from '../../components/page-headers/page-headers';
 import { getDashboard } from '../../redux/dashboard/actionCreator';
 
 const { Option } = Select;
@@ -109,10 +109,10 @@ export default function Summary() {
     }
   }, [location, loginAmazon]);
 
-  const PageRoutes = [
-    { path: 'index', breadcrumbName: 'Profit' },
-    { path: '', breadcrumbName: 'Summary' },
-  ];
+  // const PageRoutes = [
+  //   { path: 'index', breadcrumbName: 'Profit' },
+  //   { path: '', breadcrumbName: 'Summary' },
+  // ];
   // const handleViewTypeChange = (title, value) => {
   //   setViewTypes((prev) => ({
   //     ...prev,
@@ -157,32 +157,33 @@ export default function Summary() {
   //   : [];
   return (
     <>
-      <PageHeader
+      {/* <PageHeader
         routes={PageRoutes}
         title={
-          <div className="flex items-start gap-3">
-            <div
-              className="w-[42px] h-[42px] rounded-2xl flex items-center justify-center shadow-sm mt-1"
-              style={{
-                background: 'linear-gradient(135deg, rgb(16, 185, 129) 0%, rgb(15, 118, 110) 100%)',
-              }}
-            >
-              <BarChartOutlined className="text-white text-[20px]" />
-            </div>
-
-            <div>
-              <h1 className="text-[26px] font-bold text-[#111827] leading-none mb-0">Profit Summary</h1>
-
-              <p className="text-[14px] text-gray-500 font-medium mb-0">
-                Track sales, profit, returns & performance insights
-              </p>
-            </div>
-          </div>
+        
         }
         className="flex justify-between items-center px-8 xl:px-[15px] pt-2 pb-2 sm:pb-[30px] bg-transparent sm:flex-col"
-      />
+      /> */}
 
-      <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-3 xl:px-[15px] pb-[30px] bg-transparent">
+      <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-3 xl:px-[15px] pb-[10px] bg-transparent py-3">
+        <div className="flex items-start gap-3 mt-2 mb-3">
+          <div
+            className="w-[35px] h-[35px] rounded-xl flex items-center justify-center shadow-sm mt-1"
+            style={{
+              background: 'linear-gradient(135deg, rgb(16, 185, 129) 0%, rgb(15, 118, 110) 100%)',
+            }}
+          >
+            <BarChartOutlined className="text-white text-[20px]" />
+          </div>
+
+          <div>
+            <h1 className="text-[20px] font-bold text-[#111827] leading-none mb-0">Profit Summary</h1>
+
+            <p className="text-[13px] text-gray-500 font-medium mb-0">
+              Track sales, profit, returns & performance insights
+            </p>
+          </div>
+        </div>
         {/* ================= FILTER BAR ================= */}
         {/* <Card className="mb-4">
           <Row gutter={16} align="middle">
@@ -634,7 +635,7 @@ export default function Summary() {
         </Row> */}
 
         <Spin spinning={loading} size="large">
-          <Row gutter={[18, 18]}>
+          <Row gutter={[18, 8]}>
             {/* ================= LEFT SECTION ================= */}
             <Col xs={24} lg={14}>
               <Row gutter={[18, 18]}>
@@ -659,7 +660,7 @@ export default function Summary() {
                       <div className="flex flex-col justify-start flex-1 pt-[2px]">
                         <p className="text-gray-500 text-[14px] font-semibold leading-none mb-1">Total Sales</p>
 
-                        <h2 className="text-[21px] font-semibold leading-tight text-[#111827] mt-[2px]">
+                        <h2 className="text-[19px] font-semibold leading-tight text-[#111827] mt-[2px]">
                           {' '}
                           ₹ {dashboardData?.header_metrics?.sales || 0}
                         </h2>
@@ -685,7 +686,7 @@ export default function Summary() {
                       <div className="flex flex-col justify-start flex-1 pt-[2px]">
                         <p className="text-gray-500 text-[14px] font-semibold leading-none mb-1">Total Profit</p>
 
-                        <h2 className="text-[21px] font-semibold leading-tight text-[#111827] mt-[2px]">
+                        <h2 className="text-[19px] font-semibold leading-tight text-[#111827] mt-[2px]">
                           {' '}
                           ₹ {dashboardData?.header_metrics?.profit || 0}
                         </h2>
@@ -726,18 +727,20 @@ export default function Summary() {
                         }}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-2xl bg-[#dcfce7] flex items-center justify-center">
+                          <div className="w-6 h-6 rounded-2xl bg-[#dcfce7] flex items-center justify-center">
                             <FileDoneOutlined className="text-[#16a34a] text-[20px]" />
                           </div>
 
                           <p className="text-[13px] font-semibold text-[#16a34a]">Profit IDs</p>
                         </div>
 
-                        <h2 className="text-[21px] font-semibold mb-1 text-[#111827]">
+                        <h2 className="text-[19px] font-semibold mb-1 text-[#111827]">
                           #{dashboardData?.top_orders?.profitable?.total_count || 0}
                         </h2>
 
-                        <p className="text-[#4b5563]">{dashboardData?.top_orders?.profitable?.total_amount || 0}</p>
+                        <p className="text-[#4b5563] text-[13px]">
+                          {dashboardData?.top_orders?.profitable?.total_amount || 0}
+                        </p>
                       </button>
                     </Col>
 
@@ -760,18 +763,20 @@ export default function Summary() {
                         }}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-2xl bg-[#fee2e2] flex items-center justify-center">
+                          <div className="w-6 h-6 rounded-2xl bg-[#fee2e2] flex items-center justify-center">
                             <FileExclamationOutlined className="text-[#ef4444] text-[20px]" />
                           </div>
 
                           <p className="text-[13px] font-semibold text-[#ef4444]">Loss IDs</p>
                         </div>
 
-                        <h2 className="text-[21px] font-semibold mb-1 text-[#111827]">
+                        <h2 className="text-[19px] font-semibold mb-1 text-[#111827]">
                           #{dashboardData?.top_orders?.losing?.total_count || 0}
                         </h2>
 
-                        <p className="text-[#4b5563]">{dashboardData?.top_orders?.losing?.total_amount || 0}</p>
+                        <p className="text-[#4b5563] text-[13px]">
+                          {dashboardData?.top_orders?.losing?.total_amount || 0}
+                        </p>
                       </button>
                     </Col>
 
@@ -784,14 +789,14 @@ export default function Summary() {
                         }}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-2xl bg-[#ede9fe] flex items-center justify-center">
+                          <div className="w-6 h-6 rounded-2xl bg-[#ede9fe] flex items-center justify-center">
                             <NotificationOutlined className="text-[#7c3aed] text-[20px]" />
                           </div>
 
                           <p className="text-[13px] font-semibold text-[#111827]">Ad Spend</p>
                         </div>
 
-                        <h2 className="text-[21px] font-semibold mb-1 text-[#111827]">
+                        <h2 className="text-[19px] font-semibold mb-1 text-[#111827]">
                           {dashboardData?.header_metrics?.ad_spend || 0}
                         </h2>
 
@@ -877,7 +882,7 @@ export default function Summary() {
                   ))}
 
                   {/* NET */}
-                  <div className="grid grid-cols-3 px-4 py-1 mt-1 bg-[#f5f3ff] rounded-xl text-[15px] font-bold text-[#16a34a]">
+                  <div className="grid grid-cols-3 px-4 py-1 mt-1 bg-[#f5f3ff] rounded-xl text-[14px] font-bold text-[#16a34a]">
                     <span>Net</span>
 
                     <span className="text-center">{dashboardData?.breakdown_table?.net?.qty || 0}</span>
@@ -900,7 +905,7 @@ export default function Summary() {
               }}
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[16px] font-semibold text-[#111827]">Sales, Quantity & Profit Overview</h3>
+                <h3 className="text-[15px] font-semibold text-[#111827]">Sales, Quantity & Profit Overview</h3>
 
                 <Select size="small" defaultValue="daily" style={{ width: 100 }}>
                   <Option value="daily">Daily</Option>

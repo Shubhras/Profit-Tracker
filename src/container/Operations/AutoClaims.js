@@ -107,14 +107,14 @@ function AutoClaims() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] p-3 text-[12px] px-2">
-      <div className="rounded-[24px] border border-[#e5e7eb] bg-white p-4 shadow-sm">
+    <div className="min-h-screen bg-[#f8fafc] py-3 text-[12px] px-3">
+      <div className="shadow-sm">
         {/* Header */}
         <div className="flex items-start justify-between">
           {/* Left */}
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-[20px] font-bold text-[#111827] mb-[2px]">Auto Claims</h1>
+              <h1 className="text-[20px] font-bold text-[#111827] mb-0">Auto Claims</h1>
 
               <InfoCircleFilled className="text-[#94a3b8] text-[13px]" />
             </div>
@@ -184,15 +184,15 @@ function AutoClaims() {
         {/* Filters */}
         <div className="mt-3 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-1 flex-wrap gap-2">
-            <select className="min-w-[100px] rounded-xl border border-[#e5e7eb] bg-white px-3 py-2 text-[12px] text-[#374151] outline-none">
+            <select className="min-w-[100px] rounded-l border border-[#e5e7eb] bg-white px-3 py-2 text-[12px] text-[#374151] outline-none">
               <option>All Marketplaces</option>
             </select>
 
-            <select className="min-w-[100px] rounded-xl border border-[#e5e7eb] bg-white px-3 py-2 text-[12px] text-[#374151] outline-none">
+            <select className="min-w-[100px] rounded-l border border-[#e5e7eb] bg-white px-3 py-2 text-[12px] text-[#374151] outline-none">
               <option>All Claim Types</option>
             </select>
 
-            <select className="min-w-[100px] rounded-xl border border-[#e5e7eb] bg-white px-3 py-2 text-[12px] text-[#374151] outline-none">
+            <select className="min-w-[100px] rounded-l border border-[#e5e7eb] bg-white px-3 py-2 text-[12px] text-[#374151] outline-none">
               <option>All Status</option>
             </select>
 
@@ -200,14 +200,14 @@ function AutoClaims() {
               type="text"
               value="01/05/2026 - 31/05/2026"
               readOnly
-              className="min-w-[220px] rounded-xl border border-[#e5e7eb] bg-white px-3 py-2 text-[12px] text-[#374151] outline-none"
+              className="min-w-[220px] rounded-l border border-[#e5e7eb] bg-white px-3 py-2 text-[12px] text-[#374151] outline-none"
             />
 
             <div className="relative">
               <input
                 type="text"
                 placeholder="Search by Order ID, ASIN, SKU..."
-                className="w-[180px] rounded-xl border border-[#e5e7eb] bg-white py-2 pl-3 pr-9 text-[12px] outline-none"
+                className="w-[180px] rounded-l border border-[#e5e7eb] bg-white py-2 pl-3 pr-9 text-[12px] outline-none"
               />
 
               <SearchOutlined className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[11px]" />
@@ -215,7 +215,7 @@ function AutoClaims() {
 
             <button
               type="button"
-              className="flex items-center gap-2 rounded-xl border border-[#e5e7eb] bg-white px-3 py-2 text-[12px] font-medium text-[#374151] transition-all hover:bg-[#f9fafb]"
+              className="flex items-center gap-2 rounded-l border border-[#e5e7eb] bg-white px-3 py-2 text-[12px] font-medium text-[#374151] transition-all hover:bg-[#f9fafb]"
             >
               <FilterOutlined className="text-[11px]" />
               Filters

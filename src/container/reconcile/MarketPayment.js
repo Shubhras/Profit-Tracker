@@ -127,7 +127,7 @@ function MarketPayment() {
   return (
     <div className="min-h-screen bg-[#f6f8fc] p-3 px-2">
       {/* HEADER */}
-      <div className="mb-2 flex items-start justify-between">
+      <div className="flex items-start justify-between px-3 py-2">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-[22px] font-semibold text-[#111827] leading-none mb-1">Marketplace Payments</h1>
