@@ -328,3 +328,38 @@ class AdsBudgetRuleAdmin(admin.ModelAdmin):
             )
         }),
     )    
+
+@admin.register(AdsNegativeKeyword)
+class AdsNegativeKeywordAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "id",
+        "negative_keyword_id",
+        "keyword_text",
+        "match_type",
+        "campaign",
+        "ad_group",
+        "state",
+        "amazon_account",
+        "created_at"
+    )
+
+    search_fields = (
+        "keyword_text",
+        "negative_keyword_id",
+        "campaign__name",
+        "campaign__campaign_id",
+        "ad_group__name",
+        "ad_group__ad_group_id"
+    )
+
+    list_filter = (
+        "match_type",
+        "state",
+        "serving_status",
+        "amazon_account"
+    )
+
+    ordering = (
+        "-created_at",
+    )    
