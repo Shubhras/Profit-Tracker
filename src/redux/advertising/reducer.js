@@ -12,6 +12,7 @@ const initialState = {
   createrule: [],
   updaterule: [],
   deleterule: [],
+  negativekeyword: [],
   editbid: [],
   keybidupdate: [],
   updatecampaign: [],
@@ -83,6 +84,10 @@ const {
   KEYWORD_BID_BEGIN,
   KEYWORD_BID_SUCCESS,
   KEYWORD_BID_ERR,
+
+  NEGATIVE_KEYWORD_BEGIN,
+  NEGATIVE_KEYWORD_SUCCESS,
+  NEGATIVE_KEYWORD_ERR,
 } = actions;
 
 const AdvertisingReducer = (state = initialState, action) => {
@@ -417,6 +422,27 @@ const AdvertisingReducer = (state = initialState, action) => {
       };
 
     case KEYWORD_BID_ERR:
+      return {
+        ...state,
+        error: err,
+        loading: false,
+      };
+
+    case NEGATIVE_KEYWORD_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case NEGATIVE_KEYWORD_SUCCESS:
+      return {
+        ...state,
+        negativekeyword: data,
+        loading: false,
+      };
+
+    case NEGATIVE_KEYWORD_ERR:
       return {
         ...state,
         error: err,

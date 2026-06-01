@@ -63,6 +63,10 @@ const actions = {
   KEYWORD_BID_SUCCESS: 'KEYWORD_BID_SUCCESS',
   KEYWORD_BID_ERR: 'KEYWORD_BID_ERR',
 
+  NEGATIVE_KEYWORD_BEGIN: 'NEGATIVE_KEYWORD_BEGIN',
+  NEGATIVE_KEYWORD_SUCCESS: 'NEGATIVE_KEYWORD_SUCCESS',
+  NEGATIVE_KEYWORD_ERR: 'NEGATIVE_KEYWORD_ERR',
+
   campaignsBegin: () => {
     return {
       type: actions.CAMPAIGNS_BEGIN,
@@ -379,6 +383,26 @@ const actions = {
   keywordBidErr: (err) => {
     return {
       type: actions.KEYWORD_BID_ERR,
+      err,
+    };
+  },
+
+  negativekeywordBegin: () => {
+    return {
+      type: actions.NEGATIVE_KEYWORD_BEGIN,
+    };
+  },
+
+  negativekeywordSuccess: (data) => {
+    return {
+      type: actions.NEGATIVE_KEYWORD_SUCCESS,
+      data,
+    };
+  },
+
+  negativekeywordErr: (err) => {
+    return {
+      type: actions.NEGATIVE_KEYWORD_ERR,
       err,
     };
   },
