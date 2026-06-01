@@ -7,6 +7,8 @@ from .budget_rules import *
 from amazon_ads.services.reports import *
 from .adgroup import *
 from amazon_ads.services.campaigns import *
+from .keywords import *
+from .optimization_rules import *
 urlpatterns = [
 
     path("account/connect/",AmazonAdsConnectView.as_view()),
@@ -16,10 +18,12 @@ urlpatterns = [
     path("syncCampaignMetricsView/details/",SyncCampaignMetricsView.as_view()),
     path("campaigns/list/",CampaignListView.as_view()),
     path("ad-groups/list/",AdsAdGroupListView.as_view()),
+
     path("keywords/list/",AdsKeywordListView.as_view()),
+    path("keywords-update/",UpdateSPKeywordView.as_view()),
     # path("product-ads/list/",AdsProductAdListView.as_view()),
 
-    path("product-ads/list/",ProductSKUReportView.as_view()),
+    path("product-ads/list/",ProductSKUReportView.as_view()),              
 
     path("camping-by-sku/list/",CampaignBySKUView.as_view()),
 
@@ -61,5 +65,49 @@ urlpatterns = [
     path(
         "budget-rules/<str:budget_rule_id>/delete/",
         DeleteBudgetRuleAPIView.as_view()
+    ),
+
+    path(
+        "campaign-negative-targets/list/",
+        CampaignNegativeTargetListView.as_view(),
+        name="campaign-negative-target-list"
+    ),
+
+    path("negative-keywords/list/",NegativeKeywordListAPIView.as_view(),name="negative-keywords-list"),
+
+    path(
+        "optimization-rules/create/",
+        CreateOptimizationRuleAPIView.as_view()
+    ),
+
+    path(
+        "optimization-rules/update/",
+        UpdateOptimizationRuleAPIView.as_view()
+    ),
+
+    path(
+        "optimization-rules/delete/",
+        DeleteOptimizationRuleAPIView.as_view()
+    ),
+
+    path(
+        "optimization-rules/search/",
+        SearchOptimizationRuleAPIView.as_view()
+    ),
+
+    path(
+        "optimization-rules/associate/",
+        AssociateOptimizationRuleAPIView.as_view()
+    ),
+
+
+    path(
+        "optimization-rules/sync/",
+        SyncOptimizationRuleAPIView.as_view()
+    ),
+
+    path(
+        "optimization-rules/list/",
+        ListOptimizationRuleAPIView.as_view()
     ),
 ]

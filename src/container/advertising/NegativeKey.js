@@ -1,6 +1,6 @@
-import React from 'react';
-import { Button, Table, Tag } from 'antd';
-
+import React, { useEffect, useState } from 'react';
+import { Button, Table, Tag, Tooltip } from 'antd';
+import { useDispatch } from 'react-redux';
 import {
   DownloadOutlined,
   PlusOutlined,
@@ -11,8 +11,63 @@ import {
   AimOutlined,
   LineChartOutlined,
 } from '@ant-design/icons';
+import { getNegativeKeywords } from '../../redux/advertising/actionCreator'; // apne path ke hisab se
 
 function NegativeKey() {
+  const dispatch = useDispatch();
+
+  const [tableData, setTableData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [totalRecords, setTotalRecords] = useState(0);
+
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 20,
+  });
+
+  const fetchNegativeKeywords = async () => {
+    setLoading(true);
+
+    const payload = {
+      search: '',
+      campaign_id: null,
+      ad_group_id: null,
+      match_type: '',
+      state: 'ENABLED',
+      page: pagination.current,
+      page_size: pagination.pageSize,
+    };
+
+    const response = await dispatch(getNegativeKeywords(payload));
+
+    if (response?.status) {
+      setTotalRecords(response.total_records || 0);
+      const formattedData = (response?.data || []).map((item) => ({
+        key: item.id,
+
+        keyword: item.keyword_text,
+
+        type: item.match_type,
+
+        campaignName: item.campaign_name,
+
+        state: item.state,
+
+        addedOn: new Date(item.created_at).toLocaleDateString('en-GB'),
+
+        adGroupName: item.ad_group_name,
+      }));
+
+      setTableData(formattedData);
+    }
+
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchNegativeKeywords();
+  }, [pagination.current, pagination.pageSize]);
+
   const metricCards = [
     {
       title: 'Total Negative Keywords',
@@ -55,147 +110,107 @@ function NegativeKey() {
     },
   ];
 
-  const dataSource = [
-    {
-      key: 1,
-      keyword: 'free',
-      type: 'Broad',
-      addedTo: 'Campaign (12)',
-      addedOn: '28 Apr 2026',
-      impression: '45,231',
-      clicks: '1,024',
-      saved: '$845.21',
-    },
-
-    {
-      key: 2,
-      keyword: 'cheap',
-      type: 'Phrase',
-      addedTo: 'Campaign (8)',
-      addedOn: '25 Apr 2026',
-      impression: '38,112',
-      clicks: '823',
-      saved: '$642.18',
-    },
-
-    {
-      key: 3,
-      keyword: 'near me',
-      type: 'Phrase',
-      addedTo: 'Campaign (5)',
-      addedOn: '22 Apr 2026',
-      impression: '22,589',
-      clicks: '612',
-      saved: '$512.67',
-    },
-
-    {
-      key: 4,
-      keyword: 'how to',
-      type: 'Broad',
-      addedTo: 'Ad Group (24)',
-      addedOn: '20 Apr 2026',
-      impression: '19,342',
-      clicks: '534',
-      saved: '$421.39',
-    },
-
-    {
-      key: 5,
-      keyword: 'diy',
-      type: 'Phrase',
-      addedTo: 'Ad Group (18)',
-      addedOn: '18 Apr 2026',
-      impression: '16,875',
-      clicks: '401',
-      saved: '$318.71',
-    },
-
-    {
-      key: 6,
-      keyword: 'amazon',
-      type: 'Exact',
-      addedTo: 'Campaign (3)',
-      addedOn: '15 Apr 2026',
-      impression: '14,560',
-      clicks: '371',
-      saved: '$287.63',
-    },
-  ];
-
   const columns = [
     {
-      title: <input type="checkbox" className="w-[15px] h-[15px] accent-[#10b981]" />,
-
-      dataIndex: 'checkbox',
+      title: <input type="checkbox" className="w-[13px] h-[13px] accent-[#10b981]" />,
       width: 50,
-
-      render: () => <input type="checkbox" className="w-[15px] h-[15px] accent-[#10b981]" />,
+      align: 'center',
+      render: () => <input type="checkbox" className="w-[13px] h-[13px] accent-[#10b981]" />,
     },
 
     {
-      title: 'Negative Keyword',
+      title: 'Keyword Text',
       dataIndex: 'keyword',
-
-      render: (v) => <span className="font-medium text-[#111827]">{v}</span>,
+      width: 70,
+      align: 'center',
+      ellipsis: true,
+      sorter: (a, b) => String(a.keyword || '').localeCompare(String(b.keyword || '')),
+      render: (v) => (
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span className="font-medium text-[#111827] cursor-pointer">{v}</span>
+        </Tooltip>
+      ),
     },
 
     {
       title: 'Match Type',
       dataIndex: 'type',
-
+      width: 70,
+      align: 'center',
+      ellipsis: {
+        showTitle: false,
+      },
+      sorter: (a, b) => String(a.type || '').localeCompare(String(b.type || '')),
       render: (v) => {
-        const bg = v === 'Broad' ? '#dcfce7' : v === 'Phrase' ? '#ede9fe' : '#fef3c7';
-
-        const color = v === 'Broad' ? '#15803d' : v === 'Phrase' ? '#7c3aed' : '#d97706';
+        const label = v === 'NEGATIVE_EXACT' ? 'Exact' : v === 'NEGATIVE_PHRASE' ? 'Phrase' : 'Broad';
 
         return (
           <Tag
             style={{
-              background: bg,
-              color,
+              background: v === 'NEGATIVE_EXACT' ? '#fef3c7' : v === 'NEGATIVE_PHRASE' ? '#ede9fe' : '#dcfce7',
+              color: v === 'NEGATIVE_EXACT' ? '#d97706' : v === 'NEGATIVE_PHRASE' ? '#7c3aed' : '#15803d',
               border: 'none',
-              borderRadius: '999px',
-              fontWeight: 500,
+              // borderRadius: '999px',
             }}
           >
-            {v}
+            {label}
           </Tag>
         );
       },
     },
 
     {
-      title: 'Added To',
-      dataIndex: 'addedTo',
+      title: 'Campaign Name',
+      dataIndex: 'campaignName',
+      width: 70,
+      align: 'center',
+      ellipsis: true,
+      sorter: (a, b) => String(a.campaignName || '').localeCompare(String(b.campaignName || '')),
+      render: (v) => (
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span className="cursor-pointer">{v}</span>
+        </Tooltip>
+      ),
+    },
+
+    {
+      title: 'State',
+      dataIndex: 'state',
+      width: 70,
+      align: 'center',
+      ellipsis: {
+        showTitle: false,
+      },
+      sorter: (a, b) => String(a.state || '').localeCompare(String(b.state || '')),
+      render: (v) => <Tag color={v === 'ENABLED' ? 'green' : 'red'}>{v}</Tag>,
     },
 
     {
       title: 'Added On',
       dataIndex: 'addedOn',
+      align: 'center',
+      width: 70,
+      sorter: (a, b) => Number(a.addedOn || 0) - Number(b.addedOn || 0),
     },
 
     {
-      title: 'Impr. Blocked',
-      dataIndex: 'impression',
-    },
-
-    {
-      title: 'Clicks Blocked',
-      dataIndex: 'clicks',
-    },
-
-    {
-      title: 'Spend Saved',
-      dataIndex: 'saved',
-
-      render: (v) => <span className="font-semibold text-[#16a34a]">{v}</span>,
+      title: 'Ad Group Name',
+      dataIndex: 'adGroupName',
+      width: 70,
+      align: 'center',
+      ellipsis: true,
+      sorter: (a, b) => String(a.adGroupName || '').localeCompare(String(b.adGroupName || '')),
+      render: (v) => (
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span className="cursor-pointer">{v}</span>
+        </Tooltip>
+      ),
     },
 
     {
       title: 'Actions',
-      width: 70,
-
+      width: 50,
+      align: 'center',
       render: () => <Button type="text" icon={<MoreOutlined />} />,
     },
   ];
@@ -269,7 +284,7 @@ function NegativeKey() {
             <button
               key={item}
               type="button"
-              className={`pb-4 text-[14px] font-medium transition-all ${
+              className={`pb1 text-[13px] font-medium transition-all ${
                 index === 0 ? 'text-[#059669] border-b-2 border-[#059669]' : 'text-[#64748b]'
               }`}
             >
@@ -316,11 +331,27 @@ function NegativeKey() {
         <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden">
           <Table
             columns={columns}
-            dataSource={dataSource}
+            dataSource={tableData}
+            loading={loading}
+            tableLayout="fixed"
+            showSorterTooltip={false}
             pagination={{
-              pageSize: 10,
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: totalRecords,
+              showSizeChanger: true,
+              pageSizeOptions: ['10', '20', '50', '100'],
+              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
             }}
-            scroll={{ x: 'max-content' }}
+            onChange={(pag) => {
+              setPagination({
+                current: pag.current,
+                pageSize: pag.pageSize,
+              });
+            }}
+            scroll={{ x: 900 }}
+            size="middle"
+            bordered={false}
             className="
     [&_.ant-table-thead>tr>th]:!text-[12px]
     [&_.ant-table-thead>tr>th]:!font-semibold
@@ -337,7 +368,7 @@ function NegativeKey() {
           {/* WASTED TERMS */}
 
           <div className="bg-white rounded-2xl border border-[#e5e7eb] p-3">
-            <h2 className="text-[14px] font-semibold text-[#111827] mb-2">Top Wasted Search Terms</h2>
+            <h2 className="text-[15px] font-semibold text-[#111827] mb-2">Top Wasted Search Terms</h2>
 
             {[
               {
@@ -385,7 +416,7 @@ function NegativeKey() {
           </div>
 
           <div className="bg-white rounded-2xl border border-[#e5e7eb] p-3">
-            <h2 className="text-[14px] font-semibold text-[#111827]">Add Negative Keywords</h2>
+            <h2 className="text-[15px] font-semibold text-[#111827]">Add Negative Keywords</h2>
 
             <p className="text-[13px] text-[#6b7280] mb-2">Add multiple keywords or phrases (one per line)</p>
 

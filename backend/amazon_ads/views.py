@@ -2635,3 +2635,303 @@ class AdsTargetListAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+
+
+class CampaignNegativeTargetListView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    pagination_class = CustomPagination
+
+    def post(self, request):
+
+        user = request.user
+
+        data = request.data
+
+        amazon_account_id = data.get(
+            "amazon_account_id"
+        )
+
+        campaign_id = data.get(
+            "campaign_id"
+        )
+
+        negative_target_id = data.get(
+            "negative_target_id"
+        )
+
+        state = data.get(
+            "state"
+        )
+
+        expression_type = data.get(
+            "expression_type"
+        )
+
+        search = data.get(
+            "search"
+        )
+
+        ordering = data.get(
+            "ordering",
+            "-id"
+        )
+
+        queryset = AdsCampaignNegativeTarget.objects.filter(
+
+            amazon_account__user=user
+
+        ).select_related(
+
+            "amazon_account",
+            "campaign"
+
+        )
+
+        # ---------------------------------------------------
+        # AMAZON ACCOUNT FILTER
+        # ---------------------------------------------------
+
+        if amazon_account_id:
+
+            queryset = queryset.filter(
+                amazon_account_id=amazon_account_id
+            )
+
+        # ---------------------------------------------------
+        # CAMPAIGN FILTER
+        # ---------------------------------------------------
+
+        if campaign_id:
+
+            queryset = queryset.filter(
+                campaign__campaign_id=int(campaign_id)
+            )
+
+        # ---------------------------------------------------
+        # NEGATIVE TARGET FILTER
+        # ---------------------------------------------------
+
+        if negative_target_id:
+
+            queryset = queryset.filter(
+                negative_target_id=int(
+                    negative_target_id
+                )
+            )
+
+        # ---------------------------------------------------
+        # STATE FILTER
+        # ---------------------------------------------------
+
+        if state:
+
+            queryset = queryset.filter(
+                state__iexact=state
+            )
+
+        # ---------------------------------------------------
+        # EXPRESSION TYPE FILTER
+        # ---------------------------------------------------
+
+        if expression_type:
+
+            queryset = queryset.filter(
+                expression_type__iexact=
+                expression_type
+            )
+
+        # ---------------------------------------------------
+        # SEARCH
+        # ---------------------------------------------------
+
+        if search:
+
+            queryset = queryset.filter(
+
+                Q(campaign__name__icontains=search) |
+
+                Q(state__icontains=search) |
+
+                Q(serving_status__icontains=search) |
+
+                Q(expression_type__icontains=search) |
+
+                Q(negative_target_id__icontains=search)
+            )
+
+        # ---------------------------------------------------
+        # ORDERING
+        # ---------------------------------------------------
+
+        queryset = queryset.order_by(
+            ordering
+        )
+
+        # ---------------------------------------------------
+        # PAGINATION
+        # ---------------------------------------------------
+
+        paginator = self.pagination_class()
+
+        paginated_queryset = paginator.paginate_queryset(
+            queryset,
+            request
+        )
+
+        serializer = AdsCampaignNegativeTargetSerializer(
+            paginated_queryset,
+            many=True
+        )
+
+        return paginator.get_paginated_response(
+            serializer.data
+        )
+    
+
+
+# views.py
+
+from django.db.models import Q
+
+from rest_framework.views import APIView
+
+from rest_framework.response import Response
+
+from rest_framework.permissions import IsAuthenticated
+
+from amazon_ads.models import AdsNegativeKeyword
+
+from amazon_ads.serializers import (
+    AdsNegativeKeywordSerializer
+)
+
+
+class NegativeKeywordListAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        user = request.user
+
+        search = request.data.get("search")
+
+        campaign_id = request.data.get(
+            "campaign_id"
+        )
+
+        ad_group_id = request.data.get(
+            "ad_group_id"
+        )
+
+        state = request.data.get("state")
+
+        match_type = request.data.get(
+            "match_type"
+        )
+
+        page = int(
+            request.data.get("page", 1)
+        )
+
+        page_size = int(
+            request.data.get("page_size", 10)
+        )
+
+        queryset = AdsNegativeKeyword.objects.filter(
+            amazon_account__user=user
+        ).select_related(
+            "campaign",
+            "ad_group",
+            "amazon_account"
+        ).order_by(
+            "-id"
+        )
+
+        # -----------------------------------------
+        # SEARCH
+        # -----------------------------------------
+
+        if search:
+
+            queryset = queryset.filter(
+
+                Q(keyword_text__icontains=search) |
+
+                Q(
+                    campaign__name__icontains=search
+                ) |
+
+                Q(
+                    ad_group__name__icontains=search
+                ) |
+
+                Q(
+                    negative_keyword_id__icontains=search
+                )
+            )
+
+        # -----------------------------------------
+        # FILTERS
+        # -----------------------------------------
+
+        if campaign_id:
+
+            queryset = queryset.filter(
+                campaign__campaign_id=campaign_id
+            )
+
+        if ad_group_id:
+
+            queryset = queryset.filter(
+                ad_group__ad_group_id=ad_group_id
+            )
+
+        if state:
+
+            queryset = queryset.filter(
+                state=state
+            )
+
+        if match_type:
+
+            queryset = queryset.filter(
+                match_type=match_type
+            )
+
+        total_records = queryset.count()
+
+        start = (page - 1) * page_size
+
+        end = start + page_size
+
+        queryset = queryset[start:end]
+
+        serializer = AdsNegativeKeywordSerializer(
+            queryset,
+            many=True
+        )
+
+        return Response({
+
+            "status": True,
+
+            "message":
+            "Negative Keywords List",
+
+            "total_records":
+            total_records,
+
+            "page":
+            page,
+
+            "page_size":
+            page_size,
+
+            "data":
+            serializer.data
+        })
+    
+    
