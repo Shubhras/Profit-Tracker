@@ -237,58 +237,6 @@ def ads_api_request(
 
     return response
 
-# working
-# def ads_matrix_api_request(
-#     account,
-#     method,
-#     endpoint,
-#     params=None,
-#     payload=None,
-#     content_type="application/json",
-#     accept_type="application/json"
-# ):
-
-#     access_token = refresh_ads_access_token(account)
-
-#     headers = {
-
-#         "Authorization":
-#         f"Bearer {access_token}",
-
-#         "Amazon-Advertising-API-ClientId":
-#         settings.AMAZON_ADS_CLIENT_ID,
-
-#         "Amazon-Advertising-API-Scope":
-#         str(account.profile_id),
-
-#         "Content-Type":
-#         content_type,
-
-#         "Accept":
-#         accept_type
-#     }
-
-#     base_url = REGION_URLS.get(account.region)
-
-#     url = f"{base_url}{endpoint}"
-
-#     print("URL:", url)
-#     print("HEADERS:", headers)
-#     print("PAYLOAD:", json.dumps(payload, indent=4))
-
-#     response = requests.request(
-#         method=method,
-#         url=url,
-#         headers=headers,
-#         params=params,
-#         json=payload,
-#         timeout=60
-#     )
-
-#     print("STATUS:", response.status_code)
-#     print("BODY:", response.text)
-
-#     return response
 
 def ads_matrix_api_request(
     account,

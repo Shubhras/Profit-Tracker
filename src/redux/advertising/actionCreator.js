@@ -63,6 +63,10 @@ const {
   keywordBidBegin,
   keywordBidSuccess,
   keywordBidErr,
+
+  negativekeywordBegin,
+  negativekeywordSuccess,
+  negativekeywordErr,
 } = actions;
 
 export const getCampaigns = (page = 1, pageSize = 10) => {
@@ -421,6 +425,32 @@ export const KeywordBidUpdate = (payload) => {
       return response.data;
     } catch (err) {
       dispatch(keywordBidErr(err.response?.data?.message || err.message));
+
+      return {
+        status: false,
+        message: err.response?.data?.message || err.message,
+      };
+    }
+  };
+};
+
+export const getNegativeKeywords = (payload) => {
+  return async (dispatch) => {
+    dispatch(negativekeywordBegin());
+
+    try {
+      const response = await DataService.post(`/amazon-ads/negative-keywords/list/`, payload);
+
+      if (response.data.status === true) {
+        dispatch(negativekeywordSuccess(response.data));
+        return response.data;
+      }
+
+      dispatch(negativekeywordErr(response.data.message || 'Something went wrong'));
+
+      return response.data;
+    } catch (err) {
+      dispatch(negativekeywordErr(err.response?.data?.message || err.message));
 
       return {
         status: false,

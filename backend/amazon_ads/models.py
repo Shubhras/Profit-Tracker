@@ -303,7 +303,7 @@ class TargetMetric(models.Model):
     raw_data = models.JSONField(default=dict)       
 
 
-# models.py
+
 
 class AdsBudgetRule(models.Model):
 
@@ -362,3 +362,202 @@ class AdsBudgetRule(models.Model):
     def __str__(self):
         return f"{self.rule_type} - {self.budget_rule_id}"
     
+
+
+#Negative targeting by campin
+class AdsCampaignNegativeTarget(models.Model):
+
+    amazon_account = models.ForeignKey(
+        AmazonAdsAccount,
+        on_delete=models.CASCADE
+    )
+
+    campaign = models.ForeignKey(
+        AdsCampaign,
+        on_delete=models.CASCADE,
+        related_name="negative_targets"
+    )
+
+    negative_target_id = models.BigIntegerField(unique=True)
+
+    expression_type = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
+
+    expression = models.JSONField(
+        default=list,
+        blank=True
+    )
+
+    resolved_expression = models.JSONField(
+        default=list,
+        blank=True
+    )
+
+    state = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True
+    )
+
+    serving_status = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
+
+    bid = models.FloatField(
+        default=0
+    )
+
+    raw_data = models.JSONField(
+        default=dict,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    class Meta:
+        unique_together = (
+            "amazon_account",
+            "negative_target_id"
+        )
+
+    def __str__(self):
+        return str(self.negative_target_id)
+
+
+#Negative keyword by
+
+class AdsNegativeKeyword(models.Model):
+
+    MATCH_TYPES = (
+        ("NEGATIVE_EXACT", "NEGATIVE_EXACT"),
+        ("NEGATIVE_PHRASE", "NEGATIVE_PHRASE"),
+        ("NEGATIVE_BROAD", "NEGATIVE_BROAD"),
+    )
+
+    amazon_account = models.ForeignKey(
+        AmazonAdsAccount,
+        on_delete=models.CASCADE
+    )
+
+    campaign = models.ForeignKey(
+        AdsCampaign,
+        on_delete=models.CASCADE,
+        related_name="negative_keywords"
+    )
+
+    ad_group = models.ForeignKey(
+        AdsAdGroup,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="negative_keywords"
+    )
+
+    negative_keyword_id = models.BigIntegerField(
+        unique=True
+    )
+
+    keyword_text = models.TextField()
+
+    match_type = models.CharField(
+        max_length=50,
+        choices=MATCH_TYPES,
+        null=True,
+        blank=True
+    )
+
+    state = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True
+    )
+
+    serving_status = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
+
+    creation_date_time = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    last_update_date_time = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+    
+
+    native_language_keyword = models.BooleanField(
+        default=False
+    )
+
+    raw_data = models.JSONField(
+        default=dict,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    class Meta:
+        unique_together = (
+            "amazon_account",
+            "negative_keyword_id"
+        )
+
+    def __str__(self):
+        return self.keyword_text
+    
+
+
+class AdsOptimizationRule(models.Model):
+
+    amazon_account = models.ForeignKey(AmazonAdsAccount,on_delete=models.CASCADE )
+
+    profile_id = models.CharField(max_length=100,null=True,blank=True)
+
+    optimization_rule_id = models.CharField(max_length=255,unique=True)
+
+    rule_name = models.CharField(max_length=500,null=True,blank=True)
+
+    rule_category = models.CharField(max_length=100,null=True,blank=True)
+
+    rule_sub_category = models.CharField(max_length=100,null=True,blank=True)
+
+    status = models.CharField(max_length=100,null=True,blank=True)
+
+    recurrence = models.JSONField(default=dict, blank=True)
+
+    conditions = models.JSONField(default=dict,blank=True)
+
+    action = models.JSONField(default=dict,blank=True)
+
+    raw_data = models.JSONField(default=dict,blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+
+        return str(self.optimization_rule_id)
+    
+

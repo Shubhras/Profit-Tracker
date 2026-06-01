@@ -9,6 +9,8 @@ import {
   ThunderboltOutlined,
   PlayCircleOutlined,
   DollarOutlined,
+  SettingOutlined,
+  DollarCircleOutlined,
   // DownOutlined,
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -35,6 +37,7 @@ function RulesAutomation() {
   const [deleteRuleId, setDeleteRuleId] = useState(null);
   const [editRuleId, setEditRuleId] = useState(null);
   const [selectedRuleData, setSelectedRuleData] = useState(null);
+  const [activeTab, setActiveTab] = useState('Budget Rules');
   const initialRuleForm = {
     adType: undefined,
     name: '',
@@ -546,22 +549,37 @@ function RulesAutomation() {
               type="primary"
               icon={<PlusOutlined className="text-[11px]" />}
               onClick={() => setOpenRuleModal(true)}
-              className="
-        !h-[32px]
-        !px-3
-        !rounded-lg
-        !bg-[#2563eb]
-        !border-none
-        !flex
-        !items-center
-        !justify-center
-        gap-0
-        !shadow-none
-      "
+              className="!h-[32px] !px-3 !rounded-lg !bg-[#2563eb] !border-none !flex !items-center !justify-center gap-0 !shadow-none"
             >
               <span className="font-semibold leading-none text-[12px]">Create Rule</span>
             </Button>
           </div>
+        </div>
+
+        <div className="inline-flex items-center bg-[#f8fafc] border border-[#e5e7eb] rounded-xl p-1 mb-2">
+          {['Budget Rules', 'Bids'].map((tab) => {
+            const active = activeTab === tab;
+            return (
+              <button
+                type="button"
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`min-w-[100px] h-[35px] px-3 rounded-lg text-[13px] font-medium transition-all flex items-center justify-center gap-2
+          ${
+            active ? 'bg-white text-[#16a34a] shadow-sm border border-[#d1fae5]' : 'text-[#6b7280] hover:text-[#111827]'
+          }
+        `}
+              >
+                {tab === 'Budget Rules' ? (
+                  <SettingOutlined className="text-[14px]" />
+                ) : (
+                  <DollarCircleOutlined className="text-[14px]" />
+                )}
+
+                {tab}
+              </button>
+            );
+          })}
         </div>
 
         <div className="border border-[#edf0f2] rounded-xl px-3 pt-2 pb-0 mb-2 bg-white">
@@ -578,15 +596,7 @@ function RulesAutomation() {
               return (
                 <div
                   key={index}
-                  className={`
-            relative
-            flex
-            items-center
-            gap-1
-            pb-2
-            cursor-pointer
-            whitespace-nowrap
-            transition-all
+                  className={`relative flex items-center gap-1 pb-2 cursor-pointer whitespace-nowrap transition-all
             ${active ? 'text-[#16a34a] font-semibold' : 'text-[#6b7280] font-medium hover:text-[#111827]'}
           `}
                 >
@@ -713,13 +723,13 @@ function RulesAutomation() {
 
               <div className="flex items-center justify-between px-3 py-2 border-b border-[#edf0f2]">
                 <div>
-                  <h2 className="text-[18px] font-semibold text-[#111827] mb-1">Pending Execution Rules</h2>
+                  <h2 className="text-[18px] font-semibold text-[#111827] mb-0">Pending Execution Rules</h2>
 
                   <p className="text-[12px] text-[#6b7280]">Rules waiting to execute.</p>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <Button type="primary" className="!h-[30px] text-[13px] !rounded-xl !bg-[#2563eb]">
+                  <Button type="primary" className="!h-[30px] text-[13px] !rounded-l !bg-[#2563eb]">
                     <span className="font-semibold">Run All Rules</span>
                   </Button>
                 </div>
@@ -731,6 +741,8 @@ function RulesAutomation() {
                 columns={columns}
                 dataSource={dataSource}
                 loading={loading}
+                showSorterTooltip={false}
+                tableLayout="fixed"
                 pagination={{
                   current: pagination.current,
                   pageSize: pagination.pageSize,
@@ -1104,20 +1116,20 @@ function RulesAutomation() {
         <div className="p-1">
           {/* ================= HEADER ================= */}
 
-          <div className="mb-5">
-            <h2 className="text-[23px] font-bold text-[#111827] mb-1">Create Budget Rule</h2>
+          <div className="mb-3">
+            <h2 className="text-[20px] font-bold text-[#111827] mb-1">Create Budget Rule</h2>
 
             <p className="text-[#6b7280] text-[13px] mt-1">Configure automation rules for your advertising campaigns</p>
           </div>
 
           {/* ================= BODY ================= */}
 
-          <div className="bg-[#fafbfc] border border-[#edf0f2] rounded-2xl p-5 space-y-5">
+          <div className="bg-[#fafbfc] border border-[#edf0f2] rounded-2xl p-3 space-y-4">
             {/* TOP ROW */}
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[15px] font-medium text-[#374151] block mb-1">Advertising Type</label>
+                <label className="text-[14px] font-medium text-[#374151] block mb-1">Advertising Type</label>
 
                 <Select
                   value={ruleForm.adType || undefined}
@@ -1128,7 +1140,7 @@ function RulesAutomation() {
                     })
                   }
                   className="w-full !text-[13px]"
-                  size="large"
+                  size="small"
                   placeholder="Select"
                   options={[
                     {
@@ -1148,7 +1160,7 @@ function RulesAutomation() {
               </div>
 
               <div>
-                <label className="text-[15px] font-medium text-[#374151] block mb-1">Rule Type</label>
+                <label className="text-[14px] font-medium text-[#374151] block mb-1">Rule Type</label>
 
                 <Select
                   value={ruleForm.ruleType || undefined}
@@ -1160,7 +1172,7 @@ function RulesAutomation() {
                     })
                   }
                   className="w-full !text-[13px]"
-                  size="large"
+                  size="small"
                   options={[
                     {
                       label: 'Performance',
@@ -1178,11 +1190,12 @@ function RulesAutomation() {
             {/* RULE NAME */}
 
             <div>
-              <label className="text-[15px] font-medium text-[#374151] block mb-1">Rule Name</label>
+              <label className="text-[14px] font-medium text-[#374151] block mb-1">Rule Name</label>
 
               <Input
                 placeholder="Enter rule name"
                 value={ruleForm.name}
+                size="small"
                 onChange={(e) =>
                   setRuleForm({
                     ...ruleForm,
@@ -1202,6 +1215,7 @@ function RulesAutomation() {
                 <DatePicker
                   value={ruleForm.startDate}
                   className="w-full !h-[44px] !rounded-xl"
+                  size="small"
                   onChange={(date, dateString) =>
                     setRuleForm({
                       ...ruleForm,
@@ -1213,10 +1227,11 @@ function RulesAutomation() {
               </div>
 
               <div>
-                <label className="text-[15px] font-medium text-[#374151] block mb-1">End Date</label>
+                <label className="text-[14px] font-medium text-[#374151] block mb-1">End Date</label>
 
                 <DatePicker
                   value={ruleForm.endDate}
+                  size="small"
                   className="w-full !h-[44px] !rounded-xl"
                   onChange={(date, dateString) =>
                     setRuleForm({
@@ -1235,11 +1250,11 @@ function RulesAutomation() {
               {/* RECURRENCE */}
 
               <div>
-                <label className="text-[15px] font-medium text-[#374151] block mb-1">Recurrence</label>
+                <label className="text-[14px] font-medium text-[#374151] block mb-1">Recurrence</label>
 
                 <Select
                   className="w-full !text-[13px]"
-                  size="large"
+                  size="small"
                   value={ruleForm.recurrenceType}
                   onChange={(value) =>
                     setRuleForm({
@@ -1352,11 +1367,11 @@ function RulesAutomation() {
               {/* INCREASE TYPE */}
 
               <div>
-                <label className="text-[15px] font-medium text-[#374151] block mb-1">Increase Type</label>
+                <label className="text-[14px] font-medium text-[#374151] block mb-1">Increase Type</label>
 
                 <Select
                   className="w-full text-[13px]"
-                  size="large"
+                  size="small"
                   value={ruleForm.increaseType}
                   onChange={(value) =>
                     setRuleForm({
@@ -1381,11 +1396,12 @@ function RulesAutomation() {
             {/* VALUE */}
 
             <div>
-              <label className="text-[15px] font-medium text-[#374151] block mb-1">Increase Value</label>
+              <label className="text-[14px] font-medium text-[#374151] block mb-1">Increase Value</label>
 
               <InputNumber
                 className="w-full !h-[44px]"
                 placeholder="20"
+                size="small"
                 value={ruleForm.increaseValue}
                 onChange={(value) =>
                   setRuleForm({
@@ -1400,11 +1416,11 @@ function RulesAutomation() {
             {/* ================= CAMPAIGNS ================= */}
 
             <div>
-              <label className="text-[15px] font-medium text-[#374151] block mb-1">Associated Campaigns</label>
+              <label className="text-[14px] font-medium text-[#374151] block mb-1">Associated Campaigns</label>
 
               <Select
                 mode="multiple"
-                size="large"
+                size="small"
                 placeholder="Select campaigns"
                 value={ruleForm.campaign_ids}
                 optionFilterProp="label"
@@ -1455,11 +1471,11 @@ function RulesAutomation() {
             {ruleForm.ruleType === 'PERFORMANCE' && (
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="text-[15px] font-medium text-[#374151] block mb-1">Performance Metric</label>
+                  <label className="text-[14px] font-medium text-[#374151] block mb-1">Performance Metric</label>
 
                   <Select
                     className="w-full !text-[13px]"
-                    size="large"
+                    size="small"
                     value={ruleForm.metricName}
                     onChange={(value) =>
                       setRuleForm({
@@ -1472,11 +1488,11 @@ function RulesAutomation() {
                 </div>
 
                 <div>
-                  <label className="text-[15px] font-medium text-[#374151] block mb-1">Operator</label>
+                  <label className="text-[14px] font-medium text-[#374151] block mb-1">Operator</label>
 
                   <Select
                     className="w-full !text-[13px]"
-                    size="large"
+                    size="small"
                     value={ruleForm.comparisonOperator}
                     onChange={(value) =>
                       setRuleForm({
@@ -1502,11 +1518,12 @@ function RulesAutomation() {
                 </div>
 
                 <div>
-                  <label className="text-[15px] font-medium text-[#374151] block mb-1">Threshold</label>
+                  <label className="text-[14px] font-medium text-[#374151] block mb-1">Threshold</label>
 
                   <InputNumber
                     className="w-full !h-[44px]"
                     placeholder="20"
+                    size="small"
                     value={ruleForm.threshold}
                     onChange={(value) =>
                       setRuleForm({
@@ -1523,7 +1540,7 @@ function RulesAutomation() {
           {/* ================= FOOTER ================= */}
 
           <div className="flex items-center justify-end gap-3 mt-3">
-            <Button className="!h-[42px] !px-5 !rounded-xl" onClick={() => setOpenRuleModal(false)}>
+            <Button className="!h-[35px] !px-4 text-[13px] !rounded-xl" onClick={() => setOpenRuleModal(false)}>
               Cancel
             </Button>
 
@@ -1531,7 +1548,7 @@ function RulesAutomation() {
               type="primary"
               onClick={handleCreateRule}
               loading={loading}
-              className="!h-[42px] !px-6 !rounded-xl !bg-[#2563eb] !border-none"
+              className="!h-[35px] !px-4 !rounded-xl !bg-[#2563eb] !border-none text-[13px] font-semibold"
             >
               {editRuleId ? 'Update Rule' : 'Create Rule'}
             </Button>
