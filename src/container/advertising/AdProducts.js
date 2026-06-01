@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { Button, Table, Tooltip, Tag } from 'antd';
-import { FilterOutlined, ExportOutlined, SearchOutlined, RightOutlined } from '@ant-design/icons';
+import { Button, Table, Tooltip, Tag, Dropdown, Checkbox } from 'antd';
+import { FilterOutlined, SettingOutlined, SearchOutlined, RightOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { getAdProducts } from '../../redux/advertising/actionCreator';
@@ -15,6 +15,7 @@ function AdProducts() {
   });
 
   const [selectedRowKeys, setSelectedRowKeys] = React.useState([]);
+  const [visibleColumns, setVisibleColumns] = React.useState([]);
 
   const { loading, adsProductsData } = useSelector((state) => ({
     loading: state.advertising.loading,
@@ -49,7 +50,7 @@ function AdProducts() {
       roas: item.metrics?.roas,
     })) || [];
 
-  const columns = [
+  const allColumns = [
     {
       title: (
         <input
@@ -294,6 +295,69 @@ function AdProducts() {
       ),
     },
   ];
+  useEffect(() => {
+    if (allColumns.length && visibleColumns.length === 0) {
+      setVisibleColumns(allColumns.map((col) => col.dataIndex || col.key || col.title));
+    }
+  }, []);
+
+  const columnOptions = allColumns
+    .filter((col) => col.dataIndex !== 'action')
+    .map((col) => ({
+      key: col.dataIndex || col.key || col.title,
+      label: typeof col.title === 'string' ? col.title : col.dataIndex || 'Column',
+    }));
+
+  const manageColumnsDropdown = (
+    <div className="w-[260px] bg-white rounded-xl shadow-xl border border-[#e5e7eb]">
+      <div className="flex items-center justify-between px-4 py-3 border-b">
+        <span className="font-medium text-[14px]">Manage Columns</span>
+
+        <button
+          type="button"
+          className="text-[#6366f1] text-[12px]"
+          onClick={() => setVisibleColumns(columnOptions.map((item) => item.key))}
+        >
+          Restore
+        </button>
+      </div>
+
+      <div className="max-h-[350px] overflow-y-auto">
+        {columnOptions.map((item) => (
+          <div key={item.key} className="flex items-center justify-between px-4 py-2 hover:bg-[#f9fafb]">
+            <span className="text-[13px] text-[#374151]">{item.label}</span>
+
+            <Checkbox
+              checked={visibleColumns.includes(item.key)}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setVisibleColumns((prev) => [...prev, item.key]);
+                } else {
+                  setVisibleColumns((prev) => prev.filter((c) => c !== item.key));
+                }
+              }}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const columns = allColumns.filter((col) => {
+    const key = col.dataIndex || col.key || col.title;
+
+    if (
+      col.fixed === 'left' ||
+      col.fixed === 'right' ||
+      col.dataIndex === 'checkbox' ||
+      col.dataIndex === 'image' ||
+      col.dataIndex === 'action'
+    ) {
+      return true;
+    }
+
+    return visibleColumns.includes(key);
+  });
 
   return (
     <>
@@ -335,13 +399,14 @@ function AdProducts() {
                 </Button>
 
                 {/* EXPORT */}
-                <Button
-                  type="primary"
-                  icon={<ExportOutlined />}
-                  className="!h-[30px] text-[13px] !px-5 !rounded-xl !font-medium !flex !items-center !justify-center "
-                >
-                  Export
-                </Button>
+                <Dropdown trigger={['click']} dropdownRender={() => manageColumnsDropdown} placement="bottomRight">
+                  <Button
+                    icon={<SettingOutlined />}
+                    className="!h-[30px] text-[13px] !px-5 !rounded-xl border border-[#dbe1e8] bg-white !text-[#111827] !font-medium !flex !items-center !justify-center"
+                  >
+                    Manage Columns
+                  </Button>
+                </Dropdown>
               </div>
             </div>
           </div>

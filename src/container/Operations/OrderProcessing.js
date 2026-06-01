@@ -229,18 +229,18 @@ function OrderProcessing() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] p-3 px-2 text-[12px]">
-      <div className="rounded-[24px] border border-[#e5e7eb] bg-white p-4 shadow-sm">
+    <div className="min-h-screen bg-[#f8fafc] py-3 px-3">
+      <div className="shadow-sm">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-[20px] font-bold text-[#111827] mb-1">Order Processing</h1>
+              <h1 className="text-[20px] font-bold mb-0">Order Processing</h1>
 
               <InfoCircleFilled className="text-[#94a3b8] text-[13px]" />
             </div>
 
-            <p className="mt-[2px] text-[12px] leading-[18px] text-[#6b7280]">
+            <p className="mt-[2px] text-[13px] leading-[18px] text-[#6b7280]">
               Track and manage the complete order lifecycle across all your marketplaces.
             </p>
           </div>
@@ -265,13 +265,13 @@ function OrderProcessing() {
         </div>
 
         {/* Cards */}
-        <div className="mt-3 grid grid-cols-6 gap-2">
+        <div className="mt-2 grid grid-cols-6 gap-2">
           {stats.map((item, index) => (
-            <div key={index} className={`rounded-xl border border-[#edf0f2] px-2 py-2 ${item.lightBg}`}>
-              <div className="flex items-center gap-1.5">
+            <div key={index} className="rounded-xl border border-[#edf0f2] px-2 py-3 bg-white">
+              <div className="flex items-center gap-2">
                 {/* Icon */}
                 <div
-                  className={`flex h-6 w-6 items-center justify-center rounded-md text-[11px] ${item.bg} ${item.iconColor}`}
+                  className={`flex h-7 w-7 items-center justify-center rounded-md text-[11px] ${item.bg} ${item.iconColor}`}
                 >
                   {item.icon}
                 </div>
@@ -280,9 +280,9 @@ function OrderProcessing() {
                 <div className="min-w-0">
                   <p className="text-[11px] leading-[11px] font-medium text-[#6b7280] truncate">{item.title}</p>
 
-                  <h2 className="mt-[1px] text-[15px] font-bold leading-none text-[#111827]">{item.value}</h2>
+                  <h2 className="mt-[1px] text-[16px] font-bold leading-none text-[#111827]">{item.value}</h2>
 
-                  <p className={`mt-[1px] text-[8px] leading-none font-medium ${item.subColor}`}>{item.sub}</p>
+                  <p className={`mt-[1px] text-[11px] leading-none font-medium ${item.subColor}`}>{item.sub}</p>
                 </div>
               </div>
             </div>
@@ -290,11 +290,11 @@ function OrderProcessing() {
         </div>
 
         {/* Charts Row */}
-        <div className="mt-5 grid grid-cols-[2fr_1.2fr_1fr] gap-3">
+        <div className="mt-2 grid grid-cols-[2fr_1.2fr_1fr] gap-2">
           {/* Line Chart */}
-          <div className="rounded-2xl border border-[#edf0f2] bg-white p-4">
+          <div className="rounded-2xl border border-[#edf0f2] bg-white p-3">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-[13px] font-semibold text-[#111827]">Order Processing Timeline</h3>
+              <h3 className="text-[15px] font-semibold text-[#111827]">Order Processing Timeline</h3>
 
               <select className="rounded-lg border border-[#e5e7eb] px-2 py-1 text-[10px] outline-none">
                 <option>Daily</option>
@@ -325,10 +325,10 @@ function OrderProcessing() {
           </div>
 
           {/* Pie Chart */}
-          <div className="rounded-2xl border border-[#edf0f2] bg-white p-4">
-            <h3 className="text-[13px] font-semibold text-[#111827]">Order Status Breakdown</h3>
+          <div className="rounded-2xl border border-[#edf0f2] bg-white p-3">
+            <h3 className="text-[15px] font-semibold text-[#111827]">Order Status Breakdown</h3>
 
-            <div className="mt-4 flex items-center justify-between gap-2">
+            <div className="mt-2 flex items-center justify-between gap-2">
               <div className="relative h-[220px] w-[220px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -364,10 +364,10 @@ function OrderProcessing() {
           </div>
 
           {/* Insights */}
-          <div className="rounded-2xl border border-[#edf0f2] bg-white p-4">
-            <h3 className="text-[13px] font-semibold text-[#111827]">Order Insights</h3>
+          <div className="rounded-2xl border border-[#edf0f2] bg-white p-3">
+            <h3 className="text-[15px] font-semibold text-[#111827]">Order Insights</h3>
 
-            <div className="mt-4 space-y-2">
+            <div className="mt-2 space-y-2">
               {insights.map((item, index) => (
                 <div key={index} className="flex items-start gap-2">
                   <div className={`flex h-8 w-8 items-center justify-center rounded-xl text-[14px] ${item.bg}`}>
@@ -390,10 +390,10 @@ function OrderProcessing() {
         </div>
 
         {/* Marketplace Overview */}
-        <div className="mt-4 rounded-2xl border border-[#edf0f2] bg-white px-3 py-2">
+        <div className="mt-2 rounded-2xl border border-[#edf0f2] bg-white px-3 py-2">
           {/* Heading */}
           <div className="mb-2 flex items-center gap-1">
-            <h3 className="text-[13px] font-semibold text-[#111827]">Marketplace Overview</h3>
+            <h3 className="text-[15px] font-semibold text-[#111827]">Marketplace Overview</h3>
 
             {/* <InfoCircleFilled className="text-[10px] text-[#94a3b8]" /> */}
           </div>
@@ -451,7 +451,7 @@ function OrderProcessing() {
           </div>
         </div>
         {/* Bottom Table Section */}
-        <div className="mt-4 rounded-2xl border border-[#edf0f2] bg-white">
+        <div className="mt-2 rounded-2xl border border-[#edf0f2] bg-white">
           {/* Top Filters */}
           <div className="flex items-center justify-between border-b border-[#edf0f2] px-3 py-2">
             <div className="flex items-center gap-2">
@@ -475,7 +475,7 @@ function OrderProcessing() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                className="rounded-md bg-[#16a34a] px-3 py-[6px] text-[10px] font-medium text-white"
+                className="rounded-md bg-[#16a34a] px-3 py-[6px] text-[10px] font-semibold text-white"
               >
                 One Click Order Processing
               </button>
@@ -527,27 +527,27 @@ function OrderProcessing() {
               <tbody>
                 {ordersData.map((item, index) => (
                   <tr key={index} className="border-b border-[#f1f5f9] hover:bg-[#fafafa]">
-                    <td className="whitespace-nowrap px-3 py-2 text-[10px] font-medium text-[#374151]">
+                    <td className="whitespace-nowrap px-3 py-2 text-[11px] font-medium text-[#374151]">
                       {item.orderId}
                     </td>
 
-                    <td className="whitespace-nowrap px-3 py-2 text-[10px] font-medium text-[#111827]">
+                    <td className="whitespace-nowrap px-3 py-2 text-[11px] font-medium text-[#111827]">
                       {item.marketplace}
                     </td>
 
-                    <td className="whitespace-nowrap px-3 py-2 text-[10px] text-[#6b7280]">{item.channel}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-[11px] text-[#6b7280]">{item.channel}</td>
 
-                    <td className="whitespace-nowrap px-3 py-2 text-[10px] text-[#6b7280]">{item.orderDate}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-[11px] text-[#6b7280]">{item.orderDate}</td>
 
-                    <td className="whitespace-nowrap px-3 py-2 text-[10px] font-medium text-[#111827]">
+                    <td className="whitespace-nowrap px-3 py-2 text-[11px] font-medium text-[#111827]">
                       {item.customer}
                     </td>
 
-                    <td className="min-w-[170px] px-3 py-2 text-[10px] text-[#374151]">{item.product}</td>
+                    <td className="min-w-[170px] px-3 py-2 text-[11px] text-[#374151]">{item.product}</td>
 
                     <td className="whitespace-nowrap px-3 py-2">
                       <span
-                        className={`rounded-full px-2 py-[3px] text-[10px] font-semibold ${
+                        className={`rounded-full px-2 py-[3px] text-[11px] font-semibold ${
                           item.status === 'Delivered'
                             ? 'bg-[#ecfdf3] text-[#16a34a]'
                             : item.status === 'Shipped'
@@ -561,13 +561,13 @@ function OrderProcessing() {
                       </span>
                     </td>
 
-                    <td className="whitespace-nowrap px-3 py-2 text-[10px] font-medium text-[#111827]">
+                    <td className="whitespace-nowrap px-3 py-2 text-[11px] font-medium text-[#111827]">
                       ₹{item.value}
                     </td>
 
-                    <td className="whitespace-nowrap px-3 py-2 text-[10px] text-[#6b7280]">{item.shipBy}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-[11px] text-[#6b7280]">{item.shipBy}</td>
 
-                    <td className="whitespace-nowrap px-3 py-2 text-[10px] text-[#6b7280]">{item.delivery}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-[11px] text-[#6b7280]">{item.delivery}</td>
 
                     <td className="whitespace-nowrap px-3 py-2">
                       <div className="flex items-center gap-1">
@@ -575,14 +575,14 @@ function OrderProcessing() {
                           type="button"
                           className="rounded-md border border-[#e5e7eb] p-[4px] text-[#6b7280] hover:bg-[#f8fafc]"
                         >
-                          <EyeOutlined className="text-[10px]" />
+                          <EyeOutlined className="text-[11px]" />
                         </button>
 
                         <button
                           type="button"
                           className="rounded-md border border-[#e5e7eb] p-[4px] text-[#6b7280] hover:bg-[#f8fafc]"
                         >
-                          <MoreOutlined className="text-[10px]" />
+                          <MoreOutlined className="text-[11px]" />
                         </button>
                       </div>
                     </td>

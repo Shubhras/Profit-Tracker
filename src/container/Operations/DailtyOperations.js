@@ -158,12 +158,12 @@ function DailtyOperations() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] p-4 text-[12px]">
+    <div className="min-h-screen bg-[#f8fafc] py-3 px-3">
       {/* HEADER */}
-      <div className="mb-4 flex items-start justify-between">
+      <div className="mb-2 flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-[22px] font-semibold text-[#111827]">Daily Operations Dashboard</h1>
+            <h1 className="text-[22px] font-bold mb-0">Daily Operations Dashboard</h1>
 
             <InfoCircleOutlined className="mb-[1px] text-[12px] text-[#9ca3af]" />
           </div>
@@ -220,11 +220,11 @@ function DailtyOperations() {
                   <div>
                     <p className="text-[11px] font-semibold leading-[15px] text-[#374151]">{item.title}</p>
 
-                    <h2 className="mt-[2px] text-[21px] font-bold leading-none text-[#111827]">{item.value}</h2>
+                    <h2 className="mt-[2px] text-[19px] font-bold leading-none text-[#111827]">{item.value}</h2>
 
-                    <p className="mt-[1px] text-[10px] text-[#9ca3af]">{item.sub}</p>
+                    <p className="mt-[1px] text-[11px] text-[#9ca3af]">{item.sub}</p>
 
-                    <p className="mt-2 text-[10px] font-semibold text-[#16a34a]">{item.growth}</p>
+                    <p className="mt-2 text-[11px] font-semibold text-[#16a34a]">{item.growth}</p>
                   </div>
 
                   {/* STATUS ICON */}
@@ -265,7 +265,7 @@ function DailtyOperations() {
               <div>
                 <h2 className="text-[13px] font-semibold text-[#92400e]">Operations Status</h2>
 
-                <h3 className="mt-1 text-[22px] font-bold text-[#16a34a]">Completed</h3>
+                <h3 className="mt-1 text-[17px] font-bold text-[#16a34a] mb-0">Completed</h3>
               </div>
 
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#fff7ed] text-[#f97316]">
@@ -274,7 +274,7 @@ function DailtyOperations() {
             </div>
 
             {/* STATUS LIST */}
-            <div className="mt-3 space-y-2">
+            <div className="mt-2 space-y-1">
               {['Order Processing', 'Inventory Sync', 'Auto Claims'].map((item, index) => (
                 <div key={index} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -300,12 +300,12 @@ function DailtyOperations() {
       </div>
 
       {/* TABS */}
-      <div className="mt-5 flex items-center gap-6 border-b border-[#e5e7eb]">
+      <div className="mt-4 flex items-center gap-6 border-b border-[#e5e7eb]">
         {['Order', 'Inventory Sync', 'Auto Claims'].map((item, index) => (
           <button
             type="button"
             key={index}
-            className={`border-b-2 pb-2 text-[11px] font-medium ${
+            className={`border-b-2 pb-2 text-[13px] font-medium ${
               index === 0 ? 'border-[#16a34a] text-[#16a34a]' : 'border-transparent text-[#6b7280]'
             }`}
           >
@@ -315,12 +315,12 @@ function DailtyOperations() {
       </div>
 
       {/* TABLE SECTION */}
-      <div className="mt-4 grid grid-cols-12 gap-3">
+      <div className="mt-3 grid grid-cols-12 gap-3">
         {/* ORDER TABLE */}
-        <div className="col-span-6 rounded-2xl border border-[#e5e7eb] bg-white p-4">
-          <div className="mb-4 flex items-center justify-between">
+        <div className="col-span-6 rounded-2xl border border-[#e5e7eb] bg-white p-3">
+          <div className="mb-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h2 className="text-[13px] font-semibold text-[#111827]">Order Summary by Marketplace</h2>
+              <h2 className="text-[15px] font-semibold text-[#111827]">Order Summary by Marketplace</h2>
 
               <InfoCircleOutlined className="text-[11px] text-[#9ca3af]" />
             </div>
@@ -336,7 +336,7 @@ function DailtyOperations() {
                 <tr className="border-b border-[#f3f4f6]">
                   {['Marketplace', 'New', 'Processed', 'Shipped', 'Cancelled', 'Pending', 'Total'].map(
                     (head, index) => (
-                      <th key={index} className="pb-2 text-left text-[10px] font-semibold text-[#6b7280]">
+                      <th key={index} className="pb-2 text-left text-[11px] font-semibold text-[#6b7280]">
                         {head}
                       </th>
                     ),
@@ -379,10 +379,10 @@ function DailtyOperations() {
         </div>
 
         {/* INVENTORY TABLE */}
-        <div className="col-span-6 rounded-2xl border border-[#e5e7eb] bg-white p-4">
-          <div className="mb-4 flex items-center justify-between">
+        <div className="col-span-6 rounded-2xl border border-[#e5e7eb] bg-white p-3">
+          <div className="mb-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h2 className="text-[13px] font-semibold text-[#111827]">Inventory Sync Summary</h2>
+              <h2 className="text-[15px] font-semibold text-[#111827]">Inventory Sync Summary</h2>
 
               <InfoCircleOutlined className="text-[11px] text-[#9ca3af]" />
             </div>
@@ -398,7 +398,7 @@ function DailtyOperations() {
                 <tr className="border-b border-[#f3f4f6]">
                   {['Marketplace', 'Total', 'Updated', 'Success', 'Failed', 'Not Changed', 'Last Sync'].map(
                     (head, index) => (
-                      <th key={index} className="pb-2 text-left text-[10px] font-semibold text-[#6b7280]">
+                      <th key={index} className="pb-2 text-left text-[11px] font-semibold text-[#6b7280]">
                         {head}
                       </th>
                     ),

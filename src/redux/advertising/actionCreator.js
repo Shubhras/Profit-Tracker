@@ -59,6 +59,10 @@ const {
   campaignupdateBegin,
   campaignupdateSuccess,
   campaignupdateErr,
+
+  keywordBidBegin,
+  keywordBidSuccess,
+  keywordBidErr,
 } = actions;
 
 export const getCampaigns = (page = 1, pageSize = 10) => {
@@ -391,6 +395,32 @@ export const getCampaignUpdate = (payload) => {
       return response.data;
     } catch (err) {
       dispatch(campaignupdateErr(err.response?.data?.message || err.message));
+
+      return {
+        status: false,
+        message: err.response?.data?.message || err.message,
+      };
+    }
+  };
+};
+
+export const KeywordBidUpdate = (payload) => {
+  return async (dispatch) => {
+    dispatch(keywordBidBegin());
+
+    try {
+      const response = await DataService.put(`/amazon-ads/keywords-update/`, payload);
+
+      if (response.data.status === true) {
+        dispatch(keywordBidSuccess(response.data));
+        return response.data;
+      }
+
+      dispatch(keywordBidErr(response.data.message || 'Something went wrong'));
+
+      return response.data;
+    } catch (err) {
+      dispatch(keywordBidErr(err.response?.data?.message || err.message));
 
       return {
         status: false,
