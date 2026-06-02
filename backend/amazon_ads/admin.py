@@ -363,3 +363,42 @@ class AdsNegativeKeywordAdmin(admin.ModelAdmin):
     ordering = (
         "-created_at",
     )    
+
+
+
+@admin.register(AdsOptimizationRule)
+class AdsOptimizationRuleAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "id",
+        "optimization_rule_id",
+        "rule_name",
+        "rule_category",
+        "rule_sub_category",
+        "status",
+        "profile_id",
+        "created_at",
+    )
+
+    search_fields = (
+        "optimization_rule_id",
+        "rule_name",
+        "profile_id",
+    )
+
+    list_filter = (
+        "rule_category",
+        "rule_sub_category",
+        "status",
+        "created_at",
+    )
+
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+        "raw_data",
+    )
+
+    ordering = ("-created_at",)
+
+    list_per_page = 50
