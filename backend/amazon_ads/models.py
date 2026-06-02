@@ -523,7 +523,12 @@ class AdsNegativeKeyword(models.Model):
             "negative_keyword_id"
         )
 
-    def __str__(self):
+    def __str__(self):it
+
+
+
+
+
         return self.keyword_text
     
 
