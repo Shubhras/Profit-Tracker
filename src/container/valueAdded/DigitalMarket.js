@@ -12,7 +12,7 @@ import {
   LineChartOutlined,
 } from '@ant-design/icons';
 
-import Google from '../../assets/icons/googleads.jpg';
+import Google from '../../assets/icons/googleADS.png';
 import Meta from '../../assets/icons/metaAds.jpg';
 import Youtube from '../../assets/icons/youtube.jpg';
 import Linkdin from '../../assets/icons/linkdin.jpg';

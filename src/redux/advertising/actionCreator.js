@@ -67,13 +67,20 @@ const {
   negativekeywordBegin,
   negativekeywordSuccess,
   negativekeywordErr,
+
+  orderprocessingBegin,
+  orderprocessingSuccess,
+  orderprocessingErr,
 } = actions;
 
-export const getCampaigns = (page = 1, pageSize = 10) => {
+export const getCampaigns = (page = 1, pageSize = 10, payload = {}) => {
   return async (dispatch) => {
     dispatch(campaignsBegin());
     try {
-      const response = await DataService.post(`/amazon-ads/campaigns/list/?page=${page}&page_size=${pageSize}`);
+      const response = await DataService.post(
+        `/amazon-ads/campaigns/list/?page=${page}&page_size=${pageSize}`,
+        payload,
+      );
       if (response.data.status === true) {
         dispatch(campaignsSuccess(response.data));
       } else {
@@ -451,6 +458,34 @@ export const getNegativeKeywords = (payload) => {
       return response.data;
     } catch (err) {
       dispatch(negativekeywordErr(err.response?.data?.message || err.message));
+
+      return {
+        status: false,
+        message: err.response?.data?.message || err.message,
+      };
+    }
+  };
+};
+
+export const getOrderProcessing = (payload) => {
+  return async (dispatch) => {
+    dispatch(orderprocessingBegin());
+
+    try {
+      const response = await DataService.get(
+        `/amazon/order-processing-dashboard/?timeline=${payload.timeline}&marketplace_id=${payload.marketplace_id}&channel=${payload.channel}`,
+        {},
+      );
+      if (response.data.status === true) {
+        dispatch(orderprocessingSuccess(response.data));
+        return response.data;
+      }
+
+      dispatch(orderprocessingErr(response.data.message || 'Something went wrong'));
+
+      return response.data;
+    } catch (err) {
+      dispatch(orderprocessingErr(err.response?.data?.message || err.message));
 
       return {
         status: false,

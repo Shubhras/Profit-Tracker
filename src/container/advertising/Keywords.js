@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { Button, Table, Tag, Tooltip, Modal, Switch } from 'antd';
-import { FilterOutlined, ExportOutlined, SearchOutlined } from '@ant-design/icons';
+import { ExportOutlined, SearchOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { getKeywords, KeywordBidUpdate } from '../../redux/advertising/actionCreator';
+import { getKeywords, KeywordBidUpdate, getCampaignsRulesList } from '../../redux/advertising/actionCreator';
 
 function Keywords() {
   const dispatch = useDispatch();
@@ -14,19 +14,13 @@ function Keywords() {
     current: 1,
     pageSize: 10,
   });
-  const [showFilters, setShowFilters] = React.useState(false);
   const [selectedKeyword, setSelectedKeyword] = React.useState(null);
   const [savingBid, setSavingBid] = React.useState(false);
 
-  const [filters, setFilters] = React.useState({
-    state: '',
-    match_type: '',
-  });
+  const [matchType, setMatchType] = React.useState('');
+  const [campaigns, setCampaigns] = React.useState([]);
+  const [selectedCampaign, setSelectedCampaign] = React.useState('');
 
-  const [appliedFilters, setAppliedFilters] = React.useState({
-    state: '',
-    match_type: '',
-  });
   const [selectedRowKeys, setSelectedRowKeys] = React.useState([]);
 
   const { keywordsData, loading } = useSelector((state) => state.advertising);
@@ -34,8 +28,15 @@ function Keywords() {
   useEffect(() => {
     const payload = {
       search: debouncedSearch,
-      state: appliedFilters.state,
-      match_type: appliedFilters.match_type,
+
+      campaign_id: selectedCampaign || null,
+
+      match_type: matchType || '',
+
+      // future ke liye
+      ad_group_id: null,
+      // state: appliedFilters.state,
+      // match_type: appliedFilters.match_type,
       // state: 'enabled',
       // match_type: 'broad',
       // campaign_id: '1234567890',
@@ -44,7 +45,7 @@ function Keywords() {
     };
 
     dispatch(getKeywords(pagination.current, pagination.pageSize, payload));
-  }, [dispatch, pagination, debouncedSearch, appliedFilters]);
+  }, [dispatch, pagination, debouncedSearch, selectedCampaign, matchType]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -53,6 +54,18 @@ function Keywords() {
 
     return () => clearTimeout(timer);
   }, [searchText]);
+
+  const fetchCampaigns = async () => {
+    const response = await dispatch(getCampaignsRulesList());
+
+    if (response?.status) {
+      setCampaigns(response.data || []);
+    }
+  };
+
+  useEffect(() => {
+    fetchCampaigns();
+  }, []);
 
   const handleStateUpdate = async (record, checked) => {
     const payload = {
@@ -73,8 +86,8 @@ function Keywords() {
         dispatch(
           getKeywords(pagination.current, pagination.pageSize, {
             search: debouncedSearch,
-            state: appliedFilters.state,
-            match_type: appliedFilters.match_type,
+            // state: appliedFilters.state,
+            // match_type: appliedFilters.match_type,
           }),
         );
       }
@@ -392,8 +405,8 @@ function Keywords() {
         dispatch(
           getKeywords(pagination.current, pagination.pageSize, {
             search: debouncedSearch,
-            state: appliedFilters.state,
-            match_type: appliedFilters.match_type,
+            // state: appliedFilters.state,
+            // match_type: appliedFilters.match_type,
           }),
         );
       }
@@ -419,128 +432,58 @@ function Keywords() {
               </p>
             </div>
 
-            <div className="mt-5 flex items-center justify-between gap-3">
+            <div className="mt-5 flex items-center justify-between gap-3 flex-wrap">
+              {/* Search */}
               <div className="relative w-[280px]">
                 <input
                   type="text"
                   placeholder="Search keywords..."
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
-                  className="w-full h-[30px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm transition-all duration-200 focus:border-[#dbe1e8] hover:border-[#dbe1e8]"
+                  className="w-full h-[30px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm"
                 />
 
                 <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <Button
-                    icon={<FilterOutlined />}
-                    onClick={() => setShowFilters(!showFilters)}
-                    className={`!h-[30px] text-[13px] !px-5 !rounded-xl !font-medium !shadow-sm !flex !items-center !justify-center transition-all
-      ${
-        showFilters
-          ? '!border-[#2563eb] !text-[#2563eb] !bg-[#eff6ff]'
-          : '!border-[#dbe1e8] !text-[#374151] hover:!border-[#2563eb] hover:!text-[#2563eb]'
-      }`}
-                  >
-                    Filters
-                  </Button>
+              {/* Filters + Export */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* All Marketplace */}
+                <select
+                  value={selectedCampaign}
+                  onChange={(e) => setSelectedCampaign(e.target.value)}
+                  className="h-[30px] w-[170px] px-3 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none"
+                >
+                  <option value="">All Campaigns</option>
 
-                  {/* Filter Dropdown */}
-                  {showFilters && (
-                    <div className="absolute top-[52px] right-0 w-[320px] bg-white border border-[#e5e7eb] rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                      {/* Header */}
-                      <div className="px-5 py-4 border-b border-[#edf1f5] bg-[#fafafa]">
-                        <h3 className="text-[19px] font-semibold text-[#111827] mb-1">Filter Keywords</h3>
+                  {campaigns.map((item) => (
+                    <option key={item.campaign_id} value={item.campaign_id}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
 
-                        <p className="text-xs text-[#6b7280] mt-1">Filter keywords by state and match type</p>
-                      </div>
+                <select
+                  value={matchType}
+                  onChange={(e) => setMatchType(e.target.value)}
+                  className="h-[30px] px-3 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none"
+                >
+                  <option value="">All Match Type</option>
+                  <option value="BROAD">Broad</option>
+                  <option value="PHRASE">Phrase</option>
+                  <option value="EXACT">Exact</option>
+                </select>
 
-                      {/* Body */}
-                      <div className="p-5 space-y-5">
-                        {/* State */}
-                        <div>
-                          <label className="block text-[14px] font-semibold text-[#6b7280] mb-2 uppercase tracking-wide">
-                            State
-                          </label>
+                {/* Ad Group */}
+                <select className="h-[30px] px-3 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none min-w-[130px]">
+                  <option>All Ad Groups</option>
+                </select>
 
-                          <select
-                            value={filters.state}
-                            onChange={(e) =>
-                              setFilters({
-                                ...filters,
-                                state: e.target.value,
-                              })
-                            }
-                            className="w-full h-11 px-4 rounded-xl border border-[#dbe1e8] text-sm outline-none focus:border-[#2563eb]"
-                          >
-                            <option value="">All States</option>
-                            <option value="enabled">Enabled</option>
-                            <option value="disabled">Disabled</option>
-                          </select>
-                        </div>
-
-                        {/* Match Type */}
-                        <div>
-                          <label className="block text-[14px] font-semibold text-[#6b7280] mb-2 uppercase tracking-wide">
-                            Match Type
-                          </label>
-
-                          <select
-                            value={filters.match_type}
-                            onChange={(e) =>
-                              setFilters({
-                                ...filters,
-                                match_type: e.target.value,
-                              })
-                            }
-                            className="w-full h-11 px-4 rounded-xl border border-[#dbe1e8] text-sm outline-none focus:border-[#2563eb]"
-                          >
-                            <option value="">All Match Types</option>
-                            <option value="broad">BROAD</option>
-                            <option value="phrase">PHRASE</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      {/* Footer */}
-                      <div className="px-5 py-4 border-t border-[#edf1f5] flex items-center justify-between bg-[#fafafa]">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const resetFilters = {
-                              state: '',
-                              match_type: '',
-                            };
-
-                            setFilters(resetFilters);
-                            setAppliedFilters(resetFilters);
-                          }}
-                          className="text-sm font-medium text-[#6b7280] hover:text-[#111827]"
-                        >
-                          Reset
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAppliedFilters(filters);
-                            setShowFilters(false);
-                          }}
-                          className="h-10 px-5 rounded-xl bg-[#2563eb] text-white text-sm font-medium hover:bg-[#1d4ed8] transition-all"
-                        >
-                          Apply Filters
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
+                {/* Export */}
                 <Button
                   type="primary"
                   icon={<ExportOutlined />}
-                  className="!h-[30px] text-[13px] !px-5 !rounded-xl !bg-[#2563eb] !border-[#2563eb] !font-medium hover:!bg-[#1d4ed8] hover:!border-[#1d4ed8] !shadow-sm !flex !items-center !justify-center"
+                  className="!h-[30px] text-[13px] !px-5 !rounded-xl !bg-[#2563eb] !border-[#2563eb] !font-medium !shadow-sm"
                 >
                   Export
                 </Button>

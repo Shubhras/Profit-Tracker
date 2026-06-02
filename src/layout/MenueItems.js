@@ -161,11 +161,49 @@ function MenuItems({ toggleCollapsed }) {
         'summary',
         null,
       ),
+      // getItem(
+      //   <NavLink onClick={toggleCollapsed} to={`${path}/profit/salesTrend`}>
+      //     {t('salesTrend')}
+      //   </NavLink>,
+      //   'salesTrend',
+      //   null,
+      // ),
       getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/profit/salesTrend`}>
-          {t('salesTrend')}
+        <NavLink onClick={toggleCollapsed} to={`${path}/profit/skuwise`}>
+          {t('SKU Wise Profit')}
         </NavLink>,
-        'salesTrend',
+        'skuwiseprofit',
+        null,
+      ),
+
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/profit/estimatedfees`}>
+          {t('MarketPlace Fees Estimate')}
+        </NavLink>,
+        'estimatedfees',
+        null,
+      ),
+
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/profit/shippingestimate`}>
+          {t('Shipping Estimate')}
+        </NavLink>,
+        'shippingestimate',
+        null,
+      ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/profit/claims`}>
+          {t('Claims')}
+        </NavLink>,
+        'claims',
+        null,
+      ),
+
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/profit/returnfees`}>
+          {t('Return and Refun Fees')}
+        </NavLink>,
+        'returnfees',
         null,
       ),
       getItem(
@@ -183,12 +221,20 @@ function MenuItems({ toggleCollapsed }) {
         null,
       ),
       getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/profit/canvasMYOR`}>
-          {t('canvasMYOR')}
+        <NavLink onClick={toggleCollapsed} to={`${path}/profit/taxcalculation`}>
+          {t('Tax Calculations')}
         </NavLink>,
-        'canvasMYOR',
+        'taxcalculation',
         null,
       ),
+
+      // getItem(
+      //   <NavLink onClick={toggleCollapsed} to={`${path}/profit/canvasMYOR`}>
+      //     {t('canvasMYOR')}
+      //   </NavLink>,
+      //   'canvasMYOR',
+      //   null,
+      // ),
     ]),
 
     getItem(t('paymentreconcile'), 'reconcile', !topMenu && <UilCreateDashboard />, [
@@ -239,12 +285,12 @@ function MenuItems({ toggleCollapsed }) {
         'payment-leaks',
       ),
 
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/cashflow`}>
-          {t('Cashflow Planning')}
-        </NavLink>,
-        'cashflow-planning',
-      ),
+      // getItem(
+      //   <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/cashflow`}>
+      //     {t('Cashflow Planning')}
+      //   </NavLink>,
+      //   'cashflow-planning',
+      // ),
 
       getItem(
         <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/reimbursement`}>

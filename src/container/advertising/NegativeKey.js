@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Table, Tag, Tooltip } from 'antd';
+import { Button, Table, Tag, Tooltip, DatePicker } from 'antd';
 import { useDispatch } from 'react-redux';
 import {
   DownloadOutlined,
@@ -11,14 +11,20 @@ import {
   AimOutlined,
   LineChartOutlined,
 } from '@ant-design/icons';
-import { getNegativeKeywords } from '../../redux/advertising/actionCreator'; // apne path ke hisab se
+import { getNegativeKeywords, getCampaignsRulesList } from '../../redux/advertising/actionCreator'; // apne path ke hisab se
 
 function NegativeKey() {
   const dispatch = useDispatch();
-
+  const { RangePicker } = DatePicker;
   const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [matchType, setMatchType] = useState('');
+  const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  const [campaigns, setCampaigns] = useState([]);
+  const [selectedCampaign, setSelectedCampaign] = useState('');
 
   const [pagination, setPagination] = useState({
     current: 1,
@@ -29,10 +35,10 @@ function NegativeKey() {
     setLoading(true);
 
     const payload = {
-      search: '',
-      campaign_id: null,
+      search: debouncedSearch,
+      campaign_id: selectedCampaign,
       ad_group_id: null,
-      match_type: '',
+      match_type: matchType,
       state: 'ENABLED',
       page: pagination.current,
       page_size: pagination.pageSize,
@@ -66,7 +72,27 @@ function NegativeKey() {
 
   useEffect(() => {
     fetchNegativeKeywords();
-  }, [pagination.current, pagination.pageSize]);
+  }, [pagination.current, pagination.pageSize, matchType, selectedCampaign, debouncedSearch]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchText]);
+
+  const fetchCampaigns = async () => {
+    const response = await dispatch(getCampaignsRulesList());
+
+    if (response?.status) {
+      setCampaigns(response.data || []);
+    }
+  };
+
+  useEffect(() => {
+    fetchCampaigns();
+  }, []);
 
   const metricCards = [
     {
@@ -234,8 +260,7 @@ function NegativeKey() {
             <span className="text-[12px]">Amazon Search Term Report</span>
           </Button>
 
-          <Button type="primary" className="!h-[35px] !rounded-xl !bg-[#059669]">
-            <PlusOutlined className="!text-[11px]" />
+          <Button type="primary" icon={<PlusOutlined />} className="!h-[35px] !rounded-xl !bg-[#059669]">
             <span className="text-[12px] font-semibold">Add Negative Keywords</span>
           </Button>
         </div>
@@ -297,26 +322,47 @@ function NegativeKey() {
       {/* FILTERS */}
 
       <div className="flex items-center gap-3 mb-5">
-        <select className="h-[35px] px-4 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none">
-          <option>All Campaigns</option>
+        <select
+          value={selectedCampaign}
+          onChange={(e) => setSelectedCampaign(e.target.value)}
+          className="h-[30px] w-[170px] px-4 pr-8 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none cursor-pointer truncate"
+        >
+          <option value="">All Campaigns</option>
+
+          {campaigns.map((item) => (
+            <option key={item.campaign_id} value={item.campaign_id}>
+              {item.name}
+            </option>
+          ))}
         </select>
 
-        <select className="h-[35px] px-4 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none">
+        <select
+          value={matchType}
+          onChange={(e) => setMatchType(e.target.value)}
+          className="h-[30px] px-4 pr-8 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none cursor-pointer"
+        >
+          <option value="">All Match Type</option>
+          <option value="BROAD">Broad</option>
+          <option value="PHRASE">Phrase</option>
+          <option value="EXACT">Exact</option>
+        </select>
+
+        <select className="h-[30px] px-4 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none">
           <option>All Ad Groups</option>
         </select>
 
-        <select className="h-[35px] px-4 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none">
-          <option>All Match Types</option>
-        </select>
-
-        <select className="h-[35px] px-4 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none">
-          <option>01/05/2026 - 31/05/2026</option>
-        </select>
+        <RangePicker
+          format="DD/MM/YYYY"
+          className="!h-[30px] text-[12px] !rounded-xl"
+          placeholder={['Start Date', 'End Date']}
+        />
 
         <div className="relative ml-auto w-[280px]">
           <input
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
             placeholder="Search negative keywords..."
-            className="w-full h-[42px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] outline-none"
+            className="w-full h-[30px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] outline-none"
           />
 
           <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
