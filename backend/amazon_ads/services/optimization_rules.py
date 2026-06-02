@@ -9,7 +9,7 @@
 import requests
 
 from amazon_ads.models import (
-    AmazonAdsAccount,
+    AmazonAdsAccount,AdsCampaign,
     AdsOptimizationRule
 )
 
@@ -56,76 +56,37 @@ class AmazonOptimizationRuleService:
         region="eu"
     ):
 
-        base_url = cls.BASE_URLS[region]
-
         headers = {
             "Authorization": f"Bearer {access_token}",
             "Amazon-Advertising-API-ClientId": client_id,
             "Amazon-Advertising-API-Scope": str(profile_id),
-            # "Accept": "application/vnd.spoptimizationrules.v1+json",
+            "Accept": "application/vnd.spoptimizationrules.v1+json",
             "Content-Type": "application/json",
         }
 
-        # =====================================================
-        # STEP 1 : GET ALL CAMPAIGNS
-        # =====================================================
-
-        campaigns_url = (
-            f"{base_url}/sp/campaigns/list"
+        url = (
+            f"{cls.BASE_URLS[region]}"
+            f"/sp/rules/optimization/search"
         )
 
-        campaign_payload = {
-            "stateFilter": {
-                "include": [
-                    "ENABLED",
-                    "PAUSED",
-                    "ARCHIVED"
-                ]
-            },
-            "maxResults": 1000
-        }
-
-        campaign_response = requests.post(
-            campaigns_url,
-            headers=headers,
-            json=campaign_payload
-        )
-
-        print("\n============================")
-        print("STEP 1 : CAMPAIGN RESPONSE")
-        print("============================")
-        print(campaign_response.status_code)
-        print(campaign_response.text)
-
-        campaign_response.raise_for_status()
-
-        campaigns_data = campaign_response.json()
-
-        campaigns = campaigns_data.get(
-            "campaigns",
-            []
-        )
-
-        all_rules = {}
+        synced_rules = []
 
         # =====================================================
-        # STEP 2 : SEARCH RULES CAMPAIGN-WISE
+        # GET EXISTING CAMPAIGNS FROM DB
         # =====================================================
 
-        search_url = (
-            f"{base_url}/sp/rules/optimization/search"
+        campaigns = AdsCampaign.objects.filter(
+            amazon_account=amazon_account
         )
 
         for campaign in campaigns:
 
-            campaign_id = str(
-                campaign.get("campaignId")
-            )
-
-            search_payload = {
+            payload = {
                 "optimizationRuleFilter": {
                     "campaignId": {
-                        "values": [campaign_id],
+                        "values": [
+                            str(campaign.campaign_id)
+                        ],
                         "filterType": "EXACT_MATCH"
                     },
                     "ruleCategory": {
@@ -139,16 +100,17 @@ class AmazonOptimizationRuleService:
                 }
             }
 
-            response = requests.post(
-                search_url,
-                headers=headers,
-                json=search_payload
-            )
-
             print("\n============================")
             print("SEARCH RULES")
             print("============================")
-            print("CAMPAIGN:", campaign_id)
+            print("CAMPAIGN:", campaign.campaign_id)
+
+            response = requests.post(
+                url,
+                headers=headers,
+                json=payload
+            )
+
             print("STATUS:", response.status_code)
             print("BODY:", response.text)
 
@@ -157,86 +119,58 @@ class AmazonOptimizationRuleService:
 
             response_data = response.json()
 
-            rules = response_data.get(
+            optimization_rules = response_data.get(
                 "optimizationRules",
                 []
             )
 
-            for rule in rules:
+            for rule in optimization_rules:
 
-                rule_id = rule.get(
+                optimization_rule_id = rule.get(
                     "optimizationRuleId"
                 )
 
-                if not rule_id:
-                    continue
-
-                # -----------------------------------------
-                # MERGE CAMPAIGN IDS
-                # -----------------------------------------
-
-                existing_campaign_ids = (
-                    all_rules.get(rule_id, {})
-                    .get("campaign_ids", [])
+                obj, created = (
+                    AdsOptimizationRule.objects.update_or_create(
+                        amazon_account=amazon_account,
+                        optimization_rule_id=optimization_rule_id,
+                        defaults={
+                            "profile_id": profile_id,
+                            "rule_name": rule.get("ruleName"),
+                            "rule_category": rule.get("ruleCategory"),
+                            "rule_sub_category": rule.get(
+                                "ruleSubCategory"
+                            ),
+                            "status": rule.get("status"),
+                            "recurrence": rule.get(
+                                "recurrence",
+                                {}
+                            ),
+                            "conditions": rule.get(
+                                "conditions",
+                                {}
+                            ),
+                            "action": rule.get(
+                                "action",
+                                {}
+                            ),
+                            "raw_data": rule,
+                        }
+                    )
                 )
 
-                merged_campaign_ids = list(
-                    set(existing_campaign_ids + [campaign_id])
-                )
+                synced_rules.append({
+                    "optimization_rule_id": optimization_rule_id,
+                    "rule_name": rule.get("ruleName"),
+                    "campaign_id": campaign.campaign_id,
+                    "created": created
+                })
 
-                rule["campaign_ids"] = merged_campaign_ids
-
-                all_rules[rule_id] = rule
-
-        # =====================================================
-        # STEP 3 : SAVE TO DB
-        # =====================================================
-
-        synced_rules = []
-
-        for rule_id, rule in all_rules.items():
-
-            obj, created = (
-                AdsOptimizationRule.objects.update_or_create(
-                    amazon_account=amazon_account,
-                    optimization_rule_id=rule_id,
-                    defaults={
-                        "profile_id": profile_id,
-                        "rule_name": rule.get("ruleName"),
-                        "rule_category": rule.get("ruleCategory"),
-                        "rule_sub_category": rule.get(
-                            "ruleSubCategory"
-                        ),
-                        "status": rule.get("status"),
-                        "recurrence": rule.get(
-                            "recurrence",
-                            {}
-                        ),
-                        "conditions": rule.get(
-                            "conditions",
-                            {}
-                        ),
-                        "action": rule.get(
-                            "action",
-                            {}
-                        ),
-                        "raw_data": rule
-                    }
-                )
-            )
-
-            synced_rules.append({
-                "optimization_rule_id": rule_id,
-                "created": created
-            })
-
-        print("\n============================")
-        print("FINAL SYNCED RULES")
-        print("============================")
-        print(synced_rules)
-
-        return synced_rules
-
+        return {
+            "total_synced": len(synced_rules),
+            "rules": synced_rules
+        }
+    
     # @classmethod
     # def sync_optimization_rules(
     #     cls,
