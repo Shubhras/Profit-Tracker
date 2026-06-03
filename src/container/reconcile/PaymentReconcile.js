@@ -112,12 +112,12 @@ function PaymentReconcile() {
         {/* LEFT */}
         <div className="rounded-2xl border border-[#e5e7eb] bg-white overflow-hidden">
           {/* TABS */}
-          <div className="flex items-center gap-6 border-b border-[#edf0f2] px-4 py-3">
+          <div className="flex items-center gap-6 border-b border-[#edf0f2] px-3 py-2">
             {['All Payments', 'Unreconciled Payments'].map((item, index) => (
               <button
                 key={index}
                 type="button"
-                className={`pb-2 text-[12px] font-semibold ${
+                className={`pb-0 text-[12px] font-semibold ${
                   index === 0 ? 'border-b-2 border-[#16a34a] text-[#16a34a]' : 'text-[#6b7280]'
                 }`}
               >
@@ -334,9 +334,9 @@ function PaymentReconcile() {
         <div className="space-y-2">
           {/* SUMMARY */}
           <div className="rounded-2xl border border-[#e5e7eb] bg-white p-3">
-            <h2 className="text-[14px] font-semibold text-[#111827]">Payment Summary</h2>
+            <h2 className="text-[15px] font-semibold text-[#111827]">Payment Summary</h2>
 
-            <div className="mt-4 space-y-3">
+            <div className="mt-3 space-y-3">
               {[
                 ['Total Expected', '₹ 2,85,420.75'],
                 ['Total Received', '₹ 2,20,790.85'],
@@ -358,9 +358,9 @@ function PaymentReconcile() {
 
           {/* BREAKDOWN */}
           <div className="rounded-2xl border border-[#e5e7eb] bg-white p-3">
-            <h2 className="text-[14px] font-semibold text-[#111827]">Payment Type Breakdown</h2>
+            <h2 className="text-[15px] font-semibold text-[#111827]">Payment Type Breakdown</h2>
 
-            <div className="mt-4 space-y-3">
+            <div className="mt-3 space-y-3">
               {[
                 ['Payout', '₹ 2,42,150.45 (84.84%)'],
                 ['Fee Refund', '₹ 12,450.00 (4.36%)'],
@@ -387,19 +387,19 @@ function PaymentReconcile() {
 
           {/* QUICK ACTIONS */}
           <div className="rounded-2xl border border-[#e5e7eb] bg-white p-3">
-            <h2 className="text-[13px] font-semibold text-[#111827]">Quick Actions</h2>
+            <h2 className="text-[15px] font-semibold text-[#111827]">Quick Actions</h2>
 
             <div className="mt-3 space-y-2">
               <button
                 type="button"
                 className="flex w-full items-center gap-3 rounded-xl border border-[#e5e7eb] px-3 py-2 text-left hover:bg-[#fafafa]"
               >
-                <DownloadOutlined className="text-[13px] text-[#2563eb]" />
+                <DownloadOutlined className="text-[15px] text-[#2563eb]" />
 
                 <div>
-                  <p className="text-[11px] font-semibold text-[#111827] mb-1">Download All Payments</p>
+                  <p className="text-[12px] font-semibold text-[#111827] mb-0">Download All Payments</p>
 
-                  <p className="text-[10px] text-[#9ca3af]">Export complete payment data</p>
+                  <p className="text-[11px] text-[#9ca3af]">Export complete payment data</p>
                 </div>
               </button>
 
@@ -407,12 +407,12 @@ function PaymentReconcile() {
                 type="button"
                 className="flex w-full items-center gap-3 rounded-xl border border-[#e5e7eb] px-3 py-2 text-left hover:bg-[#fafafa]"
               >
-                <WarningOutlined className="text-[13px] text-[#ef4444]" />
+                <WarningOutlined className="text-[15px] text-[#ef4444]" />
 
                 <div>
-                  <p className="text-[11px] font-semibold text-[#111827] mb-1">View All Leaks</p>
+                  <p className="text-[12px] font-semibold text-[#111827] mb-0">View All Leaks</p>
 
-                  <p className="text-[10px] text-[#9ca3af]">Analyze and claim reimbursements</p>
+                  <p className="text-[11px] text-[#9ca3af]">Analyze and claim reimbursements</p>
                 </div>
               </button>
             </div>

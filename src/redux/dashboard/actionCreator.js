@@ -24,6 +24,10 @@ const {
   profitmodalBegin,
   profitmodalSuccess,
   profitmodalErr,
+
+  estimatedFeesBegin,
+  estimatedFeesSuccess,
+  estimatedFeesErr,
 } = actions;
 
 const mockService = async (payload) => {
@@ -209,6 +213,24 @@ export const getProfitModalApi = (payload) => {
       }
     } catch (err) {
       dispatch(profitmodalErr(err.message));
+    }
+  };
+};
+
+export const getEstimatedFees = (payload) => {
+  return async (dispatch) => {
+    dispatch(estimatedFeesBegin());
+
+    try {
+      const response = await DataService.post('/amazon/estimated-fees/list/', payload);
+
+      if (response.data?.status === true || response.data?.status === 'success') {
+        dispatch(estimatedFeesSuccess(response.data));
+      } else {
+        dispatch(estimatedFeesErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(estimatedFeesErr(err));
     }
   };
 };

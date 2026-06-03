@@ -20,6 +20,8 @@ function Campaigns() {
     pageSize: 10,
   });
   const [tableData, setTableData] = useState([]);
+  const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedRowKeys, setSelectedRowKeys] = React.useState([]);
   const [budgetModal, setBudgetModal] = useState(false);
   const [selectedBudget, setSelectedBudget] = useState(null);
@@ -35,9 +37,21 @@ function Campaigns() {
   const { campaignData, loading } = useSelector((state) => state.advertising);
 
   useEffect(() => {
-    dispatch(getCampaigns(pagination.current, pagination.pageSize));
+    dispatch(
+      getCampaigns(pagination.current, pagination.pageSize, {
+        search: debouncedSearch,
+      }),
+    );
     // }, [dispatch, pagination]);
-  }, [dispatch, pagination.current, pagination.pageSize]);
+  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timer);
+  }, [searchText]);
 
   // const [campaignStatus, setCampaignStatus] = useState({});
 
@@ -117,9 +131,9 @@ function Campaigns() {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-[#eef2f7]">
         <div>
-          <h3 className="text-[20px] font-semibold text-[#111827] mb-0">Filters</h3>
+          <h3 className="text-[16px] font-semibold text-[#111827] mb-0">Filters</h3>
 
-          <p className="text-[13px] text-[#6b7280] mb-1">Refine campaign performance</p>
+          <p className="text-[12px] text-[#6b7280] mb-1">Refine campaign performance</p>
         </div>
 
         <div className="w-9 h-9 rounded-xl bg-[#eff6ff] flex items-center justify-center text-[#2563eb]">
@@ -128,7 +142,7 @@ function Campaigns() {
       </div>
 
       {/* BODY */}
-      <div className="pt-5 space-y-5">
+      <div className="pt-3 space-y-4">
         {/* STATE */}
         <div>
           <p className="text-[14px] font-semibold text-[#374151] mb-2">Campaign State</p>
@@ -151,7 +165,7 @@ function Campaigns() {
                     }))
                   }
                   className={`
-                  px-4 h-[38px] rounded-xl border text-[13px] font-medium transition-all duration-200 flex items-center gap-2
+                  px-3 h-[30px] rounded-xl border text-[12px] font-medium transition-all duration-200 flex items-center gap-2
                   ${
                     active
                       ? 'bg-[#2563eb] border-[#2563eb] text-white shadow-md shadow-blue-100'
@@ -189,7 +203,7 @@ function Campaigns() {
                     }))
                   }
                   className={`
-                  px-4 h-[38px] rounded-xl border text-[13px] font-medium transition-all duration-200 flex items-center gap-2
+                  px-3 h-[30px] rounded-xl border text-[12px] font-medium transition-all duration-200 flex items-center gap-2
                   ${
                     active
                       ? 'bg-[#2563eb] border-[#2563eb] text-white shadow-md'
@@ -216,7 +230,7 @@ function Campaigns() {
               type: '',
             })
           }
-          className="!h-[40px] !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium flex items-center "
+          className="!h-[30px] !rounded-l !border-[#dbe1e8] !text-[#374151] !font-medium text-[12px] flex items-center "
         >
           Reset
         </Button>
@@ -224,7 +238,7 @@ function Campaigns() {
         <Button
           type="primary"
           onClick={() => setOpenFilter(false)}
-          className="!h-[40px] !rounded-xl !bg-[#2563eb] !px-6 !font-medium"
+          className="!h-[30px] !rounded-l !bg-[#2563eb] !px-3 !font-semibold text-[13px]"
         >
           Apply
         </Button>
@@ -646,6 +660,8 @@ function Campaigns() {
               <div className="relative w-[260px]">
                 <input
                   type="text"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
                   placeholder="Search campaigns..."
                   className="w-full h-[30px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none"
                 />

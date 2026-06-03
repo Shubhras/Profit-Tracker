@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Table, Tooltip, Tag, Dropdown, Checkbox } from 'antd';
 import { FilterOutlined, SettingOutlined, SearchOutlined, RightOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -8,6 +8,8 @@ import { getAdProducts } from '../../redux/advertising/actionCreator';
 function AdProducts() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -23,9 +25,20 @@ function AdProducts() {
   }));
 
   useEffect(() => {
-    dispatch(getAdProducts(pagination.current, pagination.pageSize));
-    // }, [dispatch, pagination]);
-  }, [dispatch, pagination.current, pagination.pageSize]);
+    dispatch(
+      getAdProducts(pagination.current, pagination.pageSize, {
+        search: debouncedSearch,
+      }),
+    );
+  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchText]);
 
   const dataSource =
     adsProductsData?.results?.map((item) => ({
@@ -381,6 +394,8 @@ function AdProducts() {
               <div className="relative w-[280px]">
                 <input
                   type="text"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
                   placeholder="Search ad products..."
                   className="w-full h-[30px] rounded-xl border bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm transition-all duration-200 focus:border-[#dbe1e8]"
                 />

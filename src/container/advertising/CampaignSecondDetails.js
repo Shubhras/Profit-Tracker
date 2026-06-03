@@ -3,7 +3,7 @@ import { Button, Table, Tooltip } from 'antd';
 import { ArrowLeftOutlined, FilterOutlined, ExportOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { getAdProducts } from '../../redux/advertising/actionCreator';
+import { getSearchTerms } from '../../redux/advertising/actionCreator';
 
 function CampaignSecondDetails() {
   const { id } = useParams();
@@ -17,19 +17,35 @@ function CampaignSecondDetails() {
     pageSize: 10,
   });
 
-  const { adsProductsData, loading } = useSelector((state) => state.advertising);
+  const { searchTerms, loading } = useSelector((state) => state.advertising);
 
   useEffect(() => {
     dispatch(
-      getAdProducts(pagination.current, pagination.pageSize, {
-        ad_group_id: id,
+      getSearchTerms(pagination.current, pagination.pageSize, {
+        filters: {
+          // search: 'headphones',
+          campaign_id: Number(id),
+          // match_types: ['BROAD', 'PHRASE', 'EXACT'],
+          // from_date: '2026-05-01',
+          // to_date: '2026-05-31',
+          // min_acos: 10,
+          // max_acos: 50,
+          // min_roas: 1,
+          // max_roas: 10,
+          // sort_by: 'sales',
+          // sort_order: 'desc',
+        },
+        pagination: {
+          pageNo: pagination.current,
+          pageSize: pagination.pageSize,
+        },
       }),
     );
     // }, [dispatch, pagination, id]);
   }, [dispatch, pagination.current, pagination.pageSize, id]);
 
   const dataSource =
-    adsProductsData?.results?.map((item, index) => ({
+    searchTerms?.results?.map((item, index) => ({
       key: index,
 
       sku: item.sku,
@@ -231,7 +247,7 @@ function CampaignSecondDetails() {
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
-              total: adsProductsData?.pagination?.total_records || 0,
+              total: searchTerms?.pagination?.total_records || 0,
               showSizeChanger: true,
               pageSizeOptions: ['10', '20', '50', '100'],
               showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,

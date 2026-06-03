@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Table, Tooltip } from 'antd';
 
 import {
@@ -22,6 +22,9 @@ import { getSearchTerms } from '../../redux/advertising/actionCreator';
 function SearchTerms() {
   const dispatch = useDispatch();
 
+  const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
   const [pagination, setPagination] = React.useState({
     current: 1,
     pageSize: 10,
@@ -32,8 +35,20 @@ function SearchTerms() {
   const { searchTerms, loading } = useSelector((state) => state.advertising);
 
   useEffect(() => {
-    dispatch(getSearchTerms(pagination.current, pagination.pageSize));
-  }, [dispatch, pagination]);
+    dispatch(
+      getSearchTerms(pagination.current, pagination.pageSize, {
+        search: debouncedSearch,
+      }),
+    );
+  }, [dispatch, pagination, debouncedSearch]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchText]);
 
   const dataSource =
     searchTerms?.data?.map((item) => ({
@@ -73,7 +88,7 @@ function SearchTerms() {
 
       dataIndex: 'checkbox',
       width: 55,
-      fixed: 'left',
+      fixed: 'center',
 
       render: (_, record) => (
         <input
@@ -94,11 +109,13 @@ function SearchTerms() {
     {
       title: 'Search Term',
       dataIndex: 'searchTerm',
-      width: 240,
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => String(a.searchTerm).localeCompare(String(b.searchTerm)),
 
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-          <span className="text-[11px] text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
+          <span className="text-[11px] text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '170px' }}>
             {v}
           </span>
         </Tooltip>
@@ -110,6 +127,7 @@ function SearchTerms() {
       dataIndex: 'impressions',
       width: 70,
       render: (v) => <span className="text-[11px]">{v}</span>,
+      sorter: (a, b) => a.impressions - b.impressions,
     },
 
     {
@@ -117,6 +135,7 @@ function SearchTerms() {
       dataIndex: 'clicks',
       width: 70,
       render: (v) => <span className="text-[11px]">{v}</span>,
+      sorter: (a, b) => a.clicks - b.clicks,
     },
 
     {
@@ -124,6 +143,7 @@ function SearchTerms() {
       dataIndex: 'cost',
       width: 70,
 
+      sorter: (a, b) => a.cost - b.cost,
       render: (v) => <span className="font-medium text-[11px]">₹{Number(v || 0).toLocaleString()}</span>,
     },
 
@@ -138,15 +158,15 @@ function SearchTerms() {
       title: 'Sales',
       dataIndex: 'sales',
       width: 70,
-
+      sorter: (a, b) => a.sales - b.sales,
       render: (v) => <span className="font-medium text-[#15803d] text-[11px]">₹{Number(v || 0).toLocaleString()}</span>,
     },
 
     {
       title: 'ACOS',
       dataIndex: 'acos',
-      width: 100,
-
+      width: 70,
+      sorter: (a, b) => a.acos - b.acos,
       render: (v) => {
         let color = '#16a34a';
 
@@ -231,7 +251,7 @@ function SearchTerms() {
         <div>
           <h1 className="text-[20px] lg:text-[18px] font-semibold text-[#111827] mb-0">Search Terms</h1>
 
-          <p className="text-[12px] text-[#6b7280] max-w-[850px] leading-5">
+          <p className="text-[12px] text-[#6b7280] max-w-[850px]">
             Discover how customers search for your products and optimize your keywords by adding high-performing search
             terms as keywords and blocking irrelevant terms as negative keywords.
           </p>
@@ -273,30 +293,31 @@ function SearchTerms() {
       {/* FILTER BAR */}
 
       <div className="flex flex-wrap items-center gap-2 mb-3">
-        <select className="h-[36px] px-3 rounded-lg border border-[#dbe1e8] bg-white text-[11px] outline-none">
-          <option>All Campaigns</option>
-        </select>
-
-        <select className="h-[36px] px-3 rounded-lg border border-[#dbe1e8] bg-white text-[11px] outline-none">
-          <option>All Ad Groups</option>
-        </select>
-
-        <select className="h-[36px] px-3 rounded-lg border border-[#dbe1e8] bg-white text-[11px] outline-none">
-          <option>Broad Match, Phrase Match, Exact Match</option>
-        </select>
-
-        <select className="h-[36px] px-3 rounded-lg border border-[#dbe1e8] bg-white text-[11px] outline-none">
-          <option>01/05/2026 - 31/05/2026</option>
-        </select>
-
-        <div className="relative ml-auto lg:w-full min-lg:w-[220px]">
+        <div className="relative lg:w-full min-lg:w-[180px]">
           <input
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
             placeholder="Search term..."
-            className="w-full h-[36px] rounded-lg border border-[#dbe1e8] bg-white pl-9 pr-3 text-[11px] outline-none"
+            className="w-full h-[30px] rounded-lg border border-[#dbe1e8] bg-white pl-9 pr-3 text-[12px] outline-none"
           />
 
           <SearchOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[12px]" />
         </div>
+        <select className="h-[30px] px-2 rounded-lg border border-[#dbe1e8] bg-white text-[12px] outline-none">
+          <option>All Campaigns</option>
+        </select>
+
+        <select className="h-[30px] px-2 rounded-lg border border-[#dbe1e8] bg-white text-[12px] outline-none">
+          <option>All Ad Groups</option>
+        </select>
+
+        <select className="h-[30px] px-2 rounded-lg border border-[#dbe1e8] bg-white text-[12px] outline-none">
+          <option>Broad Match, Phrase Match, Exact Match</option>
+        </select>
+
+        <select className="h-[30px] px-2 rounded-lg border border-[#dbe1e8] bg-white text-[12px] outline-none">
+          <option>01/05/2026 - 31/05/2026</option>
+        </select>
       </div>
       {/* MAIN CONTENT */}
 
@@ -305,11 +326,13 @@ function SearchTerms() {
 
         <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
           <Table
-            className="[&_.ant-table-thead>tr>th]:text-[11px] [&_.ant-table-thead>tr>th]:font-medium"
+            // className="[&_.ant-table-thead>tr>th]:text-[11px] [&_.ant-table-thead>tr>th]:font-medium"
             columns={columns}
             size="small"
             dataSource={dataSource}
             loading={loading}
+            showSorterTooltip={false}
+            tableLayout="fixed"
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
@@ -329,6 +352,13 @@ function SearchTerms() {
             }}
             scroll={{ x: 'max-content' }}
             bordered={false}
+            className="
+    [&_.ant-table-thead>tr>th]:!text-[12px]
+    [&_.ant-table-thead>tr>th]:!font-semibold
+    [&_.ant-table-tbody>tr>td]:!text-[12px]
+    [&_.ant-table-cell]:!px-2
+    [&_.ant-table-cell]:!py-2
+  "
           />
         </div>
 

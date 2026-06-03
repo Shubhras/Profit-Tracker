@@ -259,7 +259,7 @@ function CampaignDetails() {
           type="button"
           onClick={() => {
             // navigate(`../campaign-second-details/${record.adGroupId}`);
-            navigate(`../campaign-second-details/${record.adGroupId}`, {
+            navigate(`../campaign-second-details/${record.campaignId}`, {
               state: {
                 adGroupName: record.name,
               },
@@ -372,7 +372,6 @@ function CampaignDetails() {
           />
         </div>
       </div>
-      {/* ================= BID MODAL ================= */}
       <Modal
         open={isBidModalOpen}
         footer={null}

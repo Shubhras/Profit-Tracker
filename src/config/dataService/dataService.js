@@ -217,18 +217,47 @@ const refreshAccessToken = async () => {
 };
 
 // RESPONSE INTERCEPTOR
+// client.interceptors.response.use(
+//   (response) => response,
+
+//   async (error) => {
+//     const originalRequest = error.config;
+
+//     // token expired
+//     if (error.response?.status === 401 && !originalRequest.retryRequest) {
+//       originalRequest.retryRequest = true;
+
+//       const newAccessToken = await refreshAccessToken();
+//       console.log('New Access Token:', newAccessToken);
+
+//       if (newAccessToken) {
+//         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+//         // retry original request
+//         return client(originalRequest);
+//       }
+//     }
+
+//     return Promise.reject(error);
+//   },
+// );
+
 client.interceptors.response.use(
   (response) => response,
 
   async (error) => {
     const originalRequest = error.config;
 
+    // ✅ Login API par refresh token mat chalao
+    if (originalRequest?.url?.includes('/user/login/')) {
+      return Promise.reject(error);
+    }
+
     // token expired
     if (error.response?.status === 401 && !originalRequest.retryRequest) {
       originalRequest.retryRequest = true;
 
       const newAccessToken = await refreshAccessToken();
-      console.log('New Access Token:', newAccessToken);
 
       if (newAccessToken) {
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;

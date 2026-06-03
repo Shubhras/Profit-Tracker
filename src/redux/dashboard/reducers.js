@@ -26,6 +26,10 @@ const {
   PROFITMODAL_BEGIN,
   PROFITMODAL_SUCCESS,
   PROFITMODAL_ERR,
+
+  ESTIMATED_FEES_BEGIN,
+  ESTIMATED_FEES_SUCCESS,
+  ESTIMATED_FEES_ERR,
 } = actions;
 
 const initialState = {
@@ -34,6 +38,7 @@ const initialState = {
   pivotData: null,
   profitData: null,
   monthwiseProfitData: null,
+  estimatefees: [],
   error: null,
   dateRange: null,
   search: '',
@@ -177,6 +182,27 @@ const dashboardReducer = (state = initialState, action) => {
       };
 
     case PROFITMODAL_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case ESTIMATED_FEES_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case ESTIMATED_FEES_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        estimatefees: action.data,
+      };
+
+    case ESTIMATED_FEES_ERR:
       return {
         ...state,
         loading: false,

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Table, Tag, Tooltip, Modal, Switch } from 'antd';
 import { FilterOutlined, ExportOutlined, SearchOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -6,7 +6,8 @@ import { getAdsGroup, getEditBid } from '../../redux/advertising/actionCreator';
 
 function AdGroups() {
   const dispatch = useDispatch();
-
+  const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [pagination, setPagination] = React.useState({
     current: 1,
     pageSize: 10,
@@ -20,9 +21,21 @@ function AdGroups() {
   const { adsGroupData, loading } = useSelector((state) => state.advertising);
 
   useEffect(() => {
-    dispatch(getAdsGroup(pagination.current, pagination.pageSize));
+    dispatch(
+      getAdsGroup(pagination.current, pagination.pageSize, {
+        search: debouncedSearch,
+      }),
+    );
     // }, [dispatch, pagination]);
-  }, [dispatch, pagination.current, pagination.pageSize]);
+  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchText]);
 
   const dataSource =
     adsGroupData?.results?.map((item) => ({
@@ -352,6 +365,8 @@ function AdGroups() {
               <div className="relative w-[280px]">
                 <input
                   type="text"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
                   placeholder="Search ad groups..."
                   className="w-full h-[30px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none"
                 />
