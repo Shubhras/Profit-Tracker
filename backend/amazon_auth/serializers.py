@@ -68,4 +68,50 @@ class AmazonListingItemSerializer(serializers.ModelSerializer):
             "product_types",
             "created_at",
             "updated_at",
-        ]        
+        ] 
+        
+
+class AmazonEstimatedFeeSerializer(serializers.ModelSerializer):
+
+    order_item_id = serializers.IntegerField(source="order_item.order_item_id", read_only=True)
+    order_id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AmazonEstimatedFee
+        fields = [
+            "id",
+            "order_id",
+            "order_item_id",
+
+            "seller_sku",
+            "asin",
+            "marketplace_id",
+
+            "currency",
+
+            "selling_price",
+
+            "total_fees",
+
+            "referral_fee",
+            "closing_fee",
+            "per_item_fee",
+
+            "fba_fee",
+            "fba_pick_pack_fee",
+            "fba_weight_handling_fee",
+
+            "tax_amount",
+
+            "fulfillment_channel",
+
+            "estimated_at",
+            "created_at",
+        ]               
+        
+    def get_order_id(self, obj):
+
+        try:
+            return obj.order_item.order.amazon_order_id
+        except:
+            return None    
