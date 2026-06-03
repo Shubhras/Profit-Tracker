@@ -1,12 +1,22 @@
 from amazon_auth.models import *
 from amazon_auth.spapi_manager import SPAPIManager
+
 import requests
+
 
 def save_breakdowns(transaction, breakdowns, parent=None):
 
+    # Safety check
+    if not isinstance(breakdowns, list):
+        return
+
     for item in breakdowns:
 
-        amount_data = item.get("breakdownAmount", {})
+        # Skip invalid breakdown objects
+        if not isinstance(item, dict):
+            continue
+
+        amount_data = item.get("breakdownAmount") or {}
 
         breakdown_obj = AmazonTransactionBreakdown.objects.create(
             transaction=transaction,
@@ -16,14 +26,15 @@ def save_breakdowns(transaction, breakdowns, parent=None):
             currency_code=amount_data.get("currencyCode"),
         )
 
-        children = item.get("breakdowns", [])
+        children = item.get("breakdowns") or []
 
         if children:
             save_breakdowns(
-                transaction,
-                children,
-                breakdown_obj
+                transaction=transaction,
+                breakdowns=children,
+                parent=breakdown_obj
             )
+
 
 def sync_transactions_for_account(
     amazon_account,
@@ -31,9 +42,17 @@ def sync_transactions_for_account(
     posted_before=None
 ):
 
+    # -----------------------------------
+    # Generate Access Token
+    # -----------------------------------
+
     sp_api = SPAPIManager(account=amazon_account)
 
     access_token = sp_api.get_access_token()
+
+    # -----------------------------------
+    # Endpoint
+    # -----------------------------------
 
     endpoint = f"https://sellingpartnerapi-{amazon_account.region.lower()}.amazon.com"
 
@@ -54,6 +73,10 @@ def sync_transactions_for_account(
 
     next_token = None
 
+    # -----------------------------------
+    # Pagination Loop
+    # -----------------------------------
+
     while True:
 
         if next_token:
@@ -66,15 +89,47 @@ def sync_transactions_for_account(
             timeout=60
         )
 
-        data = response.json()
+        # -----------------------------------
+        # Safe JSON Parse
+        # -----------------------------------
 
-        payload = data.get("payload", {})
+        try:
+            data = response.json()
 
-        transactions = payload.get("transactions", [])
+        except Exception:
+            raise Exception(
+                f"Invalid JSON response: {response.text}"
+            )
+
+        # -----------------------------------
+        # API Error Handling
+        # -----------------------------------
+
+        if response.status_code != 200:
+
+            raise Exception(
+                f"Amazon API Error {response.status_code}: {data}"
+            )
+
+        payload = data.get("payload") or {}
+
+        transactions = payload.get("transactions") or []
+
+        # Safety check
+        if not isinstance(transactions, list):
+            transactions = []
+
+        # -----------------------------------
+        # Transactions Loop
+        # -----------------------------------
 
         for txn in transactions:
 
-            amount_data = txn.get("totalAmount", {})
+            # Skip invalid transaction objects
+            if not isinstance(txn, dict):
+                continue
+
+            amount_data = txn.get("totalAmount") or {}
 
             transaction_obj, created = AmazonTransaction.objects.update_or_create(
                 transaction_id=txn.get("transactionId"),
@@ -90,9 +145,21 @@ def sync_transactions_for_account(
                 }
             )
 
+            # ===================================
+            # Related Identifiers
+            # ===================================
+
             transaction_obj.related_identifiers.all().delete()
 
-            for rel in txn.get("relatedIdentifiers", []):
+            related_identifiers = txn.get("relatedIdentifiers") or []
+
+            if not isinstance(related_identifiers, list):
+                related_identifiers = []
+
+            for rel in related_identifiers:
+
+                if not isinstance(rel, dict):
+                    continue
 
                 AmazonTransactionRelatedIdentifier.objects.create(
                     transaction=transaction_obj,
@@ -100,32 +167,110 @@ def sync_transactions_for_account(
                     identifier_value=rel.get("relatedIdentifierValue")
                 )
 
+            # ===================================
+            # Contexts
+            # ===================================
+
             transaction_obj.contexts.all().delete()
 
-            for ctx in txn.get("contexts", []):
 
-                AmazonTransactionContext.objects.create(
-                    transaction=transaction_obj,
-                    context_type=ctx.get("contextType"),
-                    asin=ctx.get("asin"),
-                    sku=ctx.get("sku"),
-                    quantity_shipped=ctx.get("quantityShipped"),
-                    fulfillment_network=ctx.get("fulfillmentNetwork"),
-                    raw_context=ctx
-                )
+            def save_contexts(contexts_list):
+
+                if not isinstance(contexts_list, list):
+                    return
+
+                for ctx in contexts_list:
+
+                    if not isinstance(ctx, dict):
+                        continue
+
+                    AmazonTransactionContext.objects.create(
+                        transaction=transaction_obj,
+                        context_type=ctx.get("contextType"),
+
+                        # Product Context
+                        asin=ctx.get("asin"),
+                        sku=ctx.get("sku"),
+                        quantity_shipped=ctx.get("quantityShipped"),
+                        fulfillment_network=ctx.get("fulfillmentNetwork"),
+
+                        # Deferred Context
+                        deferral_reason=ctx.get("deferralReason"),
+                        maturity_date=ctx.get("maturityDate"),
+
+                        # Amazon Pay Context
+                        store_name=ctx.get("storeName"),
+                        order_type=ctx.get("orderType"),
+                        channel=ctx.get("channel"),
+
+                        raw_context=ctx
+                    )
+
+
+            # -----------------------------------
+            # Transaction Level Contexts
+            # -----------------------------------
+
+            transaction_contexts = txn.get("contexts") or []
+
+            save_contexts(transaction_contexts)
+
+
+            # -----------------------------------
+            # Item Level Contexts
+            # -----------------------------------
+
+            items = txn.get("items") or []
+
+            if isinstance(items, list):
+
+                for item in items:
+
+                    if not isinstance(item, dict):
+                        continue
+
+                    item_contexts = item.get("contexts") or []
+
+                    save_contexts(item_contexts)
+
+            # ===================================
+            # Breakdowns
+            # ===================================
 
             transaction_obj.breakdowns.all().delete()
 
-            breakdowns = txn.get("breakdowns", {}).get("breakdowns", [])
+            breakdowns_data = txn.get("breakdowns") or []
+
+            # Amazon may return:
+            # "breakdowns": []
+            # OR
+            # "breakdowns": {"breakdowns": []}
+
+            if isinstance(breakdowns_data, dict):
+
+                breakdowns = breakdowns_data.get("breakdowns") or []
+
+            elif isinstance(breakdowns_data, list):
+
+                breakdowns = breakdowns_data
+
+            else:
+
+                breakdowns = []
 
             save_breakdowns(
-                transaction_obj,
-                breakdowns
+                transaction=transaction_obj,
+                breakdowns=breakdowns
             )
+
+        # -----------------------------------
+        # Pagination
+        # -----------------------------------
 
         next_token = payload.get("nextToken")
 
         if not next_token:
             break
-        
-        
+
+    return True
+

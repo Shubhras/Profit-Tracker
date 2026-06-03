@@ -106,8 +106,14 @@ urlpatterns = [
     ),
     
     path(
-        "amazon/transactions/",
+        "amazon/transactions/-sync/",
         AmazonTransactionsListView.as_view(),
+        name="amazon-transactions"
+    ),
+    
+    path(
+        "amazon-transactions-details/",
+        AmazonTransactionListView.as_view(),
         name="amazon-transactions"
     ),
  
