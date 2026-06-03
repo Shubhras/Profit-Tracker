@@ -169,7 +169,7 @@ function MenuItems({ toggleCollapsed }) {
       //   null,
       // ),
       getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/profit/skuwise`}>
+        <NavLink onClick={toggleCollapsed} to="/admin/profit/profitTableView/details">
           {t('SKU Wise Profit')}
         </NavLink>,
         'skuwiseprofit',

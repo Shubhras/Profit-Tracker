@@ -40,7 +40,7 @@ function SearchTerms() {
         search: debouncedSearch,
       }),
     );
-  }, [dispatch, pagination, debouncedSearch]);
+  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -49,6 +49,8 @@ function SearchTerms() {
 
     return () => clearTimeout(timer);
   }, [searchText]);
+
+  const summaryCards = searchTerms?.dashboard?.summary_cards || {};
 
   const dataSource =
     searchTerms?.data?.map((item) => ({
@@ -195,48 +197,48 @@ function SearchTerms() {
   const metricCards = [
     {
       title: 'Total Spend',
-      value: '$54,231.52',
-      growth: '↑ 18% vs last 30 days',
+      value: `₹${Number(summaryCards?.total_spend || 0).toLocaleString()}`,
+      growth: '',
       icon: <DollarOutlined className="text-[#16a34a]" />,
       iconBg: 'bg-[#e8f7ef]',
     },
 
     {
       title: 'Impressions',
-      value: '9.82M',
-      growth: '↑ 16% vs last 30 days',
+      value: Number(summaryCards?.impressions || 0).toLocaleString(),
+      growth: '',
       icon: <EyeOutlined className="text-[#7c3aed]" />,
       iconBg: 'bg-[#f3e8ff]',
     },
 
     {
       title: 'Clicks',
-      value: '88,742',
-      growth: '↑ 14% vs last 30 days',
+      value: Number(summaryCards?.clicks || 0).toLocaleString(),
+      growth: '',
       icon: <AimOutlined className="text-[#d97706]" />,
       iconBg: 'bg-[#fef3c7]',
     },
 
     {
       title: 'Orders',
-      value: '1,842',
-      growth: '↑ 9% vs last 30 days',
+      value: Number(summaryCards?.orders || 0).toLocaleString(),
+      growth: '',
       icon: <ShoppingCartOutlined className="text-[#059669]" />,
       iconBg: 'bg-[#d1fae5]',
     },
 
     {
       title: 'Sales',
-      value: '$198,421.60',
-      growth: '↑ 21% vs last 30 days',
+      value: `₹${Number(summaryCards?.sales || 0).toLocaleString()}`,
+      growth: '',
       icon: <LineChartOutlined className="text-[#e11d48]" />,
       iconBg: 'bg-[#ffe4e6]',
     },
 
     {
       title: 'ACOS',
-      value: '27.32%',
-      growth: '↓ 5% vs last 30 days',
+      value: `${Number(summaryCards?.acos || 0).toFixed(2)}%`,
+      growth: '',
       icon: <PercentageOutlined className="text-[#2563eb]" />,
       iconBg: 'bg-[#dbeafe]',
     },
@@ -307,17 +309,13 @@ function SearchTerms() {
           <option>All Campaigns</option>
         </select>
 
-        <select className="h-[30px] px-2 rounded-lg border border-[#dbe1e8] bg-white text-[12px] outline-none">
-          <option>All Ad Groups</option>
-        </select>
-
-        <select className="h-[30px] px-2 rounded-lg border border-[#dbe1e8] bg-white text-[12px] outline-none">
+        {/* <select className="h-[30px] px-2 rounded-lg border border-[#dbe1e8] bg-white text-[12px] outline-none">
           <option>Broad Match, Phrase Match, Exact Match</option>
-        </select>
+        </select> */}
 
-        <select className="h-[30px] px-2 rounded-lg border border-[#dbe1e8] bg-white text-[12px] outline-none">
+        {/* <select className="h-[30px] px-2 rounded-lg border border-[#dbe1e8] bg-white text-[12px] outline-none">
           <option>01/05/2026 - 31/05/2026</option>
-        </select>
+        </select> */}
       </div>
       {/* MAIN CONTENT */}
 
@@ -336,10 +334,9 @@ function SearchTerms() {
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
-              total: searchTerms?.pagination?.total_records || 0,
+              total: searchTerms?.pagination?.totalItems || 0,
 
               showSizeChanger: true,
-
               pageSizeOptions: ['10', '20', '50', '100'],
 
               showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,

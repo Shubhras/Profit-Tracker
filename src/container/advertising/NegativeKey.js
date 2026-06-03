@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Table, Tag, Tooltip, DatePicker } from 'antd';
-import { useDispatch } from 'react-redux';
+import { Button, Table, Tag, Tooltip } from 'antd';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   DownloadOutlined,
   PlusOutlined,
@@ -11,18 +11,19 @@ import {
   AimOutlined,
   LineChartOutlined,
 } from '@ant-design/icons';
-import { getNegativeKeywords, getCampaignsRulesList } from '../../redux/advertising/actionCreator'; // apne path ke hisab se
+import { getNegativeKeywords, getCampaignsRulesList, getAdsGroup } from '../../redux/advertising/actionCreator'; // apne path ke hisab se
 
 function NegativeKey() {
   const dispatch = useDispatch();
-  const { RangePicker } = DatePicker;
+  // const { RangePicker } = DatePicker;
   const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
   const [matchType, setMatchType] = useState('');
   const [searchText, setSearchText] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-
+  const [selectedAdGroup, setSelectedAdGroup] = useState('');
+  const [activeTab, setActiveTab] = useState('Negative Keywords');
   const [campaigns, setCampaigns] = useState([]);
   const [selectedCampaign, setSelectedCampaign] = useState('');
 
@@ -30,6 +31,8 @@ function NegativeKey() {
     current: 1,
     pageSize: 20,
   });
+  const { adsGroupData } = useSelector((state) => state.advertising);
+  const { dateRange } = useSelector((state) => state.dashboard);
 
   const fetchNegativeKeywords = async () => {
     setLoading(true);
@@ -37,11 +40,13 @@ function NegativeKey() {
     const payload = {
       search: debouncedSearch,
       campaign_id: selectedCampaign,
-      ad_group_id: null,
+      ad_group_id: selectedAdGroup,
       match_type: matchType,
       state: 'ENABLED',
       page: pagination.current,
       page_size: pagination.pageSize,
+      fromDate: dateRange?.fromDate || null,
+      toDate: dateRange?.endDate || null,
     };
 
     const response = await dispatch(getNegativeKeywords(payload));
@@ -72,7 +77,15 @@ function NegativeKey() {
 
   useEffect(() => {
     fetchNegativeKeywords();
-  }, [pagination.current, pagination.pageSize, matchType, selectedCampaign, debouncedSearch]);
+  }, [
+    dateRange,
+    pagination.current,
+    pagination.pageSize,
+    matchType,
+    selectedCampaign,
+    selectedAdGroup,
+    debouncedSearch,
+  ]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -94,6 +107,13 @@ function NegativeKey() {
     fetchCampaigns();
   }, []);
 
+  useEffect(() => {
+    dispatch(
+      getAdsGroup(1, 4000, {
+        search: '',
+      }),
+    );
+  }, [dispatch]);
   const metricCards = [
     {
       title: 'Total Negative Keywords',
@@ -241,6 +261,34 @@ function NegativeKey() {
     },
   ];
 
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+
+    switch (tab) {
+      case 'Negative Keywords':
+        setMatchType('');
+        break;
+
+      case 'Negative Phrases':
+        setMatchType('NEGATIVE_PHRASE');
+        break;
+
+      case 'Negative Exact':
+        setMatchType('NEGATIVE_EXACT');
+        break;
+
+      default:
+        setMatchType('');
+    }
+
+    setPagination((prev) => ({
+      ...prev,
+      current: 1,
+    }));
+  };
+
+  const tabs = ['Negative Keywords', 'Negative Phrases', 'Negative Exact', 'ASIN Targeting', 'Auto Suggestions'];
+
   return (
     <div className="bg-[#f5f7fb] min-h-screen p-3">
       {/* HEADER */}
@@ -270,15 +318,7 @@ function NegativeKey() {
         {metricCards.map((item) => (
           <div
             key={item.title}
-            className="
-        bg-white
-        rounded-2xl
-        border border-[#e5e7eb]
-        px-3 py-2
-        shadow-sm
-        min-h-[92px]
-        flex flex-col justify-between
-      "
+            className="bg-white rounded-2xl border border-[#e5e7eb] px-3 py-2 shadow-sm min-h-[92px] flex flex-col justify-between"
           >
             {/* TOP */}
             <div>
@@ -304,19 +344,18 @@ function NegativeKey() {
       {/* TABS */}
 
       <div className="flex items-center gap-8 border-b border-[#e5e7eb] mb-2">
-        {['Negative Keywords', 'Negative Phrases', 'Negative Exact', 'ASIN Targeting', 'Auto Suggestions'].map(
-          (item, index) => (
-            <button
-              key={item}
-              type="button"
-              className={`pb1 text-[13px] font-medium transition-all ${
-                index === 0 ? 'text-[#059669] border-b-2 border-[#059669]' : 'text-[#64748b]'
-              }`}
-            >
-              {item}
-            </button>
-          ),
-        )}
+        {tabs.map((item) => (
+          <button
+            key={item}
+            type="button"
+            onClick={() => handleTabChange(item)}
+            className={`pb-2 text-[13px] font-medium transition-all ${
+              activeTab === item ? 'text-[#059669] border-b-2 border-[#059669]' : 'text-[#64748b]'
+            }`}
+          >
+            {item}
+          </button>
+        ))}
       </div>
 
       {/* FILTERS */}
@@ -342,20 +381,29 @@ function NegativeKey() {
           className="h-[30px] px-4 pr-8 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none cursor-pointer"
         >
           <option value="">All Match Type</option>
-          <option value="BROAD">Broad</option>
-          <option value="PHRASE">Phrase</option>
-          <option value="EXACT">Exact</option>
+          <option value="NEGATIVE_BROAD">Broad</option>
+          <option value="NEGATIVE_PHRASE">Phrase</option>
+          <option value="NEGATIVE_EXACT">Exact</option>
         </select>
 
-        <select className="h-[30px] px-4 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none">
-          <option>All Ad Groups</option>
-        </select>
+        <select
+          value={selectedAdGroup}
+          onChange={(e) => setSelectedAdGroup(e.target.value)}
+          className="h-[30px] w-[170px] px-4 pr-8 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none cursor-pointer truncate"
+        >
+          <option value="">All Ad Groups</option>
 
-        <RangePicker
+          {adsGroupData?.results?.map((item) => (
+            <option key={item.ad_group_id} value={item.ad_group_id}>
+              {item.name}
+            </option>
+          ))}
+        </select>
+        {/* <RangePicker
           format="DD/MM/YYYY"
           className="!h-[30px] text-[12px] !rounded-xl"
           placeholder={['Start Date', 'End Date']}
-        />
+        /> */}
 
         <div className="relative ml-auto w-[280px]">
           <input

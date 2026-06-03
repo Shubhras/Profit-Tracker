@@ -856,7 +856,8 @@ class AdsAdGroupListView(APIView):
         )
 
         queryset = AdsAdGroup.objects.filter(
-            amazon_account__user=user
+            amazon_account__user=user,
+            amazon_account__is_primary=True
         ).select_related(
             "amazon_account",
             "campaign"
@@ -1206,12 +1207,20 @@ class ProductSKUReportView(APIView):
         ).order_by("-id")
 
         # GROUP BY SKU
+        
         queryset = queryset.values(
 
             "sku",
-            "asin"
+            "asin",
+            "state"
 
         ).annotate(
+        # queryset = queryset.values(
+
+        #     "sku",
+        #     "asin"
+
+        # ).annotate(
 
             item_name=Subquery(
                 listing_queryset.values("item_name")[:1]
@@ -2178,7 +2187,7 @@ class SearchTermMetricListView(APIView):
 
         if campaign_id:
             queryset = queryset.filter(
-                campaign_id=campaign_id
+                campaign__campaign_id=campaign_id
             )
 
         # ---------------- MATCH TYPE FILTER ----------------

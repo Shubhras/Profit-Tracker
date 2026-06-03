@@ -783,10 +783,6 @@ class AmazonListingItem(models.Model):
 
 
 
-from django.db import models
-from amazon_auth.models import AmazonAccount
-
-
 class AmazonTransaction(models.Model):
 
     amazon_account = models.ForeignKey(
@@ -896,6 +892,8 @@ class AmazonTransactionBreakdown(models.Model):
         null=True,
         blank=True
     )    
+
+
 class AmazonTransactionContext(models.Model):
 
     transaction = models.ForeignKey(
@@ -909,6 +907,10 @@ class AmazonTransactionContext(models.Model):
         null=True,
         blank=True
     )
+
+    # ====================================
+    # Product Context
+    # ====================================
 
     asin = models.CharField(
         max_length=255,
@@ -933,8 +935,65 @@ class AmazonTransactionContext(models.Model):
         blank=True
     )
 
+    # ====================================
+    # Deferred Context
+    # ====================================
+
+    deferral_reason = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    maturity_date = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    # ====================================
+    # Amazon Pay Context
+    # ====================================
+
+    store_name = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    order_type = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    channel = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    # ====================================
+    # Raw Backup
+    # ====================================
+
     raw_context = models.JSONField(
         default=dict,
         blank=True
     )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        null=True,
+        blank=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        null=True,
+        blank=True
+    )
+
+    def __str__(self):
+        return f"{self.context_type} - {self.transaction.transaction_id}"    
+    
             
