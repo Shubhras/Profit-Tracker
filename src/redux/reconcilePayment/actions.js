@@ -46,6 +46,10 @@ const actions = {
   ORGANISATION_REPORT_SUCCESS: 'ORGANISATION_REPORT_SUCCESS',
   ORGANISATION_REPORT_ERR: 'ORGANISATION_REPORT_ERR',
 
+  AMAZON_TRANSACTION_BEGIN: 'AMAZON_TRANSACTION_BEGIN',
+  AMAZON_TRANSACTION_SUCCESS: 'AMAZON_TRANSACTION_SUCCESS',
+  AMAZON_TRANSACTION_ERR: 'AMAZON_TRANSACTION_ERR',
+
   reconcilePaymentBegin: () => {
     return {
       type: actions.RECONCILE_PAYMENT_BEGIN,
@@ -213,6 +217,20 @@ const actions = {
 
   organisationreportErr: (err) => ({
     type: actions.ORGANISATION_REPORT_ERR,
+    err,
+  }),
+
+  amazontransactionBegin: () => ({
+    type: actions.AMAZON_TRANSACTION_BEGIN,
+  }),
+
+  amazontransactionSuccess: (data) => ({
+    type: actions.AMAZON_TRANSACTION_SUCCESS,
+    data,
+  }),
+
+  amazontransactionErr: (err) => ({
+    type: actions.AMAZON_TRANSACTION_ERR,
     err,
   }),
 };

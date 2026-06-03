@@ -42,6 +42,10 @@ const {
   organisationreportBegin,
   organisationreportSuccess,
   organisationreportErr,
+
+  amazontransactionBegin,
+  amazontransactionSuccess,
+  amazontransactionErr,
 } = actions;
 
 const mockService = async (payload) => {
@@ -271,6 +275,22 @@ export const getOrganisationReport = (payload) => {
       }
     } catch (err) {
       dispatch(organisationreportErr(err.message));
+    }
+  };
+};
+
+export const getAmazonTransactionDetail = (payload) => {
+  return async (dispatch) => {
+    dispatch(amazontransactionBegin());
+    try {
+      const response = await DataService.get('/amazon/amazon-transactions-details/', payload);
+      if (response.data.status === true) {
+        dispatch(amazontransactionSuccess(response.data));
+      } else {
+        dispatch(amazontransactionErr(response.data.message || 'Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(amazontransactionErr(err.response?.data?.message || err.message));
     }
   };
 };

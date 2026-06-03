@@ -15,6 +15,7 @@ const initialState = {
   settledError: null,
   unsettledData: [],
   unsettledLoading: false,
+  amazontransation: [],
   unsettledError: null,
   invoiceReconData: [],
   invoiceReconLoading: false,
@@ -85,6 +86,10 @@ const {
   ORGANISATION_REPORT_BEGIN,
   ORGANISATION_REPORT_SUCCESS,
   ORGANISATION_REPORT_ERR,
+
+  AMAZON_TRANSACTION_BEGIN,
+  AMAZON_TRANSACTION_SUCCESS,
+  AMAZON_TRANSACTION_ERR,
 } = actions;
 
 const reconcilePaymentReducer = (state = initialState, action) => {
@@ -342,6 +347,26 @@ const reconcilePaymentReducer = (state = initialState, action) => {
         ...state,
         organisationreporError: err,
         organisationreporLoading: false,
+      };
+
+    case AMAZON_TRANSACTION_BEGIN:
+      return {
+        ...state,
+        loading: true,
+      };
+
+    case AMAZON_TRANSACTION_SUCCESS:
+      return {
+        ...state,
+        amazontransation: action.data.data,
+        loading: false,
+      };
+
+    case AMAZON_TRANSACTION_ERR:
+      return {
+        ...state,
+        error: err,
+        loading: false,
       };
     default:
       return state;
