@@ -45,122 +45,64 @@ function CampaignSecondDetails() {
   }, [dispatch, pagination.current, pagination.pageSize, id]);
 
   const dataSource =
-    searchTerms?.results?.map((item, index) => ({
-      key: index,
-
-      sku: item.sku,
-      asin: item.asin,
-      itemName: item.item_name,
-      image: item.image_url,
-
-      totalAds: item.total_ads,
-
-      impressions: item.impressions,
+    searchTerms?.data?.map((item, index) => ({
+      key: item.id || index,
+      campaignName: item.campaign_name,
+      searchTerm: item.search_term,
       clicks: item.clicks,
       cost: item.cost,
       sales: item.sales,
       orders: item.orders,
+      acos: item.acos,
+      roas: item.roas,
     })) || [];
-
   const adGroupName = location?.state?.adGroupName || '-';
 
   const columns = [
     {
-      title: '',
-      dataIndex: 'image',
-      align: 'center',
-      width: 50,
-      fixed: 'left',
-
-      render: (_, record) => (
-        <div className="flex justify-center">
-          <img
-            src={record.image}
-            alt="product"
-            className="w-[35px] h-[35px] rounded-xl object-cover border border-[#e5e7eb]"
-          />
-        </div>
-      ),
-    },
-
-    {
-      title: 'SKU',
-      dataIndex: 'sku',
+      title: 'Campaign Name',
+      dataIndex: 'campaignName',
       align: 'center',
       width: 70,
-      sorter: (a, b) => String(a.sku || '').localeCompare(String(b.sku || '')),
       ellipsis: true,
-
+      sorter: (a, b) => String(a.campaignName).localeCompare(String(b.campaignName)),
       render: (v) => (
-        <div className="flex justify-center">
-          <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-            <span
-              className="text-[#2563eb] block truncate cursor-pointer text-center font-medium"
-              style={{ maxWidth: '70px' }}
-            >
-              {v || '-'}
-            </span>
-          </Tooltip>
-        </div>
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
+            {v}
+          </span>
+        </Tooltip>
       ),
     },
-
     {
-      title: 'Item Name',
-      dataIndex: 'itemName',
+      title: 'Search Term',
+      dataIndex: 'searchTerm',
       align: 'center',
       width: 70,
-      sorter: (a, b) => String(a.itemName || '').localeCompare(String(b.itemName || '')),
-      ellipsis: true,
-
       render: (v) => (
-        <div className="flex justify-center">
-          <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-            <span className="text-[#111827] block truncate cursor-pointer text-center" style={{ maxWidth: '70px' }}>
-              {v || '-'}
-            </span>
-          </Tooltip>
-        </div>
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
+            {v}
+          </span>
+        </Tooltip>
       ),
+      sorter: (a, b) => String(a.searchTerm).localeCompare(String(b.searchTerm)),
     },
-
-    {
-      title: 'Total Ads',
-      dataIndex: 'totalAds',
-      align: 'center',
-      width: 70,
-      sorter: (a, b) => Number(a.totalAds || 0) - Number(b.totalAds || 0),
-
-      render: (v) => <span className="font-semibold text-[#2563eb]">{v ?? 0}</span>,
-    },
-
-    {
-      title: 'Impressions',
-      dataIndex: 'impressions',
-      align: 'center',
-      width: 70,
-      sorter: (a, b) => Number(a.impressions || 0) - Number(b.impressions || 0),
-
-      render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
-    },
-
     {
       title: 'Clicks',
       dataIndex: 'clicks',
       align: 'center',
       width: 70,
-      sorter: (a, b) => Number(a.clicks || 0) - Number(b.clicks || 0),
-
-      render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
+      render: (v) => v || '-',
+      sorter: (a, b) => a.clicks - b.clicks,
     },
-
     {
       title: 'Cost',
       dataIndex: 'cost',
       align: 'center',
       width: 70,
-      sorter: (a, b) => Number(a.cost || 0) - Number(b.cost || 0),
-      render: (v) => <span className="font-medium text-[#dc2626]">₹{Number(v ?? 0).toFixed(2)}</span>,
+      render: (v) => v || '-',
+      sorter: (a, b) => a.cost - b.cost,
     },
 
     {
@@ -168,18 +110,32 @@ function CampaignSecondDetails() {
       dataIndex: 'sales',
       align: 'center',
       width: 70,
-      sorter: (a, b) => Number(a.sales || 0) - Number(b.sales || 0),
-
-      render: (v) => <span className="font-medium text-[#16a34a]">₹{Number(v ?? 0).toFixed(2)}</span>,
+      render: (v) => v || '-',
+      sorter: (a, b) => a.sales - b.sales,
     },
-
     {
       title: 'Orders',
       dataIndex: 'orders',
       align: 'center',
       width: 70,
-      sorter: (a, b) => Number(a.orders || 0) - Number(b.orders || 0),
-      render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
+      render: (v) => v || '-',
+      sorter: (a, b) => a.orders - b.orders,
+    },
+    {
+      title: 'ACOS',
+      dataIndex: 'acos',
+      align: 'center',
+      width: 70,
+      render: (v) => v || '-',
+      sorter: (a, b) => a.acos - b.acos,
+    },
+    {
+      title: 'ROAS',
+      dataIndex: 'roas',
+      align: 'center',
+      width: 70,
+      render: (v) => v || '-',
+      sorter: (a, b) => a.roas - b.roas,
     },
   ];
 
