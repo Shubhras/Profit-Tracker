@@ -161,11 +161,11 @@ function AdProductsDetails() {
         <div className="flex justify-center">
           <button
             type="button"
-            onClick={() => {
-              setSelectedBudget(record);
-              setBudgetValue(record?.dailyBudget || '');
-              setBudgetModal(true);
-            }}
+            // onClick={() => {
+            //   setSelectedBudget(record);
+            //   setBudgetValue(record?.dailyBudget || '');
+            //   setBudgetModal(true);
+            // }}
             className="group relative overflow-hidden px-3 py-[8px] rounded-2xl border border-transparent bg-transparent hover:border-[#dbeafe] hover:bg-[#f8fbff] transition-all duration-300"
           >
             {/* background */}

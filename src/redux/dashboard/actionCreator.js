@@ -223,7 +223,7 @@ export const getEstimatedFees = (payload) => {
 
     try {
       const response = await DataService.post('/amazon/estimated-fees/list/', payload);
-
+      console.log('API Response =>', response);
       if (response.data?.status === true || response.data?.status === 'success') {
         dispatch(estimatedFeesSuccess(response.data));
       } else {

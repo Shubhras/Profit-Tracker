@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Table, Tooltip, Tag, Dropdown, Checkbox } from 'antd';
-import { FilterOutlined, SettingOutlined, SearchOutlined, RightOutlined } from '@ant-design/icons';
+import { Button, Table, Tooltip, Tag, Dropdown, Checkbox, Switch } from 'antd';
+import { SettingOutlined, SearchOutlined, RightOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { getAdProducts } from '../../redux/advertising/actionCreator';
@@ -18,6 +18,7 @@ function AdProducts() {
 
   const [selectedRowKeys, setSelectedRowKeys] = React.useState([]);
   const [visibleColumns, setVisibleColumns] = React.useState([]);
+  const [stateFilter, setStateFilter] = useState('');
 
   const { loading, adsProductsData } = useSelector((state) => ({
     loading: state.advertising.loading,
@@ -28,9 +29,10 @@ function AdProducts() {
     dispatch(
       getAdProducts(pagination.current, pagination.pageSize, {
         search: debouncedSearch,
+        state: stateFilter,
       }),
     );
-  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch]);
+  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch, stateFilter]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -98,6 +100,15 @@ function AdProducts() {
           className="w-[13px] h-[13px] cursor-pointer accent-[#2563eb]"
         />
       ),
+    },
+    {
+      title: 'State',
+      dataIndex: 'state',
+      width: 70,
+      align: 'center',
+      fixed: 'left',
+
+      render: (v) => <Switch checked={v === 'ENABLED'} size="small" />,
     },
     {
       title: 'Image',
@@ -406,12 +417,15 @@ function AdProducts() {
               {/* RIGHT SIDE BUTTONS */}
               <div className="flex items-center gap-3">
                 {/* FILTER */}
-                <Button
-                  icon={<FilterOutlined />}
-                  className="!h-[30px] text-[13px] !px-5 !rounded-xl border border-[#dbe1e8] bg-white !text-[#111827] !font-medium !flex !items-center !justify-center"
+                <select
+                  value={stateFilter}
+                  onChange={(e) => setStateFilter(e.target.value)}
+                  className="h-[30px] px-3 pr-6 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
                 >
-                  Filters
-                </Button>
+                  <option value="">All State</option>
+                  <option value="ENABLED">Enabled</option>
+                  <option value="PAUSED">Paused</option>
+                </select>
 
                 {/* EXPORT */}
                 <Dropdown trigger={['click']} dropdownRender={() => manageColumnsDropdown} placement="bottomRight">

@@ -1,8 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Table, Tag, Tooltip, Modal, Switch } from 'antd';
 import { ExportOutlined, SearchOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { getKeywords, KeywordBidUpdate, getCampaignsRulesList } from '../../redux/advertising/actionCreator';
+import {
+  getKeywords,
+  KeywordBidUpdate,
+  getCampaignsRulesList,
+  getAdsGroup,
+} from '../../redux/advertising/actionCreator';
 
 function Keywords() {
   const dispatch = useDispatch();
@@ -14,6 +19,8 @@ function Keywords() {
     current: 1,
     pageSize: 10,
   });
+  const [selectedAdGroup, setSelectedAdGroup] = useState('');
+
   const [selectedKeyword, setSelectedKeyword] = React.useState(null);
   const [savingBid, setSavingBid] = React.useState(false);
 
@@ -34,7 +41,7 @@ function Keywords() {
       match_type: matchType || '',
 
       // future ke liye
-      ad_group_id: null,
+      ad_group_id: selectedAdGroup,
       // state: appliedFilters.state,
       // match_type: appliedFilters.match_type,
       // state: 'enabled',
@@ -45,7 +52,7 @@ function Keywords() {
     };
 
     dispatch(getKeywords(pagination.current, pagination.pageSize, payload));
-  }, [dispatch, pagination, debouncedSearch, selectedCampaign, matchType]);
+  }, [dispatch, pagination, debouncedSearch, selectedCampaign, matchType, selectedAdGroup]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -62,6 +69,7 @@ function Keywords() {
       setCampaigns(response.data || []);
     }
   };
+  const { adsGroupData } = useSelector((state) => state.advertising);
 
   useEffect(() => {
     fetchCampaigns();
@@ -95,6 +103,13 @@ function Keywords() {
       console.log(err);
     }
   };
+  useEffect(() => {
+    dispatch(
+      getAdsGroup(1, 4000, {
+        search: '',
+      }),
+    );
+  }, [dispatch]);
 
   const dataSource =
     keywordsData?.results?.map((item) => ({
@@ -475,8 +490,18 @@ function Keywords() {
                 </select>
 
                 {/* Ad Group */}
-                <select className="h-[30px] px-3 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none min-w-[130px]">
-                  <option>All Ad Groups</option>
+                <select
+                  value={selectedAdGroup}
+                  onChange={(e) => setSelectedAdGroup(e.target.value)}
+                  className="h-[30px] w-[170px] px-4 pr-8 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none cursor-pointer truncate"
+                >
+                  <option value="">All Ad Groups</option>
+
+                  {adsGroupData?.results?.map((item) => (
+                    <option key={item.ad_group_id} value={item.ad_group_id}>
+                      {item.name}
+                    </option>
+                  ))}
                 </select>
 
                 {/* Export */}

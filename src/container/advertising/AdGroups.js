@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Table, Tag, Tooltip, Modal, Switch } from 'antd';
-import { FilterOutlined, ExportOutlined, SearchOutlined } from '@ant-design/icons';
+import { Button, Table, Tag, Tooltip, Modal, Switch, Dropdown, Checkbox } from 'antd';
+import { ExportOutlined, SearchOutlined, SettingOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { getAdsGroup, getEditBid } from '../../redux/advertising/actionCreator';
 
@@ -17,6 +17,8 @@ function AdGroups() {
   const [selectedRowData, setSelectedRowData] = React.useState(null);
 
   const [selectedRowKeys, setSelectedRowKeys] = React.useState([]);
+  const [visibleColumns, setVisibleColumns] = useState([]);
+  const [stateFilter, setStateFilter] = useState('');
 
   const { adsGroupData, loading } = useSelector((state) => state.advertising);
 
@@ -24,10 +26,11 @@ function AdGroups() {
     dispatch(
       getAdsGroup(pagination.current, pagination.pageSize, {
         search: debouncedSearch,
+        state: stateFilter,
       }),
     );
     // }, [dispatch, pagination]);
-  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch]);
+  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch, stateFilter]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -322,6 +325,63 @@ function AdGroups() {
     },
   ];
 
+  useEffect(() => {
+    if (columns.length && visibleColumns.length === 0) {
+      setVisibleColumns(columns.map((col) => col.dataIndex || col.key || col.title));
+    }
+  }, []);
+  const columnOptions = columns
+    .filter((col) => col.dataIndex !== 'action')
+    .map((col) => ({
+      key: col.dataIndex || col.key || col.title,
+      label: typeof col.title === 'string' ? col.title : col.dataIndex || 'Column',
+    }));
+
+  const manageColumnsDropdown = (
+    <div className="w-[260px] bg-white rounded-xl shadow-xl border border-[#e5e7eb]">
+      <div className="flex items-center justify-between px-4 py-3 border-b">
+        <span className="font-medium text-[14px]">Manage Columns</span>
+
+        <button
+          type="button"
+          className="text-[#6366f1] text-[12px]"
+          onClick={() => setVisibleColumns(columnOptions.map((item) => item.key))}
+        >
+          Restore
+        </button>
+      </div>
+
+      <div className="max-h-[350px] overflow-y-auto">
+        {columnOptions.map((item) => (
+          <div key={item.key} className="flex items-center justify-between px-4 py-2 hover:bg-[#f9fafb]">
+            <span className="text-[13px] text-[#374151]">{item.label}</span>
+
+            <Checkbox
+              checked={visibleColumns.includes(item.key)}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setVisibleColumns((prev) => [...prev, item.key]);
+                } else {
+                  setVisibleColumns((prev) => prev.filter((c) => c !== item.key));
+                }
+              }}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const filteredColumns = columns.filter((col) => {
+    const key = col.dataIndex || col.key || col.title;
+
+    if (col.fixed === 'left' || col.fixed === 'right' || col.dataIndex === 'checkbox') {
+      return true;
+    }
+
+    return visibleColumns.includes(key);
+  });
+
   const handleSaveBid = async () => {
     if (!selectedRowData) return;
 
@@ -375,12 +435,23 @@ function AdGroups() {
               </div>
 
               <div className="flex items-center gap-3">
-                <Button
-                  icon={<FilterOutlined />}
-                  className="!h-[30px] text-[13px] !px-5 !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium hover:!border-[#2563eb] hover:!text-[#2563eb] !shadow-sm !flex !items-center !justify-center"
+                <select
+                  value={stateFilter}
+                  onChange={(e) => setStateFilter(e.target.value)}
+                  className="h-[30px] px-3 pr-6 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
                 >
-                  Filters
-                </Button>
+                  <option value="">All State</option>
+                  <option value="ENABLED">Enabled</option>
+                  <option value="PAUSED">Paused</option>
+                </select>
+                <Dropdown trigger={['click']} dropdownRender={() => manageColumnsDropdown} placement="bottomRight">
+                  <Button
+                    icon={<SettingOutlined />}
+                    className="!h-[30px] !flex !items-center !justify-center gap-1 text-[13px] !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium"
+                  >
+                    Manage Columns
+                  </Button>
+                </Dropdown>
 
                 <Button
                   type="primary"
@@ -395,7 +466,7 @@ function AdGroups() {
 
           {/* Table */}
           <Table
-            columns={columns}
+            columns={filteredColumns}
             dataSource={dataSource}
             loading={loading}
             showSorterTooltip={false}
