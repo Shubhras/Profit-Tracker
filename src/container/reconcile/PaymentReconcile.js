@@ -18,6 +18,7 @@ import { getAmazonTransactionDetail } from '../../redux/reconcilePayment/actionC
 function PaymentReconcile() {
   const dispatch = useDispatch();
 
+  // const transactionData = useSelector((state) => state.reconcilePayment?.amazontransation);
   const transactionData = useSelector((state) => state.reconcilePayment?.amazontransation);
   console.log('transactionData', transactionData);
   const reduxState = useSelector((state) => state);
@@ -28,16 +29,13 @@ function PaymentReconcile() {
 
   console.log(reduxState);
   const loading = useSelector((state) => state.reconcilePayment?.loading);
+
   useEffect(() => {
-    dispatch(
-      getAmazonTransactionDetail({
-        page: pagination.current,
-        page_size: pagination.pageSize,
-      }),
-    );
+    dispatch(getAmazonTransactionDetail(pagination.current, pagination.pageSize));
   }, [dispatch, pagination.current, pagination.pageSize]);
+
   const dataSource =
-    transactionData?.map((item) => ({
+    transactionData?.data?.map((item) => ({
       key: item.id,
 
       id: item.id,
@@ -136,18 +134,21 @@ function PaymentReconcile() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f6f8fc] p-3">
+    <div className="min-h-screen bg-[#f6f8fc] p-3 md:p-2 sm:p-1">
+      {' '}
       {/* HEADER */}
-      <div className="mb-2 flex items-start justify-between">
+      <div className="mb-2 flex items-start justify-between lg:flex-col lg:gap-2">
         <div>
-          <h1 className="text-[24px] font-semibold text-[#111827] leading-none mb-1">Payments</h1>
+          <h1 className="text-[24px] md:text-[20px] sm:text-[18px] font-semibold text-[#111827] leading-none mb-1">
+            Payments
+          </h1>
 
           <p className="mt-1 text-[11px] text-[#6b7280]">
             View all payments transferred by marketplaces. Track expected vs received and identify gaps.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-[11px] text-[#6b7280]">
+        <div className="flex items-center gap-2 text-[11px] text-[#6b7280] lg:flex-wrap">
           <span>Payment Reconciliation</span>
 
           <span>{'>'}</span>
@@ -155,9 +156,9 @@ function PaymentReconcile() {
           <span className="font-semibold text-[#2563eb]">Payments</span>
         </div>
       </div>
-
       {/* TOP CARDS */}
-      <div className="grid grid-cols-5 gap-2 mb-3">
+      <div className="grid grid-cols-5 lg:grid-cols-2 md:grid-cols-1 gap-2 mb-3">
+        {' '}
         {[
           {
             title: 'Total Expected',
@@ -204,7 +205,8 @@ function PaymentReconcile() {
             icon: <HourglassOutlined />,
           },
         ].map((item, index) => (
-          <div key={index} className="rounded-xl border border-[#e5e7eb] bg-white px-3 py-2">
+          <div key={index} className="rounded-xl border border-[#e5e7eb] bg-white px-3 py-2 sm:px-2">
+            {' '}
             <div className="flex items-center gap-2">
               {/* Icon */}
               <div
@@ -228,13 +230,13 @@ function PaymentReconcile() {
           </div>
         ))}
       </div>
-
       {/* MAIN */}
-      <div className="grid grid-cols-[1fr_280px] gap-3">
+      <div className="grid grid-cols-[1fr_280px] lg:grid-cols-1 gap-3">
         {/* LEFT */}
         <div className="rounded-2xl border border-[#e5e7eb] bg-white overflow-hidden">
           {/* TABS */}
-          <div className="flex items-center gap-6 border-b border-[#edf0f2] px-3 py-2">
+          <div className="flex items-center gap-6 border-b border-[#edf0f2] px-3 py-2 sm:flex-wrap sm:gap-3">
+            {' '}
             {['All Payments', 'Unreconciled Payments'].map((item, index) => (
               <button
                 key={index}
@@ -249,35 +251,41 @@ function PaymentReconcile() {
           </div>
 
           {/* FILTERS */}
-          <div className="flex items-center gap-3 border-b border-[#edf0f2] px-4 py-3">
-            <select className="py-1 rounded-l border border-[#e5e7eb] px-2 text-[10px] outline-none">
+          <div className="flex items-center gap-3 border-b border-[#edf0f2] px-4 py-3 lg:flex-wrap">
+            {' '}
+            <select
+              className="py-1 rounded-l border border-[#e5e7eb] px-2 text-[10px] outline-none md:w-full
+"
+            >
               <option>All Marketplaces</option>
             </select>
-
-            <select className="py-1 rounded-l border border-[#e5e7eb] px-2 text-[10px] outline-none">
+            <select
+              className="py-1 rounded-l border border-[#e5e7eb] px-2 text-[10px] outline-none md:w-full
+"
+            >
               <option>All Types</option>
             </select>
-
-            <select className="py-1 rounded-l border border-[#e5e7eb] px-2 text-[10px] outline-none">
+            <select
+              className="py-1 rounded-l border border-[#e5e7eb] px-2 text-[10px] outline-none md:w-full
+"
+            >
               <option>All Status</option>
             </select>
-
             <input
               type="text"
               value="01/05/2026 - 31/05/2026"
               readOnly
-              className="h-[30px] w-[170px] rounded-l border border-[#e5e7eb] px-2 text-[10px] outline-none"
+              className="h-[30px] w-[170px] rounded-l border border-[#e5e7eb] px-2 text-[10px] outline-none md:w-full
+"
             />
-
-            <div className="relative ml-auto">
+            <div className="relative ml-auto md:ml-0 md:w-full">
               <input
                 placeholder="Search Payment ID / Reference ID"
-                className="h-[34px] w-[200px] rounded-l border border-[#e5e7eb] pl-3 pr-9 text-[11px] outline-none"
+                className="h-[34px] w-[200px] md:w-full rounded-l border border-[#e5e7eb] pl-3 pr-9 text-[11px] outline-none"
               />
 
               <SearchOutlined className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-[#9ca3af]" />
             </div>
-
             {/* <button
               type="button"
               className="flex py-1 items-center gap-2 rounded-l border border-[#e5e7eb] px-3 text-[10px] font-medium text-[#374151]"
@@ -288,39 +296,41 @@ function PaymentReconcile() {
           </div>
 
           {/* TABLE */}
-          <Table
-            columns={columns}
-            dataSource={dataSource}
-            loading={loading}
-            showSorterTooltip={false}
-            tableLayout="fixed"
-            pagination={{
-              current: pagination.current,
-              pageSize: pagination.pageSize,
-              total: 333, // temporary
-              showSizeChanger: true,
-              pageSizeOptions: ['10', '20', '50', '100'],
-              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
-            }}
-            onChange={(pag) => {
-              setPagination({
-                current: pag.current,
-                pageSize: pag.pageSize,
-              });
-            }}
-            scroll={{ x: 800 }}
-            size="middle"
-            bordered={false}
-            className="
+          <div className="overflow-x-auto w-full">
+            <Table
+              columns={columns}
+              dataSource={dataSource}
+              loading={loading}
+              showSorterTooltip={false}
+              tableLayout="fixed"
+              pagination={{
+                current: pagination.current,
+                pageSize: pagination.pageSize,
+                total: transactionData?.pagination?.total_records || 0,
+                showSizeChanger: true,
+                pageSizeOptions: ['10', '20', '50', '100'],
+                showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
+              }}
+              onChange={(pag) => {
+                setPagination({
+                  current: pag.current,
+                  pageSize: pag.pageSize,
+                });
+              }}
+              scroll={{ x: 800, y: 500 }}
+              size="middle"
+              bordered={false}
+              className="
     [&_.ant-table-thead>tr>th]:!text-[12px]
     [&_.ant-table-thead>tr>th]:!font-semibold
     [&_.ant-table-tbody>tr>td]:!text-[12px]
   "
-          />
+            />
+          </div>
         </div>
 
         {/* RIGHT SIDEBAR */}
-        <div className="space-y-2">
+        <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-2 lg:space-y-0 md:grid-cols-1">
           {/* SUMMARY */}
           <div className="rounded-2xl border border-[#e5e7eb] bg-white p-3">
             <h2 className="text-[15px] font-semibold text-[#111827]">Payment Summary</h2>
@@ -332,7 +342,7 @@ function PaymentReconcile() {
                 ['Pending In Transit', '₹ 29,480.00'],
                 ['Shortfall / Unreconciled', '₹ 35,149.90'],
               ].map((item, index) => (
-                <div key={index} className="flex items-center justify-between">
+                <div key={index} className="flex items-center justify-between gap-2">
                   <span className="text-[12px] text-[#6b7280]">{item[0]}</span>
 
                   <span className="text-[11px] font-semibold text-[#111827]">{item[1]}</span>
@@ -381,7 +391,7 @@ function PaymentReconcile() {
             <div className="mt-3 space-y-2">
               <button
                 type="button"
-                className="flex w-full items-center gap-3 rounded-xl border border-[#e5e7eb] px-3 py-2 text-left hover:bg-[#fafafa]"
+                className="flex w-full items-center gap-3 sm:gap-2 rounded-xl border border-[#e5e7eb] px-3 py-2 text-left hover:bg-[#fafafa]"
               >
                 <DownloadOutlined className="text-[15px] text-[#2563eb]" />
 

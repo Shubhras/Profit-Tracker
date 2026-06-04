@@ -30,18 +30,6 @@ const initialState = {
   feeleaksReconData: [],
   feeleaksReconLoading: false,
   feeleaksReconError: null,
-
-  returnsummaryData: [],
-  returnsummaryLoading: false,
-  returnsummaryError: null,
-
-  downloadsData: [],
-  downloadsLoading: false,
-  downloadsError: null,
-
-  organisationreportData: [],
-  organisationreportLoading: false,
-  organisationreportError: null,
 };
 
 const {
@@ -74,18 +62,6 @@ const {
   FEELEAKS_RECON_BEGIN,
   FEELEAKS_RECON_SUCCESS,
   FEELEAKS_RECON_ERR,
-
-  RETURN_SUMMARY_BEGIN,
-  RETURN_SUMMARY_SUCCESS,
-  RETURN_SUMMARY_ERR,
-
-  DOWNLOADS_BEGIN,
-  DOWNLOADS_SUCCESS,
-  DOWNLOADS_ERR,
-
-  ORGANISATION_REPORT_BEGIN,
-  ORGANISATION_REPORT_SUCCESS,
-  ORGANISATION_REPORT_ERR,
 
   AMAZON_TRANSACTION_BEGIN,
   AMAZON_TRANSACTION_SUCCESS,
@@ -181,16 +157,17 @@ const reconcilePaymentReducer = (state = initialState, action) => {
     case SETTLED_ORDER_SUCCESS:
       return {
         ...state,
-        settledData: data,
+        settledData: action.data,
         settledLoading: false,
       };
 
     case SETTLED_ORDER_ERR:
       return {
         ...state,
-        settledError: err,
+        settledError: action.err,
         settledLoading: false,
       };
+
     case UNSETTLED_ORDER_BEGIN:
       return {
         ...state,
@@ -289,66 +266,6 @@ const reconcilePaymentReducer = (state = initialState, action) => {
         feeleaksReconLoading: false,
       };
 
-    case RETURN_SUMMARY_BEGIN:
-      return {
-        ...state,
-        returnsummaryLoading: true,
-      };
-
-    case RETURN_SUMMARY_SUCCESS:
-      return {
-        ...state,
-        returnsummaryData: data,
-        returnsummaryLoading: false,
-      };
-
-    case RETURN_SUMMARY_ERR:
-      return {
-        ...state,
-        returnsummaryError: err,
-        returnsummaryLoading: false,
-      };
-
-    case DOWNLOADS_BEGIN:
-      return {
-        ...state,
-        downloadsLoading: true,
-      };
-
-    case DOWNLOADS_SUCCESS:
-      return {
-        ...state,
-        downloadsData: data,
-        downloadsLoading: false,
-      };
-
-    case DOWNLOADS_ERR:
-      return {
-        ...state,
-        downloadsError: err,
-        downloadsLoading: false,
-      };
-
-    case ORGANISATION_REPORT_BEGIN:
-      return {
-        ...state,
-        organisationreporLoading: true,
-      };
-
-    case ORGANISATION_REPORT_SUCCESS:
-      return {
-        ...state,
-        organisationreporData: data,
-        organisationreporLoading: false,
-      };
-
-    case ORGANISATION_REPORT_ERR:
-      return {
-        ...state,
-        organisationreporError: err,
-        organisationreporLoading: false,
-      };
-
     case AMAZON_TRANSACTION_BEGIN:
       return {
         ...state,
@@ -358,7 +275,7 @@ const reconcilePaymentReducer = (state = initialState, action) => {
     case AMAZON_TRANSACTION_SUCCESS:
       return {
         ...state,
-        amazontransation: action.data.data,
+        amazontransation: action.data,
         loading: false,
       };
 

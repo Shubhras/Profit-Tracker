@@ -1,28 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
 import { Table, Button, Skeleton, Empty, Spin } from 'antd';
 import { ReloadOutlined, UploadOutlined } from '@ant-design/icons';
-import { getDownloads, getOrganisationReport } from '../../redux/reconcilePayment/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function Download() {
-  const dispatch = useDispatch();
-  const payload = {
-    email: 'bhavnaaprostore@gmail.com',
-  };
-
-  useEffect(() => {
-    dispatch(getOrganisationReport(payload));
-  }, []);
-
-  const handleExport = () => {
-    dispatch(
-      getDownloads({
-        email: payload.email,
-      }),
-    );
-  };
-
   const [loading, setLoading] = useState(false);
   useEffect(() => {
     setTimeout(() => setLoading(false), 800);
@@ -86,7 +67,7 @@ export default function Download() {
       align: 'center',
       render: () => (
         <Button
-          onClick={() => handleExport()}
+          // onClick={() => handleExport()}
           className="bg-blue-100 text-black-600 rounded-md flex items-center gap-1 border-none shadow-none"
         >
           Export

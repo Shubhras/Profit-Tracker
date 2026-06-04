@@ -31,18 +31,6 @@ const {
   feeleaksReconSuccess,
   feeleaksReconErr,
 
-  returnsummaryBegin,
-  returnsummarySuccess,
-  returnsummaryErr,
-
-  downloadsBegin,
-  downloadsSuccess,
-  downloadsErr,
-
-  organisationreportBegin,
-  organisationreportSuccess,
-  organisationreportErr,
-
   amazontransactionBegin,
   amazontransactionSuccess,
   amazontransactionErr,
@@ -123,8 +111,8 @@ export const getSettledOrders = (payload) => {
     dispatch(settledOrderBegin());
 
     try {
-      const response = await mockService(payload);
-      if (response.data.status === 'success') {
+      const response = await DataService.post('/amazon/order-settlement-dashboard/', payload);
+      if (response.data.status === true) {
         dispatch(settledOrderSuccess(response.data));
       } else {
         dispatch(settledOrderErr(response.data.message || 'Something went wrong'));
@@ -225,65 +213,11 @@ export const getFeeleaksconciliation = (payload) => {
   };
 };
 
-export const getReturnSummary = (payload) => {
-  return async (dispatch) => {
-    dispatch(returnsummaryBegin());
-
-    try {
-      const response = await mockService(payload);
-
-      if (response.data.status === 'success') {
-        dispatch(returnsummarySuccess(response.data));
-      } else {
-        dispatch(returnsummaryErr('Something went wrong'));
-      }
-    } catch (err) {
-      dispatch(returnsummaryErr(err.message));
-    }
-  };
-};
-
-export const getDownloads = (payload) => {
-  return async (dispatch) => {
-    dispatch(downloadsBegin());
-
-    try {
-      const response = await mockService(payload);
-
-      if (response.data.status === 'success') {
-        dispatch(downloadsSuccess(response.data));
-      } else {
-        dispatch(downloadsErr('Something went wrong'));
-      }
-    } catch (err) {
-      dispatch(downloadsErr(err.message));
-    }
-  };
-};
-
-export const getOrganisationReport = (payload) => {
-  return async (dispatch) => {
-    dispatch(organisationreportBegin());
-
-    try {
-      const response = await mockService(payload);
-
-      if (response.data.status === 'success') {
-        dispatch(organisationreportSuccess(response.data));
-      } else {
-        dispatch(organisationreportErr('Something went wrong'));
-      }
-    } catch (err) {
-      dispatch(organisationreportErr(err.message));
-    }
-  };
-};
-
-export const getAmazonTransactionDetail = (payload) => {
+export const getAmazonTransactionDetail = (page = 1, pageSize = 10) => {
   return async (dispatch) => {
     dispatch(amazontransactionBegin());
     try {
-      const response = await DataService.get('/amazon/amazon-transactions-details/', payload);
+      const response = await DataService.get(`/amazon/amazon-transactions-details/?page=${page}&page_size=${pageSize}`);
       if (response.data.status === true) {
         dispatch(amazontransactionSuccess(response.data));
       } else {

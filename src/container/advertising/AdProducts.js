@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Table, Tooltip, Tag, Dropdown, Checkbox, Switch } from 'antd';
-import { SettingOutlined, SearchOutlined, RightOutlined } from '@ant-design/icons';
+import { SettingOutlined, SearchOutlined, RightOutlined, ExportOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { getAdProducts } from '../../redux/advertising/actionCreator';
@@ -427,7 +427,6 @@ function AdProducts() {
                   <option value="PAUSED">Paused</option>
                 </select>
 
-                {/* EXPORT */}
                 <Dropdown trigger={['click']} dropdownRender={() => manageColumnsDropdown} placement="bottomRight">
                   <Button
                     icon={<SettingOutlined />}
@@ -436,6 +435,13 @@ function AdProducts() {
                     Manage Columns
                   </Button>
                 </Dropdown>
+                <Button
+                  type="primary"
+                  icon={<ExportOutlined />}
+                  className="!h-[30px] text-[13px] !rounded-xl !bg-[#2563eb] !font-semibold !flex !items-center !justify-center"
+                >
+                  Export
+                </Button>
               </div>
             </div>
           </div>

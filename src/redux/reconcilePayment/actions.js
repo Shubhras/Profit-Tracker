@@ -34,18 +34,6 @@ const actions = {
   FEELEAKS_RECON_SUCCESS: 'FEELEAKS_RECON_SUCCESS',
   FEELEAKS_RECON_ERR: 'FEELEAKS_RECON_ERR',
 
-  RETURN_SUMMARY_BEGIN: 'RETURN_SUMMARY_BEGIN',
-  RETURN_SUMMARY_SUCCESS: 'RETURN_SUMMARY_SUCCESS',
-  RETURN_SUMMARY_ERR: 'RETURN_SUMMARY_ERR',
-
-  DOWNLOADS_BEGIN: 'DOWNLOADS_BEGIN',
-  DOWNLOADS_SUCCESS: 'DOWNLOADS_SUCCESS',
-  DOWNLOADS_ERR: 'DOWNLOADS_ERR',
-
-  ORGANISATION_REPORT_BEGIN: 'ORGANISATION_REPORT_BEGIN',
-  ORGANISATION_REPORT_SUCCESS: 'ORGANISATION_REPORT_SUCCESS',
-  ORGANISATION_REPORT_ERR: 'ORGANISATION_REPORT_ERR',
-
   AMAZON_TRANSACTION_BEGIN: 'AMAZON_TRANSACTION_BEGIN',
   AMAZON_TRANSACTION_SUCCESS: 'AMAZON_TRANSACTION_SUCCESS',
   AMAZON_TRANSACTION_ERR: 'AMAZON_TRANSACTION_ERR',
@@ -175,48 +163,6 @@ const actions = {
 
   feeleaksReconErr: (err) => ({
     type: actions.FEELEAKS_RECON_ERR,
-    err,
-  }),
-
-  returnsummaryBegin: () => ({
-    type: actions.RETURN_SUMMARY_BEGIN,
-  }),
-
-  returnsummarySuccess: (data) => ({
-    type: actions.RETURN_SUMMARY_SUCCESS,
-    data,
-  }),
-
-  returnsummaryErr: (err) => ({
-    type: actions.RETURN_SUMMARY_ERR,
-    err,
-  }),
-
-  downloadsBegin: () => ({
-    type: actions.DOWNLOADS_BEGIN,
-  }),
-
-  downloadsSuccess: (data) => ({
-    type: actions.DOWNLOADS_SUCCESS,
-    data,
-  }),
-
-  downloadsErr: (err) => ({
-    type: actions.DOWNLOADS_ERR,
-    err,
-  }),
-
-  organisationreportBegin: () => ({
-    type: actions.ORGANISATION_REPORT_BEGIN,
-  }),
-
-  organisationreportSuccess: (data) => ({
-    type: actions.ORGANISATION_REPORT_SUCCESS,
-    data,
-  }),
-
-  organisationreportErr: (err) => ({
-    type: actions.ORGANISATION_REPORT_ERR,
     err,
   }),
 
