@@ -567,3 +567,159 @@ class AmazonListingItemAdmin(admin.ModelAdmin):
     ordering = ("-created_at",)
 
     list_per_page = 50
+    
+
+# ==========================================
+# Related Identifier Inline
+# ==========================================
+
+class AmazonTransactionRelatedIdentifierInline(admin.TabularInline):
+    model = AmazonTransactionRelatedIdentifier
+    extra = 0
+
+
+# ==========================================
+# Breakdown Inline
+# ==========================================
+
+class AmazonTransactionBreakdownInline(admin.TabularInline):
+    model = AmazonTransactionBreakdown
+    extra = 0
+    fk_name = "transaction"
+
+
+# ==========================================
+# Context Inline
+# ==========================================
+
+class AmazonTransactionContextInline(admin.TabularInline):
+    model = AmazonTransactionContext
+    extra = 0
+
+
+# ==========================================
+# Amazon Transaction Admin
+# ==========================================
+
+@admin.register(AmazonTransaction)
+class AmazonTransactionAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "id",
+        "transaction_id",
+        "transaction_type",
+        "transaction_status",
+        "total_amount",
+        "currency_code",
+        "posted_date",
+        "amazon_account",
+        "created_at",
+    )
+
+    list_filter = (
+        "transaction_type",
+        "transaction_status",
+        "currency_code",
+        "posted_date",
+        "created_at",
+    )
+
+    search_fields = (
+        "transaction_id",
+        "description",
+    )
+
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+        "raw_payload",
+    )
+
+    inlines = [
+        AmazonTransactionRelatedIdentifierInline,
+        AmazonTransactionBreakdownInline,
+        AmazonTransactionContextInline,
+    ]
+
+    ordering = ("-posted_date",)
+
+    date_hierarchy = "posted_date"
+
+
+# ==========================================
+# Related Identifier Admin
+# ==========================================
+
+@admin.register(AmazonTransactionRelatedIdentifier)
+class AmazonTransactionRelatedIdentifierAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "id",
+        "transaction",
+        "identifier_name",
+        "identifier_value",
+    )
+
+    search_fields = (
+        "identifier_name",
+        "identifier_value",
+        "transaction__transaction_id",
+    )
+
+
+# ==========================================
+# Breakdown Admin
+# ==========================================
+
+@admin.register(AmazonTransactionBreakdown)
+class AmazonTransactionBreakdownAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "id",
+        "transaction",
+        "breakdown_type",
+        "amount",
+        "currency_code",
+        "parent",
+    )
+
+    list_filter = (
+        "breakdown_type",
+        "currency_code",
+    )
+
+    search_fields = (
+        "transaction__transaction_id",
+        "breakdown_type",
+    )
+
+
+# ==========================================
+# Context Admin
+# ==========================================
+
+@admin.register(AmazonTransactionContext)
+class AmazonTransactionContextAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "id",
+        "transaction",
+        "context_type",
+        "asin",
+        "sku",
+        "quantity_shipped",
+        "fulfillment_network",
+    )
+
+    list_filter = (
+        "context_type",
+        "fulfillment_network",
+    )
+
+    search_fields = (
+        "asin",
+        "sku",
+        "transaction__transaction_id",
+    )
+    
+        

@@ -783,4 +783,217 @@ class AmazonListingItem(models.Model):
 
 
 
-        
+class AmazonTransaction(models.Model):
+
+    amazon_account = models.ForeignKey(
+        AmazonAccount,
+        on_delete=models.CASCADE,
+        related_name="transactions"
+    )
+
+    transaction_id = models.CharField(
+        max_length=255,
+        unique=True
+    )
+
+    transaction_type = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    transaction_status = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
+
+    description = models.TextField(
+        null=True,
+        blank=True
+    )
+
+    posted_date = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    total_amount = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+
+    currency_code = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True
+    )
+
+    raw_payload = models.JSONField(
+        default=dict,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.transaction_id
+    
+
+class AmazonTransactionRelatedIdentifier(models.Model):
+
+    transaction = models.ForeignKey(
+        AmazonTransaction,
+        on_delete=models.CASCADE,
+        related_name="related_identifiers"
+    )
+
+    identifier_name = models.CharField(
+        max_length=255
+    )
+
+    identifier_value = models.CharField(
+        max_length=255
+    )    
+    
+    
+class AmazonTransactionBreakdown(models.Model):
+
+    transaction = models.ForeignKey(
+        AmazonTransaction,
+        on_delete=models.CASCADE,
+        related_name="breakdowns"
+    )
+
+    parent = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="children"
+    )
+
+    breakdown_type = models.CharField(
+        max_length=255
+    )
+
+    amount = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+
+    currency_code = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True
+    )    
+
+
+class AmazonTransactionContext(models.Model):
+
+    transaction = models.ForeignKey(
+        AmazonTransaction,
+        on_delete=models.CASCADE,
+        related_name="contexts"
+    )
+
+    context_type = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    # ====================================
+    # Product Context
+    # ====================================
+
+    asin = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    sku = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    quantity_shipped = models.IntegerField(
+        null=True,
+        blank=True
+    )
+
+    fulfillment_network = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
+
+    # ====================================
+    # Deferred Context
+    # ====================================
+
+    deferral_reason = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    maturity_date = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    # ====================================
+    # Amazon Pay Context
+    # ====================================
+
+    store_name = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    order_type = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    channel = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    # ====================================
+    # Raw Backup
+    # ====================================
+
+    raw_context = models.JSONField(
+        default=dict,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        null=True,
+        blank=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        null=True,
+        blank=True
+    )
+
+    def __str__(self):
+        return f"{self.context_type} - {self.transaction.transaction_id}"    
+    
+            

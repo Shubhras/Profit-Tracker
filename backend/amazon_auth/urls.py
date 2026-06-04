@@ -10,6 +10,9 @@ from amazon_ads.views import AmazonAdsCallbackView
 from .product_pricing import  *
 from .catelog_details import *
 from .listing_items import *
+from .orders import *  
+from .feesestimate import *
+from .transations import *
 
 
 urlpatterns = [
@@ -31,6 +34,12 @@ urlpatterns = [
     path('orders/<str:order_id>/address/', views.get_order_address, name='get_order_address'),
     path('orders/<str:order_id>/orderItems/live/', views.get_order_items, name='get_order_items_live'),
     path('orders/<str:order_id>/orderItems/', views.list_db_order_items, name='list_db_order_items'),
+    
+    path(
+        'order-processing-dashboard/',
+        OrderProcessingDashboardAPIView.as_view(),
+        name='order-processing-dashboard'
+    ),
 
 
     #finance
@@ -89,6 +98,24 @@ urlpatterns = [
     path("export-amazon-listing-excel/",export_amazon_listing_excel,name="export_amazon_listing_excel"),
 
     path("upload-amazon-listing-excel/",upload_amazon_listing_excel,name="upload_amazon_listing_excel",),
+    
+    path(
+        "estimated-fees/list/",
+        AmazonEstimatedFeeListView.as_view(),
+        name="estimated-fees-list"
+    ),
+    
+    path(
+        "amazon/transactions/-sync/",
+        AmazonTransactionsListView.as_view(),
+        name="amazon-transactions"
+    ),
+    
+    path(
+        "amazon-transactions-details/",
+        AmazonTransactionListView.as_view(),
+        name="amazon-transactions"
+    ),
  
 ]
 

@@ -856,7 +856,8 @@ class AdsAdGroupListView(APIView):
         )
 
         queryset = AdsAdGroup.objects.filter(
-            amazon_account__user=user
+            amazon_account__user=user,
+            amazon_account__is_primary=True
         ).select_related(
             "amazon_account",
             "campaign"
@@ -1206,12 +1207,20 @@ class ProductSKUReportView(APIView):
         ).order_by("-id")
 
         # GROUP BY SKU
+        
         queryset = queryset.values(
 
             "sku",
-            "asin"
+            "asin",
+            "state"
 
         ).annotate(
+        # queryset = queryset.values(
+
+        #     "sku",
+        #     "asin"
+
+        # ).annotate(
 
             item_name=Subquery(
                 listing_queryset.values("item_name")[:1]
@@ -1998,10 +2007,146 @@ class QueryAdsView(APIView):
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Q
+from django.db.models import (
+    Q,
+    Sum,
+    Count,
+    Avg,
+    FloatField
+)
 from django.core.paginator import Paginator
-
+from django.db.models.functions import Coalesce
 from .models import SearchTermMetric
+
+
+# class SearchTermMetricListView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request):
+
+#         data = request.data
+
+#         filters = data.get("filters", {})
+#         pagination = data.get("pagination", {})
+
+#         page_no = int(pagination.get("pageNo", 1))
+#         page_size = int(pagination.get("pageSize", 10))
+
+#         queryset = SearchTermMetric.objects.select_related(
+#             "campaign",
+#             "campaign__amazon_account"
+#         ).all().order_by("-report_date")
+
+#         # ---------------- SEARCH ----------------
+
+#         search = filters.get("search")
+
+#         if search:
+#             queryset = queryset.filter(
+#                 Q(search_term__icontains=search) |
+#                 Q(campaign__name__icontains=search)
+#             )
+
+#         # ---------------- FILTERS ----------------
+
+#         campaign_id = filters.get("campaign_id")
+#         if campaign_id:
+#             queryset = queryset.filter(campaign_id=campaign_id)
+
+#         from_date = filters.get("from_date")
+#         to_date = filters.get("to_date")
+
+#         if from_date and to_date:
+#             queryset = queryset.filter(
+#                 report_date__range=[from_date, to_date]
+#             )
+#         elif from_date:
+#             queryset = queryset.filter(report_date__gte=from_date)
+#         elif to_date:
+#             queryset = queryset.filter(report_date__lte=to_date)
+
+#         min_acos = filters.get("min_acos")
+#         max_acos = filters.get("max_acos")
+
+#         if min_acos not in [None, ""]:
+#             queryset = queryset.filter(acos__gte=min_acos)
+
+#         if max_acos not in [None, ""]:
+#             queryset = queryset.filter(acos__lte=max_acos)
+
+#         min_roas = filters.get("min_roas")
+#         max_roas = filters.get("max_roas")
+
+#         if min_roas not in [None, ""]:
+#             queryset = queryset.filter(roas__gte=min_roas)
+
+#         if max_roas not in [None, ""]:
+#             queryset = queryset.filter(roas__lte=max_roas)
+
+#         # ---------------- SORTING ----------------
+
+#         sort_by = filters.get("sort_by", "report_date")
+#         sort_order = filters.get("sort_order", "desc")
+
+#         allowed_sort_fields = [
+#             "report_date",
+#             "impressions",
+#             "clicks",
+#             "cost",
+#             "sales",
+#             "orders",
+#             "acos",
+#             "roas",
+#         ]
+
+#         if sort_by not in allowed_sort_fields:
+#             sort_by = "report_date"
+
+#         if sort_order == "desc":
+#             sort_by = f"-{sort_by}"
+
+#         queryset = queryset.order_by(sort_by)
+
+#         # ---------------- PAGINATION ----------------
+
+#         paginator = Paginator(queryset, page_size)
+#         page_obj = paginator.get_page(page_no)
+
+#         results = []
+
+#         for item in page_obj:
+
+#             results.append({
+#                 "id": item.id,
+#                 "campaign_id": item.campaign.id if item.campaign else None,
+#                 "campaign_name": item.campaign.name if item.campaign else None,
+#                 "search_term": item.search_term,
+#                 "report_date": item.report_date,
+#                 "impressions": item.impressions,
+#                 "clicks": item.clicks,
+#                 "cost": item.cost,
+#                 "sales": item.sales,
+#                 "orders": item.orders,
+#                 "acos": item.acos,
+#                 "roas": item.roas,
+#                 "raw_data": item.raw_data,
+#             })
+
+#         return Response({
+#             "status": True,
+#             "message": "Search term metrics fetched successfully",
+#             "data": results,
+#             "pagination": {
+#                 "pageNo": page_no,
+#                 "pageSize": page_size,
+#                 "totalPages": paginator.num_pages,
+#                 "totalItems": paginator.count,
+#             }
+#         })
+    
+
+
+
 
 
 class SearchTermMetricListView(APIView):
@@ -2020,9 +2165,11 @@ class SearchTermMetricListView(APIView):
         queryset = SearchTermMetric.objects.select_related(
             "campaign",
             "campaign__amazon_account"
-        ).all().order_by("-report_date")
+        ).all()
 
-        # ---------------- SEARCH ----------------
+        # =========================================================
+        # SEARCH
+        # =========================================================
 
         search = filters.get("search")
 
@@ -2032,11 +2179,27 @@ class SearchTermMetricListView(APIView):
                 Q(campaign__name__icontains=search)
             )
 
-        # ---------------- FILTERS ----------------
+        # =========================================================
+        # FILTERS
+        # =========================================================
 
         campaign_id = filters.get("campaign_id")
+
         if campaign_id:
-            queryset = queryset.filter(campaign_id=campaign_id)
+            queryset = queryset.filter(
+                campaign__campaign_id=campaign_id
+            )
+
+        # ---------------- MATCH TYPE FILTER ----------------
+
+        match_types = filters.get("match_types", [])
+
+        if match_types:
+            queryset = queryset.filter(
+                raw_data__matchType__in=match_types
+            )
+
+        # ---------------- DATE FILTER ----------------
 
         from_date = filters.get("from_date")
         to_date = filters.get("to_date")
@@ -2045,33 +2208,156 @@ class SearchTermMetricListView(APIView):
             queryset = queryset.filter(
                 report_date__range=[from_date, to_date]
             )
+
         elif from_date:
-            queryset = queryset.filter(report_date__gte=from_date)
+            queryset = queryset.filter(
+                report_date__gte=from_date
+            )
+
         elif to_date:
-            queryset = queryset.filter(report_date__lte=to_date)
+            queryset = queryset.filter(
+                report_date__lte=to_date
+            )
+
+        # ---------------- ACOS FILTER ----------------
 
         min_acos = filters.get("min_acos")
         max_acos = filters.get("max_acos")
 
         if min_acos not in [None, ""]:
-            queryset = queryset.filter(acos__gte=min_acos)
+            queryset = queryset.filter(
+                acos__gte=min_acos
+            )
 
         if max_acos not in [None, ""]:
-            queryset = queryset.filter(acos__lte=max_acos)
+            queryset = queryset.filter(
+                acos__lte=max_acos
+            )
+
+        # ---------------- ROAS FILTER ----------------
 
         min_roas = filters.get("min_roas")
         max_roas = filters.get("max_roas")
 
         if min_roas not in [None, ""]:
-            queryset = queryset.filter(roas__gte=min_roas)
+            queryset = queryset.filter(
+                roas__gte=min_roas
+            )
 
         if max_roas not in [None, ""]:
-            queryset = queryset.filter(roas__lte=max_roas)
+            queryset = queryset.filter(
+                roas__lte=max_roas
+            )
 
-        # ---------------- SORTING ----------------
+        # =========================================================
+        # TOP SUMMARY CARDS
+        # =========================================================
 
-        sort_by = filters.get("sort_by", "report_date")
-        sort_order = filters.get("sort_order", "desc")
+        summary = queryset.aggregate(
+
+            total_spend=Coalesce(
+                Sum("cost"),
+                0,
+                output_field=FloatField()
+            ),
+
+            total_impressions=Coalesce(
+                Sum("impressions"),
+                0
+            ),
+
+            total_clicks=Coalesce(
+                Sum("clicks"),
+                0
+            ),
+
+            total_orders=Coalesce(
+                Sum("orders"),
+                0
+            ),
+
+            total_sales=Coalesce(
+                Sum("sales"),
+                0,
+                output_field=FloatField()
+            ),
+
+            avg_acos=Coalesce(
+                Avg("acos"),
+                0,
+                output_field=FloatField()
+            )
+        )
+
+        # =========================================================
+        # MATCH TYPE DISTRIBUTION (PIE CHART)
+        # =========================================================
+
+        match_type_distribution = []
+
+        match_type_qs = (
+            queryset
+            .values("raw_data__matchType")
+            .annotate(
+                total=Count("id")
+            )
+            .order_by("-total")
+        )
+
+        total_terms_count = queryset.count()
+
+        for row in match_type_qs:
+
+            match_name = row["raw_data__matchType"] or "Unknown"
+
+            percentage = 0
+
+            if total_terms_count > 0:
+                percentage = round(
+                    (row["total"] / total_terms_count) * 100,
+                    2
+                )
+
+            match_type_distribution.append({
+                "match_type": match_name,
+                "count": row["total"],
+                "percentage": percentage
+            })
+
+        # =========================================================
+        # TOP PERFORMING TERMS
+        # =========================================================
+
+        top_terms_qs = (
+            queryset
+            .order_by("-sales")[:5]
+        )
+
+        top_performing_terms = []
+
+        for item in top_terms_qs:
+
+            top_performing_terms.append({
+                "search_term": item.search_term,
+                "sales": item.sales,
+                "orders": item.orders,
+                "acos": item.acos,
+                "roas": item.roas
+            })
+
+        # =========================================================
+        # SORTING
+        # =========================================================
+
+        sort_by = filters.get(
+            "sort_by",
+            "report_date"
+        )
+
+        sort_order = filters.get(
+            "sort_order",
+            "desc"
+        )
 
         allowed_sort_fields = [
             "report_date",
@@ -2092,35 +2378,125 @@ class SearchTermMetricListView(APIView):
 
         queryset = queryset.order_by(sort_by)
 
-        # ---------------- PAGINATION ----------------
+        # =========================================================
+        # PAGINATION
+        # =========================================================
 
         paginator = Paginator(queryset, page_size)
+
         page_obj = paginator.get_page(page_no)
 
         results = []
 
         for item in page_obj:
 
+            match_type = (
+                item.raw_data.get("matchType")
+                if item.raw_data else None
+            )
+
             results.append({
                 "id": item.id,
-                "campaign_id": item.campaign.id if item.campaign else None,
-                "campaign_name": item.campaign.name if item.campaign else None,
+
+                "campaign_id": (
+                    item.campaign.id
+                    if item.campaign else None
+                ),
+
+                "campaign_name": (
+                    item.campaign.name
+                    if item.campaign else None
+                ),
+
                 "search_term": item.search_term,
+
+                "match_type": match_type,
+
                 "report_date": item.report_date,
+
                 "impressions": item.impressions,
+
                 "clicks": item.clicks,
+
                 "cost": item.cost,
+
                 "sales": item.sales,
+
                 "orders": item.orders,
+
                 "acos": item.acos,
+
                 "roas": item.roas,
+
                 "raw_data": item.raw_data,
             })
 
+        # =========================================================
+        # FINAL RESPONSE
+        # =========================================================
+
         return Response({
+
             "status": True,
+
             "message": "Search term metrics fetched successfully",
+
+            # =====================================================
+            # NEW DASHBOARD RESPONSE
+            # =====================================================
+
+            "dashboard": {
+
+                # ---------------- TOP CARDS ----------------
+
+                "summary_cards": {
+
+                    "total_spend": round(
+                        summary["total_spend"],
+                        2
+                    ),
+
+                    "impressions": summary[
+                        "total_impressions"
+                    ],
+
+                    "clicks": summary[
+                        "total_clicks"
+                    ],
+
+                    "orders": summary[
+                        "total_orders"
+                    ],
+
+                    "sales": round(
+                        summary["total_sales"],
+                        2
+                    ),
+
+                    "acos": round(
+                        summary["avg_acos"],
+                        2
+                    )
+                },
+
+                # ---------------- PIE CHART ----------------
+
+                "match_type_distribution": {
+                    "total_terms": total_terms_count,
+                    "data": match_type_distribution
+                },
+
+                # ---------------- TOP TERMS ----------------
+
+                "top_performing_terms": top_performing_terms
+            },
+
+            # =====================================================
+            # EXISTING RESPONSE (UNCHANGED)
+            # =====================================================
+
             "data": results,
+
             "pagination": {
                 "pageNo": page_no,
                 "pageSize": page_size,
@@ -2128,8 +2504,8 @@ class SearchTermMetricListView(APIView):
                 "totalItems": paginator.count,
             }
         })
-    
-
+        
+        
 
 # views.py
 
@@ -2635,3 +3011,303 @@ class AdsTargetListAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+
+
+class CampaignNegativeTargetListView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    pagination_class = CustomPagination
+
+    def post(self, request):
+
+        user = request.user
+
+        data = request.data
+
+        amazon_account_id = data.get(
+            "amazon_account_id"
+        )
+
+        campaign_id = data.get(
+            "campaign_id"
+        )
+
+        negative_target_id = data.get(
+            "negative_target_id"
+        )
+
+        state = data.get(
+            "state"
+        )
+
+        expression_type = data.get(
+            "expression_type"
+        )
+
+        search = data.get(
+            "search"
+        )
+
+        ordering = data.get(
+            "ordering",
+            "-id"
+        )
+
+        queryset = AdsCampaignNegativeTarget.objects.filter(
+
+            amazon_account__user=user
+
+        ).select_related(
+
+            "amazon_account",
+            "campaign"
+
+        )
+
+        # ---------------------------------------------------
+        # AMAZON ACCOUNT FILTER
+        # ---------------------------------------------------
+
+        if amazon_account_id:
+
+            queryset = queryset.filter(
+                amazon_account_id=amazon_account_id
+            )
+
+        # ---------------------------------------------------
+        # CAMPAIGN FILTER
+        # ---------------------------------------------------
+
+        if campaign_id:
+
+            queryset = queryset.filter(
+                campaign__campaign_id=int(campaign_id)
+            )
+
+        # ---------------------------------------------------
+        # NEGATIVE TARGET FILTER
+        # ---------------------------------------------------
+
+        if negative_target_id:
+
+            queryset = queryset.filter(
+                negative_target_id=int(
+                    negative_target_id
+                )
+            )
+
+        # ---------------------------------------------------
+        # STATE FILTER
+        # ---------------------------------------------------
+
+        if state:
+
+            queryset = queryset.filter(
+                state__iexact=state
+            )
+
+        # ---------------------------------------------------
+        # EXPRESSION TYPE FILTER
+        # ---------------------------------------------------
+
+        if expression_type:
+
+            queryset = queryset.filter(
+                expression_type__iexact=
+                expression_type
+            )
+
+        # ---------------------------------------------------
+        # SEARCH
+        # ---------------------------------------------------
+
+        if search:
+
+            queryset = queryset.filter(
+
+                Q(campaign__name__icontains=search) |
+
+                Q(state__icontains=search) |
+
+                Q(serving_status__icontains=search) |
+
+                Q(expression_type__icontains=search) |
+
+                Q(negative_target_id__icontains=search)
+            )
+
+        # ---------------------------------------------------
+        # ORDERING
+        # ---------------------------------------------------
+
+        queryset = queryset.order_by(
+            ordering
+        )
+
+        # ---------------------------------------------------
+        # PAGINATION
+        # ---------------------------------------------------
+
+        paginator = self.pagination_class()
+
+        paginated_queryset = paginator.paginate_queryset(
+            queryset,
+            request
+        )
+
+        serializer = AdsCampaignNegativeTargetSerializer(
+            paginated_queryset,
+            many=True
+        )
+
+        return paginator.get_paginated_response(
+            serializer.data
+        )
+    
+
+
+# views.py
+
+from django.db.models import Q
+
+from rest_framework.views import APIView
+
+from rest_framework.response import Response
+
+from rest_framework.permissions import IsAuthenticated
+
+from amazon_ads.models import AdsNegativeKeyword
+
+from amazon_ads.serializers import (
+    AdsNegativeKeywordSerializer
+)
+
+
+class NegativeKeywordListAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        user = request.user
+
+        search = request.data.get("search")
+
+        campaign_id = request.data.get(
+            "campaign_id"
+        )
+
+        ad_group_id = request.data.get(
+            "ad_group_id"
+        )
+
+        state = request.data.get("state")
+
+        match_type = request.data.get(
+            "match_type"
+        )
+
+        page = int(
+            request.data.get("page", 1)
+        )
+
+        page_size = int(
+            request.data.get("page_size", 10)
+        )
+
+        queryset = AdsNegativeKeyword.objects.filter(
+            amazon_account__user=user
+        ).select_related(
+            "campaign",
+            "ad_group",
+            "amazon_account"
+        ).order_by(
+            "-id"
+        )
+
+        # -----------------------------------------
+        # SEARCH
+        # -----------------------------------------
+
+        if search:
+
+            queryset = queryset.filter(
+
+                Q(keyword_text__icontains=search) |
+
+                Q(
+                    campaign__name__icontains=search
+                ) |
+
+                Q(
+                    ad_group__name__icontains=search
+                ) |
+
+                Q(
+                    negative_keyword_id__icontains=search
+                )
+            )
+
+        # -----------------------------------------
+        # FILTERS
+        # -----------------------------------------
+
+        if campaign_id:
+
+            queryset = queryset.filter(
+                campaign__campaign_id=campaign_id
+            )
+
+        if ad_group_id:
+
+            queryset = queryset.filter(
+                ad_group__ad_group_id=ad_group_id
+            )
+
+        if state:
+
+            queryset = queryset.filter(
+                state=state
+            )
+
+        if match_type:
+
+            queryset = queryset.filter(
+                match_type=match_type
+            )
+
+        total_records = queryset.count()
+
+        start = (page - 1) * page_size
+
+        end = start + page_size
+
+        queryset = queryset[start:end]
+
+        serializer = AdsNegativeKeywordSerializer(
+            queryset,
+            many=True
+        )
+
+        return Response({
+
+            "status": True,
+
+            "message":
+            "Negative Keywords List",
+
+            "total_records":
+            total_records,
+
+            "page":
+            page,
+
+            "page_size":
+            page_size,
+
+            "data":
+            serializer.data
+        })
+    
+    

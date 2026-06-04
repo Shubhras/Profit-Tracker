@@ -328,3 +328,77 @@ class AdsBudgetRuleAdmin(admin.ModelAdmin):
             )
         }),
     )    
+
+@admin.register(AdsNegativeKeyword)
+class AdsNegativeKeywordAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "id",
+        "negative_keyword_id",
+        "keyword_text",
+        "match_type",
+        "campaign",
+        "ad_group",
+        "state",
+        "amazon_account",
+        "created_at"
+    )
+
+    search_fields = (
+        "keyword_text",
+        "negative_keyword_id",
+        "campaign__name",
+        "campaign__campaign_id",
+        "ad_group__name",
+        "ad_group__ad_group_id"
+    )
+
+    list_filter = (
+        "match_type",
+        "state",
+        "serving_status",
+        "amazon_account"
+    )
+
+    ordering = (
+        "-created_at",
+    )    
+
+
+
+@admin.register(AdsOptimizationRule)
+class AdsOptimizationRuleAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "id",
+        "optimization_rule_id",
+        "rule_name",
+        "rule_category",
+        "rule_sub_category",
+        "status",
+        "profile_id",
+        "created_at",
+    )
+
+    search_fields = (
+        "optimization_rule_id",
+        "rule_name",
+        "profile_id",
+    )
+
+    list_filter = (
+        "rule_category",
+        "rule_sub_category",
+        "status",
+        "created_at",
+    )
+
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+        "raw_data",
+    )
+
+    ordering = ("-created_at",)
+
+    list_per_page = 50

@@ -53,6 +53,118 @@ adapter = HTTPAdapter(
 
 session.mount("https://", adapter)
 
+# REPORT_CONFIGS = [
+
+#     {
+#         "report_type": "spCampaigns",
+
+#         "group_by": ["campaign"],
+
+#         "columns": [
+
+#             "date",
+#             "campaignId",
+#             "campaignName",
+#             "impressions",
+#             "clicks",
+#             "cost",
+#             "sales14d",
+#             "purchases14d",
+#             "unitsSoldClicks14d",
+#             "clickThroughRate",
+#             "costPerClick",
+#             "acosClicks14d",
+#             "roasClicks14d"
+#         ]
+#     },
+
+#     {
+#         "report_type": "spSearchTerm",
+
+#         "group_by": ["searchTerm"],
+
+#         "columns": [
+
+#             "date",
+#             "matchType",
+#             "campaignId",
+#             "campaignName",
+#             "searchTerm",
+#             "impressions",
+#             "clicks",
+#             "cost",
+#             "sales14d",
+#             "purchases14d",
+#             "acosClicks14d",
+#             "roasClicks14d"
+#         ]
+#     },
+
+#     {
+#         "report_type": "spTargeting",
+
+#         "group_by": ["targeting"],
+
+#         "columns": [
+
+#             "date",
+#             "campaignId",
+#             "adGroupId",
+#             "targetId",
+#             "impressions",
+#             "clicks",
+#             "cost",
+#             "sales14d",
+#             "purchases14d",
+#             "acosClicks14d",
+#             "roasClicks14d"
+#         ]
+#     },
+#     {
+#         "report_type": "spKeywords",
+
+#         "group_by": ["keyword"],
+
+#         "columns": [
+
+#             "date",
+#             "campaignId",
+#             "adGroupId",
+#             "keywordId",
+#             "keyword",
+#             "matchType",
+#             "impressions",
+#             "clicks",
+#             "cost",
+#             "sales14d",
+#             "purchases14d",
+#             "unitsSoldClicks14d",
+#             "acosClicks14d",
+#             "roasClicks14d"
+#         ]
+#     },
+
+#     {
+#         "report_type": "spAdvertisedProduct",
+
+#         "group_by": ["advertiser"],
+
+#         "columns": [
+
+#             "date",
+#             "campaignId",
+#             "adId",
+#             "advertisedAsin",
+#             "impressions",
+#             "clicks",
+#             "cost",
+#             "sales14d",
+#             "purchases14d"
+#         ]
+#     }
+# ]
+
+
 REPORT_CONFIGS = [
 
     {
@@ -61,20 +173,45 @@ REPORT_CONFIGS = [
         "group_by": ["campaign"],
 
         "columns": [
-
             "date",
             "campaignId",
             "campaignName",
+            "campaignStatus",
+            "campaignBudgetAmount",
+            "campaignBudgetCurrencyCode",
+            "campaignRuleBasedBudgetAmount",
+            "campaignApplicableBudgetRuleId",
+            "portfolioId",
+
             "impressions",
             "clicks",
             "cost",
-            "sales14d",
+
+            "purchases1d",
+            "purchases7d",
             "purchases14d",
+            "purchases30d",
+
+            "sales1d",
+            "sales7d",
+            "sales14d",
+            "sales30d",
+
+            "unitsSoldClicks1d",
+            "unitsSoldClicks7d",
             "unitsSoldClicks14d",
+            "unitsSoldClicks30d",
+
             "clickThroughRate",
             "costPerClick",
+
+            "acosClicks7d",
             "acosClicks14d",
-            "roasClicks14d"
+            "acosClicks30d",
+
+            "roasClicks7d",
+            "roasClicks14d",
+            "roasClicks30d"
         ]
     },
 
@@ -84,18 +221,53 @@ REPORT_CONFIGS = [
         "group_by": ["searchTerm"],
 
         "columns": [
-
             "date",
+
             "campaignId",
             "campaignName",
+
+            "adGroupId",
+            "adGroupName",
+
+            "keywordId",
+            "keyword",
+
             "searchTerm",
+
+            "matchType",
+
+            "targeting",
+            "targetingExpression",
+
             "impressions",
             "clicks",
             "cost",
-            "sales14d",
+
+            "clickThroughRate",
+            "costPerClick",
+
+            "purchases1d",
+            "purchases7d",
             "purchases14d",
+            "purchases30d",
+
+            "sales1d",
+            "sales7d",
+            "sales14d",
+            "sales30d",
+
+            "unitsSoldClicks1d",
+            "unitsSoldClicks7d",
+            "unitsSoldClicks14d",
+            "unitsSoldClicks30d",
+
+            "acosClicks7d",
             "acosClicks14d",
-            "roasClicks14d"
+            "acosClicks30d",
+
+            "roasClicks7d",
+            "roasClicks14d",
+            "roasClicks30d"
         ]
     },
 
@@ -105,18 +277,50 @@ REPORT_CONFIGS = [
         "group_by": ["targeting"],
 
         "columns": [
-
             "date",
+
             "campaignId",
+            "campaignName",
+
             "adGroupId",
+            "adGroupName",
+
             "targetId",
+
+            "targeting",
+            "targetingExpression",
+
+            "resolvedTargetingExpression",
+
             "impressions",
             "clicks",
             "cost",
-            "sales14d",
+
+            "clickThroughRate",
+            "costPerClick",
+
+            "purchases1d",
+            "purchases7d",
             "purchases14d",
+            "purchases30d",
+
+            "sales1d",
+            "sales7d",
+            "sales14d",
+            "sales30d",
+
+            "unitsSoldClicks1d",
+            "unitsSoldClicks7d",
+            "unitsSoldClicks14d",
+            "unitsSoldClicks30d",
+
+            "acosClicks7d",
             "acosClicks14d",
-            "roasClicks14d"
+            "acosClicks30d",
+
+            "roasClicks7d",
+            "roasClicks14d",
+            "roasClicks30d"
         ]
     },
     {
@@ -125,21 +329,51 @@ REPORT_CONFIGS = [
         "group_by": ["keyword"],
 
         "columns": [
-
             "date",
+
             "campaignId",
+            "campaignName",
+
             "adGroupId",
+            "adGroupName",
+
             "keywordId",
             "keyword",
+
+            "keywordType",
             "matchType",
+
+            "state",
+
             "impressions",
             "clicks",
             "cost",
-            "sales14d",
+
+            "clickThroughRate",
+            "costPerClick",
+
+            "purchases1d",
+            "purchases7d",
             "purchases14d",
+            "purchases30d",
+
+            "sales1d",
+            "sales7d",
+            "sales14d",
+            "sales30d",
+
+            "unitsSoldClicks1d",
+            "unitsSoldClicks7d",
             "unitsSoldClicks14d",
+            "unitsSoldClicks30d",
+
+            "acosClicks7d",
             "acosClicks14d",
-            "roasClicks14d"
+            "acosClicks30d",
+
+            "roasClicks7d",
+            "roasClicks14d",
+            "roasClicks30d"
         ]
     },
 
@@ -149,19 +383,53 @@ REPORT_CONFIGS = [
         "group_by": ["advertiser"],
 
         "columns": [
-
             "date",
+
             "campaignId",
+            "campaignName",
+
+            "adGroupId",
+            "adGroupName",
+
             "adId",
+
             "advertisedAsin",
+            "advertisedSku",
+
             "impressions",
             "clicks",
             "cost",
+
+            "clickThroughRate",
+            "costPerClick",
+
+            "purchases1d",
+            "purchases7d",
+            "purchases14d",
+            "purchases30d",
+
+            "sales1d",
+            "sales7d",
             "sales14d",
-            "purchases14d"
+            "sales30d",
+
+            "unitsSoldClicks1d",
+            "unitsSoldClicks7d",
+            "unitsSoldClicks14d",
+            "unitsSoldClicks30d",
+
+            "acosClicks7d",
+            "acosClicks14d",
+            "acosClicks30d",
+
+            "roasClicks7d",
+            "roasClicks14d",
+            "roasClicks30d"
         ]
     }
 ]
+
+
 
 
 def refresh_ads_access_token(account):
@@ -237,58 +505,6 @@ def ads_api_request(
 
     return response
 
-# working
-# def ads_matrix_api_request(
-#     account,
-#     method,
-#     endpoint,
-#     params=None,
-#     payload=None,
-#     content_type="application/json",
-#     accept_type="application/json"
-# ):
-
-#     access_token = refresh_ads_access_token(account)
-
-#     headers = {
-
-#         "Authorization":
-#         f"Bearer {access_token}",
-
-#         "Amazon-Advertising-API-ClientId":
-#         settings.AMAZON_ADS_CLIENT_ID,
-
-#         "Amazon-Advertising-API-Scope":
-#         str(account.profile_id),
-
-#         "Content-Type":
-#         content_type,
-
-#         "Accept":
-#         accept_type
-#     }
-
-#     base_url = REGION_URLS.get(account.region)
-
-#     url = f"{base_url}{endpoint}"
-
-#     print("URL:", url)
-#     print("HEADERS:", headers)
-#     print("PAYLOAD:", json.dumps(payload, indent=4))
-
-#     response = requests.request(
-#         method=method,
-#         url=url,
-#         headers=headers,
-#         params=params,
-#         json=payload,
-#         timeout=60
-#     )
-
-#     print("STATUS:", response.status_code)
-#     print("BODY:", response.text)
-
-#     return response
 
 def ads_matrix_api_request(
     account,
@@ -337,69 +553,6 @@ def ads_matrix_api_request(
 
     return response
 
-# from botocore.awsrequest import AWSRequest
-# from botocore.auth import SigV4Auth
-# from botocore.credentials import Credentials
-# import requests
-# import json
-
-
-# def ads_rules_api_request(
-#     account,
-#     method,
-#     endpoint,
-#     payload=None
-# ):
-
-#     base_url = REGION_URLS.get(account.region)
-
-#     url = f"{base_url}{endpoint}"
-
-#     body = json.dumps(payload) if payload else ""
-
-#     credentials = Credentials(
-#         settings.AWS_ACCESS_KEY_ID,
-#         settings.AWS_SECRET_ACCESS_KEY,
-#         settings.AWS_SESSION_TOKEN
-#     )
-
-#     headers = {
-#         "Host": "advertising-api-eu.amazon.com",
-#         "Content-Type": "application/json",
-#         "Accept": "application/json",
-#         "Amazon-Advertising-API-ClientId":
-#             settings.AMAZON_ADS_CLIENT_ID,
-#         "Amazon-Advertising-API-Scope":
-#             str(account.profile_id),
-#     }
-
-#     request = AWSRequest(
-#         method=method,
-#         url=url,
-#         data=body,
-#         headers=headers
-#     )
-
-#     SigV4Auth(
-#         credentials,
-#         "execute-api",
-#         "eu-west-1"
-#     ).add_auth(request)
-
-#     prepared_headers = dict(request.headers)
-
-#     response = requests.request(
-#         method=method,
-#         url=url,
-#         headers=prepared_headers,
-#         data=body,
-#         timeout=120
-#     )
-
-#     return response
-
-
-# amazon_ads/reporting.py
 
 def create_report(
     account,
@@ -1741,77 +1894,7 @@ def process_reports():
                     f"TOTAL KEYWORD METRICS SAVED: {total_saved}"
                 )
 
-            # elif report.report_type == "spKeywords":
-
-            #     total_saved = 0
-
-            #     for row in rows:
-
-            #         # keyword_id = row.get("keywordId")
-            #         keyword_id = str(row.get("keywordId", "")).strip()
-
-            #         if not keyword_id:
-            #             continue
-
-            #         keyword = AdsKeyword.objects.filter(
-            #             keyword_id=keyword_id
-            #         ).first()
-
-            #         if not keyword:
-
-            #             print(
-            #                 f"KEYWORD NOT FOUND: {keyword_id}"
-            #             )
-
-            #             continue
-
-            #         KeywordMetric.objects.update_or_create(
-
-            #             keyword=keyword,
-
-            #             report_date=row.get("date"),
-
-            #             defaults={
-
-            #                 "impressions":
-            #                 row.get("impressions", 0),
-
-            #                 "clicks":
-            #                 row.get("clicks", 0),
-
-            #                 "cost":
-            #                 row.get("cost", 0),
-
-            #                 "sales":
-            #                 row.get("sales14d", 0),
-
-            #                 "orders":
-            #                 row.get("purchases14d", 0),
-
-            #                 "acos": row.get("acosClicks14d") or 0,
-            #                 "roas": row.get("roasClicks14d") or 0,
-
-            #                 # "acos":
-            #                 # row.get(
-            #                 #     "acosClicks14d", 0
-            #                 # ),
-
-            #                 # "roas":
-            #                 # row.get(
-            #                 #     "roasClicks14d", 0
-            #                 # ),
-
-            #                 "raw_data":
-            #                 row
-            #             }
-            #         )
-
-            #         total_saved += 1
-
-            #     print(
-            #         f"KEYWORD METRICS SAVED: {total_saved}"
-            #     )
-
+          
 
             # =================================================
             # TARGET REPORT

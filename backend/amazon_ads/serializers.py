@@ -366,4 +366,130 @@ class ProductAdMetricSerializer(serializers.ModelSerializer):
             "orders",
 
             "raw_data",
-        ]        
+        ]   
+
+
+class AdsCampaignNegativeTargetSerializer(
+    serializers.ModelSerializer
+):
+
+    campaign_id = serializers.SerializerMethodField()
+
+    campaign_name = serializers.SerializerMethodField()
+
+    profile_id = serializers.SerializerMethodField()
+
+    class Meta:
+
+        model = AdsCampaignNegativeTarget
+
+        fields = [
+
+            "id",
+
+            "profile_id",
+
+            "campaign_id",
+
+            "campaign_name",
+
+            "negative_target_id",
+
+            "expression_type",
+
+            "expression",
+
+            "resolved_expression",
+
+            "state",
+
+            "serving_status",
+
+            "bid",
+
+            "created_at",
+
+            "updated_at",
+
+            "raw_data"
+        ]
+
+    def get_campaign_id(self, obj):
+
+        if obj.campaign:
+            return obj.campaign.campaign_id
+
+        return None
+
+    def get_campaign_name(self, obj):
+
+        if obj.campaign:
+            return obj.campaign.name
+
+        return None
+
+    def get_profile_id(self, obj):
+
+        if obj.amazon_account:
+            return obj.amazon_account.profile_id
+
+        return None
+
+
+
+class AdsNegativeKeywordSerializer(serializers.ModelSerializer):
+
+    campaign_name = serializers.CharField(
+        source="campaign.name",
+        read_only=True
+    )
+    campaign_id = serializers.CharField(
+        source="campaign.campaign_id",
+        read_only=True
+    )
+
+    ad_group_name = serializers.CharField(
+        source="ad_group.name",
+        read_only=True
+    )
+    ad_group_id = serializers.CharField(
+        source="ad_group.ad_group_id",
+        read_only=True
+    )
+
+    class Meta:
+
+        model = AdsNegativeKeyword
+
+        fields = [
+
+            "id",
+
+            "negative_keyword_id",
+
+            "keyword_text",
+
+            "match_type",
+
+            "state",
+
+            "serving_status",
+
+            "creation_date_time",
+
+            "last_update_date_time",
+
+            "campaign",
+            "campaign_id",
+
+            "campaign_name",
+
+            "ad_group",
+            "ad_group_id",
+
+            "ad_group_name",
+
+            "created_at",
+
+            "updated_at",
+        ]
