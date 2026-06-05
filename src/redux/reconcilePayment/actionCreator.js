@@ -34,6 +34,10 @@ const {
   amazontransactionBegin,
   amazontransactionSuccess,
   amazontransactionErr,
+
+  allsettlementBegin,
+  allsettlementSuccess,
+  allsettlementErr,
 } = actions;
 
 const mockService = async (payload) => {
@@ -106,12 +110,12 @@ export const getBankTransferSummary = (payload) => {
   };
 };
 
-export const getSettledOrders = (payload) => {
+export const getSettledOrders = () => {
   return async (dispatch) => {
     dispatch(settledOrderBegin());
 
     try {
-      const response = await DataService.post('/amazon/order-settlement-dashboard/', payload);
+      const response = await DataService.get('/amazon/order-settlement-dashboard/');
       if (response.data.status === true) {
         dispatch(settledOrderSuccess(response.data));
       } else {
@@ -217,14 +221,32 @@ export const getAmazonTransactionDetail = (page = 1, pageSize = 10) => {
   return async (dispatch) => {
     dispatch(amazontransactionBegin());
     try {
-      const response = await DataService.get(`/amazon/amazon-transactions-details/?page=${page}&page_size=${pageSize}`);
-      if (response.data.status === true) {
+      // const response = await DataService.get(`/amazon/amazon-transactions-details/?page=${page}&page_size=${pageSize}`);
+      const response = await DataService.get(`/amazon/grouped-transactions/?page=${page}&page_size=${pageSize}`);
+      console.log('API RESPONSE', response.data);
+      if (response.data.success === true) {
         dispatch(amazontransactionSuccess(response.data));
       } else {
         dispatch(amazontransactionErr(response.data.message || 'Something went wrong'));
       }
     } catch (err) {
       dispatch(amazontransactionErr(err.response?.data?.message || err.message));
+    }
+  };
+};
+
+export const getAllSettlement = () => {
+  return async (dispatch) => {
+    dispatch(allsettlementBegin());
+    try {
+      const response = await DataService.get(`/amazon/settlement-summary/`);
+      if (response.data.success === true) {
+        dispatch(allsettlementSuccess(response.data));
+      } else {
+        dispatch(allsettlementErr(response.data.message || 'Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(allsettlementErr(err.response?.data?.message || err.message));
     }
   };
 };

@@ -14,7 +14,6 @@ import {
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { getSettledOrders } from '../../redux/reconcilePayment/actionCreator';
-import Amazon from '../../assets/icons/amazon.svg';
 
 function OrderSettlement() {
   const dispatch = useDispatch();
@@ -24,18 +23,15 @@ function OrderSettlement() {
   const [searchText, setSearchText] = useState('');
   const [dateRange, setDateRange] = useState();
   const { settledData, settledLoading } = useSelector((state) => state.reconcilePayment);
-  const marketplaceIcons = {
-    'Amazon-India': Amazon,
-  };
   useEffect(() => {
     dispatch(
       getSettledOrders({
-        filters: {
-          fulfillment_channel: fullfilment,
-          search: debouncedSearch,
-          start_date: dateRange?.[0]?.format('YYYY-MM-DD'),
-          end_date: dateRange?.[1]?.format('YYYY-MM-DD'),
-        },
+        // filters: {
+        //   fulfillment_channel: fullfilment,
+        //   search: debouncedSearch,
+        //   start_date: dateRange?.[0]?.format('YYYY-MM-DD'),
+        //   end_date: dateRange?.[1]?.format('YYYY-MM-DD'),
+        // },
       }),
     );
   }, [dispatch, fullfilment, debouncedSearch, dateRange]);
@@ -101,180 +97,106 @@ function OrderSettlement() {
   ];
 
   const dataSource =
-    settledData?.data?.orders?.map((item, index) => ({
-      key: index,
-      marketplace: item.marketplace,
-      orderId: item.order_id,
-      orderDate: item.order_date,
-      orderStatus: item.order_status,
-      fulfillmentType: item.fulfillment_type,
-      skuCount: item.sku_count,
-      unitsSold: item.units_sold,
-      gmv: item.gmv,
-      settlementStatus: item.settlement_status,
-      expectedSettlement: item.expected_settlement,
-      settledAmount: item.settled_amount,
-      pendingAmount: item.pending,
+    settledData?.results?.map((item, index) => ({
+      key: item.id || index,
+      transactionId: item.transaction_id,
+      transactionType: item.transaction_type,
+      transactionStatus: item.transaction_status,
+      description: item.description,
+      postedDate: item.posted_date,
+      totalAmount: item.total_amount,
+      currencyCode: item.currency_code,
     })) || [];
 
   const columns = [
     {
-      title: 'Marketplace',
-      dataIndex: 'marketplace',
-      key: 'marketplace',
-      align: 'center',
-      width: 70,
-      render: (marketplace) => {
-        const icon = marketplaceIcons[marketplace];
-
-        return icon ? <img src={icon} alt={marketplace} className="h-6 w-6 object-contain mx-auto" /> : marketplace;
-      },
-    },
-    {
-      title: 'Order ID',
-      dataIndex: 'orderId',
-      key: 'orderId',
+      title: 'Transaction ID',
+      dataIndex: 'transactionId',
+      key: 'transactionId',
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.orderId - b.orderId,
       render: (v) => (
-        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-          <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '200px' }}>
-            {v}
-          </span>
+        <Tooltip title={v}>
+          <span>{v}</span>
         </Tooltip>
       ),
     },
 
     {
-      title: 'Order Date',
-      dataIndex: 'orderDate',
-      key: 'orderDate',
+      title: 'Transaction Type',
+      dataIndex: 'transactionType',
+      key: 'transactionType',
       align: 'center',
       width: 70,
-      ellipsis: true,
-      sorter: (a, b) => a.orderDate - b.orderDate,
-      render: (date) => (date ? new Date(date).toLocaleDateString('en-IN') : '-'),
     },
 
     {
-      title: 'Order Status',
-      dataIndex: 'orderStatus',
-      key: 'orderStatus',
+      title: 'Status',
+      dataIndex: 'transactionStatus',
+      key: 'transactionStatus',
       align: 'center',
       width: 70,
-      ellipsis: true,
-      sorter: (a, b) => a.orderStatus - b.orderStatus,
-      render: (status) => (
-        <span className="rounded-full bg-[#ecfdf3] px-2 py-1 text-[10px] font-semibold text-[#16a34a]">{status}</span>
-      ),
+      render: (status) => {
+        const color = status === 'DEFERRED' ? '#f59e0b' : status === 'RELEASED' ? '#16a34a' : '#2563eb';
+
+        return (
+          <span
+            className="px-2 py-1 rounded-full text-[10px] font-semibold"
+            style={{
+              background: `${color}20`,
+              color,
+            }}
+          >
+            {status}
+          </span>
+        );
+      },
     },
 
     {
-      title: 'Fulfillment Type',
-      dataIndex: 'fulfillmentType',
-      key: 'fulfillmentType',
+      title: 'Description',
+      dataIndex: 'description',
+      key: 'description',
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => String(a.fulfillmentType).localeCompare(String(b.fulfillmentType)),
     },
 
     {
-      title: 'SKU Count',
-      dataIndex: 'skuCount',
-      key: 'skuCount',
-      width: 70,
+      title: 'Posted Date',
+      dataIndex: 'postedDate',
+      key: 'postedDate',
       align: 'center',
-      sorter: (a, b) => a.skuCount - b.skuCount,
+      width: 70,
+      render: (date) => (date ? new Date(date).toLocaleString('en-IN') : '-'),
     },
 
     {
-      title: 'Units Sold',
-      dataIndex: 'unitsSold',
-      key: 'unitsSold',
+      title: 'Amount',
+      dataIndex: 'totalAmount',
+      key: 'totalAmount',
       align: 'center',
       width: 70,
-      ellipsis: true,
-      sorter: (a, b) => a.unitsSold - b.unitsSold,
+      sorter: (a, b) => Number(a.totalAmount) - Number(b.totalAmount),
+      render: (amount) => {
+        const value = Number(amount || 0);
+
+        return (
+          <span className={`font-semibold ${value < 0 ? 'text-red-500' : 'text-green-600'}`}>
+            ₹ {Math.abs(value).toFixed(2)}
+          </span>
+        );
+      },
     },
 
     {
-      title: 'GMV',
-      dataIndex: 'gmv',
-      key: 'gmv',
+      title: 'Currency',
+      dataIndex: 'currencyCode',
+      key: 'currencyCode',
       align: 'center',
       width: 70,
-      ellipsis: true,
-      render: (value) => `₹ ${Number(value || 0).toFixed(2)}`,
-      sorter: (a, b) => a.gmv - b.gmv,
     },
-
-    {
-      title: 'Settlement Status',
-      dataIndex: 'settlementStatus',
-      key: 'settlementStatus',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => a.settlementStatus - b.settlementStatus,
-      render: (status) => (
-        <span className="rounded-full bg-[#eff6ff] px-2 py-1 text-[10px] font-semibold text-[#2563eb]">{status}</span>
-      ),
-    },
-
-    {
-      title: 'Expected Settlement',
-      dataIndex: 'expectedSettlement',
-      key: 'expectedSettlement',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => a.expectedSettlement - b.expectedSettlement,
-      render: (value) => `₹ ${Number(value || 0).toFixed(2)}`,
-    },
-
-    {
-      title: 'Settled Amount',
-      dataIndex: 'settledAmount',
-      key: 'settledAmount',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => a.settledAmount - b.settledAmount,
-      render: (value) => <span className="font-semibold text-[#16a34a]">₹ {Number(value || 0).toFixed(2)}</span>,
-    },
-
-    {
-      title: 'Pending Amount',
-      dataIndex: 'pendingAmount',
-      key: 'pendingAmount',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => a.pendingAmount - b.pendingAmount,
-      render: (value) => <span className="font-semibold text-[#ef4444]">₹ {Number(value || 0).toFixed(2)}</span>,
-    },
-
-    // {
-    //   title: 'Actions',
-    //   key: 'actions',
-    //   align: 'center',
-    //   width: 70,
-    //   ellipsis: true,
-    //   render: () => (
-    //     <div className="flex items-center gap-2">
-    //       <button type="button" className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e5e7eb]">
-    //         <EyeOutlined />
-    //       </button>
-
-    //       <button type="button" className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#e5e7eb]">
-    //         <DownloadOutlined />
-    //       </button>
-    //     </div>
-    //   ),
-    // },
   ];
 
   return (

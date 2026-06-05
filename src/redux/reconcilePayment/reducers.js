@@ -2,6 +2,7 @@ import actions from './actions';
 
 const initialState = {
   reconcileData: [],
+  allsettlementData: [],
   loading: false,
   error: null,
   outstandingData: [],
@@ -66,6 +67,10 @@ const {
   AMAZON_TRANSACTION_BEGIN,
   AMAZON_TRANSACTION_SUCCESS,
   AMAZON_TRANSACTION_ERR,
+
+  ALL_SETTLEMENT_BEGIN,
+  ALL_SETTLEMENT_SUCCESS,
+  ALL_SETTLEMENT_ERR,
 } = actions;
 
 const reconcilePaymentReducer = (state = initialState, action) => {
@@ -280,6 +285,26 @@ const reconcilePaymentReducer = (state = initialState, action) => {
       };
 
     case AMAZON_TRANSACTION_ERR:
+      return {
+        ...state,
+        error: err,
+        loading: false,
+      };
+
+    case ALL_SETTLEMENT_BEGIN:
+      return {
+        ...state,
+        loading: true,
+      };
+
+    case ALL_SETTLEMENT_SUCCESS:
+      return {
+        ...state,
+        allsettlementData: data,
+        loading: false,
+      };
+
+    case ALL_SETTLEMENT_ERR:
       return {
         ...state,
         error: err,

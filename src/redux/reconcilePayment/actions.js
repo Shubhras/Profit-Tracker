@@ -38,6 +38,10 @@ const actions = {
   AMAZON_TRANSACTION_SUCCESS: 'AMAZON_TRANSACTION_SUCCESS',
   AMAZON_TRANSACTION_ERR: 'AMAZON_TRANSACTION_ERR',
 
+  ALL_SETTLEMENT_BEGIN: 'ALL_SETTLEMENT_BEGIN',
+  ALL_SETTLEMENT_SUCCESS: 'ALL_SETTLEMENT_SUCCESS',
+  ALL_SETTLEMENT_ERR: 'ALL_SETTLEMENT_ERR',
+
   reconcilePaymentBegin: () => {
     return {
       type: actions.RECONCILE_PAYMENT_BEGIN,
@@ -177,6 +181,20 @@ const actions = {
 
   amazontransactionErr: (err) => ({
     type: actions.AMAZON_TRANSACTION_ERR,
+    err,
+  }),
+
+  allsettlementBegin: () => ({
+    type: actions.ALL_SETTLEMENT_BEGIN,
+  }),
+
+  allsettlementSuccess: (data) => ({
+    type: actions.ALL_SETTLEMENT_SUCCESS,
+    data,
+  }),
+
+  allsettlementErr: (err) => ({
+    type: actions.ALL_SETTLEMENT_ERR,
     err,
   }),
 };

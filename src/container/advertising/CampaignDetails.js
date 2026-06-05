@@ -75,8 +75,6 @@ function CampaignDetails() {
               checked={isActive}
               onChange={(checked) => {
                 console.log('STATUS:', checked ? 'ENABLED' : 'PAUSED', record);
-
-                // API CALL HERE
               }}
               style={{
                 transform: 'scale(1.15)',
