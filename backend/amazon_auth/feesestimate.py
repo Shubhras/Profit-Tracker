@@ -10,8 +10,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from django.core.paginator import Paginator
-
 from .serializers import AmazonEstimatedFeeSerializer
+from django.db.models import Q
+
 
 
 
@@ -312,7 +313,100 @@ def save_fee_estimate(order_item, user):
     return fee_obj
 
 
+# class AmazonEstimatedFeeListView(APIView):
 
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request):
+
+#         data = request.data
+
+#         filters = data.get("filters", {})
+#         pagination = data.get("pagination", {})
+
+#         page_no = int(pagination.get("pageNo", 1))
+#         page_size = int(pagination.get("pageSize", 10))
+
+#         queryset = AmazonEstimatedFee.objects.select_related(
+#             "order_item",
+#             "order_item__order"
+#         ).all().order_by("-created_at")
+
+#         # ---------------- FILTERS ----------------
+
+#         seller_sku = filters.get("seller_sku")
+#         asin = filters.get("asin")
+#         marketplace_id = filters.get("marketplace_id")
+#         fulfillment_channel = filters.get("fulfillment_channel")
+#         amazon_account_id = filters.get("amazon_account_id")
+#         order_item_id = filters.get("order_item_id")
+
+#         # NEW
+#         order_id = filters.get("order_id")
+
+#         if seller_sku:
+#             queryset = queryset.filter(
+#                 seller_sku__icontains=seller_sku
+#             )
+
+#         if asin:
+#             queryset = queryset.filter(
+#                 asin__icontains=asin
+#             )
+
+#         if marketplace_id:
+#             queryset = queryset.filter(
+#                 marketplace_id=marketplace_id
+#             )
+
+#         if fulfillment_channel:
+#             queryset = queryset.filter(
+#                 fulfillment_channel=fulfillment_channel
+#             )
+
+#         if amazon_account_id:
+#             queryset = queryset.filter(
+#                 amazon_account_id=amazon_account_id
+#             )
+
+#         if order_item_id:
+#             queryset = queryset.filter(
+#                 order_item_id=order_item_id
+#             )
+
+#         # NEW FILTER
+#         if order_id:
+#             queryset = queryset.filter(
+#                 order_item__order__amazon_order_id__icontains=order_id
+#             )
+
+#         # ---------------- PAGINATION ----------------
+
+#         paginator = Paginator(queryset, page_size)
+
+#         page_obj = paginator.get_page(page_no)
+
+#         serializer = AmazonEstimatedFeeSerializer(
+#             page_obj,
+#             many=True
+#         )
+
+#         return Response(
+#             {
+#                 "status": True,
+#                 "message": "Estimated fees fetched successfully",
+
+#                 "data": serializer.data,
+
+#                 "pagination": {
+#                     "pageNo": page_no,
+#                     "pageSize": page_size,
+#                     "totalPages": paginator.num_pages,
+#                     "totalRecords": paginator.count,
+#                 }
+#             },
+#             status=status.HTTP_200_OK
+#         )       
 
 class AmazonEstimatedFeeListView(APIView):
 
@@ -328,45 +422,46 @@ class AmazonEstimatedFeeListView(APIView):
         page_no = int(pagination.get("pageNo", 1))
         page_size = int(pagination.get("pageSize", 10))
 
-        queryset = AmazonEstimatedFee.objects.all().order_by("-created_at")
+        queryset = AmazonEstimatedFee.objects.select_related(
+            "order_item",
+            "order_item__order",
+            "amazon_account"
+        ).all().order_by("-created_at")
 
         # ---------------- FILTERS ----------------
 
-        seller_sku = filters.get("seller_sku")
-        asin = filters.get("asin")
-        marketplace_id = filters.get("marketplace_id")
+        # Global Search
+        search = filters.get("search")
+
+        # Separate filter
         fulfillment_channel = filters.get("fulfillment_channel")
-        amazon_account_id = filters.get("amazon_account_id")
-        order_item_id = filters.get("order_item_id")
 
-        if seller_sku:
+        # ---------------- SEARCH FILTER ----------------
+
+        if search:
+
             queryset = queryset.filter(
-                seller_sku__icontains=seller_sku
+
+                Q(seller_sku__icontains=search) |
+
+                Q(asin__icontains=search) |
+
+                Q(marketplace_id__icontains=search) |
+
+                Q(order_item__order_item_id__icontains=search) |
+
+                Q(order_item__order__amazon_order_id__icontains=search) |
+
+                Q(amazon_account__id__icontains=search)
+
             )
 
-        if asin:
-            queryset = queryset.filter(
-                asin__icontains=asin
-            )
-
-        if marketplace_id:
-            queryset = queryset.filter(
-                marketplace_id=marketplace_id
-            )
+        # ---------------- FULFILLMENT CHANNEL FILTER ----------------
 
         if fulfillment_channel:
-            queryset = queryset.filter(
-                fulfillment_channel=fulfillment_channel
-            )
 
-        if amazon_account_id:
             queryset = queryset.filter(
-                amazon_account_id=amazon_account_id
-            )
-
-        if order_item_id:
-            queryset = queryset.filter(
-                order_item_id=order_item_id
+                fulfillment_channel__iexact=fulfillment_channel
             )
 
         # ---------------- PAGINATION ----------------
@@ -398,4 +493,3 @@ class AmazonEstimatedFeeListView(APIView):
         )
         
         
-
