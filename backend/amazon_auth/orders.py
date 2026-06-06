@@ -7,9 +7,17 @@ from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-
-from .models import Order
-
+from django.db.models.functions import Coalesce
+from rest_framework import status
+from .models import Order , OrderItem ,FinancialEvent
+from django.db.models import (
+    Sum,
+    Count,
+    Q,
+    F,
+    Value,
+    DecimalField
+)
 
 class OrderProcessingDashboardAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -233,4 +241,317 @@ class OrderProcessingDashboardAPIView(APIView):
             "insights": insights
         })
         
+
+class OrderSettlementDashboardAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        data = request.data
+
+        filters = data.get("filters", {})
+
+        amazon_account_id = filters.get("amazon_account_id")
+        order_status = filters.get("order_status")
+        fulfillment_channel = filters.get("fulfillment_channel")
+        search = filters.get("search")
+
+        start_date = filters.get("start_date")
+        end_date = filters.get("end_date")
+
+        # =====================================================
+        # BASE QUERYSETS
+        # =====================================================
+
+        orders_queryset = Order.objects.filter(
+            user=request.user
+        ).select_related(
+            "amazon_account"
+        )
+
+        items_queryset = OrderItem.objects.select_related(
+            "order",
+            "order__amazon_account"
+        ).filter(
+            order__user=request.user
+        )
+
+        financial_queryset = FinancialEvent.objects.filter(
+            user=request.user
+        )
+
+        # =====================================================
+        # AMAZON ACCOUNT FILTER
+        # =====================================================
+
+        if amazon_account_id:
+
+            orders_queryset = orders_queryset.filter(
+                amazon_account_id=amazon_account_id
+            )
+
+            items_queryset = items_queryset.filter(
+                order__amazon_account_id=amazon_account_id
+            )
+
+            financial_queryset = financial_queryset.filter(
+                amazon_account_id=amazon_account_id
+            )
+
+        # =====================================================
+        # DATE FILTER
+        # =====================================================
+
+        if start_date and end_date:
+
+            orders_queryset = orders_queryset.filter(
+                purchase_date__date__range=[start_date, end_date]
+            )
+
+            items_queryset = items_queryset.filter(
+                order__purchase_date__date__range=[start_date, end_date]
+            )
+
+            financial_queryset = financial_queryset.filter(
+                posted_date__date__range=[start_date, end_date]
+            )
+
+        # =====================================================
+        # ORDER STATUS FILTER
+        # =====================================================
+
+        if order_status:
+
+            orders_queryset = orders_queryset.filter(
+                order_status__iexact=order_status
+            )
+
+        # =====================================================
+        # FULFILLMENT CHANNEL FILTER
+        # =====================================================
+
+        if fulfillment_channel:
+
+            orders_queryset = orders_queryset.filter(
+                fulfillment_channel__iexact=fulfillment_channel
+            )
+
+        # =====================================================
+        # GLOBAL SEARCH
+        # =====================================================
+
+        if search:
+
+            orders_queryset = orders_queryset.filter(
+
+                Q(amazon_order_id__icontains=search) |
+                Q(buyer_name__icontains=search) |
+                Q(city__icontains=search) |
+                Q(state__icontains=search)
+
+            )
+
+        # =====================================================
+        # SUMMARY
+        # =====================================================
+
+        total_orders = orders_queryset.count()
+
+        total_gmv = items_queryset.aggregate(
+            total=Coalesce(
+                Sum("total_amount"),
+                Value(0),
+                output_field=DecimalField()
+            )
+        )["total"]
+
+        total_settlements = financial_queryset.aggregate(
+            total=Coalesce(
+                Sum("total_amount"),
+                Value(0),
+                output_field=DecimalField()
+            )
+        )["total"]
+
+        settled_amount = financial_queryset.filter(
+            total_amount__gt=0
+        ).aggregate(
+            total=Coalesce(
+                Sum("total_amount"),
+                Value(0),
+                output_field=DecimalField()
+            )
+        )["total"]
+
+        pending_settlement = total_gmv - settled_amount
+
+        settlement_success_rate = 0
+
+        if total_gmv and total_gmv > 0:
+
+            settlement_success_rate = round(
+                (settled_amount / total_gmv) * 100,
+                2
+            )
+
+        # =====================================================
+        # ORDER STATUS BREAKDOWN
+        # =====================================================
+
+        order_status_breakdown = list(
+
+            orders_queryset.values(
+                "order_status"
+            ).annotate(
+                count=Count("id")
+            ).order_by("-count")
+
+        )
+
+        # =====================================================
+        # SETTLEMENT STATUS BREAKDOWN
+        # =====================================================
+
+        settled_orders = financial_queryset.filter(
+            total_amount__gt=0
+        ).values(
+            "amazon_order_id"
+        ).distinct().count()
+
+        pending_orders = total_orders - settled_orders
+
+        settlement_status_breakdown = [
+            {
+                "status": "Settled",
+                "count": settled_orders
+            },
+            {
+                "status": "Pending",
+                "count": pending_orders
+            }
+        ]
+
+        # =====================================================
+        # ORDER TABLE
+        # =====================================================
+
+        orders = orders_queryset.annotate(
+
+            sku_count=Count(
+                "items",
+                distinct=True
+            ),
+
+            units_sold=Coalesce(
+                Sum("items__quantity_ordered"),
+                Value(0)
+            ),
+
+            gmv=Coalesce(
+                Sum("items__total_amount"),
+                Value(0),
+                output_field=DecimalField()
+            ),
+
+            settled_amount=Coalesce(
+
+                Sum(
+                    "items__payout_amount"
+                ),
+
+                Value(0),
+
+                output_field=DecimalField()
+
+            )
+
+        ).order_by("-purchase_date")
+
+        order_data = []
+
+        for order in orders:
+
+            pending_amount = order.gmv - order.settled_amount
+
+            # ============================================
+            # SETTLEMENT STATUS
+            # ============================================
+
+            if order.settled_amount >= order.gmv:
+
+                settlement_status = "Settled"
+
+            elif order.settled_amount > 0:
+
+                settlement_status = "Partially Settled"
+
+            else:
+
+                settlement_status = "Pending"
+
+            order_data.append({
+
+                "marketplace": order.channel,
+
+                "order_id": order.amazon_order_id,
+
+                "order_date": order.purchase_date,
+
+                "order_status": order.order_status,
+
+                "fulfillment_type": order.fulfillment_channel,
+
+                "sku_count": order.sku_count,
+
+                "units_sold": order.units_sold,
+
+                "gmv": order.gmv,
+
+                "settlement_status": settlement_status,
+
+                "expected_settlement": order.gmv,
+
+                "settled_amount": order.settled_amount,
+
+                "pending": pending_amount
+
+            })
+
+        # =====================================================
+        # FINAL RESPONSE
+        # =====================================================
+
+        return Response({
+
+            "status": True,
+
+            "message": "Dashboard data fetched successfully",
+
+            "data": {
+
+                "summary": {
+
+                    "total_orders": total_orders,
+
+                    "total_gmv": total_gmv,
+
+                    "total_settlements": total_settlements,
+
+                    "pending_settlements": pending_settlement,
+
+                    "settlement_success_rate": settlement_success_rate
+
+                },
+
+                "order_status_breakdown": order_status_breakdown,
+
+                "settlement_status_breakdown": settlement_status_breakdown,
+
+                "orders": order_data
+
+            }
+
+        }, status=status.HTTP_200_OK)
         
+                

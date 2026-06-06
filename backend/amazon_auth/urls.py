@@ -13,7 +13,7 @@ from .listing_items import *
 from .orders import *  
 from .feesestimate import *
 from .transations import *
-
+from .reconcile import *
 
 urlpatterns = [
     path('dashboard-stats/', views.get_full_dashboard, name='dashboard-stats'),
@@ -115,6 +115,32 @@ urlpatterns = [
         "amazon-transactions-details/",
         AmazonTransactionListView.as_view(),
         name="amazon-transactions"
+    ),
+    
+    path(
+        "order-settlement-dashboard/",
+        AmazonOrderRelatedTransactionsAPIView.as_view(),
+        name="order-settlement-dashboard"
+    ),
+    
+    
+    # reconcilation page 
+    path(
+        "settlement-summary/",
+        AmazonSettlementSummaryAPIView.as_view(),
+        name="amazon-settlement-summary"
+    ),
+    
+    path(
+        "grouped-transactions/",
+        AmazonTransactionsGroupedAPIView.as_view(),
+        name="amazon-grouped-transactions"
+    ),
+    
+    path(
+        "refund-transactions/",
+        AmazonRefundTransactionsAPIView.as_view(),
+        name="amazon-refund-transactions"
     ),
  
 ]
