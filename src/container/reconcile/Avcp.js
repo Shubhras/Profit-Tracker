@@ -13,7 +13,6 @@ import {
   Line,
   CartesianGrid,
 } from 'recharts';
-import { getVcpReconciliation } from '../../redux/reconcilePayment/actionCreator';
 import { exportProfitData } from '../../redux/dashboard/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
@@ -110,20 +109,6 @@ const invoiceColumns = [
 export default function Avcp() {
   const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
-  const payload = {
-    filters: {
-      channel: {
-        IN: ['AmazonVCP'],
-      },
-      fromDate: '2026-03-31T18:30:00Z',
-      toDate: '2026-04-30T18:29:59Z',
-      isdelayed_payments_enabled: false,
-      delayed_payment_days: 30,
-    },
-  };
-  useEffect(() => {
-    dispatch(getVcpReconciliation(payload));
-  }, []);
 
   useEffect(() => {
     const handleHeaderAction = (e) => {

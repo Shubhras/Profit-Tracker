@@ -15,25 +15,6 @@ const actions = {
   SETTLED_ORDER_SUCCESS: 'SETTLED_ORDER_SUCCESS',
   SETTLED_ORDER_ERR: 'SETTLED_ORDER_ERR',
 
-  UNSETTLED_ORDER_BEGIN: 'UNSETTLED_ORDER_BEGIN',
-  UNSETTLED_ORDER_SUCCESS: 'UNSETTLED_ORDER_SUCCESS',
-  UNSETTLED_ORDER_ERR: 'UNSETTLED_ORDER_ERR',
-  INVOICE_RECON_BEGIN: 'INVOICE_RECON_BEGIN',
-  INVOICE_RECON_SUCCESS: 'INVOICE_RECON_SUCCESS',
-  INVOICE_RECON_ERR: 'INVOICE_RECON_ERR',
-
-  VCP_RECON_BEGIN: 'VCP_RECON_BEGIN',
-  VCP_RECON_SUCCESS: 'VCP_RECON_SUCCESS',
-  VCP_RECON_ERR: 'VCP_RECON_ERR',
-
-  QUICKCOM_RECON_BEGIN: 'QUICKCOM_RECON_BEGIN',
-  QUICKCOM_RECON_SUCCESS: 'QUICKCOM_RECON_SUCCESS',
-  QUICKCOM_RECON_ERR: 'QUICKCOM_RECON_ERR',
-
-  FEELEAKS_RECON_BEGIN: 'FEELEAKS_RECON_BEGIN',
-  FEELEAKS_RECON_SUCCESS: 'FEELEAKS_RECON_SUCCESS',
-  FEELEAKS_RECON_ERR: 'FEELEAKS_RECON_ERR',
-
   AMAZON_TRANSACTION_BEGIN: 'AMAZON_TRANSACTION_BEGIN',
   AMAZON_TRANSACTION_SUCCESS: 'AMAZON_TRANSACTION_SUCCESS',
   AMAZON_TRANSACTION_ERR: 'AMAZON_TRANSACTION_ERR',
@@ -41,6 +22,10 @@ const actions = {
   ALL_SETTLEMENT_BEGIN: 'ALL_SETTLEMENT_BEGIN',
   ALL_SETTLEMENT_SUCCESS: 'ALL_SETTLEMENT_SUCCESS',
   ALL_SETTLEMENT_ERR: 'ALL_SETTLEMENT_ERR',
+
+  RETURN_ADJUSTMENT_BEGIN: 'RETURN_ADJUSTMENT_BEGIN',
+  RETURN_ADJUSTMENT_SUCCESS: 'RETURN_ADJUSTMENT_SUCCESS',
+  RETURN_ADJUSTMENT_ERR: 'RETURN_ADJUSTMENT_ERR',
 
   reconcilePaymentBegin: () => {
     return {
@@ -102,74 +87,6 @@ const actions = {
     err,
   }),
 
-  unsettledOrderBegin: () => ({
-    type: actions.UNSETTLED_ORDER_BEGIN,
-  }),
-
-  unsettledOrderSuccess: (data) => ({
-    type: actions.UNSETTLED_ORDER_SUCCESS,
-    data,
-  }),
-
-  unsettledOrderErr: (err) => ({
-    type: actions.UNSETTLED_ORDER_ERR,
-    err,
-  }),
-  invoiceReconBegin: () => ({
-    type: actions.INVOICE_RECON_BEGIN,
-  }),
-
-  invoiceReconSuccess: (data) => ({
-    type: actions.INVOICE_RECON_SUCCESS,
-    data,
-  }),
-
-  invoiceReconErr: (err) => ({
-    type: actions.INVOICE_RECON_ERR,
-    err,
-  }),
-  vcpReconBegin: () => ({
-    type: actions.VCP_RECON_BEGIN,
-  }),
-
-  vcpReconSuccess: (data) => ({
-    type: actions.VCP_RECON_SUCCESS,
-    data,
-  }),
-
-  vcpReconErr: (err) => ({
-    type: actions.VCP_RECON_ERR,
-    err,
-  }),
-
-  quickcomReconBegin: () => ({
-    type: actions.QUICKCOM_RECON_BEGIN,
-  }),
-
-  quickcomReconSuccess: (data) => ({
-    type: actions.QUICKCOM_RECON_SUCCESS,
-    data,
-  }),
-
-  quickcomReconErr: (err) => ({
-    type: actions.QUICKCOM_RECON_ERR,
-    err,
-  }),
-
-  feeleaksReconBegin: () => ({
-    type: actions.FEELEAKS_RECON_BEGIN,
-  }),
-
-  feeleaksReconSuccess: (data) => ({
-    type: actions.FEELEAKS_RECON_SUCCESS,
-    data,
-  }),
-
-  feeleaksReconErr: (err) => ({
-    type: actions.FEELEAKS_RECON_ERR,
-    err,
-  }),
-
   amazontransactionBegin: () => ({
     type: actions.AMAZON_TRANSACTION_BEGIN,
   }),
@@ -195,6 +112,20 @@ const actions = {
 
   allsettlementErr: (err) => ({
     type: actions.ALL_SETTLEMENT_ERR,
+    err,
+  }),
+
+  returnAdjustmentBegin: () => ({
+    type: actions.RETURN_ADJUSTMENT_BEGIN,
+  }),
+
+  returnAdjustmentSuccess: (data) => ({
+    type: actions.RETURN_ADJUSTMENT_SUCCESS,
+    data,
+  }),
+
+  returnAdjustmentErr: (err) => ({
+    type: actions.RETURN_ADJUSTMENT_ERR,
     err,
   }),
 };

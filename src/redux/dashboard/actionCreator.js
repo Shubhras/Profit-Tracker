@@ -189,7 +189,7 @@ export const getSecondDetials = (payload) => {
       const response = await DataService.post('/amazon/profitability/details/by-parent-asin/', payload);
 
       if (response.data?.status === true || response.data?.status === 'success') {
-        dispatch(profitabilitySuccess(response.data)); // same reducer use kar sakte ho
+        dispatch(profitabilitySuccess(response.data));
       } else {
         dispatch(profitabilityErr('Something went wrong'));
       }

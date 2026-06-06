@@ -1,20 +1,22 @@
 import React, { useEffect } from 'react';
-import { Table, Tag, Tooltip } from 'antd';
+import { Table, Tooltip } from 'antd';
 
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   HourglassOutlined,
-  SearchOutlined,
   // FilterOutlined,
   FileTextOutlined,
   CloseCircleOutlined,
+  RightOutlined,
 } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { getAmazonTransactionDetail, getAllSettlement } from '../../redux/reconcilePayment/actionCreator';
 
 function PaymentReconcile() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = React.useState('payments');
 
   // const transactionData = useSelector((state) => state.reconcilePayment?.amazontransation);
@@ -31,10 +33,23 @@ function PaymentReconcile() {
   const settlementData = useSelector((state) => state.reconcilePayment?.allsettlementData);
 
   useEffect(() => {
+    const today = new Date();
+
+    const startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+
+    const endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+
+    console.log(startDate, endDate);
+
     if (activeTab === 'payments') {
-      dispatch(getAmazonTransactionDetail(pagination.current, pagination.pageSize));
+      dispatch(getAmazonTransactionDetail(pagination.current, pagination.pageSize, startDate, endDate, false));
     } else {
-      dispatch(getAllSettlement());
+      dispatch(
+        getAllSettlement({
+          start_date: startDate,
+          end_date: endDate,
+        }),
+      );
     }
   }, [dispatch, activeTab, pagination.current, pagination.pageSize]);
 
@@ -56,129 +71,37 @@ function PaymentReconcile() {
 
   const dataSource =
     activeTab === 'payments'
-      ? transactionData?.results?.flatMap((group) =>
-          group.transactions.map((item) => ({
-            key: item.id,
-            transactionId: item.transaction_id,
-            transactionType: item.transaction_type,
-            transactionStatus: item.transaction_status,
-            description: item.description,
-            postedDate: item.posted_date,
-            totalAmount: item.total_amount,
-            currencyCode: item.currency_code,
-          })),
-        ) || []
-      : settlementData?.results?.map((item, index) => ({
-          key: index,
+      ? transactionData?.results?.map((item, index) => ({
+          key: item.date || index,
           statementPeriod: item.statement_period,
-          startDate: item.start_date,
-          endDate: item.end_date,
+          date: item.date,
           beginningBalance: item.beginning_balance,
           sales: item.sales,
           refunds: item.refunds,
           expenses: item.expenses,
+          others: item.others,
+          payoutAmount: item.payout_amount,
+          totalTransactions: item.total_transactions,
+        })) || []
+      : settlementData?.results?.map((item, index) => ({
+          key: item.settlement_date || index,
+          settlementDate: item.settlement_date,
+          sales: item.sales,
+          refunds: item.refunds,
+          expenses: item.expenses,
+          others: item.others,
           payoutAmount: item.payout_amount,
           totalTransactions: item.total_transactions,
         })) || [];
 
   const paymentColumns = [
-    // {
-    //   title: 'ID',
-    //   dataIndex: 'id',
-    //   width: 30,
-    //   align: 'center',
-    //   ellipsis: true,
-    // },
-
-    {
-      title: 'Transaction ID',
-      dataIndex: 'transactionId',
-      width: 70,
-      ellipsis: true,
-      align: 'center',
-      sorter: (a, b) => String(a.transactionId).localeCompare(String(b.transactionId)),
-
-      render: (v) => (
-        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-          <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
-            {v}
-          </span>
-        </Tooltip>
-      ),
-    },
-
-    {
-      title: 'Transaction Type',
-      dataIndex: 'transactionType',
-      width: 70,
-      align: 'center',
-      ellipsis: true,
-      sorter: (a, b) => String(a.transactionType).localeCompare(String(b.transactionType)),
-    },
-
-    {
-      title: 'Status',
-      dataIndex: 'transactionStatus',
-      width: 70,
-      align: 'center',
-      sorter: (a, b) => String(a.transactionStatus).localeCompare(String(b.transactionStatus)),
-      ellipsis: true,
-      render: (status) => (
-        <Tag
-          className="h-[20px] text-[10px] px-1"
-          color={status === 'SUCCESS' ? 'success' : status === 'DEFERRED' ? 'processing' : 'error'}
-        >
-          {status}
-        </Tag>
-      ),
-    },
-
-    {
-      title: 'Description',
-      dataIndex: 'description',
-      width: 70,
-      align: 'center',
-      sorter: (a, b) => String(a.description).localeCompare(String(b.description)),
-    },
-
-    {
-      title: 'Posted Date',
-      dataIndex: 'postedDate',
-      width: 70,
-      align: 'center',
-      ellipsis: true,
-      render: (date) => (date ? new Date(date).toLocaleString() : '-'),
-      sorter: (a, b) => a.postedDate - b.postedDate,
-    },
-
-    {
-      title: 'Total Amount',
-      dataIndex: 'totalAmount',
-      width: 70,
-      align: 'center',
-      ellipsis: true,
-      sorter: (a, b) => a.totalAmount - b.totalAmount,
-      render: (value) => <span className="font-medium text-green-600">₹ {value}</span>,
-    },
-
-    {
-      title: 'Currency',
-      dataIndex: 'currencyCode',
-      width: 70,
-      align: 'center',
-      ellipsis: true,
-      sorter: (a, b) => a.currencyCode - b.currencyCode,
-    },
-  ];
-
-  const settlementColumns = [
     {
       title: 'Statement Period',
       dataIndex: 'statementPeriod',
       align: 'center',
-      ellipsis: true,
-      sorter: (a, b) => a.statementPeriod - b.statementPeriod,
       width: 70,
+      ellipsis: true,
+      sorter: (a, b) => new Date(a.statementPeriod) - new Date(b.statementPeriod),
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
@@ -188,27 +111,11 @@ function PaymentReconcile() {
       ),
     },
     {
-      title: 'Start Date',
-      dataIndex: 'startDate',
+      title: 'Date',
+      dataIndex: 'date',
       align: 'center',
       width: 70,
-      ellipsis: true,
-      sorter: (a, b) => a.startDate - b.startDate,
-      render: (v) => (
-        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-          <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
-            {v}
-          </span>
-        </Tooltip>
-      ),
-    },
-    {
-      title: 'End Date',
-      dataIndex: 'endDate',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => a.endDate - b.endDate,
+      sorter: (a, b) => new Date(a.date) - new Date(b.date),
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
@@ -223,11 +130,11 @@ function PaymentReconcile() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.beginningBalance - b.beginningBalance,
+      sorter: (a, b) => new Date(a.beginningBalance) - new Date(b.beginningBalance),
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
-            {`₹ ${Number(v).toFixed(2)}`}
+            {v}
           </span>
         </Tooltip>
       ),
@@ -237,12 +144,12 @@ function PaymentReconcile() {
       dataIndex: 'sales',
       align: 'center',
       width: 70,
+      sorter: (a, b) => new Date(a.sales) - new Date(b.sales),
       ellipsis: true,
-      sorter: (a, b) => a.sales - b.sales,
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
-            {`₹ ${Number(v).toFixed(2)}`}
+            {v}
           </span>
         </Tooltip>
       ),
@@ -252,11 +159,12 @@ function PaymentReconcile() {
       dataIndex: 'refunds',
       align: 'center',
       width: 70,
-      sorter: (a, b) => a.refunds - b.refunds,
+      ellipsis: true,
+      sorter: (a, b) => new Date(a.refunds) - new Date(b.refunds),
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
-            {`₹ ${Number(v).toFixed(2)}`}
+            {v}
           </span>
         </Tooltip>
       ),
@@ -266,8 +174,30 @@ function PaymentReconcile() {
       dataIndex: 'expenses',
       align: 'center',
       width: 70,
-      sorter: (a, b) => a.expenses - b.expenses,
-      render: (value) => <span className="text-red-600 font-medium">₹ {Number(value).toFixed(2)}</span>,
+      sorter: (a, b) => new Date(a.expenses) - new Date(b.expenses),
+      ellipsis: true,
+      render: (v) => (
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
+            {v}
+          </span>
+        </Tooltip>
+      ),
+    },
+    {
+      title: 'Others',
+      dataIndex: 'others',
+      align: 'center',
+      width: 70,
+      sorter: (a, b) => new Date(a.others) - new Date(b.others),
+      ellipsis: true,
+      render: (v) => (
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
+            {v}
+          </span>
+        </Tooltip>
+      ),
     },
     {
       title: 'Payout Amount',
@@ -275,15 +205,121 @@ function PaymentReconcile() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.payoutAmount - b.payoutAmount,
-      render: (value) => <span className="text-green-700 font-semibold">₹ {Number(value).toFixed(2)}</span>,
+      sorter: (a, b) => new Date(a.payoutAmount) - new Date(b.payoutAmount),
+      render: (v) => (
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
+            {v}
+          </span>
+        </Tooltip>
+      ),
     },
     {
       title: 'Transactions',
       dataIndex: 'totalTransactions',
       align: 'center',
       width: 70,
+      sorter: (a, b) => new Date(a.totalTransactions) - new Date(b.totalTransactions),
+      ellipsis: true,
+    },
+    {
+      title: '',
+      key: 'view',
+      align: 'center',
+      width: 50,
+      render: (_, record) => (
+        <button
+          type="button"
+          className="w-[28px] h-[28px] rounded-full border border-[#dbe1e8] flex items-center justify-center cursor-pointer hover:text-black transition-all duration-200 mx-auto"
+          onClick={() =>
+            navigate('/admin/reconcile/paymentReconcileDetials', {
+              state: {
+                date: record.date,
+              },
+            })
+          }
+        >
+          <RightOutlined />
+        </button>
+      ),
+    },
+  ];
+
+  const settlementColumns = [
+    {
+      title: 'Settlement Date',
+      dataIndex: 'settlementDate',
+      align: 'center',
+      width: 100,
+      sorter: (a, b) => new Date(a.settlementDate) - new Date(b.settlementDate),
+    },
+    {
+      title: 'Sales',
+      dataIndex: 'sales',
+      align: 'center',
+      width: 100,
+      sorter: (a, b) => a.sales - b.sales,
+      render: (v) => `₹ ${Number(v).toFixed(2)}`,
+    },
+    {
+      title: 'Refunds',
+      dataIndex: 'refunds',
+      align: 'center',
+      width: 100,
+      sorter: (a, b) => a.refunds - b.refunds,
+      render: (v) => `₹ ${Number(v).toFixed(2)}`,
+    },
+    {
+      title: 'Expenses',
+      dataIndex: 'expenses',
+      align: 'center',
+      width: 100,
+      sorter: (a, b) => a.expenses - b.expenses,
+      render: (v) => <span className="text-red-600 font-medium">₹ {Number(v).toFixed(2)}</span>,
+    },
+    {
+      title: 'Others',
+      dataIndex: 'others',
+      align: 'center',
+      width: 100,
+      sorter: (a, b) => a.others - b.others,
+      render: (v) => `₹ ${Number(v).toFixed(2)}`,
+    },
+    {
+      title: 'Payout Amount',
+      dataIndex: 'payoutAmount',
+      align: 'center',
+      width: 120,
+      sorter: (a, b) => a.payoutAmount - b.payoutAmount,
+      render: (v) => <span className="text-green-700 font-semibold">₹ {Number(v).toFixed(2)}</span>,
+    },
+    {
+      title: 'Transactions',
+      dataIndex: 'totalTransactions',
+      align: 'center',
+      width: 100,
       sorter: (a, b) => a.totalTransactions - b.totalTransactions,
+    },
+    {
+      title: '',
+      key: 'view',
+      align: 'center',
+      width: 50,
+      render: (_, record) => (
+        <button
+          type="button"
+          className="w-[28px] h-[28px] rounded-full border border-[#dbe1e8] flex items-center justify-center cursor-pointer hover:bg-[#f5f7fa] hover:border-[#1677ff] transition-all duration-200 mx-auto"
+          onClick={() =>
+            navigate('/admin/reconcile/settlementdetails', {
+              state: {
+                settlementDate: record.settlementDate,
+              },
+            })
+          }
+        >
+          <RightOutlined />
+        </button>
+      ),
     },
   ];
 
@@ -313,7 +349,7 @@ function PaymentReconcile() {
         </div>
       </div>
       {/* TOP CARDS */}
-      <div className="grid grid-cols-5 lg:grid-cols-2 md:grid-cols-1 gap-2 mb-3">
+      <div className="grid grid-cols-5 lg:grid-cols-2 md:grid-cols-1 gap-2 mb-2">
         {' '}
         {[
           {
@@ -419,49 +455,17 @@ function PaymentReconcile() {
           </div>
 
           {/* FILTERS */}
-          <div className="flex items-center gap-3 border-b border-[#edf0f2] px-4 py-3 lg:flex-wrap">
+          {/* <div className="flex items-center gap-3 border-b border-[#edf0f2] px-4 py-3 lg:flex-wrap">
             {' '}
-            <select
-              className="py-1 rounded-l border border-[#e5e7eb] bg-white px-2 text-[10px] outline-none md:w-full
-"
-            >
-              <option>All Marketplaces</option>
-            </select>
-            <select
-              className="py-1 rounded-l border border-[#e5e7eb] bg-white px-2 text-[10px] outline-none md:w-full
-"
-            >
-              <option>All Types</option>
-            </select>
-            <select
-              className="py-1 rounded-l border border-[#e5e7eb] bg-white px-2 text-[10px] outline-none md:w-full
-"
-            >
-              <option>All Status</option>
-            </select>
-            <input
-              type="text"
-              value="01/05/2026 - 31/05/2026"
-              readOnly
-              className="h-[30px] w-[170px] rounded-l border border-[#e5e7eb] px-2 text-[10px] outline-none md:w-full
-"
-            />
             <div className="relative ml-auto md:ml-0 md:w-full">
               <input
                 placeholder="Search Payment ID...."
-                className="h-[34px] w-[180px] md:w-full rounded-l border border-[#e5e7eb] pl-3 pr-9 text-[11px] outline-none"
+                className="h-[30px] w-[180px] md:w-full rounded-l border border-[#e5e7eb] pl-3 pr-9 text-[12px] outline-none"
               />
 
               <SearchOutlined className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-[#9ca3af]" />
             </div>
-            {/* <button
-              type="button"
-              className="flex py-1 items-center gap-2 rounded-l border border-[#e5e7eb] px-3 text-[10px] font-medium text-[#374151]"
-            >
-              <FilterOutlined className="text-[10px]" />
-              Filters
-            </button> */}
-          </div>
+          </div> */}
 
           {/* TABLE */}
           <div className="overflow-x-auto w-full">

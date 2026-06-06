@@ -292,7 +292,7 @@ function EstimatedFees() {
             <select
               value={fullfilment}
               onChange={(e) => setFullfilment(e.target.value)}
-              className="h-[30px] w-[170px] px-2 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
+              className="h-[30px] w-[150px] px-2 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
             >
               <option value="">All Fulfillment</option>
               <option value="AFN">AFN</option>

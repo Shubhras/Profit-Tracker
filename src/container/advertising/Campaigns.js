@@ -809,9 +809,9 @@ function Campaigns() {
           <div className="border-b border-[#edf0f2] px-3 py-2">
             {/* Top Content */}
             <div>
-              <h1 className="text-[19px] font-semibold text-[#111827] mb-1">Campaigns Performance</h1>
+              <h1 className="text-[19px] font-semibold text-[#111827] mb-0">Campaigns Performance</h1>
 
-              <p className="mt-1 text-[12px] text-[#6b7280]">
+              <p className="text-[12px] text-[#6b7280]">
                 Track campaign orders, revenue, discounts and overall marketplace performance.
               </p>
             </div>
@@ -854,7 +854,7 @@ function Campaigns() {
                 <select
                   value={stateFilter}
                   onChange={(e) => setStateFilter(e.target.value)}
-                  className="h-[30px] px-3 pr-6 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
+                  className="h-[30px] px-2 pr-4 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
                 >
                   <option value="">All State</option>
                   <option value="ENABLED">Enabled</option>
@@ -864,7 +864,7 @@ function Campaigns() {
                 <select
                   value={targetinType}
                   onChange={(e) => settargetingType(e.target.value)}
-                  className="h-[30px] px-3 pr-6 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
+                  className="h-[30px] px-2 pr-4 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
                 >
                   <option value="">All Targeting Type</option>
                   <option value="ENABLED">Manual</option>
@@ -874,7 +874,7 @@ function Campaigns() {
                 <Dropdown trigger={['click']} dropdownRender={() => manageColumnsDropdown} placement="bottomRight">
                   <Button
                     icon={<SettingOutlined />}
-                    className="!h-[30px] !flex !items-center !justify-center gap-1 text-[13px] !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium"
+                    className="!h-[30px] px-2 !flex !items-center !justify-center gap-1 text-[13px] !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium"
                   >
                     Manage Columns
                   </Button>
