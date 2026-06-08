@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button, Table, Tooltip, Tag } from 'antd';
 import { FilterOutlined, ExportOutlined, SearchOutlined, ArrowLeftOutlined } from '@ant-design/icons';
@@ -9,6 +9,8 @@ function AdProductsThird() {
   const dispatch = useDispatch();
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -25,12 +27,19 @@ function AdProductsThird() {
   useEffect(() => {
     const payload = {
       campaign_id: id,
-      // start_date: '2026-05-01',
-      // end_date: '2026-05-20',
+      search: debouncedSearch,
     };
 
     dispatch(getProductsAds(pagination.current, pagination.pageSize, payload));
-  }, [dispatch, pagination, id]);
+  }, [dispatch, pagination.current, pagination.pageSize, id, debouncedSearch]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchText]);
 
   const dataSource =
     productsAds?.results?.map((item) => ({
@@ -61,9 +70,10 @@ function AdProductsThird() {
       fixed: 'left',
       width: '70',
       ellipsis: true,
+      sorter: (a, b) => a.adGroupId - b.adGroupId,
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-          <span className="font-medium text-[#2563eb] block truncate cursor-pointer">₹{v}</span>
+          <span className="font-medium text-[#2563eb] block truncate cursor-pointer">{v}</span>
         </Tooltip>
       ),
     },
@@ -74,6 +84,7 @@ function AdProductsThird() {
       align: 'center',
       width: '70',
       ellipsis: true,
+      sorter: (a, b) => a.campaignId - b.campaignId,
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span className="block truncate cursor-pointer">{v}</span>
@@ -86,6 +97,7 @@ function AdProductsThird() {
       dataIndex: 'campaignName',
       align: 'center',
       width: '70',
+      sorter: (a, b) => String(a.campaignName).localeCompare(String(b.campaignName)),
       ellipsis: true,
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
@@ -105,6 +117,7 @@ function AdProductsThird() {
       align: 'center',
       width: '70',
       ellipsis: true,
+      sorter: (a, b) => String(a.name).localeCompare(String(b.name)),
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span
@@ -122,6 +135,7 @@ function AdProductsThird() {
       dataIndex: 'state',
       align: 'center',
       width: '70',
+      sorter: (a, b) => String(a.state).localeCompare(String(b.state)),
       ellipsis: true,
       render: (v) => (
         <Tag color={v === 'ENABLED' ? 'success' : 'error'} className="!rounded-full !px-3">
@@ -145,6 +159,7 @@ function AdProductsThird() {
       align: 'center',
       width: '70',
       ellipsis: true,
+      sorter: (a, b) => a.totalAds - b.totalAds,
     },
 
     {
@@ -153,6 +168,7 @@ function AdProductsThird() {
       align: 'center',
       width: '70',
       ellipsis: true,
+      sorter: (a, b) => a.impressions - b.impressions,
     },
 
     {
@@ -160,6 +176,7 @@ function AdProductsThird() {
       dataIndex: 'clicks',
       align: 'center',
       width: '70',
+      sorter: (a, b) => a.clicks - b.clicks,
     },
 
     {
@@ -167,7 +184,7 @@ function AdProductsThird() {
       dataIndex: 'cost',
       align: 'center',
       width: '70',
-
+      sorter: (a, b) => a.cost - b.cost,
       render: (v) => (
         <Tooltip title={`₹${v}`} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span className="font-medium text-[#dc2626] block truncate cursor-pointer">₹{v}</span>
@@ -180,6 +197,7 @@ function AdProductsThird() {
       dataIndex: 'sales',
       align: 'center',
       width: 70,
+      sorter: (a, b) => a.sales - b.sales,
       render: (v) => (
         <Tooltip title={`₹${v}`} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span className="font-medium text-[#16a34a] block truncate cursor-pointer">₹{v}</span>
@@ -192,6 +210,7 @@ function AdProductsThird() {
       dataIndex: 'orders',
       align: 'center',
       width: 70,
+      sorter: (a, b) => a.orders - b.orders,
     },
 
     {
@@ -199,6 +218,7 @@ function AdProductsThird() {
       dataIndex: 'units',
       align: 'center',
       width: 70,
+      sorter: (a, b) => a.units - b.units,
     },
 
     {
@@ -206,6 +226,7 @@ function AdProductsThird() {
       dataIndex: 'acos',
       align: 'center',
       width: 70,
+      sorter: (a, b) => a.acos - b.acos,
       render: (v) => (
         <Tag color={v > 40 ? 'error' : 'processing'} className="!rounded-full !px-3">
           {v}%
@@ -218,6 +239,7 @@ function AdProductsThird() {
       dataIndex: 'roas',
       align: 'center',
       width: 70,
+      sorter: (a, b) => a.roas - b.roas,
       render: (v) => (
         <Tag color={v >= 1 ? 'success' : 'warning'} className="!rounded-full !px-3">
           {v}
@@ -262,6 +284,8 @@ function AdProductsThird() {
               <div className="relative w-[280px]">
                 <input
                   type="text"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
                   placeholder="Search ad products..."
                   className="w-full h-[30px] rounded-xl border bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm transition-all duration-200 focus:border-[#dbe1e8]"
                 />

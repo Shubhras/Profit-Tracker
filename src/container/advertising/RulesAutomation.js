@@ -534,18 +534,18 @@ function RulesAutomation() {
           <div className="flex items-center gap-2 sm:w-full sm:flex-wrap">
             {' '}
             {/* ACTIVITY LOG */}
-            <Button className="!h-[32px] !px-3 !rounded-lg !border-[#dbe1e8] !shadow-none">
+            <Button className="!h-[32px] !px-3 !rounded-l !border-[#dbe1e8] !shadow-none">
               <span className="text-[12px] font-medium leading-none">Activity Log</span>
             </Button>
             {/* CREATE RULE */}
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
+            <button
+              type="button"
               onClick={() => setOpenRuleModal(true)}
-              className="!h-[32px] !px-3 !rounded-lg !bg-[#2563eb] !border-none !shadow-none"
+              className="flex items-center justify-center gap-2 h-[30px] px-2 rounded-l bg-[#059669] hover:bg-[#047857] text-white font-semibold text-[12px] transition-all w-full min-sm:w-auto"
             >
+              <PlusOutlined />
               <span className="font-bold leading-none text-[12px]">Create Rule</span>
-            </Button>
+            </button>
           </div>
         </div>
 
@@ -594,11 +594,7 @@ function RulesAutomation() {
             ${active ? 'text-[#16a34a] font-semibold' : 'text-[#6b7280] font-medium hover:text-[#111827]'}
           `}
                 >
-                  {/* LABEL */}
-
                   <span className="text-[13px] leading-none">{tab.label}</span>
-
-                  {/* COUNT */}
 
                   {tab.count && (
                     <div
@@ -633,12 +629,12 @@ function RulesAutomation() {
                 <div>
                   <h2 className="text-[15px] font-semibold text-[#111827] mb-0">Pending Execution Rules</h2>
 
-                  <p className="text-[12px] text-[#6b7280] mb-1">Rules waiting to execute.</p>
+                  {/* <p className="text-[12px] text-[#6b7280] mb-1">Rules waiting to execute.</p> */}
                 </div>
                 <div className="flex items-center gap-3">
-                  <Button type="primary" className="!h-[30px] text-[13px] !rounded-l !bg-[#2563eb]">
+                  {/* <Button type="primary" className="!h-[30px] text-[13px] !rounded-l !bg-[#2563eb]">
                     <span className="font-semibold">Run All Rules</span>
-                  </Button>
+                  </Button> */}
                 </div>
               </div>
 
@@ -669,7 +665,7 @@ function RulesAutomation() {
                 }}
                 // scroll={{ x: 1000 }}
                 // scroll={{ x: 1000, y: 500 }}
-                scroll={{ x: 1200, y: 500 }}
+                scroll={{ x: 800, y: 500 }}
                 size="middle"
                 bordered={false}
                 className="
