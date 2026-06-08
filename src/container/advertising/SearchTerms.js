@@ -39,7 +39,7 @@ function SearchTerms() {
 
   useEffect(() => {
     dispatch(
-      getSearchTerms(pagination.current, pagination.pageSize, {
+      getSearchTerms({
         search: debouncedSearch,
         campaign_id: selectedCampaign,
         pagination: {
@@ -401,7 +401,7 @@ function SearchTerms() {
                 pageSize: pag.pageSize,
               });
             }}
-            scroll={{ x: 'max-content' }}
+            scroll={{ x: '800', y: 500 }}
             bordered={false}
             className="
     [&_.ant-table-thead>tr>th]:!text-[12px]
