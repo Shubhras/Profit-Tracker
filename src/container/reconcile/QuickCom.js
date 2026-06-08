@@ -13,7 +13,6 @@ import {
   Tooltip as RechartsTooltip,
   Legend,
 } from 'recharts';
-import { getQuickComReconciliation } from '../../redux/reconcilePayment/actionCreator';
 import { exportProfitData } from '../../redux/dashboard/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
@@ -45,24 +44,6 @@ const invoiceColumns = [
 export default function QuickCom() {
   const dispatch = useDispatch();
   const { dateRange, channel: globalChannel } = useSelector((state) => state.dashboard);
-
-  const payload = {
-    filters: {
-      channel: {
-        IN: ['Blinkit', 'BigBasket', 'Swiggy', 'Zepto'],
-      },
-      fromDate: '2026-03-31T18:30:00+00:00',
-      toDate: '2026-04-30T18:29:59+00:00',
-      mode: 'chart',
-    },
-    pagination: {
-      pageNo: 0,
-      pageSize: 25,
-    },
-  };
-  useEffect(() => {
-    dispatch(getQuickComReconciliation(payload));
-  }, []);
 
   useEffect(() => {
     const handleHeaderAction = (event) => {

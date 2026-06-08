@@ -17,13 +17,16 @@ import {
 } from '@ant-design/icons';
 
 import { useDispatch, useSelector } from 'react-redux';
-import { getSearchTerms } from '../../redux/advertising/actionCreator';
+import { getSearchTerms, getCampaignsRulesList } from '../../redux/advertising/actionCreator';
 
 function SearchTerms() {
   const dispatch = useDispatch();
 
   const [searchText, setSearchText] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  const [campaigns, setCampaigns] = useState([]);
+  const [selectedCampaign, setSelectedCampaign] = useState('');
 
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -34,13 +37,18 @@ function SearchTerms() {
 
   const { searchTerms, loading } = useSelector((state) => state.advertising);
 
-  useEffect(() => {
-    dispatch(
-      getSearchTerms(pagination.current, pagination.pageSize, {
-        search: debouncedSearch,
-      }),
-    );
-  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch]);
+  useEffect(
+    () => {
+      dispatch(
+        getSearchTerms(pagination.current, pagination.pageSize, {
+          search: debouncedSearch,
+          campaign_id: selectedCampaign,
+        }),
+      );
+    },
+    [dispatch, pagination.current, pagination.pageSize, debouncedSearch, selectedCampaign],
+    selectedCampaign,
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -51,6 +59,19 @@ function SearchTerms() {
   }, [searchText]);
 
   const summaryCards = searchTerms?.dashboard?.summary_cards || {};
+  const performanceKey = searchTerms?.dashboard?.top_performing_terms || [];
+
+  const fetchCampaigns = async () => {
+    const response = await dispatch(getCampaignsRulesList());
+
+    if (response?.status) {
+      setCampaigns(response.data || []);
+    }
+  };
+
+  useEffect(() => {
+    fetchCampaigns();
+  }, []);
 
   const dataSource =
     searchTerms?.data?.map((item) => ({
@@ -90,7 +111,7 @@ function SearchTerms() {
 
       dataIndex: 'checkbox',
       width: 55,
-      fixed: 'center',
+      align: 'center',
 
       render: (_, record) => (
         <input
@@ -113,11 +134,28 @@ function SearchTerms() {
       dataIndex: 'searchTerm',
       width: 70,
       ellipsis: true,
+      align: 'center',
       sorter: (a, b) => String(a.searchTerm).localeCompare(String(b.searchTerm)),
 
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-          <span className="text-[11px] text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '170px' }}>
+          <span className="text-[11px] text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '100px' }}>
+            {v}
+          </span>
+        </Tooltip>
+      ),
+    },
+    {
+      title: 'Campaign Name',
+      dataIndex: 'campaignName',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => String(a.campaignName).localeCompare(String(b.campaignName)),
+
+      render: (v) => (
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span className="text-[11px] text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '100px' }}>
             {v}
           </span>
         </Tooltip>
@@ -127,6 +165,7 @@ function SearchTerms() {
     {
       title: 'Impressions',
       dataIndex: 'impressions',
+      align: 'center',
       width: 70,
       render: (v) => <span className="text-[11px]">{v}</span>,
       sorter: (a, b) => a.impressions - b.impressions,
@@ -136,6 +175,7 @@ function SearchTerms() {
       title: 'Clicks',
       dataIndex: 'clicks',
       width: 70,
+      align: 'center',
       render: (v) => <span className="text-[11px]">{v}</span>,
       sorter: (a, b) => a.clicks - b.clicks,
     },
@@ -143,6 +183,7 @@ function SearchTerms() {
     {
       title: 'Cost',
       dataIndex: 'cost',
+      align: 'center',
       width: 70,
 
       sorter: (a, b) => a.cost - b.cost,
@@ -152,6 +193,7 @@ function SearchTerms() {
     {
       title: 'Orders',
       dataIndex: 'orders',
+      align: 'center',
       width: 70,
       render: (v) => <span className="text-[11px]">{v}</span>,
     },
@@ -160,6 +202,7 @@ function SearchTerms() {
       title: 'Sales',
       dataIndex: 'sales',
       width: 70,
+      align: 'center',
       sorter: (a, b) => a.sales - b.sales,
       render: (v) => <span className="font-medium text-[#15803d] text-[11px]">₹{Number(v || 0).toLocaleString()}</span>,
     },
@@ -167,6 +210,7 @@ function SearchTerms() {
     {
       title: 'ACOS',
       dataIndex: 'acos',
+      align: 'center',
       width: 70,
       sorter: (a, b) => a.acos - b.acos,
       render: (v) => {
@@ -264,13 +308,13 @@ function SearchTerms() {
             Search Term Report
           </Button>
 
-          <Button
-            type="primary"
-            className="!h-[30px] !rounded-lg !bg-[#0f766e] !text-[11px] whitespace-nowrap font-semibold"
+          <button
+            type="button"
+            className="flex items-center justify-center gap-2 h-[30px] px-3 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-semibold text-[12px] transition-all w-full min-sm:w-auto"
           >
             <PlusOutlined />
             Add as Keyword
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -305,8 +349,18 @@ function SearchTerms() {
 
           <SearchOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[12px]" />
         </div>
-        <select className="h-[30px] px-2 rounded-lg border border-[#dbe1e8] bg-white text-[12px] outline-none">
-          <option>All Campaigns</option>
+        <select
+          value={selectedCampaign}
+          onChange={(e) => setSelectedCampaign(e.target.value)}
+          className="h-[30px] w-[170px] px-2 pr-4 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none cursor-pointer truncate"
+        >
+          <option value="">All Campaigns</option>
+
+          {campaigns.map((item) => (
+            <option key={item.campaign_id} value={item.campaign_id}>
+              {item.name}
+            </option>
+          ))}
         </select>
 
         {/* <select className="h-[30px] px-2 rounded-lg border border-[#dbe1e8] bg-white text-[12px] outline-none">
@@ -423,24 +477,26 @@ function SearchTerms() {
           <div className="bg-white rounded-xl border border-[#e5e7eb] p-3">
             <h2 className="text-[15px] font-semibold text-[#111827] mb-2">Top Performing Terms</h2>
 
-            {[
-              'sony wh-1000xm5',
-              'noise cancelling headphones',
-              'gaming headphones',
-              'wireless bluetooth headphones',
-              'over ear headphones',
-            ].map((item, index) => (
+            {performanceKey.map((item, index) => (
               <div
-                key={item}
-                className={`flex items-center justify-between py-2 ${index !== 4 ? 'border-b border-[#f1f5f9]' : ''}`}
+                key={item.search_term}
+                className={`flex items-center justify-between py-1 ${
+                  index !== performanceKey.length - 1 ? 'border-b border-[#f1f5f9]' : ''
+                }`}
               >
-                <p className="text-[11px] text-[#111827] truncate max-w-[180px]">{item}</p>
+                <div>
+                  <p className="text-[12px] text-[#111827] truncate max-w-[180px] mb-1">{item.search_term}</p>
 
-                <span className="text-[11px] font-semibold text-[#16a34a]">{22 + index}%</span>
+                  <p className="text-[11px] text-[#6b7280]">Orders: {item.orders}</p>
+                </div>
+
+                <span className="text-[12px] font-semibold text-[#16a34a]">
+                  ₹{Number(item.sales || 0).toLocaleString()}
+                </span>
               </div>
             ))}
 
-            <Button className="w-full !h-[34px] !rounded-lg !text-[11px] mt-2">View All</Button>
+            <Button className="w-full !h-[34px] !rounded-lg !text-[11px] mt-0">View All</Button>
           </div>
 
           {/* QUICK ACTIONS */}

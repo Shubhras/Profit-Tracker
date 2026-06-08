@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Table, Tag, Tooltip, Modal, Switch } from 'antd';
+import { Button, Table, Tag, Tooltip, Switch, Popover, Input } from 'antd';
 import { ExportOutlined, SearchOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -13,15 +13,16 @@ function Keywords() {
   const dispatch = useDispatch();
   const [searchText, setSearchText] = React.useState('');
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
-  const [isBidModalOpen, setIsBidModalOpen] = React.useState(false);
   const [selectedBid, setSelectedBid] = React.useState('');
   const [pagination, setPagination] = React.useState({
     current: 1,
     pageSize: 10,
   });
   const [selectedAdGroup, setSelectedAdGroup] = useState('');
-
+  const [openBidId, setOpenBidId] = React.useState(null);
   const [selectedKeyword, setSelectedKeyword] = React.useState(null);
+  const [stateFilter, setStateFilter] = useState('');
+
   const [savingBid, setSavingBid] = React.useState(false);
 
   const [matchType, setMatchType] = React.useState('');
@@ -37,22 +38,24 @@ function Keywords() {
       search: debouncedSearch,
 
       campaign_id: selectedCampaign || null,
+      state: stateFilter,
 
       match_type: matchType || '',
 
-      // future ke liye
       ad_group_id: selectedAdGroup,
-      // state: appliedFilters.state,
-      // match_type: appliedFilters.match_type,
-      // state: 'enabled',
-      // match_type: 'broad',
-      // campaign_id: '1234567890',
-      // ad_group_id: '9876543210',
-      // ordering: '-created_at',
     };
 
     dispatch(getKeywords(pagination.current, pagination.pageSize, payload));
-  }, [dispatch, pagination, debouncedSearch, selectedCampaign, matchType, selectedAdGroup]);
+  }, [
+    dispatch,
+    pagination.current,
+    pagination.pageSize,
+    debouncedSearch,
+    stateFilter,
+    selectedCampaign,
+    matchType,
+    selectedAdGroup,
+  ]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -110,6 +113,43 @@ function Keywords() {
       }),
     );
   }, [dispatch]);
+
+  const handleBidUpdate = async () => {
+    if (!selectedKeyword) return;
+
+    setSavingBid(true);
+
+    const payload = {
+      profile_id: selectedKeyword.profileId,
+      keywords: [
+        {
+          keywordId: selectedKeyword.keywordId,
+          state: selectedKeyword.state,
+          bid: Number(selectedBid),
+        },
+      ],
+    };
+
+    try {
+      const res = await dispatch(KeywordBidUpdate(payload));
+
+      if (res?.status) {
+        setOpenBidId(null);
+
+        dispatch(
+          getKeywords(pagination.current, pagination.pageSize, {
+            search: debouncedSearch,
+            // state: appliedFilters.state,
+            // match_type: appliedFilters.match_type,
+          }),
+        );
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setSavingBid(false);
+    }
+  };
 
   const dataSource =
     keywordsData?.results?.map((item) => ({
@@ -194,7 +234,7 @@ function Keywords() {
       dataIndex: 'state',
       align: 'center',
       size: 'small',
-      width: 90,
+      width: 70,
       render: (value, record) => (
         <Switch
           checked={value === 'ENABLED'}
@@ -211,6 +251,8 @@ function Keywords() {
       align: 'center',
       width: 70,
       ellipsis: true,
+      sorter: (a, b) => String(a.keywordText).localeCompare(String(b.keywordText)),
+
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
@@ -226,6 +268,7 @@ function Keywords() {
       align: 'center',
       width: 70,
       ellipsis: true,
+      sorter: (a, b) => String(a.matchType).localeCompare(String(b.matchType)),
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
@@ -253,21 +296,83 @@ function Keywords() {
       dataIndex: 'bid',
       align: 'center',
       width: 70,
-      sorter: (a, b) => Number(a.bid || 0) - Number(b.bid || 0),
+      sorter: (a, b) => a.bid - b.bid,
       ellipsis: true,
-      render: (v, record) => (
-        <button
-          type="button"
-          onClick={() => {
-            setSelectedBid(v);
-            setSelectedKeyword(record);
-            setIsBidModalOpen(true);
-          }}
-          className="px-3 py-[6px] rounded-xl border border-transparent text-[#111827] font-medium bg-transparent hover:border-[#dbe1e8] hover:bg-white hover:shadow-sm transition-all duration-200"
-        >
-          ₹{Number(v ?? 0).toLocaleString('en-IN')}
-        </button>
-      ),
+
+      render: (v, record) => {
+        const bidContent = (
+          <div className="w-[220px]">
+            <Input
+              prefix="₹"
+              type="number"
+              value={selectedBid}
+              onChange={(e) => setSelectedBid(e.target.value)}
+              className="!h-[34px]"
+            />
+
+            <div className="mt-3 flex justify-end gap-2">
+              <Button
+                onClick={() => {
+                  setOpenBidId(null);
+                }}
+                className="!border-0 !shadow-none"
+              >
+                Cancel
+              </Button>
+
+              <Button
+                loading={savingBid}
+                onClick={async () => {
+                  await handleBidUpdate();
+                  setOpenBidId(null);
+                }}
+                className="
+              !text-white
+              !border-0
+              !rounded-xl
+              !font-semibold
+            "
+                style={{
+                  background: 'linear-gradient(135deg, rgb(16,185,129) 0%, rgb(15,118,110) 100%)',
+                }}
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+        );
+
+        return (
+          <Popover
+            trigger="click"
+            placement="bottom"
+            content={bidContent}
+            open={openBidId === record.keywordId}
+            onOpenChange={(open) => {
+              if (open) {
+                setOpenBidId(record.keywordId);
+                setSelectedBid(record.bid);
+                setSelectedKeyword(record);
+              } else {
+                setOpenBidId(null);
+              }
+            }}
+          >
+            <button
+              type="button"
+              className="group relative overflow-hidden w-[72px] px-2 py-[7px] rounded-2xl border border-transparent bg-transparent hover:border-[#dbeafe] hover:bg-[#f8fbff] transition-all duration-300"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-[#eff6ff] via-[#f8fafc] to-[#ecfeff] opacity-80" />
+
+              <div className="relative w-full truncate text-center">
+                <span className="text-[10px] font-bold text-[#0f172a] truncate block">
+                  ₹{Number(v ?? 0).toFixed(2)}
+                </span>
+              </div>
+            </button>
+          </Popover>
+        );
+      },
     },
 
     {
@@ -276,6 +381,7 @@ function Keywords() {
       align: 'center',
       width: 70,
       ellipsis: true,
+      sorter: (a, b) => String(a.campaignName).localeCompare(String(b.campaignName)),
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span className="text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
@@ -291,6 +397,7 @@ function Keywords() {
       align: 'center',
       width: 70,
       ellipsis: true,
+      sorter: (a, b) => String(a.adGroupName).localeCompare(String(b.adGroupName)),
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span className="text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
@@ -306,6 +413,7 @@ function Keywords() {
       align: 'center',
       width: 70,
       ellipsis: true,
+      sorter: (a, b) => String(a.countryCode).localeCompare(String(b.countryCode)),
     },
 
     {
@@ -314,6 +422,7 @@ function Keywords() {
       align: 'center',
       width: 70,
       ellipsis: true,
+      sorter: (a, b) => String(a.currencyCode).localeCompare(String(b.currencyCode)),
     },
     {
       title: 'Impressions',
@@ -321,6 +430,7 @@ function Keywords() {
       align: 'center',
       width: 70,
       ellipsis: true,
+      sorter: (a, b) => a.impressions - b.impressions,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -329,6 +439,7 @@ function Keywords() {
       dataIndex: 'clicks',
       align: 'center',
       width: 70,
+      sorter: (a, b) => a.clicks - b.clicks,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -337,7 +448,7 @@ function Keywords() {
       dataIndex: 'cost',
       align: 'center',
       width: 70,
-      sorter: (a, b) => Number(a.cost || 0) - Number(b.cost || 0),
+      sorter: (a, b) => a.cost - b.cost,
       render: (v) => <span className="font-medium text-[#dc2626]">₹{v ?? 0}</span>,
     },
 
@@ -346,7 +457,7 @@ function Keywords() {
       dataIndex: 'sales',
       align: 'center',
       width: 70,
-      sorter: (a, b) => Number(a.sales || 0) - Number(b.sales || 0),
+      sorter: (a, b) => a.sales - b.sales,
       render: (v) => <span className="font-medium text-[#16a34a]">₹{v ?? 0}</span>,
     },
 
@@ -354,7 +465,7 @@ function Keywords() {
       title: 'Orders',
       dataIndex: 'orders',
       align: 'center',
-      sorter: (a, b) => Number(a.orders || 0) - Number(b.orders || 0),
+      sorter: (a, b) => a.orders - b.orders,
       width: 70,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
@@ -364,7 +475,7 @@ function Keywords() {
       dataIndex: 'units',
       align: 'center',
       width: 70,
-      sorter: (a, b) => Number(a.units || 0) - Number(b.units || 0),
+      sorter: (a, b) => a.units - b.units,
       render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
 
@@ -373,7 +484,7 @@ function Keywords() {
       dataIndex: 'acos',
       align: 'center',
       width: 70,
-      sorter: (a, b) => Number(a.acos || 0) - Number(b.acos || 0),
+      sorter: (a, b) => a.acos - b.acos,
       render: (v) => (
         <Tag className="!px-3 !py-[3px] !rounded-full" color={v > 100 ? 'error' : 'processing'}>
           {v ? `${v.toFixed(2)}%` : '-'}
@@ -386,7 +497,7 @@ function Keywords() {
       dataIndex: 'roas',
       align: 'center',
       width: 70,
-      sorter: (a, b) => Number(a.roas || 0) - Number(b.raos || 0),
+      sorter: (a, b) => a.roas - b.roas,
       render: (v) => (
         <Tag className="!px-3 !py-[3px] !rounded-full" color={v >= 1 ? 'success' : 'warning'}>
           {v ? v.toFixed(2) : '-'}
@@ -394,43 +505,6 @@ function Keywords() {
       ),
     },
   ];
-
-  const handleBidUpdate = async () => {
-    if (!selectedKeyword) return;
-
-    setSavingBid(true);
-
-    const payload = {
-      profile_id: selectedKeyword.profileId,
-      keywords: [
-        {
-          keywordId: selectedKeyword.keywordId,
-          state: selectedKeyword.state,
-          bid: Number(selectedBid),
-        },
-      ],
-    };
-
-    try {
-      const res = await dispatch(KeywordBidUpdate(payload));
-
-      if (res?.status) {
-        setIsBidModalOpen(false);
-
-        dispatch(
-          getKeywords(pagination.current, pagination.pageSize, {
-            search: debouncedSearch,
-            // state: appliedFilters.state,
-            // match_type: appliedFilters.match_type,
-          }),
-        );
-      }
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setSavingBid(false);
-    }
-  };
 
   return (
     <>
@@ -449,7 +523,7 @@ function Keywords() {
 
             <div className="mt-5 flex items-center justify-between gap-3 flex-wrap">
               {/* Search */}
-              <div className="relative w-[280px]">
+              <div className="relative w-[240px]">
                 <input
                   type="text"
                   placeholder="Search keywords..."
@@ -467,7 +541,7 @@ function Keywords() {
                 <select
                   value={selectedCampaign}
                   onChange={(e) => setSelectedCampaign(e.target.value)}
-                  className="h-[30px] w-[170px] px-3 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none"
+                  className="h-[30px] w-[150px] px-2 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none"
                 >
                   <option value="">All Campaigns</option>
 
@@ -479,9 +553,19 @@ function Keywords() {
                 </select>
 
                 <select
+                  value={stateFilter}
+                  onChange={(e) => setStateFilter(e.target.value)}
+                  className="h-[30px] px-2 pr-6 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
+                >
+                  <option value="">All State</option>
+                  <option value="ENABLED">Enabled</option>
+                  <option value="PAUSED">Paused</option>
+                </select>
+
+                <select
                   value={matchType}
                   onChange={(e) => setMatchType(e.target.value)}
-                  className="h-[30px] px-3 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none"
+                  className="h-[30px] px23 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none"
                 >
                   <option value="">All Match Type</option>
                   <option value="BROAD">Broad</option>
@@ -493,7 +577,7 @@ function Keywords() {
                 <select
                   value={selectedAdGroup}
                   onChange={(e) => setSelectedAdGroup(e.target.value)}
-                  className="h-[30px] w-[170px] px-4 pr-8 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none cursor-pointer truncate"
+                  className="h-[30px] w-[150px] px-2 pr-4 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer truncate"
                 >
                   <option value="">All Ad Groups</option>
 
@@ -508,7 +592,7 @@ function Keywords() {
                 <Button
                   type="primary"
                   icon={<ExportOutlined />}
-                  className="!h-[30px] text-[13px] !px-5 !rounded-xl !bg-[#2563eb] !border-[#2563eb] !font-medium !shadow-sm"
+                  className="!h-[30px] text-[13px] !px-3 !rounded-xl !bg-[#2563eb] !border-[#2563eb] !font-semibold !shadow-sm"
                 >
                   Export
                 </Button>
@@ -537,7 +621,7 @@ function Keywords() {
                 pageSize: pag.pageSize,
               });
             }}
-            scroll={{ x: 1200 }}
+            scroll={{ x: 1300 }}
             size="middle"
             bordered={false}
             className="
@@ -551,50 +635,6 @@ function Keywords() {
           {/* </div> */}
         </div>
       </div>
-      <Modal
-        open={isBidModalOpen}
-        footer={null}
-        centered
-        closable={false}
-        onCancel={() => setIsBidModalOpen(false)}
-        width={340}
-      >
-        <div className="pt-1">
-          <div className="flex items-center gap-1 mb-4">
-            <span className="text-[13px] font-semibold tracking-wide text-[#4b5563] uppercase">Default Bid</span>
-          </div>
-
-          <div className="relative">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6b7280] font-semibold text-[15px]">₹</div>
-
-            <input
-              type="number"
-              value={selectedBid}
-              onChange={(e) => setSelectedBid(e.target.value)}
-              className="w-full h-[54px] rounded-2xl border border-[#c7d2fe] bg-[#fafbff] pl-10 pr-4 text-[18px] font-semibold text-[#111827] outline-none"
-            />
-          </div>
-
-          <div className="mt-6 pt-4 border-t border-[#eef1f5] flex items-center justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => setIsBidModalOpen(false)}
-              className="h-[42px] px-5 rounded-xl text-[#6b7280] font-medium hover:bg-[#f3f4f6]"
-            >
-              Cancel
-            </button>
-
-            <button
-              type="button"
-              onClick={handleBidUpdate}
-              disabled={savingBid}
-              className="h-[42px] px-6 rounded-xl bg-[#111827] text-white font-semibold disabled:opacity-50"
-            >
-              {savingBid ? 'Saving...' : 'Save'}
-            </button>
-          </div>
-        </div>
-      </Modal>
     </>
   );
 }

@@ -11,6 +11,8 @@ function CampaignDetails() {
   const navigate = useNavigate();
   const [isBidModalOpen, setIsBidModalOpen] = useState(false);
   const [selectedBid, setSelectedBid] = useState(null);
+  const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   // const [selectedRecord, setSelectedRecord] = useState(null);
 
   const [pagination, setPagination] = React.useState({
@@ -26,11 +28,20 @@ function CampaignDetails() {
         // search: 'auto',
         // state: 'ENABLED',
         campaign_id: id,
+        search: debouncedSearch,
         // ordering: '-created_at',
       }),
     );
     // }, [dispatch, pagination, id]);
-  }, [dispatch, pagination.current, pagination.pageSize, id]);
+  }, [dispatch, pagination.current, pagination.pageSize, id, debouncedSearch]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchText]);
 
   const dataSource =
     adsGroupData?.results?.map((item) => ({
@@ -75,8 +86,6 @@ function CampaignDetails() {
               checked={isActive}
               onChange={(checked) => {
                 console.log('STATUS:', checked ? 'ENABLED' : 'PAUSED', record);
-
-                // API CALL HERE
               }}
               style={{
                 transform: 'scale(1.15)',
@@ -311,6 +320,8 @@ function CampaignDetails() {
               <div className="relative w-[260px]">
                 <input
                   type="text"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
                   placeholder="Search ad groups..."
                   className="w-full h-[30px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm focus:border-[#2563eb]"
                 />
