@@ -123,7 +123,7 @@ function OrderSettlement() {
       dataIndex: 'transactionId',
       key: 'transactionId',
       align: 'center',
-      width: 70,
+      width: 90,
       sorter: (a, b) => String(a.transactionId || '').localeCompare(String(b.transactionId || '')),
       ellipsis: true,
       render: (v) => (
@@ -140,7 +140,7 @@ function OrderSettlement() {
       dataIndex: 'orderId',
       key: 'orderId',
       align: 'center',
-      width: 70,
+      width: 90,
       sorter: (a, b) => String(a.orderId || '').localeCompare(String(b.orderId || '')),
       ellipsis: true,
       render: (v) => (
@@ -261,7 +261,7 @@ function OrderSettlement() {
       title: '',
       key: 'view',
       align: 'center',
-      width: 50,
+      width: 30,
       render: (record) => (
         <Tooltip title="View Details" color="black" overlayInnerStyle={{ color: '#fff' }}>
           <EyeOutlined
@@ -529,6 +529,9 @@ function OrderSettlement() {
             {/* Breakdown Section */}
             <div>
               <h3 className="mb-3 text-[13px] font-semibold text-gray-800">Breakdown Summary</h3>
+              <div className="mb-2 font-semibold text-[13px] text-gray-800">
+                {selectedRecord?.transactionType} : ₹ {Math.abs(Number(selectedRecord?.totalAmount || 0)).toFixed(2)}
+              </div>
 
               <div className="space-y-2">
                 {selectedRecord.breakdowns?.map((item) => (

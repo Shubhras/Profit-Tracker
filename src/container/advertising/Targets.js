@@ -81,7 +81,7 @@ function Targets() {
         />
       ),
       dataIndex: 'checkbox',
-      width: 50,
+      width: 40,
       align: 'center',
       fixed: 'left',
 
@@ -105,7 +105,7 @@ function Targets() {
       title: 'State',
       dataIndex: 'state',
       align: 'center',
-      width: 55,
+      width: 40,
 
       render: (v, record) => (
         <Switch
@@ -123,7 +123,7 @@ function Targets() {
     {
       title: 'Target ID',
       dataIndex: 'targetId',
-      width: 50,
+      width: 70,
       ellipsis: true,
       fixed: 'left',
       align: 'center',
@@ -146,9 +146,9 @@ function Targets() {
       title: 'Expression',
       dataIndex: 'expression',
       align: 'center',
-      width: 50,
+      width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.expression - b.expression,
+      sorter: (a, b) => String(a.expression).localeCompare(String(b.expression)),
 
       render: (v) => (
         <div className="flex justify-center">
@@ -202,7 +202,7 @@ function Targets() {
       title: 'Bid',
       dataIndex: 'bid',
       align: 'center',
-      width: 80,
+      width: 60,
       ellipsis: true,
       sorter: (a, b) => a.bid - b.bid,
 
@@ -290,8 +290,8 @@ function Targets() {
       title: 'Campaign Name',
       dataIndex: 'campaignName',
       align: 'center',
-      width: 50,
-      sorter: (a, b) => a.campaignName - b.campaignName,
+      width: 70,
+      sorter: (a, b) => String(a.campaignName).localeCompare(String(b.campaignName)),
       ellipsis: true,
       render: (v) => (
         <div className="flex justify-center">
@@ -308,8 +308,9 @@ function Targets() {
       title: 'Ad Group Name',
       dataIndex: 'adGroupName',
       align: 'center',
-      width: 50,
-      sorter: (a, b) => a.adGroupName - b.adGroupName,
+      width: 70,
+      sorter: (a, b) => String(a.adGroupName).localeCompare(String(b.adGroupName)),
+
       ellipsis: true,
       render: (v) => (
         <div className="flex justify-center">

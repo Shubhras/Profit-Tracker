@@ -114,17 +114,19 @@ function OverView() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f6f8fc] p-3 px-2">
+    <div className="min-h-screen bg-[#f6f8fc] py-4 px-3">
       {/* HEADER */}
       <div className="mb-2 flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-[20px] font-semibold text-[#111827] leading-none">Payment Reconciliation Dashboard</h1>
+            <h1 className="text-[20px] font-semibold text-[#111827] leading-none mb-0">
+              Payment Reconciliation Dashboard
+            </h1>
 
             <InfoCircleOutlined className="text-[12px] text-[#9ca3af]" />
           </div>
 
-          <p className="mt-1 text-[12px] text-[#6b7280]">
+          <p className="text-[12px] mt-1 text-[#6b7280]">
             Track, analyze and recover every rupee owed to your business across marketplaces.
           </p>
         </div>

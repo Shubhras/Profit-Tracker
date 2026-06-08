@@ -400,9 +400,10 @@ function AdProducts() {
             </div>
 
             {/* Bottom Row */}
-            <div className="mt-5 flex items-center justify-between gap-3">
+            {/* <div className="mt-5 flex items-center justify-between gap-3"> */}
+            <div className="mt-5 flex items-center justify-between gap-3 lg:flex-col lg:items-start">
               {/* LEFT SIDE */}
-              <div className="relative w-[280px]">
+              <div className="relative w-[280px] md:w-full">
                 <input
                   type="text"
                   value={searchText}
@@ -415,7 +416,8 @@ function AdProducts() {
               </div>
 
               {/* RIGHT SIDE BUTTONS */}
-              <div className="flex items-center gap-3">
+              {/* <div className="flex items-center gap-3"> */}
+              <div className="flex items-center gap-3 flex-wrap lg:w-full">
                 {/* FILTER */}
                 <select
                   value={stateFilter}

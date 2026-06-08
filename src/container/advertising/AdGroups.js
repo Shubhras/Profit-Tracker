@@ -506,8 +506,9 @@ function AdGroups() {
               </p>
             </div>
 
-            <div className="mt-5 flex items-center justify-between gap-3">
-              <div className="relative w-[280px]">
+            {/* <div className="mt-5 flex items-center justify-between gap-3"> */}
+            <div className="mt-5 flex items-center justify-between gap-3 lg:flex-col lg:items-start">
+              <div className="relative w-[280px] md:w-full">
                 <input
                   type="text"
                   value={searchText}
@@ -519,7 +520,8 @@ function AdGroups() {
                 <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
               </div>
 
-              <div className="flex items-center gap-3">
+              {/* <div className="flex items-center gap-3"> */}
+              <div className="flex items-center gap-3 flex-wrap lg:w-full">
                 <select
                   value={stateFilter}
                   onChange={(e) => setStateFilter(e.target.value)}

@@ -110,41 +110,42 @@ function PaymentReconcile() {
         </Tooltip>
       ),
     },
-    {
-      title: 'Date',
-      dataIndex: 'date',
-      align: 'center',
-      width: 70,
-      sorter: (a, b) => new Date(a.date) - new Date(b.date),
-      render: (v) => (
-        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-          <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
-            {v}
-          </span>
-        </Tooltip>
-      ),
-    },
-    {
-      title: 'Beginning Balance',
-      dataIndex: 'beginningBalance',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => new Date(a.beginningBalance) - new Date(b.beginningBalance),
-      render: (v) => (
-        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-          <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
-            {v}
-          </span>
-        </Tooltip>
-      ),
-    },
+    // {
+    //   title: 'Date',
+    //   dataIndex: 'date',
+    //   align: 'center',
+    //   width: 70,
+    //   sorter: (a, b) => new Date(a.date) - new Date(b.date),
+    //   render: (v) => (
+    //     <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+    //       <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
+    //         {v}
+    //       </span>
+    //     </Tooltip>
+    //   ),
+    // },
+
+    // {
+    //   title: 'Beginning Balance',
+    //   dataIndex: 'beginningBalance',
+    //   align: 'center',
+    //   width: 70,
+    //   ellipsis: true,
+    //   sorter: (a, b) => Number(a.beginningBalance) - Number(b.beginningBalance),
+    //   render: (v) => (
+    //     <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+    //       <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
+    //         {v}
+    //       </span>
+    //     </Tooltip>
+    //   ),
+    // },
     {
       title: 'Sales',
       dataIndex: 'sales',
       align: 'center',
       width: 70,
-      sorter: (a, b) => new Date(a.sales) - new Date(b.sales),
+      sorter: (a, b) => Number(a.sales) - Number(b.sales),
       ellipsis: true,
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
@@ -160,7 +161,7 @@ function PaymentReconcile() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => new Date(a.refunds) - new Date(b.refunds),
+      sorter: (a, b) => Number(a.refunds) - Number(b.refunds),
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
@@ -174,7 +175,7 @@ function PaymentReconcile() {
       dataIndex: 'expenses',
       align: 'center',
       width: 70,
-      sorter: (a, b) => new Date(a.expenses) - new Date(b.expenses),
+      sorter: (a, b) => Number(a.expenses) - Number(b.expenses),
       ellipsis: true,
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
@@ -189,7 +190,7 @@ function PaymentReconcile() {
       dataIndex: 'others',
       align: 'center',
       width: 70,
-      sorter: (a, b) => new Date(a.others) - new Date(b.others),
+      sorter: (a, b) => Number(a.others) - Number(b.others),
       ellipsis: true,
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
@@ -205,7 +206,7 @@ function PaymentReconcile() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => new Date(a.payoutAmount) - new Date(b.payoutAmount),
+      sorter: (a, b) => Number(a.payoutAmount) - Number(b.payoutAmount),
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
@@ -219,7 +220,7 @@ function PaymentReconcile() {
       dataIndex: 'totalTransactions',
       align: 'center',
       width: 70,
-      sorter: (a, b) => new Date(a.totalTransactions) - new Date(b.totalTransactions),
+      sorter: (a, b) => Number(a.totalTransactions) - Number(b.totalTransactions),
       ellipsis: true,
     },
     {
@@ -326,16 +327,16 @@ function PaymentReconcile() {
   const columns = activeTab === 'payments' ? paymentColumns : settlementColumns;
 
   return (
-    <div className="min-h-screen bg-[#f6f8fc] p-3 md:p-2 sm:p-1">
+    <div className="min-h-screen bg-[#f6f8fc] px-3 py-4 md:p-2 sm:p-1">
       {' '}
       {/* HEADER */}
       <div className="mb-2 flex items-start justify-between lg:flex-col lg:gap-2">
         <div>
-          <h1 className="text-[24px] md:text-[20px] sm:text-[18px] font-semibold text-[#111827] leading-none mb-1">
+          <h1 className="text-[20px] md:text-[20px] sm:text-[18px] font-semibold text-[#111827] leading-none mb-1">
             Payments
           </h1>
 
-          <p className="mt-1 text-[11px] text-[#6b7280]">
+          <p className="text-[12px] text-[#6b7280]">
             View all payments transferred by marketplaces. Track expected vs received and identify gaps.
           </p>
         </div>

@@ -521,9 +521,10 @@ function Keywords() {
               </p>
             </div>
 
-            <div className="mt-5 flex items-center justify-between gap-3 flex-wrap">
+            {/* <div className="mt-5 flex items-center justify-between gap-3 flex-wrap"> */}
+            <div className="mt-5 flex items-center justify-between gap-3 lg:flex-col lg:items-start">
               {/* Search */}
-              <div className="relative w-[240px]">
+              <div className="relative w-[240px] md:w-full">
                 <input
                   type="text"
                   placeholder="Search keywords..."
@@ -536,12 +537,13 @@ function Keywords() {
               </div>
 
               {/* Filters + Export */}
-              <div className="flex items-center gap-2 flex-wrap">
+              {/* <div className="flex items-center gap-2 flex-wrap"> */}
+              <div className="flex items-center gap-2 flex-wrap lg:w-full">
                 {/* All Marketplace */}
                 <select
                   value={selectedCampaign}
                   onChange={(e) => setSelectedCampaign(e.target.value)}
-                  className="h-[30px] w-[150px] px-2 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none"
+                  className="h-[30px] w-[150px] md:flex-1 md:min-w-[140px]  px-2 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none"
                 >
                   <option value="">All Campaigns</option>
 
@@ -565,7 +567,7 @@ function Keywords() {
                 <select
                   value={matchType}
                   onChange={(e) => setMatchType(e.target.value)}
-                  className="h-[30px] px23 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none"
+                  className="h-[30px] px-2 pr-4 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none"
                 >
                   <option value="">All Match Type</option>
                   <option value="BROAD">Broad</option>
@@ -577,7 +579,7 @@ function Keywords() {
                 <select
                   value={selectedAdGroup}
                   onChange={(e) => setSelectedAdGroup(e.target.value)}
-                  className="h-[30px] w-[150px] px-2 pr-4 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer truncate"
+                  className="h-[30px] w-[150px] md:flex-1 md:min-w-[140px] px-2 pr-4 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer truncate"
                 >
                   <option value="">All Ad Groups</option>
 
