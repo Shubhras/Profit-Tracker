@@ -191,15 +191,12 @@ export const getProductsAds = (page = 1, pageSize = 10, payload = {}) => {
   };
 };
 
-export const getSearchTerms = (page = 1, pageSize = 10, payload = {}) => {
+export const getSearchTerms = (payload = {}) => {
   return async (dispatch) => {
     dispatch(searchtermsBegin());
 
     try {
-      const response = await DataService.post(
-        `/amazon-ads/search-term-metrics/?page=${page}&page_size=${pageSize}`,
-        payload,
-      );
+      const response = await DataService.post(`/amazon-ads/search-term-metrics/`, payload);
 
       if (response.data.status === true) {
         dispatch(searchtermsSuccess(response.data));

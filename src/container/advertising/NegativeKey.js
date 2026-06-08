@@ -307,9 +307,9 @@ function NegativeKey() {
             <span className="text-[12px]">Amazon Search Term Report</span>
           </Button> */}
 
-          <button
-            type="button"
-            className="flex items-center justify-center gap-2 h-[30px] px-2 rounded-l bg-[#059669] hover:bg-[#047857] text-white font-semibold text-[12px] transition-all w-full min-sm:w-auto"
+          <Button
+            type="primary"
+            className="flex items-center justify-center gap-0 h-[30px] px-2 rounded-l bg-[#059669] hover:bg-[#047857] text-white font-bold text-[12px] transition-all w-full min-sm:w-auto"
           >
             <PlusOutlined
               style={{
@@ -318,7 +318,7 @@ function NegativeKey() {
               }}
             />
             <span>Add Negative Keywords</span>
-          </button>
+          </Button>
         </div>
       </div>
 

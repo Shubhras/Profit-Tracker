@@ -37,18 +37,18 @@ function SearchTerms() {
 
   const { searchTerms, loading } = useSelector((state) => state.advertising);
 
-  useEffect(
-    () => {
-      dispatch(
-        getSearchTerms(pagination.current, pagination.pageSize, {
-          search: debouncedSearch,
-          campaign_id: selectedCampaign,
-        }),
-      );
-    },
-    [dispatch, pagination.current, pagination.pageSize, debouncedSearch, selectedCampaign],
-    selectedCampaign,
-  );
+  useEffect(() => {
+    dispatch(
+      getSearchTerms(pagination.current, pagination.pageSize, {
+        search: debouncedSearch,
+        campaign_id: selectedCampaign,
+        pagination: {
+          pageNo: pagination.current,
+          pageSize: pagination.pageSize,
+        },
+      }),
+    );
+  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch, selectedCampaign]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -308,13 +308,13 @@ function SearchTerms() {
             Search Term Report
           </Button>
 
-          <button
-            type="button"
-            className="flex items-center justify-center gap-2 h-[30px] px-3 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-semibold text-[12px] transition-all w-full min-sm:w-auto"
+          <Button
+            type="primary"
+            className="flex items-center justify-center gap-0 h-[30px] px-2 rounded-xl text-white font-semibold text-[12px] transition-all w-full min-sm:w-auto"
           >
             <PlusOutlined />
             Add as Keyword
-          </button>
+          </Button>
         </div>
       </div>
 
