@@ -465,14 +465,7 @@ function Campaigns() {
                     dispatch(getCampaigns(pagination.current, pagination.pageSize));
                   }
                 }}
-                className=" !text-white
-    hover:!text-white
-    focus:!text-white
-    active:!text-white
-    !border-0
-    !rounded-xl
-    !font-semibold
-    !shadow-[0_4px_12px_rgba(22,101,52,0.25)]"
+                className="!text-white hover:!text-white focus:!text-white active:!text-white !border-0 !rounded-xl !font-semibold !shadow-[0_4px_12px_rgba(22,101,52,0.25)]"
                 style={{ background: 'linear-gradient(135deg, rgb(16, 185, 129) 0%, rgb(15, 118, 110) 100%)' }}
               >
                 Save
@@ -817,7 +810,8 @@ function Campaigns() {
             </div>
 
             {/* Bottom Row */}
-            <div className="mt-5 flex items-center justify-between gap-3">
+            {/* <div className="mt-5 flex items-center justify-between gap-3"> */}
+            <div className="mt-5 flex items-center justify-between gap-3 lg:flex-col lg:items-start">
               {/* Search */}
               <div className="relative w-[260px]">
                 <input
@@ -831,26 +825,8 @@ function Campaigns() {
                 <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
               </div>
 
-              <div className="flex items-center gap-3">
-                {/* <Popover
-                  content={filterContent}
-                  trigger="click"
-                  open={openFilter}
-                  onOpenChange={setOpenFilter}
-                  placement="bottomRight"
-                  overlayInnerStyle={{
-                    padding: '8px',
-                    borderRadius: '22px',
-                  }}
-                >
-                  <Button
-                    icon={<FilterOutlined />}
-                    className="!h-[30px] text-[13px] !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium hover:!border-[#2563eb] hover:!text-[#2563eb] !flex !items-center !justify-center"
-                  >
-                    Filters
-                  </Button>
-                </Popover> */}
-
+              {/* <div className="flex items-center gap-3"> */}
+              <div className="flex items-center gap-3 flex-wrap lg:w-full">
                 <select
                   value={stateFilter}
                   onChange={(e) => setStateFilter(e.target.value)}
@@ -874,7 +850,7 @@ function Campaigns() {
                 <Dropdown trigger={['click']} dropdownRender={() => manageColumnsDropdown} placement="bottomRight">
                   <Button
                     icon={<SettingOutlined />}
-                    className="!h-[30px] px-2 !flex !items-center !justify-center gap-1 text-[13px] !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium"
+                    className="!h-[30px] px-2 !flex !items-center !justify-center gap-0 text-[13px] !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium"
                   >
                     Manage Columns
                   </Button>

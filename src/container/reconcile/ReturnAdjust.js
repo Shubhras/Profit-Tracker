@@ -115,6 +115,8 @@ function ReturnAdjust() {
       dataIndex: 'transactionId',
       width: 100,
       ellipsis: true,
+      align: 'center',
+      sorter: (a, b) => String(a.transactionId) - String(b.transactionId),
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span className="text-[12px] text-[#1677ff] block truncate font-medium cursor-pointer">{v}</span>
@@ -126,6 +128,8 @@ function ReturnAdjust() {
       title: 'Order ID',
       dataIndex: 'orderId',
       width: 100,
+      align: 'center',
+      sorter: (a, b) => Number(a.totalAmount) - Number(b.totalAmount),
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span className="text-[12px] text-[#111827] font-medium block truncate cursor-pointer">{v}</span>
@@ -138,6 +142,8 @@ function ReturnAdjust() {
       dataIndex: 'transactionType',
       width: 70,
       align: 'center',
+      ellipsis: true,
+      sorter: (a, b) => String(a.transactionType).localeCompare(String(b.transactionType)),
       render: (v) => (
         <Tag color="blue" className="rounded-full text-[10px] px-2">
           {v}
@@ -148,19 +154,24 @@ function ReturnAdjust() {
     {
       title: 'Status',
       dataIndex: 'transactionStatus',
-      width: 70,
+      width: 90,
       align: 'center',
+      sorter: (a, b) => String(a.transactionStatus).localeCompare(String(b.transactionStatus)),
       render: (v) => (
-        <Tag color={v === 'DEFERRED' ? 'gold' : 'green'} className="rounded-full text-[10px] px-2">
-          {v}
-        </Tag>
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <Tag color={v === 'DEFERRED' ? 'gold' : 'green'} className="rounded-full text-[10px] px-2 cursor-pointer">
+            {v}
+          </Tag>
+        </Tooltip>
       ),
     },
 
     {
       title: 'Posted Date',
       dataIndex: 'postedDate',
-      width: 80,
+      width: 70,
+      align: 'center',
+      sorter: (a, b) => new Date(a.transactionStatus) - new Date(b.transactionStatus),
       render: (v) => {
         const formattedDate = v ? new Date(v).toLocaleString('en-IN') : '-';
 
@@ -176,7 +187,8 @@ function ReturnAdjust() {
       title: 'Amount',
       dataIndex: 'totalAmount',
       width: 70,
-      align: 'right',
+      align: 'center',
+      sorter: (a, b) => Number(a.totalAmount) - Number(b.totalAmount),
       render: (v) => {
         const amount = Number(v || 0);
 
@@ -193,6 +205,7 @@ function ReturnAdjust() {
       dataIndex: 'currencyCode',
       width: 50,
       align: 'center',
+      sorter: (a, b) => String(a.currencyCode) - String(b.currencyCode),
       render: (v) => <span className="text-[12px] font-medium text-[#111827]">{v}</span>,
     },
 
@@ -394,6 +407,10 @@ function ReturnAdjust() {
                   {
                     value: 'RELEASED',
                     label: 'Released',
+                  },
+                  {
+                    value: 'DEFERRED_RELEASED',
+                    label: 'deferred_released',
                   },
                 ]}
               />

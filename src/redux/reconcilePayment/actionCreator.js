@@ -97,13 +97,33 @@ export const getSettledOrders = (page = 1, pageSize = 10) => {
   };
 };
 
-export const getAmazonTransactionDetail = (page = 1, pageSize = 10, startDate, endDate, details = false) => {
+export const getAmazonTransactionDetail = (
+  page = 1,
+  pageSize = 10,
+  startDate,
+  endDate,
+  details = false,
+  search = '',
+  transactionStatus = '',
+  transactionType = '',
+) => {
   return async (dispatch) => {
     dispatch(amazontransactionBegin());
     try {
       // const response = await DataService.get(`/amazon/amazon-transactions-details/?page=${page}&page_size=${pageSize}`);
+      // const response = await DataService.get(
+      //   `/amazon/grouped-transactions/?page=${page}&page_size=${pageSize}&start_date=${startDate}&end_date=${endDate}&details=${details}&search=${search}`,
+      // );
+
       const response = await DataService.get(
-        `/amazon/grouped-transactions/?page=${page}&page_size=${pageSize}&start_date=${startDate}&end_date=${endDate}&details=${details}`,
+        `/amazon/grouped-transactions/?page=${page}
+        &page_size=${pageSize}
+        &start_date=${startDate}
+        &end_date=${endDate}
+        &details=${details}
+        &search=${search}
+        &transaction_status=${transactionStatus}
+        &transaction_type=${transactionType}`.replace(/\s+/g, ''),
       );
 
       console.log('API RESPONSE', response.data);
