@@ -23,9 +23,8 @@ function CampaignSecondDetails() {
 
   useEffect(() => {
     dispatch(
-      getSearchTerms(pagination.current, pagination.pageSize, {
+      getSearchTerms({
         filters: {
-          // search: 'headphones',
           campaign_id: Number(id),
           search: debouncedSearch,
         },
