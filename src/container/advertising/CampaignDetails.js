@@ -304,7 +304,7 @@ function CampaignDetails() {
                 </button>
 
                 <div className="flex flex-col">
-                  <h1 className="text-[19px] font-semibold text-[#111827] leading-[30px] mb-1">Campaign Details</h1>
+                  <h1 className="text-[19px] font-semibold text-[#111827] leading-[30px] mb-1">Ad Groups Details</h1>
 
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[13px] text-[#6b7280] font-medium">Campaign Name:</span>
