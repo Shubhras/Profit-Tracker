@@ -9,8 +9,6 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   RiseOutlined,
-  WarningOutlined,
-  DownloadOutlined,
   EyeOutlined,
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -26,6 +24,9 @@ function OrderSettlement() {
     pageSize: 10,
   });
 
+  const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
 
@@ -40,6 +41,7 @@ function OrderSettlement() {
       getSettledOrders(
         pagination.current,
         pagination.pageSize,
+        debouncedSearch,
         // filters: {
         //   fulfillment_channel: fullfilment,
         //   search: debouncedSearch,
@@ -48,7 +50,15 @@ function OrderSettlement() {
         // },
       ),
     );
-  }, [dispatch, dateRange, pagination.current, pagination.pageSize]);
+  }, [dispatch, dateRange, pagination.current, pagination.pageSize, debouncedSearch]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchText]);
 
   const topCards = [
     {
@@ -334,7 +344,7 @@ function OrderSettlement() {
           ))}
         </div>
         {/* MAIN */}
-        <div className="grid grid-cols-[1fr_280px] lg:grid-cols-1 gap-2">
+        <div className="w-full">
           {' '}
           {/* LEFT */}
           <div className="rounded-2xl border border-[#e5e7eb] bg-white overflow-hidden">
@@ -384,6 +394,8 @@ function OrderSettlement() {
               />
               <div className="relative ml-auto md:ml-0 md:w-full">
                 <input
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
                   placeholder="Search Order ID / SKU"
                   className="py-1 w-[180px] md:w-full rounded-l border border-[#e5e7eb] pl-3 pr-9 text-[12px] outline-none"
                 />
@@ -432,79 +444,6 @@ function OrderSettlement() {
     [&_.ant-table-cell]:!py-2
   "
               />
-            </div>
-          </div>
-          {/* RIGHT SIDEBAR */}
-          <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-2 lg:space-y-0 md:grid-cols-1">
-            {/* ORDER STATUS */}
-            <div className="rounded-2xl border border-[#e5e7eb] bg-white p-3">
-              <h2 className="text-[15px] font-semibold text-[#111827]">Order Status Breakdown</h2>
-
-              <div className="mt-2 flex items-center justify-center">
-                <div className="relative flex h-[150px] w-[150px] items-center justify-center rounded-full border-[18px] border-[#16a34a]">
-                  <div className="text-center">
-                    <h3 className="text-[20px] font-bold text-[#111827]">2,189</h3>
-
-                    <p className="text-[10px] text-[#6b7280]">Total Orders</p>
-                  </div>
-                </div>
-              </div>
-
-              <button type="button" className="mt-2 text-[11px] font-medium text-[#16a34a]">
-                View Details →
-              </button>
-            </div>
-
-            {/* SETTLEMENT STATUS */}
-            <div className="rounded-2xl border border-[#e5e7eb] bg-white p-3">
-              <h2 className="text-[15px] font-semibold text-[#111827]">Settlement Status Breakdown</h2>
-
-              <div className="mt-2 flex items-center justify-center">
-                <div className="relative flex h-[150px] w-[150px] sm:h-[120px] sm:w-[120px] items-center justify-center rounded-full border-[18px] border-[#2563eb]">
-                  <div className="text-center">
-                    <h3 className="text-[20px] font-bold text-[#111827]">2,059</h3>
-
-                    <p className="text-[10px] text-[#6b7280]">Total Settlements</p>
-                  </div>
-                </div>
-              </div>
-
-              <button type="button" className="mt-2 text-[11px] font-medium text-[#16a34a]">
-                View Details →
-              </button>
-            </div>
-
-            {/* QUICK ACTIONS */}
-            <div className="rounded-2xl border border-[#e5e7eb] bg-white p-3">
-              <h2 className="text-[15px] font-semibold text-[#111827]">Quick Actions</h2>
-
-              <div className="mt-3 space-y-2">
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-3 sm:gap-2 rounded-xl border border-[#e5e7eb] px-3 py-2 text-left hover:bg-[#fafafa]"
-                >
-                  <DownloadOutlined className="text-[13px] text-[#2563eb]" />
-
-                  <div>
-                    <p className="text-[11px] font-semibold text-[#111827] mb-1">Download Order Report</p>
-
-                    <p className="text-[10px] text-[#9ca3af]">Export all order data</p>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-3 rounded-xl border border-[#e5e7eb] px-3 py-2 text-left hover:bg-[#fafafa]"
-                >
-                  <WarningOutlined className="text-[13px] text-[#ef4444]" />
-
-                  <div>
-                    <p className="text-[11px] font-semibold text-[#111827] mb-1">View All Leaks</p>
-
-                    <p className="text-[10px] text-[#9ca3af]">Analyze losses & pending settlements</p>
-                  </div>
-                </button>
-              </div>
             </div>
           </div>
         </div>

@@ -62,11 +62,13 @@ function SignIn() {
               navigate('/checkout', { state: { plan } });
             } else {
               navigate('/admin/profit/summary');
+              // navigate('/super-admin/dashboard');
             }
           } else if (redirectTo) {
             navigate(redirectTo);
           } else {
             navigate('/admin/profit/summary');
+            // navigate('/super-admin/dashboard');
           }
         }),
       );

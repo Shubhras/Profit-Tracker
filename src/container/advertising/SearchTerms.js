@@ -40,8 +40,10 @@ function SearchTerms() {
   useEffect(() => {
     dispatch(
       getSearchTerms({
-        search: debouncedSearch,
-        campaign_id: selectedCampaign,
+        filters: {
+          search: debouncedSearch,
+          campaign_id: selectedCampaign,
+        },
         pagination: {
           pageNo: pagination.current,
           pageSize: pagination.pageSize,

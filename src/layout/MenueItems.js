@@ -45,12 +45,15 @@ import {
   UilChartGrowth,
   UilProcess,
   UilLayersAlt,
+  UilApps,
+  UilUsersAlt,
+  UilTag,
 } from '@iconscout/react-unicons';
 import { Menu } from 'antd';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 
 import UilEllipsisV from '@iconscout/react-unicons/icons/uil-ellipsis-v';
 import propTypes from 'prop-types';
@@ -60,6 +63,7 @@ import propTypes from 'prop-types';
 
 function MenuItems({ toggleCollapsed }) {
   const { t } = useTranslation();
+  const location = useLocation();
 
   function getItem(label, key, icon, children, type) {
     return {
@@ -144,7 +148,8 @@ function MenuItems({ toggleCollapsed }) {
   //   document.body.classList.remove('dark');
   // };
 
-  const items = [
+  // const items = [
+  const userItems = [
     getItem(
       <NavLink onClick={toggleCollapsed} to={`${path}/pages/actionsrequired`}>
         {t('actionsRequired')}
@@ -1985,6 +1990,44 @@ function MenuItems({ toggleCollapsed }) {
     //   ),
     // ),
   ];
+
+  const superAdminItems = [
+    getItem(
+      <NavLink onClick={toggleCollapsed} to="/super-admin/dashboard">
+        Dashboard
+      </NavLink>,
+      'dashboard',
+      !topMenu && <UilApps />,
+    ),
+
+    getItem(
+      <NavLink onClick={toggleCollapsed} to="/super-admin/users">
+        Users
+      </NavLink>,
+      'users',
+      !topMenu && <UilUsersAlt />,
+    ),
+
+    getItem(
+      <NavLink onClick={toggleCollapsed} to="/super-admin/subscription">
+        Subscription
+      </NavLink>,
+      'subscription',
+      !topMenu && <UilSetting />,
+    ),
+
+    getItem(
+      <NavLink onClick={toggleCollapsed} to="/super-admin/CouponCode">
+        {t('Coupon Code')}
+      </NavLink>,
+      'couponcode',
+      !topMenu && <UilTag />,
+    ),
+  ];
+
+  const isSuperAdmin = location.pathname.startsWith('/super-admin');
+
+  const items = isSuperAdmin ? superAdminItems : userItems;
 
   return (
     <Menu
