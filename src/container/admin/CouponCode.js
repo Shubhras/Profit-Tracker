@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Input, Button, Switch, Tooltip } from 'antd';
+import { Table, Input, Button, Switch } from 'antd';
 import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 
 function CouponCode() {
@@ -13,7 +13,8 @@ function CouponCode() {
       title: 'CHR530',
       description: '30% OFF FOREVER',
       discount: '30%',
-      expiry: '12 Aug 2027',
+      startDate: '12 Aug 2026',
+      endDate: '12 Aug 2027',
     },
     {
       id: 2,
@@ -22,7 +23,8 @@ function CouponCode() {
       title: 'CHR510',
       description: '10% OFF FOREVER',
       discount: '10%',
-      expiry: '18 May 2028',
+      startDate: '18 May 2026',
+      endDate: '18 May 2027',
     },
     {
       id: 3,
@@ -31,7 +33,8 @@ function CouponCode() {
       title: 'CHR520',
       description: '20% OFF',
       discount: '20%',
-      expiry: '23 Mar 2028',
+      startDate: '28 March 2026',
+      endDate: '28 March 2027',
     },
     {
       id: 4,
@@ -40,7 +43,8 @@ function CouponCode() {
       title: 'CHR620',
       description: '10% OFF',
       discount: '30%',
-      expiry: '25 Mar 2024',
+      startDate: '12 Nov 2024',
+      endDate: '12 Nov 2027',
     },
     {
       id: 5,
@@ -49,7 +53,8 @@ function CouponCode() {
       title: 'CHR720',
       description: '50% OFF',
       discount: '10%',
-      expiry: '23 Mar 2028',
+      startDate: '12 Aug 2026',
+      endDate: '12 Aug 2027',
     },
   ];
 
@@ -74,12 +79,12 @@ function CouponCode() {
     {
       title: 'Title',
       dataIndex: 'title',
-      width: 150,
+      width: 100,
     },
     {
       title: 'Description',
       dataIndex: 'description',
-      width: 250,
+      width: 150,
     },
     {
       title: 'Discount',
@@ -88,29 +93,28 @@ function CouponCode() {
     },
     {
       title: 'Duration',
-      dataIndex: 'expiry',
       width: 180,
-      render: (text) => `→ ${text}`,
+      render: (_, record) => (
+        <span>
+          {record.startDate} - {record.endDate}
+        </span>
+      ),
     },
     {
       title: 'Actions',
       width: 120,
       render: () => (
         <div className="flex items-center gap-3">
-          <Tooltip title="Edit">
-            <EditOutlined className="cursor-pointer text-gray-500 hover:text-blue-500" />
-          </Tooltip>
+          <EditOutlined style={{ fontSize: '16px' }} className="cursor-pointer text-gray-500 hover:text-blue-500" />
 
-          <Tooltip title="Delete">
-            <DeleteOutlined className="cursor-pointer text-red-400 hover:text-red-600" />
-          </Tooltip>
+          <DeleteOutlined style={{ fontSize: '16px' }} className="cursor-pointer text-red-400 hover:text-red-600" />
         </div>
       ),
     },
   ];
 
   return (
-    <div className="p-4">
+    <div className="p-3 px-2">
       <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
         {/* Header */}
         <div className="flex items-center justify-between border-b px-4 py-3">

@@ -48,6 +48,10 @@ import {
   UilApps,
   UilUsersAlt,
   UilTag,
+  UilLifeRing,
+  UilStore,
+  UilCreditCard,
+  UilBell,
 } from '@iconscout/react-unicons';
 import { Menu } from 'antd';
 import React from 'react';
@@ -2013,7 +2017,15 @@ function MenuItems({ toggleCollapsed }) {
         Subscription
       </NavLink>,
       'subscription',
-      !topMenu && <UilSetting />,
+      !topMenu && <UilCreditCard />,
+    ),
+
+    getItem(
+      <NavLink onClick={toggleCollapsed} to="/super-admin/marketplaceIntegration">
+        Marketplace Integration
+      </NavLink>,
+      'marketplaceintegration',
+      !topMenu && <UilStore />,
     ),
 
     getItem(
@@ -2022,6 +2034,22 @@ function MenuItems({ toggleCollapsed }) {
       </NavLink>,
       'couponcode',
       !topMenu && <UilTag />,
+    ),
+
+    getItem(
+      <NavLink onClick={toggleCollapsed} to="/super-admin/support">
+        {t('Help & Support')}
+      </NavLink>,
+      'support',
+      !topMenu && <UilLifeRing />,
+    ),
+
+    getItem(
+      <NavLink onClick={toggleCollapsed} to="/super-admin/notifications">
+        {t('Notifications')}
+      </NavLink>,
+      'notification',
+      !topMenu && <UilBell />,
     ),
   ];
 

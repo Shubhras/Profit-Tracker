@@ -125,9 +125,10 @@ function MarketPayment() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f6f8fc] p-3 px-2">
+    <div className="min-h-screen bg-[#f6f8fc] p-3 md:p-2">
       {/* HEADER */}
-      <div className="flex items-start justify-between px-3 py-2">
+      <div className="flex flex-wrap items-start justify-between gap-2 px-3 py-2">
+        {' '}
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-[22px] font-semibold text-[#111827] leading-none mb-1">Marketplace Payments</h1>
@@ -142,7 +143,8 @@ function MarketPayment() {
       </div>
 
       {/* TOP CARDS */}
-      <div className="grid grid-cols-4 gap-3 mb-2">
+      <div className="grid grid-cols-4 2xl:grid-cols-2 lg:grid-cols-2 md:grid-cols-1 gap-3 mb-2">
+        {' '}
         {topCards.map((item, index) => (
           <div key={index} className="rounded-2xl border border-[#e5e7eb] bg-white px-4 py-3 shadow-sm">
             <div className="flex items-start gap-3">
@@ -163,30 +165,28 @@ function MarketPayment() {
       </div>
 
       {/* MAIN */}
-      <div className="grid grid-cols-[1fr_280px] gap-3">
+      <div className="grid grid-cols-[1fr_280px] xl:grid-cols-1 gap-3">
+        {' '}
         {/* LEFT */}
         <div className="rounded-2xl border border-[#e5e7eb] bg-white overflow-hidden">
           {/* FILTERS */}
-          <div className="flex items-center gap-2 border-b border-[#edf0f2] px-2 py-3">
-            <select className="py-2 rounded-l border border-[#e5e7eb] px-2 text-[11px] outline-none">
+          <div className="flex flex-wrap items-center gap-2 border-b border-[#edf0f2] px-2 py-3">
+            {' '}
+            <select className="py-2 rounded-l border border-[#e5e7eb] px-2 text-[11px] outline-none lg:w-full">
               <option>All Marketplaces</option>
             </select>
-
-            <select className="py-2 rounded-l border border-[#e5e7eb] px-2 text-[11px] outline-none">
+            <select className="py-2 rounded-l border border-[#e5e7eb] px-2 text-[11px] outline-none lg:w-full">
               <option>All Types</option>
             </select>
-
-            <select className="py-2 rounded-l border border-[#e5e7eb] px-2 text-[11px] outline-none">
+            <select className="py-2 rounded-l border border-[#e5e7eb] px-2 text-[11px] outline-none lg:w-full">
               <option>All Status</option>
             </select>
-
             <input
               type="text"
               value="01/05/2026 - 31/05/2026"
               readOnly
-              className="py-2 w-[170px] rounded-l border border-[#e5e7eb] px-2 text-[11px] outline-none"
+              className="py-2 w-[170px] rounded-l border border-[#e5e7eb] px-2 text-[11px] outline-none lg:w-full"
             />
-
             <div className="relative ml-auto">
               <input
                 placeholder="Search Payment ID / Reference ID"
@@ -195,7 +195,6 @@ function MarketPayment() {
 
               <SearchOutlined className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-[#9ca3af]" />
             </div>
-
             <button
               type="button"
               className="flex py-2 items-center gap-2 rounded-l border border-[#e5e7eb] px-2 text-[11px] font-medium text-[#374151]"
@@ -203,7 +202,6 @@ function MarketPayment() {
               <FilterOutlined className="text-[10px]" />
               Filters
             </button>
-
             {/* <button
               type="button"
               className="flex h-[34px] items-center gap-2 rounded-xl border border-[#e5e7eb] px-3 text-[11px] font-medium text-[#374151]"
@@ -214,7 +212,8 @@ function MarketPayment() {
           </div>
 
           {/* CHARTS */}
-          <div className="grid grid-cols-2 gap-3 border-b border-[#edf0f2] p-3">
+          <div className="grid grid-cols-2 lg:grid-cols-1 gap-3 border-b border-[#edf0f2] p-3">
+            {' '}
             <div className="rounded-2xl border border-[#edf0f2] p-4">
               {/* Header */}
               <div className="flex items-center justify-between">
@@ -303,12 +302,12 @@ function MarketPayment() {
                 </ResponsiveContainer>
               </div>
             </div>
-
             <div className="rounded-2xl border border-[#edf0f2] p-3">
               <h2 className="text-[14px] font-semibold text-[#111827]">Payment Type Breakdown</h2>
 
               <div className="mt-5 flex items-center justify-center">
-                <div className="relative flex h-[170px] w-[170px] items-center justify-center rounded-full border-[18px] border-[#16a34a]">
+                <div className="relative flex h-[170px] w-[170px] sm:h-[140px] sm:w-[140px] items-center justify-center rounded-full border-[18px] border-[#16a34a]">
+                  {' '}
                   <div className="text-center">
                     <h3 className="text-[22px] font-bold text-[#111827]">₹ 2.20L</h3>
 
@@ -320,7 +319,7 @@ function MarketPayment() {
           </div>
 
           {/* TABLE */}
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto w-full">
             <table className="w-full min-w-[1250px]">
               <thead>
                 <tr className="border-b border-[#edf0f2] bg-[#fafafa]">
@@ -405,7 +404,6 @@ function MarketPayment() {
             </table>
           </div>
         </div>
-
         {/* RIGHT SIDEBAR */}
         <div className="space-y-2">
           {/* MARKETPLACE SUMMARY */}
