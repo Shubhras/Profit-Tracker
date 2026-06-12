@@ -46,6 +46,7 @@ function Notifications() {
     {
       title: 'Type',
       dataIndex: 'type',
+      align: 'center',
       render: (type) => {
         let color = 'blue';
 
@@ -60,26 +61,31 @@ function Notifications() {
     {
       title: 'Title',
       dataIndex: 'title',
+      align: 'center',
     },
 
     {
       title: 'Audience',
       dataIndex: 'audience',
+      align: 'center',
     },
 
     {
       title: 'Method',
       dataIndex: 'method',
+      align: 'center',
     },
 
     {
       title: 'Date',
       dataIndex: 'date',
+      align: 'center',
     },
 
     {
       title: 'Status',
       dataIndex: 'status',
+      align: 'center',
       render: (status) => {
         let color = 'default';
 

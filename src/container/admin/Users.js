@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Table, Input, Avatar, Tag, Switch, Dropdown, Modal, Button, Select } from 'antd';
-import { SearchOutlined, UserOutlined, MoreOutlined } from '@ant-design/icons';
+import { SearchOutlined, UserOutlined, MoreOutlined, LockOutlined } from '@ant-design/icons';
 
 function UsersList() {
   const [searchText, setSearchText] = useState('');
@@ -61,7 +61,8 @@ function UsersList() {
   const columns = [
     {
       title: 'User',
-      width: 250,
+      width: 200,
+      align: 'center',
       render: (_, record) => (
         <div className="flex items-center gap-3">
           <Avatar icon={<UserOutlined />} />
@@ -77,10 +78,14 @@ function UsersList() {
     {
       title: 'Phone',
       dataIndex: 'phone',
+      width: 150,
+      align: 'center',
     },
     {
       title: 'Plan',
       dataIndex: 'plan',
+      width: 100,
+      align: 'center',
       render: (plan) => {
         let color = 'default';
 
@@ -93,18 +98,45 @@ function UsersList() {
     },
     {
       title: 'Status',
+      align: 'center',
       render: (_, record) => <Switch checked={record.status} size="small" />,
     },
     {
       title: 'Joined Date',
       dataIndex: 'joinedAt',
+      width: 150,
+      align: 'center',
     },
     {
       title: 'Last Login',
       dataIndex: 'lastLogin',
+      width: 150,
+      align: 'center',
     },
     {
+      title: 'Password',
+      width: 100,
+      align: 'center',
+      render: (_, record) => (
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedUser(record);
+              setPasswordModal(true);
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-300 text-black text-xs font-medium shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200"
+          >
+            <LockOutlined />
+            Reset
+          </button>
+        </div>
+      ),
+    },
+
+    {
       title: '',
+      align: 'center',
       render: (_, record) => (
         <Dropdown
           trigger={['click']}
@@ -125,14 +157,14 @@ function UsersList() {
                   setEditModal(true);
                 },
               },
-              {
-                key: 'password',
-                label: 'Change Password',
-                onClick: () => {
-                  setSelectedUser(record);
-                  setPasswordModal(true);
-                },
-              },
+              // {
+              //   key: 'password',
+              //   label: 'Change Password',
+              //   onClick: () => {
+              //     setSelectedUser(record);
+              //     setPasswordModal(true);
+              //   },
+              // },
               {
                 key: 'history',
                 label: 'Login History',
@@ -212,31 +244,89 @@ function UsersList() {
         </div>
       </div>
       <Modal
-        title="Change Password"
+        title={null}
         open={passwordModal}
         onCancel={() => setPasswordModal(false)}
         footer={null}
-        width={420}
+        width={480}
+        centered
       >
-        <div className="space-y-4">
-          <div className="bg-[#f8fafc] p-3 rounded-lg">
-            <p className="mb-0 font-medium">{selectedUser?.name}</p>
+        <div className="py-1">
+          <h2 className="text-[22px] font-semibold text-[#111827] mb-5">Change Password</h2>
 
-            <p className="mb-0 text-gray-500 text-[12px]">{selectedUser?.email}</p>
+          {/* User Info */}
+          <div className="mb-5 p-3 rounded-xl border border-[#e5e7eb] bg-[#fafafa]">
+            <p className="mb-0 text-[14px] font-semibold text-[#111827]">{selectedUser?.name}</p>
+
+            <p className="mb-0 text-[12px] text-[#6b7280]">{selectedUser?.email}</p>
           </div>
 
-          <Input.Password placeholder="New Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          {/* New Password */}
+          <div className="mb-4">
+            <label className="block text-[12px] font-medium text-[#111827] mb-2">New Password</label>
 
-          <Input.Password
-            placeholder="Confirm Password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-          />
+            <Input.Password
+              size="large"
+              value={password}
+              placeholder="Enter new password"
+              onChange={(e) => setPassword(e.target.value)}
+              className="h-[42px] rounded-xl"
+            />
 
+            <div className="mt-2 space-y-1">
+              <p className="text-[11px] text-[#ef4444] mb-2">
+                Please add all necessary characters to create safe password.
+              </p>
+
+              <div className="flex items-center gap-2 text-[11px] text-[#9ca3af]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#bdbdbd]" />
+                <span>Minimum characters 12</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-[11px] text-[#ef4444]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#ef4444]" />
+                <span>One uppercase character</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-[11px] text-[#9ca3af]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#bdbdbd]" />
+                <span>One lowercase character</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-[11px] text-[#9ca3af]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#bdbdbd]" />
+                <span>One special character</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-[11px] text-[#9ca3af]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#bdbdbd]" />
+                <span>One number</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Confirm Password */}
+          <div className="mb-6">
+            <label className="block text-[12px] font-medium text-[#111827] mb-2">Confirm New Password</label>
+
+            <Input.Password
+              size="large"
+              value={confirmPassword}
+              placeholder="Enter confirm password"
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="h-[42px] rounded-xl"
+            />
+          </div>
+
+          {/* Footer */}
           <div className="flex justify-end gap-2">
-            <Button onClick={() => setPasswordModal(false)}>Cancel</Button>
+            <Button className="rounded-lg" onClick={() => setPasswordModal(false)}>
+              Cancel
+            </Button>
 
-            <Button type="primary">Update Password</Button>
+            <Button type="primary" className="rounded-lg px-6">
+              Change Password
+            </Button>
           </div>
         </div>
       </Modal>

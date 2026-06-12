@@ -69,31 +69,37 @@ function CouponCode() {
       title: 'Status',
       dataIndex: 'status',
       width: 90,
+      align: 'center',
       render: (status) => <Switch size="small" checked={status} />,
     },
     {
       title: 'PromoCode ID',
       dataIndex: 'promoCode',
       width: 150,
+      align: 'center',
     },
     {
       title: 'Title',
       dataIndex: 'title',
       width: 100,
+      align: 'center',
     },
     {
       title: 'Description',
       dataIndex: 'description',
       width: 150,
+      align: 'center',
     },
     {
       title: 'Discount',
       dataIndex: 'discount',
       width: 120,
+      align: 'center',
     },
     {
       title: 'Duration',
       width: 180,
+      align: 'center',
       render: (_, record) => (
         <span>
           {record.startDate} - {record.endDate}
@@ -103,8 +109,9 @@ function CouponCode() {
     {
       title: 'Actions',
       width: 120,
+      align: 'center',
       render: () => (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center gap-3">
           <EditOutlined style={{ fontSize: '16px' }} className="cursor-pointer text-gray-500 hover:text-blue-500" />
 
           <DeleteOutlined style={{ fontSize: '16px' }} className="cursor-pointer text-red-400 hover:text-red-600" />

@@ -58,7 +58,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { NavLink, useLocation } from 'react-router-dom';
-
+import Cookies from 'js-cookie';
 import UilEllipsisV from '@iconscout/react-unicons/icons/uil-ellipsis-v';
 import propTypes from 'prop-types';
 // import { NavTitle } from './Style';
@@ -2024,7 +2024,7 @@ function MenuItems({ toggleCollapsed }) {
       <NavLink onClick={toggleCollapsed} to="/super-admin/marketplaceIntegration">
         Marketplace Integration
       </NavLink>,
-      'marketplaceintegration',
+      'marketplaceIntegration',
       !topMenu && <UilStore />,
     ),
 
@@ -2032,7 +2032,7 @@ function MenuItems({ toggleCollapsed }) {
       <NavLink onClick={toggleCollapsed} to="/super-admin/CouponCode">
         {t('Coupon Code')}
       </NavLink>,
-      'couponcode',
+      'CouponCode',
       !topMenu && <UilTag />,
     ),
 
@@ -2048,12 +2048,14 @@ function MenuItems({ toggleCollapsed }) {
       <NavLink onClick={toggleCollapsed} to="/super-admin/notifications">
         {t('Notifications')}
       </NavLink>,
-      'notification',
+      'notifications',
       !topMenu && <UilBell />,
     ),
   ];
 
-  const isSuperAdmin = location.pathname.startsWith('/super-admin');
+  const isSuperAdmin = Cookies.get('isSuperAdmin') === 'true';
+
+  const adminSelectedKey = location.pathname.split('/')[2];
 
   const items = isSuperAdmin ? superAdminItems : userItems;
 
@@ -2063,6 +2065,7 @@ function MenuItems({ toggleCollapsed }) {
       onClick={onClick}
       mode={!topMenu || window.innerWidth <= 991 ? 'inline' : 'horizontal'}
       // // eslint-disable-next-line no-nested-ternary
+      selectedKeys={isSuperAdmin ? [adminSelectedKey] : undefined}
       defaultSelectedKeys={
         !topMenu
           ? [

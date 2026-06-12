@@ -62,6 +62,7 @@ function HelpSupport() {
       title: <span className="text-[11px] font-semibold">Ticket ID</span>,
       dataIndex: 'ticketId',
       width: 110,
+      align: 'center',
       render: (text) => <span className="text-[12px] font-medium">{text}</span>,
     },
 
@@ -69,6 +70,7 @@ function HelpSupport() {
       title: <span className="text-[11px] font-semibold">Issue</span>,
       dataIndex: 'subject',
       width: 250,
+      align: 'center',
       render: (text) => <span className="text-[12px]">{text}</span>,
     },
 
@@ -76,6 +78,7 @@ function HelpSupport() {
       title: <span className="text-[11px] font-semibold">Category</span>,
       dataIndex: 'category',
       width: 180,
+      align: 'center',
       render: (text) => <Tag className="text-[10px]">{text}</Tag>,
     },
 
@@ -83,6 +86,7 @@ function HelpSupport() {
       title: <span className="text-[11px] font-semibold">User</span>,
       dataIndex: 'user',
       width: 140,
+      align: 'center',
       render: (text) => <span className="text-[12px]">{text}</span>,
     },
 
@@ -90,6 +94,7 @@ function HelpSupport() {
       title: <span className="text-[11px] font-semibold">Priority</span>,
       dataIndex: 'priority',
       width: 120,
+      align: 'center',
       render: (priority) => {
         const colorMap = {
           High: 'red',
@@ -105,6 +110,7 @@ function HelpSupport() {
       title: <span className="text-[11px] font-semibold">Assigned To</span>,
       dataIndex: 'assignedTo',
       width: 140,
+      align: 'center',
       render: (text) => <span className="text-[12px]">{text}</span>,
     },
 
@@ -112,6 +118,7 @@ function HelpSupport() {
       title: <span className="text-[11px] font-semibold">Status</span>,
       dataIndex: 'status',
       width: 140,
+      align: 'center',
       render: (status, record) => (
         <StatusPopover
           status={status}

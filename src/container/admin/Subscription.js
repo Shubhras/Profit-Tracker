@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Table, Input, Tag } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { Table, Input, Tag, Avatar } from 'antd';
+import { SearchOutlined, UserOutlined } from '@ant-design/icons';
 
 function SubscriptionTable() {
   const [searchText, setSearchText] = useState('');
@@ -74,25 +74,30 @@ function SubscriptionTable() {
       title: <span className="text-[12px] font-semibold">User</span>,
       dataIndex: 'user',
       width: 220,
+      align: 'center',
       render: (_, record) => (
-        <div>
-          {' '}
-          <p className="mb-0 text-[12px] font-medium"> {record.user} </p>{' '}
-          <p className="mb-0 text-[11px] text-gray-500"> {record.email} </p>{' '}
+        <div className="flex items-center gap-3">
+          <Avatar icon={<UserOutlined />} />
+          <div>
+            <p className="mb-0 text-[12px] font-medium"> {record.user} </p>{' '}
+            <p className="mb-0 text-[11px] text-gray-500"> {record.email} </p>{' '}
+          </div>
         </div>
       ),
     },
-    { title: <span className="text-[12px] font-semibold">Plan</span>, dataIndex: 'plan', width: 120 },
+    { title: <span className="text-[12px] font-semibold">Plan</span>, dataIndex: 'plan', width: 120, align: 'center' },
     {
       title: <span className="text-[12px] font-semibold"> Amount Paid </span>,
       dataIndex: 'amountPaid',
       width: 120,
+      align: 'center',
       render: (amount) => <span className="font-medium"> {amount} </span>,
     },
     {
       title: <span className="text-[12px] font-semibold"> Marketplaces </span>,
       dataIndex: 'marketplaces',
       width: 240,
+      align: 'center',
       render: (marketplaces) => (
         <div className="flex flex-wrap gap-1">
           {' '}
@@ -106,12 +111,19 @@ function SubscriptionTable() {
       title: <span className="text-[12px] font-semibold"> Billing Cycle </span>,
       dataIndex: 'billingCycle',
       width: 120,
+      align: 'center',
     },
-    { title: <span className="text-[12px] font-semibold"> Renewal Date </span>, dataIndex: 'renewalDate', width: 140 },
+    {
+      title: <span className="text-[12px] font-semibold"> Renewal Date </span>,
+      dataIndex: 'renewalDate',
+      width: 140,
+      align: 'center',
+    },
     {
       title: <span className="text-[12px] font-semibold">Status</span>,
       dataIndex: 'status',
       width: 120,
+      align: 'center',
       render: (status) => {
         let color = 'default';
         if (status === 'Active') color = 'green';
