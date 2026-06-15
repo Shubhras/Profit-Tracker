@@ -196,7 +196,7 @@ function UsersList() {
             <div>
               <h2 className="mb-0 text-[20px] font-semibold">Users Management</h2>
 
-              <p className="mb-0 text-[12px] text-gray-500">Manage all platform users</p>
+              {/* <p className="mb-0 text-[12px] text-gray-500">Manage all platform users</p> */}
             </div>
 
             {/* <Button

@@ -30,10 +30,12 @@ import subscriptionReducer from './subscription/reducers';
 import amazonReducer from './amazonAPI/reducers';
 import AmazonAdsReducer from './amazonAds/reducers';
 import dashboardReducer from './dashboard/reducers';
+import AdmindashboardReducer from './admin/reducer';
 import reconcilePaymentReducer from './reconcilePayment/reducers';
 import AdvertisingReducer from './advertising/reducer';
 import organicPerformanceReducer from './organicPerformance/reducers';
 import settingsReducer from './Settings/reducers';
+// import AdminDashboard from '../container/admin/AdminDashboard';
 // import OrganicPerformRoutes from '../routes/admin/organicPerformance';
 
 const rootReducers = combineReducers({
@@ -76,6 +78,7 @@ const rootReducers = combineReducers({
   amazonAPI: amazonReducer,
   amazonAds: AmazonAdsReducer,
   dashboard: dashboardReducer,
+  AdminDashboard: AdmindashboardReducer,
   reconcilePayment: reconcilePaymentReducer,
   advertising: AdvertisingReducer,
   OrganicPerformance: organicPerformanceReducer,

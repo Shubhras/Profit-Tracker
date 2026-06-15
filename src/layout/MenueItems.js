@@ -52,6 +52,7 @@ import {
   UilStore,
   UilCreditCard,
   UilBell,
+  UilShieldCheck,
 } from '@iconscout/react-unicons';
 import { Menu } from 'antd';
 import React from 'react';
@@ -2050,6 +2051,14 @@ function MenuItems({ toggleCollapsed }) {
       </NavLink>,
       'notifications',
       !topMenu && <UilBell />,
+    ),
+
+    getItem(
+      <NavLink onClick={toggleCollapsed} to="/super-admin/privacy-policy">
+        {t('Privacy Policy')}
+      </NavLink>,
+      'privacy-policy',
+      !topMenu && <UilShieldCheck />,
     ),
   ];
 

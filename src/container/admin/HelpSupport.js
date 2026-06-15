@@ -1,12 +1,9 @@
 import React, { useState } from 'react';
-import { Table, Tag, Input, Button, Drawer, Select, DatePicker, Popover } from 'antd';
+import { Table, Tag, Input, Button, Popover } from 'antd';
 import { SearchOutlined, DownOutlined } from '@ant-design/icons';
 
-const { RangePicker } = DatePicker;
-const { Option } = Select;
-
 function HelpSupport() {
-  const [openFilter, setOpenFilter] = useState(false);
+  // const [openFilter, setOpenFilter] = useState(false);
 
   const [ticketData, setTicketData] = useState([
     {
@@ -276,11 +273,11 @@ function HelpSupport() {
               <h2 className="text-[18px] font-semibold text-[#111827] mb-0">All Tickets</h2>
 
               <div className="flex items-center gap-3">
-                <Input placeholder="Search tickets..." prefix={<SearchOutlined />} className="w-[280px]" />
+                <Input placeholder="Search tickets..." prefix={<SearchOutlined />} className="w-[280px] h-[30px]" />
 
-                <Button onClick={() => setOpenFilter(true)}>Filter</Button>
-
-                <Button type="primary">Create Ticket</Button>
+                <Button type="primary" className="h-[30px] text-[13px] flex items-center font-semibold">
+                  Create Ticket
+                </Button>
               </div>
             </div>
             {/* Table */}
@@ -294,7 +291,7 @@ function HelpSupport() {
           </div>
         </div>
       </div>
-      <Drawer
+      {/* <Drawer
         title="Ticket Filters"
         placement="right"
         width={320}
@@ -365,7 +362,7 @@ function HelpSupport() {
             </Button>
           </div>
         </div>
-      </Drawer>
+      </Drawer> */}
     </>
   );
 }

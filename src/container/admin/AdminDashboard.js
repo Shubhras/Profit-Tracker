@@ -1,68 +1,27 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Row, Col, Table } from 'antd';
+import { useDispatch, useSelector } from 'react-redux';
 import { UserOutlined, DollarOutlined, TeamOutlined, ShoppingCartOutlined } from '@ant-design/icons';
-import { ResponsiveContainer, BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
+import { getAdminDashboard } from '../../redux/admin/actionCreator';
 
 function AdminDashboard() {
-  const overviewData = [
-    {
-      day: 'Sat',
-      orders: 120,
-      profit: 45,
-      marketplaces: 8,
-    },
-    {
-      day: 'Sun',
-      orders: 150,
-      profit: 60,
-      marketplaces: 10,
-    },
-    {
-      day: 'Mon',
-      orders: 95,
-      profit: 35,
-      marketplaces: 7,
-    },
-    {
-      day: 'Tue',
-      orders: 200,
-      profit: 85,
-      marketplaces: 12,
-    },
-    {
-      day: 'Wed',
-      orders: 140,
-      profit: 55,
-      marketplaces: 9,
-    },
-    {
-      day: 'Thu',
-      orders: 170,
-      profit: 75,
-      marketplaces: 11,
-    },
-    {
-      day: 'Fri',
-      orders: 110,
-      profit: 40,
-      marketplaces: 8,
-    },
-  ];
+  const dispatch = useDispatch();
 
-  const revenueData = [
-    { month: 'Jan', revenue: 40 },
-    { month: 'Feb', revenue: 60 },
-    { month: 'Mar', revenue: 30 },
-    { month: 'Apr', revenue: 80 },
-    { month: 'May', revenue: 45 },
-    { month: 'Jun', revenue: 70 },
-    { month: 'Jul', revenue: 50 },
-    { month: 'Aug', revenue: 65 },
-    { month: 'Sep', revenue: 75 },
-    { month: 'Oct', revenue: 68 },
-    { month: 'Nov', revenue: 35 },
-    { month: 'Dec', revenue: 70 },
-  ];
+  const { getadmindashboard } = useSelector((state) => state.AdminDashboard);
+  useEffect(() => {
+    dispatch(getAdminDashboard());
+  }, [dispatch]);
+
+  useEffect(() => {
+    console.log('Dashboard Response:', getadmindashboard);
+  }, [getadmindashboard]);
+
+  const overviewData =
+    getadmindashboard?.data?.monthly_signups?.graph?.map((item) => ({
+      day: item.day,
+      count: item.count,
+    })) || [];
 
   const columns = [
     {
@@ -103,59 +62,61 @@ function AdminDashboard() {
     },
   ];
 
+  const dashboardStats = [
+    {
+      title: 'Total Users',
+      value: getadmindashboard?.data?.overview?.total_users || 0,
+      growth: `+${getadmindashboard?.data?.overview?.new_this_month || 0}`,
+      icon: <UserOutlined />,
+      color: 'bg-blue-50 text-blue-600',
+    },
+    {
+      title: 'Inactive Users',
+      value: getadmindashboard?.data?.subscription_summary?.inactive || 0,
+      growth: '',
+      icon: <TeamOutlined />,
+      color: 'bg-green-50 text-green-600',
+    },
+    {
+      title: 'Trial Users',
+      value: getadmindashboard?.data?.subscription_summary?.trial || 0,
+      growth: '',
+      icon: <ShoppingCartOutlined />,
+      color: 'bg-purple-50 text-purple-600',
+    },
+    {
+      title: 'Paid Users',
+      value: getadmindashboard?.data?.subscription_summary?.paid || 0,
+      growth: '',
+      icon: <DollarOutlined />,
+      color: 'bg-orange-50 text-orange-600',
+    },
+  ];
+
   return (
     <div className="px-4 py-4 bg-[#f5f7fb] min-h-screen">
       {' '}
       {/* Page Header */}
-      <div className="mb-3">
+      <div className="mb-2">
         <h1 className="text-[20px] mb-0 font-semibold text-gray-900">Super Admin Dashboard</h1>
-        <p className="text-gray-500 text-[12px]">
+        {/* <p className="text-gray-500 text-[12px]">
           Manage users, monitor platform activity and control system settings.
-        </p>
+        </p> */}
       </div>
-      <Row gutter={[16, 16]} className="mb-5">
-        {[
-          {
-            title: 'Total Users',
-            value: '2,458',
-            growth: '+12.5%',
-            icon: <UserOutlined />,
-            color: 'bg-blue-50 text-blue-600',
-          },
-          {
-            title: 'Active Users',
-            value: '1,874',
-            growth: '+8.2%',
-            icon: <TeamOutlined />,
-            color: 'bg-green-50 text-green-600',
-          },
-          {
-            title: 'Subscriptions',
-            value: '982',
-            growth: '+5.6%',
-            icon: <ShoppingCartOutlined />,
-            color: 'bg-purple-50 text-purple-600',
-          },
-          {
-            title: 'Revenue',
-            value: '$12,480',
-            growth: '+18.4%',
-            icon: <DollarOutlined />,
-            color: 'bg-orange-50 text-orange-600',
-          },
-        ].map((card) => (
+      <Row gutter={[16, 16]} className="mb-3">
+        {dashboardStats.map((card) => (
           <Col xs={24} sm={12} lg={6} key={card.title}>
-            <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all">
+            <div className="bg-white border border-gray-100 rounded-2xl p-3 shadow-md hover:shadow-lg transition-all">
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-gray-500 text-xs mb-1">{card.title}</p>
 
-                  <h2 className="text-2xl font-bold text-gray-800">{card.value}</h2>
+                  <h2 className="text-[20px] font-bold text-gray-800 mb-1">{card.value}</h2>
 
                   <span className="text-green-500 text-xs font-medium">↑ {card.growth}</span>
                 </div>
 
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg ${card.color}`}>
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg ${card.color}`}>
                   {card.icon}
                 </div>
               </div>
@@ -165,12 +126,12 @@ function AdminDashboard() {
       </Row>
       <Row gutter={[16, 16]} className="mb-5">
         {/* Overview */}
-        <Col xs={24} lg={14}>
+        <Col xs={24} lg={24}>
           <div className="bg-white rounded-2xl shadow-sm p-3 h-[320px]">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-[15px]">Overview</h3>
+              <h3 className="font-semibold text-[15px]"> Monthly Signups</h3>
 
-              <span className="text-xs text-gray-400">Last 7 Days</span>
+              <span className="text-xs text-gray-400">Last 30 Days</span>
             </div>
 
             <ResponsiveContainer width="100%" height={240}>
@@ -183,38 +144,7 @@ function AdminDashboard() {
 
                 <Tooltip />
 
-                <Legend />
-
-                <Bar dataKey="orders" stackId="a" fill="#7c3aed" />
-
-                <Bar dataKey="profit" stackId="a" fill="#a78bfa" />
-
-                <Bar dataKey="marketplaces" stackId="a" fill="#ddd6fe" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Col>
-
-        {/* Revenue */}
-        <Col xs={24} lg={10}>
-          <div className="bg-white rounded-2xl shadow-sm p-3 h-[320px]">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-[15px]">Revenue Statistics</h3>
-
-              <span className="text-xs text-gray-400">Last Month</span>
-            </div>
-
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-
-                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-
-                <YAxis tick={{ fontSize: 11 }} />
-
-                <Tooltip />
-
-                <Bar dataKey="revenue" fill="#8b5cf6" radius={[6, 6, 0, 0]} barSize={18} />
+                <Bar dataKey="count" fill="#7c3aed" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

@@ -6,6 +6,7 @@ import CouponCode from '../../container/admin/CouponCode';
 import Users from '../../container/admin/Users';
 import MarketplaceIntegration from '../../container/admin/MarketplaceIntegration';
 import HelpSupport from '../../container/admin/HelpSupport';
+import PrivacyPolicy from '../../container/admin/PrivacyPolicy';
 import Notification from '../../container/admin/Notifications';
 import withAdminLayout from '../../layout/withAdminLayout';
 
@@ -18,6 +19,7 @@ function SuperAdminRoutes() {
       <Route path="CouponCode" element={<CouponCode />} />
       <Route path="notifications" element={<Notification />} />
       <Route path="support" element={<HelpSupport />} />
+      <Route path="privacy-policy" element={<PrivacyPolicy />} />
       <Route path="marketplaceIntegration" element={<MarketplaceIntegration />} />
       <Route path="users" element={<Users />} />
     </Routes>
