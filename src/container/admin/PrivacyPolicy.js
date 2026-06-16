@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Spin } from 'antd';
+import { Button, Spin, Modal } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { PlusOutlined, FormOutlined, DeleteOutlined } from '@ant-design/icons';
-import { getPrivacyPolicy, createPrivacyPolicy, updatePrivacyPolicy } from '../../redux/admin/actionCreator';
+import {
+  getPrivacyPolicy,
+  createPrivacyPolicy,
+  updatePrivacyPolicy,
+  deletePrivacyPolicy,
+} from '../../redux/admin/actionCreator';
 
 function PrivacyPolicy() {
   const [selectedTab, setSelectedTab] = useState('privacy_policy');
@@ -62,19 +67,42 @@ function PrivacyPolicy() {
     }
   };
 
+  const handleDelete = (id) => {
+    Modal.confirm({
+      title: 'Delete Privacy Policy',
+      content: 'Are you sure you want to delete this item?',
+      okText: 'Yes, Delete',
+      cancelText: 'Cancel',
+      okButtonProps: {
+        danger: true,
+        type: 'primary',
+      },
+
+      onOk: async () => {
+        try {
+          await dispatch(deletePrivacyPolicy(id));
+
+          await dispatch(getPrivacyPolicy(selectedTab));
+        } catch (error) {
+          console.log(error);
+        }
+      },
+    });
+  };
+
   return (
     <div className="p-3 px-2 bg-[#f8f9fb] min-h-screen">
       <div className="bg-white rounded-lg border overflow-hidden">
         <div className="flex min-h-[600px]">
           {/* Sidebar */}
           <div className="w-[250px] p-3 border-r">
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1">
               {menuItems.map((item) => (
                 <button
                   type="button"
                   key={item.value}
                   onClick={() => setSelectedTab(item.value)}
-                  className={`text-left px-4 py-3 rounded-lg text-[15px] transition-all ${
+                  className={`text-left px-4 py-3 rounded-lg text-[14px] transition-all ${
                     selectedTab === item.value
                       ? 'bg-gray-100 font-semibold text-black'
                       : 'text-gray-600 hover:bg-gray-50'
@@ -94,12 +122,12 @@ function PrivacyPolicy() {
                 <Spin size="large" />
               </div>
             ) : (
-              <div className="mt-6">
+              <div className="mt-3">
                 {!showForm ? (
                   documents.length > 0 ? (
                     <>
-                      <div className="flex justify-between items-center mb-5">
-                        <h2 className="text-[22px] font-bold">
+                      {/* <div className="flex justify-between items-center mb-5">
+                        <h2 className="text-[20px] font-bold">
                           {menuItems.find((item) => item.value === selectedTab)?.label}
                         </h2>
 
@@ -115,7 +143,7 @@ function PrivacyPolicy() {
                         >
                           Add
                         </Button>
-                      </div>
+                      </div> */}
 
                       <div className="space-y-4">
                         {documents.map((item) => (
@@ -151,15 +179,17 @@ function PrivacyPolicy() {
                                     setContent(item.content);
                                     setShowForm(true);
                                   }}
-                                  className="text-[#f58d73] cursor-pointer text-[17px] hover:scale-110 transition-all"
+                                  className="text-[#1677ff] cursor-pointer text-[17px] drop-shadow-sm transition-all duration-200 hover:scale-110 hover:drop-shadow-md hover:text-[#0958d9]"
                                 />
-
-                                <DeleteOutlined className="text-red-500 cursor-pointer text-[17px] hover:scale-110 transition-all" />
+                                <DeleteOutlined
+                                  onClick={() => handleDelete(item.id)}
+                                  className="text-red-500 cursor-pointer text-[17px] drop-shadow-sm transition-all duration-200 hover:scale-110 hover:drop-shadow-md hover:text-red-700"
+                                />{' '}
                               </div>
                             </div>
 
                             <div
-                              className="bg-gray-50 rounded-lg p-4 text-gray-700"
+                              className="bg-gray-100 rounded-lg p-4 text-gray-700"
                               dangerouslySetInnerHTML={{
                                 __html: item.content,
                               }}
@@ -171,9 +201,9 @@ function PrivacyPolicy() {
                   ) : (
                     <div className="flex justify-between items-start">
                       <div>
-                        <h2 className="text-[21px] font-bold text-black mb-3">No Data Available</h2>
+                        <h2 className="text-[19px] font-bold text-black mb-1">No Information Available</h2>
 
-                        <p className="text-gray-500 text-[15px]">No content available.</p>
+                        <p className="text-gray-500 text-[13px]">No content available.</p>
                       </div>
 
                       <Button
@@ -192,7 +222,7 @@ function PrivacyPolicy() {
                   )
                 ) : (
                   <div>
-                    <h2 className="text-[21px] font-bold text-black mb-6">No Data Available</h2>
+                    {/* <h2 className="text-[21px] font-bold text-black mb-6">No Data Available</h2> */}
 
                     <div className="mb-5">
                       <label className="block text-[14px] font-medium mb-2">Select Title</label>

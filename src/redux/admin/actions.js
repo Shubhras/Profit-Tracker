@@ -7,6 +7,14 @@ const actions = {
   GET_COUPONCODE_SUCCESS: 'GET_COUPONCODE_SUCCESS',
   GET_COUPONCODE_ERR: 'GET_COUPONCODE_ERR',
 
+  DELETE_COUPONCODE_BEGIN: 'DELETE_COUPONCODE_BEGIN',
+  DELETE_COUPONCODE_SUCCESS: 'DELETE_COUPONCODE_SUCCESS',
+  DELETE_COUPONCODE_ERR: 'DELETE_COUPONCODE_ERR',
+
+  UPDATE_COUPONCODE_BEGIN: 'UPDATE_COUPONCODE_BEGIN',
+  UPDATE_COUPONCODE_SUCCESS: 'UPDATE_COUPONCODE_SUCCESS',
+  UPDATE_COUPONCODE_ERR: 'UPDATE_COUPONCODE_ERR',
+
   ADMIN_DASHBOARD_BEGIN: 'ADMIN_DASHBOARD_BEGIN',
   ADMIN_DASHBOARD_SUCCESS: 'ADMIN_DASHBOARD_SUCCESS',
   ADMIN_DASHBOARD_ERR: 'ADMIN_DASHBOARD_ERR',
@@ -23,6 +31,10 @@ const actions = {
   DELETE_SUBSCRIPTION_SUCCESS: 'DELETE_SUBSCRIPTION_SUCCESS',
   DELETE_SUBSCRIPTION_ERR: 'DELETE_SUBSCRIPTION_ERR',
 
+  UPDATE_SUBSCRIPTION_BEGIN: 'UPDATE_SUBSCRIPTION_BEGIN',
+  UPDATE_SUBSCRIPTION_SUCCESS: 'UPDATE_SUBSCRIPTION_SUCCESS',
+  UPDATE_SUBSCRIPTION_ERR: 'UPDATE_SUBSCRIPTION_ERR',
+
   GET_PRIVACY_POLICY_BEGIN: 'GET_PRIVACY_POLICY_BEGIN',
   GET_PRIVACY_POLICY_SUCCESS: 'GET_PRIVACY_POLICY_SUCCESS',
   GET_PRIVACY_POLICY_ERR: 'GET_PRIVACY_POLICY_ERR',
@@ -34,6 +46,14 @@ const actions = {
   UPDATE_PRIVACY_POLICY_BEGIN: 'UPDATE_PRIVACY_POLICY_BEGIN',
   UPDATE_PRIVACY_POLICY_SUCCESS: 'UPDATE_PRIVACY_POLICY_SUCCESS',
   UPDATE_PRIVACY_POLICY_ERR: 'UPDATE_PRIVACY_POLICY_ERR',
+
+  DELETE_PRIVACY_POLICY_BEGIN: 'DELETE_PRIVACY_POLICY_BEGIN',
+  DELETE_PRIVACY_POLICY_SUCCESS: 'DELETE_PRIVACY_POLICY_SUCCESS',
+  DELETE_PRIVACY_POLICY_ERR: 'DELETE_PRIVACY_POLICY_ERR',
+
+  USERS_LIST_BEGIN: 'USERS_LIST_BEGIN',
+  USERS_LIST_SUCCESS: 'USERS_LIST_SUCCESS',
+  USERS_LIST_ERR: 'USERS_LIST_ERR',
 
   createCouponCodesBegin: () => ({
     type: actions.CREATE_COUPONCODE_BEGIN,
@@ -60,6 +80,34 @@ const actions = {
 
   getCouponCodesErr: (err) => ({
     type: actions.GET_COUPONCODE_ERR,
+    err,
+  }),
+
+  deleteCouponCodesBegin: () => ({
+    type: actions.DELETE_COUPONCODE_BEGIN,
+  }),
+
+  deleteCouponCodesSuccess: (data) => ({
+    type: actions.DELETE_COUPONCODE_SUCCESS,
+    data,
+  }),
+
+  deleteCouponCodesErr: (err) => ({
+    type: actions.DELETE_COUPONCODE_ERR,
+    err,
+  }),
+
+  updateCouponCodesBegin: () => ({
+    type: actions.UPDATE_COUPONCODE_BEGIN,
+  }),
+
+  updateCouponCodesSuccess: (data) => ({
+    type: actions.UPDATE_COUPONCODE_SUCCESS,
+    data,
+  }),
+
+  updateCouponCodesErr: (err) => ({
+    type: actions.UPDATE_COUPONCODE_ERR,
     err,
   }),
 
@@ -119,6 +167,20 @@ const actions = {
     err,
   }),
 
+  updateSubscriptionBegin: () => ({
+    type: actions.UPDATE_SUBSCRIPTION_BEGIN,
+  }),
+
+  updateSubscriptionSuccess: (data) => ({
+    type: actions.UPDATE_SUBSCRIPTION_SUCCESS,
+    data,
+  }),
+
+  updateSubscriptionErr: (err) => ({
+    type: actions.UPDATE_SUBSCRIPTION_ERR,
+    err,
+  }),
+
   getPrivacyPolicyBegin: () => ({
     type: actions.GET_PRIVACY_POLICY_BEGIN,
   }),
@@ -158,6 +220,34 @@ const actions = {
 
   updatePrivacyPolicyErr: (err) => ({
     type: actions.UPDATE_PRIVACY_POLICY_ERR,
+    err,
+  }),
+
+  deletePrivacyPolicyBegin: () => ({
+    type: actions.DELETE_PRIVACY_POLICY_BEGIN,
+  }),
+
+  deletePrivacyPolicySuccess: (data) => ({
+    type: actions.DELETE_PRIVACY_POLICY_SUCCESS,
+    data,
+  }),
+
+  deletePrivacyPolicyErr: (err) => ({
+    type: actions.DELETE_PRIVACY_POLICY_ERR,
+    err,
+  }),
+
+  getuserslistBegin: () => ({
+    type: actions.USERS_LIST_BEGIN,
+  }),
+
+  getuserslistSuccess: (data) => ({
+    type: actions.USERS_LIST_SUCCESS,
+    data,
+  }),
+
+  getuserslistErr: (err) => ({
+    type: actions.USERS_LIST_ERR,
     err,
   }),
 };

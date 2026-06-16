@@ -1,16 +1,29 @@
-import React, { useState } from 'react';
-import { Table, Input, Avatar, Tag, Switch, Dropdown, Modal, Button, Select } from 'antd';
-import { SearchOutlined, UserOutlined, MoreOutlined, LockOutlined } from '@ant-design/icons';
+import React, { useState, useEffect } from 'react';
+import { Table, Input, Tag, Switch, Modal, Button, Select, Tooltip } from 'antd';
+import { useDispatch, useSelector } from 'react-redux';
+import { SearchOutlined } from '@ant-design/icons';
+import { getUsersList } from '../../redux/admin/actionCreator';
 
 function UsersList() {
   const [searchText, setSearchText] = useState('');
   const [passwordModal, setPasswordModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const [editModal, setEditModal] = useState(false);
   const [historyModal, setHistoryModal] = useState(false);
+
+  const dispatch = useDispatch();
+
+  const { getuserlist, loading } = useSelector((state) => state.AdminDashboard);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+  });
+
+  useEffect(() => {
+    dispatch(getUsersList(pagination.current, pagination.pageSize));
+  }, [dispatch, pagination.current, pagination.pageSize]);
 
   const [editForm, setEditForm] = useState({
     name: '',
@@ -19,172 +32,206 @@ function UsersList() {
     status: true,
   });
 
-  const users = [
-    {
-      id: 1,
-      name: 'John Doe',
-      email: 'john@gmail.com',
-      phone: '+91 9876543210',
-      plan: 'Premium',
-      status: true,
-      joinedAt: '12 Jan 2026',
-      lastLogin: '11 Jun 2026, 10:30 AM',
-    },
-    {
-      id: 2,
-      name: 'Sarah Smith',
-      email: 'sarah@gmail.com',
-      phone: '+91 9988776655',
-      plan: 'Basic',
-      status: false,
-      joinedAt: '25 Feb 2026',
-      lastLogin: '10 Jun 2026, 04:04 AM',
-    },
-    {
-      id: 3,
-      name: 'Michael Brown',
-      email: 'michael@gmail.com',
-      phone: '+91 8877665544',
-      plan: 'Pro',
-      status: true,
-      joinedAt: '10 Mar 2026',
-      lastLogin: '4 Jun 2026, 10:00 AM',
-    },
-  ];
+  const dataSource =
+    getuserlist?.data?.map((item) => ({
+      key: item.user_id,
+      user_id: item.user_id,
+      name: item.name,
+      email: item.email,
+      business_name: item.business_name,
+      mobile_number: item.mobile_number,
+      address: item.address,
+      city: item.city,
+      state: item.state,
+      pin_code: item.pin_code,
+      subscription_active: item.subscription_active,
+      is_paid_subscription_active: item.is_paid_subscription_active,
+      subscription_status: item.subscription_status,
+      subscription_plan: item.subscription_plan,
+      trial_start_date: item.trial_start_date,
+      trial_end_date: item.trial_end_date,
+      created_at: item.created_at,
+    })) || [];
 
-  const filteredUsers = users.filter(
+  const filteredUsers = dataSource.filter(
     (user) =>
-      user.name.toLowerCase().includes(searchText.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchText.toLowerCase()),
+      user?.name?.toLowerCase().includes(searchText.toLowerCase()) ||
+      user?.email?.toLowerCase().includes(searchText.toLowerCase()) ||
+      user?.mobile_number?.includes(searchText),
   );
 
   const columns = [
     {
-      title: 'User',
-      width: 200,
+      title: 'Name',
+      dataIndex: 'name',
+      width: 70,
       align: 'center',
-      render: (_, record) => (
-        <div className="flex items-center gap-3">
-          <Avatar icon={<UserOutlined />} />
+      render: (name) => <span className="font-medium text-[#111827]">{name || '-'}</span>,
+    },
 
-          <div>
-            <p className="mb-0 text-[12px] font-medium">{record.name}</p>
-
-            <p className="mb-0 text-[11px] text-gray-500">{record.email}</p>
-          </div>
-        </div>
+    {
+      title: 'Email',
+      dataIndex: 'email',
+      width: 70,
+      align: 'center',
+      ellipsis: true,
+      render: (v) => (
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
+            {v}
+          </span>
+        </Tooltip>
       ),
     },
+
     {
-      title: 'Phone',
-      dataIndex: 'phone',
-      width: 150,
+      title: 'Mobile',
+      dataIndex: 'mobile_number',
+      width: 70,
       align: 'center',
+      render: (value) => <span className="font-medium text-[#111827]">{value || '-'}</span>,
     },
+
+    {
+      title: 'Business',
+      dataIndex: 'business_name',
+      width: 70,
+      align: 'center',
+      ellipsis: true,
+      render: (v) => (
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
+            {v}
+          </span>
+        </Tooltip>
+      ),
+    },
+
+    {
+      title: 'City',
+      dataIndex: 'city',
+      width: 70,
+      align: 'center',
+      render: (value) => <span className="font-medium text-[#111827]">{value || '-'}</span>,
+    },
+
+    {
+      title: 'State',
+      dataIndex: 'state',
+      width: 70,
+      align: 'center',
+      ellipsis: true,
+      render: (v) => (
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
+            {v}
+          </span>
+        </Tooltip>
+      ),
+    },
+
+    {
+      title: 'Pin Code',
+      dataIndex: 'pin_code',
+      width: 70,
+      align: 'center',
+      render: (value) => <span className="font-medium text-[#111827]"> {value || '-'}</span>,
+    },
+
+    {
+      title: 'Subscription',
+      dataIndex: 'subscription_status',
+      width: 70,
+      align: 'center',
+      render: (status) => <Tag color={status === 'active' ? 'green' : 'red'}>{status || 'inactive'}</Tag>,
+    },
+
     {
       title: 'Plan',
-      dataIndex: 'plan',
-      width: 100,
+      dataIndex: 'subscription_plan',
+      width: 70,
       align: 'center',
-      render: (plan) => {
-        let color = 'default';
-
-        if (plan === 'Premium') color = 'gold';
-        if (plan === 'Pro') color = 'blue';
-        if (plan === 'Basic') color = 'default';
-
-        return <Tag color={color}>{plan}</Tag>;
-      },
-    },
-    {
-      title: 'Status',
-      align: 'center',
-      render: (_, record) => <Switch checked={record.status} size="small" />,
-    },
-    {
-      title: 'Joined Date',
-      dataIndex: 'joinedAt',
-      width: 150,
-      align: 'center',
-    },
-    {
-      title: 'Last Login',
-      dataIndex: 'lastLogin',
-      width: 150,
-      align: 'center',
-    },
-    {
-      title: 'Password',
-      width: 100,
-      align: 'center',
-      render: (_, record) => (
-        <div className="flex justify-center">
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedUser(record);
-              setPasswordModal(true);
-            }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-300 text-black text-xs font-medium shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200"
-          >
-            <LockOutlined />
-            Reset
-          </button>
-        </div>
-      ),
+      render: (plan) => <Tag color={plan ? 'blue' : 'default'}>{plan || 'Trial'}</Tag>,
     },
 
-    {
-      title: '',
-      align: 'center',
-      render: (_, record) => (
-        <Dropdown
-          trigger={['click']}
-          menu={{
-            items: [
-              {
-                key: 'edit',
-                label: 'Edit User',
-                onClick: () => {
-                  setSelectedUser(record);
-                  setEditForm({
-                    name: record.name,
-                    phone: record.phone,
-                    plan: record.plan,
-                    status: record.status,
-                  });
+    // {
+    //   title: 'Status',
+    //   width: 100,
+    //   align: 'center',
+    //   render: (_, record) => <Switch checked={record.subscription_active} size="small" />,
+    // },
 
-                  setEditModal(true);
-                },
-              },
-              // {
-              //   key: 'password',
-              //   label: 'Change Password',
-              //   onClick: () => {
-              //     setSelectedUser(record);
-              //     setPasswordModal(true);
-              //   },
-              // },
-              {
-                key: 'history',
-                label: 'Login History',
-                onClick: () => {
-                  setSelectedUser(record);
-                  setHistoryModal(true);
-                },
-              },
-              {
-                key: 'delete',
-                danger: true,
-                label: 'Delete User',
-              },
-            ],
-          }}
-        >
-          <MoreOutlined className="cursor-pointer text-[18px]" />
-        </Dropdown>
-      ),
+    {
+      title: 'Created',
+      dataIndex: 'created_at',
+      width: 70,
+      align: 'center',
+      render: (date) => (date ? new Date(date).toLocaleDateString('en-IN') : '-'),
     },
+
+    // {
+    //   title: 'Password',
+    //   width: 120,
+    //   align: 'center',
+    //   render: (_, record) => (
+    //     <Button
+    //       size="small"
+    //       icon={<LockOutlined />}
+    //       onClick={() => {
+    //         setSelectedUser(record);
+    //         setPasswordModal(true);
+    //       }}
+    //     >
+    //       Reset
+    //     </Button>
+    //   ),
+    // },
+
+    // {
+    //   title: '',
+    //   width: 80,
+    //   align: 'center',
+    //   render: (_, record) => (
+    //     <Dropdown
+    //       trigger={['click']}
+    //       menu={{
+    //         items: [
+    //           {
+    //             key: 'edit',
+    //             label: 'Edit User',
+    //             onClick: () => {
+    //               setSelectedUser(record);
+
+    //               setEditForm({
+    //                 name: record.name,
+    //                 phone: record.mobile_number,
+    //                 plan: record.subscription_plan || '',
+    //                 status: record.subscription_active,
+    //               });
+
+    //               setEditModal(true);
+    //             },
+    //           },
+    //           {
+    //             key: 'history',
+    //             label: 'Login History',
+    //             onClick: () => {
+    //               setSelectedUser(record);
+    //               setHistoryModal(true);
+    //             },
+    //           },
+    //           {
+    //             key: 'delete',
+    //             danger: true,
+    //             label: 'Delete User',
+    //           },
+    //         ],
+    //       }}
+    //     >
+    //       <MoreOutlined className="cursor-pointer text-[18px]" />
+    //     </Dropdown>
+    //   ),
+    // },
   ];
 
   return (
@@ -230,15 +277,26 @@ function UsersList() {
           "
           >
             <Table
-              rowKey="id"
+              rowKey="user_id"
               columns={columns}
               dataSource={filteredUsers}
-              pagination={{
-                pageSize: 10,
-                showSizeChanger: false,
-              }}
+              loading={loading}
               size="small"
               scroll={{ x: 1000 }}
+              pagination={{
+                current: pagination.current,
+                pageSize: pagination.pageSize,
+                total: getuserlist?.pagination?.total_records || 0,
+                pageSizeOptions: ['10', '20', '50', '100'],
+                showSizeChanger: true,
+                showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
+              }}
+              onChange={(pag) => {
+                setPagination({
+                  current: pag.current,
+                  pageSize: pag.pageSize,
+                });
+              }}
             />
           </div>
         </div>
@@ -256,9 +314,9 @@ function UsersList() {
 
           {/* User Info */}
           <div className="mb-5 p-3 rounded-xl border border-[#e5e7eb] bg-[#fafafa]">
-            <p className="mb-0 text-[14px] font-semibold text-[#111827]">{selectedUser?.name}</p>
+            {/* <p className="mb-0 text-[14px] font-semibold text-[#111827]">{selectedUser?.name}</p> */}
 
-            <p className="mb-0 text-[12px] text-[#6b7280]">{selectedUser?.email}</p>
+            {/* <p className="mb-0 text-[12px] text-[#6b7280]">{selectedUser?.email}</p> */}
           </div>
 
           {/* New Password */}

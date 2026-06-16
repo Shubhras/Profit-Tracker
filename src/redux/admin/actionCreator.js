@@ -11,6 +11,14 @@ const {
   getCouponCodesSuccess,
   getCouponCodesErr,
 
+  deleteCouponCodesBegin,
+  deleteCouponCodesSuccess,
+  deleteCouponCodesErr,
+
+  updateCouponCodesBegin,
+  updateCouponCodesSuccess,
+  updateCouponCodesErr,
+
   adminDashboardBegin,
   adminDashboardSuccess,
   adminDashboardErr,
@@ -27,6 +35,10 @@ const {
   deleteSubscriptionSuccess,
   deleteSubscriptionErr,
 
+  updateSubscriptionBegin,
+  updateSubscriptionSuccess,
+  updateSubscriptionErr,
+
   getPrivacyPolicyBegin,
   getPrivacyPolicySuccess,
   getPrivacyPolicyErr,
@@ -38,17 +50,44 @@ const {
   updatePrivacyPolicyBegin,
   updatePrivacyPolicySuccess,
   updatePrivacyPolicyErr,
+
+  deletePrivacyPolicyBegin,
+  deletePrivacyPolicySuccess,
+  deletePrivacyPolicyErr,
+
+  getuserslistBegin,
+  getuserslistSuccess,
+  getuserslistErr,
 } = actions;
+
+export const getCouponCodes = () => {
+  return async (dispatch) => {
+    dispatch(getCouponCodesBegin());
+
+    try {
+      const response = await DataService.get('user/promocodes/list/');
+
+      if (response.data?.status === 'success' || response.data?.status === true) {
+        dispatch(getCouponCodesSuccess(response.data));
+      } else {
+        dispatch(getCouponCodesErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(getCouponCodesErr(err));
+    }
+  };
+};
 
 export const createCouponCodes = (payload) => {
   return async (dispatch) => {
     dispatch(createCouponCodesBegin());
 
     try {
-      const response = await DataService.post('/amazon/admin/promocodes/create/', payload);
+      const response = await DataService.post('user/promocodes/create/', payload);
 
       if (response.data?.status === 'success' || response.data?.status === true) {
         dispatch(createCouponCodesSuccess(response.data));
+        dispatch(getCouponCodes());
       } else {
         dispatch(createCouponCodesErr('Something went wrong'));
       }
@@ -58,20 +97,40 @@ export const createCouponCodes = (payload) => {
   };
 };
 
-export const getCouponCodes = () => {
+export const deleteCouponCodes = (id) => {
   return async (dispatch) => {
-    dispatch(getCouponCodesBegin());
+    dispatch(deleteCouponCodesBegin());
 
     try {
-      const response = await DataService.get('/amazon/admin/promocodes/list/');
+      const response = await DataService.delete(`user/promocodes/delete/${id}/`);
 
       if (response.data?.status === 'success' || response.data?.status === true) {
-        dispatch(getCouponCodesSuccess(response.data));
+        dispatch(deleteCouponCodesSuccess(response.data));
+        dispatch(getCouponCodes());
       } else {
-        dispatch(getCouponCodesErr('Something went wrong'));
+        dispatch(deleteCouponCodesErr('Something went wrong'));
       }
     } catch (err) {
-      dispatch(getCouponCodesErr(err));
+      dispatch(deleteCouponCodesErr(err));
+    }
+  };
+};
+
+export const updateCouponCodes = (id, payload) => {
+  return async (dispatch) => {
+    dispatch(updateCouponCodesBegin());
+
+    try {
+      const response = await DataService.put(`user/promocodes/update/${id}/`, payload);
+
+      if (response.data?.status === 'success' || response.data?.status === true) {
+        dispatch(updateCouponCodesSuccess(response.data));
+        dispatch(getCouponCodes());
+      } else {
+        dispatch(updateCouponCodesErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(updateCouponCodesErr(err));
     }
   };
 };
@@ -130,6 +189,25 @@ export const CreateSubscription = (payload) => {
   };
 };
 
+export const updateSubscription = (id) => {
+  return async (dispatch) => {
+    dispatch(updateSubscriptionBegin());
+
+    try {
+      const response = await DataService.put(`user/subscription-plan/update/${id}/`);
+
+      if (response.data?.results?.status === true) {
+        dispatch(updateSubscriptionSuccess(response.data));
+        dispatch(getSubscriptionList());
+      } else {
+        dispatch(updateSubscriptionErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(updateSubscriptionErr(err));
+    }
+  };
+};
+
 export const DeleteSubscription = (id) => {
   return async (dispatch) => {
     dispatch(deleteSubscriptionBegin());
@@ -137,7 +215,6 @@ export const DeleteSubscription = (id) => {
     try {
       const response = await DataService.delete(`user/subscription-plan/delete/${id}/`);
 
-      console.log('API RESPONSE =>', response.data);
       if (response.data?.results?.status === true) {
         dispatch(deleteSubscriptionSuccess(response.data));
       } else {
@@ -156,7 +233,6 @@ export const getPrivacyPolicy = (title) => {
     try {
       const response = await DataService.get(`user/privacy-policy/get-list/?title=${title}`);
 
-      console.log('API RESPONSE =>', response.data);
       if (response.data?.status === true) {
         dispatch(getPrivacyPolicySuccess(response.data));
       } else {
@@ -174,7 +250,6 @@ export const createPrivacyPolicy = (data) => {
 
     try {
       const response = await DataService.post('user/privacy-policy-create/', data);
-      console.log('API RESPONSE =>', response.data);
       if (response.data?.status === true) {
         dispatch(createPrivacyPolicySuccess(response.data));
       } else {
@@ -192,8 +267,6 @@ export const updatePrivacyPolicy = (id, data) => {
 
     try {
       const response = await DataService.put(`user/privacy-policy/${id}/update/`, data);
-
-      console.log('API RESPONSE =>', response.data);
       if (response.data?.status === true) {
         dispatch(updatePrivacyPolicySuccess(response.data));
       } else {
@@ -201,6 +274,42 @@ export const updatePrivacyPolicy = (id, data) => {
       }
     } catch (err) {
       dispatch(updatePrivacyPolicyErr(err));
+    }
+  };
+};
+
+export const deletePrivacyPolicy = (id) => {
+  return async (dispatch) => {
+    dispatch(deletePrivacyPolicyBegin());
+
+    try {
+      const response = await DataService.delete(`user/privacy-policy/${id}/delete/`);
+
+      if (response.data?.status === true) {
+        dispatch(deletePrivacyPolicySuccess(response.data));
+      } else {
+        dispatch(deletePrivacyPolicyErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(deletePrivacyPolicyErr(err));
+    }
+  };
+};
+
+export const getUsersList = (page = 1, limit = 10) => {
+  return async (dispatch) => {
+    dispatch(getuserslistBegin());
+
+    try {
+      const response = await DataService.get(`user/admin/user-list/?page=${page}&limit=${limit}`);
+
+      if (response.data?.status === true) {
+        dispatch(getuserslistSuccess(response.data));
+      } else {
+        dispatch(getuserslistErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(getuserslistErr(err));
     }
   };
 };

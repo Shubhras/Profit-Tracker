@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Modal, Form, Input, InputNumber, Select, Switch, Spin } from 'antd';
-import { FormOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Button, Modal, Form, Input, InputNumber, Select, Spin } from 'antd';
+import { FormOutlined, PlusOutlined, DeleteOutlined, CheckOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { getSubscriptionList, CreateSubscription, DeleteSubscription } from '../../redux/admin/actionCreator';
+import {
+  getSubscriptionList,
+  CreateSubscription,
+  DeleteSubscription,
+  updateSubscription,
+} from '../../redux/admin/actionCreator';
 
 function SubscriptionTable() {
   const dispatch = useDispatch();
@@ -11,13 +16,13 @@ function SubscriptionTable() {
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const { getsubscriptionData, loading } = useSelector((state) => state.AdminDashboard);
 
   useEffect(() => {
     dispatch(getSubscriptionList());
   }, [dispatch]);
-  console.log('Redux Data:', getsubscriptionData);
 
   const plans = getsubscriptionData?.results?.data || [];
 
@@ -30,9 +35,14 @@ function SubscriptionTable() {
 
           <Button
             type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setIsModalOpen(true)}
-            className="!bg-[#f58d73] !border-[#f58d73] text-white px-2 py-2 rounded-lg text-sm font-medium flex items-center gap-0"
+            icon={<PlusOutlined style={{ fontSize: '12px' }} />}
+            onClick={() => {
+              setIsEditMode(false);
+              setSelectedId(null);
+              form.resetFields();
+              setIsModalOpen(true);
+            }}
+            className="!h-[30px] !flex !items-center !justify-center gap-0 px-2 text-[13px] font-semibold"
           >
             Add Subscription
           </Button>
@@ -47,7 +57,7 @@ function SubscriptionTable() {
             {plans.map((plan) => (
               <div
                 key={plan.id}
-                className="relative bg-white border border-gray-300 rounded-[22px] px-4 py-3 shadow-sm"
+                className="relative bg-white border border-gray-200 rounded-[15px] px-4 py-3 shadow-md"
               >
                 {/* Active Badge */}
                 <div className="absolute -top-4 left-8">
@@ -78,8 +88,8 @@ function SubscriptionTable() {
                 <div className="space-y-2">
                   {plan.features?.map((feature) => (
                     <div key={feature} className="flex items-center gap-3">
-                      <div className="w-5 h-5 rounded-full bg-[#ff9d7d] text-white flex items-center justify-center text-[11px]">
-                        ✓
+                      <div className="w-4 h-4 rounded-full bg-[#22c55e] text-white flex items-center justify-center">
+                        <CheckOutlined className="text-[10px]" />
                       </div>
 
                       <span className="text-[14px] text-gray-600">{feature}</span>
@@ -87,11 +97,26 @@ function SubscriptionTable() {
                   ))}
                 </div>
 
-                <div className="flex justify-end items-center gap-4 mt-6">
-                  <FormOutlined style={{ fontSize: '16px', color: '#1677ff', cursor: 'pointer' }} />
+                <div className="flex justify-end items-center gap-4 mt-3">
+                  <FormOutlined
+                    className="text-[#1677ff] text-[17px] cursor-pointer drop-shadow-sm transition-all duration-200 hover:scale-110 hover:drop-shadow-md hover:text-[#0958d9]"
+                    onClick={() => {
+                      setIsEditMode(true);
+                      setSelectedId(plan.id);
 
+                      form.setFieldsValue({
+                        subscription_type: plan.subscription_type?.toLowerCase(),
+                        price: plan.price,
+                        status: plan.status,
+                        features: plan.features,
+                        is_active: plan.is_active,
+                      });
+
+                      setIsModalOpen(true);
+                    }}
+                  />
                   <DeleteOutlined
-                    style={{ fontSize: '16px', color: 'red', cursor: 'pointer' }}
+                    className="text-red-500 text-[17px] cursor-pointer drop-shadow-sm transition-all duration-200 hover:scale-110 hover:drop-shadow-md hover:text-red-700"
                     onClick={() => {
                       setSelectedId(plan.id);
                       setDeleteModalOpen(true);
@@ -105,7 +130,7 @@ function SubscriptionTable() {
       </div>
 
       <Modal
-        title="Add Subscription Plan"
+        title={isEditMode ? 'Update Subscription Plan' : 'Add Subscription Plan'}
         open={isModalOpen}
         onCancel={() => {
           setIsModalOpen(false);
@@ -125,18 +150,23 @@ function SubscriptionTable() {
               annualPlan: values.subscription_type === 'annual' ? values.price : null,
             };
 
-            console.log('Payload =>', payload);
-
-            await dispatch(CreateSubscription(payload));
+            if (isEditMode) {
+              await dispatch(updateSubscription(selectedId, payload));
+            } else {
+              await dispatch(CreateSubscription(payload));
+            }
 
             dispatch(getSubscriptionList());
 
             setIsModalOpen(false);
             form.resetFields();
+            setSelectedId(null);
+            setIsEditMode(false);
           }}
         >
-          <Form.Item label="Subscription Type" name="subscription_type" rules={[{ required: true }]}>
+          <Form.Item label="Subscription Type" name="subscription_type" rules={[{ required: true }]} className="mb-2">
             <Select
+              size="small"
               options={[
                 { label: 'Monthly', value: 'monthly' },
                 { label: 'Annual', value: 'annual' },
@@ -144,12 +174,13 @@ function SubscriptionTable() {
             />
           </Form.Item>
 
-          <Form.Item label="Price" name="price" rules={[{ required: true }]}>
-            <InputNumber className="w-full" />
+          <Form.Item label="Price" name="price" rules={[{ required: true }]} className="mb-2">
+            <InputNumber size="small" className="w-full" />
           </Form.Item>
 
-          <Form.Item label="Status" name="status" initialValue="active">
+          <Form.Item label="Status" name="status" initialValue="active" className="mb-2">
             <Select
+              size="small"
               options={[
                 { label: 'Active', value: 'active' },
                 { label: 'Inactive', value: 'inactive' },
@@ -173,10 +204,10 @@ function SubscriptionTable() {
                 {fields.map(({ key, name, ...restField }) => (
                   <div key={key} className="flex gap-2 mb-2">
                     <Form.Item {...restField} name={name} className="flex-1 mb-0">
-                      <Input placeholder="Enter feature" />
+                      <Input size="small" placeholder="Enter feature" />
                     </Form.Item>
 
-                    <Button danger onClick={() => remove(name)}>
+                    <Button danger onClick={() => remove(name)} className="text-[13px]">
                       Remove
                     </Button>
                   </div>
@@ -189,57 +220,68 @@ function SubscriptionTable() {
             )}
           </Form.List>
 
-          <Form.Item label="Is Active" name="is_active" valuePropName="checked" initialValue className="mt-4">
-            {' '}
-            <Switch />
-          </Form.Item>
+          {/* <div className="flex items-center gap-3 mt-4">
+            <span className="text-[14px] font-medium">Status :</span>
 
-          <div className="flex justify-end gap-2 mt-4">
+            <Form.Item name="is_active" valuePropName="checked" initialValue className="mb-0">
+              <Switch />
+            </Form.Item>
+          </div> */}
+
+          <div className="flex justify-end gap-2 mt-1">
             <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
 
             <Button htmlType="submit" type="primary">
-              Save
+              {isEditMode ? 'Update' : 'Save'}
             </Button>
           </div>
         </Form>
       </Modal>
 
       <Modal
-        title="Delete Subscription"
         open={deleteModalOpen}
+        footer={null}
+        centered
+        width={320}
         onCancel={() => {
           setDeleteModalOpen(false);
           setSelectedId(null);
         }}
-        footer={[
-          <Button
-            key="cancel"
-            onClick={() => {
-              setDeleteModalOpen(false);
-              setSelectedId(null);
-            }}
-          >
-            Cancel
-          </Button>,
-
-          <Button
-            key="delete"
-            danger
-            type="primary"
-            onClick={async () => {
-              await dispatch(DeleteSubscription(selectedId));
-
-              dispatch(getSubscriptionList());
-
-              setDeleteModalOpen(false);
-              setSelectedId(null);
-            }}
-          >
-            Delete
-          </Button>,
-        ]}
       >
-        <p>Are you sure you want to delete this subscription plan?</p>
+        <div className="text-center">
+          <h3 className="text-[16px] font-semibold mb-3">Delete Subscription</h3>
+
+          <p className="text-[13px] text-gray-600 mb-5">Are you sure you want to delete this subscription plan?</p>
+
+          <div className="flex justify-center gap-3">
+            <Button
+              size="small"
+              className="h-[30px] text-[13px] font-semibold"
+              onClick={() => {
+                setDeleteModalOpen(false);
+                setSelectedId(null);
+              }}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              danger
+              size="small"
+              className="h-[30px] text-[13px] font-semibold bg-red-500 border-red-500 text-white"
+              onClick={async () => {
+                await dispatch(DeleteSubscription(selectedId));
+
+                dispatch(getSubscriptionList());
+
+                setDeleteModalOpen(false);
+                setSelectedId(null);
+              }}
+            >
+              Yes, Delete
+            </Button>
+          </div>
+        </div>
       </Modal>
     </>
   );

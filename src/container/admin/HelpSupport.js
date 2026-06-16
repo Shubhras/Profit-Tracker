@@ -196,7 +196,7 @@ function HelpSupport() {
 
   return (
     <>
-      <div className="bg-[#f8fafc] min-h-screen p-3 px-2">
+      <div className="min-h-screen p-3 px-2">
         <div className="flex gap-5 items-start">
           {' '}
           {/* LEFT PANEL */}

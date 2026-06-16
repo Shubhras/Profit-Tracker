@@ -9,6 +9,14 @@ const {
   GET_COUPONCODE_SUCCESS,
   GET_COUPONCODE_ERR,
 
+  DELETE_COUPONCODE_BEGIN,
+  DELETE_COUPONCODE_SUCCESS,
+  DELETE_COUPONCODE_ERR,
+
+  UPDATE_COUPONCODE_BEGIN,
+  UPDATE_COUPONCODE_SUCCESS,
+  UPDATE_COUPONCODE_ERR,
+
   ADMIN_DASHBOARD_BEGIN,
   ADMIN_DASHBOARD_SUCCESS,
   ADMIN_DASHBOARD_ERR,
@@ -25,6 +33,10 @@ const {
   DELETE_SUBSCRIPTION_SUCCESS,
   DELETE_SUBSCRIPTION_ERR,
 
+  UPDATE_SUBSCRIPTION_BEGIN,
+  UPDATE_SUBSCRIPTION_SUCCESS,
+  UPDATE_SUBSCRIPTION_ERR,
+
   GET_PRIVACY_POLICY_BEGIN,
   GET_PRIVACY_POLICY_SUCCESS,
   GET_PRIVACY_POLICY_ERR,
@@ -36,19 +48,32 @@ const {
   UPDATE_PRIVACY_POLICY_BEGIN,
   UPDATE_PRIVACY_POLICY_SUCCESS,
   UPDATE_PRIVACY_POLICY_ERR,
+
+  DELETE_PRIVACY_POLICY_BEGIN,
+  DELETE_PRIVACY_POLICY_SUCCESS,
+  DELETE_PRIVACY_POLICY_ERR,
+
+  USERS_LIST_BEGIN,
+  USERS_LIST_SUCCESS,
+  USERS_LIST_ERR,
 } = actions;
 
 const initialState = {
   loading: false,
   createcouponcodedata: null,
   getcouponCodeData: null,
+  deleteCouponCode: null,
+  updateCouponCode: null,
   getadmindashboard: null,
   getsubscriptionData: null,
   createSubscription: null,
   deleteSubscription: null,
+  updateSubscription: null,
   privacypolicyData: null,
   createPrivacyPolicy: null,
+  getuserlist: null,
   updatePolicy: null,
+  deletepolicy: null,
 };
 
 const AdmindashboardReducer = (state = initialState, action) => {
@@ -64,7 +89,7 @@ const AdmindashboardReducer = (state = initialState, action) => {
       return {
         ...state,
         loading: false,
-        getcouponCodeData: action.data,
+        createcouponcodedata: action.data,
       };
 
     case CREATE_COUPONCODE_ERR:
@@ -85,10 +110,52 @@ const AdmindashboardReducer = (state = initialState, action) => {
       return {
         ...state,
         loading: false,
-        createcouponcodedata: action.data,
+        getcouponCodeData: action.data,
       };
 
     case GET_COUPONCODE_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case DELETE_COUPONCODE_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case DELETE_COUPONCODE_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        deleteCouponCode: action.data,
+      };
+
+    case DELETE_COUPONCODE_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case UPDATE_COUPONCODE_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case UPDATE_COUPONCODE_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        updateCouponCode: action.data,
+      };
+
+    case UPDATE_COUPONCODE_ERR:
       return {
         ...state,
         loading: false,
@@ -180,6 +247,27 @@ const AdmindashboardReducer = (state = initialState, action) => {
         error: action.err,
       };
 
+    case UPDATE_SUBSCRIPTION_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case UPDATE_SUBSCRIPTION_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        updateSubscription: action.data,
+      };
+
+    case UPDATE_SUBSCRIPTION_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
     case GET_PRIVACY_POLICY_BEGIN:
       return {
         ...state,
@@ -237,6 +325,48 @@ const AdmindashboardReducer = (state = initialState, action) => {
       };
 
     case UPDATE_PRIVACY_POLICY_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case DELETE_PRIVACY_POLICY_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case DELETE_PRIVACY_POLICY_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        deletepolicy: action.data,
+      };
+
+    case DELETE_PRIVACY_POLICY_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case USERS_LIST_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case USERS_LIST_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        getuserlist: action.data,
+      };
+
+    case USERS_LIST_ERR:
       return {
         ...state,
         loading: false,
