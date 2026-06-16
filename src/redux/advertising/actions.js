@@ -67,6 +67,10 @@ const actions = {
   NEGATIVE_KEYWORD_SUCCESS: 'NEGATIVE_KEYWORD_SUCCESS',
   NEGATIVE_KEYWORD_ERR: 'NEGATIVE_KEYWORD_ERR',
 
+  ORDER_PROCESSING_BEGIN: 'ORDER_PROCESSINGBEGIN',
+  ORDER_PROCESSING_SUCCESS: 'ORDER_PROCESSING_SUCCESS',
+  ORDER_PROCESSING_ERR: 'ORDER_PROCESSING_ERR',
+
   campaignsBegin: () => {
     return {
       type: actions.CAMPAIGNS_BEGIN,
@@ -403,6 +407,26 @@ const actions = {
   negativekeywordErr: (err) => {
     return {
       type: actions.NEGATIVE_KEYWORD_ERR,
+      err,
+    };
+  },
+
+  orderprocessingBegin: () => {
+    return {
+      type: actions.ORDER_PROCESSING_BEGIN,
+    };
+  },
+
+  orderprocessingSuccess: (data) => {
+    return {
+      type: actions.ORDER_PROCESSING_SUCCESS,
+      data,
+    };
+  },
+
+  orderprocessingErr: (err) => {
+    return {
+      type: actions.ORDER_PROCESSING_ERR,
       err,
     };
   },

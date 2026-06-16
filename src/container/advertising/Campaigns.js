@@ -1,13 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Table, Tag, Tooltip, Popover, Switch, Modal } from 'antd';
-import {
-  FilterOutlined,
-  ExportOutlined,
-  RightOutlined,
-  SearchOutlined,
-  CheckOutlined,
-  ReloadOutlined,
-} from '@ant-design/icons';
+import { Button, Table, Tag, Tooltip, Switch, Modal, Dropdown, Checkbox, Popover, Input } from 'antd';
+import { ExportOutlined, RightOutlined, SearchOutlined, SettingOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { getCampaigns, getCampaignUpdate } from '../../redux/advertising/actionCreator';
@@ -20,24 +13,40 @@ function Campaigns() {
     pageSize: 10,
   });
   const [tableData, setTableData] = useState([]);
+  const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedRowKeys, setSelectedRowKeys] = React.useState([]);
   const [budgetModal, setBudgetModal] = useState(false);
   const [selectedBudget, setSelectedBudget] = useState(null);
   const [budgetValue, setBudgetValue] = useState('');
+  const [visibleColumns, setVisibleColumns] = useState([]);
+  const [stateFilter, setStateFilter] = useState('');
+  const [targetinType, settargetingType] = useState('');
 
-  const [openFilter, setOpenFilter] = React.useState(false);
+  const [openBudgetId, setOpenBudgetId] = useState(null);
 
-  const [filters, setFilters] = React.useState({
-    state: '',
-    type: '',
-  });
+  // const [openFilter, setOpenFilter] = React.useState(false);
 
   const { campaignData, loading } = useSelector((state) => state.advertising);
 
   useEffect(() => {
-    dispatch(getCampaigns(pagination.current, pagination.pageSize));
+    dispatch(
+      getCampaigns(pagination.current, pagination.pageSize, {
+        search: debouncedSearch,
+        state: stateFilter,
+        targetingType: targetinType,
+      }),
+    );
     // }, [dispatch, pagination]);
-  }, [dispatch, pagination.current, pagination.pageSize]);
+  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch, stateFilter, targetinType]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timer);
+  }, [searchText]);
 
   // const [campaignStatus, setCampaignStatus] = useState({});
 
@@ -112,125 +121,125 @@ function Campaigns() {
   }, [campaignData]);
   const dataSource = tableData;
 
-  const filterContent = (
-    <div className="w-[320px]">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-[#eef2f7]">
-        <div>
-          <h3 className="text-[20px] font-semibold text-[#111827] mb-0">Filters</h3>
+  // const filterContent = (
+  //   <div className="w-[320px]">
+  //     {/* Header */}
+  //     <div className="flex items-center justify-between border-b border-[#eef2f7]">
+  //       <div>
+  //         <h3 className="text-[16px] font-semibold text-[#111827] mb-0">Filters</h3>
 
-          <p className="text-[13px] text-[#6b7280] mb-1">Refine campaign performance</p>
-        </div>
+  //         <p className="text-[12px] text-[#6b7280] mb-1">Refine campaign performance</p>
+  //       </div>
 
-        <div className="w-9 h-9 rounded-xl bg-[#eff6ff] flex items-center justify-center text-[#2563eb]">
-          <FilterOutlined />
-        </div>
-      </div>
+  //       <div className="w-9 h-9 rounded-xl bg-[#eff6ff] flex items-center justify-center text-[#2563eb]">
+  //         <FilterOutlined />
+  //       </div>
+  //     </div>
 
-      {/* BODY */}
-      <div className="pt-5 space-y-5">
-        {/* STATE */}
-        <div>
-          <p className="text-[14px] font-semibold text-[#374151] mb-2">Campaign State</p>
+  //     {/* BODY */}
+  //     <div className="pt-3 space-y-4">
+  //       {/* STATE */}
+  //       <div>
+  //         <p className="text-[14px] font-semibold text-[#374151] mb-2">Campaign State</p>
 
-          <div className="flex gap-2 flex-wrap">
-            {[
-              { label: 'Enabled', value: 'ENABLED' },
-              { label: 'Paused', value: 'PAUSED' },
-            ].map((item) => {
-              const active = filters.state === item.value;
+  //         <div className="flex gap-2 flex-wrap">
+  //           {[
+  //             { label: 'Enabled', value: 'ENABLED' },
+  //             { label: 'Paused', value: 'PAUSED' },
+  //           ].map((item) => {
+  //             const active = filters.state === item.value;
 
-              return (
-                <button
-                  type="button"
-                  key={item.value}
-                  onClick={() =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      state: item.value,
-                    }))
-                  }
-                  className={`
-                  px-4 h-[38px] rounded-xl border text-[13px] font-medium transition-all duration-200 flex items-center gap-2
-                  ${
-                    active
-                      ? 'bg-[#2563eb] border-[#2563eb] text-white shadow-md shadow-blue-100'
-                      : 'bg-white border-[#dbe1e8] text-[#374151] hover:border-[#2563eb] hover:text-[#2563eb]'
-                  }
-                `}
-                >
-                  {active && <CheckOutlined className="text-[11px]" />}
-                  {item.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+  //             return (
+  //               <button
+  //                 type="button"
+  //                 key={item.value}
+  //                 onClick={() =>
+  //                   setFilters((prev) => ({
+  //                     ...prev,
+  //                     state: item.value,
+  //                   }))
+  //                 }
+  //                 className={`
+  //                 px-3 h-[30px] rounded-xl border text-[12px] font-medium transition-all duration-200 flex items-center gap-2
+  //                 ${
+  //                   active
+  //                     ? 'bg-[#2563eb] border-[#2563eb] text-white shadow-md shadow-blue-100'
+  //                     : 'bg-white border-[#dbe1e8] text-[#374151] hover:border-[#2563eb] hover:text-[#2563eb]'
+  //                 }
+  //               `}
+  //               >
+  //                 {active && <CheckOutlined className="text-[11px]" />}
+  //                 {item.label}
+  //               </button>
+  //             );
+  //           })}
+  //         </div>
+  //       </div>
 
-        {/* TYPE */}
-        <div>
-          <p className="text-[14px] font-semibold text-[#374151] mb-2">Marketing Type</p>
+  //       {/* TYPE */}
+  //       <div>
+  //         <p className="text-[14px] font-semibold text-[#374151] mb-2">Marketing Type</p>
 
-          <div className="flex gap-2 flex-wrap">
-            {[
-              { label: 'Manual', value: 'MANUAL' },
-              { label: 'Auto', value: 'AUTO' },
-            ].map((item) => {
-              const active = filters.type === item.value;
+  //         <div className="flex gap-2 flex-wrap">
+  //           {[
+  //             { label: 'Manual', value: 'MANUAL' },
+  //             { label: 'Auto', value: 'AUTO' },
+  //           ].map((item) => {
+  //             const active = filters.type === item.value;
 
-              return (
-                <button
-                  key={item.value}
-                  type="button"
-                  onClick={() =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      type: item.value,
-                    }))
-                  }
-                  className={`
-                  px-4 h-[38px] rounded-xl border text-[13px] font-medium transition-all duration-200 flex items-center gap-2
-                  ${
-                    active
-                      ? 'bg-[#2563eb] border-[#2563eb] text-white shadow-md'
-                      : 'bg-white border-[#dbe1e8] text-[#374151] hover:border-[#2563eb] hover:text-[#2563eb]'
-                  }
-                `}
-                >
-                  {active && <CheckOutlined className="text-[11px]" />}
-                  {item.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+  //             return (
+  //               <button
+  //                 key={item.value}
+  //                 type="button"
+  //                 onClick={() =>
+  //                   setFilters((prev) => ({
+  //                     ...prev,
+  //                     type: item.value,
+  //                   }))
+  //                 }
+  //                 className={`
+  //                 px-3 h-[30px] rounded-xl border text-[12px] font-medium transition-all duration-200 flex items-center gap-2
+  //                 ${
+  //                   active
+  //                     ? 'bg-[#2563eb] border-[#2563eb] text-white shadow-md'
+  //                     : 'bg-white border-[#dbe1e8] text-[#374151] hover:border-[#2563eb] hover:text-[#2563eb]'
+  //                 }
+  //               `}
+  //               >
+  //                 {active && <CheckOutlined className="text-[11px]" />}
+  //                 {item.label}
+  //               </button>
+  //             );
+  //           })}
+  //         </div>
+  //       </div>
+  //     </div>
 
-      {/* FOOTER */}
-      <div className="pt-3 mt-2 border-t border-[#eef2f7] flex items-center justify-between">
-        <Button
-          icon={<ReloadOutlined />}
-          onClick={() =>
-            setFilters({
-              state: '',
-              type: '',
-            })
-          }
-          className="!h-[40px] !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium flex items-center "
-        >
-          Reset
-        </Button>
+  //     {/* FOOTER */}
+  //     <div className="pt-3 mt-2 border-t border-[#eef2f7] flex items-center justify-between">
+  //       <Button
+  //         icon={<ReloadOutlined />}
+  //         onClick={() =>
+  //           setFilters({
+  //             state: '',
+  //             type: '',
+  //           })
+  //         }
+  //         className="!h-[30px] !rounded-l !border-[#dbe1e8] !text-[#374151] !font-medium text-[12px] flex items-center "
+  //       >
+  //         Reset
+  //       </Button>
 
-        <Button
-          type="primary"
-          onClick={() => setOpenFilter(false)}
-          className="!h-[40px] !rounded-xl !bg-[#2563eb] !px-6 !font-medium"
-        >
-          Apply
-        </Button>
-      </div>
-    </div>
-  );
+  //       <Button
+  //         type="primary"
+  //         // onClick={() => setOpenFilter(false)}
+  //         className="!h-[30px] !rounded-l !bg-[#2563eb] !px-3 !font-semibold text-[13px]"
+  //       >
+  //         Apply
+  //       </Button>
+  //     </div>
+  //   </div>
+  // );
 
   const columns = [
     {
@@ -398,35 +407,136 @@ function Campaigns() {
       dataIndex: 'dailyBudget',
       align: 'center',
       width: 80,
-      sorter: (a, b) => a.dailyBudget - b.dailyBudget,
 
       render: (_, record) => {
         const budgetText = `₹${Number(record?.dailyBudget || 0).toFixed(2)} / ${record?.budgetType}`;
 
-        return (
-          <div className="flex justify-center">
-            <Tooltip title={budgetText} color="black" overlayInnerStyle={{ color: '#fff' }}>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedBudget(record);
-                  setBudgetValue(record?.dailyBudget || '');
-                  setBudgetModal(true);
-                }}
-                className="group relative overflow-hidden w-[72px] px-2 py-[7px] rounded-2xl border border-transparent bg-transparent hover:border-[#dbeafe] hover:bg-[#f8fbff] transition-all duration-300"
-              >
-                {/* background */}
-                <div className="absolute inset-0 bg-gradient-to-r from-[#eff6ff] via-[#f8fafc] to-[#ecfeff] opacity-80" />
+        const budgetContent = (
+          <div className="w-[200px]">
+            {/* <div className="mb-3">
+              <h4 className="text-[12px] font-semibold text-[#111827] uppercase">Budget</h4>
+            </div> */}
 
-                <div className="relative w-full truncate text-center">
-                  <span className="text-[10px] font-bold text-[#0f172a] truncate block">{budgetText}</span>
-                </div>
-              </button>
-            </Tooltip>
+            <Input
+              prefix="₹"
+              value={budgetValue}
+              onChange={(e) => setBudgetValue(e.target.value)}
+              className="!rounded-l !h-[30px] text-[14px]"
+            />
+
+            <div className="mt-2 pt-2 flex justify-end gap-2">
+              <Button
+                onClick={() => {
+                  setOpenBudgetId(null);
+                  setBudgetValue('');
+                }}
+                className="!border-0 !shadow-none !bg-transparent !text-[#6b7280] hover:!text-[#374151]"
+              >
+                Cancel
+              </Button>
+
+              <Button
+                // type="primary"
+                onClick={async () => {
+                  const payload = {
+                    profile_id: record.profileId,
+                    campaigns: [
+                      {
+                        campaignId: record.campaignId,
+                        state: record.state,
+
+                        budget: {
+                          budget: Number(budgetValue),
+                          budgetType: record.budgetType,
+                        },
+
+                        dynamicBidding: {
+                          strategy: record.biddingStrategy,
+                        },
+                      },
+                    ],
+                  };
+
+                  const response = await dispatch(getCampaignUpdate(payload));
+
+                  if (response?.status) {
+                    setOpenBudgetId(null);
+
+                    dispatch(getCampaigns(pagination.current, pagination.pageSize));
+                  }
+                }}
+                className="!text-white hover:!text-white focus:!text-white active:!text-white !border-0 !rounded-xl !font-semibold !shadow-[0_4px_12px_rgba(22,101,52,0.25)]"
+                style={{ background: 'linear-gradient(135deg, rgb(16, 185, 129) 0%, rgb(15, 118, 110) 100%)' }}
+              >
+                Save
+              </Button>
+            </div>
           </div>
+        );
+
+        return (
+          <Popover
+            trigger="click"
+            placement="bottom"
+            content={budgetContent}
+            open={openBudgetId === record.campaignId}
+            onOpenChange={(open) => {
+              if (open) {
+                setOpenBudgetId(record.campaignId);
+                setBudgetValue(record.dailyBudget);
+              } else {
+                setOpenBudgetId(null);
+              }
+            }}
+          >
+            <button
+              type="button"
+              className="group relative overflow-hidden w-[72px] px-2 py-[7px] rounded-2xl border border-transparent bg-transparent hover:border-[#dbeafe] hover:bg-[#f8fbff] transition-all duration-300"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-[#eff6ff] via-[#f8fafc] to-[#ecfeff] opacity-80" />
+
+              <div className="relative w-full truncate text-center">
+                <span className="text-[10px] font-bold text-[#0f172a] truncate block">{budgetText}</span>
+              </div>
+            </button>
+          </Popover>
         );
       },
     },
+    // {
+    //   title: 'Budget',
+    //   dataIndex: 'dailyBudget',
+    //   align: 'center',
+    //   width: 80,
+    //   sorter: (a, b) => a.dailyBudget - b.dailyBudget,
+
+    //   render: (_, record) => {
+    //     const budgetText = `₹${Number(record?.dailyBudget || 0).toFixed(2)} / ${record?.budgetType}`;
+
+    //     return (
+    //       <div className="flex justify-center">
+    //         <Tooltip title={budgetText} color="black" overlayInnerStyle={{ color: '#fff' }}>
+    //           <button
+    //             type="button"
+    //             onClick={() => {
+    //               setSelectedBudget(record);
+    //               setBudgetValue(record?.dailyBudget || '');
+    //               setBudgetModal(true);
+    //             }}
+    //             className="group relative overflow-hidden w-[72px] px-2 py-[7px] rounded-2xl border border-transparent bg-transparent hover:border-[#dbeafe] hover:bg-[#f8fbff] transition-all duration-300"
+    //           >
+    //             {/* background */}
+    //             <div className="absolute inset-0 bg-gradient-to-r from-[#eff6ff] via-[#f8fafc] to-[#ecfeff] opacity-80" />
+
+    //             <div className="relative w-full truncate text-center">
+    //               <span className="text-[10px] font-bold text-[#0f172a] truncate block">{budgetText}</span>
+    //             </div>
+    //           </button>
+    //         </Tooltip>
+    //       </div>
+    //     );
+    //   },
+    // },
 
     {
       title: 'Bidding Strategy',
@@ -591,6 +701,55 @@ function Campaigns() {
     //   render: (v) => <Switch checked={v === 'ENABLED'} />,
     // },
   ];
+
+  useEffect(() => {
+    if (columns.length && visibleColumns.length === 0) {
+      setVisibleColumns(columns.map((col) => col.dataIndex || col.key || col.title));
+    }
+  }, []);
+
+  const columnOptions = columns
+    .filter((col) => col.dataIndex !== 'action')
+    .map((col) => ({
+      key: col.dataIndex || col.key || col.title,
+      label: typeof col.title === 'string' ? col.title : col.dataIndex || 'Column',
+    }));
+
+  const manageColumnsDropdown = (
+    <div className="w-[260px] bg-white rounded-xl shadow-xl border border-[#e5e7eb]">
+      <div className="flex items-center justify-between px-4 py-3 border-b">
+        <span className="font-medium text-[14px]">Manage Columns</span>
+
+        <button
+          type="button"
+          className="text-[#6366f1] text-[12px]"
+          onClick={() => setVisibleColumns(columnOptions.map((item) => item.key))}
+        >
+          Restore
+        </button>
+      </div>
+
+      <div className="max-h-[350px] overflow-y-auto">
+        {columnOptions.map((item) => (
+          <div key={item.key} className="flex items-center justify-between px-4 py-2 hover:bg-[#f9fafb]">
+            <span className="text-[13px] text-[#374151']">{item.label}</span>
+
+            <Checkbox
+              checked={visibleColumns.includes(item.key)}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setVisibleColumns((prev) => [...prev, item.key]);
+                } else {
+                  setVisibleColumns((prev) => prev.filter((c) => c !== item.key));
+                }
+              }}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   const handleUpdateBudget = async () => {
     if (!selectedBudget) return;
 
@@ -625,6 +784,16 @@ function Campaigns() {
     }
   };
 
+  const filteredColumns = columns.filter((col) => {
+    const key = col.dataIndex || col.key || col.title;
+
+    if (col.fixed === 'left' || col.fixed === 'right' || col.dataIndex === 'checkbox' || col.dataIndex === 'action') {
+      return true;
+    }
+
+    return visibleColumns.includes(key);
+  });
+
   return (
     <>
       <div className="p-2">
@@ -633,19 +802,22 @@ function Campaigns() {
           <div className="border-b border-[#edf0f2] px-3 py-2">
             {/* Top Content */}
             <div>
-              <h1 className="text-[19px] font-semibold text-[#111827] mb-1">Campaigns Performance</h1>
+              <h1 className="text-[19px] font-semibold text-[#111827] mb-0">Campaigns Performance</h1>
 
-              <p className="mt-1 text-[12px] text-[#6b7280]">
+              <p className="text-[12px] text-[#6b7280]">
                 Track campaign orders, revenue, discounts and overall marketplace performance.
               </p>
             </div>
 
             {/* Bottom Row */}
-            <div className="mt-5 flex items-center justify-between gap-3">
+            {/* <div className="mt-5 flex items-center justify-between gap-3"> */}
+            <div className="mt-5 flex items-center justify-between gap-3 lg:flex-col lg:items-start">
               {/* Search */}
               <div className="relative w-[260px]">
                 <input
                   type="text"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
                   placeholder="Search campaigns..."
                   className="w-full h-[30px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none"
                 />
@@ -653,30 +825,40 @@ function Campaigns() {
                 <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
               </div>
 
-              <div className="flex items-center gap-3">
-                <Popover
-                  content={filterContent}
-                  trigger="click"
-                  open={openFilter}
-                  onOpenChange={setOpenFilter}
-                  placement="bottomRight"
-                  overlayInnerStyle={{
-                    padding: '8px',
-                    borderRadius: '22px',
-                  }}
+              {/* <div className="flex items-center gap-3"> */}
+              <div className="flex items-center gap-3 flex-wrap lg:w-full">
+                <select
+                  value={stateFilter}
+                  onChange={(e) => setStateFilter(e.target.value)}
+                  className="h-[30px] px-2 pr-4 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
                 >
-                  <Button
-                    icon={<FilterOutlined />}
-                    className="!h-[30px] text-[13px] !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium hover:!border-[#2563eb] hover:!text-[#2563eb] !flex !items-center !justify-center"
-                  >
-                    Filters
-                  </Button>
-                </Popover>
+                  <option value="">All State</option>
+                  <option value="ENABLED">Enabled</option>
+                  <option value="PAUSED">Paused</option>
+                </select>
 
+                <select
+                  value={targetinType}
+                  onChange={(e) => settargetingType(e.target.value)}
+                  className="h-[30px] px-2 pr-4 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
+                >
+                  <option value="">All Targeting Type</option>
+                  <option value="ENABLED">Manual</option>
+                  <option value="PAUSED">Auto</option>
+                </select>
+
+                <Dropdown trigger={['click']} dropdownRender={() => manageColumnsDropdown} placement="bottomRight">
+                  <Button
+                    icon={<SettingOutlined />}
+                    className="!h-[30px] px-2 !flex !items-center !justify-center gap-0 text-[13px] !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium"
+                  >
+                    Manage Columns
+                  </Button>
+                </Dropdown>
                 <Button
                   type="primary"
                   icon={<ExportOutlined />}
-                  className="!h-[30px] text-[13px] !rounded-xl !bg-[#2563eb] !font-medium !flex !items-center !justify-center"
+                  className="!h-[30px] text-[13px] !rounded-xl !bg-[#2563eb] !font-semibold !flex !items-center !justify-center"
                 >
                   Export
                 </Button>
@@ -685,7 +867,7 @@ function Campaigns() {
           </div>
 
           <Table
-            columns={columns}
+            columns={filteredColumns}
             dataSource={dataSource}
             loading={loading}
             showSorterTooltip={false}

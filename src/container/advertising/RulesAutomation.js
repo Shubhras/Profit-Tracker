@@ -3,12 +3,8 @@ import { Modal, Input, Select, DatePicker, InputNumber, Button, Table, Tag, Tool
 import {
   // SearchOutlined,
   EditOutlined,
-  EyeOutlined,
   DeleteOutlined,
   PlusOutlined,
-  ThunderboltOutlined,
-  PlayCircleOutlined,
-  DollarOutlined,
   SettingOutlined,
   DollarCircleOutlined,
   // DownOutlined,
@@ -259,7 +255,7 @@ function RulesAutomation() {
 
         return (
           <Tooltip title={ruleTypeMap[v] || v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-            <Tag color="processing" className="!text-[11px] !px-2 !py-[2px] !font-medium cursor-pointer uppercase">
+            <Tag color="processing" className="!text-[11px] !px-2 !h-[20px] !font-medium cursor-pointer uppercase">
               {v}
             </Tag>
           </Tooltip>
@@ -275,7 +271,7 @@ function RulesAutomation() {
       render: (v) => (
         <Tag
           color={v === 'ACTIVE' ? 'success' : 'default'}
-          className="!text-[11px] !px-2 !py-[2px] !font-medium cursor-pointer uppercase"
+          className="!text-[10px] !px-2 !h-[20px] !font-medium cursor-pointer uppercase"
         >
           {v}
         </Tag>
@@ -290,7 +286,7 @@ function RulesAutomation() {
       render: (v) => (
         <Tag
           color={v === 'EXPIRED' ? 'error' : 'processing'}
-          className="!text-[11px] !px-2 !py-[2px] !font-medium cursor-pointer uppercase"
+          className="!text-[10px] !px-2 h-[20px] !font-medium cursor-pointer uppercase"
         >
           {v}
         </Tag>
@@ -520,12 +516,13 @@ function RulesAutomation() {
 
   return (
     <>
-      <div className="px-3 py-4 bg-[#f5f7fb] min-h-screen">
+      {/* <div className="px-3 py-4 bg-[#f5f7fb] min-h-screen"> */}
+      <div className="px-3 py-3 bg-[#f5f7fb] min-h-screen sm:px-2">
         {/* ================= HEADER ================= */}
 
-        <div className="flex items-start justify-between mb-2">
+        <div className="flex items-start justify-between gap-3 mb-2 xl:flex-col xl:items-start">
+          {' '}
           {/* LEFT */}
-
           <div>
             <h1 className="text-[20px] font-semibold text-[#111827] leading-none mb-[2px]">Rules & Automation</h1>
 
@@ -533,30 +530,27 @@ function RulesAutomation() {
               Automate your Amazon advertising actions and improve performance.
             </p>
           </div>
-
           {/* RIGHT BUTTONS */}
-
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:w-full sm:flex-wrap">
+            {' '}
             {/* ACTIVITY LOG */}
-
-            <Button className="!h-[32px] !px-3 !rounded-lg !border-[#dbe1e8] !shadow-none">
+            <Button className="!h-[32px] !px-3 !rounded-l !border-[#dbe1e8] !shadow-none">
               <span className="text-[12px] font-medium leading-none">Activity Log</span>
             </Button>
-
             {/* CREATE RULE */}
-
             <Button
               type="primary"
-              icon={<PlusOutlined className="text-[11px]" />}
               onClick={() => setOpenRuleModal(true)}
-              className="!h-[32px] !px-3 !rounded-lg !bg-[#2563eb] !border-none !flex !items-center !justify-center gap-0 !shadow-none"
+              className="flex items-center justify-center gap-0 h-[30px] px-2 rounded-l text-white font-bold text-[12px] transition-all w-full min-sm:w-auto"
             >
-              <span className="font-semibold leading-none text-[12px]">Create Rule</span>
+              <PlusOutlined />
+              <span className="font-bold leading-none text-[12px]">Create Rule</span>
             </Button>
           </div>
         </div>
 
-        <div className="inline-flex items-center bg-[#f8fafc] border border-[#e5e7eb] rounded-xl p-1 mb-2">
+        <div className="inline-flex items-center bg-[#f8fafc] border border-[#e5e7eb] rounded-xl p-1 mb-2 overflow-x-auto">
+          {' '}
           {['Budget Rules', 'Bids'].map((tab) => {
             const active = activeTab === tab;
             return (
@@ -564,7 +558,7 @@ function RulesAutomation() {
                 type="button"
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`min-w-[100px] h-[35px] px-3 rounded-lg text-[13px] font-medium transition-all flex items-center justify-center gap-2
+                className={`min-w-[100px] sm:min-w-[130px] h-[35px] px-3 rounded-lg text-[13px] font-medium transition-all flex items-center justify-center gap-2
           ${
             active ? 'bg-white text-[#16a34a] shadow-sm border border-[#d1fae5]' : 'text-[#6b7280] hover:text-[#111827]'
           }
@@ -585,13 +579,13 @@ function RulesAutomation() {
         <div className="border border-[#edf0f2] rounded-xl px-3 pt-2 pb-0 mb-2 bg-white">
           <div className="flex items-center gap-5 overflow-x-auto scrollbar-hide">
             {[
-              { label: 'Overview' },
+              { label: 'Overview', count: rules?.count || 0 },
               { label: 'Active Rules' },
-              { label: 'Pending Execution', count: rules?.count || 0 },
+              { label: 'Pending Execution' },
               { label: 'Rule History' },
               { label: 'Rule Templates' },
             ].map((tab, index) => {
-              const active = tab.label === 'Pending Execution';
+              const active = tab.label === 'Overview';
 
               return (
                 <div
@@ -600,25 +594,11 @@ function RulesAutomation() {
             ${active ? 'text-[#16a34a] font-semibold' : 'text-[#6b7280] font-medium hover:text-[#111827]'}
           `}
                 >
-                  {/* LABEL */}
-
-                  <span className="text-[12px] leading-none">{tab.label}</span>
-
-                  {/* COUNT */}
+                  <span className="text-[13px] leading-none">{tab.label}</span>
 
                   {tab.count && (
                     <div
-                      className={`
-                min-w-[18px]
-                h-[18px]
-                px-[5px]
-                rounded-full
-                flex
-                items-center
-                justify-center
-                text-[10px]
-                font-semibold
-                leading-none
+                      className={`min-w-[18px] h-[18px] px-[5px] rounded-full flex items-center justify-center text-[10px] font-semibold leading-none
                 ${active ? 'bg-[#dbeafe] text-[#16a34a]' : 'bg-[#f3f4f6] text-[#6b7280]'}
               `}
                     >
@@ -635,103 +615,26 @@ function RulesAutomation() {
           </div>
         </div>
 
-        {/* ================= TOP 6 CARDS ================= */}
-
-        {/* <div className="grid grid-cols-6 gap-2 mb-2"> */}
-        <div className="flex flex-wrap gap-2 mb-2">
-          {[
-            {
-              title: 'Active Rules',
-              value: '32',
-              sub: '↑ 18% vs last 30 days',
-              icon: <ThunderboltOutlined className="text-[#22c55e]" />,
-              bg: 'bg-[#ecfdf5]',
-            },
-            {
-              title: 'Pending',
-              value: '5',
-              sub: 'Waiting to run',
-              icon: <PlayCircleOutlined className="text-[#f97316]" />,
-              bg: 'bg-[#fff7ed]',
-            },
-            {
-              title: 'Actions',
-              value: '892',
-              sub: '↑ 24% vs last 30 days',
-              icon: <PlayCircleOutlined className="text-[#2563eb]" />,
-              bg: 'bg-[#eff6ff]',
-            },
-            {
-              title: 'Impressions',
-              value: '4.8M',
-              sub: '↑ 16% vs last 30 days',
-              icon: <EyeOutlined className="text-[#7c3aed]" />,
-              bg: 'bg-[#f5f3ff]',
-            },
-            {
-              title: 'Sales Impact',
-              value: '$125K',
-              sub: '↑ 22% vs last 30 days',
-              icon: <DollarOutlined className="text-[#16a34a]" />,
-              bg: 'bg-[#ecfdf5]',
-            },
-            {
-              title: 'Time Saved',
-              value: '48.5 hrs',
-              sub: '↑ 30% vs last 30 days',
-              icon: <PlayCircleOutlined className="text-[#f97316]" />,
-              bg: 'bg-[#fff7ed]',
-            },
-          ].map((card, index) => (
-            <div
-              key={index}
-              // className="bg-white border border-[#edf0f2] rounded-2xl px-4 py-3"
-              // className="bg-white border border-[#edf0f2] rounded-2xl px-4 py-[10px]"
-              className="bg-white border border-[#edf0f2] rounded-2xl px-3 py-3 flex flex-col justify-between w-[calc(16.66%-7px)] max-[1100px]:w-[calc(33.33%-6px)] max-[600px]:w-[calc(50%-4px)] min-h-[110px]"
-            >
-              <div className="flex items-start justify-between h-full">
-                <div className="flex flex-col justify-between h-full">
-                  <div>
-                    <p className="text-[12px] sm:text-[13px] text-[#6b7280] mb-[2px] leading-4">{card.title}</p>
-
-                    <h2 className="text-[19px] sm:text-[23px] font-bold text-[#111827] leading-tight mt-1 break-words">
-                      {card.value}
-                    </h2>
-                  </div>
-
-                  <p className="text-[10px] sm:text-[11px] text-[#16a34a] font-medium leading-4">{card.sub}</p>
-                </div>
-
-                <div
-                  className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center shrink-0 ${card.bg}`}
-                >
-                  {card.icon}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
         {/* ================= MAIN CONTENT ================= */}
 
-        <div className="grid grid-cols-12 gap-2">
-          {/* ================= LEFT ================= */}
-
-          <div className="col-span-9 space-y-2">
+        <div className="grid grid-cols-12 gap-2 lg:grid-cols-1">
+          {' '}
+          <div className="col-span-12 lg:col-span-12 space-y-2">
+            {' '}
             <div className="bg-white border border-[#edf0f2] rounded-2xl shadow-sm overflow-hidden">
               {/* HEADER */}
 
-              <div className="flex items-center justify-between px-3 py-2 border-b border-[#edf0f2]">
+              <div className="flex items-center justify-between px-3 py-2 border-b border-[#edf0f2] md:flex-col md:items-start md:gap-2">
+                {' '}
                 <div>
-                  <h2 className="text-[18px] font-semibold text-[#111827] mb-0">Pending Execution Rules</h2>
+                  <h2 className="text-[15px] font-semibold text-[#111827] mb-0">Pending Execution Rules</h2>
 
-                  <p className="text-[12px] text-[#6b7280]">Rules waiting to execute.</p>
+                  {/* <p className="text-[12px] text-[#6b7280] mb-1">Rules waiting to execute.</p> */}
                 </div>
-
                 <div className="flex items-center gap-3">
-                  <Button type="primary" className="!h-[30px] text-[13px] !rounded-l !bg-[#2563eb]">
+                  {/* <Button type="primary" className="!h-[30px] text-[13px] !rounded-l !bg-[#2563eb]">
                     <span className="font-semibold">Run All Rules</span>
-                  </Button>
+                  </Button> */}
                 </div>
               </div>
 
@@ -761,7 +664,8 @@ function RulesAutomation() {
                   });
                 }}
                 // scroll={{ x: 1000 }}
-                scroll={{ x: 1000, y: 500 }}
+                // scroll={{ x: 1000, y: 500 }}
+                scroll={{ x: 800, y: 500 }}
                 size="middle"
                 bordered={false}
                 className="
@@ -773,346 +677,18 @@ function RulesAutomation() {
   "
               />
             </div>
-
-            {/* ================= RULE TYPES ================= */}
-
-            <div className="bg-white border border-[#edf0f2] rounded-xl p-[10px]">
-              {/* HEADER */}
-
-              <div className="mb-2">
-                <h2 className="text-[16px] font-semibold text-[#111827] leading-none mb-[2px]">Rule Types</h2>
-
-                <p className="text-[11px] text-[#6b7280] leading-4">Choose a type to create a new rule</p>
-              </div>
-
-              {/* CARDS */}
-
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  {
-                    title: 'Bids Rules',
-                    desc: 'Automate bid adjustments to improve performance and achieve your targets',
-                    rules: '17 rules',
-                    icon: '📈',
-                    bg: 'bg-[#eef4ff]',
-                  },
-
-                  {
-                    title: 'Budget Rules',
-                    desc: 'Automate budget actions to control spend and maximize efficiency',
-                    rules: '8 rules',
-                    icon: '💵',
-                    bg: 'bg-[#edfdf3]',
-                  },
-
-                  {
-                    title: 'Targeting Rules',
-                    desc: 'Automate targeting actions for keywords, products and placements',
-                    rules: '12 rules',
-                    icon: '🎯',
-                    bg: 'bg-[#fff4ea]',
-                  },
-                ].map((item, index) => (
-                  <div
-                    key={index}
-                    className="
-          border border-[#edf0f2]
-          rounded-xl
-          p-[10px]
-          hover:shadow-sm
-          transition-all
-          cursor-pointer
-          min-h-[92px]
-          flex flex-col justify-between
-        "
-                  >
-                    {/* TOP */}
-
-                    <div className="flex items-start gap-2">
-                      {/* ICON */}
-
-                      <div
-                        className={`w-6 h-6 rounded-lg flex items-center justify-center text-[13px] shrink-0 ${item.bg}`}
-                      >
-                        {item.icon}
-                      </div>
-
-                      {/* CONTENT */}
-
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-[12px] font-semibold text-[#111827] leading-4">{item.title}</h3>
-
-                        <p className="text-[10px] text-[#6b7280] leading-4 mt-[2px]">{item.desc}</p>
-                      </div>
-                    </div>
-
-                    {/* BOTTOM */}
-
-                    <p className="text-[#2563eb] text-[10px] font-semibold ml-[32px] mt-1">{item.rules}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* ================= QUICK PRESETS ================= */}
-
-            <div className="bg-white border border-[#edf0f2] rounded-xl p-[10px]">
-              {/* HEADER */}
-
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <h2 className="text-[16px] font-semibold text-[#111827] mb-[2px] leading-none">Quick Presets</h2>
-
-                  <p className="text-[11px] text-[#6b7280] leading-4">Use pre-built templates to get started quickly</p>
-                </div>
-
-                <button type="button" className="text-[#2563eb] text-[11px] font-semibold hover:underline">
-                  View All Presets →
-                </button>
-              </div>
-
-              {/* PRESET CARDS */}
-
-              <div className="grid grid-cols-4 gap-2">
-                {[
-                  {
-                    title: 'Increase Bids - High ACOS',
-                    desc: 'Increase bids for keywords with high ACOS',
-                    rules: '6 rules',
-                    icon: '📈',
-                    bg: 'bg-[#eef4ff]',
-                  },
-
-                  {
-                    title: 'Decrease Bids - Low CTR',
-                    desc: 'Decrease bids for keywords with low CTR',
-                    rules: '6 rules',
-                    icon: '📉',
-                    bg: 'bg-[#edfdf3]',
-                  },
-
-                  {
-                    title: 'Boost Low Impressions',
-                    desc: 'Increase bids for keywords with low impressions',
-                    rules: '5 rules',
-                    icon: '👁️',
-                    bg: 'bg-[#f7efff]',
-                  },
-
-                  {
-                    title: 'Protect Budget',
-                    desc: 'Pause or reduce spend when budget is at risk',
-                    rules: '4 rules',
-                    icon: '🛡️',
-                    bg: 'bg-[#fff4ea]',
-                  },
-                ].map((item, index) => (
-                  <div
-                    key={index}
-                    className="
-          border border-[#edf0f2]
-          rounded-xl
-          p-[10px]
-          hover:shadow-sm
-          transition-all
-          cursor-pointer
-          min-h-[88px]
-          flex flex-col justify-between
-        "
-                  >
-                    {/* TOP */}
-
-                    <div className="flex items-start gap-2">
-                      {/* ICON */}
-
-                      <div
-                        className={`w-6 h-6 rounded-lg flex items-center justify-center text-[13px] shrink-0 ${item.bg}`}
-                      >
-                        {item.icon}
-                      </div>
-
-                      {/* CONTENT */}
-
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-[11px] font-semibold text-[#111827] leading-4">{item.title}</h3>
-
-                        <p className="text-[10px] text-[#6b7280] leading-4 mt-[2px]">{item.desc}</p>
-                      </div>
-                    </div>
-
-                    {/* BOTTOM */}
-
-                    <p className="text-[#2563eb] text-[10px] font-semibold ml-[30px] mt-1">{item.rules}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* ================= RIGHT ================= */}
-
-          <div className="col-span-3 space-y-[6px]">
-            {/* ================= CREATE RULE ================= */}
-
-            <div className="bg-white border border-[#edf0f2] rounded-xl p-[10px]">
-              <h2 className="text-[15px] font-semibold text-[#111827] mb-2 leading-none">Create New Rule</h2>
-
-              <div className="space-y-[6px]">
-                <div className="border border-[#dbeafe] bg-[#f8fbff] rounded-lg p-2">
-                  <h3 className="text-[12px] font-semibold text-[#111827] leading-4">Performance Based</h3>
-
-                  <p className="text-[10px] text-[#6b7280] mt-[2px] leading-4">Trigger actions using metrics</p>
-                </div>
-
-                <div className="border border-[#edf0f2] bg-[#f8fbff] rounded-lg p-2">
-                  <h3 className="text-[12px] font-semibold text-[#111827] leading-4">Duration Based</h3>
-
-                  <p className="text-[10px] text-[#6b7280] mt-[2px] leading-4">Time & schedule based actions</p>
-                </div>
-
-                <div className="border border-[#edf0f2] bg-[#f8fbff] rounded-lg p-2">
-                  <h3 className="text-[12px] font-semibold text-[#111827] leading-4">Schedule Based</h3>
-
-                  <p className="text-[10px] text-[#6b7280] mt-[2px] leading-4">Execute on fixed schedules</p>
-                </div>
-
-                <Button type="primary" block className="!h-[34px] !rounded-lg !bg-[#2563eb] !border-none !mt-2">
-                  <span className="text-[11px] font-medium">Create Rule</span>
-                </Button>
-              </div>
-            </div>
-
-            {/* ================= SMALL RULE TYPES ================= */}
-
-            <div className="space-y-[6px]">
-              <div className="bg-white border border-[#edf0f2] rounded-xl p-[10px]">
-                {/* HEADER */}
-
-                <div className="mb-2">
-                  <h2 className="text-[15px] font-semibold text-[#111827] leading-none mb-[2px]">Rule Types</h2>
-
-                  <p className="text-[10px] text-[#9ca3af] leading-4">All available rule types</p>
-                </div>
-
-                {/* LIST */}
-
-                <div className="space-y-[6px]">
-                  {[
-                    {
-                      label: 'Bids Rules',
-                      count: 17,
-                      bg: 'bg-[#eff6ff]',
-                      text: 'text-[#2563eb]',
-                    },
-
-                    {
-                      label: 'Budget Rules',
-                      count: 8,
-                      bg: 'bg-[#ecfdf5]',
-                      text: 'text-[#16a34a]',
-                    },
-
-                    {
-                      label: 'Targeting Rules',
-                      count: 12,
-                      bg: 'bg-[#fff7ed]',
-                      text: 'text-[#f97316]',
-                    },
-                  ].map((item, index) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <span className="text-[11px] font-semibold text-[#111827]">{item.label}</span>
-
-                      <div
-                        className={`
-                min-w-[24px]
-                h-[24px]
-                px-2
-                rounded-full
-                flex items-center justify-center
-                text-[10px]
-                font-semibold
-                ${item.bg}
-                ${item.text}
-              `}
-                      >
-                        {item.count}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* FOOTER LINK */}
-
-                <button
-                  type="button"
-                  className="
-          mt-3
-          text-[#2563eb]
-          text-[11px]
-          font-semibold
-          hover:underline
-        "
-                >
-                  View All Rule Types →
-                </button>
-              </div>
-
-              {/* ================= RECENT ACTIVITY ================= */}
-
-              <div className="bg-white border border-[#edf0f2] rounded-xl p-[10px]">
-                {/* HEADER */}
-
-                <div className="mb-2">
-                  <h2 className="text-[15px] font-semibold text-[#111827] leading-none">Recent Activity</h2>
-                </div>
-
-                {/* ACTIVITIES */}
-
-                <div className="space-y-[8px]">
-                  {[
-                    {
-                      title: 'High ACOS Control executed',
-                      time: '2 min ago',
-                    },
-
-                    {
-                      title: 'Daily Budget Protection executed',
-                      time: '15 min ago',
-                    },
-
-                    {
-                      title: 'Low CTR Optimization executed',
-                      time: '1 hour ago',
-                    },
-                  ].map((item, index) => (
-                    <div key={index} className="flex items-start gap-2">
-                      {/* DOT */}
-
-                      <div className="w-[6px] h-[6px] rounded-full bg-[#22c55e] mt-[5px] shrink-0" />
-
-                      {/* CONTENT */}
-
-                      <div className="min-w-0">
-                        <h3 className="text-[11px] font-medium text-[#111827] leading-4">{item.title}</h3>
-
-                        <p className="text-[9px] text-[#9ca3af] mt-[2px] leading-3">{item.time}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* FOOTER */}
-
-                <button type="button" className="mt-3 text-[#2563eb] text-[11px] font-semibold hover:underline">
-                  View All Activity →
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </div>
 
-      <Modal open={openRuleModal} onCancel={() => setOpenRuleModal(false)} footer={null} width={820} centered>
+      <Modal
+        open={openRuleModal}
+        onCancel={() => setOpenRuleModal(false)}
+        footer={null}
+        // width={820}
+        width={window.innerWidth < 768 ? '95%' : 820}
+        centered
+      >
         <div className="p-1">
           {/* ================= HEADER ================= */}
 
@@ -1127,7 +703,7 @@ function RulesAutomation() {
           <div className="bg-[#fafbfc] border border-[#edf0f2] rounded-2xl p-3 space-y-4">
             {/* TOP ROW */}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-1">
               <div>
                 <label className="text-[14px] font-medium text-[#374151] block mb-1">Advertising Type</label>
 
@@ -1208,7 +784,7 @@ function RulesAutomation() {
 
             {/* DATE RANGE */}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-1">
               <div>
                 <label className="text-[15px] font-medium text-[#374151] block mb-1">Start Date</label>
 
@@ -1246,7 +822,7 @@ function RulesAutomation() {
 
             {/* ACTIONS */}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-1">
               {/* RECURRENCE */}
 
               <div>
@@ -1586,7 +1162,7 @@ function RulesAutomation() {
 
           {/* BUTTONS */}
 
-          <div className="flex items-center justify-center gap-3 mt-6">
+          <div className="flex items-center justify-center gap-3 mt-6 sm:flex-col">
             <Button
               className="!h-[42px] !px-5 !rounded-xl"
               onClick={() => {

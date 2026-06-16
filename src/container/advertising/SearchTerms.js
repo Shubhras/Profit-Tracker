@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Table, Tooltip } from 'antd';
 
 import {
@@ -17,10 +17,16 @@ import {
 } from '@ant-design/icons';
 
 import { useDispatch, useSelector } from 'react-redux';
-import { getSearchTerms } from '../../redux/advertising/actionCreator';
+import { getSearchTerms, getCampaignsRulesList } from '../../redux/advertising/actionCreator';
 
 function SearchTerms() {
   const dispatch = useDispatch();
+
+  const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  const [campaigns, setCampaigns] = useState([]);
+  const [selectedCampaign, setSelectedCampaign] = useState('');
 
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -32,8 +38,40 @@ function SearchTerms() {
   const { searchTerms, loading } = useSelector((state) => state.advertising);
 
   useEffect(() => {
-    dispatch(getSearchTerms(pagination.current, pagination.pageSize));
-  }, [dispatch, pagination]);
+    dispatch(
+      getSearchTerms({
+        search: debouncedSearch,
+        campaign_id: selectedCampaign,
+        pagination: {
+          pageNo: pagination.current,
+          pageSize: pagination.pageSize,
+        },
+      }),
+    );
+  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch, selectedCampaign]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchText]);
+
+  const summaryCards = searchTerms?.dashboard?.summary_cards || {};
+  const performanceKey = searchTerms?.dashboard?.top_performing_terms || [];
+
+  const fetchCampaigns = async () => {
+    const response = await dispatch(getCampaignsRulesList());
+
+    if (response?.status) {
+      setCampaigns(response.data || []);
+    }
+  };
+
+  useEffect(() => {
+    fetchCampaigns();
+  }, []);
 
   const dataSource =
     searchTerms?.data?.map((item) => ({
@@ -73,7 +111,7 @@ function SearchTerms() {
 
       dataIndex: 'checkbox',
       width: 55,
-      fixed: 'left',
+      align: 'center',
 
       render: (_, record) => (
         <input
@@ -94,11 +132,30 @@ function SearchTerms() {
     {
       title: 'Search Term',
       dataIndex: 'searchTerm',
-      width: 240,
+      width: 70,
+      ellipsis: true,
+      align: 'center',
+      sorter: (a, b) => String(a.searchTerm).localeCompare(String(b.searchTerm)),
 
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-          <span className="text-[11px] text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
+          <span className="text-[11px] text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '100px' }}>
+            {v}
+          </span>
+        </Tooltip>
+      ),
+    },
+    {
+      title: 'Campaign Name',
+      dataIndex: 'campaignName',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => String(a.campaignName).localeCompare(String(b.campaignName)),
+
+      render: (v) => (
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span className="text-[11px] text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '100px' }}>
             {v}
           </span>
         </Tooltip>
@@ -108,28 +165,35 @@ function SearchTerms() {
     {
       title: 'Impressions',
       dataIndex: 'impressions',
+      align: 'center',
       width: 70,
       render: (v) => <span className="text-[11px]">{v}</span>,
+      sorter: (a, b) => a.impressions - b.impressions,
     },
 
     {
       title: 'Clicks',
       dataIndex: 'clicks',
       width: 70,
+      align: 'center',
       render: (v) => <span className="text-[11px]">{v}</span>,
+      sorter: (a, b) => a.clicks - b.clicks,
     },
 
     {
       title: 'Cost',
       dataIndex: 'cost',
+      align: 'center',
       width: 70,
 
+      sorter: (a, b) => a.cost - b.cost,
       render: (v) => <span className="font-medium text-[11px]">₹{Number(v || 0).toLocaleString()}</span>,
     },
 
     {
       title: 'Orders',
       dataIndex: 'orders',
+      align: 'center',
       width: 70,
       render: (v) => <span className="text-[11px]">{v}</span>,
     },
@@ -138,15 +202,17 @@ function SearchTerms() {
       title: 'Sales',
       dataIndex: 'sales',
       width: 70,
-
+      align: 'center',
+      sorter: (a, b) => a.sales - b.sales,
       render: (v) => <span className="font-medium text-[#15803d] text-[11px]">₹{Number(v || 0).toLocaleString()}</span>,
     },
 
     {
       title: 'ACOS',
       dataIndex: 'acos',
-      width: 100,
-
+      align: 'center',
+      width: 70,
+      sorter: (a, b) => a.acos - b.acos,
       render: (v) => {
         let color = '#16a34a';
 
@@ -175,48 +241,48 @@ function SearchTerms() {
   const metricCards = [
     {
       title: 'Total Spend',
-      value: '$54,231.52',
-      growth: '↑ 18% vs last 30 days',
+      value: `₹${Number(summaryCards?.total_spend || 0).toLocaleString()}`,
+      growth: '',
       icon: <DollarOutlined className="text-[#16a34a]" />,
       iconBg: 'bg-[#e8f7ef]',
     },
 
     {
       title: 'Impressions',
-      value: '9.82M',
-      growth: '↑ 16% vs last 30 days',
+      value: Number(summaryCards?.impressions || 0).toLocaleString(),
+      growth: '',
       icon: <EyeOutlined className="text-[#7c3aed]" />,
       iconBg: 'bg-[#f3e8ff]',
     },
 
     {
       title: 'Clicks',
-      value: '88,742',
-      growth: '↑ 14% vs last 30 days',
+      value: Number(summaryCards?.clicks || 0).toLocaleString(),
+      growth: '',
       icon: <AimOutlined className="text-[#d97706]" />,
       iconBg: 'bg-[#fef3c7]',
     },
 
     {
       title: 'Orders',
-      value: '1,842',
-      growth: '↑ 9% vs last 30 days',
+      value: Number(summaryCards?.orders || 0).toLocaleString(),
+      growth: '',
       icon: <ShoppingCartOutlined className="text-[#059669]" />,
       iconBg: 'bg-[#d1fae5]',
     },
 
     {
       title: 'Sales',
-      value: '$198,421.60',
-      growth: '↑ 21% vs last 30 days',
+      value: `₹${Number(summaryCards?.sales || 0).toLocaleString()}`,
+      growth: '',
       icon: <LineChartOutlined className="text-[#e11d48]" />,
       iconBg: 'bg-[#ffe4e6]',
     },
 
     {
       title: 'ACOS',
-      value: '27.32%',
-      growth: '↓ 5% vs last 30 days',
+      value: `${Number(summaryCards?.acos || 0).toFixed(2)}%`,
+      growth: '',
       icon: <PercentageOutlined className="text-[#2563eb]" />,
       iconBg: 'bg-[#dbeafe]',
     },
@@ -231,7 +297,7 @@ function SearchTerms() {
         <div>
           <h1 className="text-[20px] lg:text-[18px] font-semibold text-[#111827] mb-0">Search Terms</h1>
 
-          <p className="text-[12px] text-[#6b7280] max-w-[850px] leading-5">
+          <p className="text-[12px] text-[#6b7280] max-w-[850px]">
             Discover how customers search for your products and optimize your keywords by adding high-performing search
             terms as keywords and blocking irrelevant terms as negative keywords.
           </p>
@@ -244,7 +310,7 @@ function SearchTerms() {
 
           <Button
             type="primary"
-            className="!h-[30px] !rounded-lg !bg-[#0f766e] !text-[11px] whitespace-nowrap font-semibold"
+            className="flex items-center justify-center gap-0 h-[30px] px-2 rounded-xl text-white font-semibold text-[12px] transition-all w-full min-sm:w-auto"
           >
             <PlusOutlined />
             Add as Keyword
@@ -273,30 +339,37 @@ function SearchTerms() {
       {/* FILTER BAR */}
 
       <div className="flex flex-wrap items-center gap-2 mb-3">
-        <select className="h-[36px] px-3 rounded-lg border border-[#dbe1e8] bg-white text-[11px] outline-none">
-          <option>All Campaigns</option>
-        </select>
-
-        <select className="h-[36px] px-3 rounded-lg border border-[#dbe1e8] bg-white text-[11px] outline-none">
-          <option>All Ad Groups</option>
-        </select>
-
-        <select className="h-[36px] px-3 rounded-lg border border-[#dbe1e8] bg-white text-[11px] outline-none">
-          <option>Broad Match, Phrase Match, Exact Match</option>
-        </select>
-
-        <select className="h-[36px] px-3 rounded-lg border border-[#dbe1e8] bg-white text-[11px] outline-none">
-          <option>01/05/2026 - 31/05/2026</option>
-        </select>
-
-        <div className="relative ml-auto lg:w-full min-lg:w-[220px]">
+        <div className="relative lg:w-full min-lg:w-[180px]">
           <input
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
             placeholder="Search term..."
-            className="w-full h-[36px] rounded-lg border border-[#dbe1e8] bg-white pl-9 pr-3 text-[11px] outline-none"
+            className="w-full h-[30px] rounded-lg border border-[#dbe1e8] bg-white pl-9 pr-3 text-[12px] outline-none"
           />
 
           <SearchOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[12px]" />
         </div>
+        <select
+          value={selectedCampaign}
+          onChange={(e) => setSelectedCampaign(e.target.value)}
+          className="h-[30px] w-[170px] px-2 pr-4 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none cursor-pointer truncate"
+        >
+          <option value="">All Campaigns</option>
+
+          {campaigns.map((item) => (
+            <option key={item.campaign_id} value={item.campaign_id}>
+              {item.name}
+            </option>
+          ))}
+        </select>
+
+        {/* <select className="h-[30px] px-2 rounded-lg border border-[#dbe1e8] bg-white text-[12px] outline-none">
+          <option>Broad Match, Phrase Match, Exact Match</option>
+        </select> */}
+
+        {/* <select className="h-[30px] px-2 rounded-lg border border-[#dbe1e8] bg-white text-[12px] outline-none">
+          <option>01/05/2026 - 31/05/2026</option>
+        </select> */}
       </div>
       {/* MAIN CONTENT */}
 
@@ -305,18 +378,19 @@ function SearchTerms() {
 
         <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
           <Table
-            className="[&_.ant-table-thead>tr>th]:text-[11px] [&_.ant-table-thead>tr>th]:font-medium"
+            // className="[&_.ant-table-thead>tr>th]:text-[11px] [&_.ant-table-thead>tr>th]:font-medium"
             columns={columns}
             size="small"
             dataSource={dataSource}
             loading={loading}
+            showSorterTooltip={false}
+            tableLayout="fixed"
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
-              total: searchTerms?.pagination?.total_records || 0,
+              total: searchTerms?.pagination?.totalItems || 0,
 
               showSizeChanger: true,
-
               pageSizeOptions: ['10', '20', '50', '100'],
 
               showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
@@ -327,8 +401,15 @@ function SearchTerms() {
                 pageSize: pag.pageSize,
               });
             }}
-            scroll={{ x: 'max-content' }}
+            scroll={{ x: '800', y: 500 }}
             bordered={false}
+            className="
+    [&_.ant-table-thead>tr>th]:!text-[12px]
+    [&_.ant-table-thead>tr>th]:!font-semibold
+    [&_.ant-table-tbody>tr>td]:!text-[12px]
+    [&_.ant-table-cell]:!px-2
+    [&_.ant-table-cell]:!py-2
+  "
           />
         </div>
 
@@ -396,24 +477,26 @@ function SearchTerms() {
           <div className="bg-white rounded-xl border border-[#e5e7eb] p-3">
             <h2 className="text-[15px] font-semibold text-[#111827] mb-2">Top Performing Terms</h2>
 
-            {[
-              'sony wh-1000xm5',
-              'noise cancelling headphones',
-              'gaming headphones',
-              'wireless bluetooth headphones',
-              'over ear headphones',
-            ].map((item, index) => (
+            {performanceKey.map((item, index) => (
               <div
-                key={item}
-                className={`flex items-center justify-between py-2 ${index !== 4 ? 'border-b border-[#f1f5f9]' : ''}`}
+                key={item.search_term}
+                className={`flex items-center justify-between py-1 ${
+                  index !== performanceKey.length - 1 ? 'border-b border-[#f1f5f9]' : ''
+                }`}
               >
-                <p className="text-[11px] text-[#111827] truncate max-w-[180px]">{item}</p>
+                <div>
+                  <p className="text-[12px] text-[#111827] truncate max-w-[180px] mb-1">{item.search_term}</p>
 
-                <span className="text-[11px] font-semibold text-[#16a34a]">{22 + index}%</span>
+                  <p className="text-[11px] text-[#6b7280]">Orders: {item.orders}</p>
+                </div>
+
+                <span className="text-[12px] font-semibold text-[#16a34a]">
+                  ₹{Number(item.sales || 0).toLocaleString()}
+                </span>
               </div>
             ))}
 
-            <Button className="w-full !h-[34px] !rounded-lg !text-[11px] mt-2">View All</Button>
+            <Button className="w-full !h-[34px] !rounded-lg !text-[11px] mt-0">View All</Button>
           </div>
 
           {/* QUICK ACTIONS */}

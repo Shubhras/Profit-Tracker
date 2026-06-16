@@ -7,6 +7,14 @@ const SalesTrend = lazy(() => import('../../container/profit/SalesTrend'));
 const ProfitTableView = lazy(() => import('../../container/profit/ProfitTableView'));
 const ProfitMonthlyView = lazy(() => import('../../container/profit/ProfitMonthlyView'));
 const CanvasMYOR = lazy(() => import('../../container/profit/CanvasMYOR'));
+const EstimatedFees = lazy(() => import('../../container/profit/EstimatedFees'));
+const SkuWise = lazy(() => import('../../container/profit/SkuWise'));
+const MarketplaceFees = lazy(() => import('../../container/profit/MarketplaceFees'));
+const ShippingEstimate = lazy(() => import('../../container/profit/ShippingEstimate'));
+const Claims = lazy(() => import('../../container/profit/Claims'));
+const ReturnRefundFees = lazy(() => import('../../container/profit/ReturnRefundFees'));
+const TaxCalulation = lazy(() => import('../../container/profit/TaxCalulation'));
+
 const SalesDetails = lazy(() => import('../../container/profit/SalesDetails'));
 const ProfitTableDetails = lazy(() => import('../../container/profit/ProfiteTableDetail'));
 const ProfitViewThirdTable = lazy(() => import('../../container/profit/ProfitViewThirdTable'));
@@ -53,6 +61,65 @@ function ProfitRoutes() {
         element={
           <SubscriptionGate>
             <CanvasMYOR />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="estimatedfees"
+        element={
+          <SubscriptionGate>
+            <EstimatedFees />
+          </SubscriptionGate>
+        }
+      />
+
+      <Route
+        path="skuwise"
+        element={
+          <SubscriptionGate>
+            <SkuWise />
+          </SubscriptionGate>
+        }
+      />
+
+      <Route
+        path="estimatedfees"
+        element={
+          <SubscriptionGate>
+            <MarketplaceFees />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="shippingestimate"
+        element={
+          <SubscriptionGate>
+            <ShippingEstimate />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="claims"
+        element={
+          <SubscriptionGate>
+            <Claims />
+          </SubscriptionGate>
+        }
+      />
+
+      <Route
+        path="returnfees"
+        element={
+          <SubscriptionGate>
+            <ReturnRefundFees />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="taxcalculation"
+        element={
+          <SubscriptionGate>
+            <TaxCalulation />
           </SubscriptionGate>
         }
       />

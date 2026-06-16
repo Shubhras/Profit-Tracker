@@ -1,5 +1,7 @@
 import React, { lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
+import SettlementDetails from '../../container/reconcile/SettlementDetails';
+import PaymentReconcileDetails from '../../container/reconcile/PaymentReconcileDetails';
 
 const PaymentReconcile = lazy(() => import('../../container/reconcile/PaymentReconcile'));
 const Overview = lazy(() => import('../../container/reconcile/OverView'));
@@ -31,6 +33,9 @@ function ReconcileRoutes() {
     <Routes>
       <Route path="payment-reconcile" element={<PaymentReconcile />} />
       <Route path="payment-overview" element={<Overview />} />
+
+      <Route path="settlementdetails" element={<SettlementDetails />} />
+      <Route path="paymentReconcileDetials" element={<PaymentReconcileDetails />} />
 
       <Route path="summary" element={<ReconcileSummary />} />
       <Route path="ordersettlement" element={<OrderSettlement />} />

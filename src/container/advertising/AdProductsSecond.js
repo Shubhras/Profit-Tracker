@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button, Table, Tooltip, Tag, Switch, Modal } from 'antd';
 import { FilterOutlined, ExportOutlined, SearchOutlined, RightOutlined, ArrowLeftOutlined } from '@ant-design/icons';
@@ -12,6 +12,9 @@ function AdProductsDetails() {
   const [budgetModal, setBudgetModal] = React.useState(false);
   const [selectedBudget, setSelectedBudget] = React.useState(null);
   const [budgetValue, setBudgetValue] = React.useState('');
+
+  const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -28,13 +31,23 @@ function AdProductsDetails() {
   useEffect(() => {
     const payload = {
       sku,
+      search: debouncedSearch,
       // start_date: '2026-05-01',
       // end_date: '2026-05-20',
     };
 
     dispatch(getAdProductsDetails(pagination.current, pagination.pageSize, payload));
     // }, [dispatch, pagination, sku]);
-  }, [dispatch, pagination.current, pagination.pageSize, sku]);
+  }, [dispatch, pagination.current, pagination.pageSize, sku, debouncedSearch]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchText]);
+
   const dataSource =
     adsProductsDataDetails?.results?.map((item) => ({
       key: item.id,
@@ -161,11 +174,11 @@ function AdProductsDetails() {
         <div className="flex justify-center">
           <button
             type="button"
-            onClick={() => {
-              setSelectedBudget(record);
-              setBudgetValue(record?.dailyBudget || '');
-              setBudgetModal(true);
-            }}
+            // onClick={() => {
+            //   setSelectedBudget(record);
+            //   setBudgetValue(record?.dailyBudget || '');
+            //   setBudgetModal(true);
+            // }}
             className="group relative overflow-hidden px-3 py-[8px] rounded-2xl border border-transparent bg-transparent hover:border-[#dbeafe] hover:bg-[#f8fbff] transition-all duration-300"
           >
             {/* background */}
@@ -355,6 +368,8 @@ function AdProductsDetails() {
               <div className="relative w-[280px]">
                 <input
                   type="text"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
                   placeholder="Search ad products..."
                   className="w-full h-[30px] rounded-xl border bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm transition-all duration-200 focus:border-[#dbe1e8]"
                 />

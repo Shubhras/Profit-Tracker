@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Table, Card, Tooltip, Spin } from 'antd';
-import { getUnsettledOrders } from '../../redux/reconcilePayment/actionCreator';
 import { exportProfitData } from '../../redux/dashboard/actionCreator';
 import ajio from '../../assets/icons/ajio.png';
 import flipkart from '../../assets/icons/flipkart.svg';
@@ -10,26 +9,6 @@ import { PageHeader } from '../../components/page-headers/page-headers';
 export default function UnsettledOrder() {
   const dispatch = useDispatch();
   const { dateRange, channel: globalChannel } = useSelector((state) => state.dashboard);
-
-  const payload = {
-    filters: {
-      channel: {
-        IN: ['Amazon-India', 'Flipkart', 'Jiomart', 'Meesho', 'Myntra', 'Snapdeal'],
-      },
-      fromDate: '2026-03-31T18:30:00Z',
-      toDate: '2026-04-30T18:29:59Z',
-    },
-    pagination: {
-      pageNo: 0,
-      pageSize: 25,
-    },
-    metric: {
-      summarymetric: 'unsettled',
-    },
-  };
-  useEffect(() => {
-    dispatch(getUnsettledOrders(payload));
-  }, []);
 
   useEffect(() => {
     const handleHeaderAction = (event) => {

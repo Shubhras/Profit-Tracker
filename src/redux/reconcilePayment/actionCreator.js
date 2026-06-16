@@ -14,54 +14,20 @@ const {
   settledOrderBegin,
   settledOrderSuccess,
   settledOrderErr,
-  unsettledOrderBegin,
-  unsettledOrderSuccess,
-  unsettledOrderErr,
-  invoiceReconBegin,
-  invoiceReconSuccess,
-  invoiceReconErr,
-  vcpReconBegin,
-  vcpReconSuccess,
-  vcpReconErr,
-  quickcomReconBegin,
-  quickcomReconSuccess,
-  quickcomReconErr,
 
-  feeleaksReconBegin,
-  feeleaksReconSuccess,
-  feeleaksReconErr,
+  amazontransactionBegin,
+  amazontransactionSuccess,
+  amazontransactionErr,
 
-  returnsummaryBegin,
-  returnsummarySuccess,
-  returnsummaryErr,
+  allsettlementBegin,
+  allsettlementSuccess,
+  allsettlementErr,
 
-  downloadsBegin,
-  downloadsSuccess,
-  downloadsErr,
-
-  organisationreportBegin,
-  organisationreportSuccess,
-  organisationreportErr,
+  returnAdjustmentBegin,
+  returnAdjustmentSuccess,
+  returnAdjustmentErr,
 } = actions;
 
-const mockService = async (payload) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        data: {
-          status: 'success',
-          data: [
-            {
-              id: 1,
-              name: payload?.name || 'Demo',
-              amount: payload?.amount || 100,
-            },
-          ],
-        },
-      });
-    }, 500);
-  });
-};
 export const getReconcilePaymentSummary = (payload) => {
   return async (dispatch) => {
     dispatch(reconcilePaymentBegin());
@@ -114,13 +80,13 @@ export const getBankTransferSummary = (payload) => {
   };
 };
 
-export const getSettledOrders = (payload) => {
+export const getSettledOrders = (page = 1, pageSize = 10) => {
   return async (dispatch) => {
     dispatch(settledOrderBegin());
 
     try {
-      const response = await mockService(payload);
-      if (response.data.status === 'success') {
+      const response = await DataService.get(`/amazon/order-settlement-dashboard/?page=${page}&page_size=${pageSize}`);
+      if (response.data.success === true) {
         dispatch(settledOrderSuccess(response.data));
       } else {
         dispatch(settledOrderErr(response.data.message || 'Something went wrong'));
@@ -131,146 +97,105 @@ export const getSettledOrders = (payload) => {
   };
 };
 
-export const getUnsettledOrders = (payload) => {
+export const getAmazonTransactionDetail = (
+  page = 1,
+  pageSize = 10,
+  startDate,
+  endDate,
+  details = false,
+  search = '',
+  transactionStatus = '',
+  transactionType = '',
+) => {
   return async (dispatch) => {
-    dispatch(unsettledOrderBegin());
-
+    dispatch(amazontransactionBegin());
     try {
-      const response = await mockService(payload);
+      // const response = await DataService.get(`/amazon/amazon-transactions-details/?page=${page}&page_size=${pageSize}`);
+      // const response = await DataService.get(
+      //   `/amazon/grouped-transactions/?page=${page}&page_size=${pageSize}&start_date=${startDate}&end_date=${endDate}&details=${details}&search=${search}`,
+      // );
 
-      if (response.data.status === 'success') {
-        dispatch(unsettledOrderSuccess(response.data));
+      const response = await DataService.get(
+        `/amazon/grouped-transactions/?page=${page}
+        &page_size=${pageSize}
+        &start_date=${startDate}
+        &end_date=${endDate}
+        &details=${details}
+        &search=${search}
+        &transaction_status=${transactionStatus}
+        &transaction_type=${transactionType}`.replace(/\s+/g, ''),
+      );
+
+      console.log('API RESPONSE', response.data);
+      if (response.data.success === true) {
+        dispatch(amazontransactionSuccess(response.data));
       } else {
-        dispatch(unsettledOrderErr(response.data.message || 'Something went wrong'));
+        dispatch(amazontransactionErr(response.data.message || 'Something went wrong'));
       }
     } catch (err) {
-      dispatch(unsettledOrderErr(err.response?.data?.message || err.message));
+      dispatch(amazontransactionErr(err.response?.data?.message || err.message));
     }
   };
 };
 
-export const getInvoiceReconciliation = (payload) => {
+export const getAllSettlement = (params = {}) => {
   return async (dispatch) => {
-    dispatch(invoiceReconBegin());
+    dispatch(allsettlementBegin());
 
     try {
-      const response = await mockService(payload);
+      const query = new URLSearchParams(params).toString();
 
-      if (response.data.status === 'success') {
-        dispatch(invoiceReconSuccess(response.data));
+      const response = await DataService.get(`/amazon/settlement-summary/?${query}`);
+
+      if (response.data.success) {
+        dispatch(allsettlementSuccess(response.data));
       } else {
-        dispatch(invoiceReconErr('Something went wrong'));
+        dispatch(allsettlementErr(response.data.message || 'Something went wrong'));
       }
     } catch (err) {
-      dispatch(invoiceReconErr(err.message));
+      dispatch(allsettlementErr(err.response?.data?.message || err.message));
     }
   };
 };
 
-export const getVcpReconciliation = (payload) => {
+export const getReturnsAdjustment = (
+  page = 1,
+  pageSize = 10,
+  search = '',
+  status = '',
+  startDate = '',
+  endDate = '',
+) => {
   return async (dispatch) => {
-    dispatch(vcpReconBegin());
-
+    dispatch(returnAdjustmentBegin());
     try {
-      const response = await mockService(payload);
+      let url = `/amazon/refund-transactions/?page=${page}&page_size=${pageSize}`;
 
-      if (response.data.status === 'success') {
-        dispatch(vcpReconSuccess(response.data));
+      if (search) {
+        url += `&search=${search}`;
+      }
+
+      if (status) {
+        url += `&transaction_status=${status}`;
+      }
+
+      if (startDate) {
+        url += `&start_date=${startDate}`;
+      }
+
+      if (endDate) {
+        url += `&end_date=${endDate}`;
+      }
+
+      const response = await DataService.get(url);
+
+      if (response.data.success) {
+        dispatch(returnAdjustmentSuccess(response.data));
       } else {
-        dispatch(vcpReconErr('Something went wrong'));
+        dispatch(returnAdjustmentErr(response.data.message));
       }
     } catch (err) {
-      dispatch(vcpReconErr(err.message));
-    }
-  };
-};
-
-export const getQuickComReconciliation = (payload) => {
-  return async (dispatch) => {
-    dispatch(quickcomReconBegin());
-
-    try {
-      const response = await mockService(payload);
-
-      if (response.data.status === 'success') {
-        dispatch(quickcomReconSuccess(response.data));
-      } else {
-        dispatch(quickcomReconErr('Something went wrong'));
-      }
-    } catch (err) {
-      dispatch(quickcomReconErr(err.message));
-    }
-  };
-};
-
-export const getFeeleaksconciliation = (payload) => {
-  return async (dispatch) => {
-    dispatch(feeleaksReconBegin());
-
-    try {
-      const response = await mockService(payload);
-
-      if (response.data.status === 'success') {
-        dispatch(feeleaksReconSuccess(response.data));
-      } else {
-        dispatch(feeleaksReconErr('Something went wrong'));
-      }
-    } catch (err) {
-      dispatch(feeleaksReconErr(err.message));
-    }
-  };
-};
-
-export const getReturnSummary = (payload) => {
-  return async (dispatch) => {
-    dispatch(returnsummaryBegin());
-
-    try {
-      const response = await mockService(payload);
-
-      if (response.data.status === 'success') {
-        dispatch(returnsummarySuccess(response.data));
-      } else {
-        dispatch(returnsummaryErr('Something went wrong'));
-      }
-    } catch (err) {
-      dispatch(returnsummaryErr(err.message));
-    }
-  };
-};
-
-export const getDownloads = (payload) => {
-  return async (dispatch) => {
-    dispatch(downloadsBegin());
-
-    try {
-      const response = await mockService(payload);
-
-      if (response.data.status === 'success') {
-        dispatch(downloadsSuccess(response.data));
-      } else {
-        dispatch(downloadsErr('Something went wrong'));
-      }
-    } catch (err) {
-      dispatch(downloadsErr(err.message));
-    }
-  };
-};
-
-export const getOrganisationReport = (payload) => {
-  return async (dispatch) => {
-    dispatch(organisationreportBegin());
-
-    try {
-      const response = await mockService(payload);
-
-      if (response.data.status === 'success') {
-        dispatch(organisationreportSuccess(response.data));
-      } else {
-        dispatch(organisationreportErr('Something went wrong'));
-      }
-    } catch (err) {
-      dispatch(organisationreportErr(err.message));
+      dispatch(returnAdjustmentErr(err.response?.data?.message || err.message));
     }
   };
 };

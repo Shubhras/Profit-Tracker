@@ -27,6 +27,10 @@ const actions = {
 
   SET_CHANNEL: 'SET_CHANNEL',
 
+  ESTIMATED_FEES_BEGIN: 'ESTIMATED_FEES_BEGIN',
+  ESTIMATED_FEES_SUCCESS: 'ESTIMATED_FEES_SUCCESS',
+  ESTIMATED_FEES_ERR: 'ESTIMATED_FEES_ERR',
+
   dashboardBegin: () => ({
     type: actions.DASHBOARD_BEGIN,
   }),
@@ -80,6 +84,10 @@ const actions = {
   profitabilityBegin: () => ({ type: actions.PROFITABILITY_BEGIN }),
   profitabilitySuccess: (data) => ({ type: actions.PROFITABILITY_SUCCESS, data }),
   profitabilityErr: (err) => ({ type: actions.PROFITABILITY_ERR, err }),
+
+  estimatedFeesBegin: () => ({ type: actions.ESTIMATED_FEES_BEGIN }),
+  estimatedFeesSuccess: (data) => ({ type: actions.ESTIMATED_FEES_SUCCESS, data }),
+  estimatedFeesErr: (err) => ({ type: actions.ESTIMATED_FEES_ERR, err }),
 };
 
 export default actions;

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Table, Tag, Tooltip, Modal, Switch } from 'antd';
-import { ArrowLeftOutlined, FilterOutlined, ExportOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, ExportOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getAdsGroup } from '../../redux/advertising/actionCreator';
@@ -11,6 +11,8 @@ function CampaignDetails() {
   const navigate = useNavigate();
   const [isBidModalOpen, setIsBidModalOpen] = useState(false);
   const [selectedBid, setSelectedBid] = useState(null);
+  const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   // const [selectedRecord, setSelectedRecord] = useState(null);
 
   const [pagination, setPagination] = React.useState({
@@ -26,11 +28,20 @@ function CampaignDetails() {
         // search: 'auto',
         // state: 'ENABLED',
         campaign_id: id,
+        search: debouncedSearch,
         // ordering: '-created_at',
       }),
     );
     // }, [dispatch, pagination, id]);
-  }, [dispatch, pagination.current, pagination.pageSize, id]);
+  }, [dispatch, pagination.current, pagination.pageSize, id, debouncedSearch]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchText]);
 
   const dataSource =
     adsGroupData?.results?.map((item) => ({
@@ -75,8 +86,6 @@ function CampaignDetails() {
               checked={isActive}
               onChange={(checked) => {
                 console.log('STATUS:', checked ? 'ENABLED' : 'PAUSED', record);
-
-                // API CALL HERE
               }}
               style={{
                 transform: 'scale(1.15)',
@@ -93,7 +102,11 @@ function CampaignDetails() {
       width: 70,
       sorter: (a, b) => a.adGroupId - b.adGroupId,
       ellipsis: true,
-      render: (v) => <span className="text-[#2563eb] font-medium">{v}</span>,
+      render: (v) => (
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span className="text-[#2563eb] font-medium cursor-pointer">{v}</span>
+        </Tooltip>
+      ),
     },
 
     {
@@ -132,11 +145,10 @@ function CampaignDetails() {
       render: (v) => (
         <button
           type="button"
-          onClick={() => {
-            setSelectedBid(v);
-            // setSelectedRecord(record);
-            setIsBidModalOpen(true);
-          }}
+          // onClick={() => {
+          //   setSelectedBid(v);
+          //   setIsBidModalOpen(true);
+          // }}
           className="px-3 py-[6px] rounded-xl border border-transparent text-[#111827] font-medium bg-transparent hover:border-[#dbe1e8] hover:bg-white hover:shadow-sm transition-all duration-200"
         >
           ₹{v}
@@ -259,7 +271,7 @@ function CampaignDetails() {
           type="button"
           onClick={() => {
             // navigate(`../campaign-second-details/${record.adGroupId}`);
-            navigate(`../campaign-second-details/${record.adGroupId}`, {
+            navigate(`../campaign-second-details/${record.campaignId}`, {
               state: {
                 adGroupName: record.name,
               },
@@ -286,13 +298,13 @@ function CampaignDetails() {
                 <button
                   type="button"
                   onClick={() => navigate(-1)}
-                  className="w-[35px] h-[35px] rounded-xl border border-[#dbe1e8] bg-white flex items-center justify-center hover:bg-[#f8fafc] transition-all duration-200 shadow-sm"
+                  className="w-[30px] h-[30px] rounded-xl border border-[#dbe1e8] bg-white flex items-center justify-center hover:bg-[#f8fafc] transition-all duration-200 shadow-sm"
                 >
                   <ArrowLeftOutlined className="text-[#374151]" />
                 </button>
 
                 <div className="flex flex-col">
-                  <h1 className="text-[19px] font-semibold text-[#111827] leading-[30px] mb-1">Campaign Details</h1>
+                  <h1 className="text-[19px] font-semibold text-[#111827] leading-[30px] mb-1">Ad Groups Details</h1>
 
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[13px] text-[#6b7280] font-medium">Campaign Name:</span>
@@ -311,6 +323,8 @@ function CampaignDetails() {
               <div className="relative w-[260px]">
                 <input
                   type="text"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
                   placeholder="Search ad groups..."
                   className="w-full h-[30px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm focus:border-[#2563eb]"
                 />
@@ -320,12 +334,12 @@ function CampaignDetails() {
 
               {/* Right Buttons */}
               <div className="flex items-center gap-3">
-                <Button
+                {/* <Button
                   icon={<FilterOutlined />}
                   className="!h-[30px] text-[13px] !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium !flex !items-center !justify-center"
                 >
                   Filters
-                </Button>
+                </Button> */}
 
                 <Button
                   type="primary"
@@ -372,7 +386,6 @@ function CampaignDetails() {
           />
         </div>
       </div>
-      {/* ================= BID MODAL ================= */}
       <Modal
         open={isBidModalOpen}
         footer={null}

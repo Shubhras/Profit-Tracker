@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
-import { Button, Table, Tooltip, Tag, Dropdown, Checkbox } from 'antd';
-import { FilterOutlined, SettingOutlined, SearchOutlined, RightOutlined } from '@ant-design/icons';
+import React, { useEffect, useState } from 'react';
+import { Button, Table, Tooltip, Tag, Dropdown, Checkbox, Switch } from 'antd';
+import { SettingOutlined, SearchOutlined, RightOutlined, ExportOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { getAdProducts } from '../../redux/advertising/actionCreator';
@@ -8,6 +8,8 @@ import { getAdProducts } from '../../redux/advertising/actionCreator';
 function AdProducts() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -16,6 +18,7 @@ function AdProducts() {
 
   const [selectedRowKeys, setSelectedRowKeys] = React.useState([]);
   const [visibleColumns, setVisibleColumns] = React.useState([]);
+  const [stateFilter, setStateFilter] = useState('');
 
   const { loading, adsProductsData } = useSelector((state) => ({
     loading: state.advertising.loading,
@@ -23,9 +26,21 @@ function AdProducts() {
   }));
 
   useEffect(() => {
-    dispatch(getAdProducts(pagination.current, pagination.pageSize));
-    // }, [dispatch, pagination]);
-  }, [dispatch, pagination.current, pagination.pageSize]);
+    dispatch(
+      getAdProducts(pagination.current, pagination.pageSize, {
+        search: debouncedSearch,
+        state: stateFilter,
+      }),
+    );
+  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch, stateFilter]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchText]);
 
   const dataSource =
     adsProductsData?.results?.map((item) => ({
@@ -85,6 +100,15 @@ function AdProducts() {
           className="w-[13px] h-[13px] cursor-pointer accent-[#2563eb]"
         />
       ),
+    },
+    {
+      title: 'State',
+      dataIndex: 'state',
+      width: 70,
+      align: 'center',
+      fixed: 'left',
+
+      render: (v) => <Switch checked={v === 'ENABLED'} size="small" />,
     },
     {
       title: 'Image',
@@ -376,11 +400,14 @@ function AdProducts() {
             </div>
 
             {/* Bottom Row */}
-            <div className="mt-5 flex items-center justify-between gap-3">
+            {/* <div className="mt-5 flex items-center justify-between gap-3"> */}
+            <div className="mt-5 flex items-center justify-between gap-3 lg:flex-col lg:items-start">
               {/* LEFT SIDE */}
-              <div className="relative w-[280px]">
+              <div className="relative w-[280px] md:w-full">
                 <input
                   type="text"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
                   placeholder="Search ad products..."
                   className="w-full h-[30px] rounded-xl border bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm transition-all duration-200 focus:border-[#dbe1e8]"
                 />
@@ -389,16 +416,19 @@ function AdProducts() {
               </div>
 
               {/* RIGHT SIDE BUTTONS */}
-              <div className="flex items-center gap-3">
+              {/* <div className="flex items-center gap-3"> */}
+              <div className="flex items-center gap-3 flex-wrap lg:w-full">
                 {/* FILTER */}
-                <Button
-                  icon={<FilterOutlined />}
-                  className="!h-[30px] text-[13px] !px-5 !rounded-xl border border-[#dbe1e8] bg-white !text-[#111827] !font-medium !flex !items-center !justify-center"
+                <select
+                  value={stateFilter}
+                  onChange={(e) => setStateFilter(e.target.value)}
+                  className="h-[30px] px-3 pr-6 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
                 >
-                  Filters
-                </Button>
+                  <option value="">All State</option>
+                  <option value="ENABLED">Enabled</option>
+                  <option value="PAUSED">Paused</option>
+                </select>
 
-                {/* EXPORT */}
                 <Dropdown trigger={['click']} dropdownRender={() => manageColumnsDropdown} placement="bottomRight">
                   <Button
                     icon={<SettingOutlined />}
@@ -407,6 +437,13 @@ function AdProducts() {
                     Manage Columns
                   </Button>
                 </Dropdown>
+                <Button
+                  type="primary"
+                  icon={<ExportOutlined />}
+                  className="!h-[30px] text-[13px] !rounded-xl !bg-[#2563eb] !font-semibold !flex !items-center !justify-center"
+                >
+                  Export
+                </Button>
               </div>
             </div>
           </div>

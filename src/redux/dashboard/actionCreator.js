@@ -24,6 +24,10 @@ const {
   profitmodalBegin,
   profitmodalSuccess,
   profitmodalErr,
+
+  estimatedFeesBegin,
+  estimatedFeesSuccess,
+  estimatedFeesErr,
 } = actions;
 
 const mockService = async (payload) => {
@@ -185,7 +189,7 @@ export const getSecondDetials = (payload) => {
       const response = await DataService.post('/amazon/profitability/details/by-parent-asin/', payload);
 
       if (response.data?.status === true || response.data?.status === 'success') {
-        dispatch(profitabilitySuccess(response.data)); // same reducer use kar sakte ho
+        dispatch(profitabilitySuccess(response.data));
       } else {
         dispatch(profitabilityErr('Something went wrong'));
       }
@@ -209,6 +213,24 @@ export const getProfitModalApi = (payload) => {
       }
     } catch (err) {
       dispatch(profitmodalErr(err.message));
+    }
+  };
+};
+
+export const getEstimatedFees = (payload) => {
+  return async (dispatch) => {
+    dispatch(estimatedFeesBegin());
+
+    try {
+      const response = await DataService.post('/amazon/estimated-fees/list/', payload);
+      console.log('API Response =>', response);
+      if (response.data?.status === true || response.data?.status === 'success') {
+        dispatch(estimatedFeesSuccess(response.data));
+      } else {
+        dispatch(estimatedFeesErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(estimatedFeesErr(err));
     }
   };
 };

@@ -1,12 +1,13 @@
-import React, { useEffect } from 'react';
-import { Button, Table, Tag, Tooltip, Modal, Switch } from 'antd';
-import { FilterOutlined, ExportOutlined, SearchOutlined } from '@ant-design/icons';
+import React, { useEffect, useState } from 'react';
+import { Button, Table, Tag, Tooltip, Modal, Switch, Dropdown, Checkbox, Popover, Input } from 'antd';
+import { ExportOutlined, SearchOutlined, SettingOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { getAdsGroup, getEditBid } from '../../redux/advertising/actionCreator';
 
 function AdGroups() {
   const dispatch = useDispatch();
-
+  const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [pagination, setPagination] = React.useState({
     current: 1,
     pageSize: 10,
@@ -14,15 +15,55 @@ function AdGroups() {
   const [isBidModalOpen, setIsBidModalOpen] = React.useState(false);
   const [selectedBid, setSelectedBid] = React.useState('');
   const [selectedRowData, setSelectedRowData] = React.useState(null);
+  const [openBidId, setOpenBidId] = useState(null);
 
   const [selectedRowKeys, setSelectedRowKeys] = React.useState([]);
+  const [visibleColumns, setVisibleColumns] = useState([]);
+  const [stateFilter, setStateFilter] = useState('');
 
   const { adsGroupData, loading } = useSelector((state) => state.advertising);
 
   useEffect(() => {
-    dispatch(getAdsGroup(pagination.current, pagination.pageSize));
+    dispatch(
+      getAdsGroup(pagination.current, pagination.pageSize, {
+        search: debouncedSearch,
+        state: stateFilter,
+      }),
+    );
     // }, [dispatch, pagination]);
-  }, [dispatch, pagination.current, pagination.pageSize]);
+  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch, stateFilter]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchText]);
+
+  const handleSaveBid = async () => {
+    if (!selectedRowData) return;
+
+    const payload = {
+      profile_id: selectedRowData.profileId,
+      ad_groups: [
+        {
+          adGroupId: selectedRowData.adGroupId,
+          name: selectedRowData.name,
+          state: selectedRowData.state,
+          defaultBid: Number(selectedBid),
+        },
+      ],
+    };
+
+    const response = await dispatch(getEditBid(payload));
+
+    if (response?.status) {
+      setIsBidModalOpen(false);
+
+      dispatch(getAdsGroup(pagination.current, pagination.pageSize));
+    }
+  };
 
   const dataSource =
     adsGroupData?.results?.map((item) => ({
@@ -157,28 +198,112 @@ function AdGroups() {
         </Tooltip>
       ),
     },
-
     {
       title: 'Default Bid',
       dataIndex: 'defaultBid',
       align: 'center',
-      sorter: (a, b) => Number(a.defaultBid || 0) - Number(b.defaultBid || 0),
-      width: '70',
       ellipsis: true,
-      render: (v, record) => (
-        <button
-          type="button"
-          onClick={() => {
-            setSelectedBid(v);
-            setSelectedRowData(record);
-            setIsBidModalOpen(true);
-          }}
-          className="px-3 py-[6px] rounded-xl border border-transparent text-[#111827] font-medium bg-transparent hover:border-[#dbe1e8] hover:bg-white hover:shadow-sm transition-all duration-200"
-        >
-          ₹{Number(v ?? 0).toLocaleString('en-IN')}
-        </button>
-      ),
+      sorter: (a, b) => Number(a.defaultBid || 0) - Number(b.defaultBid || 0),
+      width: 80,
+
+      render: (v, record) => {
+        const bidContent = (
+          <div className="w-[220px]">
+            <Input
+              prefix="₹"
+              value={selectedBid}
+              onChange={(e) => setSelectedBid(e.target.value)}
+              className="!rounded-xl !h-[34px] text-[14px]"
+            />
+
+            <div className="mt-3 pt-2 flex justify-end gap-2">
+              <Button
+                onClick={() => {
+                  setOpenBidId(null);
+                  setSelectedBid('');
+                }}
+                className="!border-0 !shadow-none !bg-transparent !text-[#6b7280] hover:!text-[#374151]"
+              >
+                Cancel
+              </Button>
+
+              <Button
+                onClick={async () => {
+                  await handleSaveBid();
+                  setOpenBidId(null);
+                }}
+                className="!text-white
+              hover:!text-white
+              focus:!text-white
+              active:!text-white
+              !border-0
+              !rounded-xl
+              !font-semibold
+              !shadow-[0_4px_12px_rgba(22,101,52,0.25)]"
+                style={{
+                  background: 'linear-gradient(135deg, rgb(16, 185, 129) 0%, rgb(15, 118, 110) 100%)',
+                }}
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+        );
+
+        return (
+          <Popover
+            trigger="click"
+            placement="bottom"
+            content={bidContent}
+            open={openBidId === record.adGroupId}
+            onOpenChange={(open) => {
+              if (open) {
+                setOpenBidId(record.adGroupId);
+                setSelectedBid(v);
+                setSelectedRowData(record);
+              } else {
+                setOpenBidId(null);
+              }
+            }}
+          >
+            <button
+              type="button"
+              className="group relative overflow-hidden w-[72px] px-2 py-[7px] rounded-2xl border border-transparent bg-transparent hover:border-[#dbeafe] hover:bg-[#f8fbff] transition-all duration-300"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-[#eff6ff] via-[#f8fafc] to-[#ecfeff] opacity-80" />
+
+              <div className="relative w-full truncate text-center">
+                <span className="text-[11px] font-bold text-[#0f172a] truncate block">
+                  ₹{Number(v ?? 0).toLocaleString('en-IN')}
+                </span>
+              </div>
+            </button>
+          </Popover>
+        );
+      },
     },
+
+    // {
+    //   title: 'Default Bid',
+    //   dataIndex: 'defaultBid',
+    //   align: 'center',
+    //   sorter: (a, b) => Number(a.defaultBid || 0) - Number(b.defaultBid || 0),
+    //   width: '70',
+    //   ellipsis: true,
+    //   render: (v, record) => (
+    //     <button
+    //       type="button"
+    //       onClick={() => {
+    //         setSelectedBid(v);
+    //         setSelectedRowData(record);
+    //         setIsBidModalOpen(true);
+    //       }}
+    //       className="px-3 py-[6px] rounded-xl border border-transparent text-[#111827] font-medium bg-transparent hover:border-[#dbe1e8] hover:bg-white hover:shadow-sm transition-all duration-200"
+    //     >
+    //       ₹{Number(v ?? 0).toLocaleString('en-IN')}
+    //     </button>
+    //   ),
+    // },
 
     {
       title: 'Campaign Name',
@@ -309,29 +434,62 @@ function AdGroups() {
     },
   ];
 
-  const handleSaveBid = async () => {
-    if (!selectedRowData) return;
-
-    const payload = {
-      profile_id: selectedRowData.profileId,
-      ad_groups: [
-        {
-          adGroupId: selectedRowData.adGroupId,
-          name: selectedRowData.name,
-          state: selectedRowData.state,
-          defaultBid: Number(selectedBid),
-        },
-      ],
-    };
-
-    const response = await dispatch(getEditBid(payload));
-
-    if (response?.status) {
-      setIsBidModalOpen(false);
-
-      dispatch(getAdsGroup(pagination.current, pagination.pageSize));
+  useEffect(() => {
+    if (columns.length && visibleColumns.length === 0) {
+      setVisibleColumns(columns.map((col) => col.dataIndex || col.key || col.title));
     }
-  };
+  }, []);
+  const columnOptions = columns
+    .filter((col) => col.dataIndex !== 'action')
+    .map((col) => ({
+      key: col.dataIndex || col.key || col.title,
+      label: typeof col.title === 'string' ? col.title : col.dataIndex || 'Column',
+    }));
+
+  const manageColumnsDropdown = (
+    <div className="w-[260px] bg-white rounded-xl shadow-xl border border-[#e5e7eb]">
+      <div className="flex items-center justify-between px-4 py-3 border-b">
+        <span className="font-medium text-[14px]">Manage Columns</span>
+
+        <button
+          type="button"
+          className="text-[#6366f1] text-[12px]"
+          onClick={() => setVisibleColumns(columnOptions.map((item) => item.key))}
+        >
+          Restore
+        </button>
+      </div>
+
+      <div className="max-h-[350px] overflow-y-auto">
+        {columnOptions.map((item) => (
+          <div key={item.key} className="flex items-center justify-between px-4 py-2 hover:bg-[#f9fafb]">
+            <span className="text-[13px] text-[#374151]">{item.label}</span>
+
+            <Checkbox
+              checked={visibleColumns.includes(item.key)}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setVisibleColumns((prev) => [...prev, item.key]);
+                } else {
+                  setVisibleColumns((prev) => prev.filter((c) => c !== item.key));
+                }
+              }}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const filteredColumns = columns.filter((col) => {
+    const key = col.dataIndex || col.key || col.title;
+
+    if (col.fixed === 'left' || col.fixed === 'right' || col.dataIndex === 'checkbox') {
+      return true;
+    }
+
+    return visibleColumns.includes(key);
+  });
 
   return (
     <>
@@ -348,10 +506,13 @@ function AdGroups() {
               </p>
             </div>
 
-            <div className="mt-5 flex items-center justify-between gap-3">
-              <div className="relative w-[280px]">
+            {/* <div className="mt-5 flex items-center justify-between gap-3"> */}
+            <div className="mt-5 flex items-center justify-between gap-3 lg:flex-col lg:items-start">
+              <div className="relative w-[280px] md:w-full">
                 <input
                   type="text"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
                   placeholder="Search ad groups..."
                   className="w-full h-[30px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none"
                 />
@@ -359,13 +520,25 @@ function AdGroups() {
                 <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
               </div>
 
-              <div className="flex items-center gap-3">
-                <Button
-                  icon={<FilterOutlined />}
-                  className="!h-[30px] text-[13px] !px-5 !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium hover:!border-[#2563eb] hover:!text-[#2563eb] !shadow-sm !flex !items-center !justify-center"
+              {/* <div className="flex items-center gap-3"> */}
+              <div className="flex items-center gap-3 flex-wrap lg:w-full">
+                <select
+                  value={stateFilter}
+                  onChange={(e) => setStateFilter(e.target.value)}
+                  className="h-[30px] px-3 pr-6 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
                 >
-                  Filters
-                </Button>
+                  <option value="">All State</option>
+                  <option value="ENABLED">Enabled</option>
+                  <option value="PAUSED">Paused</option>
+                </select>
+                <Dropdown trigger={['click']} dropdownRender={() => manageColumnsDropdown} placement="bottomRight">
+                  <Button
+                    icon={<SettingOutlined />}
+                    className="!h-[30px] !flex !items-center !justify-center gap-1 text-[13px] !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium"
+                  >
+                    Manage Columns
+                  </Button>
+                </Dropdown>
 
                 <Button
                   type="primary"
@@ -380,7 +553,7 @@ function AdGroups() {
 
           {/* Table */}
           <Table
-            columns={columns}
+            columns={filteredColumns}
             dataSource={dataSource}
             loading={loading}
             showSorterTooltip={false}

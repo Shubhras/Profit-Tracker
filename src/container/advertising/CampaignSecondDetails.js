@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
-import { Button, Table, Tooltip } from 'antd';
-import { ArrowLeftOutlined, FilterOutlined, ExportOutlined } from '@ant-design/icons';
+import React, { useEffect, useState } from 'react';
+import { Table, Tooltip } from 'antd';
+import { ArrowLeftOutlined, SearchOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { getAdProducts } from '../../redux/advertising/actionCreator';
+import { getSearchTerms } from '../../redux/advertising/actionCreator';
 
 function CampaignSecondDetails() {
   const { id } = useParams();
@@ -11,140 +11,99 @@ function CampaignSecondDetails() {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   const [pagination, setPagination] = React.useState({
     current: 1,
     pageSize: 10,
   });
 
-  const { adsProductsData, loading } = useSelector((state) => state.advertising);
+  const { searchTerms, loading } = useSelector((state) => state.advertising);
 
   useEffect(() => {
     dispatch(
-      getAdProducts(pagination.current, pagination.pageSize, {
-        ad_group_id: id,
+      getSearchTerms({
+        filters: {
+          campaign_id: Number(id),
+          search: debouncedSearch,
+        },
+        pagination: {
+          pageNo: pagination.current,
+          pageSize: pagination.pageSize,
+        },
       }),
     );
     // }, [dispatch, pagination, id]);
-  }, [dispatch, pagination.current, pagination.pageSize, id]);
+  }, [dispatch, pagination.current, pagination.pageSize, id, debouncedSearch]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchText]);
 
   const dataSource =
-    adsProductsData?.results?.map((item, index) => ({
-      key: index,
-
-      sku: item.sku,
-      asin: item.asin,
-      itemName: item.item_name,
-      image: item.image_url,
-
-      totalAds: item.total_ads,
-
-      impressions: item.impressions,
+    searchTerms?.data?.map((item, index) => ({
+      key: item.id || index,
+      campaignName: item.campaign_name,
+      searchTerm: item.search_term,
       clicks: item.clicks,
       cost: item.cost,
       sales: item.sales,
       orders: item.orders,
+      acos: item.acos,
+      roas: item.roas,
     })) || [];
-
   const adGroupName = location?.state?.adGroupName || '-';
 
   const columns = [
     {
-      title: '',
-      dataIndex: 'image',
-      align: 'center',
-      width: 50,
-      fixed: 'left',
-
-      render: (_, record) => (
-        <div className="flex justify-center">
-          <img
-            src={record.image}
-            alt="product"
-            className="w-[35px] h-[35px] rounded-xl object-cover border border-[#e5e7eb]"
-          />
-        </div>
-      ),
-    },
-
-    {
-      title: 'SKU',
-      dataIndex: 'sku',
+      title: 'Campaign Name',
+      dataIndex: 'campaignName',
       align: 'center',
       width: 70,
-      sorter: (a, b) => String(a.sku || '').localeCompare(String(b.sku || '')),
       ellipsis: true,
-
+      sorter: (a, b) => String(a.campaignName).localeCompare(String(b.campaignName)),
       render: (v) => (
-        <div className="flex justify-center">
-          <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-            <span
-              className="text-[#2563eb] block truncate cursor-pointer text-center font-medium"
-              style={{ maxWidth: '70px' }}
-            >
-              {v || '-'}
-            </span>
-          </Tooltip>
-        </div>
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
+            {v}
+          </span>
+        </Tooltip>
       ),
     },
-
     {
-      title: 'Item Name',
-      dataIndex: 'itemName',
+      title: 'Search Term',
+      dataIndex: 'searchTerm',
       align: 'center',
       width: 70,
-      sorter: (a, b) => String(a.itemName || '').localeCompare(String(b.itemName || '')),
-      ellipsis: true,
-
       render: (v) => (
-        <div className="flex justify-center">
-          <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-            <span className="text-[#111827] block truncate cursor-pointer text-center" style={{ maxWidth: '70px' }}>
-              {v || '-'}
-            </span>
-          </Tooltip>
-        </div>
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
+            {v}
+          </span>
+        </Tooltip>
       ),
+      sorter: (a, b) => String(a.searchTerm).localeCompare(String(b.searchTerm)),
     },
-
-    {
-      title: 'Total Ads',
-      dataIndex: 'totalAds',
-      align: 'center',
-      width: 70,
-      sorter: (a, b) => Number(a.totalAds || 0) - Number(b.totalAds || 0),
-
-      render: (v) => <span className="font-semibold text-[#2563eb]">{v ?? 0}</span>,
-    },
-
-    {
-      title: 'Impressions',
-      dataIndex: 'impressions',
-      align: 'center',
-      width: 70,
-      sorter: (a, b) => Number(a.impressions || 0) - Number(b.impressions || 0),
-
-      render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
-    },
-
     {
       title: 'Clicks',
       dataIndex: 'clicks',
       align: 'center',
       width: 70,
-      sorter: (a, b) => Number(a.clicks || 0) - Number(b.clicks || 0),
-
-      render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
+      render: (v) => v || '-',
+      sorter: (a, b) => a.clicks - b.clicks,
     },
-
     {
       title: 'Cost',
       dataIndex: 'cost',
       align: 'center',
       width: 70,
-      sorter: (a, b) => Number(a.cost || 0) - Number(b.cost || 0),
-      render: (v) => <span className="font-medium text-[#dc2626]">₹{Number(v ?? 0).toFixed(2)}</span>,
+      render: (v) => v || '-',
+      sorter: (a, b) => a.cost - b.cost,
     },
 
     {
@@ -152,18 +111,32 @@ function CampaignSecondDetails() {
       dataIndex: 'sales',
       align: 'center',
       width: 70,
-      sorter: (a, b) => Number(a.sales || 0) - Number(b.sales || 0),
-
-      render: (v) => <span className="font-medium text-[#16a34a]">₹{Number(v ?? 0).toFixed(2)}</span>,
+      render: (v) => v || '-',
+      sorter: (a, b) => a.sales - b.sales,
     },
-
     {
       title: 'Orders',
       dataIndex: 'orders',
       align: 'center',
       width: 70,
-      sorter: (a, b) => Number(a.orders || 0) - Number(b.orders || 0),
-      render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
+      render: (v) => v || '-',
+      sorter: (a, b) => a.orders - b.orders,
+    },
+    {
+      title: 'ACOS',
+      dataIndex: 'acos',
+      align: 'center',
+      width: 70,
+      render: (v) => v || '-',
+      sorter: (a, b) => a.acos - b.acos,
+    },
+    {
+      title: 'ROAS',
+      dataIndex: 'roas',
+      align: 'center',
+      width: 70,
+      render: (v) => v || '-',
+      sorter: (a, b) => a.roas - b.roas,
     },
   ];
 
@@ -171,53 +144,48 @@ function CampaignSecondDetails() {
     <>
       <div className="p-2">
         <div className="mt-3 mb-3 rounded-2xl border border-[#e5e7eb] bg-white shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between border-b border-[#edf0f2] px-6 py-4">
-            <div className="flex items-center gap-4">
-              <button
-                type="button"
-                onClick={() => navigate(-1)}
-                className="w-[35px] h-[35px] rounded-xl border border-[#dbe1e8]
-                bg-white flex items-center justify-center hover:bg-[#f8fafc]
-                transition-all duration-200 shadow-sm"
-              >
-                <ArrowLeftOutlined className="text-[#374151]" />
-              </button>
+          <div className="flex items-center justify-between border-b border-[#edf0f2]">
+            <div className="border-b border-[#edf0f2] px-3 py-2">
+              {/* Top Row */}
+              <div className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => navigate(-1)}
+                  className="w-[30px] h-[30px] rounded-xl border border-[#dbe1e8]
+      bg-white flex items-center justify-center hover:bg-[#f8fafc]
+      transition-all duration-200 shadow-sm"
+                >
+                  <ArrowLeftOutlined className="text-[#374151]" />
+                </button>
 
-              {/* Title */}
-              <div className="flex flex-col">
-                <h1 className="text-[18px] font-semibold text-[#111827] leading-[30px] mb-1">Ad Products Details</h1>
+                <div className="flex flex-col">
+                  <h1 className="text-[17px] font-semibold text-[#111827] leading-[30px] mb-0">Ad Products Details</h1>
 
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span
-                    className="text-[14px]
-                    text-[#6b7280] font-medium"
-                  >
-                    Ad Group Name:
-                  </span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[13px] text-[#6b7280] font-medium">Ad Group Name:</span>
 
-                  <div className="min-w-[120px] h-[23px] px-2 rounded-full bg-[#eff6ff] border border-[#bfdbfe] text-[#2563eb] text-[12px] font-semibold flex items-center justify-center">
-                    {adGroupName || 'Campaign Details'}
+                    <div className="min-w-[120px] h-[20px] px-2 rounded-full bg-[#eff6ff] border border-[#bfdbfe] text-[#2563eb] text-[12px] font-semibold flex items-center justify-center">
+                      {adGroupName || 'Campaign Details'}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Right Buttons */}
-            <div className="flex items-center gap-3">
-              <Button
-                icon={<FilterOutlined />}
-                className="!h-[30px] text-[13px] !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium !flex !items-center !justify-center"
-              >
-                Filters
-              </Button>
+              {/* Bottom Row */}
+              <div className="mt-5 flex items-center justify-between mb-2">
+                {/* Search */}
+                <div className="relative w-[260px]">
+                  <input
+                    type="text"
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    placeholder="Search ad groups..."
+                    className="w-full h-[30px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm focus:border-[#2563eb]"
+                  />
 
-              <Button
-                type="primary"
-                icon={<ExportOutlined />}
-                className="!h-[30px] text-[13px] !rounded-xl !bg-[#2563eb] !font-medium !flex !items-center !justify-center"
-              >
-                Export
-              </Button>
+                  <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -231,7 +199,7 @@ function CampaignSecondDetails() {
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
-              total: adsProductsData?.pagination?.total_records || 0,
+              total: searchTerms?.pagination?.totalItems || 0,
               showSizeChanger: true,
               pageSizeOptions: ['10', '20', '50', '100'],
               showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,

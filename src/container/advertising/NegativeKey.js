@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Table, Tag, Tooltip } from 'antd';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
-  DownloadOutlined,
   PlusOutlined,
   SearchOutlined,
   MoreOutlined,
@@ -11,31 +10,42 @@ import {
   AimOutlined,
   LineChartOutlined,
 } from '@ant-design/icons';
-import { getNegativeKeywords } from '../../redux/advertising/actionCreator'; // apne path ke hisab se
+import { getNegativeKeywords, getCampaignsRulesList, getAdsGroup } from '../../redux/advertising/actionCreator'; // apne path ke hisab se
 
 function NegativeKey() {
   const dispatch = useDispatch();
-
+  // const { RangePicker } = DatePicker;
   const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [matchType, setMatchType] = useState('');
+  const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [selectedAdGroup, setSelectedAdGroup] = useState('');
+  const [activeTab, setActiveTab] = useState('Negative Keywords');
+  const [campaigns, setCampaigns] = useState([]);
+  const [selectedCampaign, setSelectedCampaign] = useState('');
 
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 20,
   });
+  const { adsGroupData } = useSelector((state) => state.advertising);
+  const { dateRange } = useSelector((state) => state.dashboard);
 
   const fetchNegativeKeywords = async () => {
     setLoading(true);
 
     const payload = {
-      search: '',
-      campaign_id: null,
-      ad_group_id: null,
-      match_type: '',
+      search: debouncedSearch,
+      campaign_id: selectedCampaign,
+      ad_group_id: selectedAdGroup,
+      match_type: matchType,
       state: 'ENABLED',
       page: pagination.current,
       page_size: pagination.pageSize,
+      fromDate: dateRange?.fromDate || null,
+      toDate: dateRange?.endDate || null,
     };
 
     const response = await dispatch(getNegativeKeywords(payload));
@@ -66,8 +76,43 @@ function NegativeKey() {
 
   useEffect(() => {
     fetchNegativeKeywords();
-  }, [pagination.current, pagination.pageSize]);
+  }, [
+    dateRange,
+    pagination.current,
+    pagination.pageSize,
+    matchType,
+    selectedCampaign,
+    selectedAdGroup,
+    debouncedSearch,
+  ]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchText]);
+
+  const fetchCampaigns = async () => {
+    const response = await dispatch(getCampaignsRulesList());
+
+    if (response?.status) {
+      setCampaigns(response.data || []);
+    }
+  };
+
+  useEffect(() => {
+    fetchCampaigns();
+  }, []);
+
+  useEffect(() => {
+    dispatch(
+      getAdsGroup(1, 4000, {
+        search: '',
+      }),
+    );
+  }, [dispatch]);
   const metricCards = [
     {
       title: 'Total Negative Keywords',
@@ -215,11 +260,39 @@ function NegativeKey() {
     },
   ];
 
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+
+    switch (tab) {
+      case 'Negative Keywords':
+        setMatchType('');
+        break;
+
+      case 'Negative Phrases':
+        setMatchType('NEGATIVE_PHRASE');
+        break;
+
+      case 'Negative Exact':
+        setMatchType('NEGATIVE_EXACT');
+        break;
+
+      default:
+        setMatchType('');
+    }
+
+    setPagination((prev) => ({
+      ...prev,
+      current: 1,
+    }));
+  };
+
+  const tabs = ['Negative Keywords', 'Negative Phrases', 'Negative Exact', 'ASIN Targeting', 'Auto Suggestions'];
+
   return (
     <div className="bg-[#f5f7fb] min-h-screen p-3">
       {/* HEADER */}
 
-      <div className="flex items-start justify-between mb-2">
+      <div className="flex flex-col min-lg:flex-row min-lg:items-start justify-between gap-3 mb-2">
         <div>
           <h1 className="text-[20px] font-semibold text-[#111827] mb-[2px]">Negative Keywords</h1>
 
@@ -228,32 +301,32 @@ function NegativeKey() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Button className="!h-[32px] !rounded-xl !border-[#dbe1e8]">
+        <div className="flex flex-wrap items-center gap-2 w-full min-lg:w-auto">
+          {/* <Button className="!h-[30px] !rounded-l !border-[#dbe1e8]">
             <DownloadOutlined className="!text-[11px]" />
             <span className="text-[12px]">Amazon Search Term Report</span>
-          </Button>
+          </Button> */}
 
-          <Button type="primary" className="!h-[35px] !rounded-xl !bg-[#059669]">
-            <PlusOutlined className="!text-[11px]" />
-            <span className="text-[12px] font-semibold">Add Negative Keywords</span>
+          <Button
+            type="primary"
+            className="flex items-center justify-center gap-0 h-[30px] px-2 rounded-l bg-[#059669] hover:bg-[#047857] text-white font-bold text-[12px] transition-all w-full min-sm:w-auto"
+          >
+            <PlusOutlined
+              style={{
+                fontSize: '14px',
+                fontWeight: 600,
+              }}
+            />
+            <span>Add Negative Keywords</span>
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-5 gap-2 mb-3">
+      <div className="grid grid-cols-1 min-sm:grid-cols-2 min-md:grid-cols-3 min-xl:grid-cols-5 gap-2 mb-3">
         {metricCards.map((item) => (
           <div
             key={item.title}
-            className="
-        bg-white
-        rounded-2xl
-        border border-[#e5e7eb]
-        px-3 py-2
-        shadow-sm
-        min-h-[92px]
-        flex flex-col justify-between
-      "
+            className="bg-white rounded-2xl border border-[#e5e7eb] px-3 py-2 shadow-sm min-h-[92px] flex flex-col justify-between"
           >
             {/* TOP */}
             <div>
@@ -278,57 +351,87 @@ function NegativeKey() {
 
       {/* TABS */}
 
-      <div className="flex items-center gap-8 border-b border-[#e5e7eb] mb-2">
-        {['Negative Keywords', 'Negative Phrases', 'Negative Exact', 'ASIN Targeting', 'Auto Suggestions'].map(
-          (item, index) => (
-            <button
-              key={item}
-              type="button"
-              className={`pb1 text-[13px] font-medium transition-all ${
-                index === 0 ? 'text-[#059669] border-b-2 border-[#059669]' : 'text-[#64748b]'
-              }`}
-            >
-              {item}
-            </button>
-          ),
-        )}
+      <div className="flex items-center gap-5 overflow-x-auto whitespace-nowrap border-b border-[#e5e7eb] mb-2 scrollbar-hide">
+        {tabs.map((item) => (
+          <button
+            key={item}
+            type="button"
+            onClick={() => handleTabChange(item)}
+            className={`pb-2 text-[13px] font-medium transition-all ${
+              activeTab === item ? 'text-[#059669] border-b-2 border-[#059669]' : 'text-[#64748b]'
+            }`}
+          >
+            {item}
+          </button>
+        ))}
       </div>
 
       {/* FILTERS */}
 
-      <div className="flex items-center gap-3 mb-5">
-        <select className="h-[35px] px-4 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none">
-          <option>All Campaigns</option>
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <select
+          value={selectedCampaign}
+          onChange={(e) => setSelectedCampaign(e.target.value)}
+          className="h-[30px] w-[170px] px-2 pr-5 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none cursor-pointer truncate"
+        >
+          <option value="">All Campaigns</option>
+
+          {campaigns.map((item) => (
+            <option key={item.campaign_id} value={item.campaign_id}>
+              {item.name}
+            </option>
+          ))}
         </select>
 
-        <select className="h-[35px] px-4 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none">
-          <option>All Ad Groups</option>
+        <select
+          value={matchType}
+          onChange={(e) => setMatchType(e.target.value)}
+          className="h-[30px] w-full min-sm:w-[170px] px-2 pr-5 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none cursor-pointer"
+        >
+          <option value="">All Match Type</option>
+          <option value="NEGATIVE_BROAD">Broad</option>
+          <option value="NEGATIVE_PHRASE">Phrase</option>
+          <option value="NEGATIVE_EXACT">Exact</option>
         </select>
 
-        <select className="h-[35px] px-4 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none">
-          <option>All Match Types</option>
-        </select>
+        <select
+          value={selectedAdGroup}
+          onChange={(e) => setSelectedAdGroup(e.target.value)}
+          className="h-[30px] w-full min-sm:w-[170px] px-2 pr-5 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none cursor-pointer truncate"
+        >
+          <option value="">All Ad Groups</option>
 
-        <select className="h-[35px] px-4 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none">
-          <option>01/05/2026 - 31/05/2026</option>
+          {adsGroupData?.results?.map((item) => (
+            <option key={item.ad_group_id} value={item.ad_group_id}>
+              {item.name}
+            </option>
+          ))}
         </select>
+        {/* <RangePicker
+          format="DD/MM/YYYY"
+          className="!h-[30px] text-[12px] !rounded-xl"
+          placeholder={['Start Date', 'End Date']}
+        /> */}
 
-        <div className="relative ml-auto w-[280px]">
+        <div className="relative w-full min-md:w-[280px] min-md:ml-auto">
+          {' '}
           <input
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
             placeholder="Search negative keywords..."
-            className="w-full h-[42px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] outline-none"
+            className="w-full h-[30px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] outline-none"
           />
-
           <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
         </div>
       </div>
 
       {/* MAIN CONTENT */}
 
-      <div className="grid grid-cols-[1fr_320px] gap-2">
+      <div className="grid grid-cols-1 min-xl:grid-cols-[1fr_320px] gap-2">
         {/* TABLE */}
 
-        <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden">
+        <div className="bg-white rounded-2xl border border-[#e5e7eb] overflow-hidden min-w-0">
+          {' '}
           <Table
             columns={columns}
             dataSource={tableData}
@@ -349,7 +452,7 @@ function NegativeKey() {
                 pageSize: pag.pageSize,
               });
             }}
-            scroll={{ x: 900 }}
+            scroll={{ x: 800, y: 600 }}
             size="middle"
             bordered={false}
             className="
@@ -364,7 +467,7 @@ function NegativeKey() {
 
         {/* SIDEBAR */}
 
-        <div className="space-y-2">
+        <div className="space-y-2 w-full">
           {/* WASTED TERMS */}
 
           <div className="bg-white rounded-2xl border border-[#e5e7eb] p-3">
@@ -412,7 +515,7 @@ function NegativeKey() {
               </div>
             ))}
 
-            <Button className="w-full !mt-2 !h-[35px] !rounded-xl">View All Search Terms</Button>
+            <Button className="w-full !mt-2 !h-[30px] text-[12px] !rounded-xl">View All Search Terms</Button>
           </div>
 
           <div className="bg-white rounded-2xl border border-[#e5e7eb] p-3">
@@ -426,13 +529,13 @@ function NegativeKey() {
               className="w-full rounded-xl border border-[#dbe1e8] p-2 text-[14px] outline-none resize-none"
             />
 
-            <select className="w-full h-[35px] mt-2 px-4 rounded-xl border border-[#dbe1e8] bg-white text-[14px] outline-none">
+            <select className="w-full h-[30px] mt-2 px-3 rounded-xl border border-[#dbe1e8] bg-white text-[14px] outline-none">
               <option>Broad Match</option>
               <option>Phrase Match</option>
               <option>Exact Match</option>
             </select>
 
-            <Button type="primary" className="w-full !mt-4 !h-[35px] !rounded-xl !bg-[#059669]">
+            <Button type="primary" className="w-full !mt-4 !h-[30px] text-[12px] !rounded-xl !bg-[#059669]">
               Add Keywords
             </Button>
           </div>

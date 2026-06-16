@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
-import { Button, Table, Tag, Tooltip, Modal } from 'antd';
-import { FilterOutlined, ExportOutlined, SearchOutlined } from '@ant-design/icons';
+import React, { useEffect, useState } from 'react';
+import { Button, Table, Tag, Tooltip, Modal, Popover, Input, Switch } from 'antd';
+import { ExportOutlined, SearchOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { getTargets } from '../../redux/advertising/actionCreator';
 
@@ -14,41 +14,23 @@ function Targets() {
     current: 1,
     pageSize: 10,
   });
-  const [showFilters, setShowFilters] = React.useState(false);
-
-  const [filters, setFilters] = React.useState({
-    state: '',
-    campaign_id: '',
-    ad_group_id: '',
-    expression_type: '',
-    ordering: '-created_at',
-  });
-
-  const [appliedFilters, setAppliedFilters] = React.useState({
-    state: '',
-    campaign_id: '',
-    ad_group_id: '',
-    expression_type: '',
-    ordering: '-created_at',
-  });
   const [selectedRowKeys, setSelectedRowKeys] = React.useState([]);
+  const [openBidId, setOpenBidId] = useState(null);
+  const [bidValue, setBidValue] = useState('');
+  const [stateFilter, setStateFilter] = useState('');
 
   const { targets, loading } = useSelector((state) => state.advertising);
 
   useEffect(() => {
     const payload = {
       search: debouncedSearch || '',
-      state: appliedFilters.state || '',
-      campaign_id: appliedFilters.campaign_id || '',
-      ad_group_id: appliedFilters.ad_group_id || '',
-      expression_type: appliedFilters.expression_type || '',
-      ordering: appliedFilters.ordering || '-created_at',
       page: pagination.current,
       page_size: pagination.pageSize,
+      state: stateFilter,
     };
 
     dispatch(getTargets(pagination.current, pagination.pageSize, payload));
-  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch, appliedFilters]);
+  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch, stateFilter]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -99,7 +81,7 @@ function Targets() {
         />
       ),
       dataIndex: 'checkbox',
-      width: 50,
+      width: 40,
       align: 'center',
       fixed: 'left',
 
@@ -120,9 +102,28 @@ function Targets() {
     },
 
     {
+      title: 'State',
+      dataIndex: 'state',
+      align: 'center',
+      width: 40,
+
+      render: (v, record) => (
+        <Switch
+          checked={v === 'ENABLED'}
+          size="small"
+          onChange={(checked) => {
+            const updatedState = checked ? 'ENABLED' : 'PAUSED';
+
+            console.log('Updated State:', updatedState, record);
+          }}
+        />
+      ),
+    },
+
+    {
       title: 'Target ID',
       dataIndex: 'targetId',
-      width: 50,
+      width: 70,
       ellipsis: true,
       fixed: 'left',
       align: 'center',
@@ -145,9 +146,9 @@ function Targets() {
       title: 'Expression',
       dataIndex: 'expression',
       align: 'center',
-      width: 50,
+      width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.expression - b.expression,
+      sorter: (a, b) => String(a.expression).localeCompare(String(b.expression)),
 
       render: (v) => (
         <div className="flex justify-center">
@@ -176,48 +177,121 @@ function Targets() {
         </Tag>
       ),
     },
-
-    {
-      title: 'State',
-      dataIndex: 'state',
-      align: 'center',
-      width: 50,
-      ellipsis: true,
-      sorter: (a, b) => a.state - b.state,
-
-      render: (v) => (
-        <Tag color={v === 'ENABLED' ? 'success' : 'error'} title="" className="!px-3 !py-[3px] !rounded-full">
-          {v}
-        </Tag>
-      ),
-    },
+    // {
+    //   title: 'Bid',
+    //   dataIndex: 'bid',
+    //   align: 'center',
+    //   width: 50,
+    //   ellipsis: true,
+    //   sorter: (a, b) => a.bid - b.bid,
+    //   render: (v) => (
+    //     <button
+    //       type="button"
+    //       onClick={() => {
+    //         setSelectedBid(v);
+    //         setIsBidModalOpen(true);
+    //       }}
+    //       className="px-3 py-[6px] rounded-xl border border-transparent text-[#111827] font-medium bg-transparent hover:border-[#dbe1e8] hover:bg-white hover:shadow-sm transition-all duration-200"
+    //     >
+    //       ₹{Number(v ?? 0).toFixed(2)}
+    //     </button>
+    //   ),
+    // },
 
     {
       title: 'Bid',
       dataIndex: 'bid',
       align: 'center',
-      width: 50,
+      width: 60,
       ellipsis: true,
       sorter: (a, b) => a.bid - b.bid,
-      render: (v) => (
-        <button
-          type="button"
-          onClick={() => {
-            setSelectedBid(v);
-            setIsBidModalOpen(true);
-          }}
-          className="px-3 py-[6px] rounded-xl border border-transparent text-[#111827] font-medium bg-transparent hover:border-[#dbe1e8] hover:bg-white hover:shadow-sm transition-all duration-200"
-        >
-          ₹{Number(v ?? 0).toFixed(2)}
-        </button>
-      ),
+
+      render: (_, record) => {
+        const bidContent = (
+          <div className="w-[200px]">
+            <Input
+              prefix="₹"
+              value={bidValue}
+              onChange={(e) => setBidValue(e.target.value)}
+              className="!rounded-l !h-[30px] text-[14px]"
+            />
+
+            <div className="mt-2 pt-2 flex justify-end gap-2">
+              <Button
+                onClick={() => {
+                  setOpenBidId(null);
+                  setBidValue('');
+                }}
+                className="!border-0 !shadow-none !bg-transparent !text-[#6b7280] hover:!text-[#374151]"
+              >
+                Cancel
+              </Button>
+
+              <Button
+                onClick={() => {
+                  console.log('Updated Bid:', bidValue);
+
+                  // API later
+                  setOpenBidId(null);
+                }}
+                className="
+              !text-white
+              hover:!text-white
+              focus:!text-white
+              active:!text-white
+              !border-0
+              !rounded-xl
+              !font-semibold
+              !shadow-[0_4px_12px_rgba(22,101,52,0.25)]
+            "
+                style={{
+                  background: 'linear-gradient(135deg, rgb(16, 185, 129) 0%, rgb(15, 118, 110) 100%)',
+                }}
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+        );
+
+        return (
+          <Popover
+            trigger="click"
+            placement="bottom"
+            content={bidContent}
+            open={openBidId === record.targetId}
+            onOpenChange={(open) => {
+              if (open) {
+                setOpenBidId(record.targetId);
+                setBidValue(record.bid);
+              } else {
+                setOpenBidId(null);
+              }
+            }}
+          >
+            <button
+              type="button"
+              className="group relative overflow-hidden w-[72px] px-2 py-[7px] rounded-2xl border border-transparent bg-transparent hover:border-[#dbeafe] hover:bg-[#f8fbff] transition-all duration-300"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-[#eff6ff] via-[#f8fafc] to-[#ecfeff] opacity-80" />
+
+              <div className="relative w-full truncate text-center">
+                <span className="text-[10px] font-bold text-[#0f172a] truncate block">
+                  ₹{Number(record.bid ?? 0).toFixed(2)}
+                </span>
+              </div>
+            </button>
+          </Popover>
+        );
+      },
     },
+
     {
       title: 'Campaign Name',
       dataIndex: 'campaignName',
       align: 'center',
-      width: 50,
-      sorter: (a, b) => a.campaignName - b.campaignName,
+      width: 70,
+      sorter: (a, b) => String(a.campaignName).localeCompare(String(b.campaignName)),
       ellipsis: true,
       render: (v) => (
         <div className="flex justify-center">
@@ -234,8 +308,9 @@ function Targets() {
       title: 'Ad Group Name',
       dataIndex: 'adGroupName',
       align: 'center',
-      width: 50,
-      sorter: (a, b) => a.adGroupName - b.adGroupName,
+      width: 70,
+      sorter: (a, b) => String(a.adGroupName).localeCompare(String(b.adGroupName)),
+
       ellipsis: true,
       render: (v) => (
         <div className="flex justify-center">
@@ -278,114 +353,19 @@ function Targets() {
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="relative">
-                  <Button
-                    icon={<FilterOutlined />}
-                    onClick={() => setShowFilters(!showFilters)}
-                    className={`!h-[30px] text-[13px] !px-5 !rounded-xl !font-medium !shadow-sm !flex !items-center !justify-center transition-all
-      ${
-        showFilters
-          ? '!border-[#2563eb] !text-[#2563eb] !bg-[#eff6ff]'
-          : '!border-[#dbe1e8] !text-[#374151] hover:!border-[#2563eb] hover:!text-[#2563eb]'
-      }`}
-                  >
-                    Filters
-                  </Button>
-
-                  {/* Filter Dropdown */}
-                  {showFilters && (
-                    <div className="absolute top-[52px] right-0 w-[320px] bg-white border border-[#e5e7eb] rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                      {/* Header */}
-                      <div className="px-5 py-4 border-b border-[#edf1f5] bg-[#fafafa]">
-                        <h3 className="text-[19px] font-semibold text-[#111827] mb-1">Filter Keywords</h3>
-
-                        <p className="text-xs text-[#6b7280] mt-1">Filter keywords by state and match type</p>
-                      </div>
-
-                      {/* Body */}
-                      <div className="p-5 space-y-5">
-                        {/* State */}
-                        <div>
-                          <label className="block text-[14px] font-semibold text-[#6b7280] mb-2 uppercase tracking-wide">
-                            State
-                          </label>
-
-                          <select
-                            value={filters.state}
-                            onChange={(e) =>
-                              setFilters({
-                                ...filters,
-                                state: e.target.value,
-                              })
-                            }
-                            className="w-full h-11 px-4 rounded-xl border border-[#dbe1e8] text-sm outline-none focus:border-[#2563eb]"
-                          >
-                            <option value="">All States</option>
-                            <option value="enabled">Enabled</option>
-                            <option value="disabled">Disabled</option>
-                          </select>
-                        </div>
-
-                        {/* Match Type */}
-                        <div>
-                          <label className="block text-[14px] font-semibold text-[#6b7280] mb-2 uppercase tracking-wide">
-                            Match Type
-                          </label>
-
-                          <select
-                            value={filters.match_type}
-                            onChange={(e) =>
-                              setFilters({
-                                ...filters,
-                                match_type: e.target.value,
-                              })
-                            }
-                            className="w-full h-11 px-4 rounded-xl border border-[#dbe1e8] text-sm outline-none focus:border-[#2563eb]"
-                          >
-                            <option value="">All Match Types</option>
-                            <option value="broad">BROAD</option>
-                            <option value="phrase">PHRASE</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      {/* Footer */}
-                      <div className="px-5 py-4 border-t border-[#edf1f5] flex items-center justify-between bg-[#fafafa]">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const resetFilters = {
-                              state: '',
-                              match_type: '',
-                            };
-
-                            setFilters(resetFilters);
-                            setAppliedFilters(resetFilters);
-                          }}
-                          className="text-sm font-medium text-[#6b7280] hover:text-[#111827]"
-                        >
-                          Reset
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAppliedFilters(filters);
-                            setShowFilters(false);
-                          }}
-                          className="h-10 px-5 rounded-xl bg-[#2563eb] text-white text-sm font-medium hover:bg-[#1d4ed8] transition-all"
-                        >
-                          Apply Filters
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
+                <select
+                  value={stateFilter}
+                  onChange={(e) => setStateFilter(e.target.value)}
+                  className="h-[30px] px-3 pr-6 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
+                >
+                  <option value="">All State</option>
+                  <option value="ENABLED">Enabled</option>
+                  <option value="PAUSED">Paused</option>
+                </select>
                 <Button
                   type="primary"
                   icon={<ExportOutlined />}
-                  className="!h-[30px] text-[13px] !px-5 !rounded-xl !bg-[#2563eb] !border-[#2563eb] !font-semibold hover:!bg-[#1d4ed8] hover:!border-[#1d4ed8] !shadow-sm !flex !items-center !justify-center"
+                  className="!h-[30px] text-[13px] !px-3 !rounded-xl !bg-[#2563eb] !border-[#2563eb] !font-semibold !shadow-sm !flex !items-center !justify-center"
                 >
                   Export
                 </Button>

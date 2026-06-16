@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   InfoCircleFilled,
   ReloadOutlined,
@@ -14,7 +14,6 @@ import {
   FilterOutlined,
   EyeOutlined,
 } from '@ant-design/icons';
-
 import {
   ResponsiveContainer,
   LineChart,
@@ -27,124 +26,130 @@ import {
   Cell,
   Tooltip,
 } from 'recharts';
-
+import { useDispatch, useSelector } from 'react-redux';
 import amazon from '../../assets/icons/amazon.svg';
 import flipkart from '../../assets/icons/flipkart.png';
 import myntra from '../../assets/icons/myntra.png';
 import meesho from '../../assets/icons/meesho.png';
 import nykaa from '../../assets/icons/nykaa.png';
+import { getOrderProcessing } from '../../redux/advertising/actionCreator';
 
 function OrderProcessing() {
+  const dispatch = useDispatch();
+
+  const { orderProcessingData } = useSelector((state) => state.advertising);
+  useEffect(() => {
+    dispatch(
+      getOrderProcessing({
+        timeline: 'weekly',
+        marketplace_id: 'A21TJRUUN4KGV',
+        channel: 'Amazon-India',
+      }),
+    );
+  }, [dispatch]);
+
+  const cards = orderProcessingData?.cards || {};
+
   const stats = [
     {
       title: 'Orders Received',
-      value: '5,482',
-      sub: '+8.95%',
+      value: cards?.orders_received?.count || 0,
+      sub: `${cards?.orders_received?.percentage || 0}%`,
       icon: <ShoppingCartOutlined />,
       bg: 'bg-[#eef4ff]',
       iconColor: 'text-[#2563eb]',
-      lightBg: 'bg-[#f8fbff]',
-      glowBg: 'bg-[#bfdbfe]',
       subColor: 'text-[#16a34a]',
     },
     {
       title: 'Orders Shipped',
-      value: '4,237',
-      sub: '+8.87%',
+      value: cards?.orders_shipped?.count || 0,
+      sub: `${cards?.orders_shipped?.percentage || 0}%`,
       icon: <TruckOutlined />,
       bg: 'bg-[#ecfdf3]',
       iconColor: 'text-[#16a34a]',
-      lightBg: 'bg-[#f6fef9]',
-      glowBg: 'bg-[#bbf7d0]',
       subColor: 'text-[#16a34a]',
     },
     {
       title: 'Orders Delivered',
-      value: '3,912',
-      sub: '+9.27%',
+      value: cards?.orders_delivered?.count || 0,
+      sub: `${cards?.orders_delivered?.percentage || 0}%`,
       icon: <InboxOutlined />,
       bg: 'bg-[#f5f3ff]',
       iconColor: 'text-[#8b5cf6]',
-      lightBg: 'bg-[#faf7ff]',
-      glowBg: 'bg-[#ddd6fe]',
       subColor: 'text-[#16a34a]',
     },
     {
       title: 'Pending',
-      value: '1,086',
-      sub: '+6.27%',
+      value: cards?.pending?.count || 0,
+      sub: `${cards?.pending?.percentage || 0}%`,
       icon: <ClockCircleFilled />,
       bg: 'bg-[#fffaf5]',
       iconColor: 'text-[#f59e0b]',
-      lightBg: 'bg-[#fffaf5]',
-      glowBg: 'bg-[#fed7aa]',
       subColor: 'text-[#16a34a]',
     },
     {
       title: 'Cancelled',
-      value: '247',
-      sub: '+11.9%',
+      value: cards?.cancelled?.count || 0,
+      sub: `${cards?.cancelled?.percentage || 0}%`,
       icon: <StopFilled />,
       bg: 'bg-[#fff7f7]',
       iconColor: 'text-[#ef4444]',
-      lightBg: 'bg-[#fff7f7]',
-      glowBg: 'bg-[#fecaca]',
       subColor: 'text-[#16a34a]',
     },
     {
       title: 'Return Initiated',
-      value: '156',
-      sub: '+14.82%',
+      value: cards?.return_initiated?.count || 0,
+      sub: `${cards?.return_initiated?.percentage || 0}%`,
       icon: <RollbackOutlined />,
       bg: 'bg-[#eef4ff]',
       iconColor: 'text-[#3b82f6]',
-      lightBg: 'bg-[#f8fbff]',
-      glowBg: 'bg-[#bfdbfe]',
       subColor: 'text-[#16a34a]',
     },
   ];
 
-  const lineData = [
-    { day: 'May 1', received: 4200, shipped: 3100, delivered: 2200, cancelled: 200 },
-    { day: 'May 5', received: 4800, shipped: 3600, delivered: 2700, cancelled: 240 },
-    { day: 'May 10', received: 5200, shipped: 3900, delivered: 3100, cancelled: 280 },
-    { day: 'May 15', received: 5000, shipped: 3700, delivered: 2900, cancelled: 260 },
-    { day: 'May 20', received: 4600, shipped: 3400, delivered: 2500, cancelled: 210 },
-    { day: 'May 25', received: 5100, shipped: 3850, delivered: 3050, cancelled: 300 },
-    { day: 'May 31', received: 5600, shipped: 4100, delivered: 3400, cancelled: 350 },
-  ];
+  const lineData =
+    orderProcessingData?.timeline_graph?.map((item) => ({
+      day: item.date,
+      received: item.orders_received,
+      shipped: item.orders_shipped,
+      delivered: item.orders_delivered,
+      cancelled: item.cancelled,
+    })) || [];
 
-  const pieData = [
-    { name: 'Delivered', value: 3912, color: '#8b5cf6' },
-    { name: 'Shipped', value: 4237, color: '#22c55e' },
-    { name: 'Pending', value: 1086, color: '#f59e0b' },
-    { name: 'Cancelled', value: 247, color: '#ef4444' },
-    { name: 'Return Initiated', value: 156, color: '#3b82f6' },
-  ];
+  const pieData =
+    orderProcessingData?.pie_chart?.map((item) => ({
+      name: item.name,
+      value: item.value,
+    })) || [];
+  const totalOrders = pieData.reduce((sum, item) => sum + (item.value || 0), 0);
+
+  const COLORS = ['#8b5cf6', '#22c55e', '#f59e0b', '#ef4444', '#3b82f6'];
+
+  const insightsData = orderProcessingData?.insights || {};
 
   const insights = [
     {
       icon: '📦',
-      title: '71.33% of orders delivered',
-      sub: '3,912 orders successfully delivered',
+      title: `${insightsData.delivery_rate || 0}% delivery rate`,
+      sub: 'Orders successfully delivered',
       bg: 'bg-[#eef4ff]',
     },
     {
       icon: '🧾',
-      title: '19.79% pending orders',
-      sub: '1,086 orders are pending',
+      title: `${insightsData.pending_rate || 0}% pending rate`,
+      sub: 'Orders pending processing',
       bg: 'bg-[#fff7ed]',
     },
     {
       icon: '❌',
-      title: '4.50% cancellation rate',
-      sub: '247 orders cancelled',
+      title: `${insightsData.cancellation_rate || 0}% cancellation rate`,
+      sub: 'Cancelled orders',
       bg: 'bg-[#fff1f2]',
     },
     {
       icon: '↩️',
-      title: '2.85% return initiation',
-      sub: '156 return requests initiated',
+      title: `${insightsData.return_rate || 0}% return rate`,
+      sub: 'Return initiated orders',
       bg: 'bg-[#f5f3ff]',
     },
   ];
@@ -334,14 +339,14 @@ function OrderProcessing() {
                   <PieChart>
                     <Pie data={pieData} dataKey="value" innerRadius={58} outerRadius={82} paddingAngle={2}>
                       {pieData.map((entry, index) => (
-                        <Cell key={index} fill={entry.color} />
+                        <Cell key={index} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
                   </PieChart>
                 </ResponsiveContainer>
 
                 <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
-                  <span className="text-[22px] font-bold text-[#111827]">5,482</span>
+                  <span className="text-[22px] font-bold text-[#111827]">{totalOrders}</span>
 
                   <span className="text-[10px] text-[#6b7280]">Total Orders</span>
                 </div>
