@@ -44,8 +44,12 @@ const login = (values, callback) => {
         dispatch(actions.setUserProfile(response.data.data));
         dispatch(actions.setHasSubscription(hasSubscription));
 
-        // Pass subscription status to callback for redirect logic
-        callback(hasSubscription);
+        // callback(hasSubscription);
+        const userData = response.data.data;
+
+        Cookies.set('isSuperAdmin', userData.is_superuser ? 'true' : 'false');
+
+        callback(userData);
       }
     } catch (err) {
       console.log('Login Failed:', err.response?.data);
@@ -184,6 +188,7 @@ const logOut = (callback) => {
       Cookies.remove('refresh_token');
       Cookies.remove('logedIn'); // Clear logedIn cookie
       Cookies.remove('hasSubscription'); // Clear subscription status cookie
+      Cookies.remove('isSuperAdmin');
       Cookies.remove('userEmail'); // Clear user email cookie
       dispatch(logoutSuccess(false));
       callback();

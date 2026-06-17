@@ -48,7 +48,7 @@ function ForgotPassword() {
 
         <Form.Item>
           <Button
-            className="w-full h-12 text-base font-semibold bg-gradient-to-r from-emerald-500 to-teal-600 border-0 rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all"
+            className="w-full h-12 text-white font-semibold bg-gradient-to-r from-emerald-500 to-teal-600 border-0 rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all"
             htmlType="submit"
             loading={loading}
           >

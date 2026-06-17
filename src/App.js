@@ -8,6 +8,7 @@ import { ConfigProvider } from 'antd';
 import store from './redux/store';
 import Admin from './routes/admin';
 import Auth from './routes/auth';
+import SuperAdmin from './routes/superAdmin';
 import './static/css/style.css';
 import config from './config/config';
 import ProtectedRoute from './components/utilities/protectedRoute';
@@ -35,9 +36,11 @@ function ProviderConfig() {
           <Routes>
             {/* 1️⃣ AUTH ROUTES - Must come before catch-all */}
             {!isLoggedIn && <Route path="/auth/*" element={<Auth />} />}
-
             {/* 2️⃣ ADMIN ROUTES - Protected */}
             {isLoggedIn && <Route path="/admin/*" element={<ProtectedRoute Component={Admin} />} />}
+
+            {/* //this is new route */}
+            {isLoggedIn && <Route path="/super-admin/*" element={<ProtectedRoute Component={SuperAdmin} />} />}
 
             {/* 3️⃣ PUBLIC ROUTES (includes home, pricing, checkout, etc.) */}
             <Route path="/*" element={<PublicRoutes />} />

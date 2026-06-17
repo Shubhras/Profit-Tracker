@@ -43,17 +43,28 @@ function SignIn() {
   const handleSubmit = useCallback(
     (values) => {
       dispatch(
-        login(values, (hasSubscription) => {
-          // If user doesn't have a subscription, redirect to pricing
+        // login(values, (hasSubscription) => {
+        login(values, (userData) => {
+          // if (!hasSubscription) {
+          //   sessionStorage.removeItem('selectedPlan');
+          //   navigate('/pricing');
+          //   return;
+          // }
+
+          const hasSubscription = userData.has_subscription;
+
+          const isSuperAdmin = userData.is_superuser;
+
           if (!hasSubscription) {
-            // Clean up any previously selected plan
-            sessionStorage.removeItem('selectedPlan');
             navigate('/pricing');
             return;
           }
 
-          // User has subscription - handle redirect
-          // Check if we need to redirect to checkout with a plan (in case they selected a new plan)
+          if (isSuperAdmin) {
+            navigate('/super-admin/dashboard');
+            return;
+          }
+
           if (redirectTo === '/checkout') {
             // Get plan from location state or sessionStorage
             const plan = planFromState || JSON.parse(sessionStorage.getItem('selectedPlan') || 'null');
@@ -62,11 +73,13 @@ function SignIn() {
               navigate('/checkout', { state: { plan } });
             } else {
               navigate('/admin/profit/summary');
+              // navigate('/super-admin/dashboard');
             }
           } else if (redirectTo) {
             navigate(redirectTo);
           } else {
             navigate('/admin/profit/summary');
+            // navigate('/super-admin/dashboard');
           }
         }),
       );

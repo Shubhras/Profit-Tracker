@@ -1116,7 +1116,7 @@ function RulesAutomation() {
           {/* ================= FOOTER ================= */}
 
           <div className="flex items-center justify-end gap-3 mt-3">
-            <Button className="!h-[35px] !px-4 text-[13px] !rounded-xl" onClick={() => setOpenRuleModal(false)}>
+            <Button className="!h-[35px] !px-4 text-[13px] !rounded-l" onClick={() => setOpenRuleModal(false)}>
               Cancel
             </Button>
 
@@ -1124,7 +1124,7 @@ function RulesAutomation() {
               type="primary"
               onClick={handleCreateRule}
               loading={loading}
-              className="!h-[35px] !px-4 !rounded-xl !bg-[#2563eb] !border-none text-[13px] font-semibold"
+              className="!h-[35px] !px-4 !rounded-l !bg-[#2563eb] !border-none text-[13px] font-semibold"
             >
               {editRuleId ? 'Update Rule' : 'Create Rule'}
             </Button>

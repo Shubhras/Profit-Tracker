@@ -1299,6 +1299,18 @@ class AmazonTransactionsGroupedAPIView(APIView):
         page_obj = paginator.get_page(page)
 
         # =====================================
+        # Count Logic
+        # =====================================
+
+        if details == "true":
+
+            total_count = queryset.count()
+
+        else:
+
+            total_count = paginator.count
+
+        # =====================================
         # Final Response
         # =====================================
 
@@ -1306,7 +1318,7 @@ class AmazonTransactionsGroupedAPIView(APIView):
             {
                 "success": True,
 
-                "count": paginator.count,
+                "count": total_count,
 
                 "total_pages": paginator.num_pages,
 
@@ -1329,8 +1341,8 @@ class AmazonTransactionsGroupedAPIView(APIView):
                 )
             },
             status=status.HTTP_200_OK
-        )   
-        
+        )
+                
 class AmazonOrderRelatedTransactionsAPIView(APIView):
 
     def get(self, request):
@@ -1521,7 +1533,11 @@ class AmazonOrderRelatedTransactionsAPIView(APIView):
 
             queryset = queryset.filter(
 
-                Q(transaction_id__icontains=search)
+                Q(transaction_id__icontains=search) 
+
+                |
+                
+                Q(related_identifiers__identifier_value__icontains=search)
 
                 |
 
