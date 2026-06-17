@@ -3,7 +3,6 @@ import {
   InfoCircleOutlined,
   DownloadOutlined,
   FilterOutlined,
-  SearchOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   WarningOutlined,
@@ -114,9 +113,11 @@ function OverView() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f6f8fc] py-4 px-3">
+    <div className="min-h-screen bg-[#f6f8fc] py-4 px-3 md:px-2">
+      {' '}
       {/* HEADER */}
-      <div className="mb-2 flex items-start justify-between">
+      <div className="mb-2 flex flex-wrap items-start justify-between gap-3">
+        {' '}
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-[20px] font-semibold text-[#111827] leading-none mb-0">
@@ -130,12 +131,11 @@ function OverView() {
             Track, analyze and recover every rupee owed to your business across marketplaces.
           </p>
         </div>
-
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 md:w-full">
+          {' '}
           <select className="h-[32px] rounded-lg border border-[#e5e7eb] bg-white px-2 text-[11px] outline-none">
             <option>Reconciliation Cycle: Daily</option>
           </select>
-
           <button
             type="button"
             className="flex h-[32px] items-center gap-1.5 rounded-lg border border-[#e5e7eb] bg-white px-3 text-[11px] font-medium text-[#374151]"
@@ -143,7 +143,6 @@ function OverView() {
             <FilterOutlined className="text-[10px]" />
             Filters
           </button>
-
           <button
             type="button"
             className="flex h-[32px] items-center gap-1.5 rounded-lg bg-[#16a34a] px-3 text-[11px] font-semibold text-white"
@@ -153,9 +152,9 @@ function OverView() {
           </button>
         </div>
       </div>
-
       {/* TOP CARDS */}
-      <div className="grid grid-cols-5 gap-2 mb-2">
+      <div className="grid grid-cols-5 2xl:grid-cols-3 lg:grid-cols-2 md:grid-cols-1 gap-2 mb-2">
+        {' '}
         {topCards.map((item, index) => (
           <div key={index} className="rounded-2xl border border-[#e5e7eb] bg-white px-4 py-3 shadow-sm">
             <div className="flex items-start gap-3">
@@ -180,9 +179,9 @@ function OverView() {
           </div>
         ))}
       </div>
-
       {/* CHARTS */}
-      <div className="grid grid-cols-[1.2fr_0.9fr_0.9fr] gap-2 mb-2">
+      <div className="grid grid-cols-[1.2fr_0.9fr_0.9fr] xl:grid-cols-1 gap-2 mb-2">
+        {' '}
         {/* PAYMENT FLOW */}
         <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4">
           {/* Header */}
@@ -284,7 +283,6 @@ function OverView() {
             </ResponsiveContainer>
           </div>
         </div>
-
         {/* LEAK CATEGORY */}
         <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4">
           <div className="mb-4 flex items-center justify-between">
@@ -296,7 +294,7 @@ function OverView() {
           </div>
 
           <div className="mt-4 flex items-center justify-center">
-            <div className="relative flex h-[140px] w-[140px] items-center justify-center rounded-full border-[18px] border-[#2563eb]">
+            <div className="relative flex h-[140px] w-[140px] sm:h-[120px] sm:w-[120px] items-center justify-center rounded-full border-[18px] border-[#2563eb]">
               <div className="text-center">
                 <h3 className="text-[16px] font-bold text-[#111827]">₹ 49,150.33</h3>
 
@@ -320,7 +318,6 @@ function OverView() {
             ))}
           </div>
         </div>
-
         {/* MARKETPLACE LEAKS */}
         <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4">
           <div className="mb-4 flex items-center justify-between">
@@ -353,13 +350,12 @@ function OverView() {
           </div>
         </div>
       </div>
-
       {/* MAIN */}
-      <div className="grid grid-cols-[1fr_280px] gap-3">
+      <div className="grid grid-cols-[1fr_280px] xl:grid-cols-1 gap-3">
         {/* LEFT TABLE */}
         <div className="rounded-2xl border border-[#e5e7eb] bg-white overflow-hidden">
           {/* TOP */}
-          <div className="overflow-x-auto border-b border-[#edf0f2]">
+          <div className="border-b border-[#edf0f2]">
             <div className="flex min-w-[1250px] items-center justify-between px-4 py-3">
               {/* Tabs */}
               <div className="flex items-center gap-5">
@@ -379,7 +375,7 @@ function OverView() {
               </div>
 
               {/* Filters */}
-              <div className="flex items-center gap-2">
+              {/* <div className="flex items-center gap-2">
                 <select className="h-[32px] rounded-lg border border-[#e5e7eb] px-2 text-[10px] outline-none">
                   <option>Group by Marketplace</option>
                 </select>
@@ -392,7 +388,7 @@ function OverView() {
 
                   <SearchOutlined className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[#9ca3af]" />
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
 

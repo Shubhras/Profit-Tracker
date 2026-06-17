@@ -125,7 +125,6 @@ function Targets() {
       dataIndex: 'targetId',
       width: 70,
       ellipsis: true,
-      fixed: 'left',
       align: 'center',
       sorter: (a, b) => a.targetId - b.targetId,
 
@@ -339,8 +338,8 @@ function Targets() {
               </p>
             </div>
 
-            <div className="mt-5 flex items-center justify-between gap-3">
-              <div className="relative w-[280px]">
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+              <div className="relative w-[280px] lg:w-full">
                 <input
                   type="text"
                   placeholder="Search keywords..."
@@ -352,11 +351,11 @@ function Targets() {
                 <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 lg:w-full sm:flex-col sm:items-stretch">
                 <select
                   value={stateFilter}
                   onChange={(e) => setStateFilter(e.target.value)}
-                  className="h-[30px] px-3 pr-6 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
+                  className="h-[30px] px-3 pr-6 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer sm:w-full"
                 >
                   <option value="">All State</option>
                   <option value="ENABLED">Enabled</option>
@@ -365,7 +364,7 @@ function Targets() {
                 <Button
                   type="primary"
                   icon={<ExportOutlined />}
-                  className="!h-[30px] text-[13px] !px-3 !rounded-xl !bg-[#2563eb] !border-[#2563eb] !font-semibold !shadow-sm !flex !items-center !justify-center"
+                  className="!h-[30px] text-[13px] !px-3 sm:!w-full !rounded-xl !bg-[#2563eb] !border-[#2563eb] !font-semibold !shadow-sm !flex !items-center !justify-center"
                 >
                   Export
                 </Button>

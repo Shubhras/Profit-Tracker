@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Table, Card, Modal, Tooltip, Checkbox, Button } from 'antd';
-import { EyeOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons';
-import { useParams, useLocation } from 'react-router-dom';
+import { EyeOutlined, FilterOutlined, SearchOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 // import ProfitFilterBar from './component/ProfitFilterBar';
 import ProfitModal from './component/ProfitModal';
@@ -14,6 +14,7 @@ export default function ProfitDetailsView() {
   const { id } = useParams();
   const dispatch = useDispatch();
   const location = useLocation();
+  const navigate = useNavigate();
   const sku = location.state?.sku || '';
   // const [openSettings, setOpenSettings] = React.useState(false);
   const [detailModal, setDetailModal] = React.useState({
@@ -556,7 +557,14 @@ export default function ProfitDetailsView() {
           /> */}
 
           <div className="flex items-center justify-between gap-3 mb-5">
-            <div className="relative w-[220px]">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="w-[35px] h-[35px] rounded-xl border border-[#dbe1e8] bg-white flex items-center justify-center hover:bg-[#f8fafc] transition-all duration-200 shadow-sm"
+            >
+              <ArrowLeftOutlined className="text-[#374151]" />
+            </button>
+            {/* <div className="relative w-[220px]">
               <input
                 type="text"
                 placeholder="Search..."
@@ -566,9 +574,20 @@ export default function ProfitDetailsView() {
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af]">
                 <SearchOutlined style={{ fontSize: 14 }} />
               </span>
-            </div>
+            </div> */}
 
             <div className="flex items-center gap-3">
+              <div className="relative w-[220px]">
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  className="w-full h-[35px] rounded-xl border border-[#e5e7eb] bg-white pl-4 pr-10 text-[12px] outline-none shadow-sm"
+                />
+
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af]">
+                  <SearchOutlined style={{ fontSize: 14 }} />
+                </span>
+              </div>
               <div className="relative">
                 <button
                   type="button"

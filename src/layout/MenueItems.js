@@ -45,13 +45,21 @@ import {
   UilChartGrowth,
   UilProcess,
   UilLayersAlt,
+  UilApps,
+  UilUsersAlt,
+  UilTag,
+  UilLifeRing,
+  UilStore,
+  UilCreditCard,
+  UilBell,
+  UilShieldCheck,
 } from '@iconscout/react-unicons';
 import { Menu } from 'antd';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
-import { NavLink } from 'react-router-dom';
-
+import { NavLink, useLocation } from 'react-router-dom';
+import Cookies from 'js-cookie';
 import UilEllipsisV from '@iconscout/react-unicons/icons/uil-ellipsis-v';
 import propTypes from 'prop-types';
 // import { NavTitle } from './Style';
@@ -60,6 +68,7 @@ import propTypes from 'prop-types';
 
 function MenuItems({ toggleCollapsed }) {
   const { t } = useTranslation();
+  const location = useLocation();
 
   function getItem(label, key, icon, children, type) {
     return {
@@ -144,7 +153,8 @@ function MenuItems({ toggleCollapsed }) {
   //   document.body.classList.remove('dark');
   // };
 
-  const items = [
+  // const items = [
+  const userItems = [
     getItem(
       <NavLink onClick={toggleCollapsed} to={`${path}/pages/actionsrequired`}>
         {t('actionsRequired')}
@@ -1986,12 +1996,85 @@ function MenuItems({ toggleCollapsed }) {
     // ),
   ];
 
+  const superAdminItems = [
+    getItem(
+      <NavLink onClick={toggleCollapsed} to="/super-admin/dashboard">
+        Dashboard
+      </NavLink>,
+      'dashboard',
+      !topMenu && <UilApps />,
+    ),
+
+    getItem(
+      <NavLink onClick={toggleCollapsed} to="/super-admin/users">
+        Users
+      </NavLink>,
+      'users',
+      !topMenu && <UilUsersAlt />,
+    ),
+
+    getItem(
+      <NavLink onClick={toggleCollapsed} to="/super-admin/subscription">
+        Subscription
+      </NavLink>,
+      'subscription',
+      !topMenu && <UilCreditCard />,
+    ),
+
+    getItem(
+      <NavLink onClick={toggleCollapsed} to="/super-admin/marketplaceIntegration">
+        Marketplace Integration
+      </NavLink>,
+      'marketplaceIntegration',
+      !topMenu && <UilStore />,
+    ),
+
+    getItem(
+      <NavLink onClick={toggleCollapsed} to="/super-admin/CouponCode">
+        {t('Coupon Code')}
+      </NavLink>,
+      'CouponCode',
+      !topMenu && <UilTag />,
+    ),
+
+    getItem(
+      <NavLink onClick={toggleCollapsed} to="/super-admin/support">
+        {t('Help & Support')}
+      </NavLink>,
+      'support',
+      !topMenu && <UilLifeRing />,
+    ),
+
+    getItem(
+      <NavLink onClick={toggleCollapsed} to="/super-admin/notifications">
+        {t('Notifications')}
+      </NavLink>,
+      'notifications',
+      !topMenu && <UilBell />,
+    ),
+
+    getItem(
+      <NavLink onClick={toggleCollapsed} to="/super-admin/privacy-policy">
+        {t('Privacy Policy')}
+      </NavLink>,
+      'privacy-policy',
+      !topMenu && <UilShieldCheck />,
+    ),
+  ];
+
+  const isSuperAdmin = Cookies.get('isSuperAdmin') === 'true';
+
+  const adminSelectedKey = location.pathname.split('/')[2];
+
+  const items = isSuperAdmin ? superAdminItems : userItems;
+
   return (
     <Menu
       onOpenChange={onOpenChange}
       onClick={onClick}
       mode={!topMenu || window.innerWidth <= 991 ? 'inline' : 'horizontal'}
       // // eslint-disable-next-line no-nested-ternary
+      selectedKeys={isSuperAdmin ? [adminSelectedKey] : undefined}
       defaultSelectedKeys={
         !topMenu
           ? [
