@@ -42,7 +42,7 @@ function SubscriptionTable() {
               form.resetFields();
               setIsModalOpen(true);
             }}
-            className="!h-[30px] !flex !items-center !justify-center gap-0 px-2 text-[13px] font-semibold"
+            className="!h-[30px] !flex !items-center !justify-center gap-0 px-2 text-[12px] font-semibold"
           >
             Add Subscription
           </Button>
@@ -52,7 +52,7 @@ function SubscriptionTable() {
           <div className="flex justify-center items-center min-h-[400px]">
             <Spin size="large" />
           </div>
-        ) : (
+        ) : plans.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {plans.map((plan) => (
               <div
@@ -125,6 +125,12 @@ function SubscriptionTable() {
                 </div>
               </div>
             ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center min-h-[300px] bg-white rounded-[15px] border border-dashed border-gray-300">
+            <h3 className="text-[18px] font-semibold text-gray-700 mb-2">No Subscription Found</h3>
+
+            <p className="text-[14px] text-gray-500 mb-0">There are no subscription plans available at the moment.</p>
           </div>
         )}
       </div>

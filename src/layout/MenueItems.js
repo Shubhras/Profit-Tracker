@@ -211,7 +211,7 @@ function MenuItems({ toggleCollapsed }) {
 
       getItem(
         <NavLink onClick={toggleCollapsed} to={`${path}/profit/returnfees`}>
-          {t('Return and Refun Fees')}
+          {t('Return Fees')}
         </NavLink>,
         'returnfees',
         null,
