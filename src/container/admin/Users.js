@@ -6,6 +6,7 @@ import { getUsersList } from '../../redux/admin/actionCreator';
 
 function UsersList() {
   const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [passwordModal, setPasswordModal] = useState(false);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -15,6 +16,14 @@ function UsersList() {
 
   const dispatch = useDispatch();
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchText]);
+
   const { getuserlist, loading } = useSelector((state) => state.AdminDashboard);
   const [pagination, setPagination] = useState({
     current: 1,
@@ -22,8 +31,8 @@ function UsersList() {
   });
 
   useEffect(() => {
-    dispatch(getUsersList(pagination.current, pagination.pageSize));
-  }, [dispatch, pagination.current, pagination.pageSize]);
+    dispatch(getUsersList(pagination.current, pagination.pageSize, debouncedSearch));
+  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch]);
 
   const [editForm, setEditForm] = useState({
     name: '',
@@ -53,12 +62,12 @@ function UsersList() {
       created_at: item.created_at,
     })) || [];
 
-  const filteredUsers = dataSource.filter(
-    (user) =>
-      user?.name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      user?.email?.toLowerCase().includes(searchText.toLowerCase()) ||
-      user?.mobile_number?.includes(searchText),
-  );
+  // const filteredUsers = dataSource.filter(
+  //   (user) =>
+  //     user?.name?.toLowerCase().includes(searchText.toLowerCase()) ||
+  //     user?.email?.toLowerCase().includes(searchText.toLowerCase()) ||
+  //     user?.mobile_number?.includes(searchText),
+  // );
 
   const columns = [
     {
@@ -236,7 +245,7 @@ function UsersList() {
 
   return (
     <>
-      <div className="p-3 px-2">
+      <div className="p-3 px-2 min-h-screen">
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
           {/* Header */}
           <div className="flex items-center justify-between px-3 py-3">
@@ -268,18 +277,22 @@ function UsersList() {
             />
           </div>
 
-          {/* Table */}
           <div
             className="
-            [&_.ant-table-thead>tr>th]:text-[12px]
-            [&_.ant-table-thead>tr>th]:font-semibold
-            [&_.ant-table-tbody>tr>td]:text-[12px]
-          "
+    [&_.ant-pagination]:text-[12px]
+    [&_.ant-pagination-item]:min-w-[24px]
+    [&_.ant-pagination-item]:h-[24px]
+    [&_.ant-pagination-item]:leading-[22px]
+    [&_.ant-pagination-prev]:h-[24px]
+    [&_.ant-pagination-next]:h-[24px]
+    [&_.ant-pagination-total-text]:text-[12px]
+    [&_.ant-select-selection-item]:text-[12px]
+  "
           >
             <Table
               rowKey="user_id"
               columns={columns}
-              dataSource={filteredUsers}
+              dataSource={dataSource}
               loading={loading}
               size="small"
               scroll={{ x: 1000 }}
@@ -297,6 +310,13 @@ function UsersList() {
                   pageSize: pag.pageSize,
                 });
               }}
+              className="
+    [&_.ant-table-thead>tr>th]:!text-[12px]
+    [&_.ant-table-thead>tr>th]:!font-semibold
+    [&_.ant-table-tbody>tr>td]:!text-[12px]
+    [&_.ant-table-cell]:!px-2
+    [&_.ant-table-cell]:!py-2
+  "
             />
           </div>
         </div>
@@ -313,11 +333,11 @@ function UsersList() {
           <h2 className="text-[22px] font-semibold text-[#111827] mb-5">Change Password</h2>
 
           {/* User Info */}
-          <div className="mb-5 p-3 rounded-xl border border-[#e5e7eb] bg-[#fafafa]">
-            {/* <p className="mb-0 text-[14px] font-semibold text-[#111827]">{selectedUser?.name}</p> */}
+          {/* <div className="mb-5 p-3 rounded-xl border border-[#e5e7eb] bg-[#fafafa]">
+            <p className="mb-0 text-[14px] font-semibold text-[#111827]">{selectedUser?.name}</p>
 
-            {/* <p className="mb-0 text-[12px] text-[#6b7280]">{selectedUser?.email}</p> */}
-          </div>
+            <p className="mb-0 text-[12px] text-[#6b7280]">{selectedUser?.email}</p>
+          </div> */}
 
           {/* New Password */}
           <div className="mb-4">

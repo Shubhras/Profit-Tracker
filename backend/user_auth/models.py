@@ -113,6 +113,8 @@ class LegalDocument(models.Model):
         ("about_us", "About Us"),
         ("third_party_policy", "Third Party Policy"),
         ("plateform_policy", "Platform Policy"),
+        ("return_policy", "Return Policy"),
+        ("contact_us", "Contact Us"),
     ]
 
     title = models.CharField(max_length=50, choices=TITLE_CHOICES)

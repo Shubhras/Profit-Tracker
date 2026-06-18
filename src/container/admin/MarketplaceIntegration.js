@@ -196,7 +196,7 @@ function MarketplaceIntegrations() {
           },
         ].map((item) => (
           <Col xs={24} sm={12} xl={6} key={item.title}>
-            <div className="bg-white shadow-sm p-3">
+            <div className="bg-white shadow-md rounded-xl p-3">
               <div className="flex justify-between">
                 <div>
                   <p className="text-[#6b7280] text-[13px] mb-0">{item.title}</p>

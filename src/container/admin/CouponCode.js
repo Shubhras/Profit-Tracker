@@ -41,7 +41,7 @@ function CouponCode() {
       title,
       description,
       promoType,
-      percentage: Number(percentage),
+      ...(promoType === 'discount' ? { percentage: Number(percentage) } : { specificAmount: Number(percentage) }),
       startDateTime: `${startDateTime}:00Z`,
       endDateTime: `${endDateTime}:00Z`,
       is_active: isActive,
@@ -76,7 +76,7 @@ function CouponCode() {
     setPromoCode(record.promocode || '');
     setDescription(record.description || '');
     setPromoType(record.promoType || 'discount');
-    setPercentage(record.percentage || '');
+    setPercentage(record.promoType === 'fix' ? record.specificAmount || '' : record.percentage || '');
 
     setStartDateTime(record.startDateTime?.slice(0, 16) || '');
     setEndDateTime(record.endDateTime?.slice(0, 16) || '');
@@ -203,12 +203,12 @@ function CouponCode() {
       render: (_, record) => (
         <div className="flex items-center justify-center gap-3">
           <FormOutlined
-            style={{ fontSize: '16px' }}
+            style={{ fontSize: '15px' }}
             className="cursor-pointer text-gray-500 hover:text-blue-500"
             onClick={() => handleEditCoupon(record)}
           />
           <DeleteOutlined
-            style={{ fontSize: '16px' }}
+            style={{ fontSize: '15px' }}
             className="cursor-pointer text-red-400 hover:text-red-600"
             onClick={() => handleDeleteClick(record.id)}
           />
@@ -253,7 +253,7 @@ function CouponCode() {
 
                   setIsModalOpen(true);
                 }}
-                className="!h-[30px] !flex !items-center !justify-center gap-0 px-2 text-[13px] font-semibold"
+                className="!h-[30px] !flex !items-center !justify-center gap-0 px-2 text-[12px] font-semibold"
               >
                 Add Coupon
               </Button>
@@ -261,7 +261,18 @@ function CouponCode() {
           </div>
 
           {/* Table */}
-          <div className="w-full overflow-x-auto">
+          <div
+            className="
+    [&_.ant-pagination]:text-[12px]
+    [&_.ant-pagination-item]:min-w-[24px]
+    [&_.ant-pagination-item]:h-[24px]
+    [&_.ant-pagination-item]:leading-[22px]
+    [&_.ant-pagination-prev]:h-[24px]
+    [&_.ant-pagination-next]:h-[24px]
+    [&_.ant-pagination-total-text]:text-[12px]
+    [&_.ant-select-selection-item]:text-[12px]
+  "
+          >
             <Table
               rowKey="id"
               columns={columns}
@@ -325,17 +336,17 @@ function CouponCode() {
                 className="w-full h-[32px] border border-gray-300 rounded px-2 text-[12px]"
               >
                 <option value="discount">Discount</option>
+                <option value="fix">Fix</option>
               </select>
             </div>
 
             <Input
-              placeholder="Percentage"
+              placeholder={promoType === 'discount' ? 'Percentage' : 'Amount'}
               type="number"
               value={percentage}
               onChange={(e) => setPercentage(e.target.value)}
               className="h-[30px] text-[12px]"
             />
-
             <div>
               <label className="block text-[12px] font-medium mb-1">Start Date</label>
 
