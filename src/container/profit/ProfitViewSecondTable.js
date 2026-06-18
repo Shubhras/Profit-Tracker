@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Table, Card, Modal, Checkbox, Tooltip, Button } from 'antd';
-import { RightOutlined, EyeOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons';
+import { RightOutlined, EyeOutlined, FilterOutlined, SearchOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 // import ProfitFilterBar from './component/ProfitFilterBar';
@@ -731,19 +731,27 @@ export default function ProfitViewSecondTable() {
           /> */}
           {/* Top Action Bar */}
           <div className="flex items-center justify-between gap-3 mb-5">
-            <div className="relative w-[220px]">
-              <input
-                type="text"
-                placeholder="Search..."
-                className="w-full h-[35px] rounded-xl border border-[#e5e7eb] bg-white pl-4 pr-10 text-[12px] outline-none shadow-sm "
-              />
-
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af]">
-                <SearchOutlined style={{ fontSize: 14 }} />
-              </span>
-            </div>
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="w-[35px] h-[35px] rounded-xl border border-[#dbe1e8] bg-white flex items-center justify-center hover:bg-[#f8fafc] transition-all duration-200 shadow-sm"
+            >
+              <ArrowLeftOutlined className="text-[#374151]" />
+            </button>
 
             <div className="flex items-center gap-3">
+              <div className="relative w-[220px]">
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  className="w-full h-[35px] rounded-xl border border-[#e5e7eb] bg-white pl-4 pr-10 text-[12px] outline-none shadow-sm "
+                />
+
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af]">
+                  <SearchOutlined style={{ fontSize: 14 }} />
+                </span>
+              </div>
+
               <div className="relative">
                 <button
                   type="button"
@@ -757,7 +765,7 @@ export default function ProfitViewSecondTable() {
                   <span>Filters</span>
 
                   {/* Selected Count */}
-                  <span className=" min-w-[18px] h-[18px] rounded-full bg-[#22c55e] text-white text-[14px] font-semiboldflex items-center justify-center   px-1   ">
+                  <span className=" min-w-[16px] h-[16px] rounded-full bg-[#22c55e] text-white text-[12px] font-semiboldflex items-center justify-center   px-1   ">
                     {
                       [
                         filters.ads === 'with',

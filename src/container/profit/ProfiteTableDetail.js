@@ -714,7 +714,7 @@ export default function ProfitDetailsView() {
                 <button
                   type="button"
                   onClick={() => setShowFilters(!showFilters)}
-                  className=" h-[35px] px-2 rounded-xl border border-[#e5e7eb] bg-white flex items-center gap-2 text-[12px] font-medium shadow-sm"
+                  className="h-[35px] px-2 rounded-xl border border-[#e5e7eb] bg-white flex items-center gap-2 text-[12px] font-medium shadow-sm"
                 >
                   <span className="flex items-center">
                     <FilterOutlined style={{ fontSize: 14 }} />
