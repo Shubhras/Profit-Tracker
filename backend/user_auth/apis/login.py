@@ -30,7 +30,22 @@ class UserLoginAPI(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         # ✅ username=email in your register logic
-        user = authenticate(username=email, password=password)
+        # user = authenticate(username=email, password=password)
+        
+
+        user_obj = User.objects.filter(email=email).first()
+
+        if not user_obj:
+            return Response({
+                "statusCode": 401,
+                "status": False,
+                "error": "Invalid email or password"
+            }, status=401)
+
+        user = authenticate(
+            username=user_obj.username,
+            password=password
+        )
 
         if user is None:
             return Response({
@@ -55,6 +70,11 @@ class UserLoginAPI(APIView):
                 "email": user.email,
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
+                
+                # User role information
+                "is_staff": user.is_staff,
+                "is_superuser": user.is_superuser,
+                "is_active": user.is_active,
 
                 # ✅ new field
                 "has_subscription": has_subscription,
