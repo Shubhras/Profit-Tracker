@@ -296,12 +296,12 @@ export const deletePrivacyPolicy = (id) => {
   };
 };
 
-export const getUsersList = (page = 1, limit = 10) => {
+export const getUsersList = (page = 1, limit = 10, search = '') => {
   return async (dispatch) => {
     dispatch(getuserslistBegin());
 
     try {
-      const response = await DataService.get(`user/admin/user-list/?page=${page}&limit=${limit}`);
+      const response = await DataService.get(`user/admin/user-list/?search=${search}&page=${page}&limit=${limit}`);
 
       if (response.data?.status === true) {
         dispatch(getuserslistSuccess(response.data));

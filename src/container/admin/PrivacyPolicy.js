@@ -41,6 +41,14 @@ function PrivacyPolicy() {
       label: 'Platform Privacy',
       value: 'plateform_policy',
     },
+    {
+      label: 'Return Policy',
+      value: 'return_policy',
+    },
+    {
+      label: 'Contact Us',
+      value: 'contact_us',
+    },
   ];
 
   const handleSave = async () => {
@@ -224,7 +232,7 @@ function PrivacyPolicy() {
                   <div>
                     {/* <h2 className="text-[21px] font-bold text-black mb-6">No Data Available</h2> */}
 
-                    <div className="mb-5">
+                    {/* <div className="mb-5">
                       <label className="block text-[14px] font-medium mb-2">Select Title</label>
 
                       <select
@@ -237,7 +245,7 @@ function PrivacyPolicy() {
                         <option value="terms">Terms and Conditions</option>
                         <option value="plateform_policy">Platform Policy</option>
                       </select>
-                    </div>
+                    </div> */}
 
                     <textarea
                       rows={7}
