@@ -6,6 +6,7 @@ import AmazonAdsCallback from '../container/profit/AmazonAdsCallback';
 const Home = lazy(() => import('../container/profile/home/Index'));
 const Contact = lazy(() => import('../container/profile/contactus/Index'));
 const Pricing = lazy(() => import('../container/profile/pricing/Index'));
+const RefundFees = lazy(() => import('../container/profile/refundFees/Index'));
 const Integrations = lazy(() => import('../container/profile/Integrations/Index'));
 const Checkout = lazy(() => import('../container/pages/Checkout'));
 const About = lazy(() => import('../container/profile/about/Index'));
@@ -29,6 +30,7 @@ function PublicRoutes() {
         <Route path="/api/amazon/callback/advertise" element={<AmazonAdsCallback />} />
         <Route path="/integrations" element={<Integrations />} />
         <Route path="/pricing" element={<Pricing />} />
+        <Route path="/features" element={<RefundFees />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/about" element={<About />} />

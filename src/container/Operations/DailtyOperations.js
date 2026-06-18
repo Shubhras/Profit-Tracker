@@ -160,10 +160,10 @@ function DailtyOperations() {
   return (
     <div className="min-h-screen bg-[#f8fafc] py-3 px-3">
       {/* HEADER */}
-      <div className="mb-2 flex items-start justify-between">
+      <div className="mb-2 flex items-start justify-between lg:flex-col lg:gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-[22px] font-bold mb-0">Daily Operations Dashboard</h1>
+            <h1 className="text-[22px] md:text-[18px] sm:text-[16px] font-bold mb-0">Daily Operations Dashboard</h1>
 
             <InfoCircleOutlined className="mb-[1px] text-[12px] text-[#9ca3af]" />
           </div>
@@ -173,7 +173,7 @@ function DailtyOperations() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 lg:w-full lg:flex-col lg:items-start">
           <div className="flex items-center gap-2 text-[10px] text-[#6b7280]">
             <ClockCircleOutlined className="text-[10px]" />
 
@@ -182,7 +182,7 @@ function DailtyOperations() {
 
           <button
             type="button"
-            className="flex items-center gap-2 rounded-xl bg-[#16a34a] px-4 py-2 text-[11px] font-medium text-white shadow-sm transition-all duration-200 hover:bg-[#15803d]"
+            className="flex items-center gap-2 rounded-xl bg-[#16a34a] px-4 py-2 text-[11px] font-medium text-white shadow-sm transition-all duration-200 hover:bg-[#15803d] lg:w-full lg:justify-center"
           >
             <ArrowRightOutlined className="text-[10px]" />
             Run Daily Operations
@@ -196,7 +196,7 @@ function DailtyOperations() {
         {summaryCards.map((item, index) => (
           <div
             key={index}
-            className="col-span-3 flex min-h-[165px] flex-col rounded-2xl border border-[#e5e7eb] p-3"
+            className="col-span-3 lg:col-span-6 md:col-span-12 flex min-h-[165px] flex-col rounded-2xl border border-[#e5e7eb] p-3"
             style={{
               background: item.bg,
             }}
@@ -257,7 +257,7 @@ function DailtyOperations() {
         ))}
 
         {/* OPERATION STATUS */}
-        <div className="col-span-3 flex min-h-[165px] flex-col rounded-2xl border border-[#e5e7eb] bg-white p-3">
+        <div className="col-span-3 lg:col-span-6 md:col-span-12 flex min-h-[165px] flex-col rounded-2xl border border-[#e5e7eb] bg-white p-3">
           {/* TOP */}
           <div className="flex-1">
             {/* HEADER */}
@@ -300,7 +300,8 @@ function DailtyOperations() {
       </div>
 
       {/* TABS */}
-      <div className="mt-4 flex items-center gap-6 border-b border-[#e5e7eb]">
+      <div className="mt-4 flex items-center gap-6 overflow-x-auto border-b border-[#e5e7eb] whitespace-nowrap">
+        {' '}
         {['Order', 'Inventory Sync', 'Auto Claims'].map((item, index) => (
           <button
             type="button"
@@ -317,7 +318,7 @@ function DailtyOperations() {
       {/* TABLE SECTION */}
       <div className="mt-3 grid grid-cols-12 gap-3">
         {/* ORDER TABLE */}
-        <div className="col-span-6 rounded-2xl border border-[#e5e7eb] bg-white p-3">
+        <div className="col-span-6 lg:col-span-12 rounded-2xl border border-[#e5e7eb] bg-white p-3">
           <div className="mb-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <h2 className="text-[15px] font-semibold text-[#111827]">Order Summary by Marketplace</h2>
@@ -331,7 +332,7 @@ function DailtyOperations() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+            <table className="min-w-[750px] w-full border-collapse">
               <thead>
                 <tr className="border-b border-[#f3f4f6]">
                   {['Marketplace', 'New', 'Processed', 'Shipped', 'Cancelled', 'Pending', 'Total'].map(
@@ -379,7 +380,7 @@ function DailtyOperations() {
         </div>
 
         {/* INVENTORY TABLE */}
-        <div className="col-span-6 rounded-2xl border border-[#e5e7eb] bg-white p-3">
+        <div className="col-span-6 lg:col-span-12 rounded-2xl border border-[#e5e7eb] bg-white p-3">
           <div className="mb-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <h2 className="text-[15px] font-semibold text-[#111827]">Inventory Sync Summary</h2>
