@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Skeleton, Alert, Card, Button, Tag, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircleFilled, CrownOutlined, ThunderboltOutlined, RocketOutlined, StarOutlined } from '@ant-design/icons';
 import PropTypes from 'prop-types';
 import { DataService } from '../../../../config/dataService/dataService';
+// import { getSubscriptionList } from '../../../../redux/admin/actionCreator';
 import { selectPlan } from '../../../../redux/subscription/actionCreator';
 
 const { Title, Text } = Typography;
@@ -209,6 +210,14 @@ function PricingCards() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // const { getsubscriptionData, loading } = useSelector((state) => state.AdminDashboard);
+
+  // const pricingPlans = getsubscriptionData?.results?.data || [];
+
+  // useEffect(() => {
+  //   dispatch(getSubscriptionList());
+  // }, [dispatch]);
+
   // Handle plan selection
   const handlePlanSelect = (plan) => {
     // Store plan in redux
@@ -250,6 +259,7 @@ function PricingCards() {
   //     plan_id: apiPlan.plan_id,
   //   };
   // };
+
   const mapApiPlanToComponent = (apiPlan) => {
     const isFree = apiPlan.plan_id === 'FREE' || apiPlan.price === 0;
     const isEnterprise = apiPlan.contact_sales === true || apiPlan.billing_cycle === 'custom';
@@ -288,6 +298,30 @@ function PricingCards() {
     };
   };
 
+  // const mapApiPlanToComponent = (plan) => ({
+  //   badge: {
+  //     text: plan.subscription_type === 'monthly' ? 'Monthly Plan' : 'Annual Plan',
+  //   },
+
+  //   title: plan.price,
+
+  //   subtitle:
+  //     plan.subscription_type === 'monthly' ? 'Perfect for growing businesses' : 'Best value for long-term growth',
+
+  //   price: '₹',
+
+  //   perMonth: plan.subscription_type === 'monthly' ? 'Month' : 'Year',
+
+  //   features: plan.features || [],
+
+  //   button: {
+  //     text: 'Subscribe Now',
+  //   },
+
+  //   id: plan.id,
+  //   subscription_type: plan.subscription_type,
+  // });
+
   const fetchPricingPlans = async () => {
     setLoading(true);
     setError(null);
@@ -309,6 +343,27 @@ function PricingCards() {
     }
   };
 
+  // const fetchPricingPlans = async () => {
+  //   setLoading(true);
+  //   setError(null);
+
+  //   try {
+  //     const response = await DataService.get('/subscription-plans/');
+
+  //     if (response.data.status && response.data.data?.plans) {
+  //       const mappedPlans = response.data.data.plans.map(mapApiPlanToComponent);
+  //       setPricingPlans(mappedPlans);
+  //     } else {
+  //       setError('Invalid response format');
+  //     }
+  //   } catch (err) {
+  //     console.error('Error fetching pricing plans:', err);
+  //     setError(err.response?.data?.message || err.message || 'Failed to load pricing plans. Please try again later.');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   useEffect(() => {
     fetchPricingPlans();
   }, []);
@@ -325,6 +380,15 @@ function PricingCards() {
         min-lg:grid-cols-4
         "
         >
+          {/* <div
+          className="
+    grid gap-6
+    grid-cols-1
+    min-md:grid-cols-2
+    max-w-5xl
+    mx-auto
+  "
+        > */}
           {[1, 2, 3, 4].map((item) => (
             <PricingCardSkeleton key={item} />
           ))}
@@ -384,10 +448,22 @@ function PricingCards() {
         min-lg:grid-cols-4
       "
       >
+        {/* <div
+        className="
+    grid gap-6
+    grid-cols-1
+    min-md:grid-cols-2
+    max-w-5xl
+    mx-auto
+  "
+      > */}
         <AnimatePresence>
           {pricingPlans.map((plan, index) => (
             <PricingCard key={index} plan={plan} index={index} onSelect={handlePlanSelect} />
           ))}
+          {/* {pricingPlans.map((item, index) => (
+            <PricingCard key={item.id} plan={mapApiPlanToComponent(item)} index={index} onSelect={handlePlanSelect} />
+          ))} */}
         </AnimatePresence>
       </div>
 

@@ -189,12 +189,12 @@ export const CreateSubscription = (payload) => {
   };
 };
 
-export const updateSubscription = (id) => {
+export const updateSubscription = (id, payload) => {
   return async (dispatch) => {
     dispatch(updateSubscriptionBegin());
 
     try {
-      const response = await DataService.put(`user/subscription-plan/update/${id}/`);
+      const response = await DataService.put(`user/subscription-plan/update/${id}/`, payload);
 
       if (response.data?.results?.status === true) {
         dispatch(updateSubscriptionSuccess(response.data));
