@@ -106,7 +106,6 @@ function AdProducts() {
       dataIndex: 'state',
       width: 70,
       align: 'center',
-      fixed: 'left',
 
       render: (v) => <Switch checked={v === 'ENABLED'} size="small" />,
     },
@@ -115,7 +114,6 @@ function AdProducts() {
       dataIndex: 'image',
       width: 70,
       align: 'center',
-      fixed: 'left',
       render: (image) => (
         <div className="flex justify-center">
           <img

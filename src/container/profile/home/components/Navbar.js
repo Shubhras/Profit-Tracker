@@ -14,6 +14,7 @@ const navLinks = [
   { label: 'Testimonials', to: '/testimonials' },
   { label: 'About', to: '/about' },
   { label: 'Contact', to: '/contact' },
+  { label: 'Features', to: '/features' },
 ];
 
 function Navbar() {
