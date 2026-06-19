@@ -147,7 +147,7 @@ function ReturnRefundFees() {
       {/* Header */}
       <div className="mb-2 flex flex-col gap-3 min-lg:flex-row min-lg:items-start min-lg:justify-between">
         <div className="flex-1 min-w-0">
-          <h1 className="mb-0 text-[20px] font-semibold text-[#111827]">Return Analysis</h1>
+          <h1 className="mb-0 text-[20px] font-semibold text-[#111827]">Return-Aware Profit Analytics</h1>
         </div>
       </div>
 

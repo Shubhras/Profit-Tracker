@@ -85,10 +85,10 @@ function CustomCalendar({ onSubmit, onCancel, initialRange }) {
         style={{
           width: 180,
           borderRight: '1px solid #f0f0f0',
-          padding: 10,
+          padding: 8,
           display: 'flex',
           flexDirection: 'column',
-          height: 300,
+          // height: 300,
         }}
       >
         <div style={{ flex: 1 }}>

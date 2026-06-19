@@ -10,7 +10,7 @@ const { Title, Text } = Typography;
 
 const footerLinks = {
   products: [
-    { label: 'Features', to: '/about' },
+    { label: 'Features', to: '/features' },
     { label: 'Integrations', to: '/integrations' },
     { label: 'Pricing', to: '/pricing' },
     // { label: 'Changelog', to: '#' },
