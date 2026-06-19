@@ -4,6 +4,7 @@ import SubscriptionGate from '../../components/utilities/SubscriptionGate';
 import Placements from '../../container/advertising/Placements';
 
 const Overview = lazy(() => import('../../container/advertising/Overview'));
+const CreateCampaign = lazy(() => import('../../container/advertising/CreateCampaign'));
 const Campaigns = lazy(() => import('../../container/advertising/Campaigns'));
 const AdGroups = lazy(() => import('../../container/advertising/AdGroups'));
 const AdProducts = lazy(() => import('../../container/advertising/AdProducts'));
@@ -29,6 +30,14 @@ function AdvertisingRoutes() {
         element={
           <SubscriptionGate allowFree>
             <Overview />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="create-campaign"
+        element={
+          <SubscriptionGate allowFree>
+            <CreateCampaign />
           </SubscriptionGate>
         }
       />

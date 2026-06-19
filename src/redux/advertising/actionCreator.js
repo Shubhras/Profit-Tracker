@@ -491,3 +491,123 @@ export const getOrderProcessing = (payload) => {
     }
   };
 };
+
+export const getListingProducts = (page = 1, pageSize = 10, search = '') => {
+  return async () => {
+    try {
+      const response = await DataService.post('amazon/amazon-listing-items/', {
+        search,
+        pagination: {
+          page,
+          page_size: pageSize,
+        },
+      });
+
+      return response.data;
+    } catch (err) {
+      return {
+        status: false,
+        message: err.response?.data?.message || err.message,
+      };
+    }
+  };
+};
+
+export const createSPCampaign = (payload) => {
+  return async () => {
+    try {
+      const response = await DataService.post('/amazon-ads/campaigns/create/', payload);
+
+      return response.data;
+    } catch (err) {
+      return {
+        status: false,
+        message: err.response?.data?.message || err.message,
+      };
+    }
+  };
+};
+export const createAdGroup = (payload) => {
+  return async () => {
+    try {
+      const response = await DataService.post('/amazon-ads/adgroups/create/', payload);
+
+      return response.data;
+    } catch (err) {
+      return {
+        status: false,
+        message: err.response?.data?.message || err.message,
+      };
+    }
+  };
+};
+export const createProductAd = (payload) => {
+  return async () => {
+    try {
+      const response = await DataService.post('/amazon-ads/product-ads/create/', payload);
+
+      return response.data;
+    } catch (err) {
+      return {
+        status: false,
+        message: err.response?.data?.message || err.message,
+      };
+    }
+  };
+};
+export const createKeyword = (payload) => {
+  return async () => {
+    try {
+      const response = await DataService.post('/amazon-ads/keywords/create/', payload);
+
+      return response.data;
+    } catch (err) {
+      return {
+        status: false,
+        message: err.response?.data?.message || err.message,
+      };
+    }
+  };
+};
+export const createTarget = (payload) => {
+  return async () => {
+    try {
+      const response = await DataService.post('/amazon-ads/targets/create/', payload);
+
+      return response.data;
+    } catch (err) {
+      return {
+        status: false,
+        message: err.response?.data?.message || err.message,
+      };
+    }
+  };
+};
+export const createCampaignNegativeKeyword = (payload) => {
+  return async () => {
+    try {
+      const response = await DataService.post('/amazon-ads/campaign-negative-keywords/create/', payload);
+
+      return response.data;
+    } catch (err) {
+      return {
+        status: false,
+        message: err.response?.data?.message || err.message,
+      };
+    }
+  };
+};
+export const createCampaignNegativeTarget = (payload) => {
+  return async () => {
+    try {
+      const response = await DataService.post('/amazon-ads/campaign-negative-targets/create/', payload);
+
+      return response.data;
+    } catch (err) {
+      return {
+        status: false,
+        message: err.response?.data?.message || err.message,
+      };
+    }
+  };
+};
