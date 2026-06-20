@@ -83,11 +83,11 @@ function SubscriptionTable() {
 
                 <div className="border-t border-gray-300 my-1" />
 
-                <h3 className="text-[18px] font-semibold mb-3">What this includes:</h3>
+                <h3 className="text-[18px] font-semibold mb-3">Features :</h3>
 
                 <div className="space-y-2">
-                  {plan.features?.map((feature) => (
-                    <div key={feature} className="flex items-center gap-3">
+                  {plan.features?.map((feature, index) => (
+                    <div key={index} className="flex items-center gap-3">
                       <div className="w-4 h-4 rounded-full bg-[#22c55e] text-white flex items-center justify-center">
                         <CheckOutlined className="text-[10px]" />
                       </div>
@@ -96,6 +96,24 @@ function SubscriptionTable() {
                     </div>
                   ))}
                 </div>
+
+                {plan.termsConditions?.length > 0 && (
+                  <>
+                    <div className="border-t border-gray-200 my-4" />
+
+                    <h3 className="text-[18px] font-semibold mb-3">Terms & Conditions</h3>
+
+                    <div className="space-y-2">
+                      {plan.termsConditions.map((term, index) => (
+                        <div key={index} className="flex items-start gap-3">
+                          <span className="text-[14px] font-semibold text-gray-500">{index + 1}.</span>
+
+                          <span className="text-[14px] text-gray-600">{term}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
 
                 <div className="flex justify-end items-center gap-4 mt-3">
                   <FormOutlined
@@ -109,6 +127,7 @@ function SubscriptionTable() {
                         price: plan.price,
                         status: plan.status,
                         features: plan.features,
+                        termsConditions: plan.termsConditions || [],
                         is_active: plan.is_active,
                       });
 
@@ -151,6 +170,8 @@ function SubscriptionTable() {
           onFinish={async (values) => {
             const payload = {
               ...values,
+              features: values.features || [],
+              termsConditions: values.termsConditions || [],
               monthlyPlan: values.subscription_type === 'monthly' ? values.price : null,
 
               annualPlan: values.subscription_type === 'annual' ? values.price : null,
@@ -219,8 +240,41 @@ function SubscriptionTable() {
                   </div>
                 ))}
 
-                <Button type="dashed" block onClick={() => add()}>
+                <Button type="dashed" block onClick={() => add()} className="mb-3">
                   + Add Feature
+                </Button>
+              </>
+            )}
+          </Form.List>
+          <Form.List name="termsConditions">
+            {(fields, { add, remove }) => (
+              <>
+                <label className="font-medium">Terms & Conditions</label>
+
+                {fields.map(({ key, name, ...restField }) => (
+                  <div key={key} className="flex gap-2 mb-2">
+                    <Form.Item
+                      {...restField}
+                      name={name}
+                      className="flex-1 mb-0"
+                      rules={[
+                        {
+                          required: true,
+                          message: 'Please enter terms & condition',
+                        },
+                      ]}
+                    >
+                      <Input size="small" placeholder="Enter terms & condition" />
+                    </Form.Item>
+
+                    <Button danger onClick={() => remove(name)} className="text-[13px]">
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+
+                <Button type="dashed" block onClick={() => add()}>
+                  + Add Terms & Conditions
                 </Button>
               </>
             )}
