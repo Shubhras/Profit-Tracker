@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Skeleton, Alert, Card, Button, Tag, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircleFilled, CrownOutlined, ThunderboltOutlined, RocketOutlined, StarOutlined } from '@ant-design/icons';
 import PropTypes from 'prop-types';
-import { DataService } from '../../../../config/dataService/dataService';
+// import { DataService } from '../../../../config/dataService/dataService';
+import { getSubscriptionList } from '../../../../redux/admin/actionCreator';
 import { selectPlan } from '../../../../redux/subscription/actionCreator';
 
 const { Title, Text } = Typography;
@@ -205,9 +206,17 @@ function PricingCards() {
   const navigate = useNavigate();
   const isLoggedIn = useSelector((state) => state.auth.login);
 
-  const [pricingPlans, setPricingPlans] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // const [pricingPlans, setPricingPlans] = useState([]);
+  // const [loading, setLoading] = useState(true);
+  // const [error, setError] = useState(null);
+
+  const { getsubscriptionData, loading } = useSelector((state) => state.AdminDashboard);
+
+  const pricingPlans = getsubscriptionData?.results?.data || [];
+
+  useEffect(() => {
+    dispatch(getSubscriptionList());
+  }, [dispatch]);
 
   // Handle plan selection
   const handlePlanSelect = (plan) => {
@@ -250,80 +259,135 @@ function PricingCards() {
   //     plan_id: apiPlan.plan_id,
   //   };
   // };
-  const mapApiPlanToComponent = (apiPlan) => {
-    const isFree = apiPlan.plan_id === 'FREE' || apiPlan.price === 0;
-    const isEnterprise = apiPlan.contact_sales === true || apiPlan.billing_cycle === 'custom';
 
-    const features = [
-      `${apiPlan.sync_frequency} Sync`,
-      `${apiPlan.order_volume} Orders`,
-      `${apiPlan.integrations} Integrations`,
-      ...apiPlan.features,
-    ];
+  // const mapApiPlanToComponent = (apiPlan) => {
+  //   const isFree = apiPlan.plan_id === 'FREE' || apiPlan.price === 0;
+  //   const isEnterprise = apiPlan.contact_sales === true || apiPlan.billing_cycle === 'custom';
 
-    return {
-      badge: {
-        text: apiPlan.name,
-      },
+  //   const features = [
+  //     `${apiPlan.sync_frequency} Sync`,
+  //     `${apiPlan.order_volume} Orders`,
+  //     `${apiPlan.integrations} Integrations`,
+  //     ...apiPlan.features,
+  //   ];
 
-      // Title
-      title: isFree ? 'Free' : isEnterprise ? 'Custom' : apiPlan.price.toString(),
+  //   return {
+  //     badge: {
+  //       text: apiPlan.name,
+  //     },
 
-      // Subtitle
-      subtitle: isEnterprise ? 'For large businesses & enterprises' : `Up to ${apiPlan.order_volume} Orders`,
+  //     // Title
+  //     title: isFree ? 'Free' : isEnterprise ? 'Custom' : apiPlan.price.toString(),
 
-      // Price symbol
-      price: isFree || isEnterprise ? null : '₹',
+  //     // Subtitle
+  //     subtitle: isEnterprise ? 'For large businesses & enterprises' : `Up to ${apiPlan.order_volume} Orders`,
 
-      // Billing cycle text
-      perMonth: apiPlan.billing_cycle === 'yearly' ? 'Year' : apiPlan.billing_cycle === 'monthly' ? 'Month' : null,
+  //     // Price symbol
+  //     price: isFree || isEnterprise ? null : '₹',
 
-      features,
+  //     // Billing cycle text
+  //     perMonth: apiPlan.billing_cycle === 'yearly' ? 'Year' : apiPlan.billing_cycle === 'monthly' ? 'Month' : null,
 
-      button: {
-        text: isFree ? 'Try Now' : isEnterprise ? 'Contact Sales' : 'Subscribe Now',
-      },
+  //     features,
 
-      plan_id: apiPlan.plan_id,
-    };
-  };
+  //     button: {
+  //       text: isFree ? 'Try Now' : isEnterprise ? 'Contact Sales' : 'Subscribe Now',
+  //     },
 
-  const fetchPricingPlans = async () => {
-    setLoading(true);
-    setError(null);
+  //     plan_id: apiPlan.plan_id,
+  //   };
+  // };
 
-    try {
-      const response = await DataService.get('/subscription-plans/');
+  const mapApiPlanToComponent = (plan) => ({
+    badge: {
+      text: plan.subscription_type === 'monthly' ? 'Monthly Plan' : 'Annual Plan',
+    },
 
-      if (response.data.status && response.data.data?.plans) {
-        const mappedPlans = response.data.data.plans.map(mapApiPlanToComponent);
-        setPricingPlans(mappedPlans);
-      } else {
-        setError('Invalid response format');
-      }
-    } catch (err) {
-      console.error('Error fetching pricing plans:', err);
-      setError(err.response?.data?.message || err.message || 'Failed to load pricing plans. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    title: plan.price,
 
-  useEffect(() => {
-    fetchPricingPlans();
-  }, []);
+    subtitle:
+      plan.subscription_type === 'monthly' ? 'Perfect for growing businesses' : 'Best value for long-term growth',
+
+    price: '₹',
+
+    perMonth: plan.subscription_type === 'monthly' ? 'Month' : 'Year',
+
+    features: plan.features || [],
+
+    button: {
+      text: 'Subscribe Now',
+    },
+
+    id: plan.id,
+    subscription_type: plan.subscription_type,
+  });
+
+  // const fetchPricingPlans = async () => {
+  //   setLoading(true);
+  //   setError(null);
+
+  //   try {
+  //     const response = await DataService.get('/subscription-plans/');
+
+  //     if (response.data.status && response.data.data?.plans) {
+  //       const mappedPlans = response.data.data.plans.map(mapApiPlanToComponent);
+  //       setPricingPlans(mappedPlans);
+  //     } else {
+  //       setError('Invalid response format');
+  //     }
+  //   } catch (err) {
+  //     console.error('Error fetching pricing plans:', err);
+  //     setError(err.response?.data?.message || err.message || 'Failed to load pricing plans. Please try again later.');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  // const fetchPricingPlans = async () => {
+  //   setLoading(true);
+  //   setError(null);
+
+  //   try {
+  //     const response = await DataService.get('/subscription-plans/');
+
+  //     if (response.data.status && response.data.data?.plans) {
+  //       const mappedPlans = response.data.data.plans.map(mapApiPlanToComponent);
+  //       setPricingPlans(mappedPlans);
+  //     } else {
+  //       setError('Invalid response format');
+  //     }
+  //   } catch (err) {
+  //     console.error('Error fetching pricing plans:', err);
+  //     setError(err.response?.data?.message || err.message || 'Failed to load pricing plans. Please try again later.');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   fetchPricingPlans();
+  // }, []);
 
   // Loading state - show skeleton cards
   if (loading) {
     return (
       <main className="px-[3%] pt-10 min-lg:pt-20 pb-10 min-lg:pb-20 max-w-7xl mx-auto">
-        <div
+        {/* <div
           className="
          grid gap-6
         grid-cols-1
         min-md:grid-cols-2
         min-lg:grid-cols-4
         "
+        > */}
+        <div
+          className="
+    grid gap-6
+    grid-cols-1
+    min-md:grid-cols-2
+    max-w-5xl
+    mx-auto
+  "
         >
           {[1, 2, 3, 4].map((item) => (
             <PricingCardSkeleton key={item} />
@@ -334,26 +398,26 @@ function PricingCards() {
   }
 
   // Error state
-  if (error) {
-    return (
-      <main className="px-[3%] pt-10 min-lg:pt-20 pb-10 min-lg:pb-20 max-w-7xl mx-auto">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <Alert
-            message="Error Loading Pricing Plans"
-            description={error}
-            type="error"
-            showIcon
-            className="rounded-xl"
-            action={
-              <Button type="primary" size="small" onClick={fetchPricingPlans} className="rounded-lg">
-                Retry
-              </Button>
-            }
-          />
-        </motion.div>
-      </main>
-    );
-  }
+  // if (error) {
+  //   return (
+  //     <main className="px-[3%] pt-10 min-lg:pt-20 pb-10 min-lg:pb-20 max-w-7xl mx-auto">
+  //       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+  //         <Alert
+  //           message="Error Loading Pricing Plans"
+  //           description={error}
+  //           type="error"
+  //           showIcon
+  //           className="rounded-xl"
+  //           action={
+  //             <Button type="primary" size="small" onClick={fetchPricingPlans} className="rounded-lg">
+  //               Retry
+  //             </Button>
+  //           }
+  //         />
+  //       </motion.div>
+  //     </main>
+  //   );
+  // }
 
   // Empty state
   if (pricingPlans.length === 0) {
@@ -376,17 +440,29 @@ function PricingCards() {
   return (
     <main className="px-[3%] pt-10 min-lg:pt-20 pb-10 min-lg:pb-20 max-w-7xl mx-auto">
       {/* Pricing Cards Grid */}
-      <div
+      {/* <div
         className="
         grid gap-6
         grid-cols-1
         min-md:grid-cols-2
         min-lg:grid-cols-4
       "
+      > */}
+      <div
+        className="
+    grid gap-6
+    grid-cols-1
+    min-md:grid-cols-2
+    max-w-5xl
+    mx-auto
+  "
       >
         <AnimatePresence>
-          {pricingPlans.map((plan, index) => (
+          {/* {pricingPlans.map((plan, index) => (
             <PricingCard key={index} plan={plan} index={index} onSelect={handlePlanSelect} />
+          ))} */}
+          {pricingPlans.map((item, index) => (
+            <PricingCard key={item.id} plan={mapApiPlanToComponent(item)} index={index} onSelect={handlePlanSelect} />
           ))}
         </AnimatePresence>
       </div>
