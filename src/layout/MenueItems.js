@@ -411,6 +411,13 @@ function MenuItems({ toggleCollapsed }) {
         null,
       ),
       getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/create-campaign`}>
+          {t('Create Campaign')}
+        </NavLink>,
+        'create-campaign',
+        null,
+      ),
+      getItem(
         <NavLink onClick={toggleCollapsed} to={`${path}/advertising/campaigns`}>
           {t('Campaigns')}
         </NavLink>,
