@@ -658,14 +658,14 @@ export default function Summary() {
 
                       {/* CONTENT */}
                       <div className="flex flex-col justify-start flex-1 pt-[2px]">
-                        <p className="text-gray-500 text-[14px] font-semibold leading-none mb-1">Total Sales</p>
+                        <p className="text-gray-500 text-[14px] font-semibold leading-none mb-3">Total Sales</p>
 
                         <h2 className="text-[19px] font-semibold leading-tight text-[#111827] mt-[2px]">
                           {' '}
                           ₹ {dashboardData?.header_metrics?.sales || 0}
                         </h2>
 
-                        <div className="mt-2 inline-flex w-fit items-center px-2 py-[3px] rounded-lg bg-[#dcfce780] border border-[#bbf7d0] text-[#166534] text-[9px] font-semibold whitespace-nowrap">
+                        <div className="mt-2 inline-flex w-fit items-center px-2 py-[3px] rounded-lg bg-[#dcfce780] border border-[#bbf7d0] text-[#166534] text-[10px] font-semibold whitespace-nowrap">
                           Units: {dashboardData?.breakdown_table?.net?.qty || 0}
                         </div>
                       </div>
@@ -684,7 +684,7 @@ export default function Summary() {
 
                       {/* CONTENT */}
                       <div className="flex flex-col justify-start flex-1 pt-[2px]">
-                        <p className="text-gray-500 text-[14px] font-semibold leading-none mb-1">Total Profit</p>
+                        <p className="text-gray-500 text-[14px] font-semibold leading-none mb-3">Total Profit</p>
 
                         <h2 className="text-[19px] font-semibold leading-tight text-[#111827] mt-[2px]">
                           {' '}
@@ -692,11 +692,11 @@ export default function Summary() {
                         </h2>
 
                         <div className="flex items-center gap-1 mt-2">
-                          <div className="inline-flex items-center px-2 py-[2px] rounded-lg bg-[#dcfce780] border border-[#bbf7d0] text-[#166534] text-[9px] font-semibold whitespace-nowrap">
+                          <div className="inline-flex items-center px-2 py-[2px] rounded-lg bg-[#dcfce780] border border-[#bbf7d0] text-[#166534] text-[10px] font-semibold whitespace-nowrap">
                             Margin: {dashboardData?.header_metrics?.margin || '0%'}
                           </div>
 
-                          <div className="inline-flex items-center px-2 py-[2px] rounded-lg bg-[#dcfce780] border border-[#bbf7d0] text-[#166534] text-[9px] font-semibold whitespace-nowrap">
+                          <div className="inline-flex items-center px-2 py-[2px] rounded-lg bg-[#dcfce780] border border-[#bbf7d0] text-[#166534] text-[10px] font-semibold whitespace-nowrap">
                             ROI: {dashboardData?.header_metrics?.roi || '0%'}
                           </div>
                         </div>
