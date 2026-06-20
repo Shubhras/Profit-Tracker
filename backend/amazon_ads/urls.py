@@ -9,6 +9,11 @@ from .adgroup import *
 from amazon_ads.services.campaigns import *
 from .keywords import *
 from .optimization_rules import *
+from amazon_ads.services.product_ads import *
+from amazon_ads.services.targets import *
+from amazon_ads.services.negative_keywords import *
+from amazon_ads.services.negative_targets import *
+
 urlpatterns = [
 
     path("account/connect/",AmazonAdsConnectView.as_view()),
@@ -109,5 +114,52 @@ urlpatterns = [
     path(
         "optimization-rules/list/",
         ListOptimizationRuleAPIView.as_view()
+    ),
+
+    # CampaignCreationWorkflow
+    
+    path(
+        "campaigns/create/",
+        CreateSPCampaignView.as_view()
+    ),
+
+    path(
+        "adgroups/create/",
+        CreateSPAdGroupView.as_view()
+    ),
+
+    path(
+        "product-ads/create/",
+        CreateSPProductAdView.as_view()
+    ),
+
+    path(
+        "keywords/create/",
+        CreateSPKeywordView.as_view()
+    ),
+
+    path(
+        "targets/create/",
+        CreateSPTargetView.as_view()
+    ),
+
+    path(
+        "negative-keywords/create/",
+        CreateSPNegativeKeywordView.as_view()
+    ),
+
+    path(
+        "campaign-negative-keywords/create/",
+        CreateSPCampaignNegativeKeywordView.as_view()
+    ),
+
+    path(
+        "negative-targets/create/",
+        CreateSPNegativeTargetView.as_view()
+    ),
+
+    path(
+        "campaign-negative-targets/create/",
+        CreateSPCampaignNegativeTargetView.as_view()
     ),
 ]
