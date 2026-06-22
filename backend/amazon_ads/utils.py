@@ -2322,3 +2322,45 @@ def sync_keywords():
     )
 
     return True
+
+def extract_amazon_errors(error_items):
+
+    parsed_errors = []
+
+    for item in error_items:
+
+        for error in item.get(
+            "errors",
+            []
+        ):
+
+            error_value = error.get(
+                "errorValue",
+                {}
+            )
+
+            for value in error_value.values():
+
+                parsed_errors.append({
+
+                    "message":
+                    value.get("message"),
+
+                    "reason":
+                    value.get("reason")
+                })
+
+    return parsed_errors
+
+def get_primary_amazon_account():
+
+    account = AmazonAdsAccount.objects.filter(
+        is_primary=True
+    ).first()
+
+    if not account:
+        raise Exception(
+            "No primary Amazon account found"
+        )
+
+    return account
