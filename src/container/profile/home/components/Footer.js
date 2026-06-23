@@ -115,7 +115,7 @@ function Footer() {
 
               <Text className="block text-gray-400 text-sm leading-relaxed mb-6 max-w-sm">
                 Finance copilot for eCommerce and retail brands — delivering SKU-level profit intelligence, payment
-                recovery, and inventory forecasting.
+                recovery, and inventory forecasting.That trackmyprofit is the saas tool of Apro store.
               </Text>
 
               {/* Social Icons */}

@@ -41,7 +41,7 @@ function NegativeKey() {
       campaign_id: selectedCampaign,
       ad_group_id: selectedAdGroup,
       match_type: matchType,
-      state: 'ENABLED',
+      state: '',
       page: pagination.current,
       page_size: pagination.pageSize,
       fromDate: dateRange?.fromDate || null,
