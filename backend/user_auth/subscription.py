@@ -38,21 +38,25 @@ class SubscriptionPlanCreateView(APIView):
     """
     Create a new SubscriptionPlan with duplicate prevention
     """
+
     def post(self, request):
         try:
-            subscription_type = request.data.get("subscription_type")
+            plan_name = request.data.get("plan_name")
 
-            # Prevent duplicates only by subscription_type
-            if SubscriptionPlan.objects.filter(subscription_type=subscription_type).exists():
+            if SubscriptionPlan.objects.filter(
+                plan_name__iexact=plan_name
+            ).exists():
                 return Response({
                     "statusCode": 400,
                     "status": False,
-                    "message": "A SubscriptionPlan with this type already exists."
+                    "message": "A SubscriptionPlan with this name already exists."
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             serializer = SubscriptionPlanSerializer(data=request.data)
+
             if serializer.is_valid():
                 serializer.save()
+
                 return Response({
                     "statusCode": 201,
                     "status": True,
@@ -79,56 +83,73 @@ class SubscriptionPlanListView(APIView):
     """
     List subscription plans with search & pagination
     """
+
     def get(self, request):
         try:
             queryset = SubscriptionPlan.objects.filter(is_deleted=False)
 
-            is_active = request.GET.get("is_active")   # true/false
-            subscription_type = request.GET.get("subscription_type")  # Monthly / Annual
-            status_param = request.GET.get("status")   # active / inactive
+            is_active = request.GET.get("is_active")
+            plan_name = request.GET.get("plan_name")
+            status_param = request.GET.get("status")
 
             if is_active is not None:
-                queryset = queryset.filter(is_active=is_active.lower() in ["true", "1"])
+                queryset = queryset.filter(
+                    is_active=is_active.lower() in ["true", "1"]
+                )
 
-            if subscription_type:
-                queryset = queryset.filter(subscription_type__iexact=subscription_type)
+            if plan_name:
+                queryset = queryset.filter(
+                    plan_name__icontains=plan_name
+                )
 
             if status_param:
-                queryset = queryset.filter(status__iexact=status_param)
+                queryset = queryset.filter(
+                    status__iexact=status_param
+                )
 
-            search_query = request.GET.get('search', '').strip()
+            search_query = request.GET.get("search", "").strip()
+
             if search_query:
                 queryset = queryset.filter(
-                    Q(subscription__name__icontains=search_query) |
-                    Q(subscription_type__icontains=search_query) |
+                    Q(plan_name__icontains=search_query) |
+                    Q(slug__icontains=search_query) |
+                    Q(description__icontains=search_query) |
                     Q(status__icontains=search_query)
                 )
 
-            ordering = request.GET.get('ordering', '-created_at')
-            valid_ordering_fields = ['price', 'created_at', '-price', '-created_at']
-            queryset = queryset.order_by(ordering if ordering in valid_ordering_fields else '-created_at')
+            ordering = request.GET.get("ordering", "-created_at")
+
+            valid_ordering_fields = [
+                "monthly_price",
+                "annual_price",
+                "created_at",
+                "-monthly_price",
+                "-annual_price",
+                "-created_at"
+            ]
+
+            queryset = queryset.order_by(
+                ordering if ordering in valid_ordering_fields else "-created_at"
+            )
 
             paginator = CustomPagination()
-            paginated_queryset = paginator.paginate_queryset(queryset, request, view=self)
-            serializer = SubscriptionPlanSerializer(paginated_queryset, many=True)
 
-            # Add per_month key dynamically
-            data_with_per_month = []
-            for item in serializer.data:
-                price = float(item.get('price', 0))
-                sub_type = item.get('subscription_type', '').lower()
-                if sub_type == 'annual':
-                    per_month = round(price / 12, 2)
-                else:
-                    per_month = price
-                item['per_month'] = per_month
-                data_with_per_month.append(item)
+            paginated_queryset = paginator.paginate_queryset(
+                queryset,
+                request,
+                view=self
+            )
+
+            serializer = SubscriptionPlanSerializer(
+                paginated_queryset,
+                many=True
+            )
 
             return paginator.get_paginated_response({
                 "statusCode": 200,
                 "status": True,
                 "message": "Subscription plans fetched successfully",
-                "data": data_with_per_month,
+                "data": serializer.data
             })
 
         except Exception as e:
@@ -143,9 +164,11 @@ class UpdateSubscriptionPlanAPI(APIView):
     """
     Update SubscriptionPlan
     """
+
     def put(self, request, pk):
         try:
             subscription_plan = SubscriptionPlan.objects.get(pk=pk)
+
         except SubscriptionPlan.DoesNotExist:
             return Response({
                 "statusCode": 404,
@@ -153,9 +176,28 @@ class UpdateSubscriptionPlanAPI(APIView):
                 "message": "SubscriptionPlan not found"
             }, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = SubscriptionPlanSerializer(subscription_plan, data=request.data, partial=True)
+        plan_name = request.data.get("plan_name")
+
+        if plan_name:
+            if SubscriptionPlan.objects.filter(
+                plan_name__iexact=plan_name
+            ).exclude(pk=pk).exists():
+
+                return Response({
+                    "statusCode": 400,
+                    "status": False,
+                    "message": "A SubscriptionPlan with this name already exists."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = SubscriptionPlanSerializer(
+            subscription_plan,
+            data=request.data,
+            partial=True
+        )
+
         if serializer.is_valid():
             serializer.save()
+
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -173,11 +215,13 @@ class UpdateSubscriptionPlanAPI(APIView):
 
 class DeleteSubscriptionPlanAPI(APIView):
     """
-    Soft delete SubscriptionPlan
+    Hard delete SubscriptionPlan
     """
+
     def delete(self, request, pk):
         try:
             subscription_plan = SubscriptionPlan.objects.get(pk=pk)
+
         except SubscriptionPlan.DoesNotExist:
             return Response({
                 "statusCode": 404,
@@ -185,17 +229,14 @@ class DeleteSubscriptionPlanAPI(APIView):
                 "message": "SubscriptionPlan not found"
             }, status=status.HTTP_404_NOT_FOUND)
 
-        subscription_plan.is_deleted = True
-        subscription_plan.is_active = False
-        subscription_plan.save()
+        subscription_plan.delete()
 
         return Response({
             "statusCode": 200,
             "status": True,
             "message": "SubscriptionPlan deleted successfully"
         }, status=status.HTTP_200_OK)
-
-
+        
 
 class AdminDashboardAPI(APIView):
     """

@@ -57,6 +57,79 @@ class UserRegisterSerializer(serializers.Serializer):
 
         return user
 
+class SubscriptionPlanSerializer(serializers.ModelSerializer):
+    discount_percentage = serializers.SerializerMethodField()
+    average_discount = serializers.SerializerMethodField()
+    per_month = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SubscriptionPlan
+        fields = [
+            "id",
+            "subcription_id",
+            "plan_name",
+            "slug",
+            "description",
+            "monthly_price",
+            "annual_price",
+            "features",
+            "terms_and_conditions",
+            "status",
+            "is_active",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+            "discount_percentage",
+            "average_discount",
+            "per_month",
+        ]
+
+    def get_discount_percentage(self, obj):
+        monthly_price = obj.monthly_price or 0
+        annual_price = obj.annual_price or 0
+
+        if monthly_price <= 0:
+            return 0.0
+
+        yearly_cost = monthly_price * 12
+
+        discount = (
+            (yearly_cost - annual_price)
+            / yearly_cost
+        ) * 100
+
+        discount = round(float(discount), 2)
+
+        # Prevent negative discounts
+        return max(discount, 0.0)
+
+    def get_average_discount(self, obj):
+        return self.get_discount_percentage(obj)
+
+    def get_per_month(self, obj):
+        annual_price = obj.annual_price or 0
+
+        if annual_price <= 0:
+            return 0.0
+
+        return round(float(annual_price / 12), 2)      
+
+
+class UserProfileUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = [
+            "name",
+            "business_name",
+            "mobile_number",
+            #"gst_number",
+            "address",
+            "city",
+            "state",
+            "pin_code",
+            "accepted_terms"
+        ]
+        
 
 class UserProfileSerializer(serializers.ModelSerializer):
     # ✅ Include profile fields inside user response
@@ -89,24 +162,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "pin_code",
             "accepted_terms",
         ]
-class UserProfileUpdateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserProfile
-        fields = [
-            "name",
-            "business_name",
-            "mobile_number",
-            #"gst_number",
-            "address",
-            "city",
-            "state",
-            "pin_code",
-            "accepted_terms"
-        ]
-        
-        
         
 
+        
 class SubscriptionPlanSerializer(serializers.ModelSerializer):
     discount_percentage = serializers.SerializerMethodField()
     average_discount = serializers.SerializerMethodField()
@@ -115,54 +173,52 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubscriptionPlan
         fields = [
-            "id", "subscription_type", "price", "status",
-            "monthlyPlan", "annualPlan", "features",
-            "is_active", "is_deleted", "created_at", "updated_at",
-            "discount_percentage", "average_discount", "per_month"
+            "id",
+            "subcription_id",
+            "plan_name",
+            "slug",
+            "description",
+            "monthly_price",
+            "annual_price",
+            "features",
+            "terms_and_conditions",
+            "status",
+            "is_active",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+            "discount_percentage",
+            "average_discount",
+            "per_month",
         ]
 
     def get_discount_percentage(self, obj):
-        """
-        Calculates the discount for the annual plan compared to 12×monthly plan.
-        Cleans up -0.0 values.
-        """
-        monthly_plan = SubscriptionPlan.objects.filter(subscription_type="Monthly", is_active=True, is_deleted=False).first()
-        annual_plan = SubscriptionPlan.objects.filter(subscription_type="Annual", is_active=True, is_deleted=False).first()
+        monthly_price = float(obj.monthly_price or 0)
+        annual_price = float(obj.annual_price or 0)
 
-        if monthly_plan and annual_plan:
-            monthly_price = float(monthly_plan.price)
-            annual_price = float(annual_plan.price)
-            if monthly_price > 0:
-                discount = ((12 * monthly_price - annual_price) / (12 * monthly_price)) * 100
-                discount = round(discount, 2)
-                # 🔹 Convert -0.0 to 0.0
-                return 0.0 if discount == -0.0 else discount
-        return 0.0
+        if monthly_price <= 0:
+            return 0.0
+
+        yearly_cost = monthly_price * 12
+
+        discount = (
+            (yearly_cost - annual_price)
+            / yearly_cost
+        ) * 100
+
+        return round(max(discount, 0), 2)
 
     def get_average_discount(self, obj):
-        """
-        Returns average discount across all plans, cleaned up for -0.0.
-        """
-        monthly_plan = SubscriptionPlan.objects.filter(subscription_type="Monthly", is_active=True, is_deleted=False).first()
-        annual_plan = SubscriptionPlan.objects.filter(subscription_type="Annual", is_active=True, is_deleted=False).first()
-
-        if monthly_plan and annual_plan:
-            monthly_price = float(monthly_plan.price)
-            annual_price = float(annual_plan.price)
-            avg_discount = ((12 * monthly_price - annual_price) / (12 * monthly_price)) * 100
-            avg_discount = round(avg_discount, 2)
-            # 🔹 Convert -0.0 to 0.0
-            return 0.0 if avg_discount == -0.0 else avg_discount
-        return 0.0
+        return self.get_discount_percentage(obj)
 
     def get_per_month(self, obj):
-        """
-        Calculates per-month cost for annual or monthly plans.
-        """
-        if obj.subscription_type.lower() == "annual" and obj.price:
-            return round(float(obj.price) / 12, 2)
-        return round(float(obj.price), 2) if obj.price else 0.0
- 
+        annual_price = float(obj.annual_price or 0)
+
+        if annual_price <= 0:
+            return 0.0
+
+        return round(annual_price / 12, 2)
+        
  
 class PromocodeSerializer(serializers.ModelSerializer):
     startDateTime = serializers.DateTimeField(
