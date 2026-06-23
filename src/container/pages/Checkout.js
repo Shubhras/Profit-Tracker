@@ -95,7 +95,7 @@ function Checkout() {
       key: subscriptionInfo.razorpay_key,
       subscription_id: subscriptionInfo.subscription_id,
       name: 'TrackMyProfit',
-      description: `${plan?.badge?.text || plan?.name} Subscription`,
+      description: `${plan?.plan_name} Subscription`,
       handler(response) {
         const paymentData = {
           razorpay_payment_id: response.razorpay_payment_id,
@@ -133,24 +133,32 @@ function Checkout() {
   };
 
   const handleSubscribe = () => {
-    if (!plan?.plan_id) {
+    if (!plan?.id) {
       console.error('Plan ID not found');
       return;
     }
     setProcessingPayment(true);
     dispatch(
-      createSubscription(plan.plan_id, (subscriptionInfo) => {
-        if (subscriptionInfo.isFreePlan) {
-          // Free plan: No payment needed, show success immediately
-          setProcessingPayment(false);
-          setSuccessModalVisible(true);
-          dispatch(clearPlan());
-          sessionStorage.removeItem('selectedPlan');
-        } else {
-          // Paid plan: Open Razorpay
-          handleRazorpayPayment(subscriptionInfo);
-        }
-      }),
+      createSubscription(
+        {
+          plan_id: plan.id,
+          billing_cycle: plan.selectedType || 'monthly',
+        },
+        (subscriptionInfo) => {
+          console.log('SUBSCRIPTION INFO =>', subscriptionInfo);
+
+          if (subscriptionInfo.isFreePlan) {
+            // Free plan: No payment needed, show success immediately
+            setProcessingPayment(false);
+            setSuccessModalVisible(true);
+            dispatch(clearPlan());
+            sessionStorage.removeItem('selectedPlan');
+          } else {
+            // Paid plan: Open Razorpay
+            handleRazorpayPayment(subscriptionInfo);
+          }
+        },
+      ),
     );
   };
 
@@ -213,12 +221,12 @@ function Checkout() {
                 <div className="flex items-baseline gap-1 mb-2">
                   <span className="text-xl min-md:text-2xl font-bold text-gray-500">₹</span>
                   <span className="text-4xl min-md:text-5xl font-extrabold text-gray-900 tracking-tight">
-                    {plan.title}
+                    {plan.selectedPrice || plan.monthly_price}
                   </span>
-                  <span className="text-gray-500 font-medium">/mo</span>
+                  <span className="text-gray-500 font-medium">{plan.selectedType === 'annual' ? '/year' : '/mo'}</span>
                 </div>
                 <div className="inline-block px-3 py-1 rounded-md bg-white text-emerald-600 text-sm font-bold border border-gray-200 shadow-sm mb-8">
-                  {plan.badge?.text || `${plan.name} Plan`}
+                  {plan.plan_name}
                 </div>
 
                 <div className="space-y-4">
@@ -242,7 +250,7 @@ function Checkout() {
                 </div>
                 <div className="flex justify-between items-center text-lg font-bold">
                   <span className="text-gray-900">Total Due</span>
-                  <span className="text-emerald-600">₹{plan.title}</span>
+                  <span className="text-emerald-600">₹{plan.selectedPrice || plan.monthly_price}</span>
                 </div>
               </div>
             </div>
@@ -307,7 +315,7 @@ function Checkout() {
                     'Processing...'
                   ) : (
                     <>
-                      Pay ₹{plan.title} <ArrowLeftOutlined className="rotate-180" />
+                      Pay ₹{plan.selectedPrice || plan.monthly_price} <ArrowLeftOutlined className="rotate-180" />
                     </>
                   )}
                 </Button>
@@ -350,9 +358,7 @@ function Checkout() {
           }
           title={<span className="text-2xl font-bold text-gray-900">Payment Successful!</span>}
           subTitle={
-            <span className="text-gray-500">
-              Welcome to {plan?.badge?.text || plan?.name}! Your subscription is now active.
-            </span>
+            <span className="text-gray-500">Welcome to {plan?.plan_name}! Your subscription is now active.</span>
           }
           extra={[
             <Button
