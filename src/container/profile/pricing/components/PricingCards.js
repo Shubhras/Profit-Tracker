@@ -142,7 +142,7 @@ function PricingCard({ plan, index, onSelect }) {
         </div>
 
         {/* Features */}
-        <div className="flex-grow mb-6">
+        {/* <div className="flex-grow mb-6">
           <ul className="space-y-3">
             {plan.features.map((feature, i) => (
               <motion.li
@@ -158,6 +158,47 @@ function PricingCard({ plan, index, onSelect }) {
               </motion.li>
             ))}
           </ul>
+        </div> */}
+        <div className="flex-grow mb-6">
+          <h4 className="text-[15px] font-semibold text-gray-900 mb-3">Features</h4>
+
+          <ul className="space-y-3 mb-5">
+            {plan.features.map((feature, i) => (
+              <motion.li
+                key={i}
+                initial={{ opacity: 0, x: -10 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3 + i * 0.05 }}
+                className="flex items-center gap-3"
+              >
+                <CheckCircleFilled className="text-emerald-500 text-lg flex-shrink-0" />
+                <Text className="text-gray-700 text-sm">{feature}</Text>
+              </motion.li>
+            ))}
+          </ul>
+
+          {plan.termsConditions?.length > 0 && (
+            <>
+              <h4 className="text-[15px] font-semibold text-gray-900 mb-3">Terms & Conditions</h4>
+
+              <ul className="space-y-3">
+                {plan.termsConditions.map((term, i) => (
+                  <motion.li
+                    key={i}
+                    initial={{ opacity: 0, x: -10 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.3 + i * 0.05 }}
+                    className="flex items-center gap-3"
+                  >
+                    <CheckCircleFilled className="text-emerald-500 text-lg flex-shrink-0" />
+                    <Text className="text-gray-700 text-sm">{term}</Text>
+                  </motion.li>
+                ))}
+              </ul>
+            </>
+          )}
         </div>
 
         {/* CTA Button */}
@@ -192,6 +233,7 @@ PricingCard.propTypes = {
     price: PropTypes.string,
     perMonth: PropTypes.string,
     features: PropTypes.arrayOf(PropTypes.string).isRequired,
+    termsConditions: PropTypes.arrayOf(PropTypes.string),
     button: PropTypes.shape({
       text: PropTypes.string.isRequired,
     }).isRequired,
@@ -313,6 +355,8 @@ function PricingCards() {
     perMonth: plan.subscription_type === 'monthly' ? 'Month' : 'Year',
 
     features: plan.features || [],
+
+    termsConditions: plan.termsConditions || [],
 
     button: {
       text: 'Subscribe Now',
