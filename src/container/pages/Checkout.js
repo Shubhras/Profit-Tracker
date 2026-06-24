@@ -84,7 +84,7 @@ function Checkout() {
 
   const handleRazorpayPayment = async (subscriptionInfo) => {
     const scriptLoaded = await loadRazorpayScript();
-
+    console.log('ddddddddddddd', subscriptionInfo);
     if (!scriptLoaded) {
       alert('Failed to load payment gateway. Please try again.');
       setProcessingPayment(false);
@@ -93,13 +93,16 @@ function Checkout() {
 
     const options = {
       key: subscriptionInfo.razorpay_key,
-      subscription_id: subscriptionInfo.subscription_id,
+      // subscription_id: subscriptionInfo.subscription_id,
+      order_id: subscriptionInfo.order_id,
       name: 'TrackMyProfit',
       description: `${plan?.plan_name} Subscription`,
       handler(response) {
         const paymentData = {
           razorpay_payment_id: response.razorpay_payment_id,
-          razorpay_subscription_id: response.razorpay_subscription_id,
+          // razorpay_subscription_id: response.razorpay_subscription_id,
+          razorpay_order_id: response.razorpay_order_id,
+          subscription_id: subscriptionInfo.subscription_id,
           razorpay_signature: response.razorpay_signature,
         };
 

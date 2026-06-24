@@ -73,11 +73,14 @@ function SubscriptionTable() {
                 {/* Top Section */}
                 <div className="flex justify-between items-start">
                   <div>
-                    <h2 className="text-[20px] font-semibold">{plan.subscription_type}</h2>
+                    <h2 className="text-[20px] font-semibold">{plan.plan_name}</h2>
+                    <p className="text-[13px] text-gray-500 mt-1">{plan.description}</p>
                   </div>
 
                   <div className="text-right">
-                    <h2 className="text-[20px] mb-0 font-bold">₹{plan.price}</h2>
+                    <div className="font-semibold text-dark"> ₹{Math.floor(Number(plan.monthly_price))} /Month</div>
+
+                    <div className="font-semibold text-dark mt-2"> ₹{Math.floor(Number(plan.annual_price))} /Year</div>
                   </div>
                 </div>
 
@@ -97,14 +100,14 @@ function SubscriptionTable() {
                   ))}
                 </div>
 
-                {plan.termsConditions?.length > 0 && (
+                {plan.terms_and_conditions?.length > 0 && (
                   <>
                     <div className="border-t border-gray-200 my-4" />
 
                     <h3 className="text-[18px] font-semibold mb-3">Terms & Conditions</h3>
 
                     <div className="space-y-2">
-                      {plan.termsConditions.map((term, index) => (
+                      {plan.terms_and_conditions.map((term, index) => (
                         <div key={index} className="flex items-start gap-3">
                           <span className="text-[14px] font-semibold text-gray-500">{index + 1}.</span>
 
@@ -122,13 +125,23 @@ function SubscriptionTable() {
                       setIsEditMode(true);
                       setSelectedId(plan.id);
 
+                      // form.setFieldsValue({
+                      //   subscription_type: plan.subscription_type?.toLowerCase(),
+                      //   price: plan.price,
+                      //   status: plan.status,
+                      //   features: plan.features,
+                      //   termsConditions: plan.termsConditions || [],
+                      //   is_active: plan.is_active,
+                      // });
+
                       form.setFieldsValue({
-                        subscription_type: plan.subscription_type?.toLowerCase(),
-                        price: plan.price,
+                        plan_name: plan.plan_name,
+                        description: plan.description,
+                        monthly_price: plan.monthly_price,
+                        annual_price: plan.annual_price,
                         status: plan.status,
-                        features: plan.features,
-                        termsConditions: plan.termsConditions || [],
-                        is_active: plan.is_active,
+                        features: plan.features || [],
+                        terms_and_conditions: plan.terms_and_conditions || [],
                       });
 
                       setIsModalOpen(true);
@@ -168,15 +181,24 @@ function SubscriptionTable() {
           form={form}
           layout="vertical"
           onFinish={async (values) => {
+            // const payload = {
+            //   ...values,
+            //   features: values.features || [],
+            //   termsConditions: values.termsConditions || [],
+            //   monthlyPlan: values.subscription_type === 'monthly' ? values.price : null,
+
+            //   annualPlan: values.subscription_type === 'annual' ? values.price : null,
+            // };
             const payload = {
-              ...values,
+              plan_name: values.plan_name,
+              description: values.description,
+              monthly_price: values.monthly_price,
+              annual_price: values.annual_price,
               features: values.features || [],
-              termsConditions: values.termsConditions || [],
-              monthlyPlan: values.subscription_type === 'monthly' ? values.price : null,
-
-              annualPlan: values.subscription_type === 'annual' ? values.price : null,
+              terms_and_conditions: values.terms_and_conditions || [],
+              status: values.status,
+              is_active: values.status === 'active',
             };
-
             if (isEditMode) {
               await dispatch(updateSubscription(selectedId, payload));
             } else {
@@ -191,17 +213,31 @@ function SubscriptionTable() {
             setIsEditMode(false);
           }}
         >
-          <Form.Item label="Subscription Type" name="subscription_type" rules={[{ required: true }]} className="mb-2">
-            <Select
-              size="small"
-              options={[
-                { label: 'Monthly', value: 'monthly' },
-                { label: 'Annual', value: 'annual' },
-              ]}
-            />
+          <Form.Item label="Plan Name" name="plan_name" rules={[{ required: true, message: 'Please enter plan name' }]}>
+            <Input size="small" placeholder="Enter plan name" />
           </Form.Item>
 
-          <Form.Item label="Price" name="price" rules={[{ required: true }]} className="mb-2">
+          <Form.Item
+            label="Description"
+            name="description"
+            rules={[{ required: true, message: 'Please enter description' }]}
+          >
+            <Input.TextArea rows={3} />
+          </Form.Item>
+
+          <Form.Item
+            label="Monthly Price"
+            name="monthly_price"
+            rules={[{ required: true, message: 'Please enter monthly price' }]}
+          >
+            <InputNumber size="small" className="w-full" />
+          </Form.Item>
+
+          <Form.Item
+            label="Annual Price"
+            name="annual_price"
+            rules={[{ required: true, message: 'Please enter annual price' }]}
+          >
             <InputNumber size="small" className="w-full" />
           </Form.Item>
 
@@ -246,7 +282,7 @@ function SubscriptionTable() {
               </>
             )}
           </Form.List>
-          <Form.List name="termsConditions">
+          <Form.List name="terms_and_conditions">
             {(fields, { add, remove }) => (
               <>
                 <label className="font-medium">Terms & Conditions</label>
