@@ -12,13 +12,11 @@ from django.db.models import Q
 from django.core.paginator import Paginator
 
 import calendar
-from django.db.models import Count
+from django.db.models import Count,Sum
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 from datetime import timedelta
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
-
-
 
 class IsAdministrator(BasePermission):
     def has_permission(self, request, view):
@@ -240,18 +238,47 @@ class DeleteSubscriptionPlanAPI(APIView):
 
 class AdminDashboardAPI(APIView):
     """
-    Admin dashboard stats:
-    - Overview cards (total/new users, subscription breakdown)
-    - Monthly user growth graph
-    Example: GET /api/admin/dashboard/?month=6&year=2026
+    Admin Dashboard
+
+    Overview:
+    - Total Users
+    - New Users (Today / Week / Month)
+
+    Subscription Analytics:
+    - Total Subscriptions
+    - Active / Inactive / Expired / Cancelled
+    - Monthly vs Annual Subscriptions
+    - Revenue Summary
+    - Plan-wise Breakdown
+
+    User Growth:
+    - Daily Signup Graph for selected month
+
+    Example:
+    GET /api/admin/dashboard/?month=6&year=2026
     """
+
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
+
         try:
+
             now = timezone.now()
-            month = int(request.GET.get('month', now.month))
-            year = int(request.GET.get('year', now.year))
+
+            month = int(
+                request.GET.get(
+                    "month",
+                    now.month
+                )
+            )
+
+            year = int(
+                request.GET.get(
+                    "year",
+                    now.year
+                )
+            )
 
             if month < 1 or month > 12:
                 return Response({
@@ -260,68 +287,183 @@ class AdminDashboardAPI(APIView):
                     "message": "Invalid month. Must be between 1 and 12."
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            all_users = UserProfile.objects.all()
+            # ==================================================
+            # USERS OVERVIEW
+            # ==================================================
 
-            # ---------- Overview Cards ----------
+            all_users = UserProfile.objects.select_related(
+                "user"
+            )
+
             total_users = all_users.count()
 
-            today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-            week_start = today_start - timedelta(days=today_start.weekday())  # Monday
+            today_start = now.replace(
+                hour=0,
+                minute=0,
+                second=0,
+                microsecond=0
+            )
+
+            week_start = (
+                today_start -
+                timedelta(days=today_start.weekday())
+            )
+
             month_start = today_start.replace(day=1)
 
-            new_today = all_users.filter(created_at__gte=today_start).count()
-            new_this_week = all_users.filter(created_at__gte=week_start).count()
-            new_this_month = all_users.filter(created_at__gte=month_start).count()
-
-            # Subscription status breakdown
-            status_counts = (
-                all_users
-                .values('subscription_status')
-                .annotate(count=Count('id'))
-            )
-            status_breakdown = {item['subscription_status']: item['count'] for item in status_counts}
-
-            trial_count = status_breakdown.get('trial', 0)
-            paid_count = status_breakdown.get('paid', 0)
-            inactive_count = status_breakdown.get('inactive', 0)
-
-            active_trial_now = all_users.filter(
-                subscription_status='trial',
-                trial_end_date__gte=now
+            new_today = all_users.filter(
+                created_at__gte=today_start
             ).count()
 
-            # Active subscriptions by plan type (e.g. Monthly / Annual)
-            plan_breakdown = (
-                all_users
-                .filter(subscription_active=True, subscriptiontype__isnull=False)
-                .values('subscriptiontype__subscription_type')
-                .annotate(count=Count('id'))
-            )
-            plan_breakdown = {
-                item['subscriptiontype__subscription_type']: item['count']
-                for item in plan_breakdown
-            }
+            new_this_week = all_users.filter(
+                created_at__gte=week_start
+            ).count()
 
-            # ---------- Monthly Signup Graph ----------
-            month_queryset = all_users.filter(created_at__year=year, created_at__month=month)
+            new_this_month = all_users.filter(
+                created_at__gte=month_start
+            ).count()
+
+            # ==================================================
+            # SUBSCRIPTION ANALYTICS
+            # ==================================================
+
+            subscriptions = UserSubscription.objects.select_related(
+                "user",
+                "plan"
+            )
+
+            total_subscriptions = subscriptions.count()
+
+            active_subscriptions = subscriptions.filter(
+                status="active",
+                is_paid=True
+            ).count()
+
+            inactive_subscriptions = subscriptions.filter(
+                status="inactive"
+            ).count()
+
+            expired_subscriptions = subscriptions.filter(
+                status="expired"
+            ).count()
+
+            cancelled_subscriptions = subscriptions.filter(
+                status="cancelled"
+            ).count()
+
+            created_subscriptions = subscriptions.filter(
+                status="created"
+            ).count()
+
+            monthly_subscriptions = subscriptions.filter(
+                status="active",
+                billing_cycle="monthly"
+            ).count()
+
+            annual_subscriptions = subscriptions.filter(
+                status="active",
+                billing_cycle="annual"
+            ).count()
+
+            # ==================================================
+            # REVENUE
+            # ==================================================
+
+            monthly_revenue = (
+                subscriptions.filter(
+                    status="active",
+                    billing_cycle="monthly",
+                    is_paid=True
+                ).aggregate(
+                    total=Sum("amount")
+                )["total"] or 0
+            )
+
+            annual_revenue = (
+                subscriptions.filter(
+                    status="active",
+                    billing_cycle="annual",
+                    is_paid=True
+                ).aggregate(
+                    total=Sum("amount")
+                )["total"] or 0
+            )
+
+            total_revenue = (
+                monthly_revenue +
+                annual_revenue
+            )
+
+            # ==================================================
+            # PLAN BREAKDOWN
+            # ==================================================
+
+            plan_breakdown_queryset = (
+                subscriptions
+                .filter(
+                    status="active",
+                    plan__isnull=False
+                )
+                .values(
+                    "plan__id",
+                    "plan__plan_name"
+                )
+                .annotate(
+                    total=Count("id")
+                )
+                .order_by("-total")
+            )
+
+            plan_breakdown = [
+                {
+                    "plan_id": item["plan__id"],
+                    "plan_name": item["plan__plan_name"],
+                    "subscriptions": item["total"]
+                }
+                for item in plan_breakdown_queryset
+            ]
+
+            # ==================================================
+            # MONTHLY SIGNUP GRAPH
+            # ==================================================
+
+            month_queryset = all_users.filter(
+                created_at__year=year,
+                created_at__month=month
+            )
 
             daily_counts = (
                 month_queryset
-                .annotate(date=TruncDate('created_at'))
-                .values('date')
-                .annotate(count=Count('id'))
-                .order_by('date')
+                .annotate(
+                    date=TruncDate("created_at")
+                )
+                .values("date")
+                .annotate(
+                    count=Count("id")
+                )
+                .order_by("date")
             )
-            counts_dict = {item['date'].day: item['count'] for item in daily_counts}
 
-            days_in_month = calendar.monthrange(year, month)[1]
+            counts_dict = {
+                item["date"].day: item["count"]
+                for item in daily_counts
+            }
+
+            days_in_month = calendar.monthrange(
+                year,
+                month
+            )[1]
+
             graph_data = [
                 {
                     "day": day,
                     "date": f"{year}-{month:02d}-{day:02d}",
                     "count": counts_dict.get(day, 0)
                 }
-                for day in range(1, days_in_month + 1)
+                for day in range(
+                    1,
+                    days_in_month + 1
+                )
             ]
 
             return Response({
@@ -329,19 +471,33 @@ class AdminDashboardAPI(APIView):
                 "status": True,
                 "message": "Dashboard data fetched successfully",
                 "data": {
+
                     "overview": {
                         "total_users": total_users,
                         "new_today": new_today,
                         "new_this_week": new_this_week,
-                        "new_this_month": new_this_month,
+                        "new_this_month": new_this_month
                     },
+
                     "subscription_summary": {
-                        "inactive": inactive_count,
-                        "trial": trial_count,
-                        "active_trial_now": active_trial_now,
-                        "paid": paid_count,
-                        "plan_breakdown": plan_breakdown,
+                        "total_subscriptions": total_subscriptions,
+
+                        "active_subscriptions": active_subscriptions,
+                        "inactive_subscriptions": inactive_subscriptions,
+                        "expired_subscriptions": expired_subscriptions,
+                        "cancelled_subscriptions": cancelled_subscriptions,
+                        "created_subscriptions": created_subscriptions,
+
+                        "monthly_subscriptions": monthly_subscriptions,
+                        "annual_subscriptions": annual_subscriptions,
+
+                        "monthly_revenue": monthly_revenue,
+                        "annual_revenue": annual_revenue,
+                        "total_revenue": total_revenue,
+
+                        "plan_breakdown": plan_breakdown
                     },
+
                     "monthly_signups": {
                         "month": month,
                         "year": year,
@@ -352,6 +508,7 @@ class AdminDashboardAPI(APIView):
             }, status=status.HTTP_200_OK)
 
         except ValueError:
+
             return Response({
                 "statusCode": 400,
                 "status": False,
@@ -359,14 +516,13 @@ class AdminDashboardAPI(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
+
             return Response({
                 "statusCode": 500,
                 "status": False,
-                "message": f"Internal server error: {str(e)}"
+                "message": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
-
-
 class UserListAPIView(APIView):
 
     def get(self, request):
@@ -378,8 +534,7 @@ class UserListAPIView(APIView):
             limit = int(request.GET.get("limit", 10))
 
             queryset = UserProfile.objects.select_related(
-                "user",
-                "subscriptiontype"
+                "user"
             ).order_by("-created_at")
 
             # ==========================================
@@ -408,6 +563,33 @@ class UserListAPIView(APIView):
 
             for profile in page_obj:
 
+                active_subscription = (
+                    UserSubscription.objects
+                    .filter(
+                        user=profile.user,
+                        status="active",
+                        is_paid=True
+                    )
+                    .select_related("plan")
+                    .order_by("-created_at")
+                    .first()
+                )
+
+                subscription_data = None
+
+                if active_subscription:
+                    subscription_data = {
+                        "subscription_id": active_subscription.id,
+                        "plan_id": active_subscription.plan.id if active_subscription.plan else None,
+                        "plan_name": active_subscription.plan.plan_name if active_subscription.plan else None,
+                        "billing_cycle": active_subscription.billing_cycle,
+                        "amount": active_subscription.amount,
+                        "status": active_subscription.status,
+                        "is_paid": active_subscription.is_paid,
+                        "start_date": active_subscription.start_date,
+                        "end_date": active_subscription.end_date,
+                    }
+
                 data.append({
                     "id": profile.id,
                     "user_id": profile.user.id,
@@ -420,17 +602,7 @@ class UserListAPIView(APIView):
                     "state": profile.state,
                     "pin_code": profile.pin_code,
 
-                    "subscription_active": profile.subscription_active,
-                    "is_paid_subscription_active": profile.is_paid_subscription_active,
-                    "subscription_status": profile.subscription_status,
-
-                    "subscription_plan":
-                        profile.subscriptiontype.name
-                        if profile.subscriptiontype
-                        else None,
-
-                    "trial_start_date": profile.trial_start_date,
-                    "trial_end_date": profile.trial_end_date,
+                    "subscription": subscription_data,
 
                     "created_at": profile.created_at
                 })
@@ -440,7 +612,6 @@ class UserListAPIView(APIView):
                 "statusCode": 200,
                 "message": "Users fetched successfully",
                 "data": data,
-
                 "pagination": {
                     "current_page": page,
                     "total_pages": paginator.num_pages,
@@ -457,6 +628,5 @@ class UserListAPIView(APIView):
                 "status": False,
                 "statusCode": 500,
                 "message": str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)           
                         

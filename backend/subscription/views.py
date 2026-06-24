@@ -20,6 +20,8 @@ from drf_yasg import openapi
 from django.utils import timezone 
 from django.utils.timezone import timedelta
 from user_auth.models import SubscriptionPlan
+from dateutil.relativedelta import relativedelta
+
 
 # class CreateSubscriptionAPIView(APIView): 
 #     permission_classes = [IsAuthenticated]
@@ -100,6 +102,7 @@ from user_auth.models import SubscriptionPlan
 class CreateSubscriptionAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
+
     @swagger_auto_schema(tags=["Subscription"])
     def post(self, request):
 
@@ -109,7 +112,10 @@ class CreateSubscriptionAPIView(APIView):
         billing_cycle = request.data.get("billing_cycle")
 
         if not plan_id:
-            return error_response("plan_id is required", 400)
+            return error_response(
+                "plan_id is required",
+                400
+            )
 
         if billing_cycle not in ["monthly", "annual"]:
             return error_response(
@@ -120,7 +126,8 @@ class CreateSubscriptionAPIView(APIView):
         try:
             plan = SubscriptionPlan.objects.get(
                 id=plan_id,
-                is_active=True
+                is_active=True,
+                is_deleted=False
             )
 
         except SubscriptionPlan.DoesNotExist:
@@ -129,20 +136,24 @@ class CreateSubscriptionAPIView(APIView):
                 404
             )
 
-        # deactivate old subscription
-        UserSubscription.objects.filter(
-            user=user,
-            status="active"
-        ).update(status="inactive")
-
         amount = (
             plan.monthly_price
             if billing_cycle == "monthly"
             else plan.annual_price
         )
 
+        # ==========================
         # FREE PLAN
+        # ==========================
         if amount == 0:
+
+            start_date = timezone.now()
+
+            end_date = (
+                start_date + relativedelta(months=1)
+                if billing_cycle == "monthly"
+                else start_date + relativedelta(years=1)
+            )
 
             subscription = UserSubscription.objects.create(
                 user=user,
@@ -151,25 +162,33 @@ class CreateSubscriptionAPIView(APIView):
                 amount=0,
                 is_paid=True,
                 status="active",
-                start_date=timezone.now()
+                start_date=start_date,
+                end_date=end_date
             )
 
             return success_response(
-                message="Subscription activated successfully",
+                message="Free plan activated successfully",
                 data={
                     "subscription_id": subscription.id,
+                    "plan_id": plan.id,
                     "plan_name": plan.plan_name,
                     "billing_cycle": billing_cycle,
                     "amount": 0,
-                    "payment_required": False
-                }
+                    "payment_required": False,
+                    "status": "active",
+                    "start_date": start_date,
+                    "end_date": end_date
+                },
+                statusCode=200
             )
 
+        # ==========================
         # PAID PLAN
+        # ==========================
         try:
 
             razorpay_order = client.order.create({
-                "amount": int(amount * 100),
+                "amount": int(float(amount) * 100),
                 "currency": "INR",
                 "payment_capture": 1
             })
@@ -179,7 +198,8 @@ class CreateSubscriptionAPIView(APIView):
                 plan=plan,
                 billing_cycle=billing_cycle,
                 amount=amount,
-                status="created"
+                status="created",
+                razorpay_order_id=razorpay_order["id"]  # add field in model
             )
 
             return success_response(
@@ -187,15 +207,26 @@ class CreateSubscriptionAPIView(APIView):
                 data={
                     "subscription_id": subscription.id,
                     "order_id": razorpay_order["id"],
-                    "amount": amount,
+                    "plan_id": plan.id,
+                    "plan_name": plan.plan_name,
+                    "billing_cycle": billing_cycle,
+                    "amount": float(amount),
+                    "amount_paise": int(float(amount) * 100),
                     "currency": "INR",
-                    "razorpay_key": settings.RAZORPAY_KEY_ID
+                    "razorpay_key": settings.RAZORPAY_KEY_ID,
+                    "payment_required": True
                 },
                 statusCode=201
             )
 
         except Exception as e:
-            return error_response(str(e), 500)
+            return error_response(
+                str(e),
+                500
+            )
+
+
+
         
 class SubscriptionPlansAPIView(APIView):
     permission_classes = [AllowAny]
@@ -470,7 +501,22 @@ import hashlib
 class VerifyPaymentAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
+
     def post(self, request):
+
+        required_fields = [
+            "subscription_id",
+            "razorpay_order_id",
+            "razorpay_payment_id",
+            "razorpay_signature"
+        ]
+
+        for field in required_fields:
+            if not request.data.get(field):
+                return error_response(
+                    f"{field} is required",
+                    400
+                )
 
         subscription_id = request.data.get("subscription_id")
         razorpay_order_id = request.data.get("razorpay_order_id")
@@ -489,6 +535,12 @@ class VerifyPaymentAPIView(APIView):
                 404
             )
 
+        if subscription.is_paid:
+            return error_response(
+                "Subscription is already activated",
+                400
+            )
+
         payload = (
             f"{razorpay_order_id}|{razorpay_payment_id}"
         )
@@ -505,16 +557,27 @@ class VerifyPaymentAPIView(APIView):
                 400
             )
 
+        UserSubscription.objects.filter(
+            user=request.user,
+            status="active"
+        ).exclude(
+            id=subscription.id
+        ).update(
+            status="inactive"
+        )
+
         subscription.razorpay_payment_id = razorpay_payment_id
         subscription.razorpay_signature = razorpay_signature
         subscription.is_paid = True
         subscription.status = "active"
         subscription.start_date = timezone.now()
 
+        from dateutil.relativedelta import relativedelta
+
         if subscription.billing_cycle == "monthly":
-            subscription.end_date = timezone.now() + timedelta(days=30)
+            subscription.end_date = timezone.now() + relativedelta(months=1)
         else:
-            subscription.end_date = timezone.now() + timedelta(days=365)
+            subscription.end_date = timezone.now() + relativedelta(years=1)
 
         subscription.save()
 
@@ -523,8 +586,14 @@ class VerifyPaymentAPIView(APIView):
             data={
                 "subscription_id": subscription.id,
                 "plan_name": subscription.plan.plan_name,
-                "status": "active"
+                "billing_cycle": subscription.billing_cycle,
+                "start_date": subscription.start_date,
+                "end_date": subscription.end_date,
+                "status": subscription.status
             }
         )
-        
-                
+
+
+
+            
+                    

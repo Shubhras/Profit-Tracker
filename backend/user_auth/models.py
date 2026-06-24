@@ -170,6 +170,32 @@ class SubscriptionPlan(models.Model):
         verbose_name_plural = "Subscription Plans"
 
 
+# class LegalDocument(models.Model):
+#     TITLE_CHOICES = [
+#         ("terms", "Terms and Conditions"),
+#         ("privacy_policy", "Privacy Policy"),
+#         ("about_us", "About Us"),
+#         ("third_party_policy", "Third Party Policy"),
+#         ("plateform_policy", "Platform Policy"),
+#         ("return_policy", "Return Policy"),
+#         ("contact_us", "Contact Us"),
+#     ]
+
+#     title = models.CharField(max_length=50, choices=TITLE_CHOICES)
+#     slug = models.SlugField(unique=True)
+#     content = models.TextField()
+#     language = models.CharField(max_length=10, default='en')
+#     version = models.CharField(max_length=20, blank=True, null=True)
+#     is_active = models.BooleanField(default=True)
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+#     is_deleted = models.BooleanField(default=False)
+
+#     def __str__(self):
+#         return dict(self.TITLE_CHOICES).get(self.title, self.title) 
+
+
+
 class LegalDocument(models.Model):
     TITLE_CHOICES = [
         ("terms", "Terms and Conditions"),
@@ -183,7 +209,7 @@ class LegalDocument(models.Model):
 
     title = models.CharField(max_length=50, choices=TITLE_CHOICES)
     slug = models.SlugField(unique=True)
-    content = models.TextField()
+    content = models.TextField(help_text="HTML Content")
     language = models.CharField(max_length=10, default='en')
     version = models.CharField(max_length=20, blank=True, null=True)
     is_active = models.BooleanField(default=True)
@@ -192,7 +218,7 @@ class LegalDocument(models.Model):
     is_deleted = models.BooleanField(default=False)
 
     def __str__(self):
-        return dict(self.TITLE_CHOICES).get(self.title, self.title) 
+        return dict(self.TITLE_CHOICES).get(self.title, self.title)
     
 
 
@@ -293,6 +319,126 @@ class Promocode(models.Model):
     def __str__(self):
         return self.promocode or "No Promo"
 
+
+class Module(models.Model):
+
+    name = models.CharField(
+        max_length=100,
+        unique=True
+    )
+
+    slug = models.SlugField(
+        unique=True,
+        blank=True
+    )
+
+    description = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+    
+
+class SubModule(models.Model):
+
+    module = models.ForeignKey(
+        Module,
+        on_delete=models.CASCADE,
+        related_name="submodules"
+    )
+
+    name = models.CharField(max_length=100)
+
+    slug = models.SlugField(
+        blank=True
+    )
+
+    description = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = (
+            "module",
+            "name"
+        )
+
+    def save(self, *args, **kwargs):
+
+        if not self.slug:
+            self.slug = slugify(self.name)
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.module.name} - {self.name}"
+    
+
+
+class UserModulePermission(models.Model):
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="module_permissions"
+    )
+
+    module = models.ForeignKey(
+        Module,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+
+    submodule = models.ForeignKey(
+        SubModule,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+
+    can_view = models.BooleanField(default=True)
+
+    can_create = models.BooleanField(default=False)
+
+    can_update = models.BooleanField(default=False)
+
+    can_delete = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = (
+            "user",
+            "module",
+            "submodule"
+        )
+
+    def __str__(self):
+        return f"{self.user.email}"
+        
+        
 
         
 

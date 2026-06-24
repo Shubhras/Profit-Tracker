@@ -50,12 +50,12 @@ class UserSubscription(models.Model):
     plan = models.ForeignKey(
         SubscriptionPlan,
         on_delete=models.PROTECT,
-        related_name="user_subscriptions"
+        related_name="user_subscriptions", null=True
     )
 
     billing_cycle = models.CharField(
         max_length=20,
-        choices=BILLING_CYCLE_CHOICES
+        choices=BILLING_CYCLE_CHOICES,default="monthly"
     )
 
     amount = models.DecimalField(
@@ -85,6 +85,12 @@ class UserSubscription(models.Model):
     )
 
     razorpay_payment_id = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True
+    )
+    
+    razorpay_order_id = models.CharField(
         max_length=100,
         blank=True,
         null=True

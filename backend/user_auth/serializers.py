@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from user_auth.models import *
+from subscription.models import UserSubscription
 
 
 class UserRegisterSerializer(serializers.Serializer):
@@ -131,19 +132,56 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         ]
         
 
+# class UserProfileSerializer(serializers.ModelSerializer):
+#     # ✅ Include profile fields inside user response
+#     name = serializers.CharField(source="profile.name", read_only=True)
+#     business_name = serializers.CharField(source="profile.business_name", read_only=True)
+#     mobile_number = serializers.CharField(source="profile.mobile_number", read_only=True)
+#     #gst_number = serializers.CharField(source="profile.gst_number", read_only=True)
+
+#     address = serializers.CharField(source="profile.address", read_only=True)
+#     city = serializers.CharField(source="profile.city", read_only=True)
+#     state = serializers.CharField(source="profile.state", read_only=True)
+#     pin_code = serializers.CharField(source="profile.pin_code", read_only=True)
+
+#     accepted_terms = serializers.BooleanField(source="profile.accepted_terms", read_only=True)
+
+#     class Meta:
+#         model = User
+#         fields = [
+#             "id",
+#             "username",
+#             "email",
+
+#             "name",
+#             "business_name",
+#             "mobile_number",
+#             #"gst_number",
+#             "address",
+#             "city",
+#             "state",
+#             "pin_code",
+#             "accepted_terms",
+#         ]
+        
+
 class UserProfileSerializer(serializers.ModelSerializer):
-    # ✅ Include profile fields inside user response
+    # Profile fields
     name = serializers.CharField(source="profile.name", read_only=True)
     business_name = serializers.CharField(source="profile.business_name", read_only=True)
     mobile_number = serializers.CharField(source="profile.mobile_number", read_only=True)
-    #gst_number = serializers.CharField(source="profile.gst_number", read_only=True)
 
     address = serializers.CharField(source="profile.address", read_only=True)
     city = serializers.CharField(source="profile.city", read_only=True)
     state = serializers.CharField(source="profile.state", read_only=True)
     pin_code = serializers.CharField(source="profile.pin_code", read_only=True)
 
-    accepted_terms = serializers.BooleanField(source="profile.accepted_terms", read_only=True)
+    accepted_terms = serializers.BooleanField(
+        source="profile.accepted_terms",
+        read_only=True
+    )
+
+    subscription = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -155,16 +193,45 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "name",
             "business_name",
             "mobile_number",
-            #"gst_number",
+
             "address",
             "city",
             "state",
             "pin_code",
             "accepted_terms",
-        ]
-        
 
-        
+            "subscription"
+        ]
+
+    def get_subscription(self, obj):
+
+        subscription = (
+            UserSubscription.objects
+            .filter(
+                user=obj,
+                status="active",
+                is_paid=True
+            )
+            .select_related("plan")
+            .order_by("-created_at")
+            .first()
+        )
+
+        if not subscription:
+            return None
+
+        return {
+            "subscription_id": subscription.id,
+            "plan_id": subscription.plan.id if subscription.plan else None,
+            "plan_name": subscription.plan.plan_name if subscription.plan else None,
+            "billing_cycle": subscription.billing_cycle,
+            "amount": subscription.amount,
+            "status": subscription.status,
+            "is_paid": subscription.is_paid,
+            "start_date": subscription.start_date,
+            "end_date": subscription.end_date,
+        }
+                
 class SubscriptionPlanSerializer(serializers.ModelSerializer):
     discount_percentage = serializers.SerializerMethodField()
     average_discount = serializers.SerializerMethodField()
@@ -285,4 +352,67 @@ class LegalDocumentSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at', 'is_deleted']
     
 
+
+class ModuleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Module
+        fields = "__all__"
         
+
+
+class SubModuleSerializer(serializers.ModelSerializer):
+
+    module_name = serializers.CharField(
+        source="module.name",
+        read_only=True
+    )
+
+    class Meta:
+        model = SubModule
+        fields = "__all__"
+        
+
+class UserModulePermissionSerializer(
+    serializers.ModelSerializer
+):
+
+    class Meta:
+        model = UserModulePermission
+
+        fields = "__all__"        
+        
+        
+
+
+
+class SubModuleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SubModule
+        fields = (
+            "id",
+            "name",
+            "slug",
+            "description",
+            "is_active",
+        )
+
+
+class ModuleWithSubModulesSerializer(serializers.ModelSerializer):
+
+    submodules = SubModuleSerializer(
+        many=True,
+        read_only=True
+    )
+
+    class Meta:
+        model = Module
+        fields = (
+            "id",
+            "name",
+            "slug",
+            "description",
+            "is_active",
+            "submodules",
+        )        
