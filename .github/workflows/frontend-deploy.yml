@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      NODE_VERSION: "20"
+      NODE_VERSION: "18"
 
     steps:
       - name: Checkout code
