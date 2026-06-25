@@ -52,54 +52,72 @@ jobs:
       - name: Build frontend
         run: CI=false npm run build
 
+      - name: Verify build
+        run: |
+          ls -la build
+
       - name: Create build archive
-        run: tar -czf frontend-build.tar.gz build
+        run: |
+          tar -czf frontend-build.tar.gz build
 
       - name: Install sshpass
         run: |
           sudo apt-get update
           sudo apt-get install -y sshpass
 
+      - name: Test SSH Connection
+        run: |
+          sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh \
+            -o ConnectTimeout=15 \
+            -o StrictHostKeyChecking=no \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "echo SSH Connection Successful"
+
       - name: Upload build archive to server
         run: |
-          sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp \
-            -o StrictHostKeyChecking=no \
-            frontend-build.tar.gz \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/frontend-build.tar.gz
+          for i in 1 2 3; do
+            sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp \
+              -o ConnectTimeout=30 \
+              -o StrictHostKeyChecking=no \
+              frontend-build.tar.gz \
+              ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/frontend-build.tar.gz && break
+
+            echo "Upload failed. Retry $i/3..."
+            sleep 10
+          done
 
       - name: Deploy on server
         run: |
           sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh \
             -o StrictHostKeyChecking=no \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            set -e
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+              set -e
 
-            echo "Create temp directory..."
-            rm -rf /tmp/frontend-build
-            mkdir -p /tmp/frontend-build
+              echo 'Create temp directory...'
+              rm -rf /tmp/frontend-build
+              mkdir -p /tmp/frontend-build
 
-            echo "Extract uploaded build..."
-            tar -xzf /tmp/frontend-build.tar.gz -C /tmp/frontend-build
+              echo 'Extract uploaded build...'
+              tar -xzf /tmp/frontend-build.tar.gz -C /tmp/frontend-build
 
-            echo "Ensure live frontend directory exists..."
-            sudo mkdir -p /var/www/frontend
+              echo 'Ensure live frontend directory exists...'
+              sudo mkdir -p /var/www/frontend
 
-            echo "Clean old frontend..."
-            sudo rm -rf /var/www/frontend/*
+              echo 'Clean old frontend...'
+              sudo rm -rf /var/www/frontend/*
 
-            echo "Copy new build..."
-            sudo cp -r /tmp/frontend-build/build/* /var/www/frontend/
+              echo 'Copy new build...'
+              sudo cp -r /tmp/frontend-build/build/* /var/www/frontend/
 
-            echo "Set permissions..."
-            sudo chown -R www-data:www-data /var/www/frontend
+              echo 'Set permissions...'
+              sudo chown -R www-data:www-data /var/www/frontend
 
-            echo "Reload nginx..."
-            sudo systemctl reload nginx
+              echo 'Reload nginx...'
+              sudo systemctl reload nginx
 
-            echo "Cleanup temp files..."
-            rm -rf /tmp/frontend-build
-            rm -f /tmp/frontend-build.tar.gz
+              echo 'Cleanup temp files...'
+              rm -rf /tmp/frontend-build
+              rm -f /tmp/frontend-build.tar.gz
 
-            echo "Frontend deployment completed successfully."
-            
-          EOF
+              echo 'Frontend deployment completed successfully.'
+            "
