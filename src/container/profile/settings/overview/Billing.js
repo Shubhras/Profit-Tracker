@@ -12,8 +12,6 @@ import {
   ReloadOutlined,
 } from '@ant-design/icons';
 import UilBill from '@iconscout/react-unicons/icons/uil-bill';
-import UilCreditCard from '@iconscout/react-unicons/icons/uil-credit-card';
-import UilHistory from '@iconscout/react-unicons/icons/uil-history';
 // import { Button } from '../../../../components/buttons/buttons'; // Removed as Ant Design Button is used directly
 // import Heading from '../../../../components/heading/heading'; // Removed as per new design
 import { DataService } from '../../../../config/dataService/dataService';
@@ -97,31 +95,20 @@ function Billing() {
     });
   };
 
-  // Format amount from paise to rupees
-  const formatAmount = (amountInPaise, currencySymbol = '₹') => {
-    if (!amountInPaise && amountInPaise !== 0) return 'N/A';
-    const amount = amountInPaise / 100;
-    return `${currencySymbol}${amount.toLocaleString('en-IN')}`;
-  };
+  // const getPlanName = () => subscription?.history?.[0]?.line_items?.[0]?.name || 'Subscription Plan';
 
-  // Get plan name from subscription history
-  const getPlanName = () => subscription?.history?.[0]?.line_items?.[0]?.name || 'Subscription Plan';
+  // const getPlanPrice = () => {
+  //   if (subscription?.history?.[0]?.amount) {
+  //     const currencySymbol = subscription.history[0].currency_symbol || '₹';
+  //     return formatAmount(subscription.history[0].amount, currencySymbol);
+  //   }
+  //   return 'N/A';
+  // };
 
-  // Get plan price from history
-  const getPlanPrice = () => {
-    if (subscription?.history?.[0]?.amount) {
-      const currencySymbol = subscription.history[0].currency_symbol || '₹';
-      return formatAmount(subscription.history[0].amount, currencySymbol);
-    }
-    return 'N/A';
-  };
+  // const getNextBillingDate = () =>
+  //   subscription?.history?.[0]?.billing_end ? formatDate(subscription.history[0].billing_end) : 'N/A';
 
-  // Get next billing date from history
-  const getNextBillingDate = () =>
-    subscription?.history?.[0]?.billing_end ? formatDate(subscription.history[0].billing_end) : 'N/A';
-
-  // Get payment method from history
-  const getPaymentMethod = () => subscription?.history?.[0]?.customer_details?.customer_email || 'N/A';
+  // const getPaymentMethod = () => subscription?.history?.[0]?.customer_details?.customer_email || 'N/A';
 
   const handleUpgrade = () => {
     window.location.href = '/pricing';
@@ -225,10 +212,12 @@ function Billing() {
                   Current Plan
                 </h3>
                 <div className="flex items-baseline gap-1 mb-1">
-                  <h2 className="text-3xl font-bold text-slate-800 dark:text-white">{getPlanPrice()}</h2>
-                  <span className="text-slate-400 text-sm font-medium">/ month</span>
+                  <h2 className="text-3xl font-bold text-slate-800 dark:text-white">₹{subscription?.amount}</h2>
+                  <span className="text-slate-400 text-sm font-medium"> / {subscription?.billing_cycle}</span>
                 </div>
-                <p className="text-primary font-bold text-lg mb-6">{getPlanName()}</p>
+                <p className="text-primary font-bold text-lg">{subscription?.plan?.plan_name}</p>
+
+                <p className="text-sm text-slate-500 mt-2">{subscription?.plan?.description}</p>
 
                 <div className="flex flex-col gap-3 mt-auto">
                   <Button
@@ -251,92 +240,65 @@ function Billing() {
               </div>
 
               {/* Usage Limits Card */}
-              <div className="bg-slate-50 dark:bg-white/5 rounded-2xl p-6 border border-slate-100 dark:border-white/5 flex flex-col justify-between">
-                <h3 className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider mb-4">
-                  Usage Limits
-                </h3>
-                <div className="space-y-6">
-                  <div>
-                    <div className="flex justify-between text-sm mb-1.5">
-                      <span className="text-slate-600 dark:text-slate-300 font-medium">Users</span>
-                      <span className="text-slate-800 dark:text-white font-bold">
-                        {subscription?.users_limit || 1} / 5
-                      </span>
-                    </div>
-                    <div className="h-2 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500 w-1/5 rounded-full" />
-                    </div>
+              <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 mb-8">
+                <h3 className="text-lg font-semibold mb-5">Subscription Details</h3>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between">
+                    <span>Billing Cycle</span>
+                    <span className="font-semibold capitalize">{subscription?.billing_cycle}</span>
                   </div>
-                  <div>
-                    <div className="flex justify-between text-sm mb-1.5">
-                      <span className="text-slate-600 dark:text-slate-300 font-medium">Storage</span>
-                      <span className="text-slate-800 dark:text-white font-bold">
-                        {subscription?.file_space || '100MB'}
-                      </span>
-                    </div>
-                    <div className="h-2 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full bg-blue-500 w-3/4 rounded-full" />
-                    </div>
+
+                  <div className="flex justify-between">
+                    <span>Status</span>
+                    <Tag color={subscription?.status === 'active' ? 'green' : 'orange'}>{subscription?.status}</Tag>
                   </div>
-                  <div>
-                    <div className="flex justify-between text-sm mb-1.5">
-                      <span className="text-slate-600 dark:text-slate-300 font-medium">Projects</span>
-                      <span className="text-slate-800 dark:text-white font-bold">
-                        {subscription?.active_projects || 2} Active
-                      </span>
-                    </div>
-                    <div className="h-2 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full bg-purple-500 w-1/2 rounded-full" />
-                    </div>
+
+                  <div className="flex justify-between">
+                    <span>Payment</span>
+                    <Tag color={subscription?.is_paid ? 'green' : 'red'}>
+                      {subscription?.is_paid ? 'Paid' : 'Pending'}
+                    </Tag>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span>Created</span>
+                    <span>{formatDate(subscription?.created_at)}</span>
                   </div>
                 </div>
               </div>
 
+              <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 mb-8">
+                <h3 className="text-lg font-semibold mb-5">Terms & Conditions</h3>
+
+                <ul className="space-y-3">
+                  {subscription?.plan?.terms_and_conditions?.map((item, index) => (
+                    <li key={index} className="flex gap-3">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 mt-2" />
+
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
               {/* Payment Method Card */}
-              <div className="bg-slate-50 dark:bg-white/5 rounded-2xl p-6 border border-slate-100 dark:border-white/5 flex flex-col">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
-                    Payment Method
-                  </h3>
-                  <Tag
-                    color="blue"
-                    className="m-0 border-0 bg-blue-100 text-blue-600 rounded-md font-bold text-xs px-2"
-                  >
-                    PRIMARY
-                  </Tag>
-                </div>
+              <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 mb-8">
+                <h3 className="text-lg font-semibold mb-5">Features Included</h3>
 
-                <div className="flex items-center gap-4 mb-6 p-4 bg-white dark:bg-white/10 rounded-xl border border-slate-100 dark:border-white/5 shadow-sm">
-                  <div className="w-10 h-7 flex items-center justify-center bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded">
-                    <UilCreditCard className="w-5 h-5 text-slate-400" />
-                  </div>
-                  <div>
-                    <p className="text-slate-800 dark:text-white font-bold text-sm m-0">Visa ending in 4242</p>
-                    <p className="text-slate-400 text-xs m-0">Expires 12/29</p>
-                  </div>
+                <div className="space-y-3">
+                  {subscription?.plan?.features?.map((feature, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <span>{feature}</span>
+                    </div>
+                  ))}
                 </div>
-
-                <div className="mt-auto space-y-3 text-sm">
-                  <div className="flex justify-between py-2 border-b border-slate-200 dark:border-white/5">
-                    <span className="text-slate-500 dark:text-slate-400">Next Billing</span>
-                    <span className="text-slate-800 dark:text-white font-medium">{getNextBillingDate()}</span>
-                  </div>
-                  <div className="flex justify-between py-2">
-                    <span className="text-slate-500 dark:text-slate-400">Email</span>
-                    <span
-                      className="text-slate-800 dark:text-white font-medium truncate max-w-[120px]"
-                      title={getPaymentMethod()}
-                    >
-                      {getPaymentMethod()}
-                    </span>
-                  </div>
-                </div>
-                {/* Button Removed as per request */}
               </div>
             </div>
 
             {/* Invoice History */}
-            <div className="mt-8">
+            {/* <div className="mt-8">
               <div className="flex items-center gap-2 mb-6">
                 <UilHistory className="w-5 h-5 text-slate-400" />
                 <h3 className="text-lg font-bold text-slate-800 dark:text-white m-0">Invoice History</h3>
@@ -361,35 +323,37 @@ function Billing() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                    {subscription?.history?.map((invoice, index) => (
-                      <tr key={index} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                        <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300 font-medium">
-                          {formatDate(invoice.paid_at || invoice.created_at)}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-slate-800 dark:text-white font-semibold">
-                          {invoice.line_items?.[0]?.name || 'Pro Plan Subscription'}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-slate-800 dark:text-white font-bold">
-                          {formatAmount(invoice.amount_paid || invoice.amount, invoice.currency_symbol)}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold capitalize ${
-                              invoice.status === 'paid'
-                                ? 'bg-emerald-100 text-emerald-700'
-                                : 'bg-slate-100 text-slate-600'
-                            }`}
-                          >
+                    {subscription?.history?.length > 0 ? (
+                      subscription?.history?.map((invoice, index) => (
+                        <tr key={index} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                          <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300 font-medium">
+                            {formatDate(invoice.created_at)}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-slate-800 dark:text-white font-semibold">
+                            {invoice.subscription?.plan?.plan_name || 'Pro Plan Subscription'}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-slate-800 dark:text-white font-bold">
+                            ₹{subscription?.amount}{' '}
+                          </td>
+                          <td className="px-6 py-4">
                             <span
-                              className={`w-1.5 h-1.5 rounded-full ${
-                                invoice.status === 'paid' ? 'bg-emerald-500' : 'bg-slate-400'
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold capitalize ${
+                                invoice.status === 'paid'
+                                  ? 'bg-emerald-100 text-emerald-700'
+                                  : 'bg-slate-100 text-slate-600'
                               }`}
-                            />
-                            {invoice.status || 'Paid'}
-                          </span>
-                        </td>
-                      </tr>
-                    )) || (
+                            >
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full ${
+                                  invoice.status === 'paid' ? 'bg-emerald-500' : 'bg-slate-400'
+                                }`}
+                              />
+                              {invoice.status || 'Pending'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
                       <tr>
                         <td colSpan="4" className="px-6 py-12 text-center text-slate-400">
                           No invoice history found
@@ -399,7 +363,7 @@ function Billing() {
                   </tbody>
                 </table>
               </div>
-            </div>
+            </div> */}
           </div>
         )}
       </div>

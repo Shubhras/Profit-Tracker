@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Modal, Form, Input, InputNumber, Select, Spin } from 'antd';
-import { FormOutlined, PlusOutlined, DeleteOutlined, CheckOutlined } from '@ant-design/icons';
+import { Button, Modal, Form, Input, InputNumber, Spin } from 'antd';
+import { FormOutlined, PlusOutlined, DeleteOutlined, CheckOutlined, ExclamationCircleFilled } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   getSubscriptionList,
@@ -25,6 +25,9 @@ function SubscriptionTable() {
   }, [dispatch]);
 
   const plans = getsubscriptionData?.results?.data || [];
+
+  const [duplicateModal, setDuplicateModal] = useState(false);
+  const [duplicateMessage, setDuplicateMessage] = useState('');
 
   return (
     <>
@@ -197,20 +200,46 @@ function SubscriptionTable() {
               features: values.features || [],
               terms_and_conditions: values.terms_and_conditions || [],
               status: values.status,
-              is_active: values.status === 'active',
+              // is_active: values.status === 'active',
+              is_active: isEditMode ? values.status === 'active' : true,
             };
+            // if (isEditMode) {
+            //   await dispatch(updateSubscription(selectedId, payload));
+            // } else {
+            //   await dispatch(CreateSubscription(payload));
+            // }
+
+            // dispatch(getSubscriptionList());
+
+            // setIsModalOpen(false);
+            // form.resetFields();
+            // setSelectedId(null);
+            // setIsEditMode(false);
             if (isEditMode) {
               await dispatch(updateSubscription(selectedId, payload));
+
+              dispatch(getSubscriptionList());
+
+              setIsModalOpen(false);
+              form.resetFields();
+              setSelectedId(null);
+              setIsEditMode(false);
             } else {
-              await dispatch(CreateSubscription(payload));
+              const response = await dispatch(CreateSubscription(payload));
+
+              if (response?.status === false) {
+                setDuplicateMessage(response.message);
+                setDuplicateModal(true);
+                return;
+              }
+
+              dispatch(getSubscriptionList());
+
+              setIsModalOpen(false);
+              form.resetFields();
+              setSelectedId(null);
+              setIsEditMode(false);
             }
-
-            dispatch(getSubscriptionList());
-
-            setIsModalOpen(false);
-            form.resetFields();
-            setSelectedId(null);
-            setIsEditMode(false);
           }}
         >
           <Form.Item label="Plan Name" name="plan_name" rules={[{ required: true, message: 'Please enter plan name' }]}>
@@ -225,23 +254,25 @@ function SubscriptionTable() {
             <Input.TextArea rows={3} />
           </Form.Item>
 
-          <Form.Item
-            label="Monthly Price"
-            name="monthly_price"
-            rules={[{ required: true, message: 'Please enter monthly price' }]}
-          >
-            <InputNumber size="small" className="w-full" />
-          </Form.Item>
+          <div className="grid grid-cols-2 gap-4">
+            <Form.Item
+              label="Monthly Price"
+              name="monthly_price"
+              rules={[{ required: true, message: 'Please enter monthly price' }]}
+            >
+              <InputNumber type="number" size="small" min={0} inputMode="numeric" className="w-full" />
+            </Form.Item>
 
-          <Form.Item
-            label="Annual Price"
-            name="annual_price"
-            rules={[{ required: true, message: 'Please enter annual price' }]}
-          >
-            <InputNumber size="small" className="w-full" />
-          </Form.Item>
+            <Form.Item
+              label="Annual Price"
+              name="annual_price"
+              rules={[{ required: true, message: 'Please enter annual price' }]}
+            >
+              <InputNumber type="number" size="small" min={0} inputMode="numeric" className="w-full" />
+            </Form.Item>
+          </div>
 
-          <Form.Item label="Status" name="status" initialValue="active" className="mb-2">
+          {/* <Form.Item label="Status" name="status" initialValue="active" className="mb-2">
             <Select
               size="small"
               options={[
@@ -249,7 +280,7 @@ function SubscriptionTable() {
                 { label: 'Inactive', value: 'inactive' },
               ]}
             />
-          </Form.Item>
+          </Form.Item> */}
 
           {/* <Form.Item label="Monthly Plan" name="monthlyPlan">
             <InputNumber className="w-full" />
@@ -361,10 +392,10 @@ function SubscriptionTable() {
               Cancel
             </Button>
 
-            <Button
-              danger
+            <button
+              type="button"
               size="small"
-              className="h-[30px] text-[13px] font-semibold bg-red-500 border-red-500 text-white"
+              className="h-[30px] text-[13px] font-semibold bg-red-500 border-red-500 text-white px-3"
               onClick={async () => {
                 await dispatch(DeleteSubscription(selectedId));
 
@@ -375,8 +406,29 @@ function SubscriptionTable() {
               }}
             >
               Yes, Delete
-            </Button>
+            </button>
           </div>
+        </div>
+      </Modal>
+
+      <Modal open={duplicateModal} footer={null} centered width={420} onCancel={() => setDuplicateModal(false)}>
+        <div className="text-center py-4">
+          <div className="w-[70px] h-[70px] mx-auto rounded-full bg-yellow-100 flex items-center justify-center mb-5">
+            <ExclamationCircleFilled
+              style={{
+                fontSize: 40,
+                color: '#FAAD14',
+              }}
+            />
+          </div>
+
+          <h3 style={{ fontWeight: 600, marginBottom: 10 }}>Subscription Already Exists</h3>
+
+          <p style={{ color: '#666', marginBottom: 25 }}>{duplicateMessage}</p>
+
+          <Button type="primary" onClick={() => setDuplicateModal(false)}>
+            OK
+          </Button>
         </div>
       </Modal>
     </>

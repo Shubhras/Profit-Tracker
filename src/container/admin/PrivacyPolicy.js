@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Button, Spin, Modal } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { PlusOutlined, FormOutlined, DeleteOutlined } from '@ant-design/icons';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import {
   getPrivacyPolicy,
   createPrivacyPolicy,
@@ -99,42 +101,43 @@ function PrivacyPolicy() {
   };
 
   return (
-    <div className="p-3 px-2 bg-[#f8f9fb] min-h-screen">
-      <div className="bg-white rounded-lg border overflow-hidden">
-        <div className="flex min-h-[600px]">
-          {/* Sidebar */}
-          <div className="w-[250px] p-3 border-r">
-            <div className="flex flex-col gap-1">
-              {menuItems.map((item) => (
-                <button
-                  type="button"
-                  key={item.value}
-                  onClick={() => setSelectedTab(item.value)}
-                  className={`text-left px-4 py-3 rounded-lg text-[14px] transition-all ${
-                    selectedTab === item.value
-                      ? 'bg-gray-100 font-semibold text-black'
-                      : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Content Section */}
-          <div className="flex-1 p-3">
-            {/* Future Content */}
-            {loading ? (
-              <div className="flex items-center justify-center min-h-[500px]">
-                <Spin size="large" />
+    <>
+      <div className="p-3 px-2 bg-[#f8f9fb] min-h-screen">
+        <div className="bg-white rounded-lg border overflow-hidden">
+          <div className="flex min-h-[600px]">
+            {/* Sidebar */}
+            <div className="w-[250px] p-3 border-r">
+              <div className="flex flex-col gap-1">
+                {menuItems.map((item) => (
+                  <button
+                    type="button"
+                    key={item.value}
+                    onClick={() => setSelectedTab(item.value)}
+                    className={`text-left px-4 py-3 rounded-lg text-[14px] transition-all ${
+                      selectedTab === item.value
+                        ? 'bg-gray-100 font-semibold text-black'
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
               </div>
-            ) : (
-              <div className="mt-3">
-                {!showForm ? (
-                  documents.length > 0 ? (
-                    <>
-                      {/* <div className="flex justify-between items-center mb-5">
+            </div>
+
+            {/* Content Section */}
+            <div className="flex-1 p-3">
+              {/* Future Content */}
+              {loading ? (
+                <div className="flex items-center justify-center min-h-[500px]">
+                  <Spin size="large" />
+                </div>
+              ) : (
+                <div className="mt-3">
+                  {!showForm ? (
+                    documents.length > 0 ? (
+                      <>
+                        {/* <div className="flex justify-between items-center mb-5">
                         <h2 className="text-[20px] font-bold">
                           {menuItems.find((item) => item.value === selectedTab)?.label}
                         </h2>
@@ -153,86 +156,86 @@ function PrivacyPolicy() {
                         </Button>
                       </div> */}
 
-                      <div className="space-y-4">
-                        {documents.map((item) => (
-                          <div
-                            key={item.id}
-                            className="bg-white border rounded-xl p-3 shadow-md hover:shadow-lg transition-all"
-                          >
-                            <div className="flex justify-between items-start mb-4">
-                              <div>
-                                <h3 className="text-lg font-semibold text-gray-800">
-                                  {item.title.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
-                                </h3>
+                        <div className="space-y-4">
+                          {documents.map((item) => (
+                            <div
+                              key={item.id}
+                              className="bg-white border rounded-xl p-3 shadow-md hover:shadow-lg transition-all"
+                            >
+                              <div className="flex justify-between items-start mb-4">
+                                <div>
+                                  <h3 className="text-lg font-semibold text-gray-800">
+                                    {item.title.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                                  </h3>
 
-                                <div className="flex items-center gap-3 mt-2">
-                                  <span
-                                    className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                      item.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                                    }`}
-                                  >
-                                    {item.is_active ? 'Active' : 'Inactive'}
-                                  </span>
+                                  <div className="flex items-center gap-3 mt-2">
+                                    <span
+                                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                        item.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                      }`}
+                                    >
+                                      {item.is_active ? 'Active' : 'Inactive'}
+                                    </span>
 
-                                  <span className="text-xs text-gray-500">
-                                    {new Date(item.created_at).toLocaleDateString()}
-                                  </span>
+                                    <span className="text-xs text-gray-500">
+                                      {new Date(item.created_at).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                  <FormOutlined
+                                    onClick={() => {
+                                      setEditId(item.id);
+                                      setContent(item.content);
+                                      setShowForm(true);
+                                    }}
+                                    className="text-[#1677ff] cursor-pointer text-[17px] drop-shadow-sm transition-all duration-200 hover:scale-110 hover:drop-shadow-md hover:text-[#0958d9]"
+                                  />
+                                  <DeleteOutlined
+                                    onClick={() => handleDelete(item.id)}
+                                    className="text-red-500 cursor-pointer text-[17px] drop-shadow-sm transition-all duration-200 hover:scale-110 hover:drop-shadow-md hover:text-red-700"
+                                  />{' '}
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-3">
-                                <FormOutlined
-                                  onClick={() => {
-                                    setEditId(item.id);
-                                    setContent(item.content);
-                                    setShowForm(true);
-                                  }}
-                                  className="text-[#1677ff] cursor-pointer text-[17px] drop-shadow-sm transition-all duration-200 hover:scale-110 hover:drop-shadow-md hover:text-[#0958d9]"
-                                />
-                                <DeleteOutlined
-                                  onClick={() => handleDelete(item.id)}
-                                  className="text-red-500 cursor-pointer text-[17px] drop-shadow-sm transition-all duration-200 hover:scale-110 hover:drop-shadow-md hover:text-red-700"
-                                />{' '}
-                              </div>
+                              <div
+                                className="policy-content bg-gray-100 rounded-lg p-4"
+                                dangerouslySetInnerHTML={{
+                                  __html: item.content,
+                                }}
+                              />
                             </div>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h2 className="text-[19px] font-bold text-black mb-1">No Information Available</h2>
 
-                            <div
-                              className="bg-gray-100 rounded-lg p-4 text-gray-700"
-                              dangerouslySetInnerHTML={{
-                                __html: item.content,
-                              }}
-                            />
-                          </div>
-                        ))}
+                          <p className="text-gray-500 text-[13px]">No content available.</p>
+                        </div>
+
+                        <Button
+                          type="primary"
+                          icon={<PlusOutlined />}
+                          onClick={() => {
+                            setEditId(null);
+                            setContent('');
+                            setShowForm(true);
+                          }}
+                          className="!bg-[#f58d73] !border-[#f58d73] px-2 flex items-center justify-center text-[13px] font-semibold h-[30px]"
+                        >
+                          Add
+                        </Button>
                       </div>
-                    </>
+                    )
                   ) : (
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h2 className="text-[19px] font-bold text-black mb-1">No Information Available</h2>
+                    <div>
+                      {/* <h2 className="text-[21px] font-bold text-black mb-6">No Data Available</h2> */}
 
-                        <p className="text-gray-500 text-[13px]">No content available.</p>
-                      </div>
-
-                      <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={() => {
-                          setEditId(null);
-                          setContent('');
-                          setShowForm(true);
-                        }}
-                        className="!bg-[#f58d73] !border-[#f58d73] px-2 flex items-center justify-center text-[13px] font-semibold h-[30px]"
-                      >
-                        Add
-                      </Button>
-                    </div>
-                  )
-                ) : (
-                  <div>
-                    {/* <h2 className="text-[21px] font-bold text-black mb-6">No Data Available</h2> */}
-
-                    {/* <div className="mb-5">
+                      {/* <div className="mb-5">
                       <label className="block text-[14px] font-medium mb-2">Select Title</label>
 
                       <select
@@ -247,36 +250,88 @@ function PrivacyPolicy() {
                       </select>
                     </div> */}
 
-                    <textarea
-                      rows={7}
-                      value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                      placeholder="Enter content here..."
-                      className="w-full border border-gray-300 rounded-md p-3 resize-none outline-none"
-                    />
+                      <div className="border border-gray-300 rounded-md overflow-hidden">
+                        <ReactQuill
+                          theme="snow"
+                          value={content}
+                          onChange={setContent}
+                          placeholder="Enter content here..."
+                          className="bg-white"
+                          style={{ minHeight: '350px' }}
+                        />
+                      </div>
 
-                    <div className="flex gap-3 mt-5">
-                      <Button type="primary" onClick={handleSave} className="!bg-[#f58d73] !border-[#f58d73]">
-                        Save
-                      </Button>
+                      <div className="flex gap-3 mt-5">
+                        <Button type="primary" onClick={handleSave} className="!bg-[#f58d73] !border-[#f58d73]">
+                          Save
+                        </Button>
 
-                      <Button
-                        onClick={() => {
-                          setShowForm(false);
-                          setContent('');
-                        }}
-                      >
-                        Cancel
-                      </Button>
+                        <Button
+                          onClick={() => {
+                            setShowForm(false);
+                            setContent('');
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+      <style>{`
+  .policy-content h1{
+    font-size:40px !important;
+    font-weight:700 !important;
+    line-height:1.2 !important;
+    margin:20px 0 !important;
+  }
+
+  .policy-content h2{
+    font-size:32px !important;
+    font-weight:700 !important;
+    margin:18px 0 !important;
+  }
+
+  .policy-content h3{
+    font-size:24px !important;
+    font-weight:600 !important;
+    margin:16px 0 !important;
+  }
+
+  .policy-content p{
+    font-size:16px !important;
+    line-height:1.8 !important;
+    margin:12px 0 !important;
+  }
+
+  .policy-content ul{
+    list-style:disc !important;
+    padding-left:25px !important;
+  }
+
+  .policy-content ol{
+    list-style:decimal !important;
+    padding-left:25px !important;
+  }
+
+  .policy-content li{
+    margin:8px 0 !important;
+  }
+
+  .policy-content strong{
+    font-weight:700 !important;
+  }
+
+  .policy-content em{
+    font-style:italic !important;
+  }
+`}</style>
+    </>
   );
 }
 
