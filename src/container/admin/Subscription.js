@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Modal, Form, Input, InputNumber, Spin } from 'antd';
+import { Button, Modal, Form, Input, InputNumber, Spin, Select } from 'antd';
 import { FormOutlined, PlusOutlined, DeleteOutlined, CheckOutlined, ExclamationCircleFilled } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -63,7 +63,7 @@ function SubscriptionTable() {
                 className="relative bg-white rounded-2xl border border-gray-100 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col h-full"
               >
                 <div className="h-2 bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500" />
-                <div className="p-5">
+                <div className="p-5 flex flex-col flex-1">
                   {/* Active Badge */}
                   <div className="absolute top-4 right-4">
                     <span
@@ -76,12 +76,12 @@ function SubscriptionTable() {
                   </div>
 
                   {/* Top Section */}
-                  <div className="mt-5">
+                  <div className="2">
                     <h2 className="text-[20px] font-semibold">{plan.plan_name}</h2>
-                    <p className="text-[13px] text-gray-500 mt-1">{plan.description}</p>
+                    <p className="text-[13px] text-gray-500 mt-1 mb-0">{plan.description}</p>
                   </div>
 
-                  <div className="border-t border-gray-200 mt-5 pt-4">
+                  <div className="border-t border-gray-200 mt-3 pt-2">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="text-center bg-gray-50 rounded-xl py-3">
                         <p className="text-[12px] text-gray-500 mb-1">Monthly</p>
@@ -130,7 +130,7 @@ function SubscriptionTable() {
                     </>
                   )}
 
-                  <div className="flex justify-end items-center gap-4 mt-3">
+                  <div className="mt-auto pt-5 border-t border-gray-200 flex justify-end items-center gap-4">
                     <FormOutlined
                       className="text-[#1677ff] text-[17px] cursor-pointer drop-shadow-sm transition-all duration-200 hover:scale-110 hover:drop-shadow-md hover:text-[#0958d9]"
                       onClick={() => {
@@ -226,7 +226,15 @@ function SubscriptionTable() {
             // setSelectedId(null);
             // setIsEditMode(false);
             if (isEditMode) {
-              await dispatch(updateSubscription(selectedId, payload));
+              const id = selectedId;
+
+              // Modal turant close
+              setIsModalOpen(false);
+              form.resetFields();
+              setSelectedId(null);
+              setIsEditMode(false);
+
+              await dispatch(updateSubscription(id, payload));
 
               dispatch(getSubscriptionList());
 
@@ -255,14 +263,25 @@ function SubscriptionTable() {
           <Form.Item label="Plan Name" name="plan_name" rules={[{ required: true, message: 'Please enter plan name' }]}>
             <Input size="small" placeholder="Enter plan name" />
           </Form.Item>
-
           <Form.Item
             label="Description"
             name="description"
             rules={[{ required: true, message: 'Please enter description' }]}
           >
-            <Input.TextArea rows={3} />
+            <Input.TextArea autoSize={{ minRows: 2 }} placeholder="Enter description" />
           </Form.Item>
+
+          {isEditMode && (
+            <Form.Item label="Status" name="status" rules={[{ required: true, message: 'Please select status' }]}>
+              <Select
+                size="small"
+                options={[
+                  { label: 'Active', value: 'active' },
+                  { label: 'Inactive', value: 'inactive' },
+                ]}
+              />
+            </Form.Item>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <Form.Item
@@ -407,7 +426,12 @@ function SubscriptionTable() {
               size="small"
               className="h-[30px] text-[13px] font-semibold bg-red-500 border-red-500 text-white px-3"
               onClick={async () => {
-                await dispatch(DeleteSubscription(selectedId));
+                const id = selectedId;
+
+                // Modal turant close
+                setDeleteModalOpen(false);
+                setSelectedId(null);
+                await dispatch(DeleteSubscription(id));
 
                 dispatch(getSubscriptionList());
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Spin, Modal } from 'antd';
+import { Button, Spin, Modal, Select } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { PlusOutlined, FormOutlined, DeleteOutlined } from '@ant-design/icons';
 import ReactQuill from 'react-quill';
@@ -104,9 +104,9 @@ function PrivacyPolicy() {
     <>
       <div className="p-3 px-2 bg-[#f8f9fb] min-h-screen">
         <div className="bg-white rounded-lg border overflow-hidden">
-          <div className="flex min-h-[600px]">
+          <div className="flex md:flex-col min-h-[600px]">
             {/* Sidebar */}
-            <div className="w-[250px] p-3 border-r">
+            <div className="w-[250px] p-3 border-r md:hidden">
               <div className="flex flex-col gap-1">
                 {menuItems.map((item) => (
                   <button
@@ -125,6 +125,17 @@ function PrivacyPolicy() {
               </div>
             </div>
 
+            <div className="hidden md:block mb-4 p-2">
+              <Select
+                className="w-full"
+                value={selectedTab}
+                onChange={(value) => setSelectedTab(value)}
+                options={menuItems.map((item) => ({
+                  label: item.label,
+                  value: item.value,
+                }))}
+              />
+            </div>
             {/* Content Section */}
             <div className="flex-1 p-3">
               {/* Future Content */}
@@ -290,23 +301,22 @@ function PrivacyPolicy() {
     line-height:1.2 !important;
     margin:20px 0 !important;
   }
+.policy-content h2{
+  font-size:32px;
+  font-weight:700;
+  margin:20px 0 8px;   /* bottom sirf 8px */
+}
 
-  .policy-content h2{
-    font-size:32px !important;
-    font-weight:700 !important;
-    margin:18px 0 !important;
-  }
-
-  .policy-content h3{
-    font-size:24px !important;
-    font-weight:600 !important;
-    margin:16px 0 !important;
-  }
+.policy-content h3{
+  font-size:24px;
+  font-weight:600;
+  margin:8px 0 12px;   /* top bhi kam */
+}
 
   .policy-content p{
     font-size:16px !important;
-    line-height:1.8 !important;
-    margin:12px 0 !important;
+    line-height:1.8 !important;    
+    margin-bottom:-4px !important;
   }
 
   .policy-content ul{

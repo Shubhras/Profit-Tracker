@@ -11,7 +11,7 @@ import {
 // Images
 import profitImg from '../../../../assets/icons/Dashboard.png';
 import advertisingImg from '../../../../assets/icons/advertising.png';
-import skuImg from '../../../../assets/icons/profitTable.png';
+import skuImg from '../../../../assets/icons/convertedProfitTable.png';
 import customersImg from '../../../../assets/icons/paymentReconcile.png';
 import reportsImg from '../../../../assets/icons/returns.png';
 import inventoryImg from '../../../../assets/icons/operations.png';

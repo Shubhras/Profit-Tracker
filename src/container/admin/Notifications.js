@@ -148,7 +148,7 @@ function Notifications() {
     <>
       <div className="p-3">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex lg:flex-col lg:items-start lg:gap-3 items-center justify-between mb-4">
           <div>
             <h2 className="mb-0 text-[20px] font-semibold">Notification Management</h2>
 
@@ -158,7 +158,7 @@ function Notifications() {
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            className="!flex !items-center !justify-center gap-0 !px-2"
+            className="!flex !items-center !justify-center gap-0 !px-2 font-semibold lg:w-full"
             onClick={() => setCreateModal(true)}
           >
             Create Notification
@@ -166,7 +166,7 @@ function Notifications() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-6 gap-3 mb-4">
+        <div className="grid grid-cols-6 xl:grid-cols-3 md:grid-cols-2 sm:grid-cols-1 gap-3 mb-4">
           {[
             { title: 'Total', value: counts.total_notifications, color: 'text-blue-600' },
             { title: 'General', value: counts.general, color: 'text-green-600' },
@@ -177,7 +177,7 @@ function Notifications() {
           ].map((item) => (
             <div
               key={item.title}
-              className="bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm hover:shadow-md transition-all duration-300 text-center"
+              className="bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-lg hover:shadow-md transition-all duration-300 text-center"
             >
               <p className="text-[14px] mb-0 text-gray-500 font-medium truncate">{item.title}</p>
 
@@ -192,7 +192,7 @@ function Notifications() {
             <Input
               placeholder="Search notification..."
               prefix={<SearchOutlined />}
-              className="w-80 h-[30px] text-[12px]"
+              className="w-80 md:w-full h-[30px] text-[12px]"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
             />
