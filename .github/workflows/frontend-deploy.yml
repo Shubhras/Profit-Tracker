@@ -1,7 +1,9 @@
 name: Frontend Deploy
  
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
  
 jobs:
   deploy:
@@ -19,24 +21,26 @@ jobs:
  
             set -e
  
+            echo "Moving to project directory..."
             cd /var/www/html/Profit-Tracker
  
-            echo "Pull latest code..."
+            echo "Pulling latest code..."
             git fetch origin
             git reset --hard origin/main
  
-            echo "Install dependencies..."
+            echo "Installing dependencies..."
             npm ci
  
-            echo "Build frontend..."
+            echo "Building React app..."
             npm run build
  
-            echo "Deploy build..."
+            echo "Updating live frontend..."
             rm -rf /var/www/frontend/*
             cp -r build/* /var/www/frontend/
  
-            echo "Reload nginx..."
+            echo "Reloading nginx..."
             systemctl reload nginx
  
-            echo "Deployment completed."
-            EOF
+            echo "Deployment completed successfully."
+ 
+          EOF
