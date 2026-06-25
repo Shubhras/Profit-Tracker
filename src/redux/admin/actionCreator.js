@@ -183,6 +183,7 @@ export const CreateSubscription = (payload) => {
       } else {
         dispatch(createSubscriptionErr('Something went wrong'));
       }
+      return response.data;
     } catch (err) {
       dispatch(createSubscriptionErr(err));
     }
