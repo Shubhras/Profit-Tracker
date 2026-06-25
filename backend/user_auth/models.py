@@ -221,7 +221,76 @@ class LegalDocument(models.Model):
         return dict(self.TITLE_CHOICES).get(self.title, self.title)
     
 
+class Notification(models.Model):
 
+    NOTIFICATION_TYPE_CHOICES = (
+        ("general", "General"),
+        ("update", "Website Update"),
+        ("maintenance", "Maintenance"),
+        ("promotion", "Promotion"),
+        ("subscription", "Subscription"),
+    )
+
+    title = models.CharField(max_length=255)
+
+    message = models.TextField()
+
+    notification_type = models.CharField(
+        max_length=20,
+        choices=NOTIFICATION_TYPE_CHOICES,
+        default="general"
+    )
+
+    send_to_all = models.BooleanField(default=True)
+
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_notifications"
+    )
+
+    def __str__(self):
+        return self.title
+    
+    
+class UserNotification(models.Model):
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="notifications"
+    )
+
+    notification = models.ForeignKey(
+        Notification,
+        on_delete=models.CASCADE,
+        related_name="user_notifications"
+    )
+
+    is_read = models.BooleanField(default=False)
+
+    read_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    class Meta:
+        unique_together = ("user", "notification")
+
+    def __str__(self):
+        return f"{self.user.email} - {self.notification.title}"
+        
+    
 
 # class AdminNotification(models.Model):
 #     """

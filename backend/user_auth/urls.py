@@ -11,6 +11,7 @@ from .subscription import *
 from .privacy_policy import *
 from .promocode  import *
 from .module_submodule import *
+from .notification import *
 
 
 urlpatterns = [
@@ -55,6 +56,35 @@ urlpatterns = [
     
     # path('notification-list/', AdminNotificationListAPIView.as_view(), name='notification-list/'),
     # path('notification-count/', AdminNotificationUnreadCountAPIView.as_view(), name='notification-count/'),
+    
+    path(
+        "notifications/create/",
+        CreateNotificationAPIView.as_view(),
+        name="create-notification"
+    ),
+
+    # admin Notification List 
+    path(
+        "notifications/",
+        AdminNotificationListAPIView.as_view(),
+        name="notification-list"
+    ),
+    
+    # User Notification List 
+    path(
+        "user-notifications/",
+        UserNotificationListAPIView.as_view(),
+        name="notification-list"
+    ),
+    
+    
+
+    # Mark Notification Read
+    path(
+        "notifications/read/<int:pk>/",
+        MarkNotificationReadAPIView.as_view(),
+        name="mark-notification-read"
+    ),
     
     path("modules/create/", CreateModuleAPIView.as_view()),
     path("modules/list/", ModuleListAPIView.as_view()),

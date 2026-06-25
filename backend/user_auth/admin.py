@@ -2,7 +2,7 @@ from django.contrib import admin
 
 # Register your models here.
 from django.contrib import admin
-from .models import SubscriptionPlan, LegalDocument, Promocode
+from .models import *
 
 
 @admin.register(SubscriptionPlan)
@@ -55,4 +55,47 @@ class PromocodeAdmin(admin.ModelAdmin):
     )
     list_filter = ('promoType', 'is_active')
     search_fields = ('promocode', 'title')
+   
+   
+   
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "title",
+        "notification_type",
+        "is_active",
+        "created_at"
+    )
+
+    list_filter = (
+        "notification_type",
+        "is_active"
+    )
+
+    search_fields = (
+        "title",
+        "message"
+    )
+
+
+@admin.register(UserNotification)
+class UserNotificationAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "user",
+        "notification",
+        "is_read",
+        "created_at"
+    )
+
+    list_filter = (
+        "is_read",
+    )
+
+    search_fields = (
+        "user__email",
+        "notification__title"
+    )
+       
     

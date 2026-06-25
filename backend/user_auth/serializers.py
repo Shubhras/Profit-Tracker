@@ -416,3 +416,29 @@ class ModuleWithSubModulesSerializer(serializers.ModelSerializer):
             "is_active",
             "submodules",
         )        
+        
+        
+class NotificationSerializer(serializers.ModelSerializer):
+
+    is_read = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Notification
+        fields = [
+            "id",
+            "title",
+            "message",
+            "notification_type",
+            "is_active",
+            "created_at",
+            "is_read"
+        ]
+
+    def get_is_read(self, obj):
+        user = self.context["request"].user
+
+        return UserNotification.objects.filter(
+            user=user,
+            notification=obj,
+            is_read=True
+        ).exists()        

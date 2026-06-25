@@ -45,10 +45,10 @@ class SubscriptionPlanCreateView(APIView):
                 plan_name__iexact=plan_name
             ).exists():
                 return Response({
-                    "statusCode": 400,
+                    "statusCode": 200,
                     "status": False,
                     "message": "A SubscriptionPlan with this name already exists."
-                }, status=status.HTTP_400_BAD_REQUEST)
+                }, status=status.HTTP_200_OK)
 
             serializer = SubscriptionPlanSerializer(data=request.data)
 
@@ -56,18 +56,18 @@ class SubscriptionPlanCreateView(APIView):
                 serializer.save()
 
                 return Response({
-                    "statusCode": 201,
+                    "statusCode": 200,
                     "status": True,
                     "message": "SubscriptionPlan created successfully",
                     "data": serializer.data
-                }, status=status.HTTP_201_CREATED)
+                }, status=status.HTTP_200_OK)
 
             return Response({
-                "statusCode": 400,
+                "statusCode": 200,
                 "status": False,
                 "message": "Error creating SubscriptionPlan",
                 "errors": serializer.errors
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({

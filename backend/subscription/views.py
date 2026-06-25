@@ -313,7 +313,18 @@ class MySubscriptionAPIView(APIView):
 
     @swagger_auto_schema(tags=["Subscription"])
     def get(self, request):
-        sub = UserSubscription.objects.filter(user=request.user).order_by("-created_at").first()
+
+        sub = UserSubscription.objects.filter(
+            user=request.user
+        ).select_related("plan").order_by("-created_at").first()
+        
+        current_subscription = UserSubscription.objects.filter(
+            user=request.user
+        ).select_related("plan").order_by("-created_at").first()
+
+        all_subscriptions = UserSubscription.objects.filter(
+            user=request.user
+        ).select_related("plan").order_by("-created_at")
 
         if not sub:
             return success_response(
@@ -326,62 +337,84 @@ class MySubscriptionAPIView(APIView):
                     "history": []
                 }
             )
-        if not sub.is_paid:
-            return success_response(
-                message="Subscription fetched successfully",
-                data={
-                    "active": True,
-                    "status": sub.status,
-                    "plan_name": "Free",
-                    "price": 0,
-                    "plan_id": "FREE",
-                    "subscription_id": None,
-                    "created_at": sub.created_at,
-                    "history": []
-                },
-                statusCode=200
-            )
-        # ✅ Plan mapping (add your real plan ids here)
-        PLAN_DETAILS = {
-            "plan_SCovUd5sTXe1jt": {"plan_name": "Basic Plan", "price": 1099},
-            "plan_SCou9G4wA7cheq": {"plan_name": "Business Plan", "price": 2099},
-            "plan_SCp5cV6I8ovNfw": {"plan_name": "Enterprise", "price": None},
-        }
+            
+        subscription_history = []
 
-        # ✅ If plan_id not matched
-        plan_info = PLAN_DETAILS.get(sub.razorpay_plan_id, {"plan_name": "Unknown", "price": 0})
+        for item in all_subscriptions:
+            subscription_history.append({
+                "subscription_id": item.id,
+                "plan_id": item.plan.subcription_id if item.plan else None,
+                "plan_name": item.plan.plan_name if item.plan else None,
+                "billing_cycle": item.billing_cycle,
+                "amount": item.amount,
+                "status": item.status,
+                "is_paid": item.is_paid,
+                "start_date": item.start_date,
+                "end_date": item.end_date,
+                "created_at": item.created_at,
+                "razorpay_payment_id": item.razorpay_payment_id,
+                "razorpay_subscription_id": item.razorpay_subscription_id,
+            })    
 
         try:
-            # ✅ Fetch subscription invoices/history from Razorpay
-            invoices = client.invoice.all({
-                "subscription_id": sub.razorpay_subscription_id
-            })
             history = []
-            for inv in invoices.get("items", []):
-                history.append({
-                    "invoice_id": inv.get("id"),
-                    "status": inv.get("status"),
-                    "amount": inv.get("amount", 0) // 100,
-                    "created_at": inv.get("created_at")
+
+            if sub.razorpay_subscription_id:
+                invoices = client.invoice.all({
+                    "subscription_id": sub.razorpay_subscription_id
                 })
+
+                history = [
+                    {
+                        "invoice_id": invoice.get("id"),
+                        "status": invoice.get("status"),
+                        "amount": invoice.get("amount", 0) / 100,
+                        "created_at": invoice.get("created_at")
+                    }
+                    for invoice in invoices.get("items", [])
+                ]
 
             return success_response(
                 message="Subscription fetched successfully",
                 data={
                     "active": sub.status == "active",
                     "status": sub.status,
-                    "plan_name": plan_info["plan_name"],
-                    "price": plan_info["price"],
-                    "plan_id": sub.razorpay_plan_id,
-                    "subscription_id": sub.razorpay_subscription_id,
+
+                    "subscription_id": sub.id,
+
+                    "plan": {
+                        "plan_id": sub.plan.subcription_id if sub.plan else None,
+                        "plan_name": sub.plan.plan_name if sub.plan else None,
+                        "description": sub.plan.description if sub.plan else None,
+                        "monthly_price": sub.plan.monthly_price if sub.plan else 0,
+                        "annual_price": sub.plan.annual_price if sub.plan else 0,
+                        "features": sub.plan.features if sub.plan else [],
+                        "terms_and_conditions": (
+                            sub.plan.terms_and_conditions
+                            if sub.plan else []
+                        ),
+                    },
+
+                    "billing_cycle": sub.billing_cycle,
+                    "amount": sub.amount,
+                    "is_paid": sub.is_paid,
+
+                    "razorpay_subscription_id": sub.razorpay_subscription_id,
+                    "razorpay_payment_id": sub.razorpay_payment_id,
+
+                    "start_date": sub.start_date,
+                    "end_date": sub.end_date,
                     "created_at": sub.created_at,
-                    "history": invoices.get("items", [])
+
+                    "history": history,
+                    "history": subscription_history
                 }
             )
 
         except Exception as e:
             return error_response(str(e), 500)
-    
+        
+        
 class CancelSubscriptionAPIView(APIView):
     permission_classes = [IsAuthenticated]
     @swagger_auto_schema(tags=["Subscription"])
