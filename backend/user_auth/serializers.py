@@ -165,6 +165,74 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
 #         ]
         
 
+# class UserProfileSerializer(serializers.ModelSerializer):
+#     # Profile fields
+#     name = serializers.CharField(source="profile.name", read_only=True)
+#     business_name = serializers.CharField(source="profile.business_name", read_only=True)
+#     mobile_number = serializers.CharField(source="profile.mobile_number", read_only=True)
+
+#     address = serializers.CharField(source="profile.address", read_only=True)
+#     city = serializers.CharField(source="profile.city", read_only=True)
+#     state = serializers.CharField(source="profile.state", read_only=True)
+#     pin_code = serializers.CharField(source="profile.pin_code", read_only=True)
+
+#     accepted_terms = serializers.BooleanField(
+#         source="profile.accepted_terms",
+#         read_only=True
+#     )
+
+#     subscription = serializers.SerializerMethodField()
+
+#     class Meta:
+#         model = User
+#         fields = [
+#             "id",
+#             "username",
+#             "email",
+
+#             "name",
+#             "business_name",
+#             "mobile_number",
+
+#             "address",
+#             "city",
+#             "state",
+#             "pin_code",
+#             "accepted_terms",
+
+#             "subscription"
+#         ]
+
+#     def get_subscription(self, obj):
+
+#         subscription = (
+#             UserSubscription.objects
+#             .filter(
+#                 user=obj,
+#                 status="active",
+#                 is_paid=True
+#             )
+#             .select_related("plan")
+#             .order_by("-created_at")
+#             .first()
+#         )
+
+#         if not subscription:
+#             return None
+
+#         return {
+#             "subscription_id": subscription.id,
+#             "plan_id": subscription.plan.id if subscription.plan else None,
+#             "plan_name": subscription.plan.plan_name if subscription.plan else None,
+#             "billing_cycle": subscription.billing_cycle,
+#             "amount": subscription.amount,
+#             "status": subscription.status,
+#             "is_paid": subscription.is_paid,
+#             "start_date": subscription.start_date,
+#             "end_date": subscription.end_date,
+#         }
+
+
 class UserProfileSerializer(serializers.ModelSerializer):
     # Profile fields
     name = serializers.CharField(source="profile.name", read_only=True)
@@ -182,6 +250,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     )
 
     subscription = serializers.SerializerMethodField()
+    unread_notification_count = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -200,8 +269,15 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "pin_code",
             "accepted_terms",
 
-            "subscription"
+            "subscription",
+            "unread_notification_count",
         ]
+
+    def get_unread_notification_count(self, obj):
+        return UserNotification.objects.filter(
+            user=obj,
+            is_read=False
+        ).count()
 
     def get_subscription(self, obj):
 
@@ -231,7 +307,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "start_date": subscription.start_date,
             "end_date": subscription.end_date,
         }
-                
+                        
 class SubscriptionPlanSerializer(serializers.ModelSerializer):
     discount_percentage = serializers.SerializerMethodField()
     average_discount = serializers.SerializerMethodField()

@@ -61,7 +61,7 @@ class PromocodeAdmin(admin.ModelAdmin):
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
 
-    list_display = (
+    list_display = ("id",
         "title",
         "notification_type",
         "is_active",

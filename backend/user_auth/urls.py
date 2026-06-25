@@ -70,6 +70,12 @@ urlpatterns = [
         name="notification-list"
     ),
     
+    path(
+        "admin/notifications/delete/<int:pk>/",
+        DeleteNotificationAPIView.as_view(),
+        name="delete-notification"
+    ),
+    
     # User Notification List 
     path(
         "user-notifications/",

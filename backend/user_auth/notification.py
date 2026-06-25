@@ -127,12 +127,90 @@ class AdminNotificationListAPIView(APIView):
             status=status.HTTP_200_OK
         )
         
+class DeleteNotificationAPIView(APIView):
+
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, pk):
+
+        try:
+            notification = Notification.objects.get(id=pk)
+
+        except Notification.DoesNotExist:
+            return Response(
+                {
+                    "statusCode": status.HTTP_404_NOT_FOUND,
+                    "status": False,
+                    "message": "Notification not found"
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        notification.delete()
+
+        return Response(
+            {
+                "statusCode": status.HTTP_200_OK,
+                "status": True,
+                "message": "Notification deleted successfully"
+            },
+            status=status.HTTP_200_OK
+        )
+# class UserNotificationListAPIView(APIView):
+
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request):
+
+#         notifications = Notification.objects.filter(
+#             is_active=True
+#         ).order_by("-created_at")
+
+#         serializer = NotificationSerializer(
+#             notifications,
+#             many=True,
+#             context={"request": request}
+#         )
+
+#         unread_count = UserNotification.objects.filter(
+#             user=request.user,
+#             is_read=False
+#         ).count()
+
+#         total_notifications = UserNotification.objects.filter(
+#             user=request.user
+#         ).count()
+
+#         return Response(
+#             {
+#                 "statusCode": status.HTTP_200_OK,
+#                 "status": True,
+#                 "message": "Notifications fetched successfully",
+
+#                 "counts": {
+#                     "total_notifications": total_notifications,
+#                     "unread_notifications": unread_count,
+#                     "read_notifications": (
+#                         total_notifications - unread_count
+#                     )
+#                 },
+
+#                 "data": serializer.data
+#             },
+#             status=status.HTTP_200_OK
+#         )
 
 class UserNotificationListAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+
+        # Mark all unread notifications as read
+        UserNotification.objects.filter(
+            user=request.user,
+            is_read=False
+        ).update(is_read=True)
 
         notifications = Notification.objects.filter(
             is_active=True
@@ -144,13 +222,13 @@ class UserNotificationListAPIView(APIView):
             context={"request": request}
         )
 
+        total_notifications = UserNotification.objects.filter(
+            user=request.user
+        ).count()
+
         unread_count = UserNotification.objects.filter(
             user=request.user,
             is_read=False
-        ).count()
-
-        total_notifications = UserNotification.objects.filter(
-            user=request.user
         ).count()
 
         return Response(
@@ -161,7 +239,7 @@ class UserNotificationListAPIView(APIView):
 
                 "counts": {
                     "total_notifications": total_notifications,
-                    "unread_notifications": unread_count,
+                    "unread_notifications": unread_count,  # will be 0 after update
                     "read_notifications": (
                         total_notifications - unread_count
                     )
@@ -171,7 +249,7 @@ class UserNotificationListAPIView(APIView):
             },
             status=status.HTTP_200_OK
         )
-        
+                
 class MarkNotificationReadAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
