@@ -214,8 +214,8 @@ const LayoutContainer = Styled.div`
                 .ant-menu-submenu {
                     .ant-menu-sub {
                         .ant-menu-item {
-                            padding-left: 20px !important; 
-                            height: 40px;
+                            padding-left: 9px !important; 
+                            height: 37px;
                             line-height: 40px;
                             margin: 2px 0 !important;
                             border-radius: 8px; /* Slightly smaller radius for children */
@@ -266,8 +266,9 @@ const LayoutContainer = Styled.div`
 
     .atbd-main-layout{
         ${({ theme }) => (!theme.rtl ? 'margin-left' : 'margin-right')}: ${({ theme }) =>
-  //   theme.topMenu ? 0 : '235px'};
-  theme.topMenu ? 0 : '280px'};
+  //   theme.topMenu ? 0 : '280px'};
+  theme.topMenu ? 0 : '235px'};
+  
 
 
         margin-top: 74px;

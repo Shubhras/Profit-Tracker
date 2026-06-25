@@ -55,6 +55,18 @@ const actions = {
   USERS_LIST_SUCCESS: 'USERS_LIST_SUCCESS',
   USERS_LIST_ERR: 'USERS_LIST_ERR',
 
+  NOTIFICATION_LIST_BEGIN: 'NOTIFICATION_LIST_BEGIN',
+  NOTIFICATION_LIST_SUCCESS: 'NOTIFICATION_LIST_SUCCESS',
+  NOTIFICATION_LIST_ERR: 'NOTIFICATION_LIST_ERR',
+
+  CREATE_NOTIFICATION_BEGIN: 'CREATE_NOTIFICATION_BEGIN',
+  CREATE_NOTIFICATION_SUCCESS: 'CREATE_NOTIFICATION_SUCCESS',
+  CREATE_NOTIFICATION_ERR: 'CREATE_NOTIFICATION_ERR',
+
+  DELETE_NOTIFICATION_BEGIN: 'DELETE_NOTIFICATION_BEGIN',
+  DELETE_NOTIFICATION_SUCCESS: 'DELETE_NOTIFICATION_SUCCESS',
+  DELETE_NOTIFICATION_ERR: 'DELETE_NOTIFICATION_ERR',
+
   createCouponCodesBegin: () => ({
     type: actions.CREATE_COUPONCODE_BEGIN,
   }),
@@ -248,6 +260,48 @@ const actions = {
 
   getuserslistErr: (err) => ({
     type: actions.USERS_LIST_ERR,
+    err,
+  }),
+
+  notificationListBegin: () => ({
+    type: actions.NOTIFICATION_LIST_BEGIN,
+  }),
+
+  notificationListSuccess: (data) => ({
+    type: actions.NOTIFICATION_LIST_SUCCESS,
+    data,
+  }),
+
+  notificationListErr: (err) => ({
+    type: actions.NOTIFICATION_LIST_ERR,
+    err,
+  }),
+
+  createNotificationBegin: () => ({
+    type: actions.CREATE_NOTIFICATION_BEGIN,
+  }),
+
+  createNotificationSuccess: (data) => ({
+    type: actions.CREATE_NOTIFICATION_SUCCESS,
+    data,
+  }),
+
+  createNotificationErr: (err) => ({
+    type: actions.CREATE_NOTIFICATION_ERR,
+    err,
+  }),
+
+  deleteNotificationBegin: () => ({
+    type: actions.DELETE_NOTIFICATION_BEGIN,
+  }),
+
+  deleteNotificationSuccess: (data) => ({
+    type: actions.DELETE_NOTIFICATION_SUCCESS,
+    data,
+  }),
+
+  deleteNotificationErr: (err) => ({
+    type: actions.DELETE_NOTIFICATION_ERR,
     err,
   }),
 };

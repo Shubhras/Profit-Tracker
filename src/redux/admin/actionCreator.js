@@ -58,6 +58,18 @@ const {
   getuserslistBegin,
   getuserslistSuccess,
   getuserslistErr,
+
+  notificationListBegin,
+  notificationListSuccess,
+  notificationListErr,
+
+  createNotificationBegin,
+  createNotificationSuccess,
+  createNotificationErr,
+
+  deleteNotificationBegin,
+  deleteNotificationSuccess,
+  deleteNotificationErr,
 } = actions;
 
 export const getCouponCodes = () => {
@@ -183,6 +195,7 @@ export const CreateSubscription = (payload) => {
       } else {
         dispatch(createSubscriptionErr('Something went wrong'));
       }
+      return response.data;
     } catch (err) {
       dispatch(createSubscriptionErr(err));
     }
@@ -310,6 +323,76 @@ export const getUsersList = (page = 1, limit = 10, search = '') => {
       }
     } catch (err) {
       dispatch(getuserslistErr(err));
+    }
+  };
+};
+
+export const getNotificationList = (callback) => {
+  return async (dispatch) => {
+    dispatch(notificationListBegin());
+
+    try {
+      const response = await DataService.get('user/notifications/');
+
+      console.log(response.data);
+
+      if (response.data?.status) {
+        dispatch(notificationListSuccess(response.data));
+
+        if (callback) callback(response.data);
+      } else {
+        dispatch(notificationListErr(response.data?.message));
+      }
+    } catch (err) {
+      dispatch(notificationListErr(err));
+
+      if (callback) callback(null);
+    }
+  };
+};
+
+export const createNotification = (data, callback) => {
+  return async (dispatch) => {
+    dispatch(createNotificationBegin());
+
+    try {
+      const response = await DataService.post('user/notifications/create/', data);
+      console.log(response.data);
+
+      if (response.data?.status) {
+        dispatch(createNotificationSuccess(response.data));
+
+        if (callback) callback(response.data);
+      } else {
+        dispatch(createNotificationErr(response.data?.message));
+      }
+    } catch (err) {
+      dispatch(createNotificationErr(err));
+
+      if (callback) callback(null);
+    }
+  };
+};
+
+export const deleteNotification = (id, callback) => {
+  return async (dispatch) => {
+    dispatch(deleteNotificationBegin());
+
+    try {
+      const response = await DataService.delete(`user/admin/notifications/delete/${id}/`);
+      console.log(response.data);
+
+      if (response.data?.status) {
+        dispatch(deleteNotificationSuccess(response.data));
+
+        if (callback) callback(response.data);
+      } else {
+        dispatch(deleteNotificationErr(response.data?.message));
+      }
+    } catch (err) {
+      dispatch(deleteNotificationErr(err));
+
+      if (callback) callback(null);
     }
   };
 };

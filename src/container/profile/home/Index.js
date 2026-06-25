@@ -8,6 +8,7 @@ import Navbar from './components/Navbar';
 import ScrollToTopButton from './components/ScrollToTopButton';
 import ShiftToAISection from './components/ShiftToAISection';
 import TestimonialsSection from './components/TestimonialsSection';
+import FeatureDashboard from './components/FeatureDashboard';
 
 function Home() {
   return (
@@ -17,6 +18,7 @@ function Home() {
       <Marque />
       <ShiftToAISection />
       <FinanceEngineSection />
+      <FeatureDashboard />
       <TestimonialsSection />
       <ImpactStats />
       <Footer />

@@ -56,6 +56,18 @@ const {
   USERS_LIST_BEGIN,
   USERS_LIST_SUCCESS,
   USERS_LIST_ERR,
+
+  NOTIFICATION_LIST_BEGIN,
+  NOTIFICATION_LIST_SUCCESS,
+  NOTIFICATION_LIST_ERR,
+
+  CREATE_NOTIFICATION_BEGIN,
+  CREATE_NOTIFICATION_SUCCESS,
+  CREATE_NOTIFICATION_ERR,
+
+  DELETE_NOTIFICATION_BEGIN,
+  DELETE_NOTIFICATION_SUCCESS,
+  DELETE_NOTIFICATION_ERR,
 } = actions;
 
 const initialState = {
@@ -72,6 +84,9 @@ const initialState = {
   privacypolicyData: null,
   createPrivacyPolicy: null,
   getuserlist: null,
+  getnotificationlist: null,
+  createNotification: null,
+  deleteNotification: null,
   updatePolicy: null,
   deletepolicy: null,
 };
@@ -367,6 +382,69 @@ const AdmindashboardReducer = (state = initialState, action) => {
       };
 
     case USERS_LIST_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case NOTIFICATION_LIST_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case NOTIFICATION_LIST_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        getnotificationlist: action.data,
+      };
+
+    case NOTIFICATION_LIST_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case CREATE_NOTIFICATION_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case CREATE_NOTIFICATION_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        createNotification: action.data,
+      };
+
+    case CREATE_NOTIFICATION_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case DELETE_NOTIFICATION_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case DELETE_NOTIFICATION_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        deleteNotification: action.data,
+      };
+
+    case DELETE_NOTIFICATION_ERR:
       return {
         ...state,
         loading: false,

@@ -140,7 +140,7 @@ function AdminDashboard() {
 
                 <XAxis dataKey="day" tick={{ fontSize: 11 }} />
 
-                <YAxis tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} domain={[0, 'dataMax + 5']} ticks={[0, 2, 4, 6, 8, 10]} />
 
                 <Tooltip />
 
