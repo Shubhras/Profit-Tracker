@@ -5,8 +5,9 @@ import { UilReceipt } from '@iconscout/react-unicons';
 // import UilSetting from '@iconscout/react-unicons/icons/uil-setting';
 import UilSignout from '@iconscout/react-unicons/icons/uil-signout';
 import UilUser from '@iconscout/react-unicons/icons/uil-user';
+import { BellOutlined } from '@ant-design/icons';
 // import UilUsersAlt from '@iconscout/react-unicons/icons/uil-users-alt';
-import { Avatar, DatePicker, Button } from 'antd';
+import { Avatar, DatePicker, Button, Badge } from 'antd';
 import React, { useEffect, useState } from 'react';
 // import { useTranslation} from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -36,6 +37,8 @@ const AuthInfo = React.memo(() => {
   const { RangePicker } = DatePicker;
 
   const currentPath = location.pathname;
+
+  // const path = '/admin/pages/settings';
 
   // const matchedRoute = Object.keys(HEADER_ACTIONS).find((route) => currentPath.includes(route));
   const matchedRoute = Object.keys(HEADER_ACTIONS)
@@ -749,6 +752,19 @@ const AuthInfo = React.memo(() => {
           </Link>
         </Dropdown>
       </div> */}
+
+      <div className="mx-3 flex items-center">
+        <Badge count={profile?.unread_notification_count || 0} size="small" offset={[-2, 2]}>
+          <button
+            type="button"
+            onClick={() => navigate('/admin/pages/notifications')}
+            className="w-9 h-9 rounded-full border border-gray-200 bg-white flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-all"
+          >
+            <BellOutlined className="text-[18px] text-gray-600" />
+          </button>
+        </Badge>
+      </div>
+
       <div className="flex ltr:ml-3 rtl:mr-3 ltr:mr-4 rtl:ml-4 ssm:mr-0 ssm:rtl:ml-0">
         <Popover placement="bottomRight" content={userContent} action="click">
           <Link to="#" className="flex items-center text-light whitespace-nowrap">

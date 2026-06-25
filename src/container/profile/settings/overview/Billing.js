@@ -204,7 +204,7 @@ function Billing() {
         ) : (
           <div className="p-6">
             {/* Info Cards Grid */}
-            <div className="grid grid-cols-1 min-lg:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 min-lg:grid-cols-3 gap-6 mb-3">
               {/* Current Plan Card */}
               <div className="bg-slate-50 dark:bg-white/5 rounded-2xl p-6 border border-slate-100 dark:border-white/5 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-10 -mt-10 blur-2xl group-hover:bg-primary/10 transition-all" />
@@ -283,7 +283,7 @@ function Billing() {
               </div>
 
               {/* Payment Method Card */}
-              <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 mb-8">
+              <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 mb-4">
                 <h3 className="text-lg font-semibold mb-5">Features Included</h3>
 
                 <div className="space-y-3">
@@ -298,9 +298,9 @@ function Billing() {
             </div>
 
             {/* Invoice History */}
-            {/* <div className="mt-8">
-              <div className="flex items-center gap-2 mb-6">
-                <UilHistory className="w-5 h-5 text-slate-400" />
+            <div className="mt-3">
+              <div className="flex items-center gap-2 mb-3">
+                {/* <UilHistory className="w-5 h-5 text-slate-400" /> */}
                 <h3 className="text-lg font-bold text-slate-800 dark:text-white m-0">Invoice History</h3>
               </div>
 
@@ -313,6 +313,9 @@ function Billing() {
                       </th>
                       <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                         Plan
+                      </th>
+                      <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Plan Name
                       </th>
                       <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                         Amount
@@ -329,11 +332,15 @@ function Billing() {
                           <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300 font-medium">
                             {formatDate(invoice.created_at)}
                           </td>
+                          <td className="px-6 py-4 text-sm text-slate-800 dark:text-white font-semibold capitalize">
+                            {invoice.billing_cycle}
+                          </td>
+
                           <td className="px-6 py-4 text-sm text-slate-800 dark:text-white font-semibold">
-                            {invoice.subscription?.plan?.plan_name || 'Pro Plan Subscription'}
+                            {invoice.plan_name}
                           </td>
                           <td className="px-6 py-4 text-sm text-slate-800 dark:text-white font-bold">
-                            ₹{subscription?.amount}{' '}
+                            ₹{invoice.amount}
                           </td>
                           <td className="px-6 py-4">
                             <span
@@ -363,7 +370,7 @@ function Billing() {
                   </tbody>
                 </table>
               </div>
-            </div> */}
+            </div>
           </div>
         )}
       </div>

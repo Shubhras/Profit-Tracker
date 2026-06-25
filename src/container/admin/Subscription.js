@@ -56,107 +56,117 @@ function SubscriptionTable() {
             <Spin size="large" />
           </div>
         ) : plans.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 min-md:grid-cols-2 min-xl:grid-cols-3 gap-6">
             {plans.map((plan) => (
               <div
                 key={plan.id}
-                className="relative bg-white border border-gray-200 rounded-[15px] px-4 py-3 shadow-md"
+                className="relative bg-white rounded-2xl border border-gray-100 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col h-full"
               >
-                {/* Active Badge */}
-                <div className="absolute -top-4 left-8">
-                  <span
-                    className={`text-white text-[12px] font-medium px-4 py-2 rounded-full ${
-                      plan.is_active ? 'bg-[#22c55e]' : 'bg-red-500'
-                    }`}
-                  >
-                    {plan.is_active ? 'Active' : 'Inactive'}
-                  </span>
-                </div>
+                <div className="h-2 bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500" />
+                <div className="p-5">
+                  {/* Active Badge */}
+                  <div className="absolute top-4 right-4">
+                    <span
+                      className={`px-3 py-1 rounded-full text-[11px] font-semibold ${
+                        plan.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                      }`}
+                    >
+                      {plan.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
 
-                {/* Top Section */}
-                <div className="flex justify-between items-start">
-                  <div>
+                  {/* Top Section */}
+                  <div className="mt-5">
                     <h2 className="text-[20px] font-semibold">{plan.plan_name}</h2>
                     <p className="text-[13px] text-gray-500 mt-1">{plan.description}</p>
                   </div>
 
-                  <div className="text-right">
-                    <div className="font-semibold text-dark"> ₹{Math.floor(Number(plan.monthly_price))} /Month</div>
-
-                    <div className="font-semibold text-dark mt-2"> ₹{Math.floor(Number(plan.annual_price))} /Year</div>
-                  </div>
-                </div>
-
-                <div className="border-t border-gray-300 my-1" />
-
-                <h3 className="text-[18px] font-semibold mb-3">Features :</h3>
-
-                <div className="space-y-2">
-                  {plan.features?.map((feature, index) => (
-                    <div key={index} className="flex items-center gap-3">
-                      <div className="w-4 h-4 rounded-full bg-[#22c55e] text-white flex items-center justify-center">
-                        <CheckOutlined className="text-[10px]" />
+                  <div className="border-t border-gray-200 mt-5 pt-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center bg-gray-50 rounded-xl py-3">
+                        <p className="text-[12px] text-gray-500 mb-1">Monthly</p>
+                        <h3 className="text-[18px] font-bold text-green-600">
+                          ₹{Math.floor(Number(plan.monthly_price))}
+                        </h3>
                       </div>
 
-                      <span className="text-[14px] text-gray-600">{feature}</span>
+                      <div className="text-center bg-gray-50 rounded-xl py-3">
+                        <p className="text-[12px] text-gray-500 mb-1">Annual</p>
+                        <h3 className="text-[18px] font-bold text-blue-600">
+                          ₹{Math.floor(Number(plan.annual_price))}
+                        </h3>
+                      </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
 
-                {plan.terms_and_conditions?.length > 0 && (
-                  <>
-                    <div className="border-t border-gray-200 my-4" />
-
-                    <h3 className="text-[18px] font-semibold mb-3">Terms & Conditions</h3>
-
-                    <div className="space-y-2">
-                      {plan.terms_and_conditions.map((term, index) => (
-                        <div key={index} className="flex items-start gap-3">
-                          <span className="text-[14px] font-semibold text-gray-500">{index + 1}.</span>
-
-                          <span className="text-[14px] text-gray-600">{term}</span>
+                  <h3 className="text-[18px] font-semibold mb-3">Features :</h3>
+                  <div className="space-y-2">
+                    {plan.features?.map((feature, index) => (
+                      <div key={index} className="flex items-center gap-3">
+                        <div className="w-4 h-4 rounded-full bg-[#22c55e] text-white flex items-center justify-center">
+                          <CheckOutlined className="text-[10px]" />
                         </div>
-                      ))}
-                    </div>
-                  </>
-                )}
 
-                <div className="flex justify-end items-center gap-4 mt-3">
-                  <FormOutlined
-                    className="text-[#1677ff] text-[17px] cursor-pointer drop-shadow-sm transition-all duration-200 hover:scale-110 hover:drop-shadow-md hover:text-[#0958d9]"
-                    onClick={() => {
-                      setIsEditMode(true);
-                      setSelectedId(plan.id);
+                        <span className="text-[14px] text-gray-600">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
 
-                      // form.setFieldsValue({
-                      //   subscription_type: plan.subscription_type?.toLowerCase(),
-                      //   price: plan.price,
-                      //   status: plan.status,
-                      //   features: plan.features,
-                      //   termsConditions: plan.termsConditions || [],
-                      //   is_active: plan.is_active,
-                      // });
+                  {plan.terms_and_conditions?.length > 0 && (
+                    <>
+                      <div className="border-t border-gray-200 my-4" />
 
-                      form.setFieldsValue({
-                        plan_name: plan.plan_name,
-                        description: plan.description,
-                        monthly_price: plan.monthly_price,
-                        annual_price: plan.annual_price,
-                        status: plan.status,
-                        features: plan.features || [],
-                        terms_and_conditions: plan.terms_and_conditions || [],
-                      });
+                      <h3 className="text-[18px] font-semibold mb-3">Terms & Conditions</h3>
 
-                      setIsModalOpen(true);
-                    }}
-                  />
-                  <DeleteOutlined
-                    className="text-red-500 text-[17px] cursor-pointer drop-shadow-sm transition-all duration-200 hover:scale-110 hover:drop-shadow-md hover:text-red-700"
-                    onClick={() => {
-                      setSelectedId(plan.id);
-                      setDeleteModalOpen(true);
-                    }}
-                  />
+                      <div className="space-y-2">
+                        {plan.terms_and_conditions.map((term, index) => (
+                          <div key={index} className="flex items-start gap-3">
+                            <span className="text-[14px] font-semibold text-gray-500">{index + 1}.</span>
+
+                            <span className="text-[14px] text-gray-600">{term}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  <div className="flex justify-end items-center gap-4 mt-3">
+                    <FormOutlined
+                      className="text-[#1677ff] text-[17px] cursor-pointer drop-shadow-sm transition-all duration-200 hover:scale-110 hover:drop-shadow-md hover:text-[#0958d9]"
+                      onClick={() => {
+                        setIsEditMode(true);
+                        setSelectedId(plan.id);
+
+                        // form.setFieldsValue({
+                        //   subscription_type: plan.subscription_type?.toLowerCase(),
+                        //   price: plan.price,
+                        //   status: plan.status,
+                        //   features: plan.features,
+                        //   termsConditions: plan.termsConditions || [],
+                        //   is_active: plan.is_active,
+                        // });
+
+                        form.setFieldsValue({
+                          plan_name: plan.plan_name,
+                          description: plan.description,
+                          monthly_price: plan.monthly_price,
+                          annual_price: plan.annual_price,
+                          status: plan.status,
+                          features: plan.features || [],
+                          terms_and_conditions: plan.terms_and_conditions || [],
+                        });
+
+                        setIsModalOpen(true);
+                      }}
+                    />
+                    <DeleteOutlined
+                      className="text-red-500 text-[17px] cursor-pointer drop-shadow-sm transition-all duration-200 hover:scale-110 hover:drop-shadow-md hover:text-red-700"
+                      onClick={() => {
+                        setSelectedId(plan.id);
+                        setDeleteModalOpen(true);
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             ))}

@@ -539,7 +539,7 @@ function UsersList() {
       <Modal
         open={subscriptionModal}
         footer={null}
-        width={650}
+        width={500}
         centered
         onCancel={() => {
           setSubscriptionModal(false);

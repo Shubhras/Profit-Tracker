@@ -22,6 +22,7 @@ const Testimonials = lazy(() => import('../../container/pages/Testimonials'));
 const ActionsRequired = lazy(() => import('../../container/pages/ActionsRequired'));
 const Download = lazy(() => import('../../container/pages/Download'));
 const Billing = lazy(() => import('../../container/pages/Billing'));
+const Notification = lazy(() => import('../../container/pages/Notification'));
 
 function PagesRoute() {
   return (
@@ -74,6 +75,16 @@ function PagesRoute() {
           </SubscriptionGate>
         }
       />
+
+      <Route
+        path="notifications"
+        element={
+          <SubscriptionGate allowFree>
+            <Notification />
+          </SubscriptionGate>
+        }
+      />
+
       <Route
         path="Pricing"
         element={
