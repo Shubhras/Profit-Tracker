@@ -56,6 +56,10 @@ const {
   USERS_LIST_BEGIN,
   USERS_LIST_SUCCESS,
   USERS_LIST_ERR,
+
+  NOTIFICATION_LIST_BEGIN,
+  NOTIFICATION_LIST_SUCCESS,
+  NOTIFICATION_LIST_ERR,
 } = actions;
 
 const initialState = {
@@ -72,6 +76,7 @@ const initialState = {
   privacypolicyData: null,
   createPrivacyPolicy: null,
   getuserlist: null,
+  getnotificationlist: null,
   updatePolicy: null,
   deletepolicy: null,
 };
@@ -367,6 +372,27 @@ const AdmindashboardReducer = (state = initialState, action) => {
       };
 
     case USERS_LIST_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case NOTIFICATION_LIST_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case NOTIFICATION_LIST_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        getnotificationlist: action.data,
+      };
+
+    case NOTIFICATION_LIST_ERR:
       return {
         ...state,
         loading: false,
