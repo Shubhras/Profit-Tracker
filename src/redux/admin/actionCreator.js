@@ -58,6 +58,10 @@ const {
   getuserslistBegin,
   getuserslistSuccess,
   getuserslistErr,
+
+  notificationListBegin,
+  notificationListSuccess,
+  notificationListErr,
 } = actions;
 
 export const getCouponCodes = () => {
@@ -311,6 +315,24 @@ export const getUsersList = (page = 1, limit = 10, search = '') => {
       }
     } catch (err) {
       dispatch(getuserslistErr(err));
+    }
+  };
+};
+
+export const getNotificationList = () => {
+  return async (dispatch) => {
+    dispatch(notificationListBegin());
+
+    try {
+      const response = await DataService.get('user/notifications/');
+      console.log('API RESPONSE =>', response.data);
+      if (response.data?.results?.status === true) {
+        dispatch(notificationListSuccess(response.data));
+      } else {
+        dispatch(notificationListErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(notificationListErr(err));
     }
   };
 };

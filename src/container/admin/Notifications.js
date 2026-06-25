@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Table, Input, Tag, Button, Modal, Select, DatePicker, Dropdown } from 'antd';
 import { SearchOutlined, MoreOutlined } from '@ant-design/icons';
 
+// import { getNotificationList } from '../../redux/admin/actionCreator';
+
 function Notifications() {
   const [searchText, setSearchText] = useState('');
   const [createModal, setCreateModal] = useState(false);

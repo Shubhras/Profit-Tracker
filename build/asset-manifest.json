@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/static/css/main.b408cb14.css",
-    "main.js": "/static/js/main.08370c25.js",
+    "main.js": "/static/js/main.de65694f.js",
     "static/js/4118.e79d92f8.chunk.js": "/static/js/4118.e79d92f8.chunk.js",
     "static/js/6245.b966d7cf.chunk.js": "/static/js/6245.b966d7cf.chunk.js",
     "static/js/1170.f92ee385.chunk.js": "/static/js/1170.f92ee385.chunk.js",
@@ -373,13 +373,13 @@
     "static/js/2575.fccbcbe4.chunk.js": "/static/js/2575.fccbcbe4.chunk.js",
     "static/js/4806.f65dc6b0.chunk.js": "/static/js/4806.f65dc6b0.chunk.js",
     "static/js/6634.a8247225.chunk.js": "/static/js/6634.a8247225.chunk.js",
-    "static/js/4548.f0e15825.chunk.js": "/static/js/4548.f0e15825.chunk.js",
+    "static/js/4548.943ed3e3.chunk.js": "/static/js/4548.943ed3e3.chunk.js",
     "static/js/6004.d26cbf23.chunk.js": "/static/js/6004.d26cbf23.chunk.js",
     "static/js/9902.1c99de43.chunk.js": "/static/js/9902.1c99de43.chunk.js",
     "static/js/8749.481b3099.chunk.js": "/static/js/8749.481b3099.chunk.js",
     "static/js/4716.1e11ed04.chunk.js": "/static/js/4716.1e11ed04.chunk.js",
     "static/js/7128.a16795f8.chunk.js": "/static/js/7128.a16795f8.chunk.js",
-    "static/js/5727.d377a863.chunk.js": "/static/js/5727.d377a863.chunk.js",
+    "static/js/5727.aa1411ad.chunk.js": "/static/js/5727.aa1411ad.chunk.js",
     "static/js/3635.dd531af0.chunk.js": "/static/js/3635.dd531af0.chunk.js",
     "static/js/6737.667c128c.chunk.js": "/static/js/6737.667c128c.chunk.js",
     "static/js/3122.1155d826.chunk.js": "/static/js/3122.1155d826.chunk.js",
@@ -459,7 +459,6 @@
     "static/media/404.svg": "/static/media/404.72d84482a671c69b7c8f659651fd4b51.svg",
     "static/media/maintenance.svg": "/static/media/maintenance.a8b37be3e1bda534ab109ace72906089.svg",
     "static/media/youtube.jpg": "/static/media/youtube.895e9b9fb982a7978855.jpg",
-    "static/media/forcesight-logo.png": "/static/media/forcesight-logo.1b767a4ee6be87677998.png",
     "static/media/zepto.png": "/static/media/zepto.647cd9a390adb836f346.png",
     "static/media/swiggy.png": "/static/media/swiggy.f9299be4167acb551a7e.png",
     "static/media/support.svg": "/static/media/support.fa999a9aebf26571ad3f931248f630f4.svg",
@@ -549,7 +548,7 @@
     "static/media/file.svg": "/static/media/file.57e885a5946e533ebd77.svg",
     "static/media/columns.svg": "/static/media/columns.21328f896ab2b21f9653.svg",
     "main.b408cb14.css.map": "/static/css/main.b408cb14.css.map",
-    "main.08370c25.js.map": "/static/js/main.08370c25.js.map",
+    "main.de65694f.js.map": "/static/js/main.de65694f.js.map",
     "4118.e79d92f8.chunk.js.map": "/static/js/4118.e79d92f8.chunk.js.map",
     "6245.b966d7cf.chunk.js.map": "/static/js/6245.b966d7cf.chunk.js.map",
     "1170.f92ee385.chunk.js.map": "/static/js/1170.f92ee385.chunk.js.map",
@@ -920,19 +919,19 @@
     "2575.fccbcbe4.chunk.js.map": "/static/js/2575.fccbcbe4.chunk.js.map",
     "4806.f65dc6b0.chunk.js.map": "/static/js/4806.f65dc6b0.chunk.js.map",
     "6634.a8247225.chunk.js.map": "/static/js/6634.a8247225.chunk.js.map",
-    "4548.f0e15825.chunk.js.map": "/static/js/4548.f0e15825.chunk.js.map",
+    "4548.943ed3e3.chunk.js.map": "/static/js/4548.943ed3e3.chunk.js.map",
     "6004.d26cbf23.chunk.js.map": "/static/js/6004.d26cbf23.chunk.js.map",
     "9902.1c99de43.chunk.js.map": "/static/js/9902.1c99de43.chunk.js.map",
     "8749.481b3099.chunk.js.map": "/static/js/8749.481b3099.chunk.js.map",
     "4716.1e11ed04.chunk.js.map": "/static/js/4716.1e11ed04.chunk.js.map",
     "7128.a16795f8.chunk.js.map": "/static/js/7128.a16795f8.chunk.js.map",
-    "5727.d377a863.chunk.js.map": "/static/js/5727.d377a863.chunk.js.map",
+    "5727.aa1411ad.chunk.js.map": "/static/js/5727.aa1411ad.chunk.js.map",
     "3635.dd531af0.chunk.js.map": "/static/js/3635.dd531af0.chunk.js.map",
     "6737.667c128c.chunk.js.map": "/static/js/6737.667c128c.chunk.js.map",
     "3122.1155d826.chunk.js.map": "/static/js/3122.1155d826.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.b408cb14.css",
-    "static/js/main.08370c25.js"
+    "static/js/main.de65694f.js"
   ]
 }

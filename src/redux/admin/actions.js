@@ -55,6 +55,10 @@ const actions = {
   USERS_LIST_SUCCESS: 'USERS_LIST_SUCCESS',
   USERS_LIST_ERR: 'USERS_LIST_ERR',
 
+  NOTIFICATION_LIST_BEGIN: 'NOTIFICATION_LIST_BEGIN',
+  NOTIFICATION_LIST_SUCCESS: 'NOTIFICATION_LIST_SUCCESS',
+  NOTIFICATION_LIST_ERR: 'NOTIFICATION_LIST_ERR',
+
   createCouponCodesBegin: () => ({
     type: actions.CREATE_COUPONCODE_BEGIN,
   }),
@@ -248,6 +252,20 @@ const actions = {
 
   getuserslistErr: (err) => ({
     type: actions.USERS_LIST_ERR,
+    err,
+  }),
+
+  notificationlistBegin: () => ({
+    type: actions.NOTIFICATION_LIST_BEGIN,
+  }),
+
+  notificationlistSuccess: (data) => ({
+    type: actions.NOTIFICATION_LIST_SUCCESS,
+    data,
+  }),
+
+  notificationlistErr: (err) => ({
+    type: actions.NOTIFICATION_LIST_ERR,
     err,
   }),
 };
