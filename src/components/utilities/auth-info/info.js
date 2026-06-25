@@ -1,6 +1,7 @@
 import UilAngleDown from '@iconscout/react-unicons/icons/uil-angle-down';
 // import UilBell from '@iconscout/react-unicons/icons/uil-bell';
-import UilDollarSign from '@iconscout/react-unicons/icons/uil-dollar-sign';
+// import UilDollarSign from '@iconscout/react-unicons/icons/uil-dollar-sign';
+import { UilReceipt } from '@iconscout/react-unicons';
 // import UilSetting from '@iconscout/react-unicons/icons/uil-setting';
 import UilSignout from '@iconscout/react-unicons/icons/uil-signout';
 import UilUser from '@iconscout/react-unicons/icons/uil-user';
@@ -192,7 +193,7 @@ const AuthInfo = React.memo(() => {
               to="/admin/pages/billing"
               className="group flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-white10 dark:hover:text-white transition-all duration-200"
             >
-              <UilDollarSign className="w-4 h-4 ltr:mr-3 rtl:ml-3 text-gray-400 group-hover:text-emerald-500 transition-colors" />
+              <UilReceipt className="w-4 h-4 ltr:mr-3 rtl:ml-3 text-gray-400 group-hover:text-emerald-500 transition-colors" />
               Billing
             </Link>
           </li>
