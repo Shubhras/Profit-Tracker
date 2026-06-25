@@ -1,0 +1,42 @@
+name: Frontend Deploy
+ 
+on:
+  workflow_dispatch:
+ 
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+ 
+    steps:
+      - name: Deploy Frontend
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sshpass
+ 
+          sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh \
+            -o StrictHostKeyChecking=no \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+ 
+            set -e
+ 
+            cd /var/www/html/Profit-Tracker
+ 
+            echo "Pull latest code..."
+            git fetch origin
+            git reset --hard origin/main
+ 
+            echo "Install dependencies..."
+            npm ci
+ 
+            echo "Build frontend..."
+            npm run build
+ 
+            echo "Deploy build..."
+            rm -rf /var/www/frontend/*
+            cp -r build/* /var/www/frontend/
+ 
+            echo "Reload nginx..."
+            systemctl reload nginx
+ 
+            echo "Deployment completed."
+            EOF
