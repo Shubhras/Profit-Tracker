@@ -101,4 +101,5 @@ jobs:
             rm -f /tmp/frontend-build.tar.gz
 
             echo "Frontend deployment completed successfully."
-            EOF
+            
+          EOF
