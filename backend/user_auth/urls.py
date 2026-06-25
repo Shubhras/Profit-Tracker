@@ -10,6 +10,8 @@ from .views import *
 from .subscription import *
 from .privacy_policy import *
 from .promocode  import *
+from .module_submodule import *
+from .notification import *
 
 
 urlpatterns = [
@@ -54,5 +56,62 @@ urlpatterns = [
     
     # path('notification-list/', AdminNotificationListAPIView.as_view(), name='notification-list/'),
     # path('notification-count/', AdminNotificationUnreadCountAPIView.as_view(), name='notification-count/'),
+    
+    path(
+        "notifications/create/",
+        CreateNotificationAPIView.as_view(),
+        name="create-notification"
+    ),
+
+    # admin Notification List 
+    path(
+        "notifications/",
+        AdminNotificationListAPIView.as_view(),
+        name="notification-list"
+    ),
+    
+    path(
+        "admin/notifications/delete/<int:pk>/",
+        DeleteNotificationAPIView.as_view(),
+        name="delete-notification"
+    ),
+    
+    # User Notification List 
+    path(
+        "user-notifications/",
+        UserNotificationListAPIView.as_view(),
+        name="notification-list"
+    ),
+    
+    
+
+    # Mark Notification Read
+    path(
+        "notifications/read/<int:pk>/",
+        MarkNotificationReadAPIView.as_view(),
+        name="mark-notification-read"
+    ),
+    
+    path("modules/create/", CreateModuleAPIView.as_view()),
+    path("modules/list/", ModuleListAPIView.as_view()),
+    path("modules/<int:pk>/", ModuleDetailAPIView.as_view()),
+    path("modules/<int:pk>/update/", UpdateModuleAPIView.as_view()),
+    path("modules/<int:pk>/delete/", DeleteModuleAPIView.as_view()),
+    path("modules-with-submodules/", ModuleWithSubModulesAPIView.as_view()),
+
+    # SubModules
+    path("submodules/create/", CreateSubModuleAPIView.as_view()),
+    path("submodules/list/", SubModuleListAPIView.as_view()),
+    path("submodules/<int:pk>/update/", UpdateSubModuleAPIView.as_view()),
+    path("submodules/<int:pk>/delete/", DeleteSubModuleAPIView.as_view()),
+
+    # Permissions
+    path("permissions/assign/", AssignPermissionAPIView.as_view()),
+    path("permissions/list/", PermissionListAPIView.as_view()),
+    path("permissions/<int:pk>/update/", UpdatePermissionAPIView.as_view()),
+    path("permissions/<int:pk>/delete/", DeletePermissionAPIView.as_view()),
+
+    # Logged-in User
+    path("my-modules/", MyModulesAPIView.as_view()),
 
 ]
