@@ -200,7 +200,8 @@ function SubscriptionTable() {
               features: values.features || [],
               terms_and_conditions: values.terms_and_conditions || [],
               status: values.status,
-              is_active: values.status === 'active',
+              // is_active: values.status === 'active',
+              is_active: isEditMode ? values.status === 'active' : true,
             };
             // if (isEditMode) {
             //   await dispatch(updateSubscription(selectedId, payload));
@@ -259,7 +260,7 @@ function SubscriptionTable() {
               name="monthly_price"
               rules={[{ required: true, message: 'Please enter monthly price' }]}
             >
-              <InputNumber size="small" min={0} inputMode="numeric" className="w-full" />
+              <InputNumber type="number" size="small" min={0} inputMode="numeric" className="w-full" />
             </Form.Item>
 
             <Form.Item
@@ -267,7 +268,7 @@ function SubscriptionTable() {
               name="annual_price"
               rules={[{ required: true, message: 'Please enter annual price' }]}
             >
-              <InputNumber size="small" min={0} inputMode="numeric" className="w-full" />
+              <InputNumber type="number" size="small" min={0} inputMode="numeric" className="w-full" />
             </Form.Item>
           </div>
 
@@ -391,10 +392,10 @@ function SubscriptionTable() {
               Cancel
             </Button>
 
-            <Button
-              danger
+            <button
+              type="button"
               size="small"
-              className="h-[30px] text-[13px] font-semibold bg-red-500 border-red-500 text-white"
+              className="h-[30px] text-[13px] font-semibold bg-red-500 border-red-500 text-white px-3"
               onClick={async () => {
                 await dispatch(DeleteSubscription(selectedId));
 
@@ -405,7 +406,7 @@ function SubscriptionTable() {
               }}
             >
               Yes, Delete
-            </Button>
+            </button>
           </div>
         </div>
       </Modal>
