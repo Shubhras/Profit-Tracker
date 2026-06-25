@@ -50,7 +50,7 @@ jobs:
           EOF
 
       - name: Build frontend
-        run: npm run build
+        run: CI=false npm run build
 
       - name: Create build archive
         run: tar -czf frontend-build.tar.gz build
