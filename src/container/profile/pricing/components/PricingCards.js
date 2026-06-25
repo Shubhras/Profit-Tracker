@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Skeleton, Alert, Card, Button, Tag, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
@@ -52,9 +52,11 @@ const cardVariants = {
   }),
 };
 
-function PricingCard({ plan, index, onSelect }) {
+function PricingCard({ plan, index, onSelect, selectedPlanId, setSelectedPlanId }) {
+  const [selectedType, setSelectedType] = useState('monthly');
   const gradient = cardGradients[index % cardGradients.length];
-  const isPopular = gradient.popular;
+  // const [selectedPlanId, setSelectedPlanId] = useState(null);
+  const isSelected = selectedPlanId === plan.id;
 
   const accentColors = {
     gray: { badge: 'default', button: '#6b7280', tag: 'bg-gray-100 text-gray-700' },
@@ -88,8 +90,12 @@ function PricingCard({ plan, index, onSelect }) {
       className="h-full"
     >
       <Card
+        onClick={() => {
+          setSelectedPlanId(plan.id);
+          setSelectedType('monthly');
+        }}
         className={`h-full border-0 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden relative ${
-          isPopular ? 'ring-2 ring-emerald-500 ring-offset-4' : ''
+          isSelected ? 'ring-2 ring-emerald-500 ring-offset-4' : ''
         }`}
         bodyStyle={{
           padding: '32px',
@@ -100,7 +106,7 @@ function PricingCard({ plan, index, onSelect }) {
         style={{ background: 'linear-gradient(135deg, var(--tw-gradient-stops))' }}
       >
         {/* Popular Badge */}
-        {isPopular && (
+        {isSelected && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -113,7 +119,7 @@ function PricingCard({ plan, index, onSelect }) {
         )}
 
         {/* Plan Badge */}
-        <div className="flex items-center gap-2 mb-6">
+        <div className="flex items-center gap-2 mb-2">
           <motion.div
             whileHover={{ rotate: [0, -10, 10, 0] }}
             className={`w-10 h-10 rounded-xl flex items-center justify-center ${colors.tag}`}
@@ -125,20 +131,53 @@ function PricingCard({ plan, index, onSelect }) {
 
         {/* Price */}
         <div className="mb-6">
-          {plan.price ? (
-            <div className="flex items-baseline gap-1">
-              <Text className="text-xl text-gray-500 font-medium">{plan.price}</Text>
-              <Title level={2} className="!mb-0 !text-4xl !font-bold !text-gray-900">
-                {plan.title}
-              </Title>
-              {plan.perMonth && <Text className="text-gray-500 text-sm">/{plan.perMonth}</Text>}
-            </div>
-          ) : (
-            <Title level={2} className="!mb-0 !text-3xl !font-bold !text-gray-900">
-              {plan.title}
-            </Title>
-          )}
+          <Title level={2} className="!mb-3 !text-3xl !font-bold !text-gray-900">
+            {plan.title}
+          </Title>
+
           <Text className="text-gray-600 text-base mt-1 block">{plan.subtitle}</Text>
+
+          <div className="mt-4 space-y-3">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedType('monthly');
+              }}
+              className="flex items-center justify-between border rounded-xl px-3 py-2 cursor-pointer w-full"
+            >
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-4 h-4 rounded-full border-2 ${
+                    selectedType === 'monthly' ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300'
+                  }`}
+                />
+                <span>Monthly</span>
+              </div>
+
+              <span className="font-semibold">₹{plan.monthly_price}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedType('annual');
+              }}
+              className="flex items-center justify-between border rounded-xl px-3 py-2 cursor-pointer w-full"
+            >
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-4 h-4 rounded-full border-2 ${
+                    selectedType === 'annual' ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300'
+                  }`}
+                />
+                <span>Annual</span>
+              </div>
+
+              <span className="font-semibold">₹{plan.annual_price}</span>
+            </button>
+          </div>
         </div>
 
         {/* Features */}
@@ -178,12 +217,12 @@ function PricingCard({ plan, index, onSelect }) {
             ))}
           </ul>
 
-          {plan.termsConditions?.length > 0 && (
+          {plan.terms_and_conditions?.length > 0 && (
             <>
               <h4 className="text-[15px] font-semibold text-gray-900 mb-3">Terms & Conditions</h4>
 
               <ul className="space-y-3">
-                {plan.termsConditions.map((term, i) => (
+                {plan.terms_and_conditions.map((term, i) => (
                   <motion.li
                     key={i}
                     initial={{ opacity: 0, x: -10 }}
@@ -204,16 +243,23 @@ function PricingCard({ plan, index, onSelect }) {
         {/* CTA Button */}
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
           <Button
-            type={isPopular ? 'primary' : 'default'}
+            type={isSelected ? 'primary' : 'default'}
             size="large"
             block
-            onClick={() => onSelect(plan)}
+            // onClick={() => onSelect(plan)}
+            onClick={() =>
+              onSelect({
+                ...plan,
+                selectedType,
+                selectedPrice: selectedType === 'monthly' ? plan.monthly_price : plan.annual_price,
+              })
+            }
             className={`h-12 rounded-xl font-semibold text-base ${
-              isPopular
+              isSelected
                 ? 'bg-gradient-to-r from-emerald-500 to-teal-600 border-0 shadow-lg shadow-emerald-500/30'
                 : 'border-2 border-gray-200 hover:border-emerald-500 hover:text-emerald-600'
             }`}
-            style={isPopular ? { background: colors.button } : {}}
+            style={isSelected ? { background: colors.button } : {}}
           >
             {plan.button.text}
           </Button>
@@ -247,6 +293,7 @@ function PricingCards() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const isLoggedIn = useSelector((state) => state.auth.login);
+  const [selectedPlanId, setSelectedPlanId] = useState(null);
 
   // const [pricingPlans, setPricingPlans] = useState([]);
   // const [loading, setLoading] = useState(true);
@@ -342,19 +389,21 @@ function PricingCards() {
 
   const mapApiPlanToComponent = (plan) => ({
     badge: {
-      text: plan.subscription_type === 'monthly' ? 'Monthly Plan' : 'Annual Plan',
+      text: plan.plan_name,
     },
+    plan_name: plan.plan_name,
 
     title: plan.price,
 
-    subtitle:
-      plan.subscription_type === 'monthly' ? 'Perfect for growing businesses' : 'Best value for long-term growth',
-
+    subtitle: plan.description || '',
     price: '₹',
 
     perMonth: plan.subscription_type === 'monthly' ? 'Month' : 'Year',
 
     features: plan.features || [],
+    terms_and_conditions: plan.terms_and_conditions || [],
+    monthly_price: plan.monthly_price,
+    annual_price: plan.annual_price,
 
     termsConditions: plan.termsConditions || [],
 
@@ -429,7 +478,8 @@ function PricingCards() {
     grid gap-6
     grid-cols-1
     min-md:grid-cols-2
-    max-w-5xl
+    min-lg:grid-cols-3
+    max-w-7xl
     mx-auto
   "
         >
@@ -497,7 +547,9 @@ function PricingCards() {
     grid gap-6
     grid-cols-1
     min-md:grid-cols-2
-    max-w-5xl
+    min-lg:grid-cols-3
+
+    max-w-7xl
     mx-auto
   "
       >
@@ -506,7 +558,15 @@ function PricingCards() {
             <PricingCard key={index} plan={plan} index={index} onSelect={handlePlanSelect} />
           ))} */}
           {pricingPlans.map((item, index) => (
-            <PricingCard key={item.id} plan={mapApiPlanToComponent(item)} index={index} onSelect={handlePlanSelect} />
+            // <PricingCard key={item.id} plan={mapApiPlanToComponent(item)} index={index} onSelect={handlePlanSelect} />
+            <PricingCard
+              key={item.id}
+              plan={mapApiPlanToComponent(item)}
+              index={index}
+              onSelect={handlePlanSelect}
+              selectedPlanId={selectedPlanId}
+              setSelectedPlanId={setSelectedPlanId}
+            />
           ))}
         </AnimatePresence>
       </div>

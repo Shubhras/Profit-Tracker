@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Input, Tag, Switch, Modal, Button, Select, Tooltip } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
-import { SearchOutlined } from '@ant-design/icons';
+import { EyeOutlined, SearchOutlined } from '@ant-design/icons';
 import { getUsersList } from '../../redux/admin/actionCreator';
 
 function UsersList() {
@@ -13,6 +13,9 @@ function UsersList() {
 
   const [editModal, setEditModal] = useState(false);
   const [historyModal, setHistoryModal] = useState(false);
+
+  const [subscriptionModal, setSubscriptionModal] = useState(false);
+  const [selectedSubscription, setSelectedSubscription] = useState(null);
 
   const dispatch = useDispatch();
 
@@ -53,12 +56,8 @@ function UsersList() {
       city: item.city,
       state: item.state,
       pin_code: item.pin_code,
-      subscription_active: item.subscription_active,
-      is_paid_subscription_active: item.is_paid_subscription_active,
-      subscription_status: item.subscription_status,
-      subscription_plan: item.subscription_plan,
-      trial_start_date: item.trial_start_date,
-      trial_end_date: item.trial_end_date,
+
+      subscription: item.subscription, // add this
       created_at: item.created_at,
     })) || [];
 
@@ -149,18 +148,26 @@ function UsersList() {
 
     {
       title: 'Subscription',
-      dataIndex: 'subscription_status',
+      // dataIndex: 'subscription_status',
       width: 70,
       align: 'center',
-      render: (status) => <Tag color={status === 'active' ? 'green' : 'red'}>{status || 'inactive'}</Tag>,
+      render: (_, record) => {
+        if (!record?.subscription) {
+          return '-';
+        }
+
+        return (
+          <Tag color={record.subscription.status === 'active' ? 'green' : 'red'}>{record.subscription.status}</Tag>
+        );
+      },
     },
 
     {
       title: 'Plan',
-      dataIndex: 'subscription_plan',
+      // dataIndex: 'subscription_plan',
       width: 70,
       align: 'center',
-      render: (plan) => <Tag color={plan ? 'blue' : 'default'}>{plan || 'Trial'}</Tag>,
+      render: (_, record) => <Tag color="blue">{record?.subscription?.plan_name || 'Trial'}</Tag>,
     },
 
     // {
@@ -176,6 +183,22 @@ function UsersList() {
       width: 70,
       align: 'center',
       render: (date) => (date ? new Date(date).toLocaleDateString('en-IN') : '-'),
+    },
+
+    {
+      title: 'Details',
+      width: 90,
+      align: 'center',
+      render: (_, record) => (
+        <Button
+          type="text"
+          icon={<EyeOutlined className="text-[#1677ff] text-[18px]" />}
+          onClick={() => {
+            setSelectedSubscription(record.subscription);
+            setSubscriptionModal(true);
+          }}
+        />
+      ),
     },
 
     // {
@@ -511,6 +534,67 @@ function UsersList() {
             <div className="text-gray-500 text-[12px]">09 Jun 2026, 11:40 AM</div>
           </div>
         </div>
+      </Modal>
+
+      <Modal
+        open={subscriptionModal}
+        footer={null}
+        width={650}
+        centered
+        onCancel={() => {
+          setSubscriptionModal(false);
+          setSelectedSubscription(null);
+        }}
+      >
+        {selectedSubscription && (
+          <div>
+            <div className="border-b pb-4 mb-4">
+              <h2 className="text-[22px] font-semibold mb-1">{selectedSubscription.plan_name}</h2>
+
+              <Tag color={selectedSubscription.status === 'active' ? 'green' : 'red'}>
+                {selectedSubscription.status}
+              </Tag>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-gray-500 text-[12px]">Billing Cycle</div>
+                <div className="font-semibold capitalize">{selectedSubscription.billing_cycle}</div>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-gray-500 text-[12px]">Amount</div>
+                <div className="font-semibold">₹{selectedSubscription.amount}</div>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-gray-500 text-[12px]">Start Date</div>
+                <div className="font-semibold">
+                  {new Date(selectedSubscription.start_date).toLocaleDateString('en-IN')}
+                </div>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-gray-500 text-[12px]">End Date</div>
+                <div className="font-semibold">
+                  {new Date(selectedSubscription.end_date).toLocaleDateString('en-IN')}
+                </div>
+              </div>
+
+              {/* <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-gray-500 text-[12px]">Payment Status</div>
+                <Tag color={selectedSubscription.is_paid ? 'green' : 'orange'}>
+                  {selectedSubscription.is_paid ? 'Paid' : 'Pending'}
+                </Tag>
+              </div> */}
+
+              {/* <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-gray-500 text-[12px]">Subscription ID</div>
+                <div className="font-semibold">#{selectedSubscription.subscription_id}</div>
+              </div> */}
+            </div>
+          </div>
+        )}
       </Modal>
     </>
   );
