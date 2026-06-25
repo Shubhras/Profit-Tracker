@@ -17,81 +17,217 @@ from subscription.utils.razorpay_client import client
 from rest_framework.permissions import AllowAny
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from django.utils import timezone 
+from django.utils.timezone import timedelta
+from user_auth.models import SubscriptionPlan
+from dateutil.relativedelta import relativedelta
 
-class CreateSubscriptionAPIView(APIView): 
+
+# class CreateSubscriptionAPIView(APIView): 
+#     permission_classes = [IsAuthenticated]
+#     @swagger_auto_schema(tags=["Subscription"])
+#     def post(self, request):
+#         user = request.user
+#         plan_id = request.data.get("plan_id")
+
+#         if not plan_id:
+#             return error_response("plan_id is required", 400)
+
+#         # ==========================
+#         # ✅ FREE PLAN (NO RAZORPAY)
+#         # ==========================
+#         if plan_id == "FREE":
+#             # deactivate previous subscriptions
+#             UserSubscription.objects.filter(user=user).update(status="inactive")
+
+#             UserSubscription.objects.create(
+#                 user=user,
+#                 plan_name="Free",
+#                 is_paid=False,
+#                 status="active"
+#             )
+
+#             return success_response(
+#                 message="Free plan activated successfully",
+#                 data={
+#                     "plan_id": "FREE",
+#                     "plan_name": "Free",
+#                     "active": True,
+#                     "payment_required": False
+#                 },
+#                 statusCode=200
+#             )
+
+#         # ==========================
+#         # ✅ PAID PLAN (RAZORPAY)
+#         # ==========================
+#         try:
+#             if not settings.RAZORPAY_KEY_ID or not settings.RAZORPAY_KEY_SECRET:
+#                 return error_response("Razorpay keys are not configured in the server environment (.env)", 500)
+
+#             # deactivate previous subscriptions
+#             UserSubscription.objects.filter(user=user).update(status="inactive")
+
+#             sub_data = {
+#                 "plan_id": plan_id,
+#                 "customer_notify": 1,
+#                 "total_count": 12
+#             }
+
+#             subscription = client.subscription.create(sub_data)
+
+#             UserSubscription.objects.create(
+#                 user=user,
+#                 razorpay_plan_id=plan_id,
+#                 razorpay_subscription_id=subscription["id"],
+#                 status=subscription["status"],
+#                 is_paid=True
+#             )
+
+#             return success_response(
+#                 message="Subscription created successfully",
+#                 data={
+#                     "subscription_id": subscription["id"],
+#                     "subscription_status": subscription["status"],
+#                     "razorpay_key": settings.RAZORPAY_KEY_ID
+#                 },
+#                 statusCode=201
+#             )
+
+#         except Exception as e:
+#             return error_response(str(e), 500)
+
+
+# new
+class CreateSubscriptionAPIView(APIView):
     permission_classes = [IsAuthenticated]
+
+
     @swagger_auto_schema(tags=["Subscription"])
     def post(self, request):
+
         user = request.user
+
         plan_id = request.data.get("plan_id")
+        billing_cycle = request.data.get("billing_cycle")
 
         if not plan_id:
-            return error_response("plan_id is required", 400)
+            return error_response(
+                "plan_id is required",
+                400
+            )
+
+        if billing_cycle not in ["monthly", "annual"]:
+            return error_response(
+                "billing_cycle must be monthly or annual",
+                400
+            )
+
+        try:
+            plan = SubscriptionPlan.objects.get(
+                id=plan_id,
+                is_active=True,
+                is_deleted=False
+            )
+
+        except SubscriptionPlan.DoesNotExist:
+            return error_response(
+                "Subscription plan not found",
+                404
+            )
+
+        amount = (
+            plan.monthly_price
+            if billing_cycle == "monthly"
+            else plan.annual_price
+        )
 
         # ==========================
-        # ✅ FREE PLAN (NO RAZORPAY)
+        # FREE PLAN
         # ==========================
-        if plan_id == "FREE":
-            # deactivate previous subscriptions
-            UserSubscription.objects.filter(user=user).update(status="inactive")
+        if amount == 0:
 
-            UserSubscription.objects.create(
+            start_date = timezone.now()
+
+            end_date = (
+                start_date + relativedelta(months=1)
+                if billing_cycle == "monthly"
+                else start_date + relativedelta(years=1)
+            )
+
+            subscription = UserSubscription.objects.create(
                 user=user,
-                plan_name="Free",
-                is_paid=False,
-                status="active"
+                plan=plan,
+                billing_cycle=billing_cycle,
+                amount=0,
+                is_paid=True,
+                status="active",
+                start_date=start_date,
+                end_date=end_date
             )
 
             return success_response(
                 message="Free plan activated successfully",
                 data={
-                    "plan_id": "FREE",
-                    "plan_name": "Free",
-                    "active": True,
-                    "payment_required": False
+                    "subscription_id": subscription.id,
+                    "plan_id": plan.id,
+                    "plan_name": plan.plan_name,
+                    "billing_cycle": billing_cycle,
+                    "amount": 0,
+                    "payment_required": False,
+                    "status": "active",
+                    "start_date": start_date,
+                    "end_date": end_date
                 },
                 statusCode=200
             )
 
         # ==========================
-        # ✅ PAID PLAN (RAZORPAY)
+        # PAID PLAN
         # ==========================
         try:
-            if not settings.RAZORPAY_KEY_ID or not settings.RAZORPAY_KEY_SECRET:
-                return error_response("Razorpay keys are not configured in the server environment (.env)", 500)
 
-            # deactivate previous subscriptions
-            UserSubscription.objects.filter(user=user).update(status="inactive")
+            razorpay_order = client.order.create({
+                "amount": int(float(amount) * 100),
+                "currency": "INR",
+                "payment_capture": 1
+            })
 
-            sub_data = {
-                "plan_id": plan_id,
-                "customer_notify": 1,
-                "total_count": 12
-            }
-
-            subscription = client.subscription.create(sub_data)
-
-            UserSubscription.objects.create(
+            subscription = UserSubscription.objects.create(
                 user=user,
-                razorpay_plan_id=plan_id,
-                razorpay_subscription_id=subscription["id"],
-                status=subscription["status"],
-                is_paid=True
+                plan=plan,
+                billing_cycle=billing_cycle,
+                amount=amount,
+                status="created",
+                razorpay_order_id=razorpay_order["id"]  # add field in model
             )
 
             return success_response(
-                message="Subscription created successfully",
+                message="Payment initiated successfully",
                 data={
-                    "subscription_id": subscription["id"],
-                    "subscription_status": subscription["status"],
-                    "razorpay_key": settings.RAZORPAY_KEY_ID
+                    "subscription_id": subscription.id,
+                    "order_id": razorpay_order["id"],
+                    "plan_id": plan.id,
+                    "plan_name": plan.plan_name,
+                    "billing_cycle": billing_cycle,
+                    "amount": float(amount),
+                    "amount_paise": int(float(amount) * 100),
+                    "currency": "INR",
+                    "razorpay_key": settings.RAZORPAY_KEY_ID,
+                    "payment_required": True
                 },
                 statusCode=201
             )
 
         except Exception as e:
-            return error_response(str(e), 500)
+            return error_response(
+                str(e),
+                500
+            )
 
+
+
+        
 class SubscriptionPlansAPIView(APIView):
     permission_classes = [AllowAny]
 
@@ -177,7 +313,18 @@ class MySubscriptionAPIView(APIView):
 
     @swagger_auto_schema(tags=["Subscription"])
     def get(self, request):
-        sub = UserSubscription.objects.filter(user=request.user).order_by("-created_at").first()
+
+        sub = UserSubscription.objects.filter(
+            user=request.user
+        ).select_related("plan").order_by("-created_at").first()
+        
+        current_subscription = UserSubscription.objects.filter(
+            user=request.user
+        ).select_related("plan").order_by("-created_at").first()
+
+        all_subscriptions = UserSubscription.objects.filter(
+            user=request.user
+        ).select_related("plan").order_by("-created_at")
 
         if not sub:
             return success_response(
@@ -190,62 +337,84 @@ class MySubscriptionAPIView(APIView):
                     "history": []
                 }
             )
-        if not sub.is_paid:
-            return success_response(
-                message="Subscription fetched successfully",
-                data={
-                    "active": True,
-                    "status": sub.status,
-                    "plan_name": "Free",
-                    "price": 0,
-                    "plan_id": "FREE",
-                    "subscription_id": None,
-                    "created_at": sub.created_at,
-                    "history": []
-                },
-                statusCode=200
-            )
-        # ✅ Plan mapping (add your real plan ids here)
-        PLAN_DETAILS = {
-            "plan_SCovUd5sTXe1jt": {"plan_name": "Basic Plan", "price": 1099},
-            "plan_SCou9G4wA7cheq": {"plan_name": "Business Plan", "price": 2099},
-            "plan_SCp5cV6I8ovNfw": {"plan_name": "Enterprise", "price": None},
-        }
+            
+        subscription_history = []
 
-        # ✅ If plan_id not matched
-        plan_info = PLAN_DETAILS.get(sub.razorpay_plan_id, {"plan_name": "Unknown", "price": 0})
+        for item in all_subscriptions:
+            subscription_history.append({
+                "subscription_id": item.id,
+                "plan_id": item.plan.subcription_id if item.plan else None,
+                "plan_name": item.plan.plan_name if item.plan else None,
+                "billing_cycle": item.billing_cycle,
+                "amount": item.amount,
+                "status": item.status,
+                "is_paid": item.is_paid,
+                "start_date": item.start_date,
+                "end_date": item.end_date,
+                "created_at": item.created_at,
+                "razorpay_payment_id": item.razorpay_payment_id,
+                "razorpay_subscription_id": item.razorpay_subscription_id,
+            })    
 
         try:
-            # ✅ Fetch subscription invoices/history from Razorpay
-            invoices = client.invoice.all({
-                "subscription_id": sub.razorpay_subscription_id
-            })
             history = []
-            for inv in invoices.get("items", []):
-                history.append({
-                    "invoice_id": inv.get("id"),
-                    "status": inv.get("status"),
-                    "amount": inv.get("amount", 0) // 100,
-                    "created_at": inv.get("created_at")
+
+            if sub.razorpay_subscription_id:
+                invoices = client.invoice.all({
+                    "subscription_id": sub.razorpay_subscription_id
                 })
+
+                history = [
+                    {
+                        "invoice_id": invoice.get("id"),
+                        "status": invoice.get("status"),
+                        "amount": invoice.get("amount", 0) / 100,
+                        "created_at": invoice.get("created_at")
+                    }
+                    for invoice in invoices.get("items", [])
+                ]
 
             return success_response(
                 message="Subscription fetched successfully",
                 data={
                     "active": sub.status == "active",
                     "status": sub.status,
-                    "plan_name": plan_info["plan_name"],
-                    "price": plan_info["price"],
-                    "plan_id": sub.razorpay_plan_id,
-                    "subscription_id": sub.razorpay_subscription_id,
+
+                    "subscription_id": sub.id,
+
+                    "plan": {
+                        "plan_id": sub.plan.subcription_id if sub.plan else None,
+                        "plan_name": sub.plan.plan_name if sub.plan else None,
+                        "description": sub.plan.description if sub.plan else None,
+                        "monthly_price": sub.plan.monthly_price if sub.plan else 0,
+                        "annual_price": sub.plan.annual_price if sub.plan else 0,
+                        "features": sub.plan.features if sub.plan else [],
+                        "terms_and_conditions": (
+                            sub.plan.terms_and_conditions
+                            if sub.plan else []
+                        ),
+                    },
+
+                    "billing_cycle": sub.billing_cycle,
+                    "amount": sub.amount,
+                    "is_paid": sub.is_paid,
+
+                    "razorpay_subscription_id": sub.razorpay_subscription_id,
+                    "razorpay_payment_id": sub.razorpay_payment_id,
+
+                    "start_date": sub.start_date,
+                    "end_date": sub.end_date,
                     "created_at": sub.created_at,
-                    "history": invoices.get("items", [])
+
+                    "history": history,
+                    "history": subscription_history
                 }
             )
 
         except Exception as e:
             return error_response(str(e), 500)
-    
+        
+        
 class CancelSubscriptionAPIView(APIView):
     permission_classes = [IsAuthenticated]
     @swagger_auto_schema(tags=["Subscription"])
@@ -308,52 +477,156 @@ class RazorpayWebhookAPIView(APIView):
             statusCode=200
         )
         '''
+# class VerifyPaymentAPIView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     @swagger_auto_schema(
+#         tags=["Subscription"],
+#         request_body=openapi.Schema(
+#             type=openapi.TYPE_OBJECT,
+#             required=["razorpay_payment_id", "razorpay_subscription_id", "razorpay_signature"],
+#             properties={
+#                 "razorpay_payment_id": openapi.Schema(type=openapi.TYPE_STRING),
+#                 "razorpay_subscription_id": openapi.Schema(type=openapi.TYPE_STRING),
+#                 "razorpay_signature": openapi.Schema(type=openapi.TYPE_STRING),
+#             }
+#         )
+#     )
+#     def post(self, request):
+#         razorpay_payment_id = request.data.get("razorpay_payment_id")
+#         razorpay_subscription_id = request.data.get("razorpay_subscription_id")
+#         razorpay_signature = request.data.get("razorpay_signature")
+
+#         if not razorpay_payment_id or not razorpay_subscription_id or not razorpay_signature:
+#             return error_response("razorpay_payment_id, razorpay_subscription_id, razorpay_signature are required", 400)
+
+#         # ✅ Signature verification string
+#         payload = f"{razorpay_payment_id}|{razorpay_subscription_id}"
+
+#         expected_signature = hmac.new(
+#             bytes(settings.RAZORPAY_KEY_SECRET, "utf-8"),
+#             bytes(payload, "utf-8"),
+#             hashlib.sha256
+#         ).hexdigest()
+
+#         if expected_signature != razorpay_signature:
+#             return error_response("Invalid signature", 400)
+
+#         # ✅ Update DB status
+#         UserSubscription.objects.filter(
+#             user=request.user,
+#             razorpay_subscription_id=razorpay_subscription_id
+#         ).update(status="active")
+
+#         return success_response(
+#             message="Payment verified successfully",
+#             data={
+#                 "subscription_id": razorpay_subscription_id,
+#                 "payment_id": razorpay_payment_id,
+#                 "status": "active"
+#             }
+#         )
+        
+
+import hmac
+import hashlib
+
 class VerifyPaymentAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @swagger_auto_schema(
-        tags=["Subscription"],
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=["razorpay_payment_id", "razorpay_subscription_id", "razorpay_signature"],
-            properties={
-                "razorpay_payment_id": openapi.Schema(type=openapi.TYPE_STRING),
-                "razorpay_subscription_id": openapi.Schema(type=openapi.TYPE_STRING),
-                "razorpay_signature": openapi.Schema(type=openapi.TYPE_STRING),
-            }
-        )
-    )
+
     def post(self, request):
+
+        required_fields = [
+            "subscription_id",
+            "razorpay_order_id",
+            "razorpay_payment_id",
+            "razorpay_signature"
+        ]
+
+        for field in required_fields:
+            if not request.data.get(field):
+                return error_response(
+                    f"{field} is required",
+                    400
+                )
+
+        subscription_id = request.data.get("subscription_id")
+        razorpay_order_id = request.data.get("razorpay_order_id")
         razorpay_payment_id = request.data.get("razorpay_payment_id")
-        razorpay_subscription_id = request.data.get("razorpay_subscription_id")
         razorpay_signature = request.data.get("razorpay_signature")
 
-        if not razorpay_payment_id or not razorpay_subscription_id or not razorpay_signature:
-            return error_response("razorpay_payment_id, razorpay_subscription_id, razorpay_signature are required", 400)
+        try:
+            subscription = UserSubscription.objects.get(
+                id=subscription_id,
+                user=request.user
+            )
 
-        # ✅ Signature verification string
-        payload = f"{razorpay_payment_id}|{razorpay_subscription_id}"
+        except UserSubscription.DoesNotExist:
+            return error_response(
+                "Subscription not found",
+                404
+            )
 
-        expected_signature = hmac.new(
+        if subscription.is_paid:
+            return error_response(
+                "Subscription is already activated",
+                400
+            )
+
+        payload = (
+            f"{razorpay_order_id}|{razorpay_payment_id}"
+        )
+
+        generated_signature = hmac.new(
             bytes(settings.RAZORPAY_KEY_SECRET, "utf-8"),
             bytes(payload, "utf-8"),
             hashlib.sha256
         ).hexdigest()
 
-        if expected_signature != razorpay_signature:
-            return error_response("Invalid signature", 400)
+        if generated_signature != razorpay_signature:
+            return error_response(
+                "Invalid payment signature",
+                400
+            )
 
-        # ✅ Update DB status
         UserSubscription.objects.filter(
             user=request.user,
-            razorpay_subscription_id=razorpay_subscription_id
-        ).update(status="active")
+            status="active"
+        ).exclude(
+            id=subscription.id
+        ).update(
+            status="inactive"
+        )
+
+        subscription.razorpay_payment_id = razorpay_payment_id
+        subscription.razorpay_signature = razorpay_signature
+        subscription.is_paid = True
+        subscription.status = "active"
+        subscription.start_date = timezone.now()
+
+        from dateutil.relativedelta import relativedelta
+
+        if subscription.billing_cycle == "monthly":
+            subscription.end_date = timezone.now() + relativedelta(months=1)
+        else:
+            subscription.end_date = timezone.now() + relativedelta(years=1)
+
+        subscription.save()
 
         return success_response(
             message="Payment verified successfully",
             data={
-                "subscription_id": razorpay_subscription_id,
-                "payment_id": razorpay_payment_id,
-                "status": "active"
+                "subscription_id": subscription.id,
+                "plan_name": subscription.plan.plan_name,
+                "billing_cycle": subscription.billing_cycle,
+                "start_date": subscription.start_date,
+                "end_date": subscription.end_date,
+                "status": subscription.status
             }
         )
+
+
+
+            
+                    
