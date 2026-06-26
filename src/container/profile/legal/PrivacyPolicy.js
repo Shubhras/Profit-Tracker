@@ -1,58 +1,70 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import Navbar from '../home/components/Navbar';
 import Footer from '../home/components/Footer';
+import { getPrivacyPolicy } from '../../../redux/admin/actionCreator';
 
-function SectionBadge({ number }) {
-  return (
-    <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-emerald-500 text-white text-[12px] font-bold shrink-0">
-      {number}
-    </span>
-  );
-}
+// function SectionBadge({ number }) {
+//   return (
+//     <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-emerald-500 text-white text-[12px] font-bold shrink-0">
+//       {number}
+//     </span>
+//   );
+// }
 
-function SectionHeading({ number, children }) {
-  return (
-    <div className="flex items-center gap-3 mt-12 mb-5">
-      <SectionBadge number={number} />
-      <h2 className="text-2xl min-md:text-2xl font-bold text-gray-900 mb-0">{children}</h2>
-    </div>
-  );
-}
+// function SectionHeading({ number, children }) {
+//   return (
+//     <div className="flex items-center gap-3 mt-12 mb-5">
+//       <SectionBadge number={number} />
+//       <h2 className="text-2xl min-md:text-2xl font-bold text-gray-900 mb-0">{children}</h2>
+//     </div>
+//   );
+// }
 
-function SubHeading({ children }) {
-  return <h3 className="text-lg font-bold text-gray-800 mt-6 mb-3">{children}</h3>;
-}
+// function SubHeading({ children }) {
+//   return <h3 className="text-lg font-bold text-gray-800 mt-6 mb-3">{children}</h3>;
+// }
 
-function SubPointHeading({ number, children }) {
-  return (
-    <h4 className="text-base font-bold text-gray-800 mt-5 mb-2">
-      {number} {children}
-    </h4>
-  );
-}
+// function SubPointHeading({ number, children }) {
+//   return (
+//     <h4 className="text-base font-bold text-gray-800 mt-5 mb-2">
+//       {number} {children}
+//     </h4>
+//   );
+// }
 
-function BulletList({ items }) {
-  return (
-    <ul className="space-y-2.5 mb-5">
-      {items.map((item, i) => (
-        <li key={i} className="flex items-start gap-3 text-gray-600">
-          <span className="mt-2 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-          <span>{item}</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
+// function BulletList({ items }) {
+//   return (
+//     <ul className="space-y-2.5 mb-5">
+//       {items.map((item, i) => (
+//         <li key={i} className="flex items-start gap-3 text-gray-600">
+//           <span className="mt-2 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+//           <span>{item}</span>
+//         </li>
+//       ))}
+//     </ul>
+//   );
+// }
 
 function PrivacyPolicy() {
+  const dispatch = useDispatch();
+
+  const { privacypolicyData, loading } = useSelector((state) => state.AdminDashboard);
+  // const [loading, setLoading] = useState(true);
+
+  const policyContent = privacypolicyData?.data?.[0]?.content || '';
+
+  useEffect(() => {
+    dispatch(getPrivacyPolicy('privacy_policy'));
+  }, [dispatch]);
+
   return (
-    <div className="bg-white min-h-screen">
-      <Navbar />
+    <>
+      <div className="bg-white min-h-screen">
+        <Navbar />
 
-      <div className="pt-32 pb-12 px-[3%] max-w-7xl mx-auto">
-        <h1 className="text-3xl min-md:text-4xl font-bold text-gray-900 mb-5">Privacy Policy</h1>
-
-        <div className="text-base text-gray-600">
+        <div className="pt-32 pb-12 px-[3%] max-w-7xl mx-auto">
+          {/* <div className="text-base text-gray-600">
           <p className="mb-3">Last Updated: February 2026</p>
 
           <p className="mb-6">
@@ -60,7 +72,6 @@ function PrivacyPolicy() {
             is committed to data security, transparency, and regulatory compliance.
           </p>
 
-          {/* 1 */}
           <SectionHeading number={1}>Information We Collect</SectionHeading>
 
           <SubHeading>a) Account Information</SubHeading>
@@ -81,7 +92,6 @@ function PrivacyPolicy() {
           <SubHeading>c) Technical Information</SubHeading>
           <BulletList items={['IP address', 'Browser type', 'Usage logs', 'Device information']} />
 
-          {/* 2 */}
           <SectionHeading number={2}>How We Use Data</SectionHeading>
 
           <p className="mb-2">We use data only to:</p>
@@ -104,7 +114,6 @@ function PrivacyPolicy() {
             ]}
           />
 
-          {/* 3 */}
           <SectionHeading number={3}>Brand Analytics Compliance</SectionHeading>
           <BulletList
             items={[
@@ -115,7 +124,6 @@ function PrivacyPolicy() {
             ]}
           />
 
-          {/* 4 */}
           <SectionHeading number={4}>Data Storage &amp; Security</SectionHeading>
           <BulletList
             items={[
@@ -128,7 +136,6 @@ function PrivacyPolicy() {
           />
           <p className="mb-4">Only authorized systems and personnel can access user data.</p>
 
-          {/* 5 */}
           <SectionHeading number={5}>Personal Data (PII)</SectionHeading>
           <BulletList
             items={[
@@ -137,8 +144,6 @@ function PrivacyPolicy() {
               'Retained only as long as necessary',
             ]}
           />
-
-          {/* 6 */}
           <SectionHeading number={6}>Data Retention</SectionHeading>
           <BulletList
             items={[
@@ -148,7 +153,6 @@ function PrivacyPolicy() {
             ]}
           />
 
-          {/* 7 */}
           <SectionHeading number={7}>User Rights</SectionHeading>
           <BulletList
             items={[
@@ -160,35 +164,29 @@ function PrivacyPolicy() {
           />
           <p className="mb-4">Requests can be submitted via support email.</p>
 
-          {/* 8 */}
           <SectionHeading number={8}>Cookies &amp; Tracking</SectionHeading>
           <BulletList items={['Authentication', 'Session management', 'Product analytics']} />
           <p className="mb-4">Cookies do not collect sensitive seller data.</p>
 
-          {/* 9 */}
           <SectionHeading number={9}>Third-Party Services</SectionHeading>
           <p className="mb-4">
             We may use trusted infrastructure providers for hosting, logging, and error monitoring. All providers comply
             with strict data protection standards.
           </p>
 
-          {/* 10 */}
           <SectionHeading number={10}>No Platform Endorsement</SectionHeading>
           <p className="mb-4">
             TrackMyProfit is an independent analytics application and does not represent any marketplace or platform
             provider.
           </p>
 
-          {/* 11 */}
           <SectionHeading number={11}>Policy Updates</SectionHeading>
           <p className="mb-4">We may update this policy periodically. Continued use indicates acceptance.</p>
 
-          {/* 12 */}
           <SectionHeading number={12}>Contact</SectionHeading>
           <p className="mb-2">📧 letstalk@trackmyprofit.com</p>
           <p>🌐 https://trackmyprofit.com</p>
 
-          {/* 13 */}
           <SectionHeading number={13}>Amazon Selling Partner API (SP-API) Data Practices</SectionHeading>
           <p className="mb-4">
             TrackMyProfit is a Software-as-a-Service (SaaS) platform designed to help e-commerce businesses and Amazon
@@ -250,7 +248,6 @@ function PrivacyPolicy() {
           />
           <p className="mb-4">We access only the minimum data necessary to provide authorized services.</p>
 
-          {/* 14 */}
           <SectionHeading number={14}>How We Use Amazon Information</SectionHeading>
           <p className="mb-2">We use information to:</p>
           <BulletList
@@ -270,7 +267,6 @@ function PrivacyPolicy() {
           />
           <p className="mb-4 font-semibold text-gray-800">We do not sell Amazon Information or customer data.</p>
 
-          {/* 15 */}
           <SectionHeading number={15}>Legal Basis for Processing</SectionHeading>
           <p className="mb-2">Information is processed only:</p>
           <BulletList
@@ -282,7 +278,6 @@ function PrivacyPolicy() {
             ]}
           />
 
-          {/* 16 */}
           <SectionHeading number={16}>Security Controls</SectionHeading>
           <p className="mb-2">
             TrackMyProfit implements industry-standard security controls to protect Amazon Information and customer
@@ -306,7 +301,6 @@ function PrivacyPolicy() {
             Access to Amazon Information is restricted to authorized personnel on a need-to-know basis.
           </p>
 
-          {/* 17 */}
           <SectionHeading number={17}>Storage and Encryption</SectionHeading>
           <p className="mb-4">Amazon Information is stored using encrypted cloud infrastructure.</p>
 
@@ -324,7 +318,6 @@ function PrivacyPolicy() {
           <p className="mb-2">All communications are protected using:</p>
           <BulletList items={['HTTPS', 'TLS 1.2 or higher']} />
 
-          {/* 18 */}
           <SectionHeading number={18}>Backup and Disaster Recovery</SectionHeading>
           <p className="mb-2">To ensure business continuity:</p>
           <BulletList
@@ -339,7 +332,6 @@ function PrivacyPolicy() {
           <BulletList items={['Recovery Time Objective (RTO): 4 Hours', 'Recovery Point Objective (RPO): 24 Hours']} />
           <p className="mb-4">Backup restoration procedures are tested quarterly.</p>
 
-          {/* 19 */}
           <SectionHeading number={19}>Amazon Data Retention</SectionHeading>
 
           <SubPointHeading number="19.1">Amazon Restricted Data</SubPointHeading>
@@ -354,7 +346,6 @@ function PrivacyPolicy() {
             auditing, and financial reporting. When data is no longer required, it is securely deleted.
           </p>
 
-          {/* 20 */}
           <SectionHeading number={20}>Amazon Data Sharing</SectionHeading>
           <p className="mb-2">TrackMyProfit does not:</p>
           <BulletList
@@ -374,7 +365,6 @@ function PrivacyPolicy() {
             ]}
           />
 
-          {/* 21 */}
           <SectionHeading number={21}>Access Controls</SectionHeading>
           <p className="mb-2">We enforce strict access controls including:</p>
           <BulletList
@@ -389,7 +379,6 @@ function PrivacyPolicy() {
           />
           <p className="mb-4">Unauthorized access attempts are monitored and investigated.</p>
 
-          {/* 22 */}
           <SectionHeading number={22}>Logging and Monitoring</SectionHeading>
           <p className="mb-2">TrackMyProfit maintains centralized security logging systems. We monitor:</p>
           <BulletList
@@ -402,7 +391,6 @@ function PrivacyPolicy() {
             ]}
           />
 
-          {/* 24 */}
           <SectionHeading number={23}>Incident Response</SectionHeading>
           <p className="mb-4">TrackMyProfit maintains a documented Incident Response Plan.</p>
 
@@ -426,7 +414,6 @@ function PrivacyPolicy() {
             24 hours of detection, in accordance with Amazon SP-API requirements.
           </p>
 
-          {/* 25 */}
           <SectionHeading number={24}>International Data Transfers</SectionHeading>
           <p className="mb-4">
             Information may be processed in secure cloud environments located in multiple regions for redundancy,
@@ -434,7 +421,6 @@ function PrivacyPolicy() {
             organizational safeguards.
           </p>
 
-          {/* 26 */}
           <SectionHeading number={25}>Additional User Rights</SectionHeading>
           <p className="mb-2">Users may request:</p>
           <BulletList
@@ -447,17 +433,71 @@ function PrivacyPolicy() {
           />
           <p className="mb-4">Requests may be submitted through our contact information below.</p>
 
-          {/* 27 */}
 
           <SectionHeading number={26}>Contact Information</SectionHeading>
           <p className="mb-1">TrackMyProfit</p>
           <p className="mb-1">Website: https://trackmyprofit.com</p>
           <p className="mb-4">Email: letstalk@trackmyprofit.com</p>
+        </div> */}
+          <div className="policy-content">
+            {loading ? (
+              <p>Loading...</p>
+            ) : (
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: policyContent,
+                }}
+              />
+            )}
+          </div>
         </div>
-      </div>
 
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+      <style>{`
+.policy-content h1{
+  font-size:40px;
+  font-weight:700;
+  margin:20px 0;
+}
+
+.policy-content h2{
+  font-size:32px;
+  font-weight:700;
+  margin:20px 0 8px;   /* bottom sirf 8px */
+}
+
+.policy-content h3{
+  font-size:24px;
+  font-weight:600;
+  margin:8px 0 12px;   /* top bhi kam */
+}
+.policy-content p{
+  font-size:16px;
+  line-height:1.8;
+  margin-bottom:-4px !important;
+  color:#4b5563;
+}
+
+.policy-content ul{
+  list-style:disc;
+  padding-left:25px;
+}
+
+.policy-content ol{
+  list-style:decimal;
+  padding-left:25px;
+}
+
+.policy-content li{
+  margin:8px 0;
+}
+
+.policy-content strong{
+  font-weight:700;
+}
+`}</style>
+    </>
   );
 }
 
