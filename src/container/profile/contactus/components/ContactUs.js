@@ -1,42 +1,60 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Form, Input, Button, Row, Col, Card, Typography, message } from 'antd';
 import { motion } from 'framer-motion';
 import { PhoneOutlined, MailOutlined, EnvironmentOutlined, SendOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { useDispatch, useSelector } from 'react-redux';
 import Navbar from '../../home/components/Navbar';
 import Footer from '../../home/components/Footer';
 import ScrollToTopButton from '../../home/components/ScrollToTopButton';
+import { getPrivacyPolicy } from '../../../../redux/admin/actionCreator';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 
-const contactInfo = [
-  {
-    icon: <PhoneOutlined />,
-    title: 'Sales',
-    details: ['+91-7014719182'],
-    color: 'emerald',
-  },
-  {
-    icon: <MailOutlined />,
-    title: 'Email',
-    details: ['letstalk@trackmyprofit.com'],
-    color: 'blue',
-  },
-  {
-    icon: <EnvironmentOutlined />,
-    title: 'Location',
-    details: ['Plot 199, Vijay Nagar, Scheme 54, PU4, Indore, Madhya Pradesh 452010'],
-    color: 'purple',
-  },
-  {
-    icon: <ClockCircleOutlined />,
-    title: 'Working Hours',
-    details: ['Mon - Fri: 10AM - 6PM IST'],
-    color: 'amber',
-  },
-];
-
 function ContactUs() {
+  const dispatch = useDispatch();
+
+  const { privacypolicyData } = useSelector((state) => state.AdminDashboard);
+  // const [loading, setLoading] = useState(true);
+
+  const policyContent = privacypolicyData?.data?.[0]?.content || '{}';
+
+  const contactData = JSON.parse(policyContent);
+
+  const contactInfo = [
+    {
+      icon: <PhoneOutlined />,
+      title: 'Sales',
+      details: [contactData?.phone || ''],
+    },
+    {
+      icon: <MailOutlined />,
+      title: 'Email',
+      details: [contactData?.email || ''],
+    },
+    {
+      icon: <EnvironmentOutlined />,
+      title: 'Location',
+      details: [contactData?.location || ''],
+    },
+    {
+      icon: <ClockCircleOutlined />,
+      title: 'Working Hours',
+      // details: [contactData?.working_hours || ''],
+      details: [
+        typeof contactData?.working_hours === 'string'
+          ? contactData.working_hours
+          : `${(contactData?.working_hours?.days || []).join(', ')} | ${contactData?.working_hours?.from || ''} - ${
+              contactData?.working_hours?.to || ''
+            }`,
+      ],
+    },
+  ];
+
+  useEffect(() => {
+    dispatch(getPrivacyPolicy('contact_us'));
+  }, [dispatch]);
+
   const [form] = Form.useForm();
 
   const onFinish = (values) => {

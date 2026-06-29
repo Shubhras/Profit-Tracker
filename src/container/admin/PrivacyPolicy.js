@@ -17,6 +17,17 @@ function PrivacyPolicy() {
   const [content, setContent] = useState('');
   const [editId, setEditId] = useState(null);
 
+  const [contactData, setContactData] = useState({
+    phone: '',
+    email: '',
+    location: '',
+    working_hours: {
+      days: [],
+      from: '',
+      to: '',
+    },
+  });
+
   const dispatch = useDispatch();
   const { privacypolicyData, loading } = useSelector((state) => state.AdminDashboard);
 
@@ -37,7 +48,7 @@ function PrivacyPolicy() {
     },
     {
       label: 'Third-Party Policies',
-      value: 'terms',
+      value: 'third_party_policy',
     },
     {
       label: 'Platform Privacy',
@@ -51,12 +62,22 @@ function PrivacyPolicy() {
       label: 'Contact Us',
       value: 'contact_us',
     },
+    {
+      label: 'Terms and Conditions',
+      value: 'terms',
+    },
   ];
 
   const handleSave = async () => {
+    // const payload = {
+    //   title: selectedTab,
+    //   content,
+    //   is_active: true,
+    // };
+
     const payload = {
       title: selectedTab,
-      content,
+      content: selectedTab === 'contact_us' ? JSON.stringify(contactData) : content,
       is_active: true,
     };
 
@@ -196,9 +217,46 @@ function PrivacyPolicy() {
 
                                 <div className="flex items-center gap-3">
                                   <FormOutlined
+                                    // onClick={() => {
+                                    //   setEditId(item.id);
+                                    //   setContent(item.content);
+                                    //   setShowForm(true);
+                                    // }}
                                     onClick={() => {
                                       setEditId(item.id);
-                                      setContent(item.content);
+
+                                      if (selectedTab === 'contact_us') {
+                                        try {
+                                          const data = JSON.parse(item.content || '{}');
+
+                                          setContactData({
+                                            phone: data.phone || '',
+                                            email: data.email || '',
+                                            location: data.location || '',
+                                            // working_hours: data.working_hours || '',
+                                            working_hours: data.working_hours || {
+                                              days: [],
+                                              from: null,
+                                              to: null,
+                                            },
+                                          });
+                                        } catch {
+                                          setContactData({
+                                            phone: '',
+                                            email: '',
+                                            location: '',
+                                            // working_hours: '',
+                                            working_hours: {
+                                              days: [],
+                                              from: null,
+                                              to: null,
+                                            },
+                                          });
+                                        }
+                                      } else {
+                                        setContent(item.content);
+                                      }
+
                                       setShowForm(true);
                                     }}
                                     className="text-[#1677ff] cursor-pointer text-[17px] drop-shadow-sm transition-all duration-200 hover:scale-110 hover:drop-shadow-md hover:text-[#0958d9]"
@@ -210,12 +268,53 @@ function PrivacyPolicy() {
                                 </div>
                               </div>
 
-                              <div
+                              {/* <div
                                 className="policy-content bg-gray-100 rounded-lg p-4"
                                 dangerouslySetInnerHTML={{
                                   __html: item.content,
                                 }}
-                              />
+                              /> */}
+                              {item.title === 'contact_us' ? (
+                                (() => {
+                                  const data = JSON.parse(item.content || '{}');
+
+                                  return (
+                                    <div className="grid md:grid-cols-2 gap-5 bg-gray-50 rounded-xl p-5">
+                                      <div className="border rounded-lg p-4 bg-white">
+                                        <p className="text-gray-500 text-sm">Contact Number</p>
+                                        <h4 className="font-semibold mt-1">{data.phone}</h4>
+                                      </div>
+
+                                      <div className="border rounded-lg p-4 bg-white">
+                                        <p className="text-gray-500 text-sm">Email</p>
+                                        <h4 className="font-semibold mt-1">{data.email}</h4>
+                                      </div>
+
+                                      <div className="border rounded-lg p-4 bg-white">
+                                        <p className="text-gray-500 text-sm">Location</p>
+                                        <h4 className="font-semibold mt-1">{data.location}</h4>
+                                      </div>
+
+                                      <div className="border rounded-lg p-4 bg-white">
+                                        <p className="text-gray-500 text-sm">Working Hours</p>
+                                        {/* <h4 className="font-semibold mt-1">{data.working_hours}</h4> */}
+                                        <h4 className="font-semibold mt-1">
+                                          {Array.isArray(data.working_hours?.days)
+                                            ? `${data.working_hours.days.join(', ')} | ${data.working_hours.from} - ${
+                                                data.working_hours.to
+                                              }`
+                                            : data.working_hours}
+                                        </h4>
+                                      </div>
+                                    </div>
+                                  );
+                                })()
+                              ) : (
+                                <div
+                                  className="policy-content bg-gray-100 rounded-lg p-4"
+                                  dangerouslySetInnerHTML={{ __html: item.content }}
+                                />
+                              )}
                             </div>
                           ))}
                         </div>
@@ -261,7 +360,7 @@ function PrivacyPolicy() {
                       </select>
                     </div> */}
 
-                      <div className="border border-gray-300 rounded-md overflow-hidden">
+                      {/* <div className="border border-gray-300 rounded-md overflow-hidden">
                         <ReactQuill
                           theme="snow"
                           value={content}
@@ -270,7 +369,189 @@ function PrivacyPolicy() {
                           className="bg-white"
                           style={{ minHeight: '350px' }}
                         />
-                      </div>
+                      </div> */}
+
+                      {selectedTab === 'contact_us' ? (
+                        <div className="bg-white border rounded-xl p-6">
+                          <h2 className="text-xl font-semibold mb-6">Contact Information</h2>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                              <label className="block text-sm font-medium mb-2">Contact Number</label>
+                              <input
+                                type="tel"
+                                inputMode="numeric"
+                                maxLength={10}
+                                value={contactData.phone}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(/\D/g, '');
+                                  setContactData({
+                                    ...contactData,
+                                    phone: value,
+                                  });
+                                }}
+                                placeholder="Enter Contact Number"
+                                className="w-full h-11 rounded-lg border border-gray-300 px-4 outline-none focus:border-[#f58d73]"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium mb-2">Email</label>
+                              <input
+                                type="email"
+                                value={contactData.email}
+                                onChange={(e) =>
+                                  setContactData({
+                                    ...contactData,
+                                    email: e.target.value,
+                                  })
+                                }
+                                placeholder="example@gmail.com"
+                                className="w-full h-11 rounded-lg border border-gray-300 px-4 outline-none focus:border-[#f58d73]"
+                              />
+                            </div>
+
+                            <div className="md:col-span-2">
+                              <label className="block text-sm font-medium mb-2">Location</label>
+                              <input
+                                type="text"
+                                value={contactData.location}
+                                onChange={(e) =>
+                                  setContactData({
+                                    ...contactData,
+                                    location: e.target.value,
+                                  })
+                                }
+                                placeholder="Indore, Madhya Pradesh"
+                                className="w-full h-11 rounded-lg border border-gray-300 px-4 outline-none focus:border-[#f58d73]"
+                              />
+                            </div>
+
+                            <div className="md:col-span-2">
+                              <label className="block text-sm font-medium mb-2">Working Days</label>
+
+                              <Select
+                                mode="multiple"
+                                className="w-full mb-4"
+                                placeholder="Select Days"
+                                value={contactData.working_hours.days}
+                                onChange={(value) =>
+                                  setContactData({
+                                    ...contactData,
+                                    working_hours: {
+                                      ...contactData.working_hours,
+                                      days: value,
+                                    },
+                                  })
+                                }
+                                options={[
+                                  { label: 'Monday', value: 'Monday' },
+                                  { label: 'Tuesday', value: 'Tuesday' },
+                                  { label: 'Wednesday', value: 'Wednesday' },
+                                  { label: 'Thursday', value: 'Thursday' },
+                                  { label: 'Friday', value: 'Friday' },
+                                  { label: 'Saturday', value: 'Saturday' },
+                                  { label: 'Sunday', value: 'Sunday' },
+                                ]}
+                              />
+
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-sm mb-2">From</label>
+
+                                  {/* <input
+                                    type="time"
+                                    value={contactData.working_hours.from || ''}
+                                    onChange={(e) =>
+                                      setContactData({
+                                        ...contactData,
+                                        working_hours: {
+                                          ...contactData.working_hours,
+                                          from: e.target.value,
+                                        },
+                                      })
+                                    }
+                                    className="w-full h-11 rounded-lg border border-gray-300 px-4"
+                                  /> */}
+                                  <input
+                                    type="time"
+                                    value={contactData.working_hours.from || ''}
+                                    onChange={(e) => {
+                                      const from = e.target.value;
+
+                                      setContactData({
+                                        ...contactData,
+                                        working_hours: {
+                                          ...contactData.working_hours,
+                                          from,
+                                          // agar To Time chhota hai to reset kar do
+                                          to:
+                                            contactData.working_hours.to && contactData.working_hours.to < from
+                                              ? ''
+                                              : contactData.working_hours.to,
+                                        },
+                                      });
+                                    }}
+                                    className="w-full h-11 rounded-lg border border-gray-300 px-4"
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="block text-sm mb-2">To</label>
+                                  {/* 
+                                  <input
+                                    type="time"
+                                    value={contactData.working_hours.to || ''}
+                                    onChange={(e) =>
+                                      setContactData({
+                                        ...contactData,
+                                        working_hours: {
+                                          ...contactData.working_hours,
+                                          to: e.target.value,
+                                        },
+                                      })
+                                    }
+                                    className="w-full h-11 rounded-lg border border-gray-300 px-4"
+                                  /> */}
+                                  <input
+                                    type="time"
+                                    min={contactData.working_hours.from || ''}
+                                    value={contactData.working_hours.to || ''}
+                                    onChange={(e) => {
+                                      const to = e.target.value;
+
+                                      if (contactData.working_hours.from && to < contactData.working_hours.from) {
+                                        alert('To Time cannot be earlier than From Time');
+                                        return;
+                                      }
+
+                                      setContactData({
+                                        ...contactData,
+                                        working_hours: {
+                                          ...contactData.working_hours,
+                                          to,
+                                        },
+                                      });
+                                    }}
+                                    className="w-full h-11 rounded-lg border border-gray-300 px-4"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="border border-gray-300 rounded-md overflow-hidden">
+                          <ReactQuill
+                            theme="snow"
+                            value={content}
+                            onChange={setContent}
+                            placeholder="Enter content here..."
+                            className="bg-white"
+                            style={{ minHeight: '350px' }}
+                          />
+                        </div>
+                      )}
 
                       <div className="flex gap-3 mt-5">
                         <Button type="primary" onClick={handleSave} className="!bg-[#f58d73] !border-[#f58d73]">
