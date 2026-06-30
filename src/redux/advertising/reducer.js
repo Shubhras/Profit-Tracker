@@ -17,6 +17,7 @@ const initialState = {
   keybidupdate: [],
   updatecampaign: [],
   orderProcessingData: [],
+  advertiseOverview: [],
   rules: [],
   campginrulelist: [],
   loading: false,
@@ -93,6 +94,10 @@ const {
   ORDER_PROCESSING_BEGIN,
   ORDER_PROCESSING_SUCCESS,
   ORDER_PROCESSING_ERR,
+
+  ADVERTISE_OVERVIEW_BEGIN,
+  ADVERTISE_OVERVIEW_SUCCESS,
+  ADVERTISE_OVERVIEW_ERR,
 } = actions;
 
 const AdvertisingReducer = (state = initialState, action) => {
@@ -469,6 +474,27 @@ const AdvertisingReducer = (state = initialState, action) => {
       };
 
     case ORDER_PROCESSING_ERR:
+      return {
+        ...state,
+        error: err,
+        loading: false,
+      };
+
+    case ADVERTISE_OVERVIEW_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case ADVERTISE_OVERVIEW_SUCCESS:
+      return {
+        ...state,
+        advertiseOverview: data,
+        loading: false,
+      };
+
+    case ADVERTISE_OVERVIEW_ERR:
       return {
         ...state,
         error: err,

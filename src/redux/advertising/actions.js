@@ -71,6 +71,10 @@ const actions = {
   ORDER_PROCESSING_SUCCESS: 'ORDER_PROCESSING_SUCCESS',
   ORDER_PROCESSING_ERR: 'ORDER_PROCESSING_ERR',
 
+  ADVERTISE_OVERVIEW_BEGIN: 'ADVERTISE_OVERVIEW_BEGIN',
+  ADVERTISE_OVERVIEW_SUCCESS: 'ADVERTISE_OVERVIEW_SUCCESS',
+  ADVERTISE_OVERVIEW_ERR: 'ADVERTISE_OVERVIEW_ERR',
+
   campaignsBegin: () => {
     return {
       type: actions.CAMPAIGNS_BEGIN,
@@ -427,6 +431,26 @@ const actions = {
   orderprocessingErr: (err) => {
     return {
       type: actions.ORDER_PROCESSING_ERR,
+      err,
+    };
+  },
+
+  advertisingOverviewBegin: () => {
+    return {
+      type: actions.ADVERTISE_OVERVIEW_BEGIN,
+    };
+  },
+
+  advertisingOverviewSuccess: (data) => {
+    return {
+      type: actions.ADVERTISE_OVERVIEW_SUCCESS,
+      data,
+    };
+  },
+
+  advertisingOverviewErr: (err) => {
+    return {
+      type: actions.ADVERTISE_OVERVIEW_ERR,
       err,
     };
   },

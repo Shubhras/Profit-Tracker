@@ -4,6 +4,7 @@ import { React, useState } from 'react';
 // import UilSetting from '@iconscout/react-unicons/icons/uil-setting';
 // import UilBell from '@iconscout/react-unicons/icons/uil-bell';
 import UilUser from '@iconscout/react-unicons/icons/uil-user';
+import UilHeadphones from '@iconscout/react-unicons/icons/uil-headphones';
 // import UilUsersAlt from '@iconscout/react-unicons/icons/uil-users-alt';
 import { NavLink } from 'react-router-dom';
 // import Heading from '../../../../components/heading/heading';
@@ -93,6 +94,22 @@ function AuthorBox() {
                   <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
                 </svg>
                 Change Password
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to={`${path}/support`}
+                onClick={() => {
+                  setActiveValue('support');
+                }}
+                className={`flex items-center mb-3 px-5 py-3 rounded-[6px] ${
+                  activeValue === 'support'
+                    ? 'bg-primary-transparent text-primary font-medium'
+                    : 'bg-transparent text-light dark:text-white60 font-normal'
+                }`}
+              >
+                <UilHeadphones className="w-4 h-4 ltr:mr-3 rtl:ml-3 mb-0.5" />
+                Help & Support
               </NavLink>
             </li>
             {/* <li>
