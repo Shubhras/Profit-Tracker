@@ -28,6 +28,10 @@ const {
   estimatedFeesBegin,
   estimatedFeesSuccess,
   estimatedFeesErr,
+
+  notificationBegin,
+  notificationSuccess,
+  notificationErr,
 } = actions;
 
 const mockService = async (payload) => {
@@ -231,6 +235,24 @@ export const getEstimatedFees = (payload) => {
       }
     } catch (err) {
       dispatch(estimatedFeesErr(err));
+    }
+  };
+};
+
+export const getNotifications = () => {
+  return async (dispatch) => {
+    dispatch(notificationBegin());
+
+    try {
+      const response = await DataService.get('/user/user-notifications/');
+      console.log('API Response =>', response);
+      if (response.data?.status === true || response.data?.status === 'success') {
+        dispatch(notificationSuccess(response.data));
+      } else {
+        dispatch(notificationErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(notificationErr(err));
     }
   };
 };

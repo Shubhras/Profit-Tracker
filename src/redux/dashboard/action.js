@@ -31,6 +31,10 @@ const actions = {
   ESTIMATED_FEES_SUCCESS: 'ESTIMATED_FEES_SUCCESS',
   ESTIMATED_FEES_ERR: 'ESTIMATED_FEES_ERR',
 
+  NOTIFICATION_BEGIN: 'NOTIFICATION_BEGIN',
+  NOTIFICATION_SUCCESS: 'NOTIFICATION_SUCCESS',
+  NOTIFICATION_ERR: 'NOTIFICATION_ERR',
+
   dashboardBegin: () => ({
     type: actions.DASHBOARD_BEGIN,
   }),
@@ -88,6 +92,10 @@ const actions = {
   estimatedFeesBegin: () => ({ type: actions.ESTIMATED_FEES_BEGIN }),
   estimatedFeesSuccess: (data) => ({ type: actions.ESTIMATED_FEES_SUCCESS, data }),
   estimatedFeesErr: (err) => ({ type: actions.ESTIMATED_FEES_ERR, err }),
+
+  notificationBegin: () => ({ type: actions.NOTIFICATION_BEGIN }),
+  notificationSuccess: (data) => ({ type: actions.NOTIFICATION_SUCCESS, data }),
+  notificationErr: (err) => ({ type: actions.NOTIFICATION_ERR, err }),
 };
 
 export default actions;

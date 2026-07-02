@@ -30,6 +30,10 @@ const {
   ESTIMATED_FEES_BEGIN,
   ESTIMATED_FEES_SUCCESS,
   ESTIMATED_FEES_ERR,
+
+  NOTIFICATION_BEGIN,
+  NOTIFICATION_SUCCESS,
+  NOTIFICATION_ERR,
 } = actions;
 
 const initialState = {
@@ -39,6 +43,7 @@ const initialState = {
   profitData: null,
   monthwiseProfitData: null,
   estimatefees: [],
+  notifications: [],
   error: null,
   dateRange: null,
   search: '',
@@ -203,6 +208,27 @@ const dashboardReducer = (state = initialState, action) => {
       };
 
     case ESTIMATED_FEES_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case NOTIFICATION_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case NOTIFICATION_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        notifications: action.data.data || [],
+      };
+
+    case NOTIFICATION_ERR:
       return {
         ...state,
         loading: false,
