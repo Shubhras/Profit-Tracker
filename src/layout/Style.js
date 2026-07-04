@@ -132,7 +132,8 @@ const LayoutContainer = Styled.div`
                     /* Base Item Styling */
                     &.ant-menu-item, 
                     .ant-menu-submenu-title {
-                        margin: 4px 8px !important;
+                        margin: 4px 4px !important;
+                         padding-left: 10px !important; 
                         border-radius: 12px; /* Pill shape */
                         color: #64748b; /* Slate 500 */
                         height: 48px;
@@ -208,7 +209,7 @@ const LayoutContainer = Styled.div`
                     }
 
                     .ant-menu-title-content{
-                        margin-left: 10px;
+                        margin-left: 6px;
                     }
                 }
 
@@ -250,11 +251,44 @@ const LayoutContainer = Styled.div`
                 }
                 
                 /* Collapsed State Overrides */
-                &.ant-menu-inline-collapsed{
-                    .ant-menu-submenu-title, .ant-menu-item {
-                        padding: 0 calc(50% - 20px) !important; /* Center icons */
-                        .ant-menu-title-content { display: none; }
-                    }
+                // &.ant-menu-inline-collapsed{
+                //     .ant-menu-submenu-title, .ant-menu-item {
+                //         padding: 0 calc(50% - 20px) !important;
+                //         .ant-menu-title-content { display: none; }
+                //     }
+                
+                &.ant-menu-inline-collapsed {
+  .ant-menu-item,
+  .ant-menu-submenu-title {
+    width: 48px !important;
+    height: 48px !important;
+    padding: 0 !important;
+    margin: 6px auto !important;
+
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+
+  .ant-menu-title-content {
+    display: none !important;
+  }
+
+  .ant-menu-item-icon,
+  .ant-menu-submenu-title .ant-menu-item-icon,
+  svg {
+    margin: 0 !important;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ant-menu-submenu-arrow {
+    display: none;
+  }
+}
                 }
             }
         }

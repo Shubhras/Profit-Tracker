@@ -105,22 +105,22 @@ function SupportTicket() {
                       </div>
 
                       {/* Title */}
-                      <h2 className="text-lg font-semibold mt-3">{item.title}</h2>
+                      <h2 className="text-lg font-semibold mt-1">{item.title}</h2>
 
                       {/* Description */}
-                      <p className="text-gray-500 mt-2">{item.description}</p>
+                      <p className="text-gray-500">{item.description}</p>
 
                       {/* Admin Note */}
-                      {item.admin_note && (
+                      {/* {item.admin_note && (
                         <div className="mt-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg p-3">
                           <div className="font-semibold text-blue-700 text-sm mb-1">Admin Note</div>
 
                           <div className="text-gray-600 text-sm">{item.admin_note}</div>
                         </div>
-                      )}
+                      )} */}
 
                       {/* Bottom */}
-                      <div className="flex flex-wrap gap-6 mt-5 text-gray-500 text-sm">
+                      <div className="flex flex-wrap gap-6 mt-2 text-gray-500 text-sm">
                         <div className="flex items-center gap-2">
                           <CalendarOutlined />
                           {new Date(item.created_at).toLocaleDateString()}
@@ -141,9 +141,8 @@ function SupportTicket() {
                     </div>
 
                     <Button
-                      type="button"
-                      shape="circle"
-                      icon={<EyeOutlined />}
+                      type="text"
+                      icon={<EyeOutlined style={{ color: '#1677ff', fontSize: '20px' }} />}
                       onClick={() => handleViewTicket(item.id)}
                     />
                   </div>
@@ -328,13 +327,20 @@ function SupportTicket() {
 
             {/* Admin Note */}
 
-            {ticketDetails.admin_note && (
+            {/* {ticketDetails.admin_note && (
               <div className="bg-blue-50 border-l-4 border-blue-500 rounded-xl p-4">
                 <div className="font-semibold text-blue-700 mb-2">Admin Response</div>
 
                 <div>{ticketDetails.admin_note}</div>
               </div>
-            )}
+            )} */}
+            <div className="bg-blue-50 border-l-4 border-blue-500 rounded-xl p-3">
+              <div className="font-semibold text-blue-700 mb-0">Admin Response</div>
+
+              <div className={ticketDetails.admin_note ? 'text-gray-800' : 'text-gray-500 italic'}>
+                {ticketDetails.admin_note || 'No admin response'}
+              </div>
+            </div>
           </div>
         )}
       </Modal>
