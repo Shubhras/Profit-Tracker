@@ -11,6 +11,7 @@ class OrderItemInline(admin.TabularInline):  # or StackedInline
         'seller_sku',
         'title',
         'quantity_ordered',
+        'total_claimed_amount',
         'quantity_shipped',
         'item_price',
         'item_tax',
@@ -22,7 +23,7 @@ class OrderItemInline(admin.TabularInline):  # or StackedInline
 
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
-    list_display = ('id','seller_sku','parent_sku', 'parent_asin', 'asin','cost_price', 'order','shipping_price','shipping_income','shipping_expense', 'quantity_claimed','claim_type', 'quantity_ordered', 'item_price', 'created_at')
+    list_display = ('id','seller_sku','parent_sku', 'parent_asin', 'asin','cost_price', 'order','shipping_price','shipping_income','shipping_expense', 'quantity_claimed','claim_type', 'total_claimed_amount','quantity_ordered', 'item_price', 'created_at')
     list_filter = ('created_at','claim_type')
     search_fields = ('seller_sku','asin','parent_asin', 'title', 'order__amazon_order_id','order_item_id')
 

@@ -97,5 +97,31 @@ class UserNotificationAdmin(admin.ModelAdmin):
         "user__email",
         "notification__title"
     )
-       
-    
+
+
+@admin.register(SupportTicket)
+class SupportTicketAdmin(admin.ModelAdmin):
+    list_display = (
+        'ticket_id',
+        'user',
+        'title',
+        'status',
+        'priority',
+        'created_at',
+    )
+    list_filter = ('status', 'priority', 'created_at')
+    search_fields = ('ticket_id', 'title', 'user__email')
+    readonly_fields = ('ticket_id', 'created_at', 'updated_at')
+
+
+@admin.register(SubUser)
+class SubUserAdmin(admin.ModelAdmin):
+    list_display = (
+        'name',
+        'user',
+        'parent',
+        'mobile_number',
+        'created_at',
+    )
+    list_filter = ('created_at',)
+    search_fields = ('name', 'user__email', 'parent__email', 'mobile_number')

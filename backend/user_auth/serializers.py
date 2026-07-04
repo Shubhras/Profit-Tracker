@@ -517,4 +517,60 @@ class NotificationSerializer(serializers.ModelSerializer):
             user=user,
             notification=obj,
             is_read=True
-        ).exists()        
+        ).exists()
+
+
+class SupportTicketSerializer(serializers.ModelSerializer):
+    user_email = serializers.EmailField(source="user.email", read_only=True)
+    user_name = serializers.CharField(source="user.profile.name", read_only=True)
+    document = serializers.FileField(required=False)
+
+    class Meta:
+        model = SupportTicket
+        fields = [
+            "id",
+            "ticket_id",
+            "user_email",
+            "user_name",
+            "title",
+            "description",
+            "document",
+            "status",
+            "priority",
+            "admin_note",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["ticket_id", "created_at", "updated_at"]
+
+
+class SubUserPermissionInputSerializer(serializers.Serializer):
+    module = serializers.IntegerField(required=False, allow_null=True)
+    submodule = serializers.IntegerField(required=False, allow_null=True)
+    can_view = serializers.BooleanField(default=True)
+    can_create = serializers.BooleanField(default=False)
+    can_update = serializers.BooleanField(default=False)
+    can_delete = serializers.BooleanField(default=False)
+
+
+class SubUserSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source="user.email", read_only=True)
+    username = serializers.CharField(source="user.username", read_only=True)
+    permissions = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SubUser
+        fields = [
+            "id",
+            "username",
+            "email",
+            "name",
+            "mobile_number",
+            "permissions",
+            "created_at",
+            "updated_at",
+        ]
+
+    def get_permissions(self, obj):
+        permissions = UserModulePermission.objects.filter(user=obj.user)
+        return UserModulePermissionSerializer(permissions, many=True).data

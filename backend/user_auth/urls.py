@@ -12,6 +12,8 @@ from .privacy_policy import *
 from .promocode  import *
 from .module_submodule import *
 from .notification import *
+from .support_ticket import *
+from .sub_user import *
 
 
 urlpatterns = [
@@ -110,8 +112,20 @@ urlpatterns = [
     path("permissions/list/", PermissionListAPIView.as_view()),
     path("permissions/<int:pk>/update/", UpdatePermissionAPIView.as_view()),
     path("permissions/<int:pk>/delete/", DeletePermissionAPIView.as_view()),
-
     # Logged-in User
     path("my-modules/", MyModulesAPIView.as_view()),
+
+    # Support Tickets (User)
+    path("user-tickets/create/", UserSupportTicketCreateAPIView.as_view(), name="user-ticket-list-create"),
+    path("user-tickets/list/", UserSupportTicketListAPIView.as_view(), name="user-ticket-list"),
+    path("user-tickets/<int:pk>/", UserSupportTicketDetailAPIView.as_view(), name="user-ticket-detail"),
+
+    # Support Tickets (Admin)
+    path("admin/support-tickets/", AdminSupportTicketListAPIView.as_view(), name="admin-ticket-list"),
+    path("admin/tickets/<int:pk>/update/", AdminSupportTicketUpdateAPIView.as_view(), name="admin-ticket-update"),
+
+    # Sub-users
+    path("sub-users/", SubUserListCreateAPIView.as_view(), name="sub-user-list-create"),
+    path("sub-users/<int:pk>/", SubUserDetailUpdateDeleteAPIView.as_view(), name="sub-user-detail"),
 
 ]
