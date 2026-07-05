@@ -95,7 +95,7 @@ function Notifications() {
   // }
 
   return (
-    <div className="w-full px-3 py-3">
+    <div className="w-full px-3 mb-2">
       {/* Header */}
 
       <div className="mb-3">

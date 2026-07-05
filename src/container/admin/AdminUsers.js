@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Table, Button, Modal, Input, message } from 'antd';
 import { PlusOutlined, FormOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { getSubUsers, createSubUsers } from '../../redux/admin/actionCreator';
+import { getSubUsers, createSubUsers, updateSubUsers, deleteSubUsers } from '../../redux/admin/actionCreator';
 
 function AdminUsers() {
   const [createModal, setCreateModal] = useState(false);
@@ -11,6 +11,11 @@ function AdminUsers() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
+
+  const [isEdit, setIsEdit] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const [permissions, setPermissions] = useState([]);
 
@@ -26,23 +31,86 @@ function AdminUsers() {
     const payload = {
       name,
       email,
-      password,
       mobile_number: mobileNumber,
       permissions,
     };
 
+    if (!isEdit) {
+      payload.password = password;
+    }
+
+    if (isEdit) {
+      dispatch(
+        updateSubUsers(editId, payload, (success, res) => {
+          if (success) {
+            message.success(res.message);
+
+            setCreateModal(false);
+            setIsEdit(false);
+            setEditId(null);
+
+            setName('');
+            setEmail('');
+            setPassword('');
+            setMobileNumber('');
+            setPermissions([]);
+
+            dispatch(getSubUsers());
+          } else {
+            message.error(res?.message || 'Something went wrong');
+          }
+        }),
+      );
+    } else {
+      dispatch(
+        createSubUsers(payload, (success, res) => {
+          if (success) {
+            message.success(res.message);
+
+            setCreateModal(false);
+
+            setName('');
+            setEmail('');
+            setPassword('');
+            setMobileNumber('');
+            setPermissions([]);
+
+            dispatch(getSubUsers());
+          } else {
+            message.error(res?.message || 'Something went wrong');
+          }
+        }),
+      );
+    }
+  };
+
+  const handleEdit = (record) => {
+    setIsEdit(true);
+    setEditId(record.id);
+
+    setName(record.name || '');
+    setEmail(record.email || '');
+    setPassword('');
+    setMobileNumber(record.mobile_number || '');
+    setPermissions(record.permissions || []);
+
+    setCreateModal(true);
+  };
+
+  const handleDeleteClick = (record) => {
+    setSelectedUser(record);
+    setDeleteModal(true);
+  };
+  const handleDeleteUser = () => {
+    if (!selectedUser) return;
+
     dispatch(
-      createSubUsers(payload, (success, res) => {
+      deleteSubUsers(selectedUser.id, (success, res) => {
         if (success) {
-          message.success(res.message);
+          message.success(res?.message || 'User deleted successfully');
 
-          setCreateModal(false);
-
-          setName('');
-          setEmail('');
-          setPassword('');
-          setMobileNumber('');
-          setPermissions([]);
+          setDeleteModal(false);
+          setSelectedUser(null);
 
           dispatch(getSubUsers());
         } else {
@@ -96,19 +164,19 @@ function AdminUsers() {
       key: 'action',
       align: 'center',
       width: 120,
-      render: () => (
-        <div className="flex items-center justify-center gap-1">
+      render: (record) => (
+        <div className="flex items-center justify-center">
           <Button
             type="text"
             icon={<FormOutlined className="text-blue-600 text-[16px]" />}
-            // onClick={() => handleEdit(record)}
+            onClick={() => handleEdit(record)}
           />
 
           <Button
             type="text"
             danger
             icon={<DeleteOutlined className="text-red-500 text-[16px]" />}
-            // onClick={() => handleDelete(record)}
+            onClick={() => handleDeleteClick(record)}
           />
         </div>
       ),
@@ -127,6 +195,9 @@ function AdminUsers() {
               icon={<PlusOutlined />}
               className="h-8 px-2 rounded-lg text-[14px] font-semibold flex items-center"
               onClick={() => {
+                setIsEdit(false);
+                setEditId(null);
+
                 setName('');
                 setEmail('');
                 setPassword('');
@@ -166,9 +237,11 @@ function AdminUsers() {
       >
         <div className="p-2">
           <div className="mb-6">
-            <h2 className="text-xl font-semibold">Create Admin User</h2>
+            <h2 className="text-xl font-semibold">{isEdit ? 'Update Admin User' : 'Create Admin User'}</h2>
 
-            <p className="text-gray-500 text-sm mt-1">Fill in the details below to create a new admin user.</p>
+            <p className="text-gray-500 text-sm mt-1">
+              {isEdit ? 'Update the details below.' : 'Fill in the details below to create a new admin user.'}
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -218,6 +291,41 @@ function AdminUsers() {
 
             <Button type="primary" className="font-semibold px-4" onClick={handleSubmit}>
               Create User
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal open={deleteModal} footer={null} centered width={420} onCancel={() => setDeleteModal(false)}>
+        <div className="text-center py-2">
+          <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-5">
+            <DeleteOutlined
+              style={{
+                fontSize: 26,
+                color: '#ef4444',
+              }}
+            />
+          </div>
+
+          <h2 className="text-lg font-semibold">Delete Admin User?</h2>
+
+          <p className="text-gray-500 mt-1">
+            Are you sure you want to delete
+            <span className="font-semibold"> {selectedUser?.name}</span>?
+          </p>
+
+          <div className="flex justify-center gap-3 mt-7">
+            <Button
+              onClick={() => {
+                setDeleteModal(false);
+                setSelectedUser(null);
+              }}
+            >
+              Cancel
+            </Button>
+
+            <Button danger type="primary" className="font-semibold" onClick={handleDeleteUser}>
+              Yes, Delete
             </Button>
           </div>
         </div>

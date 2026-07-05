@@ -727,12 +727,12 @@ export const createSubUsers = (payload, callback) => {
   };
 };
 
-export const updateSubUsers = (id, callback) => {
+export const updateSubUsers = (id, payload, callback) => {
   return async (dispatch) => {
     dispatch(updateSubUsersBegin());
 
     try {
-      const response = await DataService.put(`user/sub-users/${id}/`);
+      const response = await DataService.put(`user/sub-users/${id}/`, payload);
 
       if (response.data?.status === true || response.data?.status === 'success') {
         dispatch(updateSubUsersSuccess(response.data));

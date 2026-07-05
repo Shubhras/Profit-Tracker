@@ -140,25 +140,25 @@ const AuthInfo = React.memo(() => {
               );
             })}
             {/* Footer */}
-            <div
-              className="text-center py-3"
-              style={{
-                background: '#FAFAFA',
-                borderTop: '1px solid #F0F0F0',
-              }}
-            >
-              <button
-                type="button"
-                className="font-semibold text-[#1677FF] hover:underline underline-offset-4 decoration-[#1677FF] transition-all duration-200"
-                onClick={() => navigate('/admin/pages/notifications')}
-              >
-                View All Notifications →
-              </button>
-            </div>
           </>
         ) : (
-          <div className="text-center py-5 text-muted">No notifications found</div>
+          <div className="text-center py-5 text-muted">No latest notifications found</div>
         )}
+        <div
+          className="text-center py-3"
+          style={{
+            background: '#FAFAFA',
+            borderTop: '1px solid #F0F0F0',
+          }}
+        >
+          <button
+            type="button"
+            className="font-semibold text-[#1677FF] hover:underline underline-offset-4"
+            onClick={() => navigate('/admin/pages/notifications')}
+          >
+            View All Notifications →
+          </button>
+        </div>
       </div>
     </div>
   );
