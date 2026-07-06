@@ -70,6 +70,84 @@ class PasswordResetRequest(models.Model):
     
 
 
+
+
+class Module(models.Model):
+
+    name = models.CharField(
+        max_length=100,
+        unique=True
+    )
+
+    slug = models.SlugField(
+        unique=True,
+        blank=True
+    )
+
+    description = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+    
+
+class SubModule(models.Model):
+
+    module = models.ForeignKey(
+        Module,
+        on_delete=models.CASCADE,
+        related_name="submodules"
+    )
+
+    name = models.CharField(max_length=100)
+
+    slug = models.SlugField(
+        blank=True
+    )
+
+    description = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = (
+            "module",
+            "name"
+        )
+
+    def save(self, *args, **kwargs):
+
+        if not self.slug:
+            self.slug = slugify(self.name)
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.module.name} - {self.name}"
+    
+
+
 class SubscriptionPlan(models.Model):
 
     STATUS_CHOICES = [
@@ -97,17 +175,7 @@ class SubscriptionPlan(models.Model):
         null=True,
         blank=True
     )
-    # plan_name = models.CharField(
-    #     max_length=100,
-    #     unique=True
-    # )
-    # slug = models.SlugField(
-    #     max_length=150,
-    #     unique=True,
-    #     blank=True,
-    #     null=True
-    # )
-
+    
     description = models.TextField(
         blank=True,
         null=True
@@ -130,6 +198,19 @@ class SubscriptionPlan(models.Model):
     terms_and_conditions = models.JSONField(
         default=list,
         blank=True
+    )
+    # NEW
+    modules = models.ManyToManyField(
+        Module,
+        blank=True,
+        related_name="subscription_plans"
+    )
+
+    # NEW
+    submodules = models.ManyToManyField(
+        SubModule,
+        blank=True,
+        related_name="subscription_plans"
     )
 
     status = models.CharField(
@@ -286,82 +367,6 @@ class Promocode(models.Model):
 
     def __str__(self):
         return self.promocode or "No Promo"
-
-
-class Module(models.Model):
-
-    name = models.CharField(
-        max_length=100,
-        unique=True
-    )
-
-    slug = models.SlugField(
-        unique=True,
-        blank=True
-    )
-
-    description = models.TextField(
-        blank=True,
-        null=True
-    )
-
-    is_active = models.BooleanField(default=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.name)
-
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
-    
-
-class SubModule(models.Model):
-
-    module = models.ForeignKey(
-        Module,
-        on_delete=models.CASCADE,
-        related_name="submodules"
-    )
-
-    name = models.CharField(max_length=100)
-
-    slug = models.SlugField(
-        blank=True
-    )
-
-    description = models.TextField(
-        blank=True,
-        null=True
-    )
-
-    is_active = models.BooleanField(default=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        unique_together = (
-            "module",
-            "name"
-        )
-
-    def save(self, *args, **kwargs):
-
-        if not self.slug:
-            self.slug = slugify(self.name)
-
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"{self.module.name} - {self.name}"
-    
 
 
 class UserModulePermission(models.Model):

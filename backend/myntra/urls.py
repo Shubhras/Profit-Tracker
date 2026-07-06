@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import *
+from .views_v4 import SyncMyntraDetailsView
 
 urlpatterns = [
     # path("sync-orders/", SyncMyntraOrders.as_view()),
@@ -9,4 +10,5 @@ urlpatterns = [
     path("connection/", MyntraConnectionView.as_view()),
     path("orders/", MyntraOrdersList.as_view()),
     path("dashboard/", MyntraDashboard.as_view()),
+    path("sync-details/", SyncMyntraDetailsView.as_view(), name="myntra-sync-details"),
 ]

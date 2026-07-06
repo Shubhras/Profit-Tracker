@@ -102,7 +102,7 @@ class ModuleDetailAPIView(APIView):
                 is_active=True
             )
 
-            serializer = ModuleSerializer(module)
+            serializer = ModuleDetailSerializer(module)
 
             return Response({
                 "statusCode": 200,

@@ -312,6 +312,18 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
     discount_percentage = serializers.SerializerMethodField()
     average_discount = serializers.SerializerMethodField()
     per_month = serializers.SerializerMethodField()
+    
+    modules = serializers.PrimaryKeyRelatedField(
+    many=True,
+    queryset=Module.objects.filter(is_active=True),
+    required=False
+    )
+
+    submodules = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=SubModule.objects.filter(is_active=True),
+        required=False
+    )
 
     class Meta:
         model = SubscriptionPlan
@@ -325,6 +337,8 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
             "annual_price",
             "features",
             "terms_and_conditions",
+            "modules",
+            "submodules",
             "status",
             "is_active",
             "is_deleted",
@@ -436,6 +450,23 @@ class ModuleSerializer(serializers.ModelSerializer):
         fields = "__all__"
         
 
+class ModuleDetailSerializer(serializers.ModelSerializer):
+    submodules = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Module
+        fields = (
+            "id",
+            "name",
+            "slug",
+            "description",
+            "is_active",
+            "submodules",
+        )
+
+    def get_submodules(self, obj):
+        queryset = obj.submodules.filter(is_active=True)
+        return SubModuleSerializer(queryset, many=True).data
 
 class SubModuleSerializer(serializers.ModelSerializer):
 
@@ -463,17 +494,19 @@ class UserModulePermissionSerializer(
 
 
 class SubModuleSerializer(serializers.ModelSerializer):
+    module_name = serializers.CharField(source="module.name", read_only=True)
 
     class Meta:
         model = SubModule
-        fields = (
+        fields = [
             "id",
+            "module",
+            "module_name",
             "name",
             "slug",
             "description",
             "is_active",
-        )
-
+        ]
 
 class ModuleWithSubModulesSerializer(serializers.ModelSerializer):
 
