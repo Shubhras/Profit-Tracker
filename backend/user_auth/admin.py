@@ -2,22 +2,29 @@ from django.contrib import admin
 
 # Register your models here.
 from django.contrib import admin
-from .models import SubscriptionPlan, LegalDocument, Promocode
+from .models import *
 
 
 @admin.register(SubscriptionPlan)
 class SubscriptionPlanAdmin(admin.ModelAdmin):
     list_display = (
         'subcription_id',
-        'subscription_type',
-        'price',
+        'plan_name',
+        'monthly_price',
+        'annual_price',
+        'discount_percentage',
         'status',
         'is_active',
-        'created_at'
     )
-    list_filter = ('subscription_type', 'status', 'is_active')
-    search_fields = ('subcription_id',)
 
+    def discount_percentage(self, obj):
+        if obj.monthly_price:
+            yearly_cost = obj.monthly_price * 12
+            discount = ((yearly_cost - obj.annual_price) / yearly_cost) * 100
+            return round(discount, 2)
+        return 0
+
+    discount_percentage.short_description = "Discount %"
 
 @admin.register(LegalDocument)
 class LegalDocumentAdmin(admin.ModelAdmin):
@@ -48,4 +55,73 @@ class PromocodeAdmin(admin.ModelAdmin):
     )
     list_filter = ('promoType', 'is_active')
     search_fields = ('promocode', 'title')
-    
+   
+   
+   
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+
+    list_display = ("id",
+        "title",
+        "notification_type",
+        "is_active",
+        "created_at"
+    )
+
+    list_filter = (
+        "notification_type",
+        "is_active"
+    )
+
+    search_fields = (
+        "title",
+        "message"
+    )
+
+
+@admin.register(UserNotification)
+class UserNotificationAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "user",
+        "notification",
+        "is_read",
+        "created_at"
+    )
+
+    list_filter = (
+        "is_read",
+    )
+
+    search_fields = (
+        "user__email",
+        "notification__title"
+    )
+
+
+@admin.register(SupportTicket)
+class SupportTicketAdmin(admin.ModelAdmin):
+    list_display = (
+        'ticket_id',
+        'user',
+        'title',
+        'status',
+        'priority',
+        'created_at',
+    )
+    list_filter = ('status', 'priority', 'created_at')
+    search_fields = ('ticket_id', 'title', 'user__email')
+    readonly_fields = ('ticket_id', 'created_at', 'updated_at')
+
+
+@admin.register(SubUser)
+class SubUserAdmin(admin.ModelAdmin):
+    list_display = (
+        'name',
+        'user',
+        'parent',
+        'mobile_number',
+        'created_at',
+    )
+    list_filter = ('created_at',)
+    search_fields = ('name', 'user__email', 'parent__email', 'mobile_number')

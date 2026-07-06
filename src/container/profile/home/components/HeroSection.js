@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
+
 // import { ArrowRightOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import dashboardPreview from '../../../../assets/images/home/banner3.png';
 
@@ -66,7 +67,7 @@ function HeroSection() {
               className="text-lg min-md:text-xl text-gray-600 mb-10 max-w-2xl mx-auto min-lg:mx-0 leading-relaxed"
             >
               Automate reconciliation, forecast inventory, and boost profit margins with AI-driven insights. Join 100+
-              brands growing with TrackMyProfit. Ram
+              brands growing with TrackMyProfit.
             </motion.p>
 
             {/* CTA Buttons */}

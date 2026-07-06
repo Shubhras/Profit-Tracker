@@ -202,8 +202,8 @@ def sync_reports(request):
 
             manager.new_create_report(
                 report_type="GET_SALES_AND_TRAFFIC_REPORT",
-                start_date="2026-04-01T00:00:00Z",
-                end_date="2026-04-27T23:59:59Z"
+                start_date="2026-05-26T00:00:00Z",
+                end_date="2026-06-30T23:59:59Z"
             )
 
             data = manager.get_reports(**params)
@@ -1990,9 +1990,22 @@ def get_full_dashboard(request):
                 return str(val)
         return None
 
-    start_date = datetime.strptime(find_key(['fromDate'])[:10], '%Y-%m-%d')
-    end_date = datetime.strptime(find_key(['toDate'])[:10], '%Y-%m-%d')
+    # start_date = datetime.strptime(find_key(['fromDate'])[:10], '%Y-%m-%d')
+    # end_date = datetime.strptime(find_key(['toDate'])[:10], '%Y-%m-%d')
+    # end_date = end_date.replace(hour=23, minute=59, second=59)
+    
+    from_date_str = find_key(['fromDate'])
+    to_date_str = find_key(['toDate'])
+
+    try:
+        start_date = datetime.strptime(from_date_str[:10], '%Y-%m-%d') if from_date_str else (timezone.now() - timedelta(days=30))
+        end_date = datetime.strptime(to_date_str[:10], '%Y-%m-%d') if to_date_str else timezone.now()
+    except Exception:
+        start_date = timezone.now() - timedelta(days=30)
+        end_date = timezone.now()
+
     end_date = end_date.replace(hour=23, minute=59, second=59)
+
 
     # ---------------- DATA ----------------
     orders_qs = Order.objects.filter(user=user, purchase_date__range=(start_date, end_date))
@@ -2165,7 +2178,7 @@ def get_full_dashboard(request):
         est_profit = sales * 0.3
 
         trends_data.append({
-            "date": str(t['date']),
+            "date": t['date'].strftime('%m-%d') if t['date'] else "",
             "sales": round(sales, 2),
             "qty": t['qty'],
             "estimated_profit": round(est_profit, 2),
@@ -2214,7 +2227,7 @@ def get_full_dashboard(request):
     )
 
     profitable_items = item_profit_qs.filter(profit__gt=0)
-    losing_items = item_profit_qs.filter(profit__lte=0)
+    losing_items = item_profit_qs.filter(profit__lt=0)
 
 
     profitable_summary = profitable_items.aggregate(
@@ -2266,7 +2279,10 @@ def get_full_dashboard(request):
     # ---------------- RESPONSE ----------------
     return JsonResponse({
         "status": "success",
+        "statusCode":200,
         "currency": "INR",
+        "startDate": start_date,
+        "endDate": end_date,
         "header_metrics": {
             "sales": round(net_gross_sales, 2),
             "profit": round(profit, 2),
@@ -2288,42 +2304,31 @@ def get_full_dashboard(request):
             "net": {"qty": net_gross_item_qty, "amount": format_currency(net_gross_sales)},
         },
         "trends": trends_data,
-        "geography": geo_data_detailed,
+        # "geography": geo_data_detailed,
 
         "top_orders": {
             "profitable": {
                 "total_count": profitable_summary['total_count'] or 0,
                 "total_amount": f"₹{round(float(profitable_summary['total_amount'] or 0), 2)}",
-                "data": list(
-                    profitable_items.order_by('-profit')[:20].values(
-                        'amazon_order_id',
-                        'profit'
-                    )
-                )
+                # "data": list(
+                #     profitable_items.order_by('-profit')[:20].values(
+                #         'amazon_order_id',
+                #         'profit'
+                #     )
+                # )
             },
             "losing": {
                 "total_count": losing_summary['total_count'] or 0,
                 "total_amount": f"-₹{abs(round(float(losing_summary['total_amount'] or 0), 2))}",
-                "data": list(
-                    losing_items.order_by('profit')[:20].values(
-                        'amazon_order_id',
-                        'profit'
-                    )
-                )
+                # "data": list(
+                #     losing_items.order_by('profit')[:20].values(
+                #         'amazon_order_id',
+                #         'profit'
+                #     )
+                # )
             }
         },
-        # "top_orders": {
-        #     "profitable": {
-        #         "total_count": profitable_summary['total_count'] or 0,
-        #         "total_amount": f"₹{round(float(profitable_summary['total_amount'] or 0), 2)}",
-        #         "data": list(profitable_orders_qs.values('amazon_order_id', 'total_amount'))
-        #     },
-        #     "losing": {
-        #         "total_count": losing_summary['total_count'] or 0,
-        #         "total_amount": f"₹{round(float(losing_summary['total_amount'] or 0), 2)}",
-        #         "data": list(losing_orders_qs.values('amazon_order_id', 'total_amount'))
-        #     }
-        # },
+    
         "warnings": []
     })
 

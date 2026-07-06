@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from user_auth.models import *
+from subscription.models import UserSubscription
 
 
 class UserRegisterSerializer(serializers.Serializer):
@@ -57,38 +58,64 @@ class UserRegisterSerializer(serializers.Serializer):
 
         return user
 
-
-class UserProfileSerializer(serializers.ModelSerializer):
-    # ✅ Include profile fields inside user response
-    name = serializers.CharField(source="profile.name", read_only=True)
-    business_name = serializers.CharField(source="profile.business_name", read_only=True)
-    mobile_number = serializers.CharField(source="profile.mobile_number", read_only=True)
-    #gst_number = serializers.CharField(source="profile.gst_number", read_only=True)
-
-    address = serializers.CharField(source="profile.address", read_only=True)
-    city = serializers.CharField(source="profile.city", read_only=True)
-    state = serializers.CharField(source="profile.state", read_only=True)
-    pin_code = serializers.CharField(source="profile.pin_code", read_only=True)
-
-    accepted_terms = serializers.BooleanField(source="profile.accepted_terms", read_only=True)
+class SubscriptionPlanSerializer(serializers.ModelSerializer):
+    discount_percentage = serializers.SerializerMethodField()
+    average_discount = serializers.SerializerMethodField()
+    per_month = serializers.SerializerMethodField()
 
     class Meta:
-        model = User
+        model = SubscriptionPlan
         fields = [
             "id",
-            "username",
-            "email",
-
-            "name",
-            "business_name",
-            "mobile_number",
-            #"gst_number",
-            "address",
-            "city",
-            "state",
-            "pin_code",
-            "accepted_terms",
+            "subcription_id",
+            "plan_name",
+            "slug",
+            "description",
+            "monthly_price",
+            "annual_price",
+            "features",
+            "terms_and_conditions",
+            "status",
+            "is_active",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+            "discount_percentage",
+            "average_discount",
+            "per_month",
         ]
+
+    def get_discount_percentage(self, obj):
+        monthly_price = obj.monthly_price or 0
+        annual_price = obj.annual_price or 0
+
+        if monthly_price <= 0:
+            return 0.0
+
+        yearly_cost = monthly_price * 12
+
+        discount = (
+            (yearly_cost - annual_price)
+            / yearly_cost
+        ) * 100
+
+        discount = round(float(discount), 2)
+
+        # Prevent negative discounts
+        return max(discount, 0.0)
+
+    def get_average_discount(self, obj):
+        return self.get_discount_percentage(obj)
+
+    def get_per_month(self, obj):
+        annual_price = obj.annual_price or 0
+
+        if annual_price <= 0:
+            return 0.0
+
+        return round(float(annual_price / 12), 2)      
+
+
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
@@ -104,9 +131,183 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
             "accepted_terms"
         ]
         
-        
+
+# class UserProfileSerializer(serializers.ModelSerializer):
+#     # ✅ Include profile fields inside user response
+#     name = serializers.CharField(source="profile.name", read_only=True)
+#     business_name = serializers.CharField(source="profile.business_name", read_only=True)
+#     mobile_number = serializers.CharField(source="profile.mobile_number", read_only=True)
+#     #gst_number = serializers.CharField(source="profile.gst_number", read_only=True)
+
+#     address = serializers.CharField(source="profile.address", read_only=True)
+#     city = serializers.CharField(source="profile.city", read_only=True)
+#     state = serializers.CharField(source="profile.state", read_only=True)
+#     pin_code = serializers.CharField(source="profile.pin_code", read_only=True)
+
+#     accepted_terms = serializers.BooleanField(source="profile.accepted_terms", read_only=True)
+
+#     class Meta:
+#         model = User
+#         fields = [
+#             "id",
+#             "username",
+#             "email",
+
+#             "name",
+#             "business_name",
+#             "mobile_number",
+#             #"gst_number",
+#             "address",
+#             "city",
+#             "state",
+#             "pin_code",
+#             "accepted_terms",
+#         ]
         
 
+# class UserProfileSerializer(serializers.ModelSerializer):
+#     # Profile fields
+#     name = serializers.CharField(source="profile.name", read_only=True)
+#     business_name = serializers.CharField(source="profile.business_name", read_only=True)
+#     mobile_number = serializers.CharField(source="profile.mobile_number", read_only=True)
+
+#     address = serializers.CharField(source="profile.address", read_only=True)
+#     city = serializers.CharField(source="profile.city", read_only=True)
+#     state = serializers.CharField(source="profile.state", read_only=True)
+#     pin_code = serializers.CharField(source="profile.pin_code", read_only=True)
+
+#     accepted_terms = serializers.BooleanField(
+#         source="profile.accepted_terms",
+#         read_only=True
+#     )
+
+#     subscription = serializers.SerializerMethodField()
+
+#     class Meta:
+#         model = User
+#         fields = [
+#             "id",
+#             "username",
+#             "email",
+
+#             "name",
+#             "business_name",
+#             "mobile_number",
+
+#             "address",
+#             "city",
+#             "state",
+#             "pin_code",
+#             "accepted_terms",
+
+#             "subscription"
+#         ]
+
+#     def get_subscription(self, obj):
+
+#         subscription = (
+#             UserSubscription.objects
+#             .filter(
+#                 user=obj,
+#                 status="active",
+#                 is_paid=True
+#             )
+#             .select_related("plan")
+#             .order_by("-created_at")
+#             .first()
+#         )
+
+#         if not subscription:
+#             return None
+
+#         return {
+#             "subscription_id": subscription.id,
+#             "plan_id": subscription.plan.id if subscription.plan else None,
+#             "plan_name": subscription.plan.plan_name if subscription.plan else None,
+#             "billing_cycle": subscription.billing_cycle,
+#             "amount": subscription.amount,
+#             "status": subscription.status,
+#             "is_paid": subscription.is_paid,
+#             "start_date": subscription.start_date,
+#             "end_date": subscription.end_date,
+#         }
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    # Profile fields
+    name = serializers.CharField(source="profile.name", read_only=True)
+    business_name = serializers.CharField(source="profile.business_name", read_only=True)
+    mobile_number = serializers.CharField(source="profile.mobile_number", read_only=True)
+
+    address = serializers.CharField(source="profile.address", read_only=True)
+    city = serializers.CharField(source="profile.city", read_only=True)
+    state = serializers.CharField(source="profile.state", read_only=True)
+    pin_code = serializers.CharField(source="profile.pin_code", read_only=True)
+
+    accepted_terms = serializers.BooleanField(
+        source="profile.accepted_terms",
+        read_only=True
+    )
+
+    subscription = serializers.SerializerMethodField()
+    unread_notification_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "username",
+            "email",
+
+            "name",
+            "business_name",
+            "mobile_number",
+
+            "address",
+            "city",
+            "state",
+            "pin_code",
+            "accepted_terms",
+
+            "subscription",
+            "unread_notification_count",
+        ]
+
+    def get_unread_notification_count(self, obj):
+        return UserNotification.objects.filter(
+            user=obj,
+            is_read=False
+        ).count()
+
+    def get_subscription(self, obj):
+
+        subscription = (
+            UserSubscription.objects
+            .filter(
+                user=obj,
+                status="active",
+                is_paid=True
+            )
+            .select_related("plan")
+            .order_by("-created_at")
+            .first()
+        )
+
+        if not subscription:
+            return None
+
+        return {
+            "subscription_id": subscription.id,
+            "plan_id": subscription.plan.id if subscription.plan else None,
+            "plan_name": subscription.plan.plan_name if subscription.plan else None,
+            "billing_cycle": subscription.billing_cycle,
+            "amount": subscription.amount,
+            "status": subscription.status,
+            "is_paid": subscription.is_paid,
+            "start_date": subscription.start_date,
+            "end_date": subscription.end_date,
+        }
+                        
 class SubscriptionPlanSerializer(serializers.ModelSerializer):
     discount_percentage = serializers.SerializerMethodField()
     average_discount = serializers.SerializerMethodField()
@@ -115,54 +316,52 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubscriptionPlan
         fields = [
-            "id", "subscription_type", "price", "status",
-            "monthlyPlan", "annualPlan", "features",
-            "is_active", "is_deleted", "created_at", "updated_at",
-            "discount_percentage", "average_discount", "per_month"
+            "id",
+            "subcription_id",
+            "plan_name",
+            "slug",
+            "description",
+            "monthly_price",
+            "annual_price",
+            "features",
+            "terms_and_conditions",
+            "status",
+            "is_active",
+            "is_deleted",
+            "created_at",
+            "updated_at",
+            "discount_percentage",
+            "average_discount",
+            "per_month",
         ]
 
     def get_discount_percentage(self, obj):
-        """
-        Calculates the discount for the annual plan compared to 12×monthly plan.
-        Cleans up -0.0 values.
-        """
-        monthly_plan = SubscriptionPlan.objects.filter(subscription_type="Monthly", is_active=True, is_deleted=False).first()
-        annual_plan = SubscriptionPlan.objects.filter(subscription_type="Annual", is_active=True, is_deleted=False).first()
+        monthly_price = float(obj.monthly_price or 0)
+        annual_price = float(obj.annual_price or 0)
 
-        if monthly_plan and annual_plan:
-            monthly_price = float(monthly_plan.price)
-            annual_price = float(annual_plan.price)
-            if monthly_price > 0:
-                discount = ((12 * monthly_price - annual_price) / (12 * monthly_price)) * 100
-                discount = round(discount, 2)
-                # 🔹 Convert -0.0 to 0.0
-                return 0.0 if discount == -0.0 else discount
-        return 0.0
+        if monthly_price <= 0:
+            return 0.0
+
+        yearly_cost = monthly_price * 12
+
+        discount = (
+            (yearly_cost - annual_price)
+            / yearly_cost
+        ) * 100
+
+        return round(max(discount, 0), 2)
 
     def get_average_discount(self, obj):
-        """
-        Returns average discount across all plans, cleaned up for -0.0.
-        """
-        monthly_plan = SubscriptionPlan.objects.filter(subscription_type="Monthly", is_active=True, is_deleted=False).first()
-        annual_plan = SubscriptionPlan.objects.filter(subscription_type="Annual", is_active=True, is_deleted=False).first()
-
-        if monthly_plan and annual_plan:
-            monthly_price = float(monthly_plan.price)
-            annual_price = float(annual_plan.price)
-            avg_discount = ((12 * monthly_price - annual_price) / (12 * monthly_price)) * 100
-            avg_discount = round(avg_discount, 2)
-            # 🔹 Convert -0.0 to 0.0
-            return 0.0 if avg_discount == -0.0 else avg_discount
-        return 0.0
+        return self.get_discount_percentage(obj)
 
     def get_per_month(self, obj):
-        """
-        Calculates per-month cost for annual or monthly plans.
-        """
-        if obj.subscription_type.lower() == "annual" and obj.price:
-            return round(float(obj.price) / 12, 2)
-        return round(float(obj.price), 2) if obj.price else 0.0
- 
+        annual_price = float(obj.annual_price or 0)
+
+        if annual_price <= 0:
+            return 0.0
+
+        return round(annual_price / 12, 2)
+        
  
 class PromocodeSerializer(serializers.ModelSerializer):
     startDateTime = serializers.DateTimeField(
@@ -229,4 +428,149 @@ class LegalDocumentSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at', 'is_deleted']
     
 
+
+class ModuleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Module
+        fields = "__all__"
         
+
+
+class SubModuleSerializer(serializers.ModelSerializer):
+
+    module_name = serializers.CharField(
+        source="module.name",
+        read_only=True
+    )
+
+    class Meta:
+        model = SubModule
+        fields = "__all__"
+        
+
+class UserModulePermissionSerializer(
+    serializers.ModelSerializer
+):
+
+    class Meta:
+        model = UserModulePermission
+
+        fields = "__all__"        
+        
+        
+
+
+
+class SubModuleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SubModule
+        fields = (
+            "id",
+            "name",
+            "slug",
+            "description",
+            "is_active",
+        )
+
+
+class ModuleWithSubModulesSerializer(serializers.ModelSerializer):
+
+    submodules = SubModuleSerializer(
+        many=True,
+        read_only=True
+    )
+
+    class Meta:
+        model = Module
+        fields = (
+            "id",
+            "name",
+            "slug",
+            "description",
+            "is_active",
+            "submodules",
+        )        
+        
+        
+class NotificationSerializer(serializers.ModelSerializer):
+
+    is_read = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Notification
+        fields = [
+            "id",
+            "title",
+            "message",
+            "notification_type",
+            "is_active",
+            "created_at",
+            "is_read"
+        ]
+
+    def get_is_read(self, obj):
+        user = self.context["request"].user
+
+        return UserNotification.objects.filter(
+            user=user,
+            notification=obj,
+            is_read=True
+        ).exists()
+
+
+class SupportTicketSerializer(serializers.ModelSerializer):
+    user_email = serializers.EmailField(source="user.email", read_only=True)
+    user_name = serializers.CharField(source="user.profile.name", read_only=True)
+    document = serializers.FileField(required=False)
+
+    class Meta:
+        model = SupportTicket
+        fields = [
+            "id",
+            "ticket_id",
+            "user_email",
+            "user_name",
+            "title",
+            "description",
+            "document",
+            "status",
+            "priority",
+            "admin_note",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["ticket_id", "created_at", "updated_at"]
+
+
+class SubUserPermissionInputSerializer(serializers.Serializer):
+    module = serializers.IntegerField(required=False, allow_null=True)
+    submodule = serializers.IntegerField(required=False, allow_null=True)
+    can_view = serializers.BooleanField(default=True)
+    can_create = serializers.BooleanField(default=False)
+    can_update = serializers.BooleanField(default=False)
+    can_delete = serializers.BooleanField(default=False)
+
+
+class SubUserSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source="user.email", read_only=True)
+    username = serializers.CharField(source="user.username", read_only=True)
+    permissions = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SubUser
+        fields = [
+            "id",
+            "username",
+            "email",
+            "name",
+            "mobile_number",
+            "permissions",
+            "created_at",
+            "updated_at",
+        ]
+
+    def get_permissions(self, obj):
+        permissions = UserModulePermission.objects.filter(user=obj.user)
+        return UserModulePermissionSerializer(permissions, many=True).data

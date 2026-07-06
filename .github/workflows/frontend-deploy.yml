@@ -4,120 +4,37 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
-
-concurrency:
-  group: frontend-deploy
-  cancel-in-progress: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    env:
-      NODE_VERSION: "18"
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-
-      - name: Show Node and npm versions
-        run: |
-          node -v
-          npm -v
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Create production env file
-        run: |
-          cat > .env.production <<EOF
-          RAZORPAY_KEY_ID=${{ secrets.RAZORPAY_KEY_ID }}
-          RAZORPAY_KEY_SECRET=${{ secrets.RAZORPAY_KEY_SECRET }}
-          REACT_APP_PIXABAY_API_KEY=${{ secrets.REACT_APP_PIXABAY_API_KEY }}
-          REACT_APP_BASE_URL=${{ secrets.REACT_APP_BASE_URL }}
-          REACT_APP_API_ENDPOINT=${{ secrets.REACT_APP_API_ENDPOINT }}
-          REACT_APP_PROFILE_IMAGE_ENDPOINT=${{ secrets.REACT_APP_PROFILE_IMAGE_ENDPOINT }}
-          REACT_APP_GOOGLE_MAP_KEY=${{ secrets.REACT_APP_GOOGLE_MAP_KEY }}
-          REACT_APP_AUTH0_DOMAIN=${{ secrets.REACT_APP_AUTH0_DOMAIN }}
-          REACT_APP_AUTH0_CLIENT_ID=${{ secrets.REACT_APP_AUTH0_CLIENT_ID }}
-          EOF
-
-      - name: Build frontend
-        run: CI=false npm run build
-
-      - name: Verify build
-        run: |
-          ls -la build
-
-      - name: Create build archive
-        run: |
-          tar -czf frontend-build.tar.gz build
-
-      - name: Install sshpass
+      - name: Deploy Frontend
         run: |
           sudo apt-get update
           sudo apt-get install -y sshpass
 
-      - name: Test SSH Connection
-        run: |
-          sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh \
-            -o ConnectTimeout=15 \
-            -o StrictHostKeyChecking=no \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "echo SSH Connection Successful"
-
-      - name: Upload build archive to server
-        run: |
-          for i in 1 2 3; do
-            sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp \
-              -o ConnectTimeout=30 \
-              -o StrictHostKeyChecking=no \
-              frontend-build.tar.gz \
-              ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/frontend-build.tar.gz && break
-
-            echo "Upload failed. Retry $i/3..."
-            sleep 10
-          done
-
-      - name: Deploy on server
-        run: |
           sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh \
             -o StrictHostKeyChecking=no \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
-              set -e
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
 
-              echo 'Create temp directory...'
-              rm -rf /tmp/frontend-build
-              mkdir -p /tmp/frontend-build
+            set -e
 
-              echo 'Extract uploaded build...'
-              tar -xzf /tmp/frontend-build.tar.gz -C /tmp/frontend-build
+            echo "Moving to project directory..."
+            cd /var/www/html/Profit-Tracker
 
-              echo 'Ensure live frontend directory exists...'
-              sudo mkdir -p /var/www/frontend
+            echo "Pulling latest code..."
+            git fetch origin
+            git reset --hard origin/main
 
-              echo 'Clean old frontend...'
-              sudo rm -rf /var/www/frontend/*
+            echo "Updating live frontend..."
+            rm -rf /var/www/frontend/*
+            cp -r build/* /var/www/frontend/
 
-              echo 'Copy new build...'
-              sudo cp -r /tmp/frontend-build/build/* /var/www/frontend/
+            echo "Reloading nginx..."
+            sudo systemctl reload nginx
 
-              echo 'Set permissions...'
-              sudo chown -R www-data:www-data /var/www/frontend
+            echo "Deployment completed successfully."
 
-              echo 'Reload nginx...'
-              sudo systemctl reload nginx
-
-              echo 'Cleanup temp files...'
-              rm -rf /tmp/frontend-build
-              rm -f /tmp/frontend-build.tar.gz
-
-              echo 'Frontend deployment completed successfully.'
-            "
+          EOF
