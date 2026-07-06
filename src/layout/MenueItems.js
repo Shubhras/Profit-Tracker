@@ -53,6 +53,7 @@ import {
   UilCreditCard,
   UilBell,
   UilShieldCheck,
+  UilCube,
 } from '@iconscout/react-unicons';
 import { Menu } from 'antd';
 import React from 'react';
@@ -2021,6 +2022,14 @@ function MenuItems({ toggleCollapsed }) {
     ),
 
     getItem(
+      <NavLink onClick={toggleCollapsed} to="/super-admin/admin-users">
+        Admin Users
+      </NavLink>,
+      'admin-users',
+      !topMenu && <UilUsersAlt />,
+    ),
+
+    getItem(
       <NavLink onClick={toggleCollapsed} to="/super-admin/subscription">
         Subscription
       </NavLink>,
@@ -2050,6 +2059,22 @@ function MenuItems({ toggleCollapsed }) {
       </NavLink>,
       'support',
       !topMenu && <UilLifeRing />,
+    ),
+
+    getItem(
+      <NavLink onClick={toggleCollapsed} to="/super-admin/module">
+        {t('Module')}
+      </NavLink>,
+      'module',
+      !topMenu && <UilCube />,
+    ),
+
+    getItem(
+      <NavLink onClick={toggleCollapsed} to="/super-admin/submodule">
+        {t('Sub Module')}
+      </NavLink>,
+      'submodule',
+      !topMenu && <UilCube />,
     ),
 
     getItem(

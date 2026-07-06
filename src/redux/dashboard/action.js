@@ -31,6 +31,22 @@ const actions = {
   ESTIMATED_FEES_SUCCESS: 'ESTIMATED_FEES_SUCCESS',
   ESTIMATED_FEES_ERR: 'ESTIMATED_FEES_ERR',
 
+  NOTIFICATION_BEGIN: 'NOTIFICATION_BEGIN',
+  NOTIFICATION_SUCCESS: 'NOTIFICATION_SUCCESS',
+  NOTIFICATION_ERR: 'NOTIFICATION_ERR',
+
+  SUPPORT_TICKET_BEGIN: 'SUPPORT_TICKET_BEGIN',
+  SUPPORT_TICKET_SUCCESS: 'SUPPORT_TICKET_SUCCESS',
+  SUPPORT_TICKET_ERR: 'SUPPORT_TICKET_ERR',
+
+  GET_SUPPORT_TICKET_BEGIN: ' GET_SUPPORT_TICKET_BEGIN',
+  GET_SUPPORT_TICKET_SUCCESS: ' GET_SUPPORT_TICKET_SUCCESS',
+  GET_SUPPORT_TICKET_ERR: ' GET_SUPPORT_TICKET_ERR',
+
+  GET_TICKET_DETAILS_BEGIN: 'GET_TICKET_DETAILS_BEGIN',
+  GET_TICKET_DETAILS_SUCCESS: ' GET_TICKET_DETAILS_SUCCESS',
+  GET_TICKET_DETAILS_ERR: 'GET_TICKET_DETAILS_ERR',
+
   dashboardBegin: () => ({
     type: actions.DASHBOARD_BEGIN,
   }),
@@ -88,6 +104,22 @@ const actions = {
   estimatedFeesBegin: () => ({ type: actions.ESTIMATED_FEES_BEGIN }),
   estimatedFeesSuccess: (data) => ({ type: actions.ESTIMATED_FEES_SUCCESS, data }),
   estimatedFeesErr: (err) => ({ type: actions.ESTIMATED_FEES_ERR, err }),
+
+  notificationBegin: () => ({ type: actions.NOTIFICATION_BEGIN }),
+  notificationSuccess: (data) => ({ type: actions.NOTIFICATION_SUCCESS, data }),
+  notificationErr: (err) => ({ type: actions.NOTIFICATION_ERR, err }),
+
+  supportTicketsBegin: () => ({ type: actions.SUPPORT_TICKET_BEGIN }),
+  supportTicketsSuccess: (data) => ({ type: actions.SUPPORT_TICKET_SUCCESS, data }),
+  supportTicketsErr: (err) => ({ type: actions.SUPPORT_TICKET_ERR, err }),
+
+  getsupportTicketsBegin: () => ({ type: actions.GET_SUPPORT_TICKET_BEGIN }),
+  getsupportTicketsSuccess: (data) => ({ type: actions.GET_SUPPORT_TICKET_SUCCESS, data }),
+  getsupportTicketsErr: (err) => ({ type: actions.GET_SUPPORT_TICKET_ERR, err }),
+
+  getTicketsDetailsBegin: () => ({ type: actions.GET_TICKET_DETAILS_BEGIN }),
+  getTicketsDetailsSuccess: (data) => ({ type: actions.GET_TICKET_DETAILS_SUCCESS, data }),
+  getTicketsDetailsErr: (err) => ({ type: actions.GET_TICKET_DETAILS_ERR, err }),
 };
 
 export default actions;

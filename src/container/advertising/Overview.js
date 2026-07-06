@@ -1,5 +1,5 @@
-import React from 'react';
-import { Switch } from 'antd';
+import React, { useEffect } from 'react';
+import { Spin } from 'antd';
 import {
   ReloadOutlined,
   BulbOutlined,
@@ -8,121 +8,133 @@ import {
   DownOutlined,
   InfoCircleOutlined,
 } from '@ant-design/icons';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { useDispatch, useSelector } from 'react-redux';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
+import { getAdvertisingOverview } from '../../redux/advertising/actionCreator';
 
 function Overview() {
-  const data = [
-    { name: 'May 01', acos: 16, tacos: 7, roas: 24 },
-    { name: 'May 05', acos: 17, tacos: 7.5, roas: 26 },
-    { name: 'May 09', acos: 15, tacos: 7, roas: 31 },
-    { name: 'May 13', acos: 17, tacos: 8, roas: 27 },
-    { name: 'May 17', acos: 14, tacos: 7, roas: 33 },
-    { name: 'May 21', acos: 16, tacos: 7.5, roas: 25 },
-    { name: 'May 25', acos: 15, tacos: 7, roas: 24 },
-    { name: 'May 31', acos: 16, tacos: 6.5, roas: 22 },
-  ];
+  const dispatch = useDispatch();
+
+  const { advertiseOverview, loading } = useSelector((state) => state.advertising);
+
+  const { dateRange } = useSelector((state) => state.dashboard);
+
+  useEffect(() => {
+    dispatch(
+      getAdvertisingOverview({
+        start_date: dateRange?.fromDate,
+        end_date: dateRange?.endDate,
+      }),
+    );
+  }, [dispatch, dateRange]);
+
+  const dashboard = advertiseOverview?.data || {};
+
+  const summaryCards = dashboard.summary_cards || {};
+
+  const performanceTrend = dashboard.performance_trend || [];
+
+  const performanceBreakdown = dashboard.performance_breakdown || [];
+
+  const performanceByType = dashboard.performance_by_type || [];
+
+  const topCampaigns = dashboard.top_campaigns || [];
+
+  const data = performanceTrend.map((item) => ({
+    name: item.date,
+    acos: item.acos,
+    tacos: item.tacos,
+    roas: item.roas,
+  }));
+
   const cards = [
     {
       title: 'ACOS',
-      value: '20.27%',
-      growth: '+5.32%',
-      tag: 'Good',
-      tagColor: 'text-green-600 bg-green-100',
-      //   line: 'bg-green-500',
+      value: `${summaryCards?.acos?.value ?? 0}%`,
+      growth: summaryCards?.acos?.change?.formatted ?? '0%',
     },
     {
       title: 'TACOS',
-      value: '8.65%',
-      growth: '+1.25%',
-      tag: 'Good',
-      tagColor: 'text-green-600 bg-green-100',
-      //   line: 'bg-blue-500',
+      value: `${summaryCards?.tacos?.value ?? 0}%`,
+      growth: summaryCards?.tacos?.change?.formatted ?? '0%',
     },
     {
       title: 'ROAS',
-      value: '4.94',
-      growth: '+8.35%',
-      tag: 'Excellent',
-      tagColor: 'text-purple-600 bg-purple-100',
-      //   line: 'bg-purple-500',
+      value: summaryCards?.roas?.value ?? 0,
+      growth: summaryCards?.roas?.change?.formatted ?? '0%',
     },
     {
       title: 'Ad Spend',
-      value: '₹ 2,20,790.85',
-      growth: '+5.32%',
-      tag: 'Moderate',
-      tagColor: 'text-yellow-600 bg-yellow-100',
-      //   line: 'bg-yellow-500',
+      value: `₹ ${summaryCards?.ad_spend?.value ?? 0}`,
+      growth: summaryCards?.ad_spend?.change?.formatted ?? '0%',
     },
     {
       title: 'Sales from Ads',
-      value: '₹ 10,89,112.45',
-      growth: '+8.32%',
-      tag: 'Good',
-      tagColor: 'text-green-600 bg-green-100',
-      //   line: 'bg-green-500',
+      value: `₹ ${summaryCards?.sales_from_ads?.value ?? 0}`,
+      growth: summaryCards?.sales_from_ads?.change?.formatted ?? '0%',
     },
   ];
 
   return (
     <div className="min-h-screen bg-[#f5f7fb] p-3 px-3">
-      {/* Header */}
-      <div className="mb-2 flex flex-col gap-3 min-lg:flex-row min-lg:items-start min-lg:justify-between">
-        <div className="flex-1 min-w-0">
-          <h1 className="mb-0 text-[20px] font-semibold text-[#111827]">Advertising Dashboard</h1>
+      <Spin spinning={loading}>
+        {/* Header */}
+        <div className="mb-2 flex flex-col gap-3 min-lg:flex-row min-lg:items-start min-lg:justify-between">
+          <div className="flex-1 min-w-0">
+            <h1 className="mb-0 text-[20px] font-semibold text-[#111827]">Advertising Dashboard</h1>
 
-          <p className="text-[11px] text-gray-500">
-            Overview of your advertising performance and opportunities to improve.
-          </p>
-        </div>
+            <p className="text-[11px] text-gray-500">
+              Overview of your advertising performance and opportunities to improve.
+            </p>
+          </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-2 text-[11px] font-medium">
-            <span className="text-gray-500">Ad Account:</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2 text-[11px] font-medium">
+              <span className="text-gray-500">Ad Account:</span>
+
+              <button
+                type="button"
+                className="flex items-center gap-2 rounded-lg border border-gray-300 bg-[#edf4ff] px-3 py-1.5 text-[#2563eb]"
+              >
+                <span className="font-semibold">All Accounts</span>
+                <DownOutlined className="text-[10px]" />
+              </button>
+            </div>
 
             <button
               type="button"
-              className="flex items-center gap-2 rounded-lg border border-gray-300 bg-[#edf4ff] px-3 py-1.5 text-[#2563eb]"
+              className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-[11px] font-medium text-gray-700"
             >
-              <span className="font-semibold">All Accounts</span>
-              <DownOutlined className="text-[10px]" />
+              <ReloadOutlined />
+              Refresh
             </button>
-          </div>
 
-          <button
-            type="button"
-            className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-[11px] font-medium text-gray-700"
-          >
-            <ReloadOutlined />
-            Refresh
-          </button>
-
-          <div className="flex items-center gap-1 text-[11px] text-gray-600">
-            <InfoCircleOutlined />
-            Last Updated: 31 May 2025
+            <div className="flex items-center gap-1 text-[11px] text-gray-600">
+              <InfoCircleOutlined />
+              Last Updated: 31 May 2025
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Top Cards */}
-      <div className="grid grid-cols-5 xl:grid-cols-3 md:grid-cols-2 sm:grid-cols-1 gap-2">
-        {cards.map((item, index) => (
-          <div key={index} className="rounded-2xl border border-[#e5e7eb] bg-white px-3 py-3">
-            {/* Top */}
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-[12px] font-semibold text-gray-600">{item.title}</h3>
+        {/* Top Cards */}
+        <div className="grid grid-cols-5 xl:grid-cols-3 md:grid-cols-2 sm:grid-cols-1 gap-2">
+          {cards.map((item, index) => (
+            <div key={index} className="rounded-2xl border border-[#e5e7eb] bg-white px-3 py-3">
+              {/* Top */}
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-[12px] font-semibold text-gray-600">{item.title}</h3>
 
-              <span className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${item.tagColor}`}>{item.tag}</span>
-            </div>
+                <span className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${item.tagColor}`}>{item.tag}</span>
+              </div>
 
-            {/* Value */}
-            <h2 className="text-[18px] font-bold leading-none tracking-tight text-[#111827]">{item.value}</h2>
+              {/* Value */}
+              <h2 className="text-[18px] font-bold leading-none tracking-tight text-[#111827]">{item.value}</h2>
 
-            {/* Growth */}
-            <p className="mt-2 text-[10px] font-medium text-green-600">↑ {item.growth} vs 07 Apr - 30 Apr</p>
+              {/* Growth */}
+              <p className="mt-2 text-[10px] font-medium text-green-600">↑ {item.growth}</p>
 
-            {/* Mini Graph */}
-            {/* <div className="mt-4 flex items-end gap-[3px]">
+              {/* Mini Graph */}
+              {/* <div className="mt-4 flex items-end gap-[3px]">
               {[20, 12, 18, 15, 25, 22, 32, 18, 28, 20].map((h, i) => (
                 <div
                   key={i}
@@ -134,368 +146,285 @@ function Overview() {
                 />
               ))}
             </div> */}
-          </div>
-        ))}
-      </div>
+            </div>
+          ))}
+        </div>
 
-      {/* Middle Section */}
-      <div className="mt-2 grid grid-cols-12 gap-2">
-        {/* PERFORMANCE TREND */}
+        {/* Middle Section */}
+        <div className="mt-2 grid grid-cols-12 gap-2">
+          {/* PERFORMANCE TREND */}
 
-        <div className="col-span-4 xl:col-span-12 rounded-xl border border-[#e5e7eb] bg-white p-3">
-          <div className="mb-3 flex flex-col gap-2 min-lg:flex-row min-lg:items-center min-lg:justify-between">
-            <div>
-              <h2 className="text-[15px] font-semibold text-[#111827]">Performance Trend</h2>
+          <div className="col-span-4 xl:col-span-12 rounded-xl border border-[#e5e7eb] bg-white p-3">
+            <div className="mb-3 flex flex-col gap-2 min-lg:flex-row min-lg:items-center min-lg:justify-between">
+              <div>
+                <h2 className="text-[15px] font-semibold text-[#111827]">Performance Trend</h2>
 
-              <div className="mt-2 flex flex-wrap items-center gap-3">
-                <span className="flex items-center gap-1 text-[11px] text-green-600">
-                  <div className="h-2 w-2 rounded-full bg-green-500" />
-                  ACOS (%)
-                </span>
+                <div className="mt-2 flex flex-wrap items-center gap-3">
+                  <span className="flex items-center gap-1 text-[11px] text-green-600">
+                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                    ACOS (%)
+                  </span>
 
-                <span className="flex items-center gap-1 text-[11px] text-blue-600">
-                  <div className="h-2 w-2 rounded-full bg-blue-500" />
-                  TACOS (%)
-                </span>
+                  <span className="flex items-center gap-1 text-[11px] text-blue-600">
+                    <div className="h-2 w-2 rounded-full bg-blue-500" />
+                    TACOS (%)
+                  </span>
 
-                <span className="flex items-center gap-1 text-[11px] text-purple-600">
-                  <div className="h-2 w-2 rounded-full bg-purple-500" />
-                  ROAS
-                </span>
+                  <span className="flex items-center gap-1 text-[11px] text-purple-600">
+                    <div className="h-2 w-2 rounded-full bg-purple-500" />
+                    ROAS
+                  </span>
+                </div>
               </div>
+
+              <button
+                type="button"
+                className="rounded-lg border border-gray-200 bg-white px-3 py-1 text-[11px] font-medium text-gray-600"
+              >
+                Daily
+              </button>
             </div>
 
-            <button
-              type="button"
-              className="rounded-lg border border-gray-200 bg-white px-3 py-1 text-[11px] font-medium text-gray-600"
-            >
-              Daily
+            <div className="h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={data}
+                  margin={{
+                    top: 5,
+                    right: 5,
+                    left: -20,
+                    bottom: 0,
+                  }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+
+                  <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+
+                  <Tooltip />
+
+                  <Line type="monotone" dataKey="acos" stroke="#10b981" strokeWidth={2} dot={false} />
+
+                  <Line type="monotone" dataKey="tacos" stroke="#3b82f6" strokeWidth={2} dot={false} />
+
+                  <Line type="monotone" dataKey="roas" stroke="#8b5cf6" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* PERFORMANCE BREAKDOWN */}
+
+          <div className="col-span-4 xl:col-span-6 md:col-span-12 rounded-xl border border-[#e5e7eb] bg-white p-3">
+            <h2 className="mb-3 text-[15px] font-semibold text-[#111827]">Performance Breakdown</h2>
+
+            <div className="flex flex-col items-center gap-3 min-lg:flex-row">
+              <div className="relative flex-shrink-0">
+                <svg width="150" height="150" viewBox="0 0 200 200">
+                  <circle
+                    cx="100"
+                    cy="100"
+                    r="70"
+                    fill="none"
+                    stroke="#3b82f6"
+                    strokeWidth="20"
+                    strokeDasharray="290 150"
+                    strokeLinecap="round"
+                    transform="rotate(-90 100 100)"
+                  />
+
+                  <circle
+                    cx="100"
+                    cy="100"
+                    r="70"
+                    fill="none"
+                    stroke="#34d399"
+                    strokeWidth="20"
+                    strokeDasharray="95 345"
+                    strokeDashoffset="-300"
+                    strokeLinecap="round"
+                    transform="rotate(-90 100 100)"
+                  />
+
+                  <circle
+                    cx="100"
+                    cy="100"
+                    r="70"
+                    fill="none"
+                    stroke="#8b5cf6"
+                    strokeWidth="20"
+                    strokeDasharray="70 370"
+                    strokeDashoffset="-405"
+                    strokeLinecap="round"
+                    transform="rotate(-90 100 100)"
+                  />
+                </svg>
+
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <p className="text-[10px] text-gray-500">Total Ad Spend</p>
+
+                  <h3 className="mt-1 text-[12px] font-bold text-[#111827]">₹ {summaryCards?.ad_spend?.value}</h3>
+                </div>
+              </div>
+
+              <div className="w-full space-y-3">
+                {performanceBreakdown.map((item, index) => (
+                  <div key={index}>
+                    <div className="flex items-center gap-2">
+                      <div className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+
+                      <span className="text-[11px] font-medium text-gray-700">{item.campaign_type}</span>
+                    </div>
+
+                    <p className="mt-1 pl-4 text-[11px] font-semibold text-[#111827]">
+                      ₹ {item.spend} ({item.percentage}%)
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* CAMPAIGN TYPE TABLE */}
+
+          <div className="col-span-4 xl:col-span-6 md:col-span-12 rounded-xl border border-[#e5e7eb] bg-white p-3">
+            <h2 className="mb-3 text-[15px] font-semibold text-[#111827]">Performance by Campaign Type</h2>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-[450px] w-full">
+                <thead>
+                  <tr className="border-b border-gray-200 text-left text-[11px] text-gray-500">
+                    <th className="pb-3">Campaign Type</th>
+                    <th className="pb-3">Ad Spend</th>
+                    <th className="pb-3">Sales</th>
+                    <th className="pb-3">ACOS</th>
+                  </tr>
+                </thead>
+
+                <tbody className="text-[11px]">
+                  {performanceByType.map((item, index) => (
+                    <tr key={index} className="border-b border-gray-100">
+                      <td className="py-3">{item.campaign_type}</td>
+
+                      <td>₹ {item.spend}</td>
+
+                      <td>₹ {item.sales}</td>
+
+                      <td>{item.acos}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Section */}
+        <div className="mt-2 grid grid-cols-12 gap-3">
+          {/* TOP CAMPAIGNS */}
+
+          <div className="col-span-6 xl:col-span-12 rounded-xl border border-[#e5e7eb] bg-white p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="text-[15px] font-semibold text-[#111827]">Top Campaigns</h2>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[650px]">
+                <thead>
+                  <tr className="bg-[#f8fafc] text-left text-[11px] font-semibold text-gray-500">
+                    <th className="rounded-l-lg px-2 py-2">Campaign</th>
+                    <th className="px-2 py-2">Ad Spend</th>
+                    <th className="px-2 py-2">Sales</th>
+                    <th className="px-2 py-2">ACOS</th>
+                    <th className="px-2 py-2">ROAS</th>
+                    <th className="rounded-r-lg px-2 py-2">Status</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {topCampaigns.map((item) => (
+                    <tr key={item.campaign_id} className="border-b border-gray-100 text-[11px] text-gray-700">
+                      <td className="px-2 py-2 font-medium">{item.name}</td>
+
+                      <td className="px-2 py-2">₹ {item.spend}</td>
+
+                      <td className="px-2 py-2">₹ {item.sales}</td>
+
+                      <td className="px-2 py-2">{item.acos}%</td>
+
+                      <td className="px-2 py-2">{item.roas}</td>
+
+                      <td className="px-2 py-2">
+                        <span
+                          className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold
+            ${
+              item.status === 'Excellent'
+                ? 'bg-green-100 text-green-600'
+                : item.status === 'Good'
+                ? 'bg-blue-100 text-blue-600'
+                : 'bg-yellow-100 text-yellow-600'
+            }`}
+                        >
+                          {item.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <button type="button" className="mt-3 flex items-center gap-1 text-[11px] font-medium text-blue-600">
+              View all campaigns →
             </button>
           </div>
 
-          <div className="h-[220px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart
-                data={data}
-                margin={{
-                  top: 5,
-                  right: 5,
-                  left: -20,
-                  bottom: 0,
-                }}
-              >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+          {/* AI RECOMMENDATIONS */}
 
-                <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+          <div className="col-span-6 xl:col-span-6 md:col-span-12 rounded-xl border border-[#e5e7eb] bg-white p-3">
+            <h2 className="mb-2 text-[15px] font-semibold text-[#111827]">AI Recommendations</h2>
 
-                <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
-
-                <Line type="monotone" dataKey="acos" stroke="#10b981" strokeWidth={2} dot={false} />
-
-                <Line type="monotone" dataKey="tacos" stroke="#3b82f6" strokeWidth={2} dot={false} />
-
-                <Line type="monotone" dataKey="roas" stroke="#8b5cf6" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* PERFORMANCE BREAKDOWN */}
-
-        <div className="col-span-4 xl:col-span-6 md:col-span-12 rounded-xl border border-[#e5e7eb] bg-white p-3">
-          <h2 className="mb-3 text-[15px] font-semibold text-[#111827]">Performance Breakdown</h2>
-
-          <div className="flex flex-col items-center gap-3 min-lg:flex-row">
-            <div className="relative flex-shrink-0">
-              <svg width="150" height="150" viewBox="0 0 200 200">
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="70"
-                  fill="none"
-                  stroke="#3b82f6"
-                  strokeWidth="20"
-                  strokeDasharray="290 150"
-                  strokeLinecap="round"
-                  transform="rotate(-90 100 100)"
-                />
-
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="70"
-                  fill="none"
-                  stroke="#34d399"
-                  strokeWidth="20"
-                  strokeDasharray="95 345"
-                  strokeDashoffset="-300"
-                  strokeLinecap="round"
-                  transform="rotate(-90 100 100)"
-                />
-
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="70"
-                  fill="none"
-                  stroke="#8b5cf6"
-                  strokeWidth="20"
-                  strokeDasharray="70 370"
-                  strokeDashoffset="-405"
-                  strokeLinecap="round"
-                  transform="rotate(-90 100 100)"
-                />
-              </svg>
-
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <p className="text-[10px] text-gray-500">Total Ad Spend</p>
-
-                <h3 className="mt-1 text-[12px] font-bold text-[#111827]">₹ 2,20,790.85</h3>
-              </div>
-            </div>
-
-            <div className="w-full space-y-3">
-              <div>
-                <div className="flex items-center gap-2">
-                  <div className="h-2.5 w-2.5 rounded-full bg-blue-500" />
-                  <span className="text-[11px] font-medium text-gray-700">Sponsored Products</span>
-                </div>
-
-                <p className="mt-1 pl-4 text-[11px] font-semibold text-[#111827]">₹ 1,45,230.40 (65.8%)</p>
-              </div>
-
-              <div>
-                <div className="flex items-center gap-2">
-                  <div className="h-2.5 w-2.5 rounded-full bg-green-500" />
-                  <span className="text-[11px] font-medium text-gray-700">Sponsored Brands</span>
-                </div>
-
-                <p className="mt-1 pl-4 text-[11px] font-semibold text-[#111827]">₹ 45,671.22 (20.7%)</p>
-              </div>
-
-              <div>
-                <div className="flex items-center gap-2">
-                  <div className="h-2.5 w-2.5 rounded-full bg-purple-500" />
-                  <span className="text-[11px] font-medium text-gray-700">Sponsored Display</span>
-                </div>
-
-                <p className="mt-1 pl-4 text-[11px] font-semibold text-[#111827]">₹ 29,889.23 (13.5%)</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* CAMPAIGN TYPE TABLE */}
-
-        <div className="col-span-4 xl:col-span-6 md:col-span-12 rounded-xl border border-[#e5e7eb] bg-white p-3">
-          <h2 className="mb-3 text-[15px] font-semibold text-[#111827]">Performance by Campaign Type</h2>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-[450px] w-full">
-              <thead>
-                <tr className="border-b border-gray-200 text-left text-[11px] text-gray-500">
-                  <th className="pb-3">Campaign Type</th>
-                  <th className="pb-3">Ad Spend</th>
-                  <th className="pb-3">Sales</th>
-                  <th className="pb-3">ACOS</th>
-                </tr>
-              </thead>
-
-              <tbody className="text-[11px]">
-                <tr className="border-b border-gray-100">
-                  <td className="py-3">Sponsored Products</td>
-                  <td>₹ 1,41,326</td>
-                  <td>₹ 7,42,418</td>
-                  <td>19.02%</td>
-                </tr>
-
-                <tr className="border-b border-gray-100">
-                  <td className="py-3">Sponsored Brands</td>
-                  <td>₹ 45,673</td>
-                  <td>₹ 2,63,564</td>
-                  <td>17.31%</td>
-                </tr>
-
-                <tr>
-                  <td className="py-3">Sponsored Display</td>
-                  <td>₹ 33,791</td>
-                  <td>₹ 1,83,129</td>
-                  <td>18.45%</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Section */}
-      <div className="mt-2 grid grid-cols-12 gap-3">
-        {/* TOP CAMPAIGNS */}
-
-        <div className="col-span-5 xl:col-span-12 rounded-xl border border-[#e5e7eb] bg-white p-3">
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-[15px] font-semibold text-[#111827]">Top Campaigns</h2>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[650px]">
-              <thead>
-                <tr className="bg-[#f8fafc] text-left text-[11px] font-semibold text-gray-500">
-                  <th className="rounded-l-lg px-2 py-2">Campaign</th>
-                  <th className="px-2 py-2">Ad Spend</th>
-                  <th className="px-2 py-2">Sales</th>
-                  <th className="px-2 py-2">ACOS</th>
-                  <th className="px-2 py-2">ROAS</th>
-                  <th className="rounded-r-lg px-2 py-2">Status</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {[
-                  {
-                    campaign: 'SP - Auto - Best Sellers',
-                    spend: '₹52,348.21',
-                    sales: '₹3,284.60',
-                    acos: '15.17%',
-                    roas: '6.59',
-                    status: 'Good',
-                    color: 'bg-green-100 text-green-600',
-                  },
-                  {
-                    campaign: 'SP - Manual - High Convert',
-                    spend: '₹31,245.60',
-                    sales: '₹2,25,640.80',
-                    acos: '13.85%',
-                    roas: '7.22',
-                    status: 'Excellent',
-                    color: 'bg-emerald-100 text-emerald-600',
-                  },
-                  {
-                    campaign: 'SB - Brand - Exact',
-                    spend: '₹18,765.44',
-                    sales: '₹1,02,456.60',
-                    acos: '18.32%',
-                    roas: '5.45',
-                    status: 'Good',
-                    color: 'bg-green-100 text-green-600',
-                  },
-                  {
-                    campaign: 'SD - Product Targeting',
-                    spend: '₹16,232.15',
-                    sales: '₹62,431.20',
-                    acos: '26.01%',
-                    roas: '3.84',
-                    status: 'Moderate',
-                    color: 'bg-yellow-100 text-yellow-600',
-                  },
-                ].map((item, index) => (
-                  <tr key={index} className="border-b border-gray-100 text-[11px] text-gray-700">
-                    <td className="px-2 py-2 font-medium">{item.campaign}</td>
-
-                    <td className="px-2 py-2">{item.spend}</td>
-
-                    <td className="px-2 py-2">{item.sales}</td>
-
-                    <td className="px-2 py-2">{item.acos}</td>
-
-                    <td className="px-2 py-2">{item.roas}</td>
-
-                    <td className="px-2 py-2">
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${item.color}`}>
-                        {item.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <button type="button" className="mt-3 flex items-center gap-1 text-[11px] font-medium text-blue-600">
-            View all campaigns →
-          </button>
-        </div>
-
-        {/* AI RECOMMENDATIONS */}
-
-        <div className="col-span-4 xl:col-span-6 md:col-span-12 rounded-xl border border-[#e5e7eb] bg-white p-3">
-          <h2 className="mb-2 text-[15px] font-semibold text-[#111827]">AI Recommendations</h2>
-
-          <div className="space-y-2">
-            {[1, 2, 3].map((item) => (
-              <div
-                key={item}
-                className="flex items-start justify-between rounded-lg border border-gray-200 bg-gray-50 p-3"
-              >
-                <div className="flex gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-100">
-                    {item === 1 && <LineChartOutlined className="text-[13px] text-green-600" />}
-
-                    {item === 2 && <SearchOutlined className="text-[13px] text-purple-600" />}
-
-                    {item === 3 && <BulbOutlined className="text-[13px] text-yellow-600" />}
-                  </div>
-
-                  <div>
-                    <h4 className="text-[11px] font-semibold text-[#111827]">
-                      Increase bids for high converting keywords
-                    </h4>
-
-                    <p className="mt-1 text-[10px] text-gray-500">Improve ad performance and conversions.</p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  className="rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-600"
+            <div className="space-y-2">
+              {[1, 2, 3].map((item) => (
+                <div
+                  key={item}
+                  className="flex items-start justify-between rounded-lg border border-gray-200 bg-gray-50 p-3"
                 >
-                  Apply
-                </button>
-              </div>
-            ))}
-          </div>
+                  <div className="flex gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-100">
+                      {item === 1 && <LineChartOutlined className="text-[13px] text-green-600" />}
 
-          <button type="button" className="mt-3 flex items-center gap-1 text-[11px] font-medium text-blue-600">
-            View all recommendations →
-          </button>
-        </div>
+                      {item === 2 && <SearchOutlined className="text-[13px] text-purple-600" />}
 
-        {/* AUTO RULES */}
+                      {item === 3 && <BulbOutlined className="text-[13px] text-yellow-600" />}
+                    </div>
 
-        <div className="col-span-3 xl:col-span-6 md:col-span-12 rounded-xl border border-[#e5e7eb] bg-white p-3">
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-[15px] font-semibold text-[#111827]">Auto Optimization Rules</h2>
-          </div>
+                    <div>
+                      <h4 className="text-[11px] font-semibold text-[#111827]">
+                        Increase bids for high converting keywords
+                      </h4>
 
-          <div className="mb-2 grid grid-cols-[1fr_auto] border-b border-gray-200 pb-2 text-[10px] font-medium text-gray-400">
-            <span>Campaign</span>
-            <span>Status</span>
-          </div>
+                      <p className="mt-1 text-[10px] text-gray-500">Improve ad performance and conversions.</p>
+                    </div>
+                  </div>
 
-          <div className="space-y-2">
-            {[
-              'Pause keywords with ACOS > 60%',
-              'Increase bids for ACOS < 15%',
-              'Reduce bids for ACOS > 40%',
-              'Daily budget reallocation',
-            ].map((rule, index) => (
-              <div key={index} className="grid grid-cols-[1fr_auto] items-center border-b border-gray-100 pb-2">
-                <h4 className="text-[11px] font-medium text-[#111827]">{rule}</h4>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-gray-500">Active</span>
-
-                  <Switch defaultChecked size="small" />
+                  <button
+                    type="button"
+                    className="rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-600"
+                  >
+                    Apply
+                  </button>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          <button type="button" className="mt-3 flex items-center gap-1 text-[11px] font-medium text-blue-600">
-            Manage all rules →
-          </button>
+            <button type="button" className="mt-3 flex items-center gap-1 text-[11px] font-medium text-blue-600">
+              View all recommendations →
+            </button>
+          </div>
         </div>
-      </div>
+      </Spin>
     </div>
   );
 }
