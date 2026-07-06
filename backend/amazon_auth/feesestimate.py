@@ -422,11 +422,19 @@ class AmazonEstimatedFeeListView(APIView):
         page_no = int(pagination.get("pageNo", 1))
         page_size = int(pagination.get("pageSize", 10))
 
+        # queryset = AmazonEstimatedFee.objects.select_related(
+        #     "order_item",
+        #     "order_item__order",
+        #     "amazon_account"
+        # ).all().order_by("-created_at")
+        
         queryset = AmazonEstimatedFee.objects.select_related(
             "order_item",
             "order_item__order",
             "amazon_account"
-        ).all().order_by("-created_at")
+        ).filter(
+            order_item__order__user=request.user
+        ).order_by("-created_at")
 
         # ---------------- FILTERS ----------------
 

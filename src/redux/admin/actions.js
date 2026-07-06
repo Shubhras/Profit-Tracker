@@ -55,6 +55,78 @@ const actions = {
   USERS_LIST_SUCCESS: 'USERS_LIST_SUCCESS',
   USERS_LIST_ERR: 'USERS_LIST_ERR',
 
+  NOTIFICATION_LIST_BEGIN: 'NOTIFICATION_LIST_BEGIN',
+  NOTIFICATION_LIST_SUCCESS: 'NOTIFICATION_LIST_SUCCESS',
+  NOTIFICATION_LIST_ERR: 'NOTIFICATION_LIST_ERR',
+
+  CREATE_NOTIFICATION_BEGIN: 'CREATE_NOTIFICATION_BEGIN',
+  CREATE_NOTIFICATION_SUCCESS: 'CREATE_NOTIFICATION_SUCCESS',
+  CREATE_NOTIFICATION_ERR: 'CREATE_NOTIFICATION_ERR',
+
+  DELETE_NOTIFICATION_BEGIN: 'DELETE_NOTIFICATION_BEGIN',
+  DELETE_NOTIFICATION_SUCCESS: 'DELETE_NOTIFICATION_SUCCESS',
+  DELETE_NOTIFICATION_ERR: 'DELETE_NOTIFICATION_ERR',
+
+  GET_TICKETS_LISTS_BEGIN: 'GET_TICKETS_LISTS_BEGIN',
+  GET_TICKETS_LISTS_SUCCESS: 'GET_TICKETS_LISTS_SUCCESS',
+  GET_TICKETS_LISTS_ERR: 'GET_TICKETS_LISTS_ERR',
+
+  UPDATE_TICKET_STATUS_BEGIN: 'UPDATE_TICKET_STATUS_BEGIN',
+  UPDATE_TICKET_STATUS_SUCCESS: 'UPDATE_TICKET_STATUS_SUCCESS',
+  UPDATE_TICKET_STATUS_ERR: 'UPDATE_TICKET_STATUS_ERR',
+
+  CREATE_MODULES_BEGIN: 'CREATE_MODULES_BEGIN',
+  CREATE_MODULES_SUCCESS: 'CREATE_MODULES_SUCCESS',
+  CREATE_MODULES_ERR: 'CREATE_MODULES_ERR',
+
+  GET_MODULES_BEGIN: 'GET_MODULES_BEGIN',
+  GET_MODULES_SUCCESS: 'GET_MODULES_SUCCESS',
+  GET_MODULES_ERR: 'GET_MODULES_ERR',
+
+  UPDATE_MODULES_BEGIN: 'UPDATE_MODULES_BEGIN',
+  UPDATE_MODULES_SUCCESS: 'UPDATE_MODULES_SUCCESS',
+  UPDATE_MODULES_ERR: 'UPDATE_MODULES_ERR',
+
+  DELETE_MODULES_BEGIN: 'DELETE_MODULES_BEGIN',
+  DELETE_MODULES_SUCCESS: 'DELETE_MODULES_SUCCESS',
+  DELETE_MODULES_ERR: 'DELETE_MODULES_ERR',
+
+  VIEW_MODULES_BEGIN: 'VIEW_MODULES_BEGIN',
+  VIEW_MODULES_SUCCESS: 'VIEW_MODULES_SUCCESS',
+  VIEW_MODULES_ERR: 'VIEW_MODULES_ERR',
+
+  GET_SUB_MODULES_BEGIN: 'GET_SUB_MODULES_BEGIN',
+  GET_SUB_MODULES_SUCCESS: 'GET_SUB_MODULES_SUCCESS',
+  GET_SUB_MODULES_ERR: 'GET_SUB_MODULES_ERR',
+
+  CREATE_SUB_MODULES_BEGIN: 'CREATE_SUB_MODULES_BEGIN',
+  CREATE_SUB_MODULES_SUCCESS: 'CREATE_SUB_MODULES_SUCCESS',
+  CREATE_SUB_MODULES_ERR: 'CREATE_SUB_MODULES_ERR',
+
+  UPDATE_SUB_MODULES_BEGIN: 'UPDATE_SUB_MODULES_BEGIN',
+  UPDATE_SUB_MODULES_SUCCESS: 'UPDATE_SUB_MODULES_SUCCESS',
+  UPDATE_SUB_MODULES_ERR: 'UPDATE_SUB_MODULES_ERR',
+
+  DELETE_SUB_MODULES_BEGIN: 'DELETE_SUB_MODULESS_BEGIN',
+  DELETE_SUB_MODULES_SUCCESS: 'DELETE_SUB_MODULES_SUCCESS',
+  DELETE_SUB_MODULES_ERR: 'DELETE_SUB_MODULES_ERR',
+
+  GET_SUBUSERS_BEGIN: 'GET_SUBUSERS_BEGIN',
+  GET_SUBUSERS_SUCCESS: 'GET_SUBUSERS_SUCCESS',
+  GET_SUBUSERS_ERR: 'GET_SUBUSERS_ERR',
+
+  CREATE_SUBUSERS_BEGIN: 'CREATE_SUBUSERS_BEGIN',
+  CREATE_SUBUSERS_SUCCESS: 'CREATE_SUBUSERS_SUCCESS',
+  CREATE_SUBUSERS_ERR: 'CREATE_SUBUSERS_ERR',
+
+  UPDATE_SUBUSERS_BEGIN: 'UPDATE_SUBUSERS_BEGIN',
+  UPDATE_SUBUSERS_SUCCESS: 'UPDATE_SUBUSERS_SUCCESS',
+  UPDATE_SUBUSERS_ERR: 'UPDATE_SUBUSERS_ERR',
+
+  DELETE_SUBUSERS_BEGIN: 'DELETE_SUBUSERS_BEGIN',
+  DELETE_SUBUSERS_SUCCESS: 'DELETE_SUBUSERS_SUCCESS',
+  DELETE_SUBUSERS_ERR: 'DELETE_SUBUSERS_ERR',
+
   createCouponCodesBegin: () => ({
     type: actions.CREATE_COUPONCODE_BEGIN,
   }),
@@ -248,6 +320,258 @@ const actions = {
 
   getuserslistErr: (err) => ({
     type: actions.USERS_LIST_ERR,
+    err,
+  }),
+
+  notificationListBegin: () => ({
+    type: actions.NOTIFICATION_LIST_BEGIN,
+  }),
+
+  notificationListSuccess: (data) => ({
+    type: actions.NOTIFICATION_LIST_SUCCESS,
+    data,
+  }),
+
+  notificationListErr: (err) => ({
+    type: actions.NOTIFICATION_LIST_ERR,
+    err,
+  }),
+
+  createNotificationBegin: () => ({
+    type: actions.CREATE_NOTIFICATION_BEGIN,
+  }),
+
+  createNotificationSuccess: (data) => ({
+    type: actions.CREATE_NOTIFICATION_SUCCESS,
+    data,
+  }),
+
+  createNotificationErr: (err) => ({
+    type: actions.CREATE_NOTIFICATION_ERR,
+    err,
+  }),
+
+  deleteNotificationBegin: () => ({
+    type: actions.DELETE_NOTIFICATION_BEGIN,
+  }),
+
+  deleteNotificationSuccess: (data) => ({
+    type: actions.DELETE_NOTIFICATION_SUCCESS,
+    data,
+  }),
+
+  deleteNotificationErr: (err) => ({
+    type: actions.DELETE_NOTIFICATION_ERR,
+    err,
+  }),
+
+  getTicketsListBegin: () => ({
+    type: actions.GET_TICKETS_LISTS_BEGIN,
+  }),
+
+  getTicketsListSuccess: (data) => ({
+    type: actions.GET_TICKETS_LISTS_SUCCESS,
+    data,
+  }),
+
+  getTicketsListErr: (err) => ({
+    type: actions.GET_TICKETS_LISTS_ERR,
+    err,
+  }),
+
+  updateTicketStatusBegin: () => ({
+    type: actions.UPDATE_TICKET_STATUS_BEGIN,
+  }),
+
+  updateTicketStatusSuccess: (data) => ({
+    type: actions.UPDATE_TICKET_STATUS_SUCCESS,
+    data,
+  }),
+
+  updateTicketStatusErr: (err) => ({
+    type: actions.UPDATE_TICKET_STATUS_ERR,
+    err,
+  }),
+
+  createModulesBegin: () => ({
+    type: actions.CREATE_MODULES_BEGIN,
+  }),
+
+  createModulesSuccess: (data) => ({
+    type: actions.CREATE_MODULES_SUCCESS,
+    data,
+  }),
+
+  createModulesErr: (err) => ({
+    type: actions.CREATE_MODULES_ERR,
+    err,
+  }),
+
+  getModulesBegin: () => ({
+    type: actions.GET_MODULES_BEGIN,
+  }),
+
+  getModulesSuccess: (data) => ({
+    type: actions.GET_MODULES_SUCCESS,
+    data,
+  }),
+
+  getModulesErr: (err) => ({
+    type: actions.GET_MODULES_ERR,
+    err,
+  }),
+
+  updateModulesBegin: () => ({
+    type: actions.UPDATE_MODULES_BEGIN,
+  }),
+
+  updateModulesSuccess: (data) => ({
+    type: actions.UPDATE_MODULES_SUCCESS,
+    data,
+  }),
+
+  updateModulesErr: (err) => ({
+    type: actions.UPDATE_MODULES_ERR,
+    err,
+  }),
+
+  deleteModulesBegin: () => ({
+    type: actions.DELETE_MODULES_BEGIN,
+  }),
+
+  deleteModulesSuccess: (data) => ({
+    type: actions.DELETE_MODULES_SUCCESS,
+    data,
+  }),
+
+  deleteModulesErr: (err) => ({
+    type: actions.DELETE_MODULES_ERR,
+    err,
+  }),
+
+  viewSingleModulesBegin: () => ({
+    type: actions.VIEW_MODULES_BEGIN,
+  }),
+
+  viewSingleModulesSuccess: (data) => ({
+    type: actions.VIEW_MODULES_SUCCESS,
+    data,
+  }),
+
+  viewSingleModulesErr: (err) => ({
+    type: actions.VIEW_MODULES_ERR,
+    err,
+  }),
+
+  getSubModulesBegin: () => ({
+    type: actions.GET_SUB_MODULES_BEGIN,
+  }),
+
+  getSubModulesSuccess: (data) => ({
+    type: actions.GET_SUB_MODULES_SUCCESS,
+    data,
+  }),
+
+  getSubModulesErr: (err) => ({
+    type: actions.GET_SUB_MODULES_ERR,
+    err,
+  }),
+
+  createSubModulesBegin: () => ({
+    type: actions.CREATE_SUB_MODULES_BEGIN,
+  }),
+
+  createSubModulesSuccess: (data) => ({
+    type: actions.CREATE_SUB_MODULES_SUCCESS,
+    data,
+  }),
+
+  createSubModulesErr: (err) => ({
+    type: actions.CREATE_SUB_MODULES_ERR,
+    err,
+  }),
+
+  updateSubModulesBegin: () => ({
+    type: actions.UPDATE_SUB_MODULES_BEGIN,
+  }),
+
+  updateSubModulesSuccess: (data) => ({
+    type: actions.UPDATE_SUB_MODULES_SUCCESS,
+    data,
+  }),
+
+  updateSubModulesErr: (err) => ({
+    type: actions.UPDATE_SUB_MODULES_ERR,
+    err,
+  }),
+
+  deleteSubModulesBegin: () => ({
+    type: actions.DELETE_SUB_MODULES_BEGIN,
+  }),
+
+  deleteSubModulesSuccess: (data) => ({
+    type: actions.DELETE_SUB_MODULES_SUCCESS,
+    data,
+  }),
+
+  deleteSubModulesErr: (err) => ({
+    type: actions.DELETE_SUB_MODULES_ERR,
+    err,
+  }),
+
+  getSubUsersBegin: () => ({
+    type: actions.GET_SUBUSERS_BEGIN,
+  }),
+
+  getSubUsersSuccess: (data) => ({
+    type: actions.GET_SUBUSERS_SUCCESS,
+    data,
+  }),
+
+  getSubUsersErr: (err) => ({
+    type: actions.GET_SUBUSERS_ERR,
+    err,
+  }),
+
+  createSubUsersBegin: () => ({
+    type: actions.CREATE_SUBUSERS_BEGIN,
+  }),
+
+  createSubUsersSuccess: (data) => ({
+    type: actions.CREATE_SUBUSERS_SUCCESS,
+    data,
+  }),
+
+  createSubUsersErr: (err) => ({
+    type: actions.CREATE_SUBUSERS_ERR,
+    err,
+  }),
+
+  updateSubUsersBegin: () => ({
+    type: actions.UPDATE_SUBUSERS_BEGIN,
+  }),
+
+  updateSubUsersSuccess: (data) => ({
+    type: actions.UPDATE_SUBUSERS_SUCCESS,
+    data,
+  }),
+
+  updateSubUsersErr: (err) => ({
+    type: actions.UPDATE_SUBUSERS_ERR,
+    err,
+  }),
+
+  deleteSubUsersBegin: () => ({
+    type: actions.DELETE_SUBUSERS_BEGIN,
+  }),
+
+  deleteSubUsersSuccess: (data) => ({
+    type: actions.DELETE_SUBUSERS_SUCCESS,
+    data,
+  }),
+
+  deleteSubUsersErr: (err) => ({
+    type: actions.DELETE_SUBUSERS_ERR,
     err,
   }),
 };

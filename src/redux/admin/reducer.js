@@ -56,6 +56,74 @@ const {
   USERS_LIST_BEGIN,
   USERS_LIST_SUCCESS,
   USERS_LIST_ERR,
+
+  NOTIFICATION_LIST_BEGIN,
+  NOTIFICATION_LIST_SUCCESS,
+  NOTIFICATION_LIST_ERR,
+
+  CREATE_NOTIFICATION_BEGIN,
+  CREATE_NOTIFICATION_SUCCESS,
+  CREATE_NOTIFICATION_ERR,
+
+  DELETE_NOTIFICATION_BEGIN,
+  DELETE_NOTIFICATION_SUCCESS,
+  DELETE_NOTIFICATION_ERR,
+
+  GET_TICKETS_LISTS_BEGIN,
+  GET_TICKETS_LISTS_SUCCESS,
+  GET_TICKETS_LISTS_ERR,
+
+  UPDATE_TICKET_STATUS_BEGIN,
+  UPDATE_TICKET_STATUS_SUCCESS,
+  UPDATE_TICKET_STATUS_ERR,
+
+  CREATE_MODULES_BEGIN,
+  CREATE_MODULES_SUCCESS,
+  CREATE_MODULES_ERR,
+
+  GET_MODULES_BEGIN,
+  GET_MODULES_SUCCESS,
+  GET_MODULES_ERR,
+
+  UPDATE_MODULES_BEGIN,
+  UPDATE_MODULES_SUCCESS,
+  UPDATE_MODULES_ERR,
+
+  DELETE_MODULES_BEGIN,
+  DELETE_MODULES_SUCCESS,
+  DELETE_MODULES_ERR,
+
+  GET_SUB_MODULES_BEGIN,
+  GET_SUB_MODULES_SUCCESS,
+  GET_SUB_MODULES_ERR,
+
+  CREATE_SUB_MODULES_BEGIN,
+  CREATE_SUB_MODULES_SUCCESS,
+  CREATE_SUB_MODULES_ERR,
+
+  UPDATE_SUB_MODULES_BEGIN,
+  UPDATE_SUB_MODULES_SUCCESS,
+  UPDATE_SUB_MODULES_ERR,
+
+  DELETE_SUB_MODULES_BEGIN,
+  DELETE_SUB_MODULES_SUCCESS,
+  DELETE_SUB_MODULES_ERR,
+
+  GET_SUBUSERS_BEGIN,
+  GET_SUBUSERS_SUCCESS,
+  GET_SUBUSERS_ERR,
+
+  CREATE_SUBUSERS_BEGIN,
+  CREATE_SUBUSERS_SUCCESS,
+  CREATE_SUBUSERS_ERR,
+
+  UPDATE_SUBUSERS_BEGIN,
+  UPDATE_SUBUSERS_SUCCESS,
+  UPDATE_SUBUSERS_ERR,
+
+  DELETE_SUBUSERS_BEGIN,
+  DELETE_SUBUSERS_SUCCESS,
+  DELETE_SUBUSERS_ERR,
 } = actions;
 
 const initialState = {
@@ -71,7 +139,23 @@ const initialState = {
   updateSubscription: null,
   privacypolicyData: null,
   createPrivacyPolicy: null,
+  getTicketsLists: null,
+  updateModule: null,
+  deleteModule: null,
+  viewsingleModule: null,
   getuserlist: null,
+  getModuleslist: null,
+  getsubModule: null,
+  updateSubModules: null,
+  createSubModule: null,
+  deleteSubModules: null,
+  getSubUserslist: null,
+  updateSubUsers: null,
+  deleteSubUsers: null,
+  createSubUsers: null,
+  getnotificationlist: null,
+  createNotification: null,
+  deleteNotification: null,
   updatePolicy: null,
   deletepolicy: null,
 };
@@ -367,6 +451,363 @@ const AdmindashboardReducer = (state = initialState, action) => {
       };
 
     case USERS_LIST_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case NOTIFICATION_LIST_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case NOTIFICATION_LIST_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        getnotificationlist: action.data,
+      };
+
+    case NOTIFICATION_LIST_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case CREATE_NOTIFICATION_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case CREATE_NOTIFICATION_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        createNotification: action.data,
+      };
+
+    case CREATE_NOTIFICATION_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case DELETE_NOTIFICATION_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case DELETE_NOTIFICATION_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        deleteNotification: action.data,
+      };
+
+    case DELETE_NOTIFICATION_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case GET_TICKETS_LISTS_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case GET_TICKETS_LISTS_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        getTicketsLists: action.data,
+      };
+
+    case GET_TICKETS_LISTS_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case UPDATE_TICKET_STATUS_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case UPDATE_TICKET_STATUS_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        updateticketStatus: action.data,
+      };
+
+    case UPDATE_TICKET_STATUS_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case CREATE_MODULES_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case CREATE_MODULES_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        createModules: action.data,
+      };
+
+    case CREATE_MODULES_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case GET_MODULES_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case GET_MODULES_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        getModuleslist: action.data,
+      };
+
+    case GET_MODULES_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case UPDATE_MODULES_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case UPDATE_MODULES_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        updateModule: action.data,
+      };
+
+    case UPDATE_MODULES_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case DELETE_MODULES_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case DELETE_MODULES_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        viewsingleModule: action.data,
+      };
+
+    case DELETE_MODULES_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case GET_SUB_MODULES_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case GET_SUB_MODULES_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        getsubModule: action.data,
+      };
+
+    case GET_SUB_MODULES_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case CREATE_SUB_MODULES_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case CREATE_SUB_MODULES_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        createSubModule: action.data,
+      };
+
+    case CREATE_SUB_MODULES_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case UPDATE_SUB_MODULES_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case UPDATE_SUB_MODULES_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        updateSubModules: action.data,
+      };
+
+    case UPDATE_SUB_MODULES_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case DELETE_SUB_MODULES_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case DELETE_SUB_MODULES_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        deleteSubModules: action.data,
+      };
+
+    case DELETE_SUB_MODULES_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case GET_SUBUSERS_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case GET_SUBUSERS_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        getSubUserslist: action.data,
+      };
+
+    case GET_SUBUSERS_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case CREATE_SUBUSERS_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case CREATE_SUBUSERS_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        createSubUsers: action.data,
+      };
+
+    case CREATE_SUBUSERS_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case UPDATE_SUBUSERS_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case UPDATE_SUBUSERS_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        updateSubUsers: action.data,
+      };
+
+    case UPDATE_SUBUSERS_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case DELETE_SUBUSERS_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case DELETE_SUBUSERS_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        deleteSubUsers: action.data,
+      };
+
+    case DELETE_SUBUSERS_ERR:
       return {
         ...state,
         loading: false,

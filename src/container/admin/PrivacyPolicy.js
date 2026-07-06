@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Spin, Modal } from 'antd';
+import { Button, Spin, Modal, Select } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { PlusOutlined, FormOutlined, DeleteOutlined } from '@ant-design/icons';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import {
   getPrivacyPolicy,
   createPrivacyPolicy,
@@ -14,6 +16,17 @@ function PrivacyPolicy() {
   const [showForm, setShowForm] = useState(false);
   const [content, setContent] = useState('');
   const [editId, setEditId] = useState(null);
+
+  const [contactData, setContactData] = useState({
+    phone: '',
+    email: '',
+    location: '',
+    working_hours: {
+      days: [],
+      from: '',
+      to: '',
+    },
+  });
 
   const dispatch = useDispatch();
   const { privacypolicyData, loading } = useSelector((state) => state.AdminDashboard);
@@ -35,7 +48,7 @@ function PrivacyPolicy() {
     },
     {
       label: 'Third-Party Policies',
-      value: 'terms',
+      value: 'third_party_policy',
     },
     {
       label: 'Platform Privacy',
@@ -49,12 +62,22 @@ function PrivacyPolicy() {
       label: 'Contact Us',
       value: 'contact_us',
     },
+    {
+      label: 'Terms and Conditions',
+      value: 'terms',
+    },
   ];
 
   const handleSave = async () => {
+    // const payload = {
+    //   title: selectedTab,
+    //   content,
+    //   is_active: true,
+    // };
+
     const payload = {
       title: selectedTab,
-      content,
+      content: selectedTab === 'contact_us' ? JSON.stringify(contactData) : content,
       is_active: true,
     };
 
@@ -99,42 +122,54 @@ function PrivacyPolicy() {
   };
 
   return (
-    <div className="p-3 px-2 bg-[#f8f9fb] min-h-screen">
-      <div className="bg-white rounded-lg border overflow-hidden">
-        <div className="flex min-h-[600px]">
-          {/* Sidebar */}
-          <div className="w-[250px] p-3 border-r">
-            <div className="flex flex-col gap-1">
-              {menuItems.map((item) => (
-                <button
-                  type="button"
-                  key={item.value}
-                  onClick={() => setSelectedTab(item.value)}
-                  className={`text-left px-4 py-3 rounded-lg text-[14px] transition-all ${
-                    selectedTab === item.value
-                      ? 'bg-gray-100 font-semibold text-black'
-                      : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Content Section */}
-          <div className="flex-1 p-3">
-            {/* Future Content */}
-            {loading ? (
-              <div className="flex items-center justify-center min-h-[500px]">
-                <Spin size="large" />
+    <>
+      <div className="p-3 px-2 bg-[#f8f9fb] min-h-screen">
+        <div className="bg-white rounded-lg border overflow-hidden">
+          <div className="flex md:flex-col min-h-[600px]">
+            {/* Sidebar */}
+            <div className="w-[250px] p-3 border-r md:hidden">
+              <div className="flex flex-col gap-1">
+                {menuItems.map((item) => (
+                  <button
+                    type="button"
+                    key={item.value}
+                    onClick={() => setSelectedTab(item.value)}
+                    className={`text-left px-4 py-3 rounded-lg text-[14px] transition-all ${
+                      selectedTab === item.value
+                        ? 'bg-gray-100 font-semibold text-black'
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
               </div>
-            ) : (
-              <div className="mt-3">
-                {!showForm ? (
-                  documents.length > 0 ? (
-                    <>
-                      {/* <div className="flex justify-between items-center mb-5">
+            </div>
+
+            <div className="hidden md:block mb-4 p-2">
+              <Select
+                className="w-full"
+                value={selectedTab}
+                onChange={(value) => setSelectedTab(value)}
+                options={menuItems.map((item) => ({
+                  label: item.label,
+                  value: item.value,
+                }))}
+              />
+            </div>
+            {/* Content Section */}
+            <div className="flex-1 p-3">
+              {/* Future Content */}
+              {loading ? (
+                <div className="flex items-center justify-center min-h-[500px]">
+                  <Spin size="large" />
+                </div>
+              ) : (
+                <div className="mt-3">
+                  {!showForm ? (
+                    documents.length > 0 ? (
+                      <>
+                        {/* <div className="flex justify-between items-center mb-5">
                         <h2 className="text-[20px] font-bold">
                           {menuItems.find((item) => item.value === selectedTab)?.label}
                         </h2>
@@ -153,86 +188,164 @@ function PrivacyPolicy() {
                         </Button>
                       </div> */}
 
-                      <div className="space-y-4">
-                        {documents.map((item) => (
-                          <div
-                            key={item.id}
-                            className="bg-white border rounded-xl p-3 shadow-md hover:shadow-lg transition-all"
-                          >
-                            <div className="flex justify-between items-start mb-4">
-                              <div>
-                                <h3 className="text-lg font-semibold text-gray-800">
-                                  {item.title.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
-                                </h3>
+                        <div className="space-y-4">
+                          {documents.map((item) => (
+                            <div
+                              key={item.id}
+                              className="bg-white border rounded-xl p-3 shadow-md hover:shadow-lg transition-all"
+                            >
+                              <div className="flex justify-between items-start mb-4">
+                                <div>
+                                  <h3 className="text-lg font-semibold text-gray-800">
+                                    {item.title.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                                  </h3>
 
-                                <div className="flex items-center gap-3 mt-2">
-                                  <span
-                                    className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                      item.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                                    }`}
-                                  >
-                                    {item.is_active ? 'Active' : 'Inactive'}
-                                  </span>
+                                  <div className="flex items-center gap-3 mt-2">
+                                    <span
+                                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                        item.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                      }`}
+                                    >
+                                      {item.is_active ? 'Active' : 'Inactive'}
+                                    </span>
 
-                                  <span className="text-xs text-gray-500">
-                                    {new Date(item.created_at).toLocaleDateString()}
-                                  </span>
+                                    <span className="text-xs text-gray-500">
+                                      {new Date(item.created_at).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                  <FormOutlined
+                                    // onClick={() => {
+                                    //   setEditId(item.id);
+                                    //   setContent(item.content);
+                                    //   setShowForm(true);
+                                    // }}
+                                    onClick={() => {
+                                      setEditId(item.id);
+
+                                      if (selectedTab === 'contact_us') {
+                                        try {
+                                          const data = JSON.parse(item.content || '{}');
+
+                                          setContactData({
+                                            phone: data.phone || '',
+                                            email: data.email || '',
+                                            location: data.location || '',
+                                            // working_hours: data.working_hours || '',
+                                            working_hours: data.working_hours || {
+                                              days: [],
+                                              from: null,
+                                              to: null,
+                                            },
+                                          });
+                                        } catch {
+                                          setContactData({
+                                            phone: '',
+                                            email: '',
+                                            location: '',
+                                            // working_hours: '',
+                                            working_hours: {
+                                              days: [],
+                                              from: null,
+                                              to: null,
+                                            },
+                                          });
+                                        }
+                                      } else {
+                                        setContent(item.content);
+                                      }
+
+                                      setShowForm(true);
+                                    }}
+                                    className="text-[#1677ff] cursor-pointer text-[17px] drop-shadow-sm transition-all duration-200 hover:scale-110 hover:drop-shadow-md hover:text-[#0958d9]"
+                                  />
+                                  <DeleteOutlined
+                                    onClick={() => handleDelete(item.id)}
+                                    className="text-red-500 cursor-pointer text-[17px] drop-shadow-sm transition-all duration-200 hover:scale-110 hover:drop-shadow-md hover:text-red-700"
+                                  />{' '}
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-3">
-                                <FormOutlined
-                                  onClick={() => {
-                                    setEditId(item.id);
-                                    setContent(item.content);
-                                    setShowForm(true);
-                                  }}
-                                  className="text-[#1677ff] cursor-pointer text-[17px] drop-shadow-sm transition-all duration-200 hover:scale-110 hover:drop-shadow-md hover:text-[#0958d9]"
+                              {/* <div
+                                className="policy-content bg-gray-100 rounded-lg p-4"
+                                dangerouslySetInnerHTML={{
+                                  __html: item.content,
+                                }}
+                              /> */}
+                              {item.title === 'contact_us' ? (
+                                (() => {
+                                  const data = JSON.parse(item.content || '{}');
+
+                                  return (
+                                    <div className="grid md:grid-cols-2 gap-5 bg-gray-50 rounded-xl p-5">
+                                      <div className="border rounded-lg p-4 bg-white">
+                                        <p className="text-gray-500 text-sm">Contact Number</p>
+                                        <h4 className="font-semibold mt-1">{data.phone}</h4>
+                                      </div>
+
+                                      <div className="border rounded-lg p-4 bg-white">
+                                        <p className="text-gray-500 text-sm">Email</p>
+                                        <h4 className="font-semibold mt-1">{data.email}</h4>
+                                      </div>
+
+                                      <div className="border rounded-lg p-4 bg-white">
+                                        <p className="text-gray-500 text-sm">Location</p>
+                                        <h4 className="font-semibold mt-1">{data.location}</h4>
+                                      </div>
+
+                                      <div className="border rounded-lg p-4 bg-white">
+                                        <p className="text-gray-500 text-sm">Working Hours</p>
+                                        {/* <h4 className="font-semibold mt-1">{data.working_hours}</h4> */}
+                                        <h4 className="font-semibold mt-1">
+                                          {Array.isArray(data.working_hours?.days)
+                                            ? `${data.working_hours.days.join(', ')} | ${data.working_hours.from} - ${
+                                                data.working_hours.to
+                                              }`
+                                            : data.working_hours}
+                                        </h4>
+                                      </div>
+                                    </div>
+                                  );
+                                })()
+                              ) : (
+                                <div
+                                  className="policy-content bg-gray-100 rounded-lg p-4"
+                                  dangerouslySetInnerHTML={{ __html: item.content }}
                                 />
-                                <DeleteOutlined
-                                  onClick={() => handleDelete(item.id)}
-                                  className="text-red-500 cursor-pointer text-[17px] drop-shadow-sm transition-all duration-200 hover:scale-110 hover:drop-shadow-md hover:text-red-700"
-                                />{' '}
-                              </div>
+                              )}
                             </div>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h2 className="text-[19px] font-bold text-black mb-1">No Information Available</h2>
 
-                            <div
-                              className="bg-gray-100 rounded-lg p-4 text-gray-700"
-                              dangerouslySetInnerHTML={{
-                                __html: item.content,
-                              }}
-                            />
-                          </div>
-                        ))}
+                          <p className="text-gray-500 text-[13px]">No content available.</p>
+                        </div>
+
+                        <Button
+                          type="primary"
+                          icon={<PlusOutlined />}
+                          onClick={() => {
+                            setEditId(null);
+                            setContent('');
+                            setShowForm(true);
+                          }}
+                          className="!bg-[#f58d73] !border-[#f58d73] px-2 flex items-center justify-center text-[13px] font-semibold h-[30px]"
+                        >
+                          Add
+                        </Button>
                       </div>
-                    </>
+                    )
                   ) : (
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h2 className="text-[19px] font-bold text-black mb-1">No Information Available</h2>
+                    <div>
+                      {/* <h2 className="text-[21px] font-bold text-black mb-6">No Data Available</h2> */}
 
-                        <p className="text-gray-500 text-[13px]">No content available.</p>
-                      </div>
-
-                      <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={() => {
-                          setEditId(null);
-                          setContent('');
-                          setShowForm(true);
-                        }}
-                        className="!bg-[#f58d73] !border-[#f58d73] px-2 flex items-center justify-center text-[13px] font-semibold h-[30px]"
-                      >
-                        Add
-                      </Button>
-                    </div>
-                  )
-                ) : (
-                  <div>
-                    {/* <h2 className="text-[21px] font-bold text-black mb-6">No Data Available</h2> */}
-
-                    {/* <div className="mb-5">
+                      {/* <div className="mb-5">
                       <label className="block text-[14px] font-medium mb-2">Select Title</label>
 
                       <select
@@ -247,36 +360,269 @@ function PrivacyPolicy() {
                       </select>
                     </div> */}
 
-                    <textarea
-                      rows={7}
-                      value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                      placeholder="Enter content here..."
-                      className="w-full border border-gray-300 rounded-md p-3 resize-none outline-none"
-                    />
+                      {/* <div className="border border-gray-300 rounded-md overflow-hidden">
+                        <ReactQuill
+                          theme="snow"
+                          value={content}
+                          onChange={setContent}
+                          placeholder="Enter content here..."
+                          className="bg-white"
+                          style={{ minHeight: '350px' }}
+                        />
+                      </div> */}
 
-                    <div className="flex gap-3 mt-5">
-                      <Button type="primary" onClick={handleSave} className="!bg-[#f58d73] !border-[#f58d73]">
-                        Save
-                      </Button>
+                      {selectedTab === 'contact_us' ? (
+                        <div className="bg-white border rounded-xl p-6">
+                          <h2 className="text-xl font-semibold mb-6">Contact Information</h2>
 
-                      <Button
-                        onClick={() => {
-                          setShowForm(false);
-                          setContent('');
-                        }}
-                      >
-                        Cancel
-                      </Button>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                              <label className="block text-sm font-medium mb-2">Contact Number</label>
+                              <input
+                                type="tel"
+                                inputMode="numeric"
+                                maxLength={10}
+                                value={contactData.phone}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(/\D/g, '');
+                                  setContactData({
+                                    ...contactData,
+                                    phone: value,
+                                  });
+                                }}
+                                placeholder="Enter Contact Number"
+                                className="w-full h-11 rounded-lg border border-gray-300 px-4 outline-none focus:border-[#f58d73]"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium mb-2">Email</label>
+                              <input
+                                type="email"
+                                value={contactData.email}
+                                onChange={(e) =>
+                                  setContactData({
+                                    ...contactData,
+                                    email: e.target.value,
+                                  })
+                                }
+                                placeholder="example@gmail.com"
+                                className="w-full h-11 rounded-lg border border-gray-300 px-4 outline-none focus:border-[#f58d73]"
+                              />
+                            </div>
+
+                            <div className="md:col-span-2">
+                              <label className="block text-sm font-medium mb-2">Location</label>
+                              <input
+                                type="text"
+                                value={contactData.location}
+                                onChange={(e) =>
+                                  setContactData({
+                                    ...contactData,
+                                    location: e.target.value,
+                                  })
+                                }
+                                placeholder="Indore, Madhya Pradesh"
+                                className="w-full h-11 rounded-lg border border-gray-300 px-4 outline-none focus:border-[#f58d73]"
+                              />
+                            </div>
+
+                            <div className="md:col-span-2">
+                              <label className="block text-sm font-medium mb-2">Working Days</label>
+
+                              <Select
+                                mode="multiple"
+                                className="w-full mb-4"
+                                placeholder="Select Days"
+                                value={contactData.working_hours.days}
+                                onChange={(value) =>
+                                  setContactData({
+                                    ...contactData,
+                                    working_hours: {
+                                      ...contactData.working_hours,
+                                      days: value,
+                                    },
+                                  })
+                                }
+                                options={[
+                                  { label: 'Monday', value: 'Monday' },
+                                  { label: 'Tuesday', value: 'Tuesday' },
+                                  { label: 'Wednesday', value: 'Wednesday' },
+                                  { label: 'Thursday', value: 'Thursday' },
+                                  { label: 'Friday', value: 'Friday' },
+                                  { label: 'Saturday', value: 'Saturday' },
+                                  { label: 'Sunday', value: 'Sunday' },
+                                ]}
+                              />
+
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-sm mb-2">From</label>
+
+                                  {/* <input
+                                    type="time"
+                                    value={contactData.working_hours.from || ''}
+                                    onChange={(e) =>
+                                      setContactData({
+                                        ...contactData,
+                                        working_hours: {
+                                          ...contactData.working_hours,
+                                          from: e.target.value,
+                                        },
+                                      })
+                                    }
+                                    className="w-full h-11 rounded-lg border border-gray-300 px-4"
+                                  /> */}
+                                  <input
+                                    type="time"
+                                    value={contactData.working_hours.from || ''}
+                                    onChange={(e) => {
+                                      const from = e.target.value;
+
+                                      setContactData({
+                                        ...contactData,
+                                        working_hours: {
+                                          ...contactData.working_hours,
+                                          from,
+                                          // agar To Time chhota hai to reset kar do
+                                          to:
+                                            contactData.working_hours.to && contactData.working_hours.to < from
+                                              ? ''
+                                              : contactData.working_hours.to,
+                                        },
+                                      });
+                                    }}
+                                    className="w-full h-11 rounded-lg border border-gray-300 px-4"
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="block text-sm mb-2">To</label>
+                                  {/* 
+                                  <input
+                                    type="time"
+                                    value={contactData.working_hours.to || ''}
+                                    onChange={(e) =>
+                                      setContactData({
+                                        ...contactData,
+                                        working_hours: {
+                                          ...contactData.working_hours,
+                                          to: e.target.value,
+                                        },
+                                      })
+                                    }
+                                    className="w-full h-11 rounded-lg border border-gray-300 px-4"
+                                  /> */}
+                                  <input
+                                    type="time"
+                                    min={contactData.working_hours.from || ''}
+                                    value={contactData.working_hours.to || ''}
+                                    onChange={(e) => {
+                                      const to = e.target.value;
+
+                                      if (contactData.working_hours.from && to < contactData.working_hours.from) {
+                                        alert('To Time cannot be earlier than From Time');
+                                        return;
+                                      }
+
+                                      setContactData({
+                                        ...contactData,
+                                        working_hours: {
+                                          ...contactData.working_hours,
+                                          to,
+                                        },
+                                      });
+                                    }}
+                                    className="w-full h-11 rounded-lg border border-gray-300 px-4"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="border border-gray-300 rounded-md overflow-hidden">
+                          <ReactQuill
+                            theme="snow"
+                            value={content}
+                            onChange={setContent}
+                            placeholder="Enter content here..."
+                            className="bg-white"
+                            style={{ minHeight: '350px' }}
+                          />
+                        </div>
+                      )}
+
+                      <div className="flex gap-3 mt-5">
+                        <Button type="primary" onClick={handleSave} className="!bg-[#f58d73] !border-[#f58d73]">
+                          Save
+                        </Button>
+
+                        <Button
+                          onClick={() => {
+                            setShowForm(false);
+                            setContent('');
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+      <style>{`
+  .policy-content h1{
+    font-size:40px !important;
+    font-weight:700 !important;
+    line-height:1.2 !important;
+    margin:20px 0 !important;
+  }
+.policy-content h2{
+  font-size:32px;
+  font-weight:700;
+  margin:20px 0 8px;   /* bottom sirf 8px */
+}
+
+.policy-content h3{
+  font-size:24px;
+  font-weight:600;
+  margin:8px 0 12px;   /* top bhi kam */
+}
+
+  .policy-content p{
+    font-size:16px !important;
+    line-height:1.8 !important;    
+    margin-bottom:-4px !important;
+  }
+
+  .policy-content ul{
+    list-style:disc !important;
+    padding-left:25px !important;
+  }
+
+  .policy-content ol{
+    list-style:decimal !important;
+    padding-left:25px !important;
+  }
+
+  .policy-content li{
+    margin:8px 0 !important;
+  }
+
+  .policy-content strong{
+    font-weight:700 !important;
+  }
+
+  .policy-content em{
+    font-style:italic !important;
+  }
+`}</style>
+    </>
   );
 }
 

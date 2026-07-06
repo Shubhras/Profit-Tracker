@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Modal, Form, Input, InputNumber, Select, Spin } from 'antd';
-import { FormOutlined, PlusOutlined, DeleteOutlined, CheckOutlined } from '@ant-design/icons';
+import { Button, Modal, Form, Input, InputNumber, Spin, Select } from 'antd';
+import { FormOutlined, PlusOutlined, DeleteOutlined, CheckOutlined, ExclamationCircleFilled } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   getSubscriptionList,
@@ -25,6 +25,9 @@ function SubscriptionTable() {
   }, [dispatch]);
 
   const plans = getsubscriptionData?.results?.data || [];
+
+  const [duplicateModal, setDuplicateModal] = useState(false);
+  const [duplicateMessage, setDuplicateMessage] = useState('');
 
   return (
     <>
@@ -53,75 +56,117 @@ function SubscriptionTable() {
             <Spin size="large" />
           </div>
         ) : plans.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 min-md:grid-cols-2 min-xl:grid-cols-3 gap-6">
             {plans.map((plan) => (
               <div
                 key={plan.id}
-                className="relative bg-white border border-gray-200 rounded-[15px] px-4 py-3 shadow-md"
+                className="relative bg-white rounded-2xl border border-gray-100 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col h-full"
               >
-                {/* Active Badge */}
-                <div className="absolute -top-4 left-8">
-                  <span
-                    className={`text-white text-[12px] font-medium px-4 py-2 rounded-full ${
-                      plan.is_active ? 'bg-[#22c55e]' : 'bg-red-500'
-                    }`}
-                  >
-                    {plan.is_active ? 'Active' : 'Inactive'}
-                  </span>
-                </div>
-
-                {/* Top Section */}
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="text-[20px] font-semibold">{plan.subscription_type}</h2>
+                <div className="h-2 bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500" />
+                <div className="p-5 flex flex-col flex-1">
+                  {/* Active Badge */}
+                  <div className="absolute top-4 right-4">
+                    <span
+                      className={`px-3 py-1 rounded-full text-[11px] font-semibold ${
+                        plan.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                      }`}
+                    >
+                      {plan.is_active ? 'Active' : 'Inactive'}
+                    </span>
                   </div>
 
-                  <div className="text-right">
-                    <h2 className="text-[20px] mb-0 font-bold">₹{plan.price}</h2>
+                  {/* Top Section */}
+                  <div className="2">
+                    <h2 className="text-[20px] font-semibold">{plan.plan_name}</h2>
+                    <p className="text-[13px] text-gray-500 mt-1 mb-0">{plan.description}</p>
                   </div>
-                </div>
 
-                <div className="border-t border-gray-300 my-1" />
-
-                <h3 className="text-[18px] font-semibold mb-3">What this includes:</h3>
-
-                <div className="space-y-2">
-                  {plan.features?.map((feature) => (
-                    <div key={feature} className="flex items-center gap-3">
-                      <div className="w-4 h-4 rounded-full bg-[#22c55e] text-white flex items-center justify-center">
-                        <CheckOutlined className="text-[10px]" />
+                  <div className="border-t border-gray-200 mt-3 pt-2">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center bg-gray-50 rounded-xl py-3">
+                        <p className="text-[12px] text-gray-500 mb-1">Monthly</p>
+                        <h3 className="text-[18px] font-bold text-green-600">
+                          ₹{Math.floor(Number(plan.monthly_price))}
+                        </h3>
                       </div>
 
-                      <span className="text-[14px] text-gray-600">{feature}</span>
+                      <div className="text-center bg-gray-50 rounded-xl py-3">
+                        <p className="text-[12px] text-gray-500 mb-1">Annual</p>
+                        <h3 className="text-[18px] font-bold text-blue-600">
+                          ₹{Math.floor(Number(plan.annual_price))}
+                        </h3>
+                      </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
 
-                <div className="flex justify-end items-center gap-4 mt-3">
-                  <FormOutlined
-                    className="text-[#1677ff] text-[17px] cursor-pointer drop-shadow-sm transition-all duration-200 hover:scale-110 hover:drop-shadow-md hover:text-[#0958d9]"
-                    onClick={() => {
-                      setIsEditMode(true);
-                      setSelectedId(plan.id);
+                  <h3 className="text-[18px] font-semibold mb-3">Features :</h3>
+                  <div className="space-y-2">
+                    {plan.features?.map((feature, index) => (
+                      <div key={index} className="flex items-center gap-3">
+                        <div className="w-4 h-4 rounded-full bg-[#22c55e] text-white flex items-center justify-center">
+                          <CheckOutlined className="text-[10px]" />
+                        </div>
 
-                      form.setFieldsValue({
-                        subscription_type: plan.subscription_type?.toLowerCase(),
-                        price: plan.price,
-                        status: plan.status,
-                        features: plan.features,
-                        is_active: plan.is_active,
-                      });
+                        <span className="text-[14px] text-gray-600">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
 
-                      setIsModalOpen(true);
-                    }}
-                  />
-                  <DeleteOutlined
-                    className="text-red-500 text-[17px] cursor-pointer drop-shadow-sm transition-all duration-200 hover:scale-110 hover:drop-shadow-md hover:text-red-700"
-                    onClick={() => {
-                      setSelectedId(plan.id);
-                      setDeleteModalOpen(true);
-                    }}
-                  />
+                  {plan.terms_and_conditions?.length > 0 && (
+                    <>
+                      <div className="border-t border-gray-200 my-4" />
+
+                      <h3 className="text-[18px] font-semibold mb-3">Terms & Conditions</h3>
+
+                      <div className="space-y-2">
+                        {plan.terms_and_conditions.map((term, index) => (
+                          <div key={index} className="flex items-start gap-3">
+                            <span className="text-[14px] font-semibold text-gray-500">{index + 1}.</span>
+
+                            <span className="text-[14px] text-gray-600">{term}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  <div className="mt-auto pt-5 border-t border-gray-200 flex justify-end items-center gap-4">
+                    <FormOutlined
+                      className="text-[#1677ff] text-[17px] cursor-pointer drop-shadow-sm transition-all duration-200 hover:scale-110 hover:drop-shadow-md hover:text-[#0958d9]"
+                      onClick={() => {
+                        setIsEditMode(true);
+                        setSelectedId(plan.id);
+
+                        // form.setFieldsValue({
+                        //   subscription_type: plan.subscription_type?.toLowerCase(),
+                        //   price: plan.price,
+                        //   status: plan.status,
+                        //   features: plan.features,
+                        //   termsConditions: plan.termsConditions || [],
+                        //   is_active: plan.is_active,
+                        // });
+
+                        form.setFieldsValue({
+                          plan_name: plan.plan_name,
+                          description: plan.description,
+                          monthly_price: plan.monthly_price,
+                          annual_price: plan.annual_price,
+                          status: plan.status,
+                          features: plan.features || [],
+                          terms_and_conditions: plan.terms_and_conditions || [],
+                        });
+
+                        setIsModalOpen(true);
+                      }}
+                    />
+                    <DeleteOutlined
+                      className="text-red-500 text-[17px] cursor-pointer drop-shadow-sm transition-all duration-200 hover:scale-110 hover:drop-shadow-md hover:text-red-700"
+                      onClick={() => {
+                        setSelectedId(plan.id);
+                        setDeleteModalOpen(true);
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             ))}
@@ -149,42 +194,114 @@ function SubscriptionTable() {
           form={form}
           layout="vertical"
           onFinish={async (values) => {
+            // const payload = {
+            //   ...values,
+            //   features: values.features || [],
+            //   termsConditions: values.termsConditions || [],
+            //   monthlyPlan: values.subscription_type === 'monthly' ? values.price : null,
+
+            //   annualPlan: values.subscription_type === 'annual' ? values.price : null,
+            // };
             const payload = {
-              ...values,
-              monthlyPlan: values.subscription_type === 'monthly' ? values.price : null,
-
-              annualPlan: values.subscription_type === 'annual' ? values.price : null,
+              plan_name: values.plan_name,
+              description: values.description,
+              monthly_price: values.monthly_price,
+              annual_price: values.annual_price,
+              features: values.features || [],
+              terms_and_conditions: values.terms_and_conditions || [],
+              status: values.status,
+              // is_active: values.status === 'active',
+              is_active: isEditMode ? values.status === 'active' : true,
             };
+            // if (isEditMode) {
+            //   await dispatch(updateSubscription(selectedId, payload));
+            // } else {
+            //   await dispatch(CreateSubscription(payload));
+            // }
 
+            // dispatch(getSubscriptionList());
+
+            // setIsModalOpen(false);
+            // form.resetFields();
+            // setSelectedId(null);
+            // setIsEditMode(false);
             if (isEditMode) {
-              await dispatch(updateSubscription(selectedId, payload));
+              const id = selectedId;
+
+              // Modal turant close
+              setIsModalOpen(false);
+              form.resetFields();
+              setSelectedId(null);
+              setIsEditMode(false);
+
+              await dispatch(updateSubscription(id, payload));
+
+              dispatch(getSubscriptionList());
+
+              setIsModalOpen(false);
+              form.resetFields();
+              setSelectedId(null);
+              setIsEditMode(false);
             } else {
-              await dispatch(CreateSubscription(payload));
+              const response = await dispatch(CreateSubscription(payload));
+
+              if (response?.status === false) {
+                setDuplicateMessage(response.message);
+                setDuplicateModal(true);
+                return;
+              }
+
+              dispatch(getSubscriptionList());
+
+              setIsModalOpen(false);
+              form.resetFields();
+              setSelectedId(null);
+              setIsEditMode(false);
             }
-
-            dispatch(getSubscriptionList());
-
-            setIsModalOpen(false);
-            form.resetFields();
-            setSelectedId(null);
-            setIsEditMode(false);
           }}
         >
-          <Form.Item label="Subscription Type" name="subscription_type" rules={[{ required: true }]} className="mb-2">
-            <Select
-              size="small"
-              options={[
-                { label: 'Monthly', value: 'monthly' },
-                { label: 'Annual', value: 'annual' },
-              ]}
-            />
+          <Form.Item label="Plan Name" name="plan_name" rules={[{ required: true, message: 'Please enter plan name' }]}>
+            <Input size="small" placeholder="Enter plan name" />
+          </Form.Item>
+          <Form.Item
+            label="Description"
+            name="description"
+            rules={[{ required: true, message: 'Please enter description' }]}
+          >
+            <Input.TextArea autoSize={{ minRows: 2 }} placeholder="Enter description" />
           </Form.Item>
 
-          <Form.Item label="Price" name="price" rules={[{ required: true }]} className="mb-2">
-            <InputNumber size="small" className="w-full" />
-          </Form.Item>
+          {isEditMode && (
+            <Form.Item label="Status" name="status" rules={[{ required: true, message: 'Please select status' }]}>
+              <Select
+                size="small"
+                options={[
+                  { label: 'Active', value: 'active' },
+                  { label: 'Inactive', value: 'inactive' },
+                ]}
+              />
+            </Form.Item>
+          )}
 
-          <Form.Item label="Status" name="status" initialValue="active" className="mb-2">
+          <div className="grid grid-cols-2 gap-4">
+            <Form.Item
+              label="Monthly Price"
+              name="monthly_price"
+              rules={[{ required: true, message: 'Please enter monthly price' }]}
+            >
+              <InputNumber type="number" size="small" min={0} inputMode="numeric" className="w-full" />
+            </Form.Item>
+
+            <Form.Item
+              label="Annual Price"
+              name="annual_price"
+              rules={[{ required: true, message: 'Please enter annual price' }]}
+            >
+              <InputNumber type="number" size="small" min={0} inputMode="numeric" className="w-full" />
+            </Form.Item>
+          </div>
+
+          {/* <Form.Item label="Status" name="status" initialValue="active" className="mb-2">
             <Select
               size="small"
               options={[
@@ -192,7 +309,7 @@ function SubscriptionTable() {
                 { label: 'Inactive', value: 'inactive' },
               ]}
             />
-          </Form.Item>
+          </Form.Item> */}
 
           {/* <Form.Item label="Monthly Plan" name="monthlyPlan">
             <InputNumber className="w-full" />
@@ -219,8 +336,41 @@ function SubscriptionTable() {
                   </div>
                 ))}
 
-                <Button type="dashed" block onClick={() => add()}>
+                <Button type="dashed" block onClick={() => add()} className="mb-3">
                   + Add Feature
+                </Button>
+              </>
+            )}
+          </Form.List>
+          <Form.List name="terms_and_conditions">
+            {(fields, { add, remove }) => (
+              <>
+                <label className="font-medium">Terms & Conditions</label>
+
+                {fields.map(({ key, name, ...restField }) => (
+                  <div key={key} className="flex gap-2 mb-2">
+                    <Form.Item
+                      {...restField}
+                      name={name}
+                      className="flex-1 mb-0"
+                      rules={[
+                        {
+                          required: true,
+                          message: 'Please enter terms & condition',
+                        },
+                      ]}
+                    >
+                      <Input size="small" placeholder="Enter terms & condition" />
+                    </Form.Item>
+
+                    <Button danger onClick={() => remove(name)} className="text-[13px]">
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+
+                <Button type="dashed" block onClick={() => add()}>
+                  + Add Terms & Conditions
                 </Button>
               </>
             )}
@@ -271,12 +421,17 @@ function SubscriptionTable() {
               Cancel
             </Button>
 
-            <Button
-              danger
+            <button
+              type="button"
               size="small"
-              className="h-[30px] text-[13px] font-semibold bg-red-500 border-red-500 text-white"
+              className="h-[30px] text-[13px] font-semibold bg-red-500 border-red-500 text-white px-3"
               onClick={async () => {
-                await dispatch(DeleteSubscription(selectedId));
+                const id = selectedId;
+
+                // Modal turant close
+                setDeleteModalOpen(false);
+                setSelectedId(null);
+                await dispatch(DeleteSubscription(id));
 
                 dispatch(getSubscriptionList());
 
@@ -285,8 +440,29 @@ function SubscriptionTable() {
               }}
             >
               Yes, Delete
-            </Button>
+            </button>
           </div>
+        </div>
+      </Modal>
+
+      <Modal open={duplicateModal} footer={null} centered width={420} onCancel={() => setDuplicateModal(false)}>
+        <div className="text-center py-4">
+          <div className="w-[70px] h-[70px] mx-auto rounded-full bg-yellow-100 flex items-center justify-center mb-5">
+            <ExclamationCircleFilled
+              style={{
+                fontSize: 40,
+                color: '#FAAD14',
+              }}
+            />
+          </div>
+
+          <h3 style={{ fontWeight: 600, marginBottom: 10 }}>Subscription Already Exists</h3>
+
+          <p style={{ color: '#666', marginBottom: 25 }}>{duplicateMessage}</p>
+
+          <Button type="primary" onClick={() => setDuplicateModal(false)}>
+            OK
+          </Button>
         </div>
       </Modal>
     </>

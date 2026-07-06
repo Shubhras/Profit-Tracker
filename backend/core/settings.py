@@ -102,6 +102,7 @@ INSTALLED_APPS = [
     'amazon_auth',
     'amazon_ads',
     'django_crontab',
+    'myntra',
 ]
 
 AUTH_PASSWORD_VALIDATORS = [

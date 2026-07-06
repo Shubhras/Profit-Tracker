@@ -28,6 +28,22 @@ const {
   estimatedFeesBegin,
   estimatedFeesSuccess,
   estimatedFeesErr,
+
+  notificationBegin,
+  notificationSuccess,
+  notificationErr,
+
+  supportTicketsBegin,
+  supportTicketsSuccess,
+  supportTicketsErr,
+
+  getsupportTicketsBegin,
+  getsupportTicketsSuccess,
+  getsupportTicketsErr,
+
+  getTicketsDetailsBegin,
+  getTicketsDetailsSuccess,
+  getTicketsDetailsErr,
 } = actions;
 
 const mockService = async (payload) => {
@@ -231,6 +247,81 @@ export const getEstimatedFees = (payload) => {
       }
     } catch (err) {
       dispatch(estimatedFeesErr(err));
+    }
+  };
+};
+
+export const getNotifications = () => {
+  return async (dispatch) => {
+    dispatch(notificationBegin());
+
+    try {
+      const response = await DataService.get('/user/user-notifications/');
+      console.log('API Response =>', response);
+      if (response.data?.status === true || response.data?.status === 'success') {
+        dispatch(notificationSuccess(response.data));
+      } else {
+        dispatch(notificationErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(notificationErr(err));
+    }
+  };
+};
+
+export const createSupportTickets = (payload) => {
+  return async (dispatch) => {
+    dispatch(supportTicketsBegin());
+
+    try {
+      const response = await DataService.post('/user/user-tickets/create/', payload);
+      console.log('API Response =>', response);
+      if (response.data?.status === true || response.data?.status === 'success') {
+        dispatch(supportTicketsSuccess(response.data));
+        return response.data;
+      }
+      throw new Error('Something went wrong');
+    } catch (err) {
+      dispatch(supportTicketsErr(err));
+      throw err; // <-- Important
+    }
+  };
+};
+
+export const getSupportTickets = () => {
+  return async (dispatch) => {
+    dispatch(getsupportTicketsBegin());
+
+    try {
+      const response = await DataService.get('/user/user-tickets/list/');
+
+      if (response.data?.results?.status === true) {
+        dispatch(getsupportTicketsSuccess(response.data.results));
+      } else {
+        dispatch(getsupportTicketsErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(getsupportTicketsErr(err));
+    }
+  };
+};
+
+export const getSupportTicketsDetails = (id, callback) => {
+  return async (dispatch) => {
+    dispatch(getTicketsDetailsBegin());
+
+    try {
+      const response = await DataService.get(`/user/user-tickets/${id}/`);
+
+      if (response.data?.status === true) {
+        dispatch(getTicketsDetailsSuccess(response.data.data));
+
+        if (callback) callback();
+      } else {
+        dispatch(getTicketsDetailsErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(getTicketsDetailsErr(err));
     }
   };
 };

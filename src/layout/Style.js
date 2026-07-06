@@ -132,13 +132,15 @@ const LayoutContainer = Styled.div`
                     /* Base Item Styling */
                     &.ant-menu-item, 
                     .ant-menu-submenu-title {
-                        margin: 4px 0 !important;
+                        margin: 4px 4px !important;
+                         padding-left: 10px !important; 
                         border-radius: 12px; /* Pill shape */
                         color: #64748b; /* Slate 500 */
                         height: 48px;
                         line-height: 48px;
                         overflow: hidden;
                         width: 100%;
+                        font-size: 13px !important; 
                         
                         &:hover {
                             color: #059669; /* Emerald 600 */
@@ -155,6 +157,7 @@ const LayoutContainer = Styled.div`
                         background: linear-gradient(135deg, #10b981 0%, #0f766e 100%); /* Emerald 500 to Teal 700 */
                         color: #ffffff;
                         box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+                        margin: 4px 12px !important;
                         
                         &:after{
                             content: none; /* Remove default styling */
@@ -206,7 +209,7 @@ const LayoutContainer = Styled.div`
                     }
 
                     .ant-menu-title-content{
-                        margin-left: 10px;
+                        margin-left: 6px;
                     }
                 }
 
@@ -214,8 +217,8 @@ const LayoutContainer = Styled.div`
                 .ant-menu-submenu {
                     .ant-menu-sub {
                         .ant-menu-item {
-                            padding-left: 20px !important; 
-                            height: 40px;
+                            padding-left: 6px !important; 
+                            height: 34px;
                             line-height: 40px;
                             margin: 2px 0 !important;
                             border-radius: 8px; /* Slightly smaller radius for children */
@@ -248,11 +251,44 @@ const LayoutContainer = Styled.div`
                 }
                 
                 /* Collapsed State Overrides */
-                &.ant-menu-inline-collapsed{
-                    .ant-menu-submenu-title, .ant-menu-item {
-                        padding: 0 calc(50% - 20px) !important; /* Center icons */
-                        .ant-menu-title-content { display: none; }
-                    }
+                // &.ant-menu-inline-collapsed{
+                //     .ant-menu-submenu-title, .ant-menu-item {
+                //         padding: 0 calc(50% - 20px) !important;
+                //         .ant-menu-title-content { display: none; }
+                //     }
+                
+                &.ant-menu-inline-collapsed {
+  .ant-menu-item,
+  .ant-menu-submenu-title {
+    width: 48px !important;
+    height: 48px !important;
+    padding: 0 !important;
+    margin: 6px auto !important;
+
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+
+  .ant-menu-title-content {
+    display: none !important;
+  }
+
+  .ant-menu-item-icon,
+  .ant-menu-submenu-title .ant-menu-item-icon,
+  svg {
+    margin: 0 !important;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ant-menu-submenu-arrow {
+    display: none;
+  }
+}
                 }
             }
         }
@@ -266,7 +302,11 @@ const LayoutContainer = Styled.div`
 
     .atbd-main-layout{
         ${({ theme }) => (!theme.rtl ? 'margin-left' : 'margin-right')}: ${({ theme }) =>
-  theme.topMenu ? 0 : '280px'};
+  //   theme.topMenu ? 0 : '280px'};
+  theme.topMenu ? 0 : '205px'};
+  
+
+
         margin-top: 74px;
         transition: 0.3s ease;
         

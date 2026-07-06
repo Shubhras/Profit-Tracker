@@ -2002,10 +2002,17 @@ class SearchTermMetricListView(APIView):
         page_no = int(pagination.get("pageNo", 1))
         page_size = int(pagination.get("pageSize", 10))
 
+        # queryset = SearchTermMetric.objects.select_related(
+        #     "campaign",
+        #     "campaign__amazon_account"
+        # ).all()
+        
         queryset = SearchTermMetric.objects.select_related(
             "campaign",
             "campaign__amazon_account"
-        ).all()
+        ).filter(
+            campaign__amazon_account__user=request.user
+        )
 
         # =========================================================
         # SEARCH

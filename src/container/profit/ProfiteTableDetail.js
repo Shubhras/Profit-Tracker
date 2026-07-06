@@ -721,7 +721,7 @@ export default function ProfitDetailsView() {
                   </span>
                   <span>Filters</span>
 
-                  <span className="min-w-[20px] h-[20px] rounded-full bg-[#22c55e] text-white text-[12px] font-semibold flex items-center justify-center px-1">
+                  <span className="w-5 h-5 rounded-full bg-[#22c55e] text-white text-[11px] font-semibold inline-flex items-center justify-center leading-none shrink-0">
                     {
                       [
                         filters.ads === 'with',

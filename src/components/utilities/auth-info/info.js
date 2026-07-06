@@ -1,11 +1,21 @@
 import UilAngleDown from '@iconscout/react-unicons/icons/uil-angle-down';
 // import UilBell from '@iconscout/react-unicons/icons/uil-bell';
-import UilDollarSign from '@iconscout/react-unicons/icons/uil-dollar-sign';
+// import UilDollarSign from '@iconscout/react-unicons/icons/uil-dollar-sign';
+import { UilReceipt, UilHeadphonesAlt } from '@iconscout/react-unicons';
 // import UilSetting from '@iconscout/react-unicons/icons/uil-setting';
 import UilSignout from '@iconscout/react-unicons/icons/uil-signout';
 import UilUser from '@iconscout/react-unicons/icons/uil-user';
 // import UilUsersAlt from '@iconscout/react-unicons/icons/uil-users-alt';
-import { Avatar, DatePicker, Button } from 'antd';
+import { Avatar, DatePicker, Button, Badge } from 'antd';
+import {
+  BellOutlined,
+  ToolOutlined,
+  ShoppingCartOutlined,
+  UserOutlined,
+  CheckCircleOutlined,
+  WarningOutlined,
+  CalendarOutlined,
+} from '@ant-design/icons';
 import React, { useEffect, useState } from 'react';
 // import { useTranslation} from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -27,14 +37,135 @@ import Heading from '../../heading/heading';
 // import { Dropdown } from '../../dropdown/dropdown';
 import { HEADER_ACTIONS } from '../../../config/headerActionsConfig';
 import { logOut, getProfile } from '../../../redux/authentication/actionCreator';
+import { getNotifications } from '../../../redux/dashboard/actionCreator';
 import action from '../../../redux/dashboard/action';
 
 const AuthInfo = React.memo(() => {
   const dispatch = useDispatch();
   const location = useLocation();
+  const navigate = useNavigate();
+
   const { RangePicker } = DatePicker;
 
+  const { notifications, loading } = useSelector((state) => state.dashboard);
+
+  const getNotificationIcon = (type) => {
+    switch (type) {
+      case 'maintenance':
+        return {
+          icon: <ToolOutlined style={{ fontSize: 18, color: '#F59E0B' }} />,
+          bg: '#FFF7E6',
+        };
+
+      case 'order':
+        return {
+          icon: <ShoppingCartOutlined style={{ fontSize: 18, color: '#1677FF' }} />,
+          bg: '#E6F4FF',
+        };
+
+      case 'user':
+        return {
+          icon: <UserOutlined style={{ fontSize: 18, color: '#722ED1' }} />,
+          bg: '#F9F0FF',
+        };
+
+      case 'success':
+        return {
+          icon: <CheckCircleOutlined style={{ fontSize: 18, color: '#52C41A' }} />,
+          bg: '#F6FFED',
+        };
+
+      case 'warning':
+        return {
+          icon: <WarningOutlined style={{ fontSize: 18, color: '#FA8C16' }} />,
+          bg: '#FFF7E6',
+        };
+
+      default:
+        return {
+          icon: <BellOutlined style={{ fontSize: 18, color: '#2563EB' }} />,
+          bg: '#EEF4FF',
+        };
+    }
+  };
+
+  const notificationContent = (
+    <div
+      style={{
+        width: 320,
+        borderRadius: 14,
+        overflow: 'hidden',
+        background: '#fff',
+        boxShadow: '0 8px 30px rgba(0,0,0,.12)',
+      }}
+    >
+      {/* Header */}
+      <div
+        className="d-flex justify-content-between align-items-center px-3 py-3"
+        style={{ borderBottom: '1px solid #F0F0F0' }}
+      >
+        <h6 className="mb-0 text-gray-900 text-[16px] fw-bold">Notifications</h6>
+      </div>
+
+      {/* Body */}
+      <div style={{ maxHeight: 340, overflowY: 'auto' }}>
+        {loading ? (
+          <div className="text-center py-4">Loading...</div>
+        ) : notifications?.length ? (
+          <>
+            {notifications.slice(0, 4).map((item) => {
+              const { icon, bg } = getNotificationIcon(item.notification_type);
+
+              return (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-3 px-4 py-2 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                >
+                  {/* Icon */}
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                    style={{ background: bg }}
+                  >
+                    {icon}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex flex-col flex-1">
+                    <h6 className="m-0 text-[15px] font-semibold text-gray-900">{item.title}</h6>
+                    <p className="mt-1 text-[13px] text-gray-500">
+                      {item.message?.length > 35 ? `${item.message.substring(0, 35)}...` : item.message}
+                    </p>{' '}
+                  </div>
+                </div>
+              );
+            })}
+            {/* Footer */}
+          </>
+        ) : (
+          <div className="text-center py-5 text-muted">No latest notifications found</div>
+        )}
+        <div
+          className="text-center py-3"
+          style={{
+            background: '#FAFAFA',
+            borderTop: '1px solid #F0F0F0',
+          }}
+        >
+          <button
+            type="button"
+            className="font-semibold text-[#1677FF] hover:underline underline-offset-4"
+            onClick={() => navigate('/admin/pages/notifications')}
+          >
+            View All Notifications →
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   const currentPath = location.pathname;
+
+  // const path = '/admin/pages/settings';
 
   // const matchedRoute = Object.keys(HEADER_ACTIONS).find((route) => currentPath.includes(route));
   const matchedRoute = Object.keys(HEADER_ACTIONS)
@@ -62,7 +193,7 @@ const AuthInfo = React.memo(() => {
   const HIDE_CALENDAR = [
     '/settings/product-setting/finance-configuration',
     '/settings/product-setting/product-configuration',
-    '/profit/profitTableView/details',
+    // '/profit/profitTableView/details',
     '/profit/salesdetails/',
     '/reconcile/os-payment',
     '/reconcile/return/summary',
@@ -73,6 +204,8 @@ const AuthInfo = React.memo(() => {
   const hideCalendar = HIDE_CALENDAR.some((route) => location.pathname.includes(route));
   const { profile, profileLoading, profileError } = useSelector((state) => state.auth);
   const [selectedRows, setSelectedRows] = useState([]);
+
+  const isSuperAdmin = profile?.is_superuser;
 
   // const HIDE_SEARCH = [
   //   '/settings/product-setting/overview',
@@ -96,7 +229,6 @@ const AuthInfo = React.memo(() => {
       window.removeEventListener('tabChange', handler);
     };
   }, []);
-  const navigate = useNavigate();
 
   const SignOut = (e) => {
     e.preventDefault();
@@ -187,13 +319,24 @@ const AuthInfo = React.memo(() => {
               Profile
             </Link>
           </li>
+          {!isSuperAdmin && (
+            <li>
+              <Link
+                to="/admin/pages/billing"
+                className="group flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-white10 dark:hover:text-white transition-all duration-200"
+              >
+                <UilReceipt className="w-4 h-4 ltr:mr-3 rtl:ml-3 text-gray-400 group-hover:text-emerald-500 transition-colors" />
+                Billing
+              </Link>
+            </li>
+          )}
           <li>
             <Link
-              to="/admin/pages/billing"
+              to="/admin/pages/support"
               className="group flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-white10 dark:hover:text-white transition-all duration-200"
             >
-              <UilDollarSign className="w-4 h-4 ltr:mr-3 rtl:ml-3 text-gray-400 group-hover:text-emerald-500 transition-colors" />
-              Billing
+              <UilHeadphonesAlt className="w-4 h-4 ltr:mr-3 rtl:ml-3 text-gray-400 group-hover:text-emerald-500 transition-colors" />
+              Help & Support
             </Link>
           </li>
         </ul>
@@ -270,7 +413,7 @@ const AuthInfo = React.memo(() => {
             <button
               type="button"
               onClick={() => setOpen(!open)}
-              className="px-2 py-2 border rounded-md text-sm bg-white flex items-center gap-2"
+              className="px-2 py-1 border rounded-md text-sm bg-white flex items-center gap-2"
             >
               {/* DATE TEXT */}
               {/* <span>
@@ -278,13 +421,27 @@ const AuthInfo = React.memo(() => {
                 ? `${dateRange[0].format('DD/MM/YYYY')} - ${dateRange[1].format('DD/MM/YYYY')}`
                 : 'Select Date'}
             </span> */}
-              <span>
+              {/* <span className="text-[12px]">
                 {dateRange
                   ? isMonthMode
                     ? `${dateRange[0].format('MMM YYYY')} - ${dateRange[1].format('MMM YYYY')}`
                     : `${dateRange[0].format('DD/MM/YYYY')} - ${dateRange[1].format('DD/MM/YYYY')}`
                   : 'Select Date'}
-              </span>
+              </span> */}
+
+              <>
+                {/* Desktop */}
+                <span className="text-[12px] lg:hidden">
+                  {dateRange
+                    ? isMonthMode
+                      ? `${dateRange[0].format('MMM YYYY')} - ${dateRange[1].format('MMM YYYY')}`
+                      : `${dateRange[0].format('DD/MM/YYYY')} - ${dateRange[1].format('DD/MM/YYYY')}`
+                    : 'Select Date'}
+                </span>
+
+                {/* Mobile */}
+                <CalendarOutlined className="hidden lg:block text-[18px]" />
+              </>
 
               {/* ❌ CLEAR BUTTON */}
               {dateRange && (
@@ -307,7 +464,7 @@ const AuthInfo = React.memo(() => {
                   }}
                   className="text-gray-400 hover:text-red-500 flex items-center cursor-pointer"
                 >
-                  <UilTimes className="w-4 h-4" />
+                  <UilTimes className="w-4 h-4 lg:hidden" />
                 </button>
               )}
             </button>
@@ -748,6 +905,38 @@ const AuthInfo = React.memo(() => {
           </Link>
         </Dropdown>
       </div> */}
+
+      <div className="mx-3 flex items-center">
+        {/* <Badge count={profile?.unread_notification_count || 0} size="small" offset={[-2, 2]}>
+          <button
+            type="button"
+            onClick={() => navigate('/admin/pages/notifications')}
+            className="w-9 h-9 rounded-full border border-gray-200 bg-white flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-all"
+          >
+            <BellOutlined className="text-[18px] text-gray-600" />
+          </button>
+        </Badge> */}
+        <Popover
+          placement="bottomRight"
+          content={notificationContent}
+          trigger="hover"
+          onOpenChange={() => {
+            if (open) {
+              dispatch(getNotifications());
+            }
+          }}
+        >
+          <Badge count={profile?.unread_notification_count || 0} size="small" offset={[-2, 2]}>
+            <button
+              type="button"
+              className="w-9 h-9 rounded-full border border-gray-200 bg-white flex items-center justify-center"
+            >
+              <BellOutlined className="text-[18px] text-gray-600" />
+            </button>
+          </Badge>
+        </Popover>
+      </div>
+
       <div className="flex ltr:ml-3 rtl:mr-3 ltr:mr-4 rtl:ml-4 ssm:mr-0 ssm:rtl:ml-0">
         <Popover placement="bottomRight" content={userContent} action="click">
           <Link to="#" className="flex items-center text-light whitespace-nowrap">

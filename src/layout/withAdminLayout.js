@@ -13,7 +13,7 @@ import MenueItems from './MenueItems';
 // import CustomizerWrap from './overview/Customizer';
 import { FooterStyle, LayoutContainer, SmallScreenAuthInfo, TopMenuSearch } from './Style';
 // import TopMenu from './TopMenu';
-import Search from '../components/utilities/auth-info/Search';
+// import Search from '../components/utilities/auth-info/Search';
 import AuthInfo from '../components/utilities/auth-info/info';
 import { ReactComponent as MySVG } from '../static/img/icon/left-bar.svg';
 
@@ -74,7 +74,7 @@ const ThemeLayout = (WrappedComponent) => {
 
       const SideBarStyle = {
         margin: '63px 0 0 0',
-        padding: `${!rtl ? '20px 20px 55px 0' : '20px 0 55px 20px'}`,
+        padding: `${!rtl ? '20px 0px 55px 0' : '20px 0 55px 20px'}`,
         overflowY: 'auto',
         height: '100vh',
         position: 'fixed',
@@ -125,7 +125,7 @@ const ThemeLayout = (WrappedComponent) => {
                 width: '100%',
                 top: 0,
                 [!rtl ? 'left' : 'right']: 0,
-                height: '80px', // Increased height slightly
+                height: '70px', // Increased height slightly
                 background: 'rgba(255, 255, 255, 0.85)',
                 backdropFilter: 'blur(12px)',
                 borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
@@ -146,8 +146,19 @@ const ThemeLayout = (WrappedComponent) => {
                     </Button>
                   ) : null}
 
-                  <Link className="flex items-center gap-2 cursor-pointer group" to="/admin/profit/summary">
+                  {/* <Link className="flex items-center gap-2 cursor-pointer group" to="/admin/profit/summary">
                     <img src="/WhatsApp-Image-2026-04-23.jpeg" alt="Logo" className="h-10 w-auto object-contain" />
+                  </Link> */}
+                  <Link className="flex items-center gap-2 cursor-pointer group" to="/admin/profit/summary">
+                    {/* Desktop Logo */}
+                    <img
+                      src="/WhatsApp-Image-2026-04-23.jpeg"
+                      alt="Logo"
+                      className="h-10 w-auto object-contain lg:hidden"
+                    />
+
+                    {/* Mobile Logo */}
+                    <img src="/Media.png" alt="Logo" className="hidden lg:block h-9 w-auto object-contain" />
                   </Link>
                 </div>
 
@@ -168,9 +179,7 @@ const ThemeLayout = (WrappedComponent) => {
 
                   {/* Desktop Actions */}
                   <div className="hidden md:flex items-center gap-2">
-                    <div className="relative">
-                      <Search />
-                    </div>
+                    <div className="relative">{/* <Search /> */}</div>
                     {/* <div className="h-8 w-[1px] bg-gray-200 mx-2" /> Divider */}
                     {/* <AuthInfo /> - Assuming AuthInfo contains the user dropdown */}
                     {/* Re-adding AuthInfo here as it was commented out in original file but typically needed */}
@@ -190,7 +199,8 @@ const ThemeLayout = (WrappedComponent) => {
               {!topMenu || window.innerWidth <= 991 ? (
                 <ThemeProvider theme={theme}>
                   <Sider
-                    width={280}
+                    // width={280}
+                    width={210}
                     style={SideBarStyle}
                     collapsed={collapsed}
                     theme={layoutMode === 'lightMode' ? 'light' : 'dark'}

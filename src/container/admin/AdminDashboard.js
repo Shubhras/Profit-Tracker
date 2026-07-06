@@ -66,28 +66,28 @@ function AdminDashboard() {
     {
       title: 'Total Users',
       value: getadmindashboard?.data?.overview?.total_users || 0,
-      growth: `+${getadmindashboard?.data?.overview?.new_this_month || 0}`,
+      // growth: `+${getadmindashboard?.data?.overview?.new_this_month || 0}`,
       icon: <UserOutlined />,
       color: 'bg-blue-50 text-blue-600',
     },
     {
-      title: 'Inactive Users',
-      value: getadmindashboard?.data?.subscription_summary?.inactive || 0,
-      growth: '',
+      title: 'New Today',
+      value: getadmindashboard?.data?.overview?.new_today || 0,
+      // growth: '',
       icon: <TeamOutlined />,
       color: 'bg-green-50 text-green-600',
     },
     {
-      title: 'Trial Users',
-      value: getadmindashboard?.data?.subscription_summary?.trial || 0,
-      growth: '',
+      title: 'New This Weel',
+      value: getadmindashboard?.data?.overview?.new_this_week || 0,
+      // growth: '',
       icon: <ShoppingCartOutlined />,
       color: 'bg-purple-50 text-purple-600',
     },
     {
-      title: 'Paid Users',
-      value: getadmindashboard?.data?.subscription_summary?.paid || 0,
-      growth: '',
+      title: 'New This Month',
+      value: getadmindashboard?.data?.overview?.new_this_month || 0,
+      // growth: '',
       icon: <DollarOutlined />,
       color: 'bg-orange-50 text-orange-600',
     },
@@ -113,7 +113,7 @@ function AdminDashboard() {
 
                   <h2 className="text-[20px] font-bold text-gray-800 mb-1">{card.value}</h2>
 
-                  <span className="text-green-500 text-xs font-medium">↑ {card.growth}</span>
+                  {/* <span className="text-green-500 text-xs font-medium">↑ {card.growth}</span> */}
                 </div>
 
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg ${card.color}`}>
@@ -140,7 +140,7 @@ function AdminDashboard() {
 
                 <XAxis dataKey="day" tick={{ fontSize: 11 }} />
 
-                <YAxis tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} domain={[0, 'dataMax + 5']} ticks={[0, 2, 4, 6, 8, 10]} />
 
                 <Tooltip />
 

@@ -4,6 +4,7 @@ import { React, useState } from 'react';
 // import UilSetting from '@iconscout/react-unicons/icons/uil-setting';
 // import UilBell from '@iconscout/react-unicons/icons/uil-bell';
 import UilUser from '@iconscout/react-unicons/icons/uil-user';
+// import UilHeadphones from '@iconscout/react-unicons/icons/uil-headphones';
 // import UilUsersAlt from '@iconscout/react-unicons/icons/uil-users-alt';
 import { NavLink } from 'react-router-dom';
 // import Heading from '../../../../components/heading/heading';
@@ -95,6 +96,22 @@ function AuthorBox() {
                 Change Password
               </NavLink>
             </li>
+            {/* <li>
+              <NavLink
+                to={`${path}/support`}
+                onClick={() => {
+                  setActiveValue('support');
+                }}
+                className={`flex items-center mb-3 px-5 py-3 rounded-[6px] ${
+                  activeValue === 'support'
+                    ? 'bg-primary-transparent text-primary font-medium'
+                    : 'bg-transparent text-light dark:text-white60 font-normal'
+                }`}
+              >
+                <UilHeadphones className="w-4 h-4 ltr:mr-3 rtl:ml-3 mb-0.5" />
+                Help & Support
+              </NavLink>
+            </li> */}
             {/* <li>
               <NavLink
                 to={`${path}/social`}
