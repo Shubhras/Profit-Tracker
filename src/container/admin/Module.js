@@ -234,7 +234,7 @@ function Module() {
 
                   setCreateModal(true);
                 }}
-                className="h-8 px-2 rounded-lg text-[14px] font-semibold flex items-center"
+                className="h-8 px-2 rounded-l text-[13px] font-semibold flex items-center"
               >
                 Create Module
               </Button>

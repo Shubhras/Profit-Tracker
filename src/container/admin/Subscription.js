@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Modal, Form, Input, InputNumber, Spin, Select } from 'antd';
+import { Button, Modal, Form, Input, InputNumber, Spin, Select, Checkbox } from 'antd';
 import { FormOutlined, PlusOutlined, DeleteOutlined, CheckOutlined, ExclamationCircleFilled } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -7,6 +7,7 @@ import {
   CreateSubscription,
   DeleteSubscription,
   updateSubscription,
+  getModulesSubmodules,
 } from '../../redux/admin/actionCreator';
 
 function SubscriptionTable() {
@@ -18,7 +19,15 @@ function SubscriptionTable() {
   const [selectedId, setSelectedId] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
 
-  const { getsubscriptionData, loading } = useSelector((state) => state.AdminDashboard);
+  const [expandedModules, setExpandedModules] = useState([]);
+  const [selectedModules, setSelectedModules] = useState([]);
+  const [selectedSubmodules, setSelectedSubmodules] = useState([]);
+
+  const toggleModule = (id) => {
+    setExpandedModules((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
+  const { getsubscriptionData, loading, getModuleSubmodules } = useSelector((state) => state.AdminDashboard);
 
   useEffect(() => {
     dispatch(getSubscriptionList());
@@ -28,6 +37,28 @@ function SubscriptionTable() {
 
   const [duplicateModal, setDuplicateModal] = useState(false);
   const [duplicateMessage, setDuplicateMessage] = useState('');
+
+  const handleModuleChange = (module, checked) => {
+    if (checked) {
+      setSelectedModules((prev) => [...new Set([...prev, module.id])]);
+
+      setSelectedSubmodules((prev) => [...new Set([...prev, ...module.submodules.map((item) => item.id)])]);
+    } else {
+      setSelectedModules((prev) => prev.filter((id) => id !== module.id));
+
+      setSelectedSubmodules((prev) => prev.filter((id) => !module.submodules.some((sub) => sub.id === id)));
+    }
+  };
+
+  const handleSubmoduleChange = (moduleId, subId, checked) => {
+    if (checked) {
+      setSelectedSubmodules((prev) => [...new Set([...prev, subId])]);
+
+      setSelectedModules((prev) => (prev.includes(moduleId) ? prev : [...prev, moduleId]));
+    } else {
+      setSelectedSubmodules((prev) => prev.filter((id) => id !== subId));
+    }
+  };
 
   return (
     <>
@@ -43,9 +74,11 @@ function SubscriptionTable() {
               setIsEditMode(false);
               setSelectedId(null);
               form.resetFields();
+
+              dispatch(getModulesSubmodules());
               setIsModalOpen(true);
             }}
-            className="!h-[30px] !flex !items-center !justify-center gap-0 px-2 text-[12px] font-semibold"
+            className="!h-[30px] !flex !items-center !justify-center gap-0 px-2 text-[13px] font-semibold"
           >
             Add Subscription
           </Button>
@@ -99,7 +132,7 @@ function SubscriptionTable() {
                     </div>
                   </div>
 
-                  <h3 className="text-[18px] font-semibold mb-3">Features :</h3>
+                  <h3 className="text-[18px] font-semibold mb-3 mt-2">Features :</h3>
                   <div className="space-y-2">
                     {plan.features?.map((feature, index) => (
                       <div key={index} className="flex items-center gap-3">
@@ -130,6 +163,69 @@ function SubscriptionTable() {
                     </>
                   )}
 
+                  <>
+                    <div className="border-t border-gray-200 my-4" />
+
+                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-2">
+                      {/* Header */}
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-[18px] font-semibold">Permissions</h3>
+                      </div>
+
+                      {plan.module_details?.length > 0 ? (
+                        plan.module_details?.map((module) => {
+                          const moduleSubmodules =
+                            plan.submodule_details?.filter((sub) => sub.module_id === module.id) || [];
+
+                          return (
+                            <div
+                              key={module.id}
+                              className="bg-white border border-gray-200 rounded-lg mb-3 overflow-hidden"
+                            >
+                              {/* Module Header */}
+                              <div className="flex items-center justify-between p-3 border-b border-gray-100">
+                                <div className="flex items-center gap-3">
+                                  <span className="font-medium text-[15px] text-gray-800">{module.name}</span>
+                                </div>
+
+                                <span className="text-[12px] text-blue-600 bg-blue-100 px-3 py-1 rounded-full font-medium">
+                                  {moduleSubmodules.length} Submodule
+                                  {moduleSubmodules.length !== 1 ? 's' : ''}
+                                </span>
+                              </div>
+
+                              {/* Submodules */}
+                              <div className="p-3">
+                                {moduleSubmodules.length > 0 ? (
+                                  <div className="flex flex-wrap gap-2">
+                                    {moduleSubmodules.map((sub) => (
+                                      <span
+                                        key={sub.id}
+                                        className="px-3 py-1 bg-green-50 text-green-700 border border-green-200 rounded-full text-[12px] flex items-center gap-1"
+                                      >
+                                        <span className="w-2 h-2 rounded-full bg-green-500" />
+                                        {sub.name}
+                                      </span>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-2 text-gray-500 text-[13px]">
+                                    <span className="w-2 h-2 rounded-full bg-gray-300" />
+                                    No submodules available
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="bg-white border border-dashed border-gray-300 rounded-lg py-4 text-center">
+                          <p className="text-[14px] font-medium text-gray-500">No modules found</p>
+                        </div>
+                      )}
+                    </div>
+                  </>
+
                   <div className="mt-auto pt-5 border-t border-gray-200 flex justify-end items-center gap-4">
                     <FormOutlined
                       className="text-[#1677ff] text-[17px] cursor-pointer drop-shadow-sm transition-all duration-200 hover:scale-110 hover:drop-shadow-md hover:text-[#0958d9]"
@@ -155,7 +251,7 @@ function SubscriptionTable() {
                           features: plan.features || [],
                           terms_and_conditions: plan.terms_and_conditions || [],
                         });
-
+                        dispatch(getModulesSubmodules());
                         setIsModalOpen(true);
                       }}
                     />
@@ -212,6 +308,8 @@ function SubscriptionTable() {
               status: values.status,
               // is_active: values.status === 'active',
               is_active: isEditMode ? values.status === 'active' : true,
+              modules: selectedModules,
+              submodules: selectedSubmodules,
             };
             // if (isEditMode) {
             //   await dispatch(updateSubscription(selectedId, payload));
@@ -375,6 +473,49 @@ function SubscriptionTable() {
               </>
             )}
           </Form.List>
+
+          <div className="mt-4">
+            <label className="font-semibold text-[15px] mb-3 block">Permissions</label>
+
+            {getModuleSubmodules?.data?.map((module) => {
+              const expanded = expandedModules.includes(module.id);
+
+              return (
+                <div key={module.id} className="border rounded-xl mb-3 overflow-hidden">
+                  <div className="flex justify-between items-center p-3 bg-white">
+                    <Checkbox
+                      checked={selectedModules.includes(module.id)}
+                      onChange={(e) => handleModuleChange(module, e.target.checked)}
+                    >
+                      <span className="font-semibold">{module.name}</span>
+                    </Checkbox>
+
+                    {module.submodules.length > 0 && (
+                      <button type="button" onClick={() => toggleModule(module.id)}>
+                        {expanded ? '▲' : '▼'}
+                      </button>
+                    )}
+                  </div>
+
+                  {expanded && (
+                    <div className="px-6 py-3 border-t bg-[#fafafa]">
+                      <div className="grid grid-cols-2 gap-3">
+                        {module.submodules.map((sub) => (
+                          <Checkbox
+                            key={sub.id}
+                            checked={selectedSubmodules.includes(sub.id)}
+                            onChange={(e) => handleSubmoduleChange(module.id, sub.id, e.target.checked)}
+                          >
+                            {sub.name}
+                          </Checkbox>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
           {/* <div className="flex items-center gap-3 mt-4">
             <span className="text-[14px] font-medium">Status :</span>

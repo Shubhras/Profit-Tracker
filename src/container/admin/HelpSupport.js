@@ -8,6 +8,10 @@ function HelpSupport() {
   // const [openFilter, setOpenFilter] = useState(false);
   const { TextArea } = Input;
   const dispatch = useDispatch();
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+  });
 
   const [statusModal, setStatusModal] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
@@ -17,8 +21,8 @@ function HelpSupport() {
   const { getTicketsLists, loading } = useSelector((state) => state.AdminDashboard);
 
   useEffect(() => {
-    dispatch(getAdminTickets());
-  }, [dispatch]);
+    dispatch(getAdminTickets(pagination.current, pagination.pageSize));
+  }, [dispatch, pagination.current, pagination.pageSize]);
 
   const handleOpenStatusModal = (record) => {
     setSelectedTicket(record);
@@ -147,7 +151,7 @@ function HelpSupport() {
 
             setStatusModal(false);
 
-            dispatch(getAdminTickets());
+            dispatch(getAdminTickets(pagination.current, pagination.pageSize));
           } else {
             message.error('Failed to update ticket');
           }
@@ -176,8 +180,28 @@ function HelpSupport() {
               loading={loading}
               columns={columns}
               dataSource={ticketData}
-              pagination={{ pageSize: 10 }}
               scroll={{ x: 1000 }}
+              pagination={{
+                current: pagination.current,
+                pageSize: pagination.pageSize,
+                total: ticketData.length,
+                showSizeChanger: true,
+                pageSizeOptions: ['10', '20', '50', '100'],
+                showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
+              }}
+              onChange={(pag) => {
+                setPagination({
+                  current: pag.current,
+                  pageSize: pag.pageSize,
+                });
+              }}
+              className="
+    [&_.ant-table-thead>tr>th]:!text-[13px]
+    [&_.ant-table-thead>tr>th]:!font-semibold
+    [&_.ant-table-tbody>tr>td]:!text-[13px]
+    [&_.ant-table-cell]:!px-2
+    [&_.ant-table-cell]:!py-2
+  "
             />
           </div>
         </div>

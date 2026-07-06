@@ -130,6 +130,18 @@ const {
   deleteSubUsersBegin,
   deleteSubUsersSuccess,
   deleteSubUsersErr,
+
+  getModuleSubModuleBegin,
+  getModuleSubModuleSuccess,
+  getModuleSubModuleErr,
+
+  updateModulesPermissionBegin,
+  updateModulesPermissionSuccess,
+  updateModulesPermissionErr,
+
+  getModulePermissionDetailsBegin,
+  getModulePermissionDetailsSuccess,
+  getModulePermissionDetailsErr,
 } = actions;
 
 export const getCouponCodes = () => {
@@ -457,12 +469,12 @@ export const deleteNotification = (id, callback) => {
   };
 };
 
-export const getAdminTickets = () => {
+export const getAdminTickets = (page = 1, limit = 10) => {
   return async (dispatch) => {
     dispatch(getTicketsListBegin());
 
     try {
-      const response = await DataService.get('user/admin/support-tickets/');
+      const response = await DataService.get(`user/admin/support-tickets/?page=${page}&limit=${limit}`);
 
       if (response.data?.results?.status === true) {
         dispatch(getTicketsListSuccess(response.data));
@@ -602,12 +614,12 @@ export const ViewSingleModule = (id, callback) => {
   };
 };
 
-export const getSubModules = () => {
+export const getSubModules = (page = 1, limit = 10) => {
   return async (dispatch) => {
     dispatch(getSubModulesBegin());
 
     try {
-      const response = await DataService.get('user/submodules/list/');
+      const response = await DataService.get(`user/submodules/list/?page=${page}&limit=${limit}`);
 
       if (response.data?.status === 'success' || response.data?.status === true) {
         dispatch(getSubModulesSuccess(response.data));
@@ -684,12 +696,12 @@ export const deleteSubModules = (id, callback) => {
   };
 };
 
-export const getSubUsers = (callback) => {
+export const getSubUsers = (page = 1, limit = 10, callback) => {
   return async (dispatch) => {
     dispatch(getSubUsersBegin());
 
     try {
-      const response = await DataService.get('user/sub-users/');
+      const response = await DataService.get(`user/sub-users/?page=${page}&limit=${limit}`);
 
       if (response.data?.results?.status === true || response.data?.results?.status === 'success') {
         dispatch(getSubUsersSuccess(response.data));
@@ -767,6 +779,69 @@ export const deleteSubUsers = (id, callback) => {
       dispatch(deleteSubUsersErr(err));
       // callback?.(false);
       callback?.(false, err?.response?.data);
+    }
+  };
+};
+
+export const getModulesSubmodules = (callback) => {
+  return async (dispatch) => {
+    dispatch(getModuleSubModuleBegin());
+
+    try {
+      const response = await DataService.get('user/modules-with-submodules/');
+
+      if (response.data?.status === true || response.data?.status === 'success') {
+        dispatch(getModuleSubModuleSuccess(response.data));
+        callback?.(true, response.data);
+      } else {
+        dispatch(getModuleSubModuleErr(response.data?.message));
+        callback?.(false, response.data);
+      }
+    } catch (err) {
+      dispatch(getModuleSubModuleErr(err));
+      callback?.(false, err);
+    }
+  };
+};
+
+export const updateModulesPermission = (id, payload, callback) => {
+  return async (dispatch) => {
+    dispatch(updateModulesPermissionBegin());
+
+    try {
+      const response = await DataService.put(`user/sub-users/${id}/`, payload);
+
+      if (response.data?.status === true || response.data?.status === 'success') {
+        dispatch(updateModulesPermissionSuccess(response.data));
+        callback?.(true, response.data);
+      } else {
+        dispatch(updateModulesPermissionErr(response.data?.message));
+        callback?.(false, response.data);
+      }
+    } catch (err) {
+      dispatch(updateModulesPermissionErr(err));
+      callback?.(false, err);
+    }
+  };
+};
+
+export const getModulePermissionsDetails = (id, callback) => {
+  return async (dispatch) => {
+    dispatch(getModulePermissionDetailsBegin());
+
+    try {
+      const response = await DataService.get(`user/sub-users/${id}/`);
+
+      if (response.data?.status === true || response.data?.status === 'success') {
+        dispatch(getModulePermissionDetailsSuccess(response.data));
+        callback?.(true, response.data);
+      } else {
+        dispatch(getModulePermissionDetailsErr(response.data?.message));
+        callback?.(false, response.data);
+      }
+    } catch (err) {
+      dispatch(getModulePermissionDetailsErr(err));
+      callback?.(false, err);
     }
   };
 };
