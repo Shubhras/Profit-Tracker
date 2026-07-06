@@ -172,14 +172,16 @@ function CouponCode() {
       dataIndex: 'percentage',
       width: 70,
       align: 'center',
-      render: (value) => (value ? `${value}%` : '-'),
+      // render: (value) => (value ? `${value}%` : '-'),
+      render: (value) => (value != null ? `${Math.trunc(Number(value))}%` : '-'),
     },
     {
       title: 'Amount',
       dataIndex: 'specificAmount',
       width: 70,
       align: 'center',
-      render: (value) => value || '-',
+      // render: (value) => value || '-',
+      render: (value) => (value != null ? `${Math.trunc(Number(value))}%` : '-'),
     },
     {
       title: 'Start Date',
@@ -219,7 +221,7 @@ function CouponCode() {
 
   return (
     <>
-      <div className="min-h-screen py-3 px-2">
+      <div className="min-h-screen py-3 px-3">
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm w-full overflow-hidden">
           {/* Header */}
           <div className="flex justify-between items-center border-b px-4 py-3 md:flex-col md:items-start md:gap-3">

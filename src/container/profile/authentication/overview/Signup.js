@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+// import ReCAPTCHA from 'react-google-recaptcha';
 import { Link, useNavigate } from 'react-router-dom';
 import { Form, Input, Button, message } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
@@ -11,6 +12,7 @@ function SignUp() {
   const { loading, error } = useSelector((state) => state.auth);
 
   const [checked, setChecked] = useState(false);
+  // const [captchaToken, setCaptchaToken] = useState(null);
 
   const handleSubmit = useCallback(
     (values) => {
@@ -18,6 +20,10 @@ function SignUp() {
         message.error('You must accept Terms & Conditions before registering.');
         return;
       }
+      // if (!captchaToken) {
+      //   message.error('Please verify that you are not a robot.');
+      //   return;
+      // }
       const payload = {
         name: values.name,
         business_name: values.businessName,
@@ -31,6 +37,7 @@ function SignUp() {
         state: values.state,
         pin_code: values.pincode,
         accepted_terms: true,
+        // captcha_token: captchaToken,
       };
 
       console.log('Register Payload:', payload);
@@ -173,6 +180,9 @@ function SignUp() {
             </span>
           </Checkbox>
         </div>
+        {/* <div className="mb-6 flex justify-center">
+          <ReCAPTCHA sitekey="6LdxwD0tAAAAAO2TvLS6roENrpn_32Jx4pPOpIna" onChange={(token) => setCaptchaToken(token)} />
+        </div> */}
 
         {error && (
           <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-600 text-sm border border-red-100">{error}</div>

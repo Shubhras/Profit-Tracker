@@ -30,6 +30,22 @@ const {
   ESTIMATED_FEES_BEGIN,
   ESTIMATED_FEES_SUCCESS,
   ESTIMATED_FEES_ERR,
+
+  NOTIFICATION_BEGIN,
+  NOTIFICATION_SUCCESS,
+  NOTIFICATION_ERR,
+
+  SUPPORT_TICKET_BEGIN,
+  SUPPORT_TICKET_SUCCESS,
+  SUPPORT_TICKET_ERR,
+
+  GET_SUPPORT_TICKET_BEGIN,
+  GET_SUPPORT_TICKET_SUCCESS,
+  GET_SUPPORT_TICKET_ERR,
+
+  GET_TICKET_DETAILS_BEGIN,
+  GET_TICKET_DETAILS_SUCCESS,
+  GET_TICKET_DETAILS_ERR,
 } = actions;
 
 const initialState = {
@@ -39,6 +55,10 @@ const initialState = {
   profitData: null,
   monthwiseProfitData: null,
   estimatefees: [],
+  notifications: [],
+  supportTickets: [],
+  getsupportTickets: [],
+  getTicketsDetails: [],
   error: null,
   dateRange: null,
   search: '',
@@ -203,6 +223,90 @@ const dashboardReducer = (state = initialState, action) => {
       };
 
     case ESTIMATED_FEES_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case NOTIFICATION_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case NOTIFICATION_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        notifications: action.data.data || [],
+      };
+
+    case NOTIFICATION_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case SUPPORT_TICKET_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case SUPPORT_TICKET_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        supportTickets: action.data.data || [],
+      };
+
+    case SUPPORT_TICKET_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case GET_SUPPORT_TICKET_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case GET_SUPPORT_TICKET_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        getsupportTickets: action.data.data || [],
+      };
+
+    case GET_SUPPORT_TICKET_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case GET_TICKET_DETAILS_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case GET_TICKET_DETAILS_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        getTicketsDetails: action.data || [],
+      };
+
+    case GET_TICKET_DETAILS_ERR:
       return {
         ...state,
         loading: false,

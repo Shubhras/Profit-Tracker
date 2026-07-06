@@ -149,7 +149,7 @@ export default function ProfitMonthlyView() {
       getProfitMonthwise({
         fromDate: dateRange?.fromDate || null,
         toDate: dateRange?.endDate || null,
-        ...filters, // ✅ gst included
+        ...filters,
       }),
     );
     setShowFilters(false);
@@ -183,9 +183,9 @@ export default function ProfitMonthlyView() {
       <PageHeader
         routes={PageRoutes}
         title="Profit"
-        className="flex  justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 sm:pb-[30px] bg-transparent sm:flex-col"
+        className="flex justify-between items-center px-4 xl:px-[15px] pt-2 pb-6 sm:pb-[30px] bg-transparent sm:flex-col"
       />
-      <main className="min-h-[715px] lg:min-h-[580p x] flex-1 h-auto px-8 xl:px-[15px] pb-[30px] bg-transparent">
+      <main className="min-h-[715px] lg:min-h-[580p x] flex-1 h-auto px-4 xl:px-[15px] pb-[30px] bg-transparent">
         <Card className="bg-white rounded-md border overflow-x-auto">
           <div className="mb-4 p-3 border border-gray-200 rounded-xl bg-gray-50">
             <div role="button" tabIndex={0} className="flex items-center gap-4 cursor-pointer">

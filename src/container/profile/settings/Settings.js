@@ -6,6 +6,7 @@ import { PageHeader } from '../../../components/page-headers/page-headers';
 const Profile = lazy(() => import('./overview/Profile'));
 // const Account = lazy(() => import('./overview/Account'));
 const Password = lazy(() => import('./overview/Passwoard'));
+const SupportTicket = lazy(() => import('./overview/SupportTicket'));
 // const Billing = lazy(() => import('./overview/Billing'));
 // const SocialProfiles = lazy(() => import('./overview/SocialProfile'));
 // const Notification = lazy(() => import('./overview/Notification'));
@@ -69,7 +70,7 @@ function Settings() {
                   <Route path="profile" element={<Profile />} />
                   {/* <Route path="account" element={<Account />} /> */}
                   <Route path="password" element={<Password />} />
-                  {/* <Route path="billing" element={<Billing />} /> */}
+                  <Route path="support" element={<SupportTicket />} />
                   {/* <Route path="social" element={<SocialProfiles />} /> */}
                   {/* <Route path="notification" element={<Notification />} /> */}
                 </Routes>

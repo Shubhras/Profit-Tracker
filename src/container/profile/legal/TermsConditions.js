@@ -1,13 +1,27 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import Navbar from '../home/components/Navbar';
 import Footer from '../home/components/Footer';
+import { getPrivacyPolicy } from '../../../redux/admin/actionCreator';
 
 function TermsConditions() {
-  return (
-    <div className="bg-white min-h-screen">
-      <Navbar />
+  const dispatch = useDispatch();
 
-      <div className="pt-32 pb-12 px-[3%] max-w-7xl mx-auto">
+  const { privacypolicyData, loading } = useSelector((state) => state.AdminDashboard);
+  // const [loading, setLoading] = useState(true);
+
+  const policyContent = privacypolicyData?.data?.[0]?.content || '';
+
+  useEffect(() => {
+    dispatch(getPrivacyPolicy('terms'));
+  }, [dispatch]);
+
+  return (
+    <>
+      <div className="bg-white min-h-screen">
+        <Navbar />
+
+        {/* <div className="pt-32 pb-12 px-[3%] max-w-7xl mx-auto">
         <h1 className="text-4xl min-md:text-5xl font-bold text-gray-900 mb-8">Terms & Conditions</h1>
 
         <div className="text-base text-gray-600">
@@ -19,7 +33,6 @@ function TermsConditions() {
             the TrackMyProfit website and software platform (collectively, the “Service”).
           </p>
 
-          {/* 1 */}
           <h2 className="text-2xl min-md:text-3xl font-semibold text-gray-800 mt-8 mb-4">1. About TrackMyProfit</h2>
           <p className="mb-4">
             TrackMyProfit is a self-serve, cloud-based SaaS analytics platform designed for online marketplace sellers.
@@ -30,7 +43,6 @@ function TermsConditions() {
             TrackMyProfit is a software product and does not provide consulting, agency, or managed account services.
           </p>
 
-          {/* 2 */}
           <h2 className="text-2xl min-md:text-3xl font-semibold text-gray-800 mt-8 mb-4">2. Eligibility</h2>
           <ul className="list-disc ml-6 mb-4">
             <li>You are a legitimate seller or brand owner</li>
@@ -38,7 +50,6 @@ function TermsConditions() {
             <li>You are authorized to connect third-party APIs to your seller account</li>
           </ul>
 
-          {/* 3 */}
           <h2 className="text-2xl min-md:text-3xl font-semibold text-gray-800 mt-8 mb-4">
             3. Nature of the Service (SaaS Clarification)
           </h2>
@@ -57,7 +68,6 @@ function TermsConditions() {
             <li>Modify seller accounts or listings</li>
           </ul>
 
-          {/* 4 */}
           <h2 className="text-2xl min-md:text-3xl font-semibold text-gray-800 mt-8 mb-4">4. Data Access & API Usage</h2>
           <p className="mb-4">
             Users may connect their seller accounts to enable sales analytics, profit analysis, inventory insights, and
@@ -65,7 +75,6 @@ function TermsConditions() {
             authenticated user.
           </p>
 
-          {/* 5 */}
           <h2 className="text-2xl min-md:text-3xl font-semibold text-gray-800 mt-8 mb-4">
             5. Brand & Market Analytics Usage
           </h2>
@@ -77,7 +86,6 @@ function TermsConditions() {
           </ul>
           <p className="mb-4">TrackMyProfit does not resell, redistribute, or publicly expose analytics data.</p>
 
-          {/* 6 */}
           <h2 className="text-2xl min-md:text-3xl font-semibold text-gray-800 mt-8 mb-4">
             6. Subscription, Pricing & Billing
           </h2>
@@ -88,7 +96,6 @@ function TermsConditions() {
           </ul>
           <p className="mb-4">Pricing details are publicly available and may change with prior notice.</p>
 
-          {/* 7 */}
           <h2 className="text-2xl min-md:text-3xl font-semibold text-gray-800 mt-8 mb-4">7. User Responsibilities</h2>
           <ul className="list-disc ml-6 mb-4">
             <li>Not misuse the platform</li>
@@ -97,21 +104,18 @@ function TermsConditions() {
             <li>Not use the platform for unlawful purposes</li>
           </ul>
 
-          {/* 8 */}
           <h2 className="text-2xl min-md:text-3xl font-semibold text-gray-800 mt-8 mb-4">8. Intellectual Property</h2>
           <p className="mb-4">
             All software, dashboards, designs, and documentation are the exclusive property of TrackMyProfit. Users
             receive a limited, non-exclusive license to use the platform.
           </p>
 
-          {/* 9 */}
           <h2 className="text-2xl min-md:text-3xl font-semibold text-gray-800 mt-8 mb-4">9. Limitation of Liability</h2>
           <p className="mb-4">
             TrackMyProfit provides analytics for informational purposes only. We do not guarantee financial outcomes,
             profits, or marketplace performance.
           </p>
 
-          {/* 10 */}
           <h2 className="text-2xl min-md:text-3xl font-semibold text-gray-800 mt-8 mb-4">10. Termination</h2>
           <ul className="list-disc ml-6 mb-4">
             <li>Violation of terms</li>
@@ -119,7 +123,6 @@ function TermsConditions() {
             <li>Legal or compliance risks</li>
           </ul>
 
-          {/* 11 */}
           <h2 className="text-2xl min-md:text-3xl font-semibold text-gray-800 mt-8 mb-4">
             11. No Affiliation Disclaimer
           </h2>
@@ -128,21 +131,77 @@ function TermsConditions() {
             any marketplace or platform provider.
           </p>
 
-          {/* 12 */}
           <h2 className="text-2xl min-md:text-3xl font-semibold text-gray-800 mt-8 mb-4">12. Changes to Terms</h2>
           <p className="mb-4">
             We may update these Terms periodically. Continued use indicates acceptance of updated terms.
           </p>
 
-          {/* 13 */}
           <h2 className="text-2xl min-md:text-3xl font-semibold text-gray-800 mt-8 mb-4">13. Contact</h2>
           <p className="mb-2">📧 letstalk@trackmyprofit.com</p>
           <p>🌐 https://trackmyprofit.com</p>
         </div>
+      </div> */}
+        <div className="pt-32 pb-12 px-[3%] max-w-7xl mx-auto">
+          <div className="policy-content">
+            {loading ? (
+              <p>Loading...</p>
+            ) : (
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: policyContent,
+                }}
+              />
+            )}
+          </div>
+        </div>
+
+        <Footer />
       </div>
 
-      <Footer />
-    </div>
+      <style>{`
+.policy-content h1{
+  font-size:40px;
+  font-weight:700;
+  margin:20px 0;
+}
+
+.policy-content h2{
+  font-size:32px;
+  font-weight:700;
+  margin:20px 0 8px;   /* bottom sirf 8px */
+}
+
+.policy-content h3{
+  font-size:24px;
+  font-weight:600;
+  margin:8px 0 12px;   /* top bhi kam */
+}
+.policy-content p{
+  font-size:16px;
+  line-height:1.8;
+  margin-bottom:-4px !important;
+  color:#4b5563;
+}
+
+.policy-content ul{
+  list-style:disc;
+  padding-left:25px;
+}
+
+.policy-content ol{
+  list-style:decimal;
+  padding-left:25px;
+}
+
+.policy-content li{
+  margin:8px 0;
+}
+
+.policy-content strong{
+  font-weight:700;
+}
+`}</style>
+    </>
   );
 }
 

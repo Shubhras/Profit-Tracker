@@ -1,8 +1,8 @@
 export const HEADER_ACTIONS = {
   '/profit/profitMonthlyView': ['export', 'sku'],
   // '/profit/profitTableView': ['orderprofit', 'export', 'lowest'],
-  '/profit/profitTableView/second/': ['orderprofit', 'export', 'lowest'],
-  '/profit/profitTableView/third/': ['export', 'lowest'],
+  // '/profit/profitTableView/second/': ['orderprofit', 'export', 'lowest'],
+  // '/profit/profitTableView/third/': ['export', 'lowest'],
   '/profit/salesTrend': ['export'],
   '/profit/salesdetails/': ['export'],
   '/reconcile/os-payment': ['payment', 'cashback'],
