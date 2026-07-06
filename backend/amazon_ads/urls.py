@@ -13,8 +13,11 @@ from amazon_ads.services.product_ads import *
 from amazon_ads.services.targets import *
 from amazon_ads.services.negative_keywords import *
 from amazon_ads.services.negative_targets import *
+from amazon_ads.services.dashboard import AdsDashboardStatsAPIView
 
 urlpatterns = [
+
+    path("ads/dashboard-stats/", AdsDashboardStatsAPIView.as_view(), name="ads-dashboard-stats"),
 
     path("account/connect/",AmazonAdsConnectView.as_view()),
 

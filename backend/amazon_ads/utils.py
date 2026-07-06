@@ -176,42 +176,16 @@ REPORT_CONFIGS = [
             "date",
             "campaignId",
             "campaignName",
-            "campaignStatus",
-            "campaignBudgetAmount",
-            "campaignBudgetCurrencyCode",
-            "campaignRuleBasedBudgetAmount",
-            "campaignApplicableBudgetRuleId",
-            "portfolioId",
-
             "impressions",
             "clicks",
             "cost",
-
-            "purchases1d",
-            "purchases7d",
-            "purchases14d",
-            "purchases30d",
-
-            "sales1d",
-            "sales7d",
             "sales14d",
-            "sales30d",
-
-            "unitsSoldClicks1d",
-            "unitsSoldClicks7d",
+            "purchases14d",
             "unitsSoldClicks14d",
-            "unitsSoldClicks30d",
-
             "clickThroughRate",
             "costPerClick",
-
-            "acosClicks7d",
             "acosClicks14d",
-            "acosClicks30d",
-
-            "roasClicks7d",
-            "roasClicks14d",
-            "roasClicks30d"
+            "roasClicks14d"
         ]
     },
 
@@ -222,52 +196,17 @@ REPORT_CONFIGS = [
 
         "columns": [
             "date",
-
+            "matchType",
             "campaignId",
             "campaignName",
-
-            "adGroupId",
-            "adGroupName",
-
-            "keywordId",
-            "keyword",
-
             "searchTerm",
-
-            "matchType",
-
-            "targeting",
-            "targetingExpression",
-
             "impressions",
             "clicks",
             "cost",
-
-            "clickThroughRate",
-            "costPerClick",
-
-            "purchases1d",
-            "purchases7d",
-            "purchases14d",
-            "purchases30d",
-
-            "sales1d",
-            "sales7d",
             "sales14d",
-            "sales30d",
-
-            "unitsSoldClicks1d",
-            "unitsSoldClicks7d",
-            "unitsSoldClicks14d",
-            "unitsSoldClicks30d",
-
-            "acosClicks7d",
+            "purchases14d",
             "acosClicks14d",
-            "acosClicks30d",
-
-            "roasClicks7d",
-            "roasClicks14d",
-            "roasClicks30d"
+            "roasClicks14d"
         ]
     },
 
@@ -278,102 +217,34 @@ REPORT_CONFIGS = [
 
         "columns": [
             "date",
-
             "campaignId",
-            "campaignName",
-
             "adGroupId",
-            "adGroupName",
-
-            "targetId",
-
+            "keywordId",
             "targeting",
-            "targetingExpression",
-
-            "resolvedTargetingExpression",
-
             "impressions",
             "clicks",
             "cost",
-
-            "clickThroughRate",
-            "costPerClick",
-
-            "purchases1d",
-            "purchases7d",
-            "purchases14d",
-            "purchases30d",
-
-            "sales1d",
-            "sales7d",
             "sales14d",
-            "sales30d",
-
-            "unitsSoldClicks1d",
-            "unitsSoldClicks7d",
-            "unitsSoldClicks14d",
-            "unitsSoldClicks30d",
-
-            "acosClicks7d",
+            "purchases14d",
             "acosClicks14d",
-            "acosClicks30d",
-
-            "roasClicks7d",
-            "roasClicks14d",
-            "roasClicks30d"
+            "roasClicks14d"
         ]
     },
     {
         "report_type": "spKeywords",
 
-        "group_by": ["keyword"],
+        "group_by": ["adGroup"],
 
         "columns": [
             "date",
-
-            "campaignId",
-            "campaignName",
-
-            "adGroupId",
-            "adGroupName",
-
             "keywordId",
-            "keyword",
-
-            "keywordType",
+            "keywordText",
             "matchType",
-
-            "state",
-
             "impressions",
             "clicks",
             "cost",
-
-            "clickThroughRate",
-            "costPerClick",
-
-            "purchases1d",
-            "purchases7d",
-            "purchases14d",
-            "purchases30d",
-
-            "sales1d",
-            "sales7d",
             "sales14d",
-            "sales30d",
-
-            "unitsSoldClicks1d",
-            "unitsSoldClicks7d",
-            "unitsSoldClicks14d",
-            "unitsSoldClicks30d",
-
-            "acosClicks7d",
-            "acosClicks14d",
-            "acosClicks30d",
-
-            "roasClicks7d",
-            "roasClicks14d",
-            "roasClicks30d"
+            "purchases14d"
         ]
     },
 
@@ -384,47 +255,14 @@ REPORT_CONFIGS = [
 
         "columns": [
             "date",
-
             "campaignId",
-            "campaignName",
-
-            "adGroupId",
-            "adGroupName",
-
             "adId",
-
             "advertisedAsin",
-            "advertisedSku",
-
             "impressions",
             "clicks",
             "cost",
-
-            "clickThroughRate",
-            "costPerClick",
-
-            "purchases1d",
-            "purchases7d",
-            "purchases14d",
-            "purchases30d",
-
-            "sales1d",
-            "sales7d",
             "sales14d",
-            "sales30d",
-
-            "unitsSoldClicks1d",
-            "unitsSoldClicks7d",
-            "unitsSoldClicks14d",
-            "unitsSoldClicks30d",
-
-            "acosClicks7d",
-            "acosClicks14d",
-            "acosClicks30d",
-
-            "roasClicks7d",
-            "roasClicks14d",
-            "roasClicks30d"
+            "purchases14d"
         ]
     }
 ]
@@ -1582,44 +1420,44 @@ def process_reports():
                         defaults={
 
                             "impressions":
-                            row.get("impressions", 0),
+                            row.get("impressions") or 0,
 
                             "clicks":
-                            row.get("clicks", 0),
+                            row.get("clicks") or 0,
 
                             "cost":
-                            row.get("cost", 0),
+                            row.get("cost") or 0,
 
                             "sales":
-                            row.get("sales14d", 0),
+                            row.get("sales14d") or 0,
 
                             "orders":
-                            row.get("purchases14d", 0),
+                            row.get("purchases14d") or 0,
 
                             "units":
                             row.get(
-                                "unitsSoldClicks14d", 0
-                            ),
+                                "unitsSoldClicks14d"
+                            ) or 0,
 
                             "ctr":
                             row.get(
-                                "clickThroughRate", 0
-                            ),
+                                "clickThroughRate"
+                            ) or 0,
 
                             "cpc":
                             row.get(
-                                "costPerClick", 0
-                            ),
+                                "costPerClick"
+                            ) or 0,
 
                             "acos":
                             row.get(
-                                "acosClicks14d", 0
-                            ),
+                                "acosClicks14d"
+                            ) or 0,
 
                             "roas":
                             row.get(
-                                "roasClicks14d", 0
-                            ),
+                                "roasClicks14d"
+                            ) or 0,
 
                             "raw_data":
                             row
@@ -1768,12 +1606,14 @@ def process_reports():
 
                                 "acos":
                                 float(
-                                    row.get("acosClicks14d", 0) or 0
+                                    row.get("acosClicks14d") if row.get("acosClicks14d") is not None
+                                    else ((row.get("cost", 0) / row.get("sales14d")) * 100 if row.get("sales14d", 0) > 0 else 0)
                                 ),
 
                                 "roas":
                                 float(
-                                    row.get("roasClicks14d", 0) or 0
+                                    row.get("roasClicks14d") if row.get("roasClicks14d") is not None
+                                    else (row.get("sales14d", 0) / row.get("cost") if row.get("cost", 0) > 0 else 0)
                                 ),
 
                                 "raw_data":
@@ -1821,7 +1661,7 @@ def process_reports():
                     try:
 
                         target_id = str(
-                            row.get("targetId", "")
+                            row.get("keywordId") or row.get("targetId") or ""
                         ).strip()
 
                         if not target_id:
@@ -1987,19 +1827,19 @@ def process_reports():
                         defaults={
 
                             "impressions":
-                            row.get("impressions", 0),
+                            row.get("impressions") or 0,
 
                             "clicks":
-                            row.get("clicks", 0),
+                            row.get("clicks") or 0,
 
                             "cost":
-                            row.get("cost", 0),
+                            row.get("cost") or 0,
 
                             "sales":
-                            row.get("sales14d", 0),
+                            row.get("sales14d") or 0,
 
                             "orders":
-                            row.get("purchases14d", 0),
+                            row.get("purchases14d") or 0,
 
                             "raw_data":
                             row

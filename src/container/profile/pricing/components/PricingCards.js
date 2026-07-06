@@ -155,7 +155,9 @@ function PricingCard({ plan, index, onSelect, selectedPlanId, setSelectedPlanId 
                 <span>Monthly</span>
               </div>
 
-              <span className="font-semibold">₹{plan.monthly_price}</span>
+              <span className="font-semibold">
+                {/* ₹{plan.monthly_price} */}₹{Math.trunc(Number(plan.monthly_price || 0))}
+              </span>
             </button>
 
             <button
@@ -175,7 +177,10 @@ function PricingCard({ plan, index, onSelect, selectedPlanId, setSelectedPlanId 
                 <span>Annual</span>
               </div>
 
-              <span className="font-semibold">₹{plan.annual_price}</span>
+              <span className="font-semibold">
+                ₹{Math.trunc(Number(plan.annual_price || 0))}
+                {/* ₹{plan.annual_price} */}
+              </span>
             </button>
           </div>
         </div>

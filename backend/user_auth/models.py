@@ -70,6 +70,84 @@ class PasswordResetRequest(models.Model):
     
 
 
+
+
+class Module(models.Model):
+
+    name = models.CharField(
+        max_length=100,
+        unique=True
+    )
+
+    slug = models.SlugField(
+        unique=True,
+        blank=True
+    )
+
+    description = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+    
+
+class SubModule(models.Model):
+
+    module = models.ForeignKey(
+        Module,
+        on_delete=models.CASCADE,
+        related_name="submodules"
+    )
+
+    name = models.CharField(max_length=100)
+
+    slug = models.SlugField(
+        blank=True
+    )
+
+    description = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = (
+            "module",
+            "name"
+        )
+
+    def save(self, *args, **kwargs):
+
+        if not self.slug:
+            self.slug = slugify(self.name)
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.module.name} - {self.name}"
+    
+
+
 class SubscriptionPlan(models.Model):
 
     STATUS_CHOICES = [
@@ -97,17 +175,7 @@ class SubscriptionPlan(models.Model):
         null=True,
         blank=True
     )
-    # plan_name = models.CharField(
-    #     max_length=100,
-    #     unique=True
-    # )
-    # slug = models.SlugField(
-    #     max_length=150,
-    #     unique=True,
-    #     blank=True,
-    #     null=True
-    # )
-
+    
     description = models.TextField(
         blank=True,
         null=True
@@ -130,6 +198,19 @@ class SubscriptionPlan(models.Model):
     terms_and_conditions = models.JSONField(
         default=list,
         blank=True
+    )
+    # NEW
+    modules = models.ManyToManyField(
+        Module,
+        blank=True,
+        related_name="subscription_plans"
+    )
+
+    # NEW
+    submodules = models.ManyToManyField(
+        SubModule,
+        blank=True,
+        related_name="subscription_plans"
     )
 
     status = models.CharField(
@@ -168,33 +249,6 @@ class SubscriptionPlan(models.Model):
     class Meta:
         verbose_name = "Subscription Plan"
         verbose_name_plural = "Subscription Plans"
-
-
-# class LegalDocument(models.Model):
-#     TITLE_CHOICES = [
-#         ("terms", "Terms and Conditions"),
-#         ("privacy_policy", "Privacy Policy"),
-#         ("about_us", "About Us"),
-#         ("third_party_policy", "Third Party Policy"),
-#         ("plateform_policy", "Platform Policy"),
-#         ("return_policy", "Return Policy"),
-#         ("contact_us", "Contact Us"),
-#     ]
-
-#     title = models.CharField(max_length=50, choices=TITLE_CHOICES)
-#     slug = models.SlugField(unique=True)
-#     content = models.TextField()
-#     language = models.CharField(max_length=10, default='en')
-#     version = models.CharField(max_length=20, blank=True, null=True)
-#     is_active = models.BooleanField(default=True)
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
-#     is_deleted = models.BooleanField(default=False)
-
-#     def __str__(self):
-#         return dict(self.TITLE_CHOICES).get(self.title, self.title) 
-
-
 
 class LegalDocument(models.Model):
     TITLE_CHOICES = [
@@ -291,80 +345,6 @@ class UserNotification(models.Model):
         return f"{self.user.email} - {self.notification.title}"
         
     
-
-# class AdminNotification(models.Model):
-#     """
-#     Stores system notifications sent to Admin(s)
-#     for user/professional actions, payments, reports, etc.
-#     """
-
-#     NOTIFICATION_TYPES = [
-#         ('user_login', 'User Login'),
-#         ('user_registration', 'User Registration'),
-#         ('ticket_raise', 'Ticket Raise'),
-#         ('payment_succesfull', 'Payment Succesfull'),
-#         ('custom', 'Custom Message'),
-
-#     ]
-
-#     STATUS_CHOICES = [
-#         ('pending', 'Pending'),
-#         ('sent', 'Sent'),
-#         ('failed', 'Failed'),
-#     ]
-
-#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
-#     receiver = models.ForeignKey('UserProfile', on_delete=models.SET_NULL, null=True,
-#         blank=True,related_name='admin_notifications',help_text="Admin receiving this notification")
-
-#     title = models.CharField(max_length=150, blank=True, null=True)
-#     message = models.TextField()
-#     notification_type = models.CharField(max_length=30, choices=NOTIFICATION_TYPES)
-    
-#     # Generic sender (could be User, Professional, etc.)
-#     sender_content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-#     sender_object_id = models.PositiveIntegerField()
-#     sender = GenericForeignKey('sender_content_type', 'sender_object_id')
-
-
-#     # Status tracking
-#     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-#     is_read = models.BooleanField(default=False)
-#     is_deleted = models.BooleanField(default=False)
-#     sent_at = models.DateTimeField(blank=True, null=True)
-#     read_at = models.DateTimeField(blank=True, null=True)
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
-
-#     error_message = models.TextField(blank=True, null=True)
-
-#     class Meta:
-#         ordering = ['-created_at']
-#         verbose_name = "Admin Notification"
-#         verbose_name_plural = "Admin Notifications"
-
-#     def __str__(self):
-#         return f"[{self.get_notification_type_display()}] {self.title or self.message[:30]}"
-
-#     # Helper methods
-#     def mark_as_read(self):
-#         """Mark notification as read"""
-#         self.is_read = True
-#         self.read_at = timezone.now()
-#         self.save(update_fields=['is_read', 'read_at'])
-
-#     def mark_as_sent(self, success=True, error=None):
-#         """Mark notification as sent or failed"""
-#         self.status = 'sent' if success else 'failed'
-#         self.sent_at = timezone.now()
-#         self.error_message = error
-#         self.save(update_fields=['status', 'sent_at', 'error_message'])
-
-
-
-
-
 class Promocode(models.Model):
     PROMO_TYPE_CHOICES = [
         ('fix', 'Fixed Amount'),
@@ -387,82 +367,6 @@ class Promocode(models.Model):
 
     def __str__(self):
         return self.promocode or "No Promo"
-
-
-class Module(models.Model):
-
-    name = models.CharField(
-        max_length=100,
-        unique=True
-    )
-
-    slug = models.SlugField(
-        unique=True,
-        blank=True
-    )
-
-    description = models.TextField(
-        blank=True,
-        null=True
-    )
-
-    is_active = models.BooleanField(default=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.name)
-
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
-    
-
-class SubModule(models.Model):
-
-    module = models.ForeignKey(
-        Module,
-        on_delete=models.CASCADE,
-        related_name="submodules"
-    )
-
-    name = models.CharField(max_length=100)
-
-    slug = models.SlugField(
-        blank=True
-    )
-
-    description = models.TextField(
-        blank=True,
-        null=True
-    )
-
-    is_active = models.BooleanField(default=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        unique_together = (
-            "module",
-            "name"
-        )
-
-    def save(self, *args, **kwargs):
-
-        if not self.slug:
-            self.slug = slugify(self.name)
-
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"{self.module.name} - {self.name}"
-    
 
 
 class UserModulePermission(models.Model):
@@ -509,7 +413,75 @@ class UserModulePermission(models.Model):
         
         
 
-        
+class SupportTicket(models.Model):
+    STATUS_CHOICES = [
+        ("open", "Open"),
+        ("in_progress", "In Progress"),
+        ("resolved", "Resolved"),
+        ("closed", "Closed"),
+    ]
+
+    PRIORITY_CHOICES = [
+        ("low", "Low"),
+        ("medium", "Medium"),
+        ("high", "High"),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="support_tickets"
+    )
+    ticket_id = models.CharField(
+        max_length=50,
+        unique=True,
+        blank=True
+    )
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    document = models.FileField(
+        upload_to="support_tickets/",
+        null=True,
+        blank=True
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="open"
+    )
+    priority = models.CharField(
+        max_length=20,
+        choices=PRIORITY_CHOICES,
+        default="medium"
+    )
+    admin_note = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if not self.ticket_id:
+            self.ticket_id = f"TKT-{uuid.uuid4().hex[:6].upper()}"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.ticket_id} - {self.title}"
 
 
-    
+class SubUser(models.Model):
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="subuser_profile"
+    )
+    parent = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="sub_users"
+    )
+    name = models.CharField(max_length=100)
+    mobile_number = models.CharField(max_length=15)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} (Sub-user of {self.parent.email})"

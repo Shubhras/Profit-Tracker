@@ -9,7 +9,7 @@ import {
 } from '@ant-design/icons';
 
 import profitSummaryImg from '../../../../assets/icons/Dashboard.png';
-import profitTableImg from '../../../../assets/icons/profitTable.png';
+import profitTableImg from '../../../../assets/icons/profitTablenewimag.png';
 import advertisingImg from '../../../../assets/icons/advertising.png';
 import returnsAdjustmentsImg from '../../../../assets/icons/returns.png';
 import paymentReconcile from '../../../../assets/icons/paymentReconcile.png';
