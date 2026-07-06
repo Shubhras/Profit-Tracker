@@ -1,6 +1,4 @@
 from django.urls import path
-from .views import sync_campaigns_api
-from django.urls import path
 
 from .views import *
 from .budget_rules import *
@@ -13,6 +11,7 @@ from amazon_ads.services.product_ads import *
 from amazon_ads.services.targets import *
 from amazon_ads.services.negative_keywords import *
 from amazon_ads.services.negative_targets import *
+from amazon_ads.services.portfolio import *
 
 urlpatterns = [
 
@@ -36,7 +35,6 @@ urlpatterns = [
     path("adgroup-update/",UpdateSPAdGroupView.as_view()),
 
     path("get-query-ads/",QueryAdsView.as_view()),
-    path("sync-campaigns/",sync_campaigns_api),
 
     path("search-term-metrics/",SearchTermMetricListView.as_view(),name="search-term-metrics"),
 
@@ -162,4 +160,21 @@ urlpatterns = [
         "campaign-negative-targets/create/",
         CreateSPCampaignNegativeTargetView.as_view()
     ),
+
+path(
+    "campaign-products/list/",
+    CampaignProductListAPIView.as_view(),
+),
+    # PortfolioWorkflow
+    
+    path("portfolios/list/", PortfolioListAPIView.as_view()),
+
+    path("portfolios/create/", CreatePortfolioView.as_view()),
+
+    # Keyword and Product Recommendation
+    path("keywords/recommendations/", KeywordRecommendationAPIView.as_view()),
+
+   path("targets/product-recommendations/", ProductTargetRecommendationAPIView.as_view()),
+
+   path("targets/category-recommendations/", CategoryRecommendationAPIView.as_view())
 ]

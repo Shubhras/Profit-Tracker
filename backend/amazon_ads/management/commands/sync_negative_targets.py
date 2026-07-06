@@ -1,9 +1,9 @@
 from django.core.management.base import BaseCommand
 
 from amazon_ads.models import AmazonAdsAccount
-from amazon_ads.services.sync.negative_keywords_sync import (
-    sync_campaign_negative_keywords,
-    sync_negative_keywords,
+from amazon_ads.services.sync.negative_targets_sync import (
+    sync_campaign_negative_targets,
+    sync_negative_targets,
 )
 
 
@@ -17,12 +17,12 @@ class Command(BaseCommand):
         accounts = AmazonAdsAccount.objects.filter(is_primary=True)
 
         for account in accounts:
-            adgroup_saved = sync_negative_keywords(account)
+            adgroup_saved = sync_negative_targets(account)
 
-            campaign_saved = sync_campaign_negative_keywords(account)
+            campaign_saved = sync_campaign_negative_targets(account)
 
             total_saved += adgroup_saved + campaign_saved
 
         self.stdout.write(
-            self.style.SUCCESS(f"TOTAL NEGATIVE KEYWORDS SAVED: {total_saved}")
+            self.style.SUCCESS(f"TOTAL NEGATIVE TARGETS SAVED: {total_saved}")
         )

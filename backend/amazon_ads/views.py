@@ -1,7 +1,4 @@
-from django.shortcuts import render
-from rest_framework.decorators import api_view
 from .models import *
-from amazon_ads.services.campaigns import sync_campaigns
 import secrets
 from django.shortcuts import redirect
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -59,21 +56,6 @@ class CustomPagination(PageNumberPagination):
             },
             "results": data
         })
-    
-@api_view(["GET"])
-def sync_campaigns_api(request):
-
-    account = AmazonAdsAccount.objects.first()
-
-    sync_campaigns(account)
-
-    return Response({
-        "status": True,
-        "message": "Campaigns synced"
-    })
-
-
-client_id= settings.AMAZON_ADS_CLIENT_ID
 
 class AmazonAdsConnectView(APIView):
 
@@ -2904,7 +2886,7 @@ class CampaignNegativeTargetListView(APIView):
             "-id"
         )
 
-        queryset = AdsCampaignNegativeTarget.objects.filter(
+        queryset = AdsNegativeTarget.objects.filter(
 
             amazon_account__user=user
 
@@ -3006,7 +2988,7 @@ class CampaignNegativeTargetListView(APIView):
             request
         )
 
-        serializer = AdsCampaignNegativeTargetSerializer(
+        serializer = AdsNegativeTargetSerializer(
             paginated_queryset,
             many=True
         )

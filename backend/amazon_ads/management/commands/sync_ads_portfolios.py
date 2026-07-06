@@ -1,11 +1,11 @@
 from django.core.management.base import BaseCommand
 
 from amazon_ads.models import AmazonAdsAccount
-from amazon_ads.services.sync.product_ads_sync import sync_productads
+from amazon_ads.services.sync.portfolios_sync import sync_portfolios
 
 
 class Command(BaseCommand):
-    help = "Sync Amazon Product Ads"
+    help = "Sync Amazon Ads Portfolios"
 
     def handle(self, *args, **kwargs):
 
@@ -14,6 +14,6 @@ class Command(BaseCommand):
         accounts = AmazonAdsAccount.objects.filter(is_primary=True)
 
         for account in accounts:
-            total_saved += sync_productads(account)
+            total_saved += sync_portfolios(account)
 
-        self.stdout.write(self.style.SUCCESS(f"TOTAL PRODUCT ADS SAVED: {total_saved}"))
+        self.stdout.write(self.style.SUCCESS(f"TOTAL PORTFOLIOS SAVED: {total_saved}"))

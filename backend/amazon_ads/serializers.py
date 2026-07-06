@@ -8,6 +8,10 @@ class CampaignMetricSerializer(serializers.ModelSerializer):
         model = CampaignMetric
         fields = "__all__"
 
+class AdsPortfolioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdsPortfolio
+        fields = "__all__"
 
 class AdsCampaignSerializer(serializers.ModelSerializer):
 
@@ -30,7 +34,7 @@ class AdsCampaignSerializer(serializers.ModelSerializer):
             "targeting_type","daily_budget",
             "budget_type", "bidding_strategy",
             "placement_bidding","marketplace_budget_allocation",
-            "off_amazon_settings","tags","start_date","profile_id",
+            "off_amazon_settings","tags","start_date","end_date","profile_id",
             "country_code","currency_code","metrics","raw_data","created_at"
         ]
 
@@ -369,7 +373,7 @@ class ProductAdMetricSerializer(serializers.ModelSerializer):
         ]   
 
 
-class AdsCampaignNegativeTargetSerializer(
+class AdsNegativeTargetSerializer(
     serializers.ModelSerializer
 ):
 
@@ -381,7 +385,7 @@ class AdsCampaignNegativeTargetSerializer(
 
     class Meta:
 
-        model = AdsCampaignNegativeTarget
+        model = AdsNegativeTarget
 
         fields = [
 
@@ -405,7 +409,9 @@ class AdsCampaignNegativeTargetSerializer(
 
             "serving_status",
 
-            "bid",
+            "creation_date_time",
+
+            "last_update_date_time",
 
             "created_at",
 
