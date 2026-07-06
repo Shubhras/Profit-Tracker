@@ -43,11 +43,19 @@ class CampaignBuilderService {
           {
             name: wizardData.campaign.name,
 
+            ...(wizardData.campaign.portfolioId && {
+              portfolioId: wizardData.campaign.portfolioId,
+            }),
+
             campaignType: 'SPONSORED_PRODUCTS',
 
             targetingType: wizardData.campaign.targetingType,
 
             state: wizardData.campaign.state,
+
+            startDate: wizardData.campaign.startDate,
+
+            endDate: wizardData.campaign.endDate,
 
             budget: {
               budget: Number(wizardData.campaign.budget),

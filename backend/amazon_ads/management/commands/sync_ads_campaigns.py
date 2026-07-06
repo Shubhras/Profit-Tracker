@@ -1,27 +1,23 @@
-# amazon_ads/management/commands/sync_ads_campaigns.py
-
 from django.core.management.base import BaseCommand
 
 from amazon_ads.models import AmazonAdsAccount
-from amazon_ads.services.campaigns import sync_campaigns
+from amazon_ads.services.sync.campaigns_sync import sync_campaigns
 
 
 class Command(BaseCommand):
-
     help = "Sync Amazon Ads Campaigns"
 
-    def handle(self, *args, **kwargs):  
+    def handle(self, *args, **kwargs):
 
-        accounts = AmazonAdsAccount.objects.filter(
-            is_primary = True
-        )
+        total_saved = 0
+
+        accounts = AmazonAdsAccount.objects.filter(is_primary=True)
 
         for account in accounts:
+            total_saved += sync_campaigns(account)
 
-            print(
-                f"SYNCING ACCOUNT: {account.profile_id}"
-            )
+        self.stdout.write(self.style.SUCCESS("\n" + "=" * 80))
 
-            sync_campaigns(account)
+        self.stdout.write(self.style.SUCCESS(f"TOTAL CAMPAIGNS SAVED: {total_saved}"))
 
-        print("CAMPAIGN SYNC COMPLETED")
+        self.stdout.write(self.style.SUCCESS("=" * 80))

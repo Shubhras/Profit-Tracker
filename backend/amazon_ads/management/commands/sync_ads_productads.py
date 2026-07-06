@@ -1,22 +1,19 @@
-# amazon_ads/management/commands/sync_ads_productads.py
-
 from django.core.management.base import BaseCommand
 
-from amazon_ads.utils import (
-    sync_productads
-)
+from amazon_ads.models import AmazonAdsAccount
+from amazon_ads.services.sync.product_ads_sync import sync_productads
 
 
 class Command(BaseCommand):
-
-    help = "Sync Amazon Ads Product Ads"
+    help = "Sync Amazon Product Ads"
 
     def handle(self, *args, **kwargs):
 
-        sync_productads()
+        total_saved = 0
 
-        self.stdout.write(
-            self.style.SUCCESS(
-                "Product Ads Synced"
-            )
-        )
+        accounts = AmazonAdsAccount.objects.filter(is_primary=True)
+
+        for account in accounts:
+            total_saved += sync_productads(account)
+
+        self.stdout.write(self.style.SUCCESS(f"TOTAL PRODUCT ADS SAVED: {total_saved}"))
