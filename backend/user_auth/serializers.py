@@ -307,22 +307,101 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "start_date": subscription.start_date,
             "end_date": subscription.end_date,
         }
-                        
+          
+
+# class ModuleSimpleSerializer(serializers.ModelSerializer):
+
+#     class Meta:
+#         model = Module
+#         fields = [
+#             "id",
+#             "name",
+#             "slug"
+#         ]
+
+
+# class SubModuleSimpleSerializer(serializers.ModelSerializer):
+
+#     module = serializers.SerializerMethodField()
+
+#     class Meta:
+#         model = SubModule
+#         fields = [
+#             "id",
+#             "name",
+#             "slug",
+#             "module"
+#         ]
+
+#     def get_module(self, obj):
+#         return {
+#             "id": obj.module.id,
+#             "name": obj.module.name,
+#             "slug": obj.module.slug,
+#         }                        
+class ModuleSimpleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Module
+        fields = [
+            "id",
+            "name",
+            "slug"
+        ]
+
+
+class SubModuleSimpleSerializer(serializers.ModelSerializer):
+
+    module = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SubModule
+        fields = [
+            "id",
+            "name",
+            "slug",
+            "module"
+        ]
+
+    def get_module(self, obj):
+        return {
+            "id": obj.module.id,
+            "name": obj.module.name,
+            "slug": obj.module.slug,
+        }
+
+
 class SubscriptionPlanSerializer(serializers.ModelSerializer):
     discount_percentage = serializers.SerializerMethodField()
     average_discount = serializers.SerializerMethodField()
     per_month = serializers.SerializerMethodField()
-    
+
+    # For Create/Update (accept IDs)
     modules = serializers.PrimaryKeyRelatedField(
-    many=True,
-    queryset=Module.objects.filter(is_active=True),
-    required=False
+        many=True,
+        queryset=Module.objects.filter(is_active=True),
+        required=False,
+        write_only=True
     )
 
     submodules = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=SubModule.objects.filter(is_active=True),
-        required=False
+        required=False,
+        write_only=True
+    )
+
+    # For List/Details (return objects)
+    module_details = ModuleSimpleSerializer(
+        source="modules",
+        many=True,
+        read_only=True
+    )
+
+    submodule_details = SubModuleSimpleSerializer(
+        source="submodules",
+        many=True,
+        read_only=True
     )
 
     class Meta:
@@ -337,8 +416,13 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
             "annual_price",
             "features",
             "terms_and_conditions",
+
             "modules",
             "submodules",
+
+            "module_details",
+            "submodule_details",
+
             "status",
             "is_active",
             "is_deleted",
@@ -357,11 +441,7 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
             return 0.0
 
         yearly_cost = monthly_price * 12
-
-        discount = (
-            (yearly_cost - annual_price)
-            / yearly_cost
-        ) * 100
+        discount = ((yearly_cost - annual_price) / yearly_cost) * 100
 
         return round(max(discount, 0), 2)
 
@@ -373,10 +453,41 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
 
         if annual_price <= 0:
             return 0.0
+        
+        
+    def create(self, validated_data):
+        modules = validated_data.pop("modules", [])
+        submodules = validated_data.pop("submodules", [])
+
+        plan = SubscriptionPlan.objects.create(**validated_data)
+
+        if modules:
+            plan.modules.set(modules)
+
+        if submodules:
+            plan.submodules.set(submodules)
+
+        return plan
+
+    def update(self, instance, validated_data):
+        modules = validated_data.pop("modules", None)
+        submodules = validated_data.pop("submodules", None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+
+        if modules is not None:
+            instance.modules.set(modules)
+
+        if submodules is not None:
+            instance.submodules.set(submodules)
+
+        return instance    
 
         return round(annual_price / 12, 2)
-        
- 
+
 class PromocodeSerializer(serializers.ModelSerializer):
     startDateTime = serializers.DateTimeField(
         input_formats=[

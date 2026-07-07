@@ -36,7 +36,7 @@ urlpatterns = [
         name="user-list"
     ),
     path(
-        "admin/main-users/<int:pk>/update/",
+        "admin/main-users/<int:pk>/get-update/",
         AdminUserDetailUpdateAPIView.as_view(),
         name="admin-user-detail-update"
     ),
