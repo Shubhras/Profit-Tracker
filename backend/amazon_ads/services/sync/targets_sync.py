@@ -1,0 +1,177 @@
+from django.db import transaction
+
+from amazon_ads.models import (
+    AdsAdGroup,
+    AdsCampaign,
+    AdsTarget,
+)
+from amazon_ads.utils import ads_matrix_api_request
+
+
+def sync_targets(account):
+
+    print("\n" + "=" * 80)
+    print(f"SYNCING TARGETS: {account.profile_id}")
+
+    total_saved = 0
+
+    campaign_map = {
+        str(c.campaign_id): c
+        for c in AdsCampaign.objects.filter(amazon_account=account).only(
+            "id", "campaign_id"
+        )
+    }
+
+    adgroup_map = {
+        str(a.ad_group_id): a
+        for a in AdsAdGroup.objects.filter(amazon_account=account).only(
+            "id", "campaign", "ad_group_id"
+        )
+    }
+
+    adgroup_ids = list(adgroup_map.keys())
+
+    existing_targets = {
+        str(obj.target_id): obj
+        for obj in AdsTarget.objects.filter(amazon_account=account)
+    }
+
+    create_objects = []
+    update_objects = []
+
+    # -------------------------------------------------
+    # PROCESS 100 ADGROUPS PER REQUEST
+    # -------------------------------------------------
+
+    for i in range(0, len(adgroup_ids), 100):
+        batch_adgroup_ids = adgroup_ids[i : i + 100]
+
+        next_token = None
+
+        while True:
+            payload = {
+                "maxResults": 1000,
+                "includeExtendedDataFields": True,
+                "adGroupIdFilter": {"include": batch_adgroup_ids},
+            }
+
+            if next_token:
+                payload["nextToken"] = next_token
+
+            response = ads_matrix_api_request(
+                account=account,
+                method="POST",
+                endpoint="/sp/targets/list",
+                payload=payload,
+                content_type="application/vnd.sptargetingClause.v3+json",
+                accept_type="application/vnd.sptargetingClause.v3+json",
+            )
+
+            print(f"API STATUS: {response.status_code}")
+
+            if response.status_code != 200:
+                print("TARGET SYNC ERROR")
+                print(response.text)
+
+                break
+
+            data = response.json()
+
+            targets = data.get("targetingClauses", [])
+
+            print(f"TARGETS RECEIVED: {len(targets)}")
+
+            for item in targets:
+                try:
+                    target_id = str(item.get("targetId"))
+
+                    campaign = campaign_map.get(str(item.get("campaignId")))
+
+                    ad_group = adgroup_map.get(str(item.get("adGroupId")))
+
+                    if not campaign or not ad_group:
+                        continue
+
+                    if target_id in existing_targets:
+                        obj = existing_targets[target_id]
+
+                        obj.campaign = campaign
+                        obj.ad_group = ad_group
+                        obj.expression_type = item.get("expressionType")
+                        obj.expression = item.get("expression", [])
+                        obj.bid = item.get("bid", 0) or 0
+                        obj.state = item.get("state")
+                        obj.raw_data = item
+
+                        update_objects.append(obj)
+
+                    else:
+                        obj = AdsTarget(
+                            amazon_account=account,
+                            campaign=campaign,
+                            ad_group=ad_group,
+                            target_id=target_id,
+                            expression_type=item.get("expressionType"),
+                            expression=item.get("expression", []),
+                            bid=item.get("bid", 0) or 0,
+                            state=item.get("state"),
+                            raw_data=item,
+                        )
+                        
+                        create_objects.append(obj)
+
+                        existing_targets[target_id] = obj
+
+                    total_saved += 1
+
+                except Exception as e:
+                    print(f"FAILED TARGET {item.get('targetId')}: {e}")
+
+                    continue
+
+            next_token = data.get("nextToken")
+
+            if not next_token:
+                break
+
+    # -------------------------------------------------
+    # BULK CREATE
+    # -------------------------------------------------
+
+    if create_objects:
+        with transaction.atomic():
+            AdsTarget.objects.bulk_create(
+                create_objects,
+                batch_size=500,
+                ignore_conflicts=True,
+            )
+
+        print(f"CREATED: {len(create_objects)}")
+
+    # -------------------------------------------------
+    # BULK UPDATE
+    # -------------------------------------------------
+
+    if update_objects:
+        with transaction.atomic():
+            AdsTarget.objects.bulk_update(
+                update_objects,
+                [
+                    "campaign",
+                    "ad_group",
+                    "expression_type",
+                    "expression",
+                    "bid",
+                    "state",
+                    "raw_data",
+                ],
+                batch_size=500,
+            )
+
+        print(f"UPDATED: {len(update_objects)}")
+
+    print("\n" + "=" * 80)
+    print(f"TOTAL TARGETS SAVED: {total_saved}")
+    print("=" * 80)
+
+    return total_saved

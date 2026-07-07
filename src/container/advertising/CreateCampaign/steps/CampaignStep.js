@@ -1,7 +1,86 @@
-import { Form, Row, Col, Input, Select, InputNumber, DatePicker, Button, Divider } from 'antd';
+import { Form, Row, Col, Input, Select, InputNumber, DatePicker, Button, Divider, Modal, message } from 'antd';
+import { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import moment from 'moment';
+import { getPortfolios, createPortfolio } from '../../../../redux/advertising/actionCreator';
 
 function CampaignStep({ wizardData, setWizardData, onNext }) {
+  const dispatch = useDispatch();
+  const [portfolios, setPortfolios] = useState([]);
+  const [portfolioModalOpen, setPortfolioModalOpen] = useState(false);
+  const [portfolioName, setPortfolioName] = useState('');
+  const [creatingPortfolio, setCreatingPortfolio] = useState(false);
+
+  useEffect(() => {
+    const fetchPortfolios = async () => {
+      const response = await dispatch(getPortfolios());
+
+      if (Array.isArray(response)) {
+        setPortfolios(response);
+      }
+    };
+
+    fetchPortfolios();
+  }, [dispatch]);
+
+  const handleCreatePortfolio = async () => {
+    try {
+      setCreatingPortfolio(true);
+
+      const exists = portfolios.some((portfolio) => portfolio.name === portfolioName.trim());
+
+      if (exists) {
+        message.error('Portfolio already exists');
+        return;
+      }
+
+      const response = await dispatch(
+        createPortfolio({
+          name: portfolioName.trim(),
+        }),
+      );
+
+      if (!response?.status) {
+        if (response?.errors?.length > 0) {
+          response.errors.forEach((error) => {
+            message.error(error.message);
+          });
+        } else {
+          message.error(response?.message || 'Failed to create portfolio');
+        }
+
+        return;
+      }
+
+      const createdPortfolio = response.data?.[0];
+
+      setPortfolios((prev) => [
+        ...prev,
+        {
+          portfolio_id: createdPortfolio.portfolio_id,
+          name: createdPortfolio.name,
+        },
+      ]);
+
+      setWizardData({
+        ...wizardData,
+        campaign: {
+          ...wizardData.campaign,
+          portfolioId: createdPortfolio.portfolio_id,
+          portfolioName: createdPortfolio.name,
+        },
+      });
+
+      setPortfolioName('');
+
+      setPortfolioModalOpen(false);
+
+      message.success('Portfolio created successfully');
+    } finally {
+      setCreatingPortfolio(false);
+    }
+  };
+
   return (
     <>
       <Form layout="vertical">
@@ -22,7 +101,33 @@ function CampaignStep({ wizardData, setWizardData, onNext }) {
               />
             </Form.Item>
           </Col>
+          <Col span={12}>
+            <Form.Item label="Portfolio">
+              <Select
+                allowClear
+                placeholder="Select Portfolio"
+                value={wizardData.campaign.portfolioId}
+                options={portfolios.map((portfolio) => ({
+                  label: portfolio.name,
+                  value: portfolio.portfolio_id,
+                }))}
+                onChange={(value, option) =>
+                  setWizardData({
+                    ...wizardData,
+                    campaign: {
+                      ...wizardData.campaign,
+                      portfolioId: value,
+                      portfolioName: option?.label || '',
+                    },
+                  })
+                }
+              />
+            </Form.Item>
 
+            <Button type="link" style={{ padding: 0 }} onClick={() => setPortfolioModalOpen(true)}>
+              + Create Portfolio
+            </Button>
+          </Col>
           <Col span={12}>
             <Form.Item label="Campaign Status">
               <Select
@@ -252,6 +357,15 @@ function CampaignStep({ wizardData, setWizardData, onNext }) {
         </Row>
       </Form>
 
+      <Modal
+        title="Create Portfolio"
+        open={portfolioModalOpen}
+        confirmLoading={creatingPortfolio}
+        onCancel={() => setPortfolioModalOpen(false)}
+        onOk={handleCreatePortfolio}
+      >
+        <Input placeholder="Portfolio Name" value={portfolioName} onChange={(e) => setPortfolioName(e.target.value)} />
+      </Modal>
       <div
         style={{
           marginTop: 24,

@@ -1,10 +1,16 @@
 import requests
+from django.db.models import Q, Sum
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework.views import APIView, status
 
 from amazon_ads.models import *
-from amazon_ads.utils import refresh_ads_access_token, extract_amazon_errors, get_primary_amazon_account
+from amazon_ads.utils import (
+    extract_amazon_errors,
+    get_primary_amazon_account,
+    refresh_ads_access_token,
+)
+from amazon_auth.models import AmazonCatalogDetails
 
 
 class CreateSPProductAdView(APIView):
@@ -26,7 +32,7 @@ class CreateSPProductAdView(APIView):
         # ---------------- AMAZON ACCOUNT ----------------
 
         try:
-            amazon_account = get_primary_amazon_account()
+            amazon_account = get_primary_amazon_account(request.user)
             profile_id = amazon_account.profile_id
 
         except Exception as e:
@@ -116,9 +122,9 @@ class CreateSPProductAdView(APIView):
         success_items = response_data.get("productAds", {}).get("success", [])
 
         error_items = response_data.get("productAds", {}).get("error", [])
-        
+
         parsed_errors = extract_amazon_errors(error_items)
-                
+
         for item in success_items:
             product_ad_data = item.get("productAd", {})
 
@@ -169,4 +175,178 @@ class CreateSPProductAdView(APIView):
                 "data": created_product_ads,
                 "amazon_response": response_data,
             }
+        )
+
+
+class CampaignProductListAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        # ---------------- USER ----------------
+
+        user = request.user
+
+        data = request.data
+        from_date = data.get("fromDate")
+        end_date = data.get("endDate")
+
+        # ---------------- AMAZON ACCOUNT ----------------
+
+        try:
+            amazon_account = get_primary_amazon_account(user)
+
+        except Exception as e:
+            return Response(
+                {
+                    "status": False,
+                    "message": str(e),
+                },
+                status=404,
+            )
+
+        # ---------------- FILTERS ----------------
+
+        asin = data.get("asin")
+        parent_asin = data.get("parent_asin")
+        brand = data.get("brand")
+        marketplace_id = data.get("marketplace_id")
+        search = data.get("search", "")
+
+        pagination = data.get("pagination", {})
+
+        page_no = max(1, int(pagination.get("page", 1)))
+        page_size = min(max(1, int(pagination.get("page_size", 10))), 100)
+
+        queryset = AmazonCatalogDetails.objects.filter(user=user).order_by(
+            "-created_at"
+        )
+
+        # ---------------- FILTERS ----------------
+
+        if asin:
+            queryset = queryset.filter(asin=asin)
+
+        if parent_asin:
+            queryset = queryset.filter(parent_asin=parent_asin)
+
+        if brand:
+            queryset = queryset.filter(brand__icontains=brand)
+
+        if marketplace_id:
+            queryset = queryset.filter(marketplace_id=marketplace_id)
+
+        # ---------------- SEARCH ----------------
+
+        if search:
+            sku_matches = AdsProductAd.objects.filter(
+                amazon_account=amazon_account,
+                sku__icontains=search,
+            ).values_list("asin", flat=True)
+
+            queryset = queryset.filter(
+                Q(item_name__icontains=search)
+                | Q(brand__icontains=search)
+                | Q(asin__icontains=search)
+                | Q(asin__in=sku_matches)
+            )
+
+        # ---------------- PAGINATION ----------------
+
+        total_count = queryset.count()
+
+        start = (page_no - 1) * page_size
+
+        end = start + page_size
+
+        queryset = queryset[start:end]
+
+        # ---------------- PERFORMANCE QUERY ----------------
+        metrics_queryset = ProductAdMetric.objects.filter(
+            product_ad__amazon_account=amazon_account
+        )
+        if from_date:
+            metrics_queryset = metrics_queryset.filter(report_date__gte=from_date)
+
+        if end_date:
+            metrics_queryset = metrics_queryset.filter(report_date__lte=end_date)
+        metrics = metrics_queryset.values("product_ad__asin").annotate(
+            ad_spend=Sum("cost"),
+            ad_sales=Sum("sales"),
+            orders=Sum("orders"),
+            impressions=Sum("impressions"),
+            clicks=Sum("clicks"),
+        )
+
+        metrics_by_asin = {
+            row["product_ad__asin"]: {
+                "adSpend": row["ad_spend"] or 0,
+                "adSales": row["ad_sales"] or 0,
+                "orders": row["orders"] or 0,
+                "impressions": row["impressions"] or 0,
+                "clicks": row["clicks"] or 0,
+            }
+            for row in metrics
+        }
+
+        # ---------------- PRODUCT ADS LOOKUP ----------------
+
+        product_ads = list(
+            AdsProductAd.objects.filter(amazon_account=amazon_account).values(
+                "asin",
+                "sku",
+            )
+        )
+
+        sku_by_asin = {row["asin"]: row["sku"] for row in product_ads}
+
+        advertised_asins = {row["asin"] for row in product_ads}
+
+        # ---------------- BUILD RESPONSE ----------------
+
+        products = list(
+            queryset.values(
+                "asin",
+                "item_name",
+                "brand",
+                "image_url",
+            )
+        )
+
+        default_performance = {
+            "adSpend": 0,
+            "adSales": 0,
+            "orders": 0,
+            "impressions": 0,
+            "clicks": 0,
+        }
+
+        # ---------------- ATTACH PERFORMANCE ----------------
+
+        for product in products:
+            asin = product["asin"]
+
+            product["sku"] = sku_by_asin.get(asin)
+
+            product["isAdvertised"] = asin in advertised_asins
+
+            product["performance"] = metrics_by_asin.get(
+                asin,
+                default_performance.copy(),
+            )
+
+        # ---------------- RESPONSE ----------------
+
+        return Response(
+            {
+                "status": True,
+                "statusCode": 200,
+                "message": "Campaign products fetched successfully",
+                "totalCount": total_count,
+                "pageNo": page_no,
+                "pageSize": page_size,
+                "totalPages": (total_count + page_size - 1) // page_size,
+                "data": products,
+            },
+            status=status.HTTP_200_OK,
         )

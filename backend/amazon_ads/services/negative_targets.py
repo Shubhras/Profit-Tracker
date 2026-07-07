@@ -3,8 +3,16 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from amazon_ads.models import AmazonAdsAccount
-from amazon_ads.utils import refresh_ads_access_token, extract_amazon_errors, get_primary_amazon_account
+from amazon_ads.models import (
+    AdsAdGroup,
+    AdsCampaign,
+    AdsNegativeTarget,
+)
+from amazon_ads.utils import (
+    extract_amazon_errors,
+    get_primary_amazon_account,
+    refresh_ads_access_token,
+)
 
 
 class CreateSPNegativeTargetView(APIView):
@@ -27,7 +35,7 @@ class CreateSPNegativeTargetView(APIView):
         # ---------------- AMAZON ACCOUNT ----------------
 
         try:
-            amazon_account = get_primary_amazon_account()
+            amazon_account = get_primary_amazon_account(request.user)
             profile_id = amazon_account.profile_id
 
         except Exception as e:
@@ -110,12 +118,68 @@ class CreateSPNegativeTargetView(APIView):
                 status=response.status_code,
             )
 
+        # ---------------- SAVE TO DB ----------------
+
+        created_negative_targets = []
+
+        success_items = response_data.get("negativeTargetingClauses", {}).get(
+            "success", []
+        )
+
+        error_items = response_data.get("negativeTargetingClauses", {}).get("error", [])
+
+        parsed_errors = extract_amazon_errors(error_items)
+
+        for item in success_items:
+            target_data = item.get("negativeTargetingClause", {})
+
+            target_id = item.get("targetId")
+
+            if not target_id:
+                target_id = target_data.get("targetId")
+
+            if not target_id:
+                continue
+
+            campaign = AdsCampaign.objects.filter(
+                campaign_id=target_data.get("campaignId")
+            ).first()
+
+            ad_group = AdsAdGroup.objects.filter(
+                ad_group_id=target_data.get("adGroupId")
+            ).first()
+
+            negative_target, created = AdsNegativeTarget.objects.update_or_create(
+                negative_target_id=str(target_id),
+                defaults={
+                    "amazon_account": amazon_account,
+                    "campaign": campaign,
+                    "ad_group": ad_group,
+                    "expression_type": target_data.get("expressionType"),
+                    "expression": target_data.get("expression", []),
+                    "resolved_expression": target_data.get("resolvedExpression", []),
+                    "state": target_data.get("state"),
+                    "serving_status": target_data.get("extendedData", {}).get(
+                        "servingStatus"
+                    ),
+                    "raw_data": target_data,
+                },
+            )
+
+            created_negative_targets.append(
+                {"negative_target_id": target_id, "created": created}
+            )
+
         # ---------------- SUCCESS RESPONSE ----------------
 
         return Response(
             {
-                "status": True,
-                "message": "Negative targets created successfully",
+                "status": len(success_items) > 0,
+                "message": "Negative targets processed",
+                "created_count": len(created_negative_targets),
+                "error_count": len(parsed_errors),
+                "errors": parsed_errors,
+                "data": created_negative_targets,
                 "amazon_response": response_data,
             }
         )
@@ -141,7 +205,7 @@ class CreateSPCampaignNegativeTargetView(APIView):
         # ---------------- AMAZON ACCOUNT ----------------
 
         try:
-            amazon_account = get_primary_amazon_account()
+            amazon_account = get_primary_amazon_account(request.user)
             profile_id = amazon_account.profile_id
 
         except Exception as e:
@@ -241,15 +305,66 @@ class CreateSPCampaignNegativeTargetView(APIView):
 
         parsed_errors = extract_amazon_errors(error_items)
 
+        # ---------------- SAVE TO DB ----------------
+
+        created_negative_targets = []
+
+        success_items = response_data.get("campaignNegativeTargetingClauses", {}).get(
+            "success", []
+        )
+
+        error_items = response_data.get("campaignNegativeTargetingClauses", {}).get(
+            "error", []
+        )
+
+        parsed_errors = extract_amazon_errors(error_items)
+
+        for item in success_items:
+            target_data = item.get("campaignNegativeTargetingClauses", {})
+
+            target_id = item.get("campaignNegativeTargetingClauseId")
+
+            if not target_id:
+                target_id = target_data.get("targetId")
+
+            if not target_id:
+                continue
+
+            campaign = AdsCampaign.objects.filter(
+                campaign_id=target_data.get("campaignId")
+            ).first()
+
+            negative_target, created = AdsNegativeTarget.objects.update_or_create(
+                negative_target_id=str(target_id),
+                defaults={
+                    "amazon_account": amazon_account,
+                    "campaign": campaign,
+                    "ad_group": None,
+                    "expression_type": target_data.get("expressionType"),
+                    "expression": target_data.get("expression", []),
+                    "resolved_expression": target_data.get("resolvedExpression", []),
+                    "state": target_data.get("state"),
+                    "serving_status": target_data.get("extendedData", {}).get(
+                        "servingStatus"
+                    ),
+                    "raw_data": target_data,
+                },
+            )
+
+            created_negative_targets.append(
+                {"negative_target_id": target_id, "created": created}
+            )
+
         # ---------------- SUCCESS RESPONSE ----------------
 
         return Response(
             {
                 "status": len(success_items) > 0,
                 "message": "Campaign negative targets processed",
-                "created_count": len(success_items),
+                "created_count": len(created_negative_targets),
                 "error_count": len(parsed_errors),
                 "errors": parsed_errors,
+                "data": created_negative_targets,
                 "amazon_response": response_data,
             }
         )
