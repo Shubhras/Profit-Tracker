@@ -3,6 +3,7 @@
 /* eslint-disable react/prop-types */
 // import UilEllipsisV from '@iconscout/react-unicons/icons/uil-ellipsis-v';
 import { Button, Col, Layout, Row } from 'antd';
+// import { DoubleLeftOutlined, DoubleRightOutlined } from '@ant-design/icons';
 import propTypes from 'prop-types';
 import { Component } from 'react';
 import { Scrollbars } from '@pezhmanparsaee/react-custom-scrollbars';
@@ -15,11 +16,49 @@ import { FooterStyle, LayoutContainer, SmallScreenAuthInfo, TopMenuSearch } from
 // import TopMenu from './TopMenu';
 // import Search from '../components/utilities/auth-info/Search';
 import AuthInfo from '../components/utilities/auth-info/info';
-import { ReactComponent as MySVG } from '../static/img/icon/left-bar.svg';
+// import { ReactComponent as MySVG } from '../static/img/icon/left-bar.svg';
 
 const { theme } = require('../config/theme/themeVariables');
 
 const { Header, Sider, Content } = Layout;
+
+function CollapseMenuIcon() {
+  return (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      color="#312f2fd4"
+    >
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <path d="M9 3v18m8-13-4 4 4 4" />
+    </svg>
+  );
+}
+
+function ExpandMenuIcon() {
+  return (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      color="#312f2fd4"
+    >
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <path d="M9 3v18m4-13 4 4-4 4" />
+    </svg>
+  );
+}
 
 const ThemeLayout = (WrappedComponent) => {
   class LayoutComponent extends Component {
@@ -137,12 +176,43 @@ const ThemeLayout = (WrappedComponent) => {
                 {/* Logo Area */}
                 <div className="flex items-center gap-4 min-w-[200px]">
                   {!topMenu || window.innerWidth <= 991 ? (
+                    // <Button
+                    //   type="link"
+                    //   className="p-2 mb-0 bg-gray-50 hover:bg-emerald-50 text-gray-500 hover:text-emerald-600 rounded-lg border border-gray-100 transition-all"
+                    //   onClick={toggleCollapsed}
+                    // >
+                    //   <MySVG className="w-5 h-5" />
+                    // </Button>
+                    //                   <Button
+                    //                     type="text"
+                    //                     onClick={toggleCollapsed}
+                    //                     className="
+                    //   w-9 h-9
+                    //   !p-0
+                    //   !rounded-full
+                    //   !bg-[#F3F4F6]
+                    //   hover:!bg-[#E5E7EB]
+                    //   !border
+                    //   !border-[#D1D5DB]
+                    //   flex
+                    //   items-center
+                    //   justify-center
+                    //   transition-all
+                    // "
+                    //                   >
+                    //                     {collapsed ? <DoubleRightOutlined /> : <DoubleLeftOutlined />}
+                    //                   </Button>
+
                     <Button
-                      type="link"
-                      className="p-2 mb-0 bg-gray-50 hover:bg-emerald-50 text-gray-500 hover:text-emerald-600 rounded-lg border border-gray-100 transition-all"
+                      type="text"
                       onClick={toggleCollapsed}
+                      className="w-9 h-9 !p-0 flex items-center justify-center transition-all"
+                      // style={{ marginLeft: '-21px' }}
+                      style={{
+                        marginLeft: window.innerWidth > 991 ? '-21px' : '0px',
+                      }}
                     >
-                      <MySVG className="w-5 h-5" />
+                      {collapsed ? <ExpandMenuIcon /> : <CollapseMenuIcon />}
                     </Button>
                   ) : null}
 

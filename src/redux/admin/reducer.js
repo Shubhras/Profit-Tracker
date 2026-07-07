@@ -136,6 +136,14 @@ const {
   GET_MODULE_PERMISSION_DETAILS_BEGIN,
   GET_MODULE_PERMISSION_DETAILS_SUCCESS,
   GET_MODULE_PERMISSION_DETAILS_ERR,
+
+  GET_USERS_DETAILS_BEGIN,
+  GET_USERS_DETAILS_SUCCESS,
+  GET_USERS_DETAILS_ERR,
+
+  UPDATE_USERS_DETAILS_BEGIN,
+  UPDATE_USERS_DETAILS_SUCCESS,
+  UPDATE_USERS_DETAILS_ERR,
 } = actions;
 
 const initialState = {
@@ -173,6 +181,8 @@ const initialState = {
   getModuleSubmodules: null,
   updateModulePermission: null,
   modulePermissionsDetails: null,
+  getusersDetailsData: null,
+  updateUserDetailsData: null,
 };
 
 const AdmindashboardReducer = (state = initialState, action) => {
@@ -886,6 +896,48 @@ const AdmindashboardReducer = (state = initialState, action) => {
       };
 
     case GET_MODULE_PERMISSION_DETAILS_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case GET_USERS_DETAILS_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case GET_USERS_DETAILS_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        getusersDetailsData: action.data,
+      };
+
+    case GET_USERS_DETAILS_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case UPDATE_USERS_DETAILS_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case UPDATE_USERS_DETAILS_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        updateUserDetailsData: action.data,
+      };
+
+    case UPDATE_USERS_DETAILS_ERR:
       return {
         ...state,
         loading: false,

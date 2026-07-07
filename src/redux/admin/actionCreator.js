@@ -59,6 +59,14 @@ const {
   getuserslistSuccess,
   getuserslistErr,
 
+  getusersDetailsBegin,
+  getusersDetailsSuccess,
+  getusersDetailsErr,
+
+  updateUsersDetailsBegin,
+  updateUsersDetailsSuccess,
+  updateUsersDetailsErr,
+
   notificationListBegin,
   notificationListSuccess,
   notificationListErr,
@@ -274,21 +282,26 @@ export const CreateSubscription = (payload) => {
   };
 };
 
-export const updateSubscription = (id, payload) => {
+export const updateSubscription = (id, payload, callback) => {
   return async (dispatch) => {
     dispatch(updateSubscriptionBegin());
 
     try {
       const response = await DataService.put(`user/subscription-plan/update/${id}/`, payload);
 
-      if (response.data?.results?.status === true) {
+      if (response.data?.status === true || response.data?.status === 'success') {
         dispatch(updateSubscriptionSuccess(response.data));
+
         dispatch(getSubscriptionList());
+
+        callback?.(true, response.data);
       } else {
-        dispatch(updateSubscriptionErr('Something went wrong'));
+        dispatch(updateSubscriptionErr(response.data?.message || 'Something went wrong'));
+        callback?.(false, response.data);
       }
     } catch (err) {
       dispatch(updateSubscriptionErr(err));
+      callback?.(false, err.response?.data || err);
     }
   };
 };
@@ -395,6 +408,43 @@ export const getUsersList = (page = 1, limit = 10, search = '') => {
       }
     } catch (err) {
       dispatch(getuserslistErr(err));
+    }
+  };
+};
+
+export const getUsersDetails = (id) => {
+  return async (dispatch) => {
+    dispatch(getusersDetailsBegin());
+
+    try {
+      const response = await DataService.get(`user/admin/main-users/${id}/get-update/`);
+
+      if (response.data?.status === true) {
+        dispatch(getusersDetailsSuccess(response.data));
+      } else {
+        dispatch(getusersDetailsErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(getusersDetailsErr(err));
+    }
+  };
+};
+
+export const updateUserDetails = (id, payload) => {
+  return async (dispatch) => {
+    dispatch(updateUsersDetailsBegin());
+
+    try {
+      const response = await DataService.put(`user/admin/main-users/${id}/get-update/`, payload);
+
+      if (response.data?.status === true) {
+        dispatch(updateUsersDetailsSuccess(response.data));
+      } else {
+        dispatch(updateUsersDetailsErr('Something went wrong'));
+      }
+      return response.data;
+    } catch (err) {
+      dispatch(updateUsersDetailsErr(err));
     }
   };
 };

@@ -479,9 +479,7 @@ export default function ProfitDetailsView() {
               record,
             })
           }
-          // className={`font-medium underline cursor-pointer bg-transparent border-none ${
-          //   String(v).includes('-') ? 'text-red-500' : 'text-green-600'
-          // }`}
+          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none"
         >
           {v}
         </button>

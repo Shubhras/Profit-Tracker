@@ -139,6 +139,13 @@ const actions = {
   GET_MODULE_PERMISSION_DETAILS_SUCCESS: 'GET_MODULE_PERMISSION_DETAILS_SUCCESS',
   GET_MODULE_PERMISSION_DETAILS_ERR: 'GET_MODULE_PERMISSION_DETAILS_ERR',
 
+  GET_USERS_DETAILS_BEGIN: 'GET_USERS_DETAILS_BEGIN',
+  GET_USERS_DETAILS_SUCCESS: 'GET_USERS_DETAILS_SUCCESS',
+  GET_USERS_DETAILS_ERR: 'GET_USERS_DETAILS_ERR',
+
+  UPDATE_USERS_DETAILS_BEGIN: 'UPDATE_USERS_DETAILS_BEGIN',
+  UPDATE_USERS_DETAILS_SUCCESS: 'UPDATE_USERS_DETAILS_SUCCESS',
+  UPDATE_USERS_DETAILS_ERR: 'UPDATE_USERS_DETAILS_ERR',
   createCouponCodesBegin: () => ({
     type: actions.CREATE_COUPONCODE_BEGIN,
   }),
@@ -626,6 +633,34 @@ const actions = {
 
   getModulePermissionDetailsErr: (err) => ({
     type: actions.GET_MODULE_PERMISSION_DETAILS_ERR,
+    err,
+  }),
+
+  getusersDetailsBegin: () => ({
+    type: actions.GET_USERS_DETAILS_BEGIN,
+  }),
+
+  getusersDetailsSuccess: (data) => ({
+    type: actions.GET_USERS_DETAILS_SUCCESS,
+    data,
+  }),
+
+  getusersDetailsErr: (err) => ({
+    type: actions.GET_USERS_DETAILS_ERR,
+    err,
+  }),
+
+  updateUsersDetailsBegin: () => ({
+    type: actions.UPDATE_USERS_DETAILS_BEGIN,
+  }),
+
+  updateUsersDetailsSuccess: (data) => ({
+    type: actions.UPDATE_USERS_DETAILS_SUCCESS,
+    data,
+  }),
+
+  updateUsersDetailsErr: (err) => ({
+    type: actions.UPDATE_USERS_DETAILS_ERR,
     err,
   }),
 };

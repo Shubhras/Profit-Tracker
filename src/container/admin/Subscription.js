@@ -2,16 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { Button, Modal, Form, Input, InputNumber, Spin, Select, Checkbox } from 'antd';
 import { FormOutlined, PlusOutlined, DeleteOutlined, CheckOutlined, ExclamationCircleFilled } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+
 import {
   getSubscriptionList,
   CreateSubscription,
   DeleteSubscription,
   updateSubscription,
-  getModulesSubmodules,
+  // getModulesSubmodules,
 } from '../../redux/admin/actionCreator';
 
 function SubscriptionTable() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
 
@@ -70,14 +73,15 @@ function SubscriptionTable() {
           <Button
             type="primary"
             icon={<PlusOutlined style={{ fontSize: '12px' }} />}
-            onClick={() => {
-              setIsEditMode(false);
-              setSelectedId(null);
-              form.resetFields();
+            // onClick={() => {
+            //   setIsEditMode(false);
+            //   setSelectedId(null);
+            //   form.resetFields();
 
-              dispatch(getModulesSubmodules());
-              setIsModalOpen(true);
-            }}
+            //   dispatch(getModulesSubmodules());
+            //   setIsModalOpen(true);
+            // }}
+            onClick={() => navigate('/super-admin/subscription/add')}
             className="!h-[30px] !flex !items-center !justify-center gap-0 px-2 text-[13px] font-semibold"
           >
             Add Subscription
@@ -175,8 +179,7 @@ function SubscriptionTable() {
                       {plan.module_details?.length > 0 ? (
                         plan.module_details?.map((module) => {
                           const moduleSubmodules =
-                            plan.submodule_details?.filter((sub) => sub.module_id === module.id) || [];
-
+                            plan.submodule_details?.filter((sub) => sub.module?.id === module.id) || [];
                           return (
                             <div
                               key={module.id}
@@ -229,30 +232,29 @@ function SubscriptionTable() {
                   <div className="mt-auto pt-5 border-t border-gray-200 flex justify-end items-center gap-4">
                     <FormOutlined
                       className="text-[#1677ff] text-[17px] cursor-pointer drop-shadow-sm transition-all duration-200 hover:scale-110 hover:drop-shadow-md hover:text-[#0958d9]"
+                      // onClick={() => {
+                      //   setIsEditMode(true);
+                      //   setSelectedId(plan.id);
+
+                      //   form.setFieldsValue({
+                      //     plan_name: plan.plan_name,
+                      //     description: plan.description,
+                      //     monthly_price: plan.monthly_price,
+                      //     annual_price: plan.annual_price,
+                      //     status: plan.status,
+                      //     features: plan.features || [],
+                      //     terms_and_conditions: plan.terms_and_conditions || [],
+                      //   });
+                      //   setSelectedModules(plan.module_details?.map((m) => m.id) || []);
+
+                      //   setSelectedSubmodules(plan.submodule_details?.map((s) => s.id) || []);
+
+                      //   setExpandedModules(plan.module_details?.map((m) => m.id) || []);
+                      //   dispatch(getModulesSubmodules());
+                      //   setIsModalOpen(true);
+                      // }}
                       onClick={() => {
-                        setIsEditMode(true);
-                        setSelectedId(plan.id);
-
-                        // form.setFieldsValue({
-                        //   subscription_type: plan.subscription_type?.toLowerCase(),
-                        //   price: plan.price,
-                        //   status: plan.status,
-                        //   features: plan.features,
-                        //   termsConditions: plan.termsConditions || [],
-                        //   is_active: plan.is_active,
-                        // });
-
-                        form.setFieldsValue({
-                          plan_name: plan.plan_name,
-                          description: plan.description,
-                          monthly_price: plan.monthly_price,
-                          annual_price: plan.annual_price,
-                          status: plan.status,
-                          features: plan.features || [],
-                          terms_and_conditions: plan.terms_and_conditions || [],
-                        });
-                        dispatch(getModulesSubmodules());
-                        setIsModalOpen(true);
+                        navigate(`/super-admin/subscription/add?id=${plan.id}`);
                       }}
                     />
                     <DeleteOutlined
