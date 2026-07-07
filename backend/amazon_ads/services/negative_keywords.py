@@ -4,7 +4,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from amazon_ads.models import *
-from amazon_ads.utils import extract_amazon_errors, refresh_ads_access_token, get_primary_amazon_account
+from amazon_ads.utils import (
+    extract_amazon_errors,
+    get_primary_amazon_account,
+    refresh_ads_access_token,
+)
 
 
 class CreateSPNegativeKeywordView(APIView):
@@ -27,7 +31,7 @@ class CreateSPNegativeKeywordView(APIView):
         # ---------------- AMAZON ACCOUNT ----------------
 
         try:
-            amazon_account = get_primary_amazon_account()
+            amazon_account = get_primary_amazon_account(request.user)
             profile_id = amazon_account.profile_id
 
         except Exception as e:
@@ -116,7 +120,7 @@ class CreateSPNegativeKeywordView(APIView):
 
         success_items = response_data.get("negativeKeywords", {}).get("success", [])
 
-        error_items = response_data.get("keywords", {}).get("error", [])
+        error_items = response_data.get("negativeKeywords", {}).get("error", [])
 
         parsed_errors = extract_amazon_errors(error_items)
 
@@ -124,6 +128,9 @@ class CreateSPNegativeKeywordView(APIView):
             negative_keyword_data = item.get("negativeKeyword", {})
 
             negative_keyword_id = item.get("negativeKeywordId")
+
+            if not negative_keyword_id:
+                negative_keyword_id = negative_keyword_data.get("keywordId")
 
             if not negative_keyword_id:
                 continue
@@ -148,6 +155,9 @@ class CreateSPNegativeKeywordView(APIView):
                     "native_language_keyword": bool(
                         negative_keyword_data.get("nativeLanguageKeyword")
                     ),
+                    "serving_status": negative_keyword_data.get("extendedData", {}).get(
+                        "servingStatus"
+                    ),
                     "raw_data": negative_keyword_data,
                 },
             )
@@ -165,7 +175,7 @@ class CreateSPNegativeKeywordView(APIView):
         return Response(
             {
                 "status": len(created_negative_keywords) > 0,
-                "message": "Negative Keywords processed",
+                "message": "Negative keywords processed",
                 "created_count": len(created_negative_keywords),
                 "error_count": len(parsed_errors),
                 "errors": parsed_errors,
@@ -195,7 +205,7 @@ class CreateSPCampaignNegativeKeywordView(APIView):
         # ---------------- AMAZON ACCOUNT ----------------
 
         try:
-            amazon_account = get_primary_amazon_account()
+            amazon_account = get_primary_amazon_account(request.user)
             profile_id = amazon_account.profile_id
 
         except Exception as e:
@@ -251,13 +261,8 @@ class CreateSPCampaignNegativeKeywordView(APIView):
         # ---------------- AMAZON REQUEST ----------------
 
         try:
-            print("URL:", url)
-            print("PAYLOAD:", payload)
 
             response = requests.post(url, headers=headers, json=payload)
-
-            print("STATUS:", response.status_code)
-            print("RESPONSE:", response.text)
 
             response_data = response.json()
 
@@ -283,7 +288,9 @@ class CreateSPCampaignNegativeKeywordView(APIView):
                 status=response.status_code,
             )
 
-        # ---------------- RESPONSE PARSING ----------------
+        # ---------------- SAVE TO DB ----------------
+
+        created_negative_keywords = []
 
         success_items = response_data.get("campaignNegativeKeywords", {}).get(
             "success", []
@@ -293,15 +300,58 @@ class CreateSPCampaignNegativeKeywordView(APIView):
 
         parsed_errors = extract_amazon_errors(error_items)
 
+        for item in success_items:
+            negative_keyword_data = item.get("campaignNegativeKeyword", {})
+
+            negative_keyword_id = item.get("campaignNegativeKeywordId")
+
+            if not negative_keyword_id:
+                negative_keyword_id = negative_keyword_data.get("keywordId")
+
+            if not negative_keyword_id:
+                continue
+
+            campaign = AdsCampaign.objects.filter(
+                campaign_id=negative_keyword_data.get("campaignId")
+            ).first()
+
+            negative_keyword_obj, created = AdsNegativeKeyword.objects.update_or_create(
+                negative_keyword_id=int(negative_keyword_id),
+                defaults={
+                    "amazon_account": amazon_account,
+                    "campaign": campaign,
+                    "ad_group": None,
+                    "keyword_text": negative_keyword_data.get("keywordText"),
+                    "match_type": negative_keyword_data.get("matchType"),
+                    "state": negative_keyword_data.get("state"),
+                    "native_language_keyword": bool(
+                        negative_keyword_data.get("nativeLanguageKeyword")
+                    ),
+                    "serving_status": negative_keyword_data.get("extendedData", {}).get(
+                        "servingStatus"
+                    ),
+                    "raw_data": negative_keyword_data,
+                },
+            )
+
+            created_negative_keywords.append(
+                {
+                    "negative_keyword_id": negative_keyword_id,
+                    "keyword_text": negative_keyword_obj.keyword_text,
+                    "created": created,
+                }
+            )
+
         # ---------------- SUCCESS RESPONSE ----------------
 
         return Response(
             {
-                "status": len(success_items) > 0,
+                "status": len(created_negative_keywords) > 0,
                 "message": "Campaign negative keywords processed",
-                "created_count": len(success_items),
+                "created_count": len(created_negative_keywords),
                 "error_count": len(parsed_errors),
                 "errors": parsed_errors,
+                "data": created_negative_keywords,
                 "amazon_response": response_data,
             }
         )

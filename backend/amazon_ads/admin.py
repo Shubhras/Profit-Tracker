@@ -1,5 +1,3 @@
-from django.contrib import admin
-
 # Register your models here.
 from django.contrib import admin
 from .models import *
@@ -27,6 +25,19 @@ class AmazonAdsAccountAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at", "updated_at")
     ordering = ("-created_at",)
 
+@admin.register(AdsPortfolio)
+class AdsPortfolioAdmin(admin.ModelAdmin):
+    list_display = (
+        "portfolio_id",
+        "name",
+        "amazon_account",
+        "state",
+        "in_budget",
+    )
+    search_fields = (
+        "name",
+        "portfolio_id",
+    )
 
 @admin.register(AdsCampaign)
 class AdsCampaignAdmin(admin.ModelAdmin):
@@ -40,6 +51,7 @@ class AdsCampaignAdmin(admin.ModelAdmin):
         "targeting_type",
         "daily_budget",
         "start_date",
+        "end_date",
         "created_at",
     )
     search_fields = (
@@ -364,7 +376,29 @@ class AdsNegativeKeywordAdmin(admin.ModelAdmin):
         "-created_at",
     )    
 
+@admin.register(AdsNegativeTarget)
+class AdsNegativeTargetAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "negative_target_id",
+        "campaign",
+        "ad_group",
+        "state",
+        "amazon_account",
+        "created_at",
+    )
 
+    search_fields = (
+        "negative_target_id",
+        "campaign__name",
+        "campaign__campaign_id",
+        "ad_group__name",
+        "ad_group__ad_group_id",
+    )
+
+    list_filter = ("state", "serving_status", "amazon_account")
+
+    ordering = ("-created_at",)
 
 @admin.register(AdsOptimizationRule)
 class AdsOptimizationRuleAdmin(admin.ModelAdmin):

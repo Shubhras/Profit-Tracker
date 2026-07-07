@@ -6,117 +6,10 @@ from rest_framework.views import APIView
 from amazon_ads.models import *
 from amazon_ads.models import AdsCampaign
 from amazon_ads.utils import (
-    ads_api_request,
     extract_amazon_errors,
     refresh_ads_access_token,
     get_primary_amazon_account
 )
-
-
-def sync_campaigns(account):
-
-    payload = {
-        "maxResults": 1000
-    }
-
-    response = ads_api_request(
-        account=account,
-        method="POST",
-        endpoint="/sp/campaigns/list",
-        payload=payload
-    )
-
-    if response.status_code != 200:
-
-        print("CAMPAIGN SYNC ERROR")
-        print(response.text)
-
-        return False
-
-    data = response.json()
-
-    campaigns = data.get("campaigns", [])
-
-    saved = 0
-
-    for item in campaigns:
-
-        dynamic_bidding = item.get(
-            "dynamicBidding", {}
-        )
-
-        AdsCampaign.objects.update_or_create(
-
-            campaign_id=item["campaignId"],
-
-            defaults={
-
-                "amazon_account":
-                account,
-
-                "name":
-                item.get("name"),
-
-                "start_date":
-                item.get("startDate"),
-
-                "state":
-                item.get("state"),
-
-                "campaign_type":
-                item.get("campaignType"),
-
-                "targeting_type":
-                item.get("targetingType"),
-
-                "daily_budget":
-                item.get("budget", {}).get(
-                    "budget", 0
-                ),
-
-                "budget_type":
-                item.get("budget", {}).get(
-                    "budgetType"
-                ),
-
-                "bidding_strategy":
-                dynamic_bidding.get(
-                    "strategy"
-                ),
-
-                "placement_bidding":
-                dynamic_bidding.get(
-                    "placementBidding", []
-                ),
-
-                "marketplace_budget_allocation":
-                item.get(
-                    "marketplaceBudgetAllocation"
-                ),
-
-                "off_amazon_settings":
-                item.get(
-                    "offAmazonSettings", {}
-                ),
-
-                "tags":
-                item.get(
-                    "tags", {}
-                ),
-
-                "raw_data":
-                item
-            }
-        )
-
-        saved += 1
-
-    print(f"TOTAL CAMPAIGNS SAVED: {saved}")
-
-    return True
-
-
-
 
 class UpdateSPCampaignView(APIView):
 
@@ -346,7 +239,7 @@ class CreateSPCampaignView(APIView):
         # ---------------- AMAZON ACCOUNT ----------------
 
         try:
-            amazon_account = get_primary_amazon_account()
+            amazon_account = get_primary_amazon_account(request.user)
             profile_id = amazon_account.profile_id
 
         except Exception as e:
@@ -455,6 +348,7 @@ class CreateSPCampaignView(APIView):
                     "name": campaign_data.get("name"),
                     "state": campaign_data.get("state"),
                     "start_date": campaign_data.get("startDate"),
+                    "end_date": campaign_data.get("endDate"),
                     "campaign_type": campaign_data.get("campaignType"),
                     "targeting_type": campaign_data.get("targetingType"),
                     "daily_budget": budget_data.get("budget", 0),

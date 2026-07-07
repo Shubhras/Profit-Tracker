@@ -47,8 +47,6 @@ function ReviewStep({ wizardData, onBack }) {
 
       message.error(result?.message || 'Campaign creation failed');
     } catch (error) {
-      console.error(error);
-
       message.error(error.message || 'Campaign creation failed');
     } finally {
       setCreating(false);
@@ -72,6 +70,8 @@ function ReviewStep({ wizardData, onBack }) {
           <Card title="Campaign">
             <Descriptions column={1} size="small">
               <Descriptions.Item label="Name">{wizardData.campaign.name}</Descriptions.Item>
+
+              <Descriptions.Item label="Portfolio">{wizardData.campaign.portfolioName || 'None'}</Descriptions.Item>
 
               <Descriptions.Item label="State">{wizardData.campaign.state}</Descriptions.Item>
 

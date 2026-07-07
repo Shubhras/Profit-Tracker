@@ -516,7 +516,35 @@ export const getListingProducts = (page = 1, pageSize = 10, search = '') => {
     }
   };
 };
+export const getPortfolios = () => {
+  return async () => {
+    try {
+      const response = await DataService.get('/amazon-ads/portfolios/list/');
 
+      return response.data;
+    } catch (err) {
+      return {
+        status: false,
+        message: err.response?.data?.message || err.message,
+      };
+    }
+  };
+};
+
+export const createPortfolio = (payload) => {
+  return async () => {
+    try {
+      const response = await DataService.post('/amazon-ads/portfolios/create/', payload);
+
+      return response.data;
+    } catch (err) {
+      return {
+        status: false,
+        message: err.response?.data?.message || err.message,
+      };
+    }
+  };
+};
 export const createSPCampaign = (payload) => {
   return async () => {
     try {
@@ -614,6 +642,71 @@ export const createCampaignNegativeTarget = (payload) => {
       };
     }
   };
+};
+
+export const getKeywordRecommendations = (payload) => {
+  return async () => {
+    try {
+      const response = await DataService.post('/amazon-ads/keywords/recommendations/', payload);
+
+      return response.data;
+    } catch (err) {
+      return {
+        status: false,
+        message: err.response?.data?.message || err.message,
+      };
+    }
+  };
+};
+
+export const getCategoryRecommendations = (payload) => {
+  return async () => {
+    try {
+      const response = await DataService.post('/amazon-ads/targets/category-recommendations/', payload);
+
+      return response.data;
+    } catch (err) {
+      return {
+        status: false,
+        message: err.response?.data?.message || err.message,
+      };
+    }
+  };
+};
+
+export const getProductRecommendations = (payload) => {
+  return async () => {
+    try {
+      const response = await DataService.post('/amazon-ads/targets/product-recommendations/', payload);
+
+      return response.data;
+    } catch (err) {
+      return {
+        status: false,
+        message: err.response?.data?.message || err.message,
+      };
+    }
+  };
+};
+export const getCampaignProducts = (search, page, pageSize, fromDate, endDate) => async () => {
+  try {
+    const response = await DataService.post('/amazon-ads/campaign-products/list/', {
+      search,
+      fromDate,
+      endDate,
+      pagination: {
+        page,
+        page_size: pageSize,
+      },
+    });
+
+    return response.data;
+  } catch (err) {
+    return {
+      status: false,
+      message: err.response?.data?.message || err.message,
+    };
+  }
 };
 
 export const getAdvertisingOverview = (params) => {

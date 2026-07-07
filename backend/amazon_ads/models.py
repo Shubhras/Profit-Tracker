@@ -1,9 +1,8 @@
-from django.db import models
-
 # Create your models here.
 from django.db import models
-from user_auth.models import User
+
 from amazon_auth.models import AmazonAccount
+from user_auth.models import User
 
 
 class AmazonAdsAccount(models.Model):
@@ -38,6 +37,24 @@ class AmazonAdsAccount(models.Model):
     def __str__(self):
         return str(self.profile_id)
 
+class AdsPortfolio(models.Model):
+    amazon_account = models.ForeignKey(AmazonAdsAccount, on_delete=models.CASCADE)
+
+    portfolio_id = models.CharField(max_length=50)
+
+    name = models.CharField(max_length=255)
+    state = models.CharField(max_length=50)
+    in_budget = models.BooleanField()
+    currency_code = models.CharField(max_length=10, null=True, blank=True)
+    budget_policy = models.CharField(max_length=50, null=True, blank=True)
+
+    raw_data = models.JSONField(default=dict, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("amazon_account", "portfolio_id")
+
 class AdsCampaign(models.Model):
     amazon_account = models.ForeignKey(AmazonAdsAccount,on_delete=models.CASCADE)
 
@@ -48,6 +65,7 @@ class AdsCampaign(models.Model):
     targeting_type = models.CharField(max_length=50, null=True, blank=True)
     daily_budget = models.FloatField(default=0)
     start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
     raw_data = models.JSONField(default=dict)
 
     budget_type = models.CharField( max_length=50,null=True,blank=True)
@@ -364,8 +382,8 @@ class AdsBudgetRule(models.Model):
     
 
 
-#Negative targeting by campin
-class AdsCampaignNegativeTarget(models.Model):
+#Negative targeting
+class AdsNegativeTarget(models.Model):
 
     amazon_account = models.ForeignKey(
         AmazonAdsAccount,
@@ -375,6 +393,13 @@ class AdsCampaignNegativeTarget(models.Model):
     campaign = models.ForeignKey(
         AdsCampaign,
         on_delete=models.CASCADE,
+        related_name="negative_targets"
+    )
+    ad_group = models.ForeignKey(
+        AdsAdGroup,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         related_name="negative_targets"
     )
 
@@ -408,10 +433,16 @@ class AdsCampaignNegativeTarget(models.Model):
         blank=True
     )
 
-    bid = models.FloatField(
-        default=0
+    creation_date_time = models.DateTimeField(
+        null=True,
+        blank=True
     )
 
+    last_update_date_time = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+    
     raw_data = models.JSONField(
         default=dict,
         blank=True
