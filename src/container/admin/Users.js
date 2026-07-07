@@ -76,7 +76,13 @@ function UsersList() {
       dataIndex: 'name',
       width: 70,
       align: 'center',
-      render: (name) => <span className="font-medium text-[#111827]">{name || '-'}</span>,
+      render: (v) => (
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
+            {v || '-'}
+          </span>
+        </Tooltip>
+      ),
     },
 
     {

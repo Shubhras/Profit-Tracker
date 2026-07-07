@@ -119,7 +119,7 @@ function ViewUser() {
 
               <div>
                 <div className="flex items-center gap-3 flex-wrap mb-1">
-                  <h2 className="text-[19px] font-semibold text-gray-800 mb-0">{user?.name || '-'}</h2>
+                  <h2 className="text-[17px] font-semibold text-gray-800 mb-0">{user?.name || '-'}</h2>
 
                   <Tag color={user?.is_active ? 'green' : 'red'} className="rounded-1 px-3">
                     {user?.is_active ? 'Active' : 'Inactive'}
