@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Tag, Avatar, Spin, Button, Modal, message } from 'antd';
+import { Tag, Avatar, Spin, Button, Modal, message, Select } from 'antd';
 import {
   UserOutlined,
   MailOutlined,
@@ -104,7 +104,7 @@ function ViewUser() {
 
           <div>
             <h2 className="text-[20px] font-bold text-gray-800 mb-0">User Details</h2>
-            <p className="text-[13px] mb-0">View complete information about the user.</p>
+            {/* <p className="text-[13px] mb-0">View complete information about the user.</p> */}
           </div>
         </div>
 
@@ -115,7 +115,7 @@ function ViewUser() {
             {/* Left Section */}
 
             <div className="flex items-center gap-3">
-              <Avatar size={43} icon={<UserOutlined />} className="shrink-0" />
+              <Avatar size={38} icon={<UserOutlined />} className="shrink-0" />
 
               <div>
                 <div className="flex items-center gap-3 flex-wrap mb-1">
@@ -216,7 +216,7 @@ function ViewUser() {
           {/* Address */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
             <div className="flex items-center gap-2">
-              <EnvironmentOutlined className="text-green-500 text-lg" />
+              <EnvironmentOutlined className="text-blue-500 text-lg" />
               <h3 className="text-lg font-semibold mb-0">Address</h3>
             </div>
             <div className="mx-1 my-3 border-t border-gray-200 mt-2" />
@@ -275,7 +275,7 @@ function ViewUser() {
 
         <div className="p-3 rounded-2xl shadow-md mt-4 bg-white">
           <div className="flex items-center gap-2">
-            <AppstoreOutlined className="text-purple-500 text-lg" />
+            <AppstoreOutlined className="text-blue-500 text-lg" />
             <h3 className="text-lg font-semibold mb-0">Module Permissions</h3>
           </div>
           <div className="mx-1 my-3 border-t border-gray-200 mt-2" />
@@ -408,6 +408,33 @@ function ViewUser() {
                   }
                 />
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">Active Status</label>
+
+                <Select
+                  size="middle"
+                  style={{ width: '100%' }}
+                  className="rounded-lg"
+                  value={editData.is_active}
+                  onChange={(value) =>
+                    setEditData({
+                      ...editData,
+                      is_active: value,
+                    })
+                  }
+                  options={[
+                    {
+                      label: 'Active',
+                      value: true,
+                    },
+                    {
+                      label: 'Inactive',
+                      value: false,
+                    },
+                  ]}
+                />
+              </div>
             </div>
 
             {/* Address */}
@@ -427,7 +454,7 @@ function ViewUser() {
             </div>
 
             {/* Status */}
-            <div className="mt-4 flex items-center justify-between bg-gray-50 rounded-lg px-4 py-3">
+            {/* <div className="mt-4 flex items-center justify-between bg-gray-50 rounded-lg px-4 py-3">
               <span className="text-sm font-medium text-gray-700">Active Status</span>
 
               <input
@@ -441,19 +468,19 @@ function ViewUser() {
                 }
                 className="h-5 w-5"
               />
-            </div>
+            </div> */}
 
             {/* Buttons */}
             <div className="flex justify-end gap-3 mt-6">
               <button
                 type="button"
                 onClick={() => setIsEditModalOpen(false)}
-                className="px-3 h-[34px] rounded-lg border border-gray-300 hover:bg-gray-100"
+                className="px-3 h-[34px] rounded-l border border-gray-300 hover:bg-gray-100"
               >
                 Cancel
               </button>
 
-              <button type="submit" className="px-3 h-[34px] bg-primary rounded-lg text-white font-semibold">
+              <button type="submit" className="px-3 h-[34px] bg-primary rounded-l text-white font-semibold">
                 Update User
               </button>
             </div>
