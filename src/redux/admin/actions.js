@@ -127,6 +127,25 @@ const actions = {
   DELETE_SUBUSERS_SUCCESS: 'DELETE_SUBUSERS_SUCCESS',
   DELETE_SUBUSERS_ERR: 'DELETE_SUBUSERS_ERR',
 
+  GET_MODULE_SUBMODULE_BEGIN: 'GET_MODULE_SUBMODULE_BEGIN',
+  GET_MODULE_SUBMODULE_SUCCESS: 'GET_MODULE_SUBMODULE_SUCCESS',
+  GET_MODULE_SUBMODULE_ERR: 'GET_MODULE_SUBMODULE_ERR',
+
+  UPDATE_MODULE_PERMISSION_BEGIN: 'UPDATE_MODULE_PERMISSION_BEGIN',
+  UPDATE_MODULE_PERMISSION_SUCCESS: 'UPDATE_MODULE_PERMISSION_SUCCESS',
+  UPDATE_MODULE_PERMISSION_ERR: 'UPDATE_MODULE_PERMISSION_ERR',
+
+  GET_MODULE_PERMISSION_DETAILS_BEGIN: 'GET_MODULE_PERMISSION_DETAILS_BEGIN',
+  GET_MODULE_PERMISSION_DETAILS_SUCCESS: 'GET_MODULE_PERMISSION_DETAILS_SUCCESS',
+  GET_MODULE_PERMISSION_DETAILS_ERR: 'GET_MODULE_PERMISSION_DETAILS_ERR',
+
+  GET_USERS_DETAILS_BEGIN: 'GET_USERS_DETAILS_BEGIN',
+  GET_USERS_DETAILS_SUCCESS: 'GET_USERS_DETAILS_SUCCESS',
+  GET_USERS_DETAILS_ERR: 'GET_USERS_DETAILS_ERR',
+
+  UPDATE_USERS_DETAILS_BEGIN: 'UPDATE_USERS_DETAILS_BEGIN',
+  UPDATE_USERS_DETAILS_SUCCESS: 'UPDATE_USERS_DETAILS_SUCCESS',
+  UPDATE_USERS_DETAILS_ERR: 'UPDATE_USERS_DETAILS_ERR',
   createCouponCodesBegin: () => ({
     type: actions.CREATE_COUPONCODE_BEGIN,
   }),
@@ -572,6 +591,76 @@ const actions = {
 
   deleteSubUsersErr: (err) => ({
     type: actions.DELETE_SUBUSERS_ERR,
+    err,
+  }),
+
+  getModuleSubModuleBegin: () => ({
+    type: actions.GET_MODULE_SUBMODULE_BEGIN,
+  }),
+
+  getModuleSubModuleSuccess: (data) => ({
+    type: actions.GET_MODULE_SUBMODULE_SUCCESS,
+    data,
+  }),
+
+  getModuleSubModuleErr: (err) => ({
+    type: actions.GET_MODULE_SUBMODULE_ERR,
+    err,
+  }),
+
+  updateModulesPermissionBegin: () => ({
+    type: actions.UPDATE_MODULE_PERMISSION_BEGIN,
+  }),
+
+  updateModulesPermissionSuccess: (data) => ({
+    type: actions.UPDATE_MODULE_PERMISSION_SUCCESS,
+    data,
+  }),
+
+  updateModulesPermissionErr: (err) => ({
+    type: actions.UPDATE_MODULE_PERMISSION_ERR,
+    err,
+  }),
+
+  getModulePermissionDetailsBegin: () => ({
+    type: actions.GET_MODULE_PERMISSION_DETAILS_BEGIN,
+  }),
+
+  getModulePermissionDetailsSuccess: (data) => ({
+    type: actions.GET_MODULE_PERMISSION_DETAILS_SUCCESS,
+    data,
+  }),
+
+  getModulePermissionDetailsErr: (err) => ({
+    type: actions.GET_MODULE_PERMISSION_DETAILS_ERR,
+    err,
+  }),
+
+  getusersDetailsBegin: () => ({
+    type: actions.GET_USERS_DETAILS_BEGIN,
+  }),
+
+  getusersDetailsSuccess: (data) => ({
+    type: actions.GET_USERS_DETAILS_SUCCESS,
+    data,
+  }),
+
+  getusersDetailsErr: (err) => ({
+    type: actions.GET_USERS_DETAILS_ERR,
+    err,
+  }),
+
+  updateUsersDetailsBegin: () => ({
+    type: actions.UPDATE_USERS_DETAILS_BEGIN,
+  }),
+
+  updateUsersDetailsSuccess: (data) => ({
+    type: actions.UPDATE_USERS_DETAILS_SUCCESS,
+    data,
+  }),
+
+  updateUsersDetailsErr: (err) => ({
+    type: actions.UPDATE_USERS_DETAILS_ERR,
     err,
   }),
 };
