@@ -30,7 +30,7 @@ class CreateSPTargetView(APIView):
         # ---------------- AMAZON ACCOUNT ----------------
 
         try:
-            amazon_account = get_primary_amazon_account()
+            amazon_account = get_primary_amazon_account(request.user)
             profile_id = amazon_account.profile_id
 
         except Exception as e:
@@ -168,5 +168,211 @@ class CreateSPTargetView(APIView):
                 "errors": parsed_errors,
                 "data": created_targets,
                 "amazon_response": response_data,
+            }
+        )
+
+
+class ProductTargetRecommendationAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        data = request.data
+
+        # ---------------- VALIDATION ----------------
+
+        adAsins = data.get("adAsins", [])
+
+        if not adAsins:
+            return Response(
+                {"status": False, "message": "adAsins are required"}, status=400
+            )
+
+        # ---------------- AMAZON ACCOUNT ----------------
+
+        try:
+            amazon_account = get_primary_amazon_account(request.user)
+
+            profile_id = amazon_account.profile_id
+
+        except Exception as e:
+            return Response({"status": False, "message": str(e)}, status=404)
+
+        # ---------------- ACCESS TOKEN ----------------
+
+        access_token = refresh_ads_access_token(amazon_account)
+
+        client_id = amazon_account.client_id
+
+        region = amazon_account.region
+
+        # ---------------- REGION URL ----------------
+
+        if region == "EU":
+            base_url = "https://advertising-api-eu.amazon.com"
+
+        elif region == "FE":
+            base_url = "https://advertising-api-fe.amazon.com"
+
+        else:
+            base_url = "https://advertising-api.amazon.com"
+
+        url = f"{base_url}/sp/targets/products/recommendations"
+
+        # ---------------- PAYLOAD ----------------
+
+        payload = {"adAsins": adAsins, "count": 10}
+
+        # ---------------- HEADERS ----------------
+
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Amazon-Advertising-API-ClientId": client_id,
+            "Amazon-Advertising-API-Scope": str(profile_id),
+            "Content-Type": "application/vnd.spproductrecommendation.v3+json",
+            "Accept": "application/vnd.spproductrecommendation.v3+json",
+        }
+
+        # ---------------- AMAZON REQUEST ----------------
+
+        try:
+            response = requests.post(url, headers=headers, json=payload)
+
+            response_data = response.json()
+            recommendations = response_data.get("recommendations", [])
+
+        except Exception as e:
+            return Response(
+                {
+                    "status": False,
+                    "message": "Amazon API request failed",
+                    "error": str(e),
+                },
+                status=500,
+            )
+
+        # ---------------- AMAZON ERROR ----------------
+
+        if response.status_code not in [200, 201]:
+            return Response(
+                {
+                    "status": False,
+                    "message": "Amazon API error",
+                    "amazon_response": response_data,
+                },
+                status=response.status_code,
+            )
+
+        # ---------------- SUCCESS RESPONSE ----------------
+
+        return Response(
+            {
+                "status": True,
+                "message": "Product target recommendations fetched",
+                "count": len(recommendations),
+                "data": recommendations,
+            }
+        )
+
+
+class CategoryRecommendationAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        data = request.data
+
+        # ---------------- VALIDATION ----------------
+
+        asins = data.get("asins", [])
+        include_ancestor = data.get("includeAncestor", False)
+
+        if not asins:
+            return Response(
+                {"status": False, "message": "adAsins are required"}, status=400
+            )
+
+        # ---------------- AMAZON ACCOUNT ----------------
+
+        try:
+            amazon_account = get_primary_amazon_account(request.user)
+
+            profile_id = amazon_account.profile_id
+
+        except Exception as e:
+            return Response({"status": False, "message": str(e)}, status=404)
+
+        # ---------------- ACCESS TOKEN ----------------
+
+        access_token = refresh_ads_access_token(amazon_account)
+
+        client_id = amazon_account.client_id
+
+        region = amazon_account.region
+
+        # ---------------- REGION URL ----------------
+
+        if region == "EU":
+            base_url = "https://advertising-api-eu.amazon.com"
+
+        elif region == "FE":
+            base_url = "https://advertising-api-fe.amazon.com"
+
+        else:
+            base_url = "https://advertising-api.amazon.com"
+
+        url = f"{base_url}/sp/targets/categories/recommendations"
+
+        # ---------------- PAYLOAD ----------------
+
+        payload = {"asins": asins, "includeAncestor": include_ancestor}
+
+        # ---------------- HEADERS ----------------
+
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Amazon-Advertising-API-ClientId": client_id,
+            "Amazon-Advertising-API-Scope": str(profile_id),
+            "Content-Type": "application/vnd.spproducttargeting.v3+json",
+            "Accept": "application/vnd.spproducttargeting.v3+json",
+        }
+
+        # ---------------- AMAZON REQUEST ----------------
+
+        try:
+            response = requests.post(url, headers=headers, json=payload)
+            response_data = response.json()
+            recommendations = response_data.get("categories", [])
+
+        except Exception as e:
+            return Response(
+                {
+                    "status": False,
+                    "message": "Amazon API request failed",
+                    "error": str(e),
+                },
+                status=500,
+            )
+
+        # ---------------- AMAZON ERROR ----------------
+
+        if response.status_code not in [200, 201]:
+            return Response(
+                {
+                    "status": False,
+                    "message": "Amazon API error",
+                    "amazon_response": response_data,
+                },
+                status=response.status_code,
+            )
+
+        # ---------------- SUCCESS RESPONSE ----------------
+
+        return Response(
+            {
+                "status": True,
+                "message": "Category recommendations fetched",
+                "count": len(recommendations),
+                "data": recommendations,
             }
         )

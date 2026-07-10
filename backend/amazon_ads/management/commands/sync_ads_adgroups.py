@@ -1,20 +1,19 @@
-# amazon_ads/management/commands/sync_ads_adgroups.py
-
 from django.core.management.base import BaseCommand
 
-from amazon_ads.utils import sync_adgroups
+from amazon_ads.models import AmazonAdsAccount
+from amazon_ads.services.sync.adgroups_sync import sync_adgroups
 
 
 class Command(BaseCommand):
-
     help = "Sync Amazon Ads AdGroups"
 
     def handle(self, *args, **kwargs):
 
-        sync_adgroups()
+        total_saved = 0
 
-        self.stdout.write(
-            self.style.SUCCESS(
-                "AdGroups Synced"
-            )
-        )
+        accounts = AmazonAdsAccount.objects.filter(is_primary=True)
+
+        for account in accounts:
+            total_saved += sync_adgroups(account)
+
+        self.stdout.write(self.style.SUCCESS(f"TOTAL ADGROUPS SAVED: {total_saved}"))

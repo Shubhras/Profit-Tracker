@@ -351,3 +351,125 @@ class SubUserAPITests(APITestCase):
         self.assertFalse(SubUser.objects.filter(id=self.subuser_obj.id).exists())
         self.assertFalse(UserProfile.objects.filter(user_id=self.subuser_user.id).exists())
 
+
+class AdminUserUpdateAPITests(APITestCase):
+    def setUp(self):
+        # Create normal user
+        self.user = User.objects.create_user(
+            username="normal@example.com",
+            email="normal@example.com",
+            password="password123"
+        )
+        self.profile = UserProfile.objects.create(
+            user=self.user,
+            name="Normal User",
+            business_name="Normal Biz",
+            mobile_number="1234567890",
+            address="123 Road",
+            city="Normal City",
+            state="Normal State",
+            pin_code="123456",
+            accepted_terms=True
+        )
+
+        # Create admin user
+        self.admin = User.objects.create_user(
+            username="admin_user@example.com",
+            email="admin_user@example.com",
+            password="password123",
+            is_staff=True
+        )
+
+        # Create modules & submodules
+        self.module = Module.objects.create(name="Inventory", slug="inventory")
+        self.submodule = SubModule.objects.create(module=self.module, name="Stock Count", slug="stock-count")
+
+    def test_unauthenticated_requests_blocked(self):
+        response = self.client.get(f"/api/user/admin/users/{self.user.id}/")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_non_admin_requests_blocked(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(f"/api/user/admin/users/{self.user.id}/")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        response = self.client.put(f"/api/user/admin/users/{self.user.id}/", {"name": "New Name"})
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_admin_can_retrieve_user_details(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get(f"/api/user/admin/users/{self.user.id}/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data["status"])
+        self.assertEqual(response.data["data"]["email"], "normal@example.com")
+        self.assertEqual(response.data["data"]["name"], "Normal User")
+        self.assertEqual(len(response.data["data"]["permissions"]), 0)
+
+    def test_admin_can_update_user_info_and_permissions(self):
+        self.client.force_authenticate(user=self.admin)
+        update_data = {
+            "name": "Updated Name",
+            "business_name": "Updated Biz",
+            "email": "updated_normal@example.com",
+            "is_active": False,
+            "permissions": [
+                {
+                    "module": self.module.id,
+                    "submodule": self.submodule.id,
+                    "can_view": True,
+                    "can_create": True,
+                    "can_update": False,
+                    "can_delete": False
+                }
+            ]
+        }
+        response = self.client.put(f"/api/user/admin/users/{self.user.id}/", update_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data["status"])
+        self.assertEqual(response.data["data"]["name"], "Updated Name")
+        self.assertEqual(response.data["data"]["email"], "updated_normal@example.com")
+        self.assertFalse(response.data["data"]["is_active"])
+        self.assertEqual(len(response.data["data"]["permissions"]), 1)
+        self.assertEqual(response.data["data"]["permissions"][0]["module"], self.module.id)
+        self.assertEqual(response.data["data"]["permissions"][0]["submodule"], self.submodule.id)
+        self.assertTrue(response.data["data"]["permissions"][0]["can_create"])
+
+        # Check DB
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, "updated_normal@example.com")
+        self.assertEqual(self.user.username, "updated_normal@example.com")
+        self.assertFalse(self.user.is_active)
+        self.assertEqual(self.user.profile.name, "Updated Name")
+        self.assertTrue(UserModulePermission.objects.filter(user=self.user, module=self.module, submodule=self.submodule).exists())
+
+    def test_admin_cannot_assign_invalid_permissions(self):
+        self.client.force_authenticate(user=self.admin)
+        
+        # Duplicate permission check
+        update_data = {
+            "permissions": [
+                {
+                    "module": self.module.id,
+                    "submodule": self.submodule.id
+                },
+                {
+                    "module": self.module.id,
+                    "submodule": self.submodule.id
+                }
+            ]
+        }
+        response = self.client.put(f"/api/user/admin/users/{self.user.id}/", update_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # Invalid module check
+        update_data = {
+            "permissions": [
+                {
+                    "module": 99999
+                }
+            ]
+        }
+        response = self.client.put(f"/api/user/admin/users/{self.user.id}/", update_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+

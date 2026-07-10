@@ -1,5 +1,3 @@
-import json
-
 import requests
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -215,7 +213,7 @@ class CreateSPAdGroupView(APIView):
         # ---------------- AMAZON ACCOUNT ----------------
 
         try:
-            amazon_account = get_primary_amazon_account()
+            amazon_account = get_primary_amazon_account(request.user)
             profile_id = amazon_account.profile_id
 
         except Exception as e:

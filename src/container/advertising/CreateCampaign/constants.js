@@ -5,6 +5,8 @@ export const INITIAL_WIZARD_DATA = {
 
   campaign: {
     name: '',
+    portfolioId: null,
+    portfolioName: '',
     state: 'ENABLED',
     targetingType: 'MANUAL',
     budget: '',

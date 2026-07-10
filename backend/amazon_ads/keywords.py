@@ -4,7 +4,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import AdsAdGroup, AdsCampaign, AdsKeyword, AmazonAdsAccount
-from .utils import extract_amazon_errors, refresh_ads_access_token, get_primary_amazon_account
+from .utils import (
+    extract_amazon_errors,
+    get_primary_amazon_account,
+    refresh_ads_access_token,
+)
 
 
 class UpdateSPKeywordView(APIView):
@@ -224,7 +228,7 @@ class CreateSPKeywordView(APIView):
         # ---------------- AMAZON ACCOUNT ----------------
 
         try:
-            amazon_account = get_primary_amazon_account()
+            amazon_account = get_primary_amazon_account(request.user)
             profile_id = amazon_account.profile_id
 
         except Exception as e:
@@ -367,5 +371,110 @@ class CreateSPKeywordView(APIView):
                 "errors": parsed_errors,
                 "data": created_keywords,
                 "amazon_response": response_data,
+            }
+        )
+
+class KeywordRecommendationAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        data = request.data
+
+        # ---------------- VALIDATION ----------------
+
+        asins = data.get("asins", [])
+
+        if not asins:
+            return Response(
+                {"status": False, "message": "asins are required"}, status=400
+            )
+
+        # ---------------- AMAZON ACCOUNT ----------------
+
+        try:
+            amazon_account = get_primary_amazon_account(request.user)
+
+            profile_id = amazon_account.profile_id
+
+        except Exception as e:
+            return Response({"status": False, "message": str(e)}, status=404)
+
+        # ---------------- ACCESS TOKEN ----------------
+
+        access_token = refresh_ads_access_token(amazon_account)
+
+        client_id = amazon_account.client_id
+
+        region = amazon_account.region
+
+        # ---------------- REGION URL ----------------
+
+        if region == "EU":
+            base_url = "https://advertising-api-eu.amazon.com"
+
+        elif region == "FE":
+            base_url = "https://advertising-api-fe.amazon.com"
+
+        else:
+            base_url = "https://advertising-api.amazon.com"
+
+        url = f"{base_url}/sp/targets/keywords/recommendations"
+
+        # ---------------- PAYLOAD ----------------
+
+        payload = {
+            "recommendationType": "KEYWORDS_FOR_ASINS",
+            "asins": asins,
+            "maxRecommendations": 50,
+            "sortDimension": "CLICKS",
+        }
+
+        # ---------------- HEADERS ----------------
+
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Amazon-Advertising-API-ClientId": client_id,
+            "Amazon-Advertising-API-Scope": str(profile_id),
+            "Content-Type": "application/vnd.spkeywordsrecommendation.v3+json",
+            "Accept": "application/vnd.spkeywordsrecommendation.v3+json",
+        }
+
+        # ---------------- AMAZON REQUEST ----------------
+
+        try:
+            response = requests.post(url, headers=headers, json=payload)
+
+            response_data = response.json()
+
+        except Exception as e:
+            return Response(
+                {
+                    "status": False,
+                    "message": "Amazon API request failed",
+                    "error": str(e),
+                },
+                status=500,
+            )
+
+        # ---------------- AMAZON ERROR ----------------
+
+        if response.status_code not in [200, 201]:
+            return Response(
+                {
+                    "status": False,
+                    "message": "Amazon API error",
+                    "amazon_response": response_data,
+                },
+                status=response.status_code,
+            )
+
+        # ---------------- SUCCESS RESPONSE ----------------
+
+        return Response(
+            {
+                "status": True,
+                "message": "Keyword recommendations fetched",
+                "data": response_data,
             }
         )

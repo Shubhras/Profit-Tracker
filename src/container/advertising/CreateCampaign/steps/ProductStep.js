@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Input, Table, Row, Col, Card, Typography, Empty } from 'antd';
+import { Button, Input, Table, Row, Col, Card, Typography, Empty, Tag } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
-import { getListingProducts } from '../../../../redux/advertising/actionCreator';
+import { getCampaignProducts } from '../../../../redux/advertising/actionCreator';
 
 const { Text } = Typography;
 
 function ProductStep({ wizardData, setWizardData, onBack, onNext }) {
   const dispatch = useDispatch();
+  const dateRange = useSelector((state) => state.dashboard.dateRange);
   // ============================================================================================================
   // LOCAL STATE
   // ============================================================================================================
@@ -30,7 +31,7 @@ function ProductStep({ wizardData, setWizardData, onBack, onNext }) {
     const map = {};
 
     (wizardData.products || []).forEach((product) => {
-      map[product.id] = product;
+      map[product.asin] = product;
     });
 
     return map;
@@ -38,13 +39,18 @@ function ProductStep({ wizardData, setWizardData, onBack, onNext }) {
 
   const selectedProducts = useMemo(() => Object.values(selectedProductsMap), [selectedProductsMap]);
 
-  const selectedRowKeys = useMemo(() => selectedProducts.map((product) => product.id), [selectedProducts]);
+  const selectedRowKeys = useMemo(() => selectedProducts.map((product) => product.asin), [selectedProducts]);
   // ============================================================================================================
   // SEARCH DEBOUNCE
   // ============================================================================================================
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchText);
+
+      setPagination((prev) => ({
+        ...prev,
+        current: 1,
+      }));
     }, 500);
 
     return () => clearTimeout(timer);
@@ -55,14 +61,24 @@ function ProductStep({ wizardData, setWizardData, onBack, onNext }) {
   const fetchProducts = async () => {
     setLoading(true);
 
-    const response = await dispatch(getListingProducts(pagination.current, pagination.pageSize, debouncedSearch));
+    const response = await dispatch(
+      getCampaignProducts(
+        debouncedSearch,
+        pagination.current,
+        pagination.pageSize,
+        dateRange?.fromDate,
+        dateRange?.endDate,
+      ),
+    );
 
     if (response?.status) {
       setProducts(response.data || []);
 
       setPagination((prev) => ({
         ...prev,
-        total: response.totalCount || 0,
+        current: response.pageNo,
+        pageSize: response.pageSize,
+        total: response.totalCount,
       }));
     }
 
@@ -71,7 +87,7 @@ function ProductStep({ wizardData, setWizardData, onBack, onNext }) {
 
   useEffect(() => {
     fetchProducts();
-  }, [debouncedSearch, pagination.current, pagination.pageSize]);
+  }, [debouncedSearch, pagination.current, pagination.pageSize, dateRange?.fromDate, dateRange?.endDate]);
   // ============================================================================================================
   // TABLE COLUMNS
   // ============================================================================================================
@@ -95,22 +111,66 @@ function ProductStep({ wizardData, setWizardData, onBack, onNext }) {
       ),
     },
     {
-      title: 'SKU',
-      dataIndex: 'sku',
-      key: 'sku',
-      width: 180,
+      title: 'Product',
+      key: 'product',
+      width: 340,
+
+      render: (_, record) => (
+        <>
+          <Text
+            strong
+            ellipsis={{
+              rows: 2,
+              tooltip: record.item_name,
+            }}
+          >
+            {record.item_name}
+          </Text>
+
+          <br />
+
+          <Text type="secondary">{record.asin}</Text>
+
+          <br />
+
+          <Text type="secondary">{record.sku.length > 25 ? `${record.sku.slice(0, 25)}...` : record.sku}</Text>
+
+          {!record.isAdvertised && (
+            <>
+              <br />
+
+              <Tag color="orange">No Ad History</Tag>
+            </>
+          )}
+        </>
+      ),
     },
     {
-      title: 'ASIN',
-      dataIndex: 'asin',
-      key: 'asin',
-      width: 140,
+      title: 'Ad Spend',
+
+      sorter: (a, b) => a.performance.adSpend - b.performance.adSpend,
+
+      render: (_, record) => (record.performance.adSpend ? `₹${record.performance.adSpend.toFixed(2)}` : '—'),
     },
     {
-      title: 'Product Name',
-      dataIndex: 'item_name',
-      key: 'item_name',
-      ellipsis: true,
+      title: 'Ad Sales',
+
+      sorter: (a, b) => a.performance.adSales - b.performance.adSales,
+
+      render: (_, record) => (record.performance.adSales ? `₹${record.performance.adSales.toFixed(2)}` : '—'),
+    },
+    {
+      title: 'Orders',
+
+      dataIndex: ['performance', 'orders'],
+
+      sorter: (a, b) => a.performance.orders - b.performance.orders,
+      render: (_, record) => (record.performance.orders ? `${record.performance.orders}` : '—'),
+    },
+    {
+      title: 'Impressions',
+      sorter: (a, b) => a.performance.impressions - b.performance.impressions,
+      render: (_, record) => (record.performance.impressions ? `${record.performance.impressions}` : '—'),
     },
   ];
 
@@ -129,12 +189,12 @@ function ProductStep({ wizardData, setWizardData, onBack, onNext }) {
           />
 
           <Table
-            rowKey="id"
+            rowKey="asin"
             loading={loading}
             columns={columns}
             dataSource={products}
             scroll={{
-              y: 500,
+              y: 550,
             }}
             rowSelection={{
               selectedRowKeys,
@@ -147,9 +207,9 @@ function ProductStep({ wizardData, setWizardData, onBack, onNext }) {
                   };
 
                   if (selected) {
-                    updated[record.id] = record;
+                    updated[record.asin] = record;
                   } else {
-                    delete updated[record.id];
+                    delete updated[record.asin];
                   }
 
                   return updated;
@@ -175,17 +235,20 @@ function ProductStep({ wizardData, setWizardData, onBack, onNext }) {
         <Col span={6}>
           <Card
             title={`Selected Products (${selectedProducts.length})`}
-            bodyStyle={{
-              maxHeight: 600,
-              overflowY: 'auto',
-            }}
+            extra={
+              selectedProducts.length > 0 && (
+                <Button type="link" danger onClick={() => setSelectedProductsMap({})}>
+                  Clear All
+                </Button>
+              )
+            }
           >
             {selectedProducts.length === 0 ? (
               <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No products selected" />
             ) : (
               selectedProducts.map((product) => (
                 <Card
-                  key={product.id}
+                  key={product.asin}
                   size="small"
                   style={{
                     marginBottom: 12,

@@ -6,6 +6,7 @@ from user_auth.apis.password import UserChangePasswordAPI
 from user_auth.apis.forgot_password import UserForgotPasswordAPI
 from user_auth.apis.reset_password import UserResetPasswordAPI,RefreshTokenAPI
 from user_auth.apis.update_profile import UserUpdateProfileAPI
+from user_auth.apis.admin_user_update import AdminUserDetailUpdateAPIView
 from .views import *
 from .subscription import *
 from .privacy_policy import *
@@ -33,6 +34,11 @@ urlpatterns = [
         "admin/user-list/",
         UserListAPIView.as_view(),
         name="user-list"
+    ),
+    path(
+        "admin/main-users/<int:pk>/get-update/",
+        AdminUserDetailUpdateAPIView.as_view(),
+        name="admin-user-detail-update"
     ),
     
     
