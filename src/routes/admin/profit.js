@@ -5,6 +5,7 @@ import SubscriptionGate from '../../components/utilities/SubscriptionGate';
 const Summary = lazy(() => import('../../container/profit/Summary'));
 const SalesTrend = lazy(() => import('../../container/profit/SalesTrend'));
 const ProfitTableView = lazy(() => import('../../container/profit/ProfitTableView'));
+const ProfitSKUIdPage = lazy(() => import('../../container/profit/ProfitSKUIdPage'));
 const ProfitMonthlyView = lazy(() => import('../../container/profit/ProfitMonthlyView'));
 const CanvasMYOR = lazy(() => import('../../container/profit/CanvasMYOR'));
 const EstimatedFees = lazy(() => import('../../container/profit/EstimatedFees'));
@@ -137,6 +138,15 @@ function ProfitRoutes() {
           element={
             <SubscriptionGate>
               <ProfitTableView />
+            </SubscriptionGate>
+          }
+        />
+
+        <Route
+          path="sku-profit"
+          element={
+            <SubscriptionGate>
+              <ProfitSKUIdPage />
             </SubscriptionGate>
           }
         />

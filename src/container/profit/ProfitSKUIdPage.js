@@ -1,24 +1,23 @@
 import React, { useEffect } from 'react';
 import { Table, Card, Modal, Checkbox, Tooltip } from 'antd';
-import { RightOutlined, SearchOutlined, FilterOutlined, EyeOutlined } from '@ant-design/icons';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { SearchOutlined, FilterOutlined, EyeOutlined } from '@ant-design/icons';
+import { useParams, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 // import ProfitFilterBar from './component/ProfitFilterBar';
 // import ProfitModal from './component/ProfitModal'
 import CalculationModal from './component/Calculations';
 import amazon from '../../assets/icons/amazon.svg';
 // import flipkart from "../../assets/icons/flipkart.png";
-import { getProfitDetails } from '../../redux/dashboard/actionCreator';
+import { getProfitSKUId } from '../../redux/dashboard/actionCreator';
 // import { PageHeader } from '../../components/page-headers/page-headers';
 
-export default function ProfitDetailsView() {
+export default function ProfitSKUIdPage() {
   const { channel } = useParams();
   const location = useLocation();
   const decodedChannel = decodeURIComponent(channel);
-  const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { dateRange, profitData, loading, channel: globalChannel } = useSelector((state) => state.dashboard);
-  const totals = profitData?.totals || {};
+  const { dateRange, getProfitSkuData, loading, channel: globalChannel } = useSelector((state) => state.dashboard);
+  const totals = getProfitSkuData?.totals || {};
   const profitType = location.state?.profitType || 'all';
   const channels = location.state?.channels?.length > 0 ? location.state.channels : globalChannel || [];
   // const [openSettings, setOpenSettings] = React.useState(false);
@@ -59,42 +58,28 @@ export default function ProfitDetailsView() {
     expenses: 'with',
     accountCharges: 'with',
   });
-  const getMetricFromFilters = () => {
-    return {
-      ads: filters.ads === 'with' ? 'withAds' : 'withoutAds',
-      gst: filters.gst === 'with' ? 'withGst' : 'withoutGst',
-      expense: filters.expenses === 'with' ? 'withExpense' : 'withoutExpense',
-    };
-  };
-  const buildPayload = () => {
-    return {
-      filters: {
-        channel: {
-          // IN: [decodedChannel],
-          IN: channels,
-          // IN: globalChannel,
-        },
-        ...(profitType === 'profitable' && {
-          profit: { GT: 0 },
-        }),
 
-        ...(profitType === 'losing' && {
-          Profit: { LT: 0 },
-        }),
+  const buildPayload = () => ({
+    filters: {
+      fromDate: dateRange?.fromDate,
+      toDate: dateRange?.endDate,
 
-        fromDate: dateRange?.fromDate || null,
-        toDate: dateRange?.endDate || null,
+      channel: {
+        IN: channels,
       },
-      metric: getMetricFromFilters(),
-      pagination: {
-        pageNo: 0,
-        pageSize: 1000,
-      },
-    };
-  };
+
+      profit_filter: profitType === 'profitable' ? 'GT_0' : profitType === 'losing' ? 'LT_0' : undefined,
+    },
+
+    pagination: {
+      pageNo: pagination.current - 1,
+      pageSize: pagination.pageSize,
+    },
+  });
+
   useEffect(() => {
     if (decodedChannel) {
-      dispatch(getProfitDetails(buildPayload()));
+      dispatch(getProfitSKUId(buildPayload()));
     }
   }, [dateRange, decodedChannel]);
 
@@ -105,7 +90,7 @@ export default function ProfitDetailsView() {
 
   const dataSource = React.useMemo(() => {
     const rows =
-      profitData?.response?.map((item, index) => ({
+      getProfitSkuData?.response?.map((item, index) => ({
         key: index,
 
         channel: item.channel || '-',
@@ -177,7 +162,7 @@ export default function ProfitDetailsView() {
     // };
 
     return rows;
-  }, [profitData]);
+  }, [getProfitSkuData]);
 
   const columns = [
     {
@@ -515,182 +500,16 @@ export default function ProfitDetailsView() {
     //   align: 'center',
     //   sorter: (a, b) => a.settledamount - b.settledamount,
     // },
-    {
-      key: 'action',
-      fixed: 'right',
-      width: 60,
-      render: (_, record) => (
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-          <button
-            type="button"
-            onClick={() => navigate(`../second/${record.asin}`)}
-            className="w-[28px] h-[28px] rounded-full border border-[#dbe1e8]
-  flex items-center justify-center cursor-pointer hover:text-black transition-all duration-200 mx-auto"
-          >
-            <RightOutlined style={{ fontSize: 12 }} />
-          </button>
-          {/* <button
-            type="button"
-            onClick={() => {
-              const payload = {
-                filters: {
-                  channel: { IN: globalChannel },
-                  fromDate: dateRange?.fromDate || null,
-                  toDate: dateRange?.endDate || null,
-                },
-                metric: {
-                  expense: 'withExpense',
-                  ads: 'withAds',
-                  account_charges: 'withAccountCharges',
-                  gst: 'withGst',
-                  payment: 'withEstimate',
-                  summarymetric: 'channel',
-                },
-                pagination: {
-                  pageNo: 0,
-                  pageSize: 25,
-                },
-                expand: 'channel',
-                expandValue: 'Amazon-India',
-                tab_name: 'summary',
-              };
-              dispatch(getProfitModalApi(payload));
-
-              setDetailModal({
-                open: true,
-                record,
-                type: 'qty',
-                modalLabel: 'ASIN',
-                modalValue: record.asin,
-              });
-            }}
-            style={{
-              border: '1px solid #ffc0cb',
-              background: '#ffe4e9',
-            }}
-            className="w-[30px] h-[30px] rounded-[4px] cursor-pointer flex-items-center justify-center mx-auto"
-          >
-            <BarChartOutlined style={{ fontSize: 14, color: '#ff4d6d' }} />
-          </button> */}
-        </div>
-      ),
-    },
   ];
   const handleApply = () => {
-    dispatch(getProfitDetails(buildPayload()));
+    dispatch(getProfitSKUId(buildPayload()));
     setShowFilters(false);
   };
 
-  // const handleClear = () => {
-  //   setFilters({
-  //     channel: '',
-  //     sku: '',
-  //     productId: '',
-  //     parentId: '',
-  //     mkt: '',
-
-  //     ads: 'without',
-  //     gst: 'without',
-  //     estimate: 'with',
-  //     expenses: 'with',
-  //     accountCharges: 'with',
-  //   });
-  // };
-
-  // const allColumnsList = [
-  //   { key: 'grossQty', label: 'Gross Qty' },
-  //   { key: 'netQty', label: 'Net Qty' },
-  //   { key: 'returnqty', label: 'Return Qty' },
-  //   { key: 'returnPercent', label: 'Return %' },
-
-  //   { key: 'netMRP', label: 'Net MRP' },
-  //   { key: 'mrpNetDiscount', label: 'MRP Net Discount%' },
-  //   { key: 'mrpCustomerDiscount', label: 'MRP Customer Discount%' },
-
-  //   { key: 'grossSales', label: 'Gross Sales' },
-  //   { key: 'netsales', label: 'Net Sales' },
-  //   { key: 'tcs', label: 'tcs' },
-  //   { key: 'mpfees', label: 'mpfees' },
-  //   // { key: 'stdcost', label: 'Std Cost' },
-
-  //   { key: 'shipping', label: 'Shipping' },
-  //   { key: 'adSpend', label: 'Ad spend' },
-  //   { key: 'stdCost', label: 'Product Cost' },
-
-  //   { key: 'stdCostMS', label: 'Std Cost M/S %' },
-  //   { key: 'accountCharges', label: 'Account Charges' },
-  //   { key: 'otherExpenses', label: 'Other Expenses' },
-
-  //   { key: 'gst', label: 'GST to Pay' },
-  //   // { key: 'grossprofit', label: 'Gross Profit' },
-  //   { key: 'profit', label: 'Profit' },
-
-  //   { key: 'settledAmount', label: 'Settled Amount' },
-  //   { key: 'tacos', label: 'TACOS' },
-  //   { key: 'grossProfitPercent', label: 'Gross Profit %' },
-
-  //   { key: 'profitPercent', label: 'Profit %' },
-  //   { key: 'percentOfSales', label: '% of Sales' },
-  //   { key: 'drr', label: 'DRR (Daily Run Rate)' },
-
-  //   { key: 'lastOrderDate', label: 'Last Order Date' },
-  // ];
-  // const [visibleColumns, setVisibleColumns] = React.useState([
-  //   'view',
-  //   'netQty',
-  //   'returnqty',
-  //   'returnPercent',
-  //   'mpfees',
-  //   'netsales',
-  //   'mp_gst',
-  //   'tcs',
-  //   'stdcost',
-  //   'shipping',
-  //   'adSpend',
-  //   'gst',
-  //   'profit',
-  //   'profitPercent',
-  // ]);
-  // const handleSelectAll = (checked) => {
-  //   if (checked) {
-  //     setVisibleColumns(allColumnsList.map((col) => col.key));
-  //   } else {
-  //     setVisibleColumns([]);
-  //   }
-  // };
-
-  // const filteredColumns = columns.filter((col) => {
-  //   if (col.dataIndex === 'image' || col.dataIndex === 'channel' || col.key === 'action') return true;
-
-  //   return visibleColumns.some(
-  //     (key) =>
-  //       key === col.dataIndex ||
-  //       key.toLowerCase() === col.dataIndex.toLowerCase(),
-  //   );
-  // });
   return (
     <>
-      {/* <PageHeader
-        routes={PageRoutes}
-        // title="Profit Details"
-        className="flex justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 bg-transparent"
-      /> */}
-
       <main className="min-h-[600px] px-3 pb-[30px] py-3">
-        {/* <div className="mb-3">
-          <h1 className="text-[20px] font-semibold text-[#111827]">Sales Details</h1>
-        </div> */}
-
         <Card bordered={false}>
-          {/* <ProfitFilterBar
-            filters={filters}
-            setFilters={setFilters}
-            handleApply={handleApply}
-            handleClear={handleClear}
-            showFilters={showFilters}
-            setShowFilters={setShowFilters}
-          /> */}
-
           <div className="flex items-center justify-between gap-3 mb-5">
             {/* Search */}
             <div className="relative w-[220px]">
@@ -846,13 +665,28 @@ export default function ProfitDetailsView() {
             tableLayout="fixed"
             locale={{ emptyText: 'No Data Found' }}
             pagination={{
-              ...pagination,
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: getProfitSkuData?.pagination?.count || 0,
               showSizeChanger: true,
               pageSizeOptions: ['10', '20', '50', '100'],
               showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
             }}
             onChange={(pag) => {
-              setPagination(pag);
+              setPagination({
+                current: pag.current,
+                pageSize: pag.pageSize,
+              });
+
+              dispatch(
+                getProfitSKUId({
+                  ...buildPayload(),
+                  pagination: {
+                    pageNo: pag.current - 1,
+                    pageSize: pag.pageSize,
+                  },
+                }),
+              );
             }}
             size="small"
             scroll={{ x: 1800 }}

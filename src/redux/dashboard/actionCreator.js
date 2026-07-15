@@ -44,6 +44,10 @@ const {
   getTicketsDetailsBegin,
   getTicketsDetailsSuccess,
   getTicketsDetailsErr,
+
+  profitSKUIdBegin,
+  profitSKUIdSuccess,
+  profitSKUIdErr,
 } = actions;
 
 const mockService = async (payload) => {
@@ -322,6 +326,24 @@ export const getSupportTicketsDetails = (id, callback) => {
       }
     } catch (err) {
       dispatch(getTicketsDetailsErr(err));
+    }
+  };
+};
+
+export const getProfitSKUId = (payload) => {
+  return async (dispatch) => {
+    dispatch(profitSKUIdBegin());
+
+    try {
+      const response = await DataService.post('/amazon/profitability/list/by-sku/filtered/', payload);
+
+      if (response.data?.status === true || response.data?.status === 'success') {
+        dispatch(profitSKUIdSuccess(response.data));
+      } else {
+        dispatch(profitSKUIdErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(profitSKUIdErr(err));
     }
   };
 };
