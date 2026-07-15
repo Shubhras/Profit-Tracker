@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Input, Tag, Switch, Modal, Button, Select, Tooltip } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { EyeOutlined, SearchOutlined } from '@ant-design/icons';
 import { getUsersList } from '../../redux/admin/actionCreator';
 
 function UsersList() {
+  const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [passwordModal, setPasswordModal] = useState(false);
@@ -74,7 +76,13 @@ function UsersList() {
       dataIndex: 'name',
       width: 70,
       align: 'center',
-      render: (name) => <span className="font-medium text-[#111827]">{name || '-'}</span>,
+      render: (v) => (
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
+            {v || '-'}
+          </span>
+        </Tooltip>
+      ),
     },
 
     {
@@ -193,9 +201,16 @@ function UsersList() {
         <Button
           type="text"
           icon={<EyeOutlined className="text-[#1677ff] text-[18px]" />}
+          // onClick={() => {
+          //   setSelectedSubscription(record.subscription);
+          //   setSubscriptionModal(true);
+          // }}
           onClick={() => {
-            setSelectedSubscription(record.subscription);
-            setSubscriptionModal(true);
+            navigate('/super-admin/user/view', {
+              state: {
+                userId: record.user_id,
+              },
+            });
           }}
         />
       ),

@@ -13,13 +13,17 @@ import {
 
 function SubModule() {
   const dispatch = useDispatch();
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+  });
 
   const { getModuleslist, getsubModule, loading } = useSelector((state) => state.AdminDashboard);
 
   useEffect(() => {
-    dispatch(getSubModules());
+    dispatch(getSubModules(pagination.current, pagination.pageSize));
     dispatch(getModules());
-  }, [dispatch]);
+  }, [dispatch, pagination.current, pagination.pageSize]);
 
   const [createModal, setCreateModal] = useState(false);
 
@@ -212,7 +216,7 @@ function SubModule() {
             <Button
               type="primary"
               icon={<PlusOutlined />}
-              className="h-8 px-2 rounded-lg text-[14px] font-semibold flex items-center"
+              className="h-8 px-2 rounded-l text-[13px] font-semibold flex items-center"
               onClick={() => {
                 resetForm();
                 setCreateModal(true);
@@ -227,13 +231,23 @@ function SubModule() {
             dataSource={subModuleData}
             loading={loading}
             rowKey={(record) => record.id}
-            pagination={{
-              pageSize: 10,
-              showSizeChanger: false,
-            }}
             bordered
             scroll={{ x: 700 }}
             size="small"
+            pagination={{
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: subModuleData.length,
+              showSizeChanger: true,
+              pageSizeOptions: ['10', '20', '50', '100'],
+              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
+            }}
+            onChange={(pag) => {
+              setPagination({
+                current: pag.current,
+                pageSize: pag.pageSize,
+              });
+            }}
             className="
     [&_.ant-table-thead>tr>th]:!text-[12px]
     [&_.ant-table-thead>tr>th]:!font-semibold

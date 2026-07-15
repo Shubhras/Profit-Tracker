@@ -124,6 +124,26 @@ const {
   DELETE_SUBUSERS_BEGIN,
   DELETE_SUBUSERS_SUCCESS,
   DELETE_SUBUSERS_ERR,
+
+  GET_MODULE_SUBMODULE_BEGIN,
+  GET_MODULE_SUBMODULE_SUCCESS,
+  GET_MODULE_SUBMODULE_ERR,
+
+  UPDATE_MODULE_PERMISSION_BEGIN,
+  UPDATE_MODULE_PERMISSION_SUCCESS,
+  UPDATE_MODULE_PERMISSION_ERR,
+
+  GET_MODULE_PERMISSION_DETAILS_BEGIN,
+  GET_MODULE_PERMISSION_DETAILS_SUCCESS,
+  GET_MODULE_PERMISSION_DETAILS_ERR,
+
+  GET_USERS_DETAILS_BEGIN,
+  GET_USERS_DETAILS_SUCCESS,
+  GET_USERS_DETAILS_ERR,
+
+  UPDATE_USERS_DETAILS_BEGIN,
+  UPDATE_USERS_DETAILS_SUCCESS,
+  UPDATE_USERS_DETAILS_ERR,
 } = actions;
 
 const initialState = {
@@ -158,6 +178,11 @@ const initialState = {
   deleteNotification: null,
   updatePolicy: null,
   deletepolicy: null,
+  getModuleSubmodules: null,
+  updateModulePermission: null,
+  modulePermissionsDetails: null,
+  getusersDetailsData: null,
+  updateUserDetailsData: null,
 };
 
 const AdmindashboardReducer = (state = initialState, action) => {
@@ -808,6 +833,111 @@ const AdmindashboardReducer = (state = initialState, action) => {
       };
 
     case DELETE_SUBUSERS_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case GET_MODULE_SUBMODULE_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case GET_MODULE_SUBMODULE_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        getModuleSubmodules: action.data,
+      };
+
+    case GET_MODULE_SUBMODULE_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case UPDATE_MODULE_PERMISSION_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case UPDATE_MODULE_PERMISSION_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        updateModulePermission: action.data,
+      };
+
+    case UPDATE_MODULE_PERMISSION_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case GET_MODULE_PERMISSION_DETAILS_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case GET_MODULE_PERMISSION_DETAILS_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        modulePermissionsDetails: action.data,
+      };
+
+    case GET_MODULE_PERMISSION_DETAILS_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case GET_USERS_DETAILS_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case GET_USERS_DETAILS_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        getusersDetailsData: action.data,
+      };
+
+    case GET_USERS_DETAILS_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case UPDATE_USERS_DETAILS_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case UPDATE_USERS_DETAILS_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        updateUserDetailsData: action.data,
+      };
+
+    case UPDATE_USERS_DETAILS_ERR:
       return {
         ...state,
         loading: false,

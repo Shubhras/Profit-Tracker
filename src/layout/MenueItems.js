@@ -54,6 +54,8 @@ import {
   UilBell,
   UilShieldCheck,
   UilCube,
+  UilUserCheck,
+  UilLayerGroup,
 } from '@iconscout/react-unicons';
 import { Menu } from 'antd';
 import React from 'react';
@@ -2026,7 +2028,7 @@ function MenuItems({ toggleCollapsed }) {
         Admin Users
       </NavLink>,
       'admin-users',
-      !topMenu && <UilUsersAlt />,
+      !topMenu && <UilUserCheck />,
     ),
 
     getItem(
@@ -2074,7 +2076,7 @@ function MenuItems({ toggleCollapsed }) {
         {t('Sub Module')}
       </NavLink>,
       'submodule',
-      !topMenu && <UilCube />,
+      !topMenu && <UilLayerGroup />,
     ),
 
     getItem(

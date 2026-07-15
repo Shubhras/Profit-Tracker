@@ -1,6 +1,7 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Form, Input, Button } from 'antd';
+import { UserOutlined, SafetyCertificateOutlined, ApartmentOutlined, CheckCircleFilled } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 // eslint-disable-next-line import/no-extraneous-dependencies
 // import { ReactSVG } from 'react-svg';
@@ -22,7 +23,7 @@ function SignIn() {
   const isLoading = useSelector((state) => state.auth.loading);
   const [form] = Form.useForm();
   const error = useSelector((state) => state.auth.error);
-
+  const [loginType, setLoginType] = useState('user');
   // Check if there's a redirect destination (e.g., from pricing page)
   const redirectTo = location.state?.redirectTo;
   const planFromState = location.state?.plan;
@@ -104,12 +105,73 @@ function SignIn() {
 
   return (
     <div className="w-full">
-      <div className="text-center mb-10">
+      <div className="text-center mb-7">
         <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Welcome Back</h2>
         <p className="text-gray-500">Enter your details to access your account</p>
       </div>
 
       <Form name="login" form={form} onFinish={handleSubmit} layout="vertical">
+        {/* Login As */}
+
+        <div className="mb-4">
+          <label className="block text-sm font-semibold text-gray-700 mb-4">Login as</label>
+
+          <div className="flex items-center justify-between border-b border-gray-200 pb-5">
+            {[
+              {
+                key: 'user',
+                label: 'User',
+                icon: <UserOutlined />,
+              },
+              {
+                key: 'admin',
+                label: 'Admin',
+                icon: <SafetyCertificateOutlined />,
+              },
+              {
+                key: 'client',
+                label: 'Client',
+                icon: <ApartmentOutlined />,
+              },
+            ].map((item, index) => (
+              <React.Fragment key={item.key}>
+                <button
+                  type="button"
+                  onClick={() => setLoginType(item.key)}
+                  className="relative flex flex-col items-center w-full group"
+                >
+                  {/* Tick */}
+                  {loginType === item.key && (
+                    <CheckCircleFilled className="absolute top-0 right-[28%] text-green-500 text-lg bg-white rounded-full" />
+                  )}
+
+                  {/* Circle */}
+                  <div
+                    className={`w-14 h-14 rounded-full border flex items-center justify-center transition-all duration-300
+            ${
+              loginType === item.key
+                ? 'border-emerald-500 text-emerald-500'
+                : 'border-gray-300 text-gray-500 group-hover:border-emerald-400 group-hover:text-emerald-500'
+            }`}
+                  >
+                    <span className="text-xl">{item.icon}</span>
+                  </div>
+
+                  {/* Label */}
+                  <span
+                    className={`mt-2 text-sm font-medium transition-colors
+            ${loginType === item.key ? 'text-emerald-500' : 'text-gray-700'}`}
+                  >
+                    {item.label}
+                  </span>
+                </button>
+
+                {/* Divider */}
+                {index < 2 && <div className="h-12 w-px bg-gray-200 mx-2" />}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
         <Form.Item
           name="email"
           rules={[{ message: 'Please input your Email!', required: true }]}
