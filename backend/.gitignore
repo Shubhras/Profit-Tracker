@@ -37,3 +37,9 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Scratch files
+scratch/
+
+# Myntra documentation
+myntra_doc/
