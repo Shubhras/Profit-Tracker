@@ -1948,6 +1948,119 @@ def get_product_analytics(request):
 #         "warnings": []
 #     })
 
+def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
+    from django.db.models import Sum, Max, Q, Subquery, OuterRef
+    from amazon_auth.models import OrderItem, AmazonEstimatedFee, AmazonListingItem
+    from amazon_ads.models import ProductAdMetric
+    from collections import defaultdict
+
+    order_filter = Q(order__user=user)
+    if start_date:
+        order_filter &= Q(order__purchase_date__gte=start_date)
+    if end_date:
+        order_filter &= Q(order__purchase_date__lte=end_date)
+    
+    channels = filters.get("channel", {}).get("IN", [])
+    if channels:
+        CHANNEL_MAP = {"Amazon-India": "A21TJRUUN4KGV"}
+        marketplace_ids = [CHANNEL_MAP[ch] for ch in channels if ch in CHANNEL_MAP]
+        if marketplace_ids:
+            order_filter &= Q(order__marketplace_id__in=marketplace_ids)
+
+    listing_qs = AmazonListingItem.objects.filter(
+        user=user,
+        sku=OuterRef("seller_sku")
+    ).order_by("-updated_at")
+
+    items = OrderItem.objects.filter(order_filter).exclude(
+        order__order_status__icontains='Cancel'
+    ).annotate(
+        sku_standard_cost=Subquery(listing_qs.values("standard_cost")[:1]),
+        sku_gst_rate=Subquery(listing_qs.values("gst_rate")[:1]),
+        sku_tcs_rate=Subquery(listing_qs.values("tcs")[:1]),
+    ).values('seller_sku').annotate(
+        grosssales=Sum('item_price'),
+        item_tax=Sum('item_tax'),
+        shipping_income=Sum('shipping_price'),
+        promotion_discount=Sum('promotion_discount'),
+        qty=Sum('quantity_ordered'),
+        title=Max('title'),
+        cost_price=Max('sku_standard_cost'),
+        gst_rate=Max('sku_gst_rate'),
+        tcs_rate=Max('sku_tcs_rate'),
+    )
+
+    ad_metrics = ProductAdMetric.objects.filter(
+        product_ad__amazon_account__user=user,
+        product_ad__amazon_account__is_primary=True
+    )
+    if start_date:
+        ad_metrics = ad_metrics.filter(report_date__gte=start_date.date())
+    if end_date:
+        ad_metrics = ad_metrics.filter(report_date__lte=end_date.date())
+    
+    ads_map = defaultdict(float)
+    for m in ad_metrics.select_related('product_ad'):
+        ads_map[m.product_ad.sku] += float(m.cost or 0)
+
+    fee_qs = AmazonEstimatedFee.objects.filter(
+        amazon_account__user=user
+    ).order_by('seller_sku', '-estimated_at')
+    
+    fee_map = {}
+    for f in fee_qs:
+        if f.seller_sku not in fee_map:
+            fee_map[f.seller_sku] = float(f.total_fees or 0)
+
+    sku_results = []
+    for row in items:
+        sku = row['seller_sku']
+        if not sku:
+            continue
+        
+        gross_sales = float(row['grosssales'] or 0)
+        item_tax = float(row['item_tax'] or 0)
+        promo_discount = float(row['promotion_discount'] or 0)
+        shipping_income = float(row['shipping_income'] or 0)
+        qty = int(row['qty'] or 0)
+        
+        cost = float(row['cost_price'] or 0) * qty
+        gst_rate = float(row['gst_rate'] or 0)
+        tcs_rate = float(row['tcs_rate'] or 1)
+        
+        ads = ads_map.get(sku, 0)
+        estimated_fees = fee_map.get(sku, 0) * qty
+        
+        adjusted_gross_sales = gross_sales + item_tax + shipping_income
+
+        if gst_rate > 0:
+            taxable_value = adjusted_gross_sales / (1 + (gst_rate / 100))
+            gst_to_pay = adjusted_gross_sales - taxable_value
+        else:
+            taxable_value = adjusted_gross_sales
+            gst_to_pay = item_tax
+
+        tcs_total = taxable_value * (tcs_rate / 100)
+        mp_gst = (estimated_fees + shipping_income) * 0.18
+
+        profit = (
+            adjusted_gross_sales
+            - estimated_fees
+            - shipping_income
+            - ads
+            - cost
+            + tcs_total
+            + mp_gst
+            - gst_to_pay
+        )
+        
+        sku_results.append({
+            "sku": sku,
+            "name": row['title'],
+            "profit": round(profit, 2)
+        })
+
+    return sku_results
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
@@ -2144,10 +2257,6 @@ def get_full_dashboard(request):
 
     # make negative for expense
     ads_amount = -abs(ads_amount)
-
-    # optional sanity cap
-    if net_sales > 0 and abs(ads_amount) > net_sales:
-        ads_amount = -(net_sales * 0.3)
         
 
     # ---------------- PROFIT ----------------
@@ -2169,18 +2278,20 @@ def get_full_dashboard(request):
     # ---------------- TRENDS ----------------
     trends = orders_qs.annotate(date=TruncDate('purchase_date')).values('date').annotate(
         sales=Sum('total_amount'),
-        qty=Count('id')
+        qty=Sum('items__quantity_ordered')
     )
 
     trends_data = []
+    margin_factor = profit / gross_sales if gross_sales else 0
+
     for t in trends:
         sales = float(t['sales'] or 0)
-        est_profit = sales * 0.3
+        est_profit = sales * margin_factor
 
         trends_data.append({
             "date": t['date'].strftime('%m-%d') if t['date'] else "",
             "sales": round(sales, 2),
-            "qty": t['qty'],
+            "qty": t['qty'] or 0,
             "estimated_profit": round(est_profit, 2),
             "margin": f"{round((est_profit/sales)*100)}%" if sales else "0%"
         })
@@ -2202,44 +2313,26 @@ def get_full_dashboard(request):
         })
 
     
-    # profit and losss asin
-    from django.db.models import DecimalField, Value
-    from django.db.models.functions import Coalesce
+    # profit and losss sku
+    sku_profits = _get_sku_profits_for_dashboard(user, start_date, end_date, search_data)
+    
+    profitable_skus = [s for s in sku_profits if s['profit'] > 0]
+    losing_skus = [s for s in sku_profits if s['profit'] < 0]
+    
+    profitable_skus.sort(key=lambda x: x['profit'], reverse=True)
+    losing_skus.sort(key=lambda x: x['profit'])
 
-    item_profit_qs = finances_qs.values(
-        'amazon_order_id'
-    ).annotate(
-        principal=Coalesce(Sum('principal'), Value(0), output_field=DecimalField()),
-        shipping=Coalesce(Sum('shipping_fee'), Value(0), output_field=DecimalField()),
-        tax=Coalesce(Sum('tax'), Value(0), output_field=DecimalField()),
-        commission=Coalesce(Sum('commission_fee'), Value(0), output_field=DecimalField()),
-        fulfillment=Coalesce(Sum('fulfillment_fee'), Value(0), output_field=DecimalField()),
-        other=Coalesce(Sum('other_fee'), Value(0), output_field=DecimalField()),
-    ).annotate(
-        profit=(
-            F('principal') +
-            F('shipping') -
-            F('tax') -
-            F('commission') -
-            F('fulfillment') -
-            F('other')
-        )
-    )
+    profitable_summary = {
+        'total_count': len(profitable_skus),
+        'total_amount': sum(s['profit'] for s in profitable_skus),
+        'data': profitable_skus[:20]
+    }
 
-    profitable_items = item_profit_qs.filter(profit__gt=0)
-    losing_items = item_profit_qs.filter(profit__lt=0)
-
-
-    profitable_summary = profitable_items.aggregate(
-        total_count=Count('amazon_order_id'),
-        total_amount=Sum('profit')
-    )
-
-    losing_summary = losing_items.aggregate(
-        total_count=Count('amazon_order_id'),
-        total_amount=Sum('profit')
-    )
-
+    losing_summary = {
+        'total_count': len(losing_skus),
+        'total_amount': sum(s['profit'] for s in losing_skus),
+        'data': losing_skus[:20]
+    }
 
 
     cancelled_qty = cancelled_qs.count() 
@@ -2310,22 +2403,12 @@ def get_full_dashboard(request):
             "profitable": {
                 "total_count": profitable_summary['total_count'] or 0,
                 "total_amount": f"₹{round(float(profitable_summary['total_amount'] or 0), 2)}",
-                # "data": list(
-                #     profitable_items.order_by('-profit')[:20].values(
-                #         'amazon_order_id',
-                #         'profit'
-                #     )
-                # )
+                "data": profitable_summary['data']
             },
             "losing": {
                 "total_count": losing_summary['total_count'] or 0,
                 "total_amount": f"-₹{abs(round(float(losing_summary['total_amount'] or 0), 2))}",
-                # "data": list(
-                #     losing_items.order_by('profit')[:20].values(
-                #         'amazon_order_id',
-                #         'profit'
-                #     )
-                # )
+                "data": losing_summary['data']
             }
         },
     
@@ -8037,6 +8120,1261 @@ def amazon_profitability_parent(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+def amazon_profitability_parent_transactions_shipping(request):
+
+    user = request.user
+    data = request.data
+
+    filters = data.get("filters", {})
+    pagination = data.get("pagination", {})
+
+    page_no = int(pagination.get("pageNo", 0))
+    page_size = int(pagination.get("pageSize", 25))
+
+    # ---------------- DATE FILTER ----------------
+    from_date = to_date = None
+    try:
+        if filters.get("fromDate"):
+            from_date = timezone.make_aware(datetime.strptime(filters["fromDate"], "%Y-%m-%d"))
+        if filters.get("toDate"):
+            to_date = timezone.make_aware(datetime.strptime(filters["toDate"], "%Y-%m-%d")) + timedelta(days=1)
+    except Exception as e:
+        print("Date error:", e)
+
+    order_filter = Q(order__user=user)
+
+    # ---------------- CHANNEL FILTER ----------------
+    CHANNEL_MAP = {"Amazon-India": "A21TJRUUN4KGV"}
+    channels = filters.get("channel", {}).get("IN", [])
+
+    if channels:
+        marketplace_ids = [CHANNEL_MAP.get(ch) for ch in channels if CHANNEL_MAP.get(ch)]
+        order_filter &= Q(order__marketplace_id__in=marketplace_ids)
+
+    # ---------------- PARENT FILTER (IMPORTANT) ----------------
+    parent_ids = filters.get("parentproductid", {}).get("IN", [])
+    if not parent_ids:
+        return Response({
+            "status": False,
+            "message": "parentproductid is required"
+        })
+
+    order_filter &= Q(parent_asin__in=parent_ids)
+
+    # ---------------- DATE APPLY ----------------
+    if from_date:
+        order_filter &= Q(order__purchase_date__gte=from_date)
+    if to_date:
+        order_filter &= Q(order__purchase_date__lte=to_date)
+
+
+    # ============================================================
+    # ITEMS QUERY WITH SKU LEVEL GST / COST / TCS
+    # ============================================================
+
+    listing_qs = AmazonListingItem.objects.filter(
+        user=user,
+        sku=OuterRef("seller_sku")
+    ).order_by("-updated_at")
+
+    # ---------------- CHILD ASIN DATA ----------------
+    items = (
+        OrderItem.objects
+        .filter(order_filter)
+        .exclude(order__order_status__icontains='Cancel')
+        .annotate(
+
+            # SKU LEVEL DATA
+            sku_standard_cost=Subquery(
+                listing_qs.values("standard_cost")[:1]
+            ),
+
+            sku_gst_rate=Subquery(
+                listing_qs.values("gst_rate")[:1]
+            ),
+
+            sku_tcs_rate=Subquery(
+                listing_qs.values("tcs")[:1]
+            ),
+
+            sku_region=Subquery(
+                listing_qs.values("region")[:1]
+            ),
+
+            sku_shipping_estimate=Subquery(
+                listing_qs.values("shiping_estimate")[:1]
+            ),
+
+            sku_step_level=Subquery(
+                listing_qs.values("step_level")[:1]
+            ),
+        )
+        .values(
+            'asin',
+            'parent_asin',
+            'seller_sku',
+
+            # SKU DATA
+            'sku_standard_cost',
+            'sku_gst_rate',
+            'sku_tcs_rate',
+            'sku_region',
+            'sku_shipping_estimate',
+            'sku_step_level',
+        )
+        .annotate(
+            title=Max('title'),
+            image_url=Max('image_url'),
+
+            grossqty=Sum('quantity_ordered'),
+            quantity_shipped=Sum('quantity_shipped'),
+
+            shipping_price=Sum('shipping_price'),
+
+            total_cost=Sum(
+                F('cost_price') * F('quantity_ordered')
+            ),
+
+            grosssales=Sum('item_price'),
+            promotion_discount=Sum('promotion_discount'),
+            avg_cost=Avg('item_price'),
+            item_tax=Sum('item_tax'),
+        )
+    )
+
+
+    # ---------------- ESTIMATED FEES ----------------
+    estimated_fee_qs = AmazonEstimatedFee.objects.filter(
+        order_item__order__user=user
+    )
+
+    if from_date:
+        estimated_fee_qs = estimated_fee_qs.filter(
+            order_item__order__purchase_date__gte=from_date
+        )
+
+    if to_date:
+        estimated_fee_qs = estimated_fee_qs.filter(
+            order_item__order__purchase_date__lte=to_date
+        )
+
+    if channels:
+        estimated_fee_qs = estimated_fee_qs.filter(
+            order_item__order__marketplace_id__in=marketplace_ids
+        )
+
+
+    estimated_fee_data = (
+        estimated_fee_qs
+        .values('asin')
+        .annotate(
+            estimated_fees=Sum('total_fees'),
+
+            referral_fee=Sum('referral_fee'),
+            closing_fee=Sum('closing_fee'),
+            per_item_fee=Sum('per_item_fee'),
+
+            fba_fee=Sum('fba_fee'),
+            fba_pick_pack_fee=Sum('fba_pick_pack_fee'),
+            fba_weight_handling_fee=Sum('fba_weight_handling_fee'),
+
+            tax_amount=Sum('tax_amount'),
+        )
+    )
+
+
+    estimated_fee_map = {
+        row['asin']: {
+            "estimated_fees": Decimal(str(row['estimated_fees'] or 0)),
+
+            "referral_fee": Decimal(str(row['referral_fee'] or 0)),
+            "closing_fee": Decimal(str(row['closing_fee'] or 0)),
+            "per_item_fee": Decimal(str(row['per_item_fee'] or 0)),
+
+            "fba_fee": Decimal(str(row['fba_fee'] or 0)),
+            "fba_pick_pack_fee": Decimal(str(row['fba_pick_pack_fee'] or 0)),
+            "fba_weight_handling_fee": Decimal(str(row['fba_weight_handling_fee'] or 0)),
+
+            "tax_amount": Decimal(str(row['tax_amount'] or 0)),
+        }
+        for row in estimated_fee_data
+    }
+
+    # ---------------- FINANCE ----------------
+    finances_qs = FinancialEvent.objects.filter(user=user)
+
+    if from_date:
+        finances_qs = finances_qs.filter(posted_date__gte=from_date)
+    if to_date:
+        finances_qs = finances_qs.filter(posted_date__lte=to_date)
+
+    finance_data = (
+        finances_qs
+        .values('amazon_order_id')
+        .annotate(
+            refund=Sum('total_amount', filter=Q(event_group="REFUND")),
+            rto=Sum('total_amount', filter=Q(event_group="RTO")),
+            # ads=Sum('total_amount', filter=Q(event_type__icontains='Ad')),
+            commission=Sum('commission_fee'),
+            fulfillment=Sum('fulfillment_fee'),
+            other_fee=Sum('other_fee'),
+            shipping_fee=Sum('shipping_fee'),
+        )
+    )
+
+    finance_map = {f['amazon_order_id']: f for f in finance_data}
+
+    # ---------------- RAW MAP ----------------
+    raw_map = FinancialEvent.objects.filter(user=user).exclude(raw_data=None).values('amazon_order_id', 'raw_data')
+
+    raw_data_map = {}
+    for r in raw_map:
+        raw_data_map.setdefault(r['amazon_order_id'], []).append(r['raw_data'])
+
+    # ---------------- ORDER MAP ----------------
+    asin_orders = (
+        OrderItem.objects
+        .filter(order_filter)
+        .values('asin', 'parent_asin', 'order__amazon_order_id', 'quantity_ordered')
+    )
+
+    asin_map = {}
+    for row in asin_orders:
+        asin_map.setdefault(row['asin'], []).append(row)
+
+    # ---------------- SKU MAP ----------------
+    sku_asin_map = {
+        normalize_sku(k): v
+        for k, v in OrderItem.objects.filter(order_filter).values_list('seller_sku', 'asin')
+    }
+
+    # ============================================================
+    # ADS DATA MAP
+    # ============================================================
+
+    ads_metrics_qs = ProductAdMetric.objects.filter(
+        product_ad__amazon_account__user=user,
+        product_ad__amazon_account__is_primary=True,
+    )
+
+    if from_date:
+        ads_metrics_qs = ads_metrics_qs.filter(
+            report_date__gte=from_date.date()
+        )
+
+    if to_date:
+        ads_metrics_qs = ads_metrics_qs.filter(
+            report_date__lte=to_date.date()
+        )
+
+    # ============================================================
+    # MAP ADS BY ASIN
+    # ============================================================
+
+    ads_data = (
+        ads_metrics_qs
+        .values(
+            "product_ad__asin",
+            "product_ad__sku",
+        )
+        .annotate(
+            total_ads_cost=Sum("cost"),
+            total_impressions=Sum("impressions"),
+            total_clicks=Sum("clicks"),
+            total_sales=Sum("sales"),
+            total_orders=Sum("orders"),
+        )
+    )
+
+    # ============================================================
+    # ASIN ADS MAP
+    # ============================================================
+
+    ads_map = {}
+
+    for row in ads_data:
+
+        asin_key = (
+            row["product_ad__asin"] or ""
+        ).strip()
+
+        sku_key = normalize_sku(
+            row["product_ad__sku"] or ""
+        )
+
+        cost = Decimal(
+            str(row["total_ads_cost"] or 0)
+        )
+
+        if asin_key not in ads_map:
+
+            ads_map[asin_key] = {
+                "cost": Decimal("0"),
+                "clicks": 0,
+                "impressions": 0,
+                "sales": Decimal("0"),
+                "orders": 0,
+            }
+
+        ads_map[asin_key]["cost"] += cost
+        ads_map[asin_key]["clicks"] += int(
+            row["total_clicks"] or 0
+        )
+        ads_map[asin_key]["impressions"] += int(
+            row["total_impressions"] or 0
+        )
+        ads_map[asin_key]["sales"] += Decimal(
+            str(row["total_sales"] or 0)
+        )
+        ads_map[asin_key]["orders"] += int(
+            row["total_orders"] or 0
+        )
+
+        # optional SKU mapping
+        if sku_key:
+
+            if sku_key not in ads_map:
+
+                ads_map[sku_key] = {
+                    "cost": Decimal("0"),
+                    "clicks": 0,
+                    "impressions": 0,
+                    "sales": Decimal("0"),
+                    "orders": 0,
+                }
+
+            ads_map[sku_key]["cost"] += cost
+
+    
+    # ---------------- TRANSACTION SHIPPING FEES ----------------
+    all_order_ids = [row['order__amazon_order_id'] for row in asin_orders]
+    tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+        identifier_name='ORDER_ID',
+        identifier_value__in=all_order_ids
+    ).values('transaction_id', 'identifier_value')
+    
+    tx_to_order = {
+        item['transaction_id']: item['identifier_value'] 
+        for item in tx_identifiers
+    }
+    
+    shipping_breakdowns = AmazonTransactionBreakdown.objects.filter(
+        transaction_id__in=tx_to_order.keys(),
+        breakdown_type__in=['Shipping', 'ShippingChargeback']
+    ).values('transaction_id').annotate(total=Sum('amount'))
+    
+    tx_shipping_map = {}
+    for bd in shipping_breakdowns:
+        t_id = bd['transaction_id']
+        oid = tx_to_order[t_id]
+        tx_shipping_map[oid] = tx_shipping_map.get(oid, Decimal("0")) + Decimal(str(bd['total'] or 0))
+
+    # ---------------- BUILD RESPONSE ----------------
+    results = []
+
+    total_sales = total_profit = total_ads = Decimal(0)
+    total_net_sales = total_qty = Decimal(0)
+    total_returns = total_shipping = Decimal(0)
+    total_tcs = Decimal(0)
+    total_mpfees = Decimal(0)   
+    total_ret_percent = Decimal(0)  
+    total_stdcost = Decimal(0) 
+    adjusted_gross_sales = Decimal(0) 
+    total_estimatefees = Decimal(0)
+    total_mp_gst = Decimal(0)
+
+    total_taxable_value = Decimal(0)
+    total_gst_payable = Decimal(0)
+    total_exp_settlement = Decimal(0)
+
+    for row in items:
+
+        asin = row['asin']
+        parent_asin = row['parent_asin']
+        child_sku = row['seller_sku']
+    
+        orders = asin_map.get(asin, [])
+        
+        # estimated_fees = estimated_fee_map.get(asin, Decimal("0"))
+
+        fee_data = estimated_fee_map.get(asin, {})
+
+        estimated_fees = fee_data.get("estimated_fees", Decimal("0"))
+
+        referral_fee = fee_data.get("referral_fee", Decimal("0"))
+        closing_fee = fee_data.get("closing_fee", Decimal("0"))
+        per_item_fee = fee_data.get("per_item_fee", Decimal("0"))
+
+        fba_fee = fee_data.get("fba_fee", Decimal("0"))
+        fba_pick_pack_fee = fee_data.get("fba_pick_pack_fee", Decimal("0"))
+        fba_weight_handling_fee = fee_data.get("fba_weight_handling_fee", Decimal("0"))
+
+        tax_amount = fee_data.get("tax_amount", Decimal("0"))
+
+        gross_qty = Decimal(row['grossqty'] or 0)
+        gross_sales = Decimal(row['grosssales'] or 0)
+
+        item_tax = Decimal(row.get('item_tax') or 0)
+        promo_discount = Decimal(row.get('promotion_discount') or 0)
+
+        tx_shipping_final = Decimal("0")
+        for o in orders:
+            oid = o['order__amazon_order_id']
+            tx_shipping_final += tx_shipping_map.get(oid, Decimal("0"))
+        shipping_price = tx_shipping_final
+        
+        
+        # estimated_fees += promo_discount   #currently not use this 
+
+        # ---------------- GST / TAXABLE ----------------
+
+        # # Gross sales excluding GST
+        # taxable_value = gross_sales
+
+        # # GST collected from order
+        # gst_to_pay_amount = item_tax
+
+        # # GST %
+        # gst_to_pay_perc = (
+        #     (gst_to_pay_amount / taxable_value) * 100
+        #     if taxable_value else Decimal("0")
+        # )
+
+        # # TCS = 1% of taxable value
+        # tcs_total = gst_to_pay_amount * Decimal("0.01")
+
+        # # adjusted_gross_sales = gross_sales + item_tax - promo_discount
+        # adjusted_gross_sales = gross_sales + item_tax - promo_discount + shipping_price
+
+        # ------------------------------------------------------------
+        # ADJUSTED SALES
+        # ------------------------------------------------------------
+
+        # adjusted_gross_sales = (
+        #     gross_sales
+        #     + item_tax
+        #     - promo_discount
+        #     + shipping_price
+        # )
+        adjusted_gross_sales = (
+            gross_sales
+            + item_tax
+         
+            + shipping_price
+        )
+
+        # ------------------------------------------------------------
+        # SKU GST / TCS
+        # ------------------------------------------------------------
+
+        gst_rate = Decimal(str(row.get("sku_gst_rate") or 0))
+        tcs_rate = Decimal(str(row.get("sku_tcs_rate") or 0))
+
+        # ------------------------------------------------------------
+        # TAXABLE VALUE
+        # GST INCLUDED SALES -> REMOVE GST
+        # ------------------------------------------------------------
+
+        if gst_rate > 0:
+
+            taxable_value = (
+                adjusted_gross_sales / (1 + (gst_rate / 100))
+            )
+            gst_to_pay_amount = adjusted_gross_sales - taxable_value
+            
+            # taxable_value = gross_sales
+
+        else:
+
+            taxable_value = gross_sales
+            gst_to_pay_amount = item_tax
+
+        # ------------------------------------------------------------
+        # GST TO PAY
+        # ------------------------------------------------------------
+
+        # gst_to_pay_amount = (
+        #     adjusted_gross_sales - taxable_value
+        # )
+
+        # ------------------------------------------------------------
+        # TCS
+        # ------------------------------------------------------------
+
+        if tcs_rate:
+            tcs_total = (
+                gst_to_pay_amount *
+                (tcs_rate / Decimal("100"))
+            )
+        else:
+            # default 1% TCS
+            tcs_total = (
+                gst_to_pay_amount *
+                (Decimal("1") / Decimal("100"))
+            )   
+
+        # ------------------------------------------------------------
+        # GST %
+        # ------------------------------------------------------------
+
+        # gst_to_pay_perc = gst_rate
+        
+        if gst_rate:
+            gst_to_pay_perc = gst_rate
+
+        else:
+          
+            gst_to_pay_perc = (
+                (gst_to_pay_amount / taxable_value) * 100
+                if taxable_value else 1
+            )  
+
+
+
+
+        refund = rto = mpfees = shipping_fee = Decimal(0)
+        return_units = Decimal(0)
+        # tcs_total = Decimal(0)
+        t_new_charge = Decimal(0)
+
+        refund = rto = mpfees = shipping_fee = Decimal(0)
+
+        # ============================================================
+        # ADS SPEND
+        # ============================================================
+
+        ads = Decimal("0")
+
+        # by child asin
+        ads_row = ads_map.get(asin)
+
+        if not ads_row:
+
+            # fallback by sku
+            ads_row = ads_map.get(
+                normalize_sku(child_sku)
+            )
+
+        if ads_row:
+
+            ads = -abs(
+                Decimal(
+                    str(ads_row["cost"] or 0)
+                )
+            )
+
+        for o in orders:
+            oid = o['order__amazon_order_id']
+            qty = Decimal(o['quantity_ordered'] or 0)
+
+            f = finance_map.get(oid, {})
+
+            refund += Decimal(f.get('refund') or 0)
+            rto += Decimal(f.get('rto') or 0)
+            # ads += Decimal(f.get('ads') or 0)
+
+            mpfees += (
+                Decimal(f.get('commission') or 0) +
+                Decimal(f.get('fulfillment') or 0) +
+                Decimal(f.get('other_fee') or 0)
+            )
+
+            shipping_fee += Decimal(f.get('shipping_fee') or 0)
+
+            order_fee_map = extract_fees_and_tcs_per_asin(
+                raw_data_map.get(oid, []),
+                sku_asin_map=sku_asin_map
+            )
+
+            if asin in order_fee_map:
+                t_new_charge += Decimal(order_fee_map[asin]["fee"])
+                # tcs_total += Decimal(order_fee_map[asin]["tcs"])
+
+            r = Decimal(f.get('refund') or 0)
+            rto_amt = Decimal(f.get('rto') or 0)
+
+            refund += r
+            rto += rto_amt
+
+            # total_estimatefees += estimated_fees
+
+            if r < 0 or rto_amt < 0:
+                return_units += qty
+
+        # net_qty = max(gross_qty - return_units, 0)
+        net_qty = max(gross_qty , 0)
+        # net_sales = gross_sales + refund + rto
+        net_sales = adjusted_gross_sales
+        # total_estimatefees += estimated_fees
+        shipping_final = shipping_price
+
+        # mp_gst = (net_sales + shipping_final) * 0.18
+       
+
+        # mp_gst = (net_sales + shipping_final) * Decimal("0.18")  update on 13 july
+        mp_gst = (estimated_fees + shipping_final) * Decimal("0.18")
+        
+        # total_cost = Decimal(row['total_cost'] or 0)
+
+        # total_cost = Decimal(50) * net_qty
+        
+        standard_cost = Decimal(
+            str(row.get("sku_standard_cost") or 0)
+        )
+
+        total_cost = standard_cost * net_qty
+
+        # profit = net_sales + t_new_charge + shipping_final - total_cost + tcs_total
+        # profit = net_sales - estimated_fees - shipping_final - tcs_total + mp_gst - total_cost
+        
+        profit = (
+            net_sales
+            - estimated_fees
+            - shipping_final
+            + ads
+            + tcs_total
+            + mp_gst
+            - total_cost
+            - gst_to_pay_amount
+        )
+
+        # exp_settlement = (
+        #     profit
+        #     - total_cost
+        #     - tcs_total
+        #     - mp_gst
+        # )
+
+        exp_settlement = (
+            net_sales
+            - shipping_final
+            - tcs_total
+            - mp_gst
+        )
+        profit_margin = (profit / net_sales * 100) if net_sales else 0
+
+        tacos = (
+            (abs(ads) / gross_sales) * 100
+            if gross_sales else 0
+        )
+
+        ret_percent = (return_units / net_qty * 100) if net_qty else 0
+        
+
+        results.append({
+            "asin": asin,
+            "parent_asin": parent_asin,
+            "name": row['title'],
+            "child_sku": clean_sku(child_sku),
+            # "child_sku": row['child_sku'],
+            "image_url": row['image_url'],
+            "channel": "Amazon-India",
+            "channel1": "Amazon-India",
+
+            "grossqty": int(gross_qty),
+            "netqty": int(net_qty),
+
+            "grosssales": format_currency(gross_sales),
+            "netsales": format_currency(net_sales),
+
+            "ads": format_currency(ads),
+            "tacos": round(tacos, 2),
+            "mp_gst": format_currency(mp_gst),
+            "new_mpfees": format_currency(t_new_charge),
+         
+            "estimatefees": format_currency(-abs(estimated_fees)),
+            "referral_fee": format_currency(referral_fee),
+            "closing_fee": format_currency(closing_fee),
+            "per_item_fee": format_currency(per_item_fee),
+
+            "fba_fee": format_currency(fba_fee),
+            "fba_pick_pack_fee": format_currency(fba_pick_pack_fee),
+            "fba_weight_handling_fee": format_currency(fba_weight_handling_fee),
+
+            "tax_amount": format_currency(tax_amount),
+            "shippingfees": format_currency(shipping_final),
+            "tcs": format_currency(tcs_total),
+
+            "profit": format_currency(profit),
+            "grossprofitper": round(profit_margin, 2),
+            "retpercent": round(ret_percent, 2),
+            "returnqty": int(return_units),
+            # "tacos": round(tacos, 2),
+            # "gst": format_currency(tcs_total),
+            "gst": format_currency(0),
+
+            "taxable_value": format_currency(taxable_value),
+            "gst_to_pay_amount": format_currency(gst_to_pay_amount),
+            "gst_to_pay_perc": round(gst_to_pay_perc, 2),
+            "exp_settlement": format_currency(exp_settlement),
+
+            "id": asin,
+            "stdcost": format_currency(total_cost),
+            "redirecturl": f"https://www.amazon.in/dp/{asin}" if asin else None,
+        })
+
+
+        total_sales += gross_sales
+        total_net_sales += net_sales
+        total_profit += profit
+        total_ads += ads
+        total_qty += net_qty
+        total_returns += return_units
+        total_shipping += shipping_final
+        total_tcs += tcs_total
+        total_mpfees += t_new_charge
+        total_ret_percent += ret_percent
+        total_stdcost += total_cost
+        total_estimatefees += Decimal(estimated_fees)
+        total_mp_gst += mp_gst
+        total_taxable_value += taxable_value
+        total_gst_payable += gst_to_pay_amount
+        total_exp_settlement += exp_settlement
+
+    return Response({
+        "status": True,
+        "message": "Success",
+        "pagination": {
+            "pageNo": page_no,
+            "pageSize": page_size,
+            "count": len(results)
+        },
+        "totals": {
+            "ads": format_currency(total_ads),
+            "netqty": total_qty,
+            "totalreturn": total_returns,
+            "totalreturnper": f"{round(total_ret_percent, 2)}%",
+            "grosssales": format_currency(total_sales),
+            "netsales": format_currency(total_net_sales),
+            "profit": format_currency(total_profit),
+            "grossprofitper": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
+            "mpfees": format_currency(total_mpfees),
+             "mp_gst": format_currency(total_mp_gst),
+            # "estimatefees": format_currency(total_estimatefees),
+            "estimatefees": format_currency(-abs(total_estimatefees)),
+            "total_new_mpfees": format_currency(total_mpfees),
+            "shippingfees": format_currency(total_shipping),
+            "tacos": (total_ads / total_sales * 100) if total_sales else 0,
+            "stdcost": format_currency(total_stdcost),
+            # "totalgst": format_currency(total_tcs),
+            "totalgst": format_currency(0),
+            "tcs": format_currency(total_tcs),
+            "taxable_value": format_currency(total_taxable_value),
+
+            "gst_to_pay_amount": format_currency(total_gst_payable),
+            "gst_to_pay_perc":f"{round((total_gst_payable / total_taxable_value * 100),2) if total_taxable_value else 1}%",
+
+            "exp_settlement": format_currency(total_exp_settlement),
+        },
+        "response": results[page_no * page_size:(page_no + 1) * page_size]
+    })
+
+
+
+
+# workinng till may 20
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def sku_profit_report(request):
+
+#     user = request.user
+#     data = request.data
+
+#     # ---------------- GET ASIN ----------------
+#     filters = data.get("filters", {})
+#     asin = data.get("parentProductId") or filters.get("parentProductId")
+
+#     if not asin:
+#         return Response({
+#             "status": False,
+#             "message": "parentProductId is required"
+#         }, status=400)
+
+#     pagination = data.get("pagination", {})
+#     page_no = int(pagination.get("pageNo", 0))
+#     page_size = int(pagination.get("pageSize", 25))
+
+
+   
+#     # ---------------- DATE FILTER ----------------
+#     from_date = None
+#     to_date = None
+
+#     try:
+#         if filters.get("fromDate"):
+#             from_date = timezone.make_aware(
+#                 datetime.strptime(filters["fromDate"], "%Y-%m-%d")
+#             )
+
+#         if filters.get("endDate"):
+#             to_date = timezone.make_aware(
+#                 datetime.strptime(filters["endDate"], "%Y-%m-%d")
+#             ) + timedelta(days=1)
+
+#         # ✅ FIX: handle single-day filter
+#         if from_date and not to_date:
+#             to_date = from_date + timedelta(days=1)
+
+#     except Exception as e:
+#         print("Date error:", e)
+#     valid_orders = (
+#         OrderItem.objects
+#         .filter(order__user=user)
+#     )
+
+#     order_filter = Q(order__user=user, asin=asin)
+
+#     if from_date:
+#         order_filter &= Q(order__purchase_date__gte=from_date)
+
+#     if to_date:
+#         order_filter &= Q(order__purchase_date__lt=to_date)   # ✅ IMPORTANT
+
+#     valid_order_ids = set(
+#         valid_orders.values_list('order__amazon_order_id', flat=True)
+#     )
+
+#     # ---------------- FILTER ----------------
+#     # order_filter = Q(order__user=user, asin=asin)
+#     # order_filter = Q(order__user=user, asin=asin)
+
+#     if valid_order_ids:
+#         order_filter &= Q(order__amazon_order_id__in=valid_order_ids)
+
+#     CHANNEL_MAP = {"Amazon-India": "A21TJRUUN4KGV"}
+
+#     channels = filters.get("channel", {}).get("IN", [])
+#     if channels:
+#         marketplace_ids = [CHANNEL_MAP[ch] for ch in channels if ch in CHANNEL_MAP]
+#         if marketplace_ids:
+#             order_filter &= Q(order__marketplace_id__in=marketplace_ids)
+
+#     if from_date:
+#         order_filter &= Q(order__purchase_date__gte=from_date)
+#     if to_date:
+#         order_filter &= Q(order__purchase_date__lte=to_date)
+
+#     # ---------------- ORDER ITEMS ----------------
+#     items = (
+#         OrderItem.objects
+#         .filter(order_filter)
+#         .exclude(order__order_status__icontains='Cancel')
+#         .values('order__amazon_order_id', 'order__purchase_date')
+#         .annotate(
+#             title=Max('title'),
+#             image=Max('image_url'),
+
+#             grossqty=Sum('quantity_ordered'),
+#             grosssales=Sum('item_price'),
+#             promotion_discount=Sum('promotion_discount'),
+#             avg_cost=Avg('item_price'),
+#             item_tax=Sum('item_tax'),
+
+#             shipping_income=Sum('shipping_price'),
+#             shipping_price=Sum('shipping_price'),
+#             total_cost=Sum(F('cost_price') * F('quantity_ordered'))
+#         )
+#         .order_by('-order__purchase_date')
+#     )
+
+#     # estimated_fee_data = (
+#     #     AmazonEstimatedFee.objects
+#     #     .filter(
+#     #         order_item__order__user=user,
+#     #         asin=asin
+#     #     )
+#     #     .values('order_item__order__amazon_order_id')
+#     #     .annotate(
+#     #         estimated_fees=Sum('total_fees')
+#     #     )
+#     # )
+
+#     estimated_fee_data = (
+#         AmazonEstimatedFee.objects
+#         .filter(
+#             order_item__order__user=user,
+#             asin=asin
+#         )
+#         .values('order_item__order__amazon_order_id')
+#         .annotate(
+#             estimated_fees=Sum('total_fees'),
+
+#             referral_fee=Sum('referral_fee'),
+#             closing_fee=Sum('closing_fee'),
+#             per_item_fee=Sum('per_item_fee'),
+
+#             fba_fee=Sum('fba_fee'),
+#             fba_pick_pack_fee=Sum('fba_pick_pack_fee'),
+#             fba_weight_handling_fee=Sum('fba_weight_handling_fee'),
+
+#             tax_amount=Sum('tax_amount'),
+#         )
+#     )
+
+#     # estimated_fee_map = {
+#     #     row['order_item__order__amazon_order_id']: Decimal(
+#     #         str(row['estimated_fees'] or 0)
+#     #     )
+#     #     for row in estimated_fee_data
+#     # }
+#     estimated_fee_map = {
+#         row['order_item__order__amazon_order_id']: {
+
+#             "estimated_fees": float(row['estimated_fees'] or 0),
+
+#             "referral_fee": float(row['referral_fee'] or 0),
+#             "closing_fee": float(row['closing_fee'] or 0),
+#             "per_item_fee": float(row['per_item_fee'] or 0),
+
+#             "fba_fee": float(row['fba_fee'] or 0),
+#             "fba_pick_pack_fee": float(row['fba_pick_pack_fee'] or 0),
+#             "fba_weight_handling_fee": float(row['fba_weight_handling_fee'] or 0),
+
+#             "tax_amount": float(row['tax_amount'] or 0),
+#         }
+
+#         for row in estimated_fee_data
+#     }
+#     # ---------------- FINANCE ----------------
+#     # finance_qs = FinancialEvent.objects.filter(user=user)
+#     finance_qs = FinancialEvent.objects.filter(
+#         user=user,
+#         amazon_order_id__in=valid_order_ids
+#     )
+
+#     if from_date:
+#         finance_qs = finance_qs.filter(posted_date__gte=from_date)
+#     if to_date:
+#         finance_qs = finance_qs.filter(posted_date__lte=to_date)
+
+#     finance_data = (
+#         finance_qs
+#         .values('amazon_order_id')
+#         .annotate(
+#             refund=Sum('total_amount', filter=Q(event_group="REFUND")),
+#             ads=Sum('total_amount', filter=Q(event_type__icontains='Ad')),
+
+#             commission=Sum('commission_fee'),
+#             fulfillment=Sum('fulfillment_fee'),
+#             other_fee=Sum('other_fee'),
+
+#             shipping_fee=Sum('shipping_fee'),
+#             gst=Sum('tax')
+#         )
+#     )
+
+#     finance_map = {f['amazon_order_id']: f for f in finance_data}
+
+#     # ---------------- RAW DATA (TCS) ----------------
+#     raw_map = (
+#         FinancialEvent.objects
+#         .filter(user=user, amazon_order_id__in=valid_order_ids)
+#         .exclude(raw_data=None)
+#         .values('amazon_order_id', 'raw_data')
+#     )
+
+#     raw_data_map = {}
+#     for r in raw_map:
+#         raw_data_map.setdefault(r['amazon_order_id'], []).append(r['raw_data'])
+
+#     # ---------------- BUILD RESPONSE ----------------
+#     results = []
+
+#     total_sales = total_profit = total_qty = 0
+#     total_ads = total_mpfees = total_shipping = 0
+#     total_gst = total_tcs = total_cost = 0
+#     total_net_sales = 0
+#     total_returns = 0
+#     total_ret_percent =0
+#     total_new_charge = 0
+#     adjusted_gross_sales = 0
+#     total_estimatefees = 0
+#     total_mp_gst = 0
+
+#     total_taxable_value = 0
+#     total_gst_payable = 0
+
+#     total_exp_settlement = 0
+
+#     for row in items:
+
+#         oid = row['order__amazon_order_id']
+
+#         gross_qty = int(row['grossqty'] or 0)
+#         gross_sales = float(row['grosssales'] or 0)
+
+#         item_tax = float(row.get('item_tax') or 0)
+#         promo_discount = float(row.get('promotion_discount') or 0)
+       
+#         # estimated_fees = float(
+#         #     estimated_fee_map.get(oid, Decimal("0"))
+#         # )
+
+#         fee_data = estimated_fee_map.get(oid, {})
+
+#         estimated_fees = fee_data.get("estimated_fees", 0)
+
+#         referral_fee = fee_data.get("referral_fee", 0)
+#         closing_fee = fee_data.get("closing_fee", 0)
+#         per_item_fee = fee_data.get("per_item_fee", 0)
+
+#         fba_fee = fee_data.get("fba_fee", 0)
+#         fba_pick_pack_fee = fee_data.get("fba_pick_pack_fee", 0)
+#         fba_weight_handling_fee = fee_data.get("fba_weight_handling_fee", 0)
+
+#         tax_amount = fee_data.get("tax_amount", 0)
+
+#         # adjusted_gross_sales = gross_sales + item_tax - promo_discount
+
+#         shipping_income = float(row['shipping_income'] or 0)
+#         shipping_price = float(row['shipping_price'] or 0)
+
+#         adjusted_gross_sales = gross_sales + item_tax - promo_discount + shipping_price
+        
+#         # cost = float(row['total_cost'] or 0)
+#         cost = float(50) * gross_qty
+
+#         f = finance_map.get(oid, {})
+
+#         refund = float(f.get('refund') or 0)
+#         ads = float(f.get('ads') or 0)
+
+#         mpfees = (
+#             float(f.get('commission') or 0) +
+#             float(f.get('fulfillment') or 0) +
+#             float(f.get('other_fee') or 0)
+#         )
+
+#         shipping_fee = float(f.get('shipping_fee') or 0)
+#         gst = float(f.get('gst') or 0)
+
+#         # ---------------- TCS ----------------
+
+#         # tcs = 0
+#         # for raw in raw_data_map.get(oid, []):# ---------------- GST / TAXABLE ----------------
+
+#         # Gross sales includes GST
+#         # Taxable value = sales without GST
+        
+#         gst_to_pay_amount = item_tax
+
+#         # TCS = 1% of taxable value
+#         tcs = gst_to_pay_amount * 0.01
+
+#         # GST amount payable
+#         taxable_value = gross_sales
+
+#         # GST percentage
+#         gst_to_pay_perc = (
+#             (gst_to_pay_amount / taxable_value) * 100
+#             if taxable_value else 1
+#         )
+#         #     if not isinstance(raw, dict):
+#         #         continue
+#         #     try:
+#         #         for item in raw.get("ShipmentItemList", []):
+#         #             for charge in item.get("ItemChargeList", []):
+#         #                 if charge.get("ChargeType") == "TCS-IGST":
+#         #                     tcs += float(charge["ChargeAmount"]["CurrencyAmount"])
+#         #     except:
+#         #         pass
+
+
+   
+#         # ---------------- NEW FEES (SUM OF ALL FEETYPES) ----------------
+#         new_charge = 0
+
+#         for raw in raw_data_map.get(oid, []):
+#             if not isinstance(raw, dict):
+#                 continue
+
+#             try:
+#                 # ✅ Handle BOTH types
+#                 item_lists = []
+#                 item_lists.extend(raw.get("ShipmentItemList", []))
+#                 item_lists.extend(raw.get("ShipmentItemAdjustmentList", []))
+
+#                 for item in item_lists:
+
+#                     fee_lists = []
+#                     fee_lists.extend(item.get("ItemFeeList", []))               # ✅ NORMAL
+#                     fee_lists.extend(item.get("ItemFeeAdjustmentList", []))     # ✅ REFUND
+
+#                     for fee in fee_lists:
+#                         amount = float(
+#                             fee.get("FeeAmount", {}).get("CurrencyAmount", 0) or 0
+#                         )
+#                         new_charge += amount
+
+#             except Exception:
+#                 pass
+
+#         # ---------------- RETURNS ----------------
+#         return_units = abs(refund) / (gross_sales / gross_qty) if gross_qty and gross_sales else 0
+#         return_units = int(round(return_units))
+
+#         # net_qty = max(gross_qty - return_units, 0)
+#         net_qty = max(gross_qty , 0)
+
+#         # ---------------- CALCULATIONS ----------------
+#         # net_sales = gross_sales + refund
+#         net_sales = adjusted_gross_sales
+#         # shipping_final = shipping_income  
+
+#         shipping_final = shipping_income
+
+#         # MP GST = 18% of (netsales + shipping)
+#         mp_gst = (net_sales + shipping_final) * 0.18
+
+        
+#         # profit = net_sales + new_charge + shipping_final - cost + tcs
+#         # profit = net_sales - estimated_fees - shipping_final - tcs
+        
+#         # profit = net_sales - estimated_fees - shipping_final - tcs + mp_gst - cost
+#         profit = (
+#             net_sales
+#             - estimated_fees
+#             - shipping_final
+#             - cost
+#             + tcs
+#             + mp_gst
+        
+#         )
+
+#         exp_settlement = profit - cost - tcs - mp_gst
+        
+
+#         profit_margin = (profit / net_sales * 100) if net_sales else 0
+#         tacos = (ads / gross_sales * 100) if gross_sales else 0
+#         drr = tacos
+#         ret_percent = (return_units / net_qty * 100) if net_qty else 0
+
+#         results.append({
+#             "order_id": oid,
+#             "date": row['order__purchase_date'],
+#             "name": row['title'],
+#             "image": row['image'],
+
+#             "channel": "Amazon-India",
+#             "channel1": "Amazon-India",
+#             "redirecturl": f"https://www.amazon.in/dp/{asin}",
+
+#             "grossqty": gross_qty,
+#             "qty": net_qty,
+
+#             "grosssales": round(gross_sales, 2),
+#             "netsales": format_currency(net_sales),
+
+#             "taxable_value":
+#             format_currency(taxable_value),
+
+#             "gst_to_pay_amount":
+#             format_currency(gst_to_pay_amount),
+
+#             "gst_to_pay_perc":
+#             round(gst_to_pay_perc, 2),
+
+#             "ads": format_currency(ads),
+#             "mpfees": round(mpfees, 2),
+#             "mp_gst": format_currency(mp_gst),
+#             # "estimatefees": format_currency(estimated_fees),
+#             "estimatefees": format_currency(-abs(estimated_fees)),
+#             "referral_fee": format_currency(referral_fee),
+#             "closing_fee": format_currency(closing_fee),
+#             "per_item_fee": format_currency(per_item_fee),
+
+#             "fba_fee": format_currency(fba_fee),
+#             "fba_pick_pack_fee": format_currency(fba_pick_pack_fee),
+#             "fba_weight_handling_fee": format_currency(fba_weight_handling_fee),
+
+#             "tax_amount": format_currency(tax_amount),
+#             "new_mpfees": format_currency(new_charge),
+#             "shippingfees": format_currency(shipping_final),
+
+#             "profit": format_currency(profit),
+#             "grossprofitper": round(profit_margin, 2),
+
+#             "returnqty": return_units,
+#             "retpercent": round(ret_percent, 2),
+
+#             "tacos": round(tacos, 2),
+#             "drr": round(drr, 2),
+
+#             "stdcost": format_currency(cost),
+
+#             # "gst": format_currency(tcs),
+#             "gst": format_currency(0),
+#             "tcs": format_currency(tcs),
+#             "exp_settlement":format_currency(exp_settlement),
+#         })
+
+#         # ---------------- TOTALS ----------------
+#         total_sales += gross_sales
+#         total_net_sales += net_sales
+#         total_profit += profit
+#         total_qty += net_qty
+#         total_returns += return_units
+#         total_ads += ads
+#         total_mpfees += mpfees
+#         total_shipping += shipping_final
+#         total_gst += gst
+#         total_tcs += tcs
+#         total_cost += cost
+#         total_ret_percent += ret_percent
+#         total_new_charge += new_charge
+#         total_estimatefees += estimated_fees
+#         total_mp_gst += mp_gst
+#         total_taxable_value += taxable_value
+#         total_gst_payable += gst_to_pay_amount
+#         total_exp_settlement += exp_settlement
+
+#     # ---------------- RESPONSE ----------------
+#     return Response({
+#         "status": True,
+#         "message": "Success",
+#         "pagination": {
+#             "pageNo": page_no,
+#             "pageSize": page_size,
+#             "count": len(results)
+#         },
+#         "totals": {
+#             "grosssales": round(total_sales, 2),
+#             "netsales": format_currency(total_net_sales),
+#             "total_netquantity": total_qty,
+#             "profit": format_currency(total_profit),
+#             "total_returns":total_returns,
+#             "total_ret_percent":f"{round(total_ret_percent, 2)}%",
+
+#             # "totalprofitmargin": (total_profit / total_net_sales * 100) if total_net_sales else 0,
+#             "totalprofitmargin": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
+
+#             "ads": format_currency(total_ads),
+#             "mpfees": round(total_mpfees, 2),
+#             "mp_gst": format_currency(total_mp_gst),
+#             # "estimatefees": format_currency(total_estimatefees),
+#             "estimatefees": format_currency(-abs(total_estimatefees)),
+#             "total_new_mpfees": format_currency(total_new_charge),
+#             "shipping": format_currency(total_shipping),
+#             # "gst": format_currency(total_tcs),
+#             "gst": format_currency(0),
+#             "tcs": format_currency(total_tcs),
+#             "cost": format_currency(total_cost),
+
+#             "taxable_value":format_currency(total_taxable_value),
+
+#             "gst_to_pay_amount":format_currency(total_gst_payable),
+
+#             "gst_to_pay_perc":f"{round((total_gst_payable / total_taxable_value * 100),2) if total_taxable_value else 1}%",
+
+            
+#             "exp_settlement":format_currency(total_exp_settlement),
+#         },
+#         "response": results[page_no * page_size:(page_no + 1) * page_size]
+#     })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def sku_profit_report(request):
 
     user = request.user
@@ -8352,7 +9690,7 @@ def sku_profit_report(request):
 
     if to_date:
         ads_metrics_qs = ads_metrics_qs.filter(
-            report_date__lt=to_date.date()
+            report_date__lte=to_date.date()
         )
     # ============================================================
     # ADS DATA
@@ -8790,6 +10128,727 @@ def sku_profit_report(request):
 
 
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def sku_profit_report_transactions_shipping(request):
+
+    user = request.user
+    data = request.data
+
+    # ---------------- GET ASIN ----------------
+    filters = data.get("filters", {})
+
+    sku = data.get("sku") or filters.get("sku")
+
+    if not sku:
+        return Response({
+            "status": False,
+            "message": "sku is required"
+        }, status=400)
+
+    pagination = data.get("pagination", {})
+    page_no = int(pagination.get("pageNo", 0))
+    page_size = int(pagination.get("pageSize", 25))
+
+    # ---------------- DATE FILTER ----------------
+    from_date = None
+    to_date = None
+
+    try:
+        if filters.get("fromDate"):
+            from_date = timezone.make_aware(
+                datetime.strptime(filters["fromDate"], "%Y-%m-%d")
+            )
+
+        if filters.get("endDate"):
+            to_date = timezone.make_aware(
+                datetime.strptime(filters["endDate"], "%Y-%m-%d")
+            ) + timedelta(days=1)
+
+        if from_date and not to_date:
+            to_date = from_date + timedelta(days=1)
+
+    except Exception as e:
+        print("Date error:", e)
+
+    order_filter = Q(
+        order__user=user,
+        seller_sku=sku
+    )
+
+    if from_date:
+        order_filter &= Q(order__purchase_date__gte=from_date)
+
+    if to_date:
+        order_filter &= Q(order__purchase_date__lt=to_date)
+
+    CHANNEL_MAP = {"Amazon-India": "A21TJRUUN4KGV"}
+
+    channels = filters.get("channel", {}).get("IN", [])
+    if channels:
+        marketplace_ids = [CHANNEL_MAP[ch] for ch in channels if ch in CHANNEL_MAP]
+        if marketplace_ids:
+            order_filter &= Q(order__marketplace_id__in=marketplace_ids)
+
+    # Get the specific order IDs matching this SKU and date/channel filter
+    matching_order_ids = list(
+        OrderItem.objects.filter(order_filter)
+        .exclude(order__order_status__icontains='Cancel')
+        .values_list('order__amazon_order_id', flat=True)
+        .distinct()
+    )
+
+    # ============================================================
+    # ITEMS QUERY WITH THIS new gst and st cost
+    # ============================================================
+
+    listing_qs = AmazonListingItem.objects.filter(
+        user=user,
+        sku=OuterRef("seller_sku")
+    ).order_by("-updated_at")
+
+    items = (
+        OrderItem.objects
+        .filter(order_filter)
+        .exclude(order__order_status__icontains='Cancel')
+        .annotate(
+
+            # SKU LEVEL DATA
+            sku_standard_cost=Subquery(
+                listing_qs.values("standard_cost")[:1]
+            ),
+
+            sku_gst_rate=Subquery(
+                listing_qs.values("gst_rate")[:1]
+            ),
+
+            sku_tcs_rate=Subquery(
+                listing_qs.values("tcs")[:1]
+            ),
+
+            sku_region=Subquery(
+                listing_qs.values("region")[:1]
+            ),
+
+            sku_shipping_estimate=Subquery(
+                listing_qs.values("shiping_estimate")[:1]
+            ),
+
+            sku_step_level=Subquery(
+                listing_qs.values("step_level")[:1]
+            ),
+        )
+        .values(
+            'order__amazon_order_id',
+            'order__purchase_date',
+            'seller_sku',
+
+            # ⚠️ CONFIRM THIS FIELD NAME — see note at bottom of file.
+            # This must be whatever field on Order/OrderItem tells you
+            # AFN (FBA) vs MFN (FBM). Replace 'order__fulfillment_channel'
+            # with your actual field.
+            'order__fulfillment_channel',
+
+            # INCLUDE THESE
+            'sku_standard_cost',
+            'sku_gst_rate',
+            'sku_tcs_rate',
+            'sku_region',
+            'sku_shipping_estimate',
+            'sku_step_level',
+        )
+        .annotate(
+            title=Max('title'),
+            image=Max('image_url'),
+            asin=Max('asin'),
+
+            grossqty=Sum('quantity_ordered'),
+            grosssales=Sum('item_price'),
+            promotion_discount=Sum('promotion_discount'),
+            avg_cost=Avg('item_price'),
+            item_tax=Sum('item_tax'),
+
+            shipping_income=Sum('shipping_price'),
+            shipping_price=Sum('shipping_price'),
+
+            total_cost=Sum(
+                F('cost_price') * F('quantity_ordered')
+            )
+        )
+        .order_by('-order__purchase_date')
+    )
+
+    estimated_fee_data = (
+        AmazonEstimatedFee.objects.filter(
+            order_item__order__user=user,
+            order_item__seller_sku=sku,
+            order_item__order__amazon_order_id__in=matching_order_ids
+        )
+        .values('order_item__order__amazon_order_id')
+        .annotate(
+            estimated_fees=Sum('total_fees'),
+
+            referral_fee=Sum('referral_fee'),
+            closing_fee=Sum('closing_fee'),
+            per_item_fee=Sum('per_item_fee'),
+
+            fba_fee=Sum('fba_fee'),
+            fba_pick_pack_fee=Sum('fba_pick_pack_fee'),
+            fba_weight_handling_fee=Sum('fba_weight_handling_fee'),
+
+            tax_amount=Sum('tax_amount'),
+        )
+    )
+
+    estimated_fee_map = {
+        row['order_item__order__amazon_order_id']: {
+
+            "estimated_fees": float(row['estimated_fees'] or 0),
+
+            "referral_fee": float(row['referral_fee'] or 0),
+            "closing_fee": float(row['closing_fee'] or 0),
+            "per_item_fee": float(row['per_item_fee'] or 0),
+
+            "fba_fee": float(row['fba_fee'] or 0),
+            "fba_pick_pack_fee": float(row['fba_pick_pack_fee'] or 0),
+            "fba_weight_handling_fee": float(row['fba_weight_handling_fee'] or 0),
+
+            "tax_amount": float(row['tax_amount'] or 0),
+        }
+
+        for row in estimated_fee_data
+    }
+
+    # ---------------- FINANCE ----------------
+    finance_qs = FinancialEvent.objects.filter(
+        user=user,
+        amazon_order_id__in=matching_order_ids
+    )
+
+    if from_date:
+        finance_qs = finance_qs.filter(posted_date__gte=from_date)
+    if to_date:
+        finance_qs = finance_qs.filter(posted_date__lte=to_date)
+
+    finance_data = (
+        finance_qs
+        .values('amazon_order_id')
+        .annotate(
+            refund=Sum('total_amount', filter=Q(event_group="REFUND")),
+
+            commission=Sum('commission_fee'),
+            fulfillment=Sum('fulfillment_fee'),
+            other_fee=Sum('other_fee'),
+
+            shipping_fee=Sum('shipping_fee'),
+            gst=Sum('tax')
+        )
+    )
+
+    finance_map = {f['amazon_order_id']: f for f in finance_data}
+
+    # ---------------- RAW DATA (TCS) ----------------
+    raw_map = (
+        FinancialEvent.objects
+        .filter(user=user, amazon_order_id__in=matching_order_ids)
+        .exclude(raw_data=None)
+        .values('amazon_order_id', 'raw_data')
+    )
+
+    raw_data_map = {}
+    for r in raw_map:
+        raw_data_map.setdefault(r['amazon_order_id'], []).append(r['raw_data'])
+
+    # ============================================================
+    # ADS SPEND MAP (APPLY BEFORE BUILD RESPONSE)
+    # ============================================================
+
+    sku_list = list(
+        OrderItem.objects
+        .filter(order_filter)
+        .exclude(seller_sku__isnull=True)
+        .exclude(seller_sku__exact="")
+        .values_list("seller_sku", flat=True)
+        .distinct()
+    )
+
+    normalized_skus = [
+        normalize_sku(sku)
+        for sku in sku_list
+    ]
+
+    ads_metrics_qs = (
+        ProductAdMetric.objects
+        .filter(
+            product_ad__amazon_account__user=user,
+            product_ad__amazon_account__is_primary=True,
+        )
+    )
+
+    if from_date:
+        ads_metrics_qs = ads_metrics_qs.filter(
+            report_date__gte=from_date.date()
+        )
+
+    if to_date:
+        ads_metrics_qs = ads_metrics_qs.filter(
+            report_date__lte=to_date.date()
+        )
+
+    ads_data = (
+        ads_metrics_qs
+        .values(
+            "product_ad__asin",
+            "product_ad__sku",
+        )
+        .annotate(
+            total_ads_cost=Sum("cost"),
+            total_impressions=Sum("impressions"),
+            total_clicks=Sum("clicks"),
+            total_sales=Sum("sales"),
+            total_orders=Sum("orders"),
+        )
+    )
+
+    ads_map = {}
+
+    for row in ads_data:
+
+        asin_key = (
+            row["product_ad__asin"] or ""
+        ).strip()
+
+        sku_key = normalize_sku(
+            row["product_ad__sku"] or ""
+        )
+
+        cost = float(
+            str(row["total_ads_cost"] or 0)
+        )
+
+        if asin_key not in ads_map:
+
+            ads_map[asin_key] = {
+                "cost": float("0"),
+                "clicks": 0,
+                "impressions": 0,
+                "sales": float("0"),
+                "orders": 0,
+            }
+
+        ads_map[asin_key]["cost"] += cost
+        ads_map[asin_key]["clicks"] += int(
+            row["total_clicks"] or 0
+        )
+        ads_map[asin_key]["impressions"] += int(
+            row["total_impressions"] or 0
+        )
+        ads_map[asin_key]["sales"] += float(
+            str(row["total_sales"] or 0)
+        )
+        ads_map[asin_key]["orders"] += int(
+            row["total_orders"] or 0
+        )
+
+        if sku_key:
+
+            if sku_key not in ads_map:
+
+                ads_map[sku_key] = {
+                    "cost": float("0"),
+                    "clicks": 0,
+                    "impressions": 0,
+                    "sales": float("0"),
+                    "orders": 0,
+                }
+
+            ads_map[sku_key]["cost"] += cost
+
+    # ============================================================
+    # TOTAL ADS SPEND & ADS PER UNIT
+    # ============================================================
+
+    ads_row = ads_map.get(normalize_sku(sku), {})
+
+    total_ads_cost = abs(
+        float(str(ads_row.get("cost") or 0))
+    )
+
+    total_net_quantity = (
+        items.aggregate(
+            total_qty=Sum("grossqty")
+        )["total_qty"] or 0
+    )
+
+    ads_per_unit = (
+        total_ads_cost / total_net_quantity
+        if total_net_quantity else 0
+    )
+
+    # ============================================================
+    # TRANSACTION SHIPPING FEES — DIRECT SUM (no FBA/FBM mismatch)
+    # ============================================================
+
+    tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+        identifier_name='ORDER_ID',
+        identifier_value__in=matching_order_ids
+    ).values('transaction_id', 'identifier_value')
+
+    tx_to_order = {
+        item['transaction_id']: item['identifier_value']
+        for item in tx_identifiers
+    }
+
+    shipping_breakdowns = AmazonTransactionBreakdown.objects.filter(
+        transaction_id__in=tx_to_order.keys(),
+        breakdown_type__in=['Shipping', 'ShippingChargeback']
+    ).values('transaction_id').annotate(total=Sum('amount'))
+
+    tx_shipping_map = {}
+
+    for bd in shipping_breakdowns:
+        t_id = bd['transaction_id']
+        oid_val = tx_to_order[t_id]
+        tx_shipping_map[oid_val] = tx_shipping_map.get(oid_val, 0.0) + float(bd['total'] or 0)
+
+    # ---------------- BUILD RESPONSE ----------------
+    results = []
+
+    total_sales = total_profit = total_qty = 0
+    total_ads = total_mpfees = total_shipping = 0
+    total_gst = total_tcs = total_cost = 0
+    total_net_sales = 0
+    total_returns = 0
+    total_new_charge = 0
+    adjusted_gross_sales = 0
+    total_estimatefees = 0
+    total_mp_gst = 0
+
+    total_taxable_value = 0
+    total_gst_payable = 0
+
+    total_exp_settlement = 0
+
+    for row in items:
+
+        oid = row['order__amazon_order_id']
+
+        gross_qty = int(row['grossqty'] or 0)
+        gross_sales = float(row['grosssales'] or 0)
+
+        asin = row['asin']
+
+        item_tax = float(row.get('item_tax') or 0)
+        promo_discount = float(row.get('promotion_discount') or 0)
+
+        fee_data = estimated_fee_map.get(oid, {})
+
+        estimated_fees = fee_data.get("estimated_fees", 0)
+
+        referral_fee = fee_data.get("referral_fee", 0)
+        closing_fee = fee_data.get("closing_fee", 0)
+        per_item_fee = fee_data.get("per_item_fee", 0)
+
+        fba_fee = fee_data.get("fba_fee", 0)
+        fba_pick_pack_fee = fee_data.get("fba_pick_pack_fee", 0)
+        fba_weight_handling_fee = fee_data.get("fba_weight_handling_fee", 0)
+
+        tax_amount = fee_data.get("tax_amount", 0)
+
+        # ------------------------------------------------------------
+        # SHIPPING — Direct sum of breakdowns for this order
+        # ------------------------------------------------------------
+        tx_shipping = tx_shipping_map.get(oid, 0.0)
+
+        shipping_income = tx_shipping
+        shipping_price = tx_shipping
+
+        # estimated_fees += promo_discount  #currently not use this 
+
+        # ============================================================
+        # ADS SPEND
+        # ============================================================
+        # ============================================================
+        # DISTRIBUTE ADS BY QUANTITY
+        # ============================================================
+
+        ads = -(
+            ads_per_unit * gross_qty
+        )
+
+        adjusted_gross_sales = gross_sales + item_tax + shipping_price
+
+        standard_cost = float(row.get("sku_standard_cost") or 0)
+
+        cost = standard_cost * gross_qty
+
+        f = finance_map.get(oid, {})
+
+        refund = float(f.get('refund') or 0)
+
+        mpfees = (
+            float(f.get('commission') or 0) +
+            float(f.get('fulfillment') or 0) +
+            float(f.get('other_fee') or 0)
+        )
+
+        shipping_fee = float(f.get('shipping_fee') or 0)
+
+        gst = float(f.get('gst') or 0)
+
+        # ---------------- TCS ----------------
+
+        gst_rate = float(str(row.get("sku_gst_rate") or 0))
+        tcs_rate = float(str(row.get("sku_tcs_rate") or 0))
+
+        if gst_rate > 0:
+
+            taxable_value = (
+                adjusted_gross_sales /
+                (float("1") + (gst_rate / float("100")))
+            )
+
+            gst_to_pay_amount = (
+                adjusted_gross_sales - taxable_value
+            )
+
+            gst_to_pay_perc = gst_rate
+
+        else:
+
+            taxable_value = gross_sales
+            gst_to_pay_amount = item_tax
+
+            gst_to_pay_perc = (
+                (gst_to_pay_amount / taxable_value) * float("100")
+                if taxable_value else float("0")
+            )
+
+        tcs = (
+            taxable_value *
+            ((tcs_rate or float("1")) / float("100"))
+        )
+
+        if gst_rate:
+            gst_to_pay_perc = gst_rate
+        else:
+            gst_to_pay_perc = (
+                (gst_to_pay_amount / taxable_value) * 100
+                if taxable_value else 1
+            )
+
+        # ---------------- NEW FEES (SUM OF ALL FEETYPES) ----------------
+        new_charge = 0
+
+        for raw in raw_data_map.get(oid, []):
+            if not isinstance(raw, dict):
+                continue
+
+            try:
+                item_lists = []
+                item_lists.extend(raw.get("ShipmentItemList", []))
+                item_lists.extend(raw.get("ShipmentItemAdjustmentList", []))
+
+                for item in item_lists:
+
+                    fee_lists = []
+                    fee_lists.extend(item.get("ItemFeeList", []))
+                    fee_lists.extend(item.get("ItemFeeAdjustmentList", []))
+
+                    for fee in fee_lists:
+                        amount = float(
+                            fee.get("FeeAmount", {}).get("CurrencyAmount", 0) or 0
+                        )
+                        new_charge += amount
+
+            except Exception:
+                pass
+
+        # ---------------- RETURNS ----------------
+        return_units = abs(refund) / (gross_sales / gross_qty) if gross_qty and gross_sales else 0
+        return_units = int(round(return_units))
+
+        net_qty = max(gross_qty, 0)
+
+        # ---------------- CALCULATIONS ----------------
+        net_sales = adjusted_gross_sales
+
+        shipping_final = shipping_income
+        print("shipping_final>>>>>>>>>>>>>>>>",shipping_final)
+
+        mp_gst = (estimated_fees + shipping_final) * 0.18
+
+        profit = (
+            net_sales
+            - estimated_fees
+            - shipping_final
+            + ads
+            - cost
+            + tcs
+            + mp_gst
+            - gst_to_pay_amount
+        )
+
+        exp_settlement = (
+            net_sales
+            - shipping_final
+            - tcs
+            - mp_gst
+        )
+
+        profit_margin = (profit / net_sales * 100) if net_sales else 0
+        tacos = (
+            (abs(ads) / gross_sales) * 100
+            if gross_sales else 0
+        )
+        drr = tacos
+        ret_percent = (return_units / net_qty * 100) if net_qty else 0
+
+        results.append({
+            "order_id": oid,
+            "date": row['order__purchase_date'],
+            "name": row['title'],
+            "image": row['image'],
+
+            "channel": "Amazon-India",
+            "channel1": "Amazon-India",
+            "redirecturl": f"https://www.amazon.in/dp/{row['asin']}",
+
+            "grossqty": gross_qty,
+            "qty": net_qty,
+
+            "grosssales": round(gross_sales, 2),
+            "netsales": format_currency(net_sales),
+
+            "taxable_value":
+            format_currency(taxable_value),
+
+            "gst_to_pay_amount":
+            format_currency(gst_to_pay_amount),
+
+            "gst_to_pay_perc":
+            round(gst_to_pay_perc, 2),
+
+            "ads": format_currency(ads),
+            "mpfees": round(mpfees, 2),
+            "mp_gst": format_currency(mp_gst),
+            "estimatefees": format_currency(-abs(estimated_fees)),
+            "referral_fee": format_currency(referral_fee),
+            "closing_fee": format_currency(closing_fee),
+            "per_item_fee": format_currency(per_item_fee),
+
+            "fba_fee": format_currency(fba_fee),
+            "fba_pick_pack_fee": format_currency(fba_pick_pack_fee),
+            "fba_weight_handling_fee": format_currency(fba_weight_handling_fee),
+
+            "tax_amount": format_currency(tax_amount),
+            "new_mpfees": format_currency(new_charge),
+            "shippingfees": format_currency(shipping_final),
+
+            "profit": format_currency(profit),
+            "grossprofitper": round(profit_margin, 2),
+
+            "returnqty": return_units,
+            "retpercent": round(ret_percent, 2),
+
+            "tacos": round(tacos, 2),
+            "drr": round(drr, 2),
+
+            "stdcost": format_currency(cost),
+
+            "gst": format_currency(0),
+            "tcs": format_currency(tcs),
+            "exp_settlement": format_currency(exp_settlement),
+        })
+
+        # ---------------- TOTALS ----------------
+        total_sales += gross_sales
+        total_net_sales += net_sales
+        total_profit += profit
+        total_qty += net_qty
+        total_returns += return_units
+        total_ads += ads
+        total_mpfees += mpfees
+        total_shipping += shipping_final
+        total_gst += gst
+        total_tcs += tcs
+        total_cost += cost
+        total_new_charge += new_charge
+        total_estimatefees += estimated_fees
+        total_mp_gst += mp_gst
+        total_taxable_value += taxable_value
+        total_gst_payable += gst_to_pay_amount
+        total_exp_settlement += exp_settlement
+
+    print("totale ads spends", total_ads)
+
+    # ---------------- RESPONSE ----------------
+    return Response({
+        "status": True,
+        "message": "Success",
+        "pagination": {
+            "pageNo": page_no,
+            "pageSize": page_size,
+            "count": len(results)
+        },
+        "totals": {
+            "grosssales": round(total_sales, 2),
+            "netsales": format_currency(total_net_sales),
+            "total_netquantity": total_qty,
+            "profit": format_currency(total_profit),
+            "total_returns": total_returns,
+            "total_ret_percent": f"{round((total_returns / total_qty * 100), 2) if total_qty else 0.0}%",
+
+            "totalprofitmargin": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
+
+            "adSpend": format_currency(total_ads),
+            "mpfees": round(total_mpfees, 2),
+            "mp_gst": format_currency(total_mp_gst),
+            "estimatefees": format_currency(-abs(total_estimatefees)),
+            "total_new_mpfees": format_currency(total_new_charge),
+            "shipping": format_currency(total_shipping),
+            "gst": format_currency(0),
+            "tcs": format_currency(total_tcs),
+            "cost": format_currency(total_cost),
+
+            "taxable_value": format_currency(total_taxable_value),
+
+            "gst_to_pay_amount": format_currency(total_gst_payable),
+
+            "gst_to_pay_perc": f"{round((total_gst_payable / total_taxable_value * 100), 2) if total_taxable_value else 1}%",
+
+            "exp_settlement": format_currency(total_exp_settlement),
+        },
+        "response": results[page_no * page_size:(page_no + 1) * page_size]
+    })
+
+
+# ============================================================
+# ⚠️ ACTION NEEDED BEFORE THIS RUNS CORRECTLY
+# ============================================================
+# This file assumes the order's fulfillment channel is available via:
+#     row.get('order__fulfillment_channel')
+#
+# That field name is a GUESS. Open your Order (or OrderItem) model and
+# find the actual field that stores FBA vs FBM — common names are:
+#     fulfillment_channel, is_fba, ship_service_level, fulfillment_type
+#
+# Then update BOTH of these spots:
+#   1. In the `.values(...)` call inside the `items` queryset — replace
+#      'order__fulfillment_channel' with the correct related field path.
+#   2. Inside the loop — replace
+#      row.get('order__fulfillment_channel') with the same path.
+#
+# Also double check that AmazonTransactionContext.fulfillment_network is
+# actually being populated as "AFN"/"MFN" by your sync job (see
+# save_contexts() in transaction_sync.py, ctx.get("fulfillmentNetwork")) —
+# if Amazon returns different strings for this field, adjust the
+# AFN/MFN matching logic above accordingly.
+# ============================================================
+
+
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_catalog_details(request):
@@ -8880,4 +10939,2022 @@ def get_catalog_details(request):
 
 
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def amazon_profitability_details_transactions_shipping(request):
+
+    user = request.user
+    data_source_raw = request.data if request.method == 'POST' else request.GET
+    
+    data_source = {}
+    if data_source_raw:
+        if hasattr(data_source_raw, 'dict'):
+            data_source.update(data_source_raw.dict())
+        else:
+            data_source.update(data_source_raw)
+
+    # Try parsing raw body if still empty
+    if not data_source:
+        try:
+            import json
+            body_data = json.loads(request._request.body)
+            if isinstance(body_data, dict):
+                data_source.update(body_data)
+        except: pass
+
+    search_data = {}
+    search_data.update(data_source)
+
+    # Robust parsing for nested "filters" or "filter" keys (dictionary, JSON string, or bracket notation)
+    for fk in ['filters', 'filter']:
+        f_val = search_data.get(fk)
+        if isinstance(f_val, str):
+            try:
+                import json
+                f_val = json.loads(f_val)
+            except Exception:
+                pass
+        if isinstance(f_val, dict):
+            search_data.update(f_val)
+
+    # Handle bracket notation like filters[fromDate]=...
+    temp_updates = {}
+    for k, v in search_data.items():
+        for prefix in ['filters[', 'filter[']:
+            if k.startswith(prefix) and k.endswith(']'):
+                real_key = k[len(prefix):-1]
+                temp_updates[real_key] = v
+    search_data.update(temp_updates)
+
+    def find_key(keys):
+        for k in keys:
+            val = search_data.get(k)
+            if isinstance(val, list) and len(val) > 0: val = val[0]
+            if val and str(val).strip(): return str(val).strip()
+            # Case-insensitive
+            for sk, sv in search_data.items():
+                if sk.lower() == k.lower():
+                    if isinstance(sv, list) and len(sv) > 0: sv = sv[0]
+                    if sv and str(sv).strip(): return str(sv).strip()
+        return None
+
+    # Date Range Extraction
+    from_date_str = find_key(['fromDate', 'start_date', 'from_date', 'startDate'])
+    to_date_str = find_key(['toDate', 'end_date', 'to_date', 'endDate'])
+    
+    # Rest of pagination
+    pagination = data_source.get("pagination", {})
+    page_no = int(pagination.get("pageNo", 0))
+    page_size = int(pagination.get("pageSize", 25))
+
+    from_date = to_date = None
+    def parse_dt(dt_str, is_end=False):
+        if not dt_str or not isinstance(dt_str, (str, bytes, date, datetime)) or len(str(dt_str)) < 10: 
+            return None
+        try:
+            if isinstance(dt_str, (datetime, date)):
+                dt = dt_str
+            else:
+                clean_str = str(dt_str).split('T')[0]
+                dt = datetime.strptime(clean_str, '%Y-%m-%d')
+            if is_end:
+                dt = dt.replace(hour=23, minute=59, second=59)
+            if timezone.is_naive(dt):
+                return timezone.make_aware(dt)
+            return dt
+        except Exception:
+            return None
+
+    from_date = parse_dt(from_date_str, is_end=False)
+    to_date = parse_dt(to_date_str, is_end=True)
+
+    order_filter = Q(order__user=user)
+
+    # ---------------- CHANNEL FILTER ----------------
+    CHANNEL_MAP = {"Amazon-India": "A21TJRUUN4KGV"}
+
+    filters = {}
+    f_val = data_source.get("filters") or data_source.get("filter")
+    if isinstance(f_val, str):
+        try:
+            import json
+            f_val = json.loads(f_val)
+        except Exception: pass
+    if isinstance(f_val, dict):
+        filters.update(f_val)
+
+    channels = filters.get("channel", {}).get("IN", []) if isinstance(filters.get("channel"), dict) else []
+    if channels:
+        marketplace_ids = [CHANNEL_MAP.get(ch) for ch in channels if CHANNEL_MAP.get(ch)]
+        order_filter &= Q(order__marketplace_id__in=marketplace_ids)
+
+    # ---------------- ASIN FILTER ----------------
+    parent_ids = filters.get("parentproductid", {}).get("IN", []) if isinstance(filters.get("parentproductid"), dict) else []
+    if parent_ids:
+        order_filter &= Q(asin__in=parent_ids)
+
+    # ---------------- DATE APPLY ----------------
+    if from_date:
+        order_filter &= Q(order__purchase_date__gte=from_date)
+    if to_date:
+        order_filter &= Q(order__purchase_date__lte=to_date)
+
+    # ---------------- ORDER ITEM AGG ----------------
+
+    listing_qs = AmazonListingItem.objects.filter(
+            user=user,
+            asin=OuterRef("asin")
+        ).order_by("-updated_at")
+    
+    items = (
+        OrderItem.objects
+        .filter(order_filter)
+        .exclude(order__order_status__icontains='Cancel')
+
+        .annotate(
+
+            sku_standard_cost=Subquery(
+                listing_qs.values("standard_cost")[:1]
+            ),
+
+            sku_gst_rate=Subquery(
+                listing_qs.values("gst_rate")[:1]
+            ),
+
+            sku_tcs_rate=Subquery(
+                listing_qs.values("tcs")[:1]
+            ),
+
+            sku_region=Subquery(
+                listing_qs.values("region")[:1]
+            ),
+        )
+
+        .values('parent_asin')
+
+        .annotate(
+            title=Max('title'),
+            image_url=Max('image_url'),
+
+            grossqty=Sum('quantity_ordered'),
+            quantity_shipped=Sum('quantity_shipped'),
+
+            shipping_income=Sum('shipping_income'),
+            shipping_price=Sum('shipping_price'),
+
+            discount=Sum('discount'),
+            promotion_discount=Sum('promotion_discount'),
+
+            avg_cost=Avg('item_price'),
+
+            item_tax=Sum('item_tax'),
+
+            grosssales=Sum('item_price'),
+
+            sku_standard_cost=Max('sku_standard_cost'),
+            sku_gst_rate=Max('sku_gst_rate'),
+            sku_tcs_rate=Max('sku_tcs_rate'),
+            sku_region=Max('sku_region'),
+        )
+    )
+
+    # ---------------- ESTIMATED FEES ----------------
+    estimated_fee_qs = AmazonEstimatedFee.objects.filter(
+        order_item__order__user=user
+    )
+
+    # apply same date filter
+    if from_date:
+        estimated_fee_qs = estimated_fee_qs.filter(
+            order_item__order__purchase_date__gte=from_date
+        )
+
+    if to_date:
+        estimated_fee_qs = estimated_fee_qs.filter(
+            order_item__order__purchase_date__lte=to_date
+        )
+
+    # apply same parent filter
+    if parent_ids:
+        estimated_fee_qs = estimated_fee_qs.filter(
+            order_item__parent_asin__in=parent_ids
+        )
+
+    estimated_fee_data = (
+        estimated_fee_qs
+        .values('order_item__parent_asin')
+        .annotate(
+            estimated_fees=Sum('total_fees'),
+
+            referral_fee=Sum('referral_fee'),
+            closing_fee=Sum('closing_fee'),
+            per_item_fee=Sum('per_item_fee'),
+
+            fba_fee=Sum('fba_fee'),
+            fba_pick_pack_fee=Sum('fba_pick_pack_fee'),
+            fba_weight_handling_fee=Sum('fba_weight_handling_fee'),
+
+            tax_amount=Sum('tax_amount'),
+        )
+    )
+
+    estimated_fee_map = {
+        row['order_item__parent_asin']: {
+            "estimated_fees": float(row['estimated_fees'] or 0),
+
+            "referral_fee": float(row['referral_fee'] or 0),
+            "closing_fee": float(row['closing_fee'] or 0),
+            "per_item_fee": float(row['per_item_fee'] or 0),
+
+            "fba_fee": float(row['fba_fee'] or 0),
+            "fba_pick_pack_fee": float(row['fba_pick_pack_fee'] or 0),
+            "fba_weight_handling_fee": float(row['fba_weight_handling_fee'] or 0),
+
+            "tax_amount": float(row['tax_amount'] or 0),
+        }
+        for row in estimated_fee_data
+    }
+
+    # ---------------- FINANCIAL EVENTS ----------------
+    finances_qs = FinancialEvent.objects.filter(user=user)
+
+    raw_map = (
+        FinancialEvent.objects
+        .filter(user=user)
+        .exclude(raw_data=None)
+        .values('amazon_order_id', 'raw_data')
+    )
+
+    raw_data_map = {}
+    for r in raw_map:
+        raw_data_map.setdefault(r['amazon_order_id'], []).append(r['raw_data'])
+
+    if from_date:
+        finances_qs = finances_qs.filter(posted_date__gte=from_date)
+    if to_date:
+        finances_qs = finances_qs.filter(posted_date__lte=to_date)
+
+    finance_data = (
+        finances_qs
+        .values('amazon_order_id')
+        .annotate(
+            refund=Sum('total_amount', filter=Q(event_group="REFUND")),
+            rto=Sum('total_amount', filter=Q(event_group="RTO")),
+            # ads=Sum('total_amount', filter=Q(event_type__icontains='Ad')),
+            commission=Sum('commission_fee'),
+            fulfillment=Sum('fulfillment_fee'),
+            other_fee=Sum('other_fee'),
+            shipping_fee=Sum('shipping_fee'),
+            gst=Sum('tax'),
+        )
+    )
+
+    finance_map = {f['amazon_order_id']: f for f in finance_data}
+
+    # ---------------- ASIN → ORDER MAP ----------------
+    asin_orders = (
+        OrderItem.objects
+        .filter(order_filter)
+        .values('asin','parent_asin', 'order__amazon_order_id', 'quantity_ordered')
+    )
+
+    # asin_map = {}
+    # for row in asin_orders:
+    #     asin_map.setdefault(row['asin'], []).append(row)
+    
+    # for both if not have parent assin
+    # asin_map = {}
+    # for row in asin_orders:
+    #     key = row['parent_asin'] or row['asin']  # fallback
+    #     asin_map.setdefault(key, []).append(row)
+
+    asin_map = {}
+    for row in asin_orders:
+        asin_map.setdefault(row['parent_asin'], []).append(row)
+
+    # ---------------- TRANSACTION SHIPPING FEES ----------------
+    all_order_ids = [row['order__amazon_order_id'] for row in asin_orders]
+    tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+        identifier_name='ORDER_ID',
+        identifier_value__in=all_order_ids
+    ).values('transaction_id', 'identifier_value')
+    
+    tx_to_order = {
+        item['transaction_id']: item['identifier_value'] 
+        for item in tx_identifiers
+    }
+    
+    shipping_breakdowns = AmazonTransactionBreakdown.objects.filter(
+        transaction_id__in=tx_to_order.keys(),
+        breakdown_type__in=['Shipping', 'ShippingChargeback']
+    ).values('transaction_id').annotate(total=Sum('amount'))
+    
+    tx_shipping_map = {}
+    for bd in shipping_breakdowns:
+        t_id = bd['transaction_id']
+        oid = tx_to_order[t_id]
+        tx_shipping_map[oid] = tx_shipping_map.get(oid, 0) + float(bd['total'] or 0)
+
+    # ---------------- BUILD RESPONSE ----------------
+    results = []
+
+    total_sales = total_profit = total_ads = 0
+    total_mpfees = total_net_sales = total_qty = 0
+    total_returns = total_shipping = 0
+    total_stdcost = 0
+    total_ret_percent = 0
+    adjusted_gross_sales = 0
+    total_estimatefees = 0 
+    total_mp_gst = 0
+    total_gst = 0
+    total_tcs = 0
+    total_taxable_value = 0
+    total_gst_payable = 0
+    total_exp_settlement = 0
+
+    sku_asin_map = {
+        normalize_sku(k): v
+        for k, v in OrderItem.objects
+            .filter(order_filter)
+            .values_list('seller_sku', 'asin')
+    }
+
+    child_parent_map = {
+        row['asin']: (row['parent_asin'] or row['asin'])
+        for row in OrderItem.objects
+            .filter(order_filter)
+            .values('asin', 'parent_asin')
+    }
+
+    for row in items:
+        # asin = row['asin']
+        parent_asin = row['parent_asin']
+        # estimated_fees = estimated_fee_map.get(parent_asin, 0)
+
+        fee_data = estimated_fee_map.get(parent_asin, {})
+
+        estimated_fees = fee_data.get("estimated_fees", 0)
+
+        referral_fee = fee_data.get("referral_fee", 0)
+        closing_fee = fee_data.get("closing_fee", 0)
+        per_item_fee = fee_data.get("per_item_fee", 0)
+
+        fba_fee = fee_data.get("fba_fee", 0)
+        fba_pick_pack_fee = fee_data.get("fba_pick_pack_fee", 0)
+        fba_weight_handling_fee = fee_data.get("fba_weight_handling_fee", 0)
+
+        tax_amount = fee_data.get("tax_amount", 0)
+
+        gross_qty = int(row['grossqty'] or 0)  
+        quantity_shipped = int(row['quantity_shipped'] or 0) 
         
+        gross_sales = float(row['grosssales'] or 0)
+        item_tax = float(row.get('item_tax') or 0)
+        promo_discount = float(row.get('promotion_discount') or 0)
+
+        
+        shipping_income = float(row.get('shipping_income') or 0)
+        pass # replaced below
+
+        # ---------------- GST / TAXABLE ---------------
+
+        # ==========================================================
+        # GST / TAXABLE / TCS
+        # ==========================================================
+
+        gross_sales = float(str(row['grosssales'] or 0))
+
+        item_tax = float(str(row.get('item_tax') or 0))
+
+        promo_discount = float(
+            str(row.get('promotion_discount') or 0)
+        )
+
+        orders = asin_map.get(parent_asin, [])
+        tx_shipping_final = 0
+        for o in orders:
+            oid = o['order__amazon_order_id']
+            tx_shipping_final += tx_shipping_map.get(oid, 0)
+        shipping_price = tx_shipping_final
+        
+        
+        print("estimated_fees before",estimated_fees)
+        print("promo_discount >>>>>>>>>>>>",promo_discount)
+        # estimated_fees += promo_discount   #update to remove to add in estimate 
+        
+        print("estimated_fees after ????????????????????",estimated_fees)
+        
+        
+
+        # ----------------------------------------------------------
+        # ADJUSTED SALES
+        # ----------------------------------------------------------
+
+        # adjusted_gross_sales = ( gross_sales + item_tax - promo_discount + shipping_price ) 
+        adjusted_gross_sales = ( gross_sales + item_tax + shipping_price )
+
+        # ----------------------------------------------------------
+        # GST RATE
+        # ----------------------------------------------------------
+
+        gst_rate = float(str(row.get("sku_gst_rate") or 0))
+
+        # ----------------------------------------------------------
+        # TCS RATE
+        # ----------------------------------------------------------
+
+        tcs_rate = float(str(row.get("sku_tcs_rate") or 1))
+
+        # ----------------------------------------------------------
+        # TAXABLE VALUE
+        # GST INCLUDED SALES -> REMOVE GST
+        # ----------------------------------------------------------
+
+        if gst_rate > 0:
+
+            taxable_value = (
+                adjusted_gross_sales /
+                (1 + (gst_rate / float("100")))
+            )
+
+            gst_to_pay_amount = (
+                adjusted_gross_sales
+                - taxable_value
+            )
+
+        else:
+
+            taxable_value = adjusted_gross_sales
+
+            gst_to_pay_amount = item_tax
+
+        # ----------------------------------------------------------
+        # GST %
+        # ----------------------------------------------------------
+
+        gst_to_pay_perc = gst_rate if gst_rate else (
+            (gst_to_pay_amount / taxable_value) * 100
+            if taxable_value else float("0")
+        )
+
+        # ----------------------------------------------------------
+        # TCS
+        # ----------------------------------------------------------
+
+        tcs_total = (
+            taxable_value *
+            (tcs_rate / float("100"))
+        )
+        
+
+        # adjusted_gross_sales = gross_sales + item_tax - promo_discount + shipping_price
+        adjusted_gross_sales = gross_sales + item_tax + shipping_price 
+        # orders = asin_map.get(asin, [])
+        orders = asin_map.get(parent_asin, [])
+
+        refund = rto = ads = mpfees = shipping_fee = 0
+        return_units = 0
+        gst = 0
+        # tcs_total = 0  
+        t_new_charge = 0   
+
+        # ==========================================================
+        # ADS SPEND (FROM PRODUCT AD METRICS)
+        # ==========================================================
+
+        ads_metrics_qs = ProductAdMetric.objects.filter(
+            product_ad__amazon_account__user=user,
+            product_ad__amazon_account__is_primary=True,
+        )
+
+        # DATE FILTER
+        if from_date:
+            ads_metrics_qs = ads_metrics_qs.filter(
+                report_date__gte=from_date.date()
+            )
+
+        if to_date:
+            ads_metrics_qs = ads_metrics_qs.filter(
+                report_date__lte=to_date.date()
+            )
+
+        # GET ALL CHILD ORDER ITEMS
+        order_items = (
+            OrderItem.objects
+            .filter(
+                order_filter,
+                parent_asin=parent_asin
+            )
+        )
+
+        # CHILD SKUS
+        child_skus = list(
+            order_items
+            .exclude(seller_sku__isnull=True)
+            .exclude(seller_sku__exact="")
+            .values_list("seller_sku", flat=True)
+            .distinct()
+        )
+
+        # MATCH ADS USING CHILD SKU
+        ads_metrics_qs = ads_metrics_qs.filter(
+            product_ad__sku__in=child_skus
+        ).distinct()
+
+        # AGGREGATE
+        ads_data = ads_metrics_qs.aggregate(
+            total_ads_cost=Sum("cost"),
+            total_ads_sales=Sum("sales"),
+            total_ads_clicks=Sum("clicks"),
+            total_ads_orders=Sum("orders"),
+            total_ads_impressions=Sum("impressions"),
+        )
+
+        ads = -abs(float(ads_data["total_ads_cost"] or 0))
+
+        # make negative because expense
+        ads = -abs(ads)
+
+        ads_sales = float(ads_data["total_ads_sales"] or 0)
+        ads_clicks = int(ads_data["total_ads_clicks"] or 0)
+        ads_orders = int(ads_data["total_ads_orders"] or 0)
+        ads_impressions = int(ads_data["total_ads_impressions"] or 0)
+        
+
+
+        for o in orders:
+            oid = o['order__amazon_order_id']
+            qty = o['quantity_ordered'] or 0
+
+            f = finance_map.get(oid, {})
+
+            # -------- SINGLE CORRECT BLOCK --------
+            r = float(f.get('refund') or 0)
+            rto_amt = float(f.get('rto') or 0)
+
+            refund += r
+            rto += rto_amt
+            # ads += float(f.get('ads') or 0)
+
+            mpfees += (
+                float(f.get('commission') or 0) +
+                float(f.get('fulfillment') or 0) +
+                float(f.get('other_fee') or 0)
+            )
+
+            shipping_fee += float(f.get('shipping_fee') or 0)
+            gst += float(f.get('gst') or 0)
+
+            # -------- RAW TCS --------
+            raw_list = raw_data_map.get(oid, [])
+            tcs = 0
+
+            
+            order_fee_map = extract_fees_and_tcs_per_asin(
+                raw_data_map.get(oid, []),
+                sku_asin_map=sku_asin_map
+            )
+
+            # total_estimatefees += estimated_fees
+
+            for child_asin, fee_data in order_fee_map.items():
+
+                parent_key = child_parent_map.get(child_asin)
+
+                if parent_key == parent_asin:
+                    t_new_charge += float(fee_data["fee"])
+                    # tcs_total += float(fee_data["tcs"])
+
+           
+
+            if r < 0 or rto_amt < 0:
+                return_units += qty
+
+        # ---------------- CALCULATIONS ----------------
+        # net_qty = max(gross_qty - return_units, 0)
+        net_qty = max(gross_qty , 0)
+    
+        net_sales = adjusted_gross_sales
+        shipping_final = shipping_price 
+
+        # mp_gst = (net_sales + shipping_final) * 0.18   changes on 13 july
+        mp_gst = (estimated_fees + shipping_final) * 0.18 
+
+        
+
+        # total_cost = float(row.get('total_cost') or 0)
+        # total_cost = float(50)
+        # total_cost = float(50) * net_qty
+
+        standard_cost = float(
+            str(row.get("sku_standard_cost") or 0)
+        )
+
+        total_cost = standard_cost * float(str(net_qty))
+        avg_cost = float(row.get('avg_cost') or 0)
+
+        stdcost = total_cost
+        stdcost_per_unit = (total_cost / gross_qty) if gross_qty else 0
+
+        missing_qty = 0
+        for o in orders:
+            if o.get('quantity_ordered') and avg_cost == 0:
+                missing_qty += o['quantity_ordered']
+
+        stdcost_missing_percentage = (missing_qty / gross_qty * 100) if gross_qty else 0
+        
+        # profit = (
+        #     net_sales
+        #     - estimated_fees
+        #     - shipping_final
+        #     - stdcost
+        #     + tcs_total
+        #     + mp_gst
+        #     + ads
+        
+        # )
+        profit = (
+            net_sales
+            - estimated_fees
+            - shipping_final
+            - stdcost
+            + tcs_total
+            + mp_gst
+            + ads
+            - gst_to_pay_amount
+        
+        )
+
+        # exp_settlement = (
+        #     profit
+        #     # - stdcost
+        #     - tcs_total
+        #     - mp_gst
+        # )
+        exp_settlement = (
+            net_sales
+            - shipping_final
+            - tcs_total
+            - mp_gst
+        )
+        
+        profit_margin = (profit / net_sales * 100) if net_sales else 0
+        # tacos = (ads / gross_sales * 100) if gross_sales else 0
+        tacos = (
+            abs(ads) / gross_sales * 100
+        ) if gross_sales else 0
+        ret_percent = (return_units / net_qty * 100) if net_qty else 0
+
+
+        results.append({
+            # "asin": asin,
+            "asin": parent_asin, 
+            "parent_asin": parent_asin, 
+            "name": row['title'],
+            "image_url": row['image_url'],
+            "channel": "Amazon-India",
+            "channel1": "Amazon-India",
+            "grossqty": gross_qty,
+            "netqty": net_qty,
+            "grosssales": format_currency(gross_sales),
+            "netsales": format_currency(net_sales),
+            # "ads": format_currency(ads),
+            "ads": format_currency(ads),
+            "ads_sales": format_currency(ads_sales),
+            "ads_clicks": ads_clicks,
+            "ads_orders": ads_orders,
+            "ads_impressions": ads_impressions,
+            "mpfees": round(mpfees, 2),
+            "mp_gst": format_currency(mp_gst),
+            "new_mpfees": format_currency(t_new_charge),
+            # "estimatefees": format_currency(estimated_fees),
+            "estimatefees": format_currency(-abs(estimated_fees)),
+
+            "referral_fee": format_currency(referral_fee),
+            "closing_fee": format_currency(closing_fee),
+            "per_item_fee": format_currency(per_item_fee),
+
+            "fba_fee": format_currency(fba_fee),
+            "fba_pick_pack_fee": format_currency(fba_pick_pack_fee),
+            "fba_weight_handling_fee": format_currency(fba_weight_handling_fee),
+
+            "tax_amount": format_currency(tax_amount),
+            "shippingfees": format_currency(shipping_final),
+            "profit": format_currency(profit),
+            "grossprofitper": round(profit_margin, 2),
+            "returnqty": return_units,
+            "retpercent": round(ret_percent, 2),
+            "tacos": round(tacos, 2),
+            # "id": asin,
+            "id": parent_asin,
+            "stdcost": format_currency(stdcost),
+            "stdcost_per_unit": round(stdcost_per_unit, 2),
+            "stdcostmissingqty": missing_qty,
+            "stdcost_missing_percentage": round(stdcost_missing_percentage, 2),
+            "redirecturl": f"https://www.amazon.in/dp/{parent_asin}" if parent_asin else None,
+            "gst": format_currency(0),
+            # "gst": "0",
+            "tcs": format_currency(tcs_total),
+            "taxable_value": format_currency(taxable_value),
+
+            "gst_to_pay_amount": format_currency(gst_to_pay_amount),
+
+            "gst_to_pay_perc": round(gst_to_pay_perc, 2),
+
+            "exp_settlement": format_currency(exp_settlement),
+        })
+
+        # -------- TOTALS --------
+        total_sales += gross_sales
+        total_net_sales += net_sales
+        total_profit += profit
+        total_ads += ads
+        total_mpfees += t_new_charge
+        total_qty += net_qty
+        total_returns += return_units
+        total_shipping += shipping_final
+        total_stdcost += stdcost
+        total_gst += gst
+        total_tcs += tcs_total
+        total_ret_percent += ret_percent
+        total_estimatefees += estimated_fees
+        total_mp_gst += mp_gst
+
+        total_taxable_value += taxable_value
+        total_gst_payable += gst_to_pay_amount
+        total_exp_settlement += exp_settlement
+
+    # -------- DEBUG AFTER BUILD --------
+    db_asins = set(OrderItem.objects.filter(order__user=user).values_list('asin', flat=True))
+    api_asins = set([r['asin'] for r in results])
+    missing = db_asins - api_asins
+
+    print("Missing ASINs:", len(missing))
+
+    return Response({
+        "status": True,
+        "message": "Success",
+        "pagination": {
+            "pageNo": page_no,
+            "pageSize": page_size,
+            "count": len(results)
+        },
+        "totals": {
+            "ads": format_currency(total_ads),
+            "netqty": total_qty,
+            "totalreturn": total_returns,
+            "totalreturnper": f"{round(total_ret_percent, 2)}%",
+            "grosssales": format_currency(total_sales),
+            "netsales": format_currency(total_net_sales),
+            "profit": format_currency(total_profit),
+            "grossprofitper": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
+            "mpfees": format_currency(total_mpfees),
+            "mp_gst": format_currency(total_mp_gst),
+            # "estimatefees": format_currency(total_estimatefees),
+            "estimatefees": format_currency(-abs(total_estimatefees)),
+            "total_new_mpfees": format_currency(total_mpfees),
+            "shippingfees": format_currency(total_shipping),
+            "tacos": (total_ads / total_sales * 100) if total_sales else 0,
+            "stdcost": format_currency(total_stdcost),
+            # "totalgst": format_currency(total_tcs),
+            "totalgst": format_currency(0),
+            "tcs": format_currency(total_tcs),
+            "taxable_value": format_currency(total_taxable_value),
+
+            "gst_to_pay_amount": format_currency(total_gst_payable),
+            "gst_to_pay_perc":f"{round((total_gst_payable / total_taxable_value * 100),2) if total_taxable_value else 1}%",
+            "exp_settlement": format_currency(total_exp_settlement),
+        },
+        "response": results[page_no * page_size:(page_no + 1) * page_size]
+    })
+
+
+# asin by parent asin working till 20May
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def amazon_profitability_parent(request):
+
+#     user = request.user
+#     data = request.data
+
+#     filters = data.get("filters", {})
+#     pagination = data.get("pagination", {})
+
+#     page_no = int(pagination.get("pageNo", 0))
+#     page_size = int(pagination.get("pageSize", 25))
+
+#     # ---------------- DATE FILTER ----------------
+#     from_date = to_date = None
+#     try:
+#         if filters.get("fromDate"):
+#             from_date = timezone.make_aware(datetime.strptime(filters["fromDate"], "%Y-%m-%d"))
+#         if filters.get("toDate"):
+#             to_date = timezone.make_aware(datetime.strptime(filters["toDate"], "%Y-%m-%d")) + timedelta(days=1)
+#     except Exception as e:
+#         print("Date error:", e)
+
+#     order_filter = Q(order__user=user)
+
+#     # ---------------- CHANNEL FILTER ----------------
+#     CHANNEL_MAP = {"Amazon-India": "A21TJRUUN4KGV"}
+#     channels = filters.get("channel", {}).get("IN", [])
+
+#     if channels:
+#         marketplace_ids = [CHANNEL_MAP.get(ch) for ch in channels if CHANNEL_MAP.get(ch)]
+#         order_filter &= Q(order__marketplace_id__in=marketplace_ids)
+
+#     # ---------------- PARENT FILTER (IMPORTANT) ----------------
+#     parent_ids = filters.get("parentproductid", {}).get("IN", [])
+#     if not parent_ids:
+#         return Response({
+#             "status": False,
+#             "message": "parentproductid is required"
+#         })
+
+#     order_filter &= Q(parent_asin__in=parent_ids)
+
+#     # ---------------- DATE APPLY ----------------
+#     if from_date:
+#         order_filter &= Q(order__purchase_date__gte=from_date)
+#     if to_date:
+#         order_filter &= Q(order__purchase_date__lte=to_date)
+
+
+#     # ---------------- CHILD ASIN DATA ----------------
+#     items = (
+#         OrderItem.objects
+#         .filter(order_filter)
+#         .exclude(order__order_status__icontains='Cancel')
+#         .values('asin', 'parent_asin')
+#         .annotate(
+#             title=Max('title'),
+#             seller_sku=Max('seller_sku'),
+#             image_url=Max('image_url'),
+#             grossqty=Sum('quantity_ordered'),
+#             quantity_shipped=Sum('quantity_shipped'),
+#             shipping_price=Sum('shipping_price'),
+#             total_cost=Sum(F('cost_price') * F('quantity_ordered')),
+#             grosssales=Sum('item_price'),
+#             promotion_discount=Sum('promotion_discount'),
+#             avg_cost=Avg('item_price'),
+#             item_tax=Sum('item_tax'),
+#         )
+#     )
+
+
+#     # ---------------- ESTIMATED FEES ----------------
+#     estimated_fee_qs = AmazonEstimatedFee.objects.filter(
+#         order_item__order__user=user
+#     )
+
+#     if from_date:
+#         estimated_fee_qs = estimated_fee_qs.filter(
+#             order_item__order__purchase_date__gte=from_date
+#         )
+
+#     if to_date:
+#         estimated_fee_qs = estimated_fee_qs.filter(
+#             order_item__order__purchase_date__lte=to_date
+#         )
+
+#     if channels:
+#         estimated_fee_qs = estimated_fee_qs.filter(
+#             order_item__order__marketplace_id__in=marketplace_ids
+#         )
+
+#     # estimated_fee_data = (
+#     #     estimated_fee_qs
+#     #     .values('asin')
+#     #     .annotate(
+#     #         estimated_fees=Sum('total_fees')
+#     #     )
+#     # )
+
+#     estimated_fee_data = (
+#         estimated_fee_qs
+#         .values('asin')
+#         .annotate(
+#             estimated_fees=Sum('total_fees'),
+
+#             referral_fee=Sum('referral_fee'),
+#             closing_fee=Sum('closing_fee'),
+#             per_item_fee=Sum('per_item_fee'),
+
+#             fba_fee=Sum('fba_fee'),
+#             fba_pick_pack_fee=Sum('fba_pick_pack_fee'),
+#             fba_weight_handling_fee=Sum('fba_weight_handling_fee'),
+
+#             tax_amount=Sum('tax_amount'),
+#         )
+#     )
+
+#     # estimated_fee_map = {
+#     #     row['asin']: Decimal(str(row['estimated_fees'] or 0))
+#     #     for row in estimated_fee_data
+#     # }
+
+
+#     estimated_fee_map = {
+#         row['asin']: {
+#             "estimated_fees": Decimal(str(row['estimated_fees'] or 0)),
+
+#             "referral_fee": Decimal(str(row['referral_fee'] or 0)),
+#             "closing_fee": Decimal(str(row['closing_fee'] or 0)),
+#             "per_item_fee": Decimal(str(row['per_item_fee'] or 0)),
+
+#             "fba_fee": Decimal(str(row['fba_fee'] or 0)),
+#             "fba_pick_pack_fee": Decimal(str(row['fba_pick_pack_fee'] or 0)),
+#             "fba_weight_handling_fee": Decimal(str(row['fba_weight_handling_fee'] or 0)),
+
+#             "tax_amount": Decimal(str(row['tax_amount'] or 0)),
+#         }
+#         for row in estimated_fee_data
+#     }
+
+#     # ---------------- FINANCE ----------------
+#     finances_qs = FinancialEvent.objects.filter(user=user)
+
+#     if from_date:
+#         finances_qs = finances_qs.filter(posted_date__gte=from_date)
+#     if to_date:
+#         finances_qs = finances_qs.filter(posted_date__lte=to_date)
+
+#     finance_data = (
+#         finances_qs
+#         .values('amazon_order_id')
+#         .annotate(
+#             refund=Sum('total_amount', filter=Q(event_group="REFUND")),
+#             rto=Sum('total_amount', filter=Q(event_group="RTO")),
+#             ads=Sum('total_amount', filter=Q(event_type__icontains='Ad')),
+#             commission=Sum('commission_fee'),
+#             fulfillment=Sum('fulfillment_fee'),
+#             other_fee=Sum('other_fee'),
+#             shipping_fee=Sum('shipping_fee'),
+#         )
+#     )
+
+#     finance_map = {f['amazon_order_id']: f for f in finance_data}
+
+#     # ---------------- RAW MAP ----------------
+#     raw_map = FinancialEvent.objects.filter(user=user).exclude(raw_data=None).values('amazon_order_id', 'raw_data')
+
+#     raw_data_map = {}
+#     for r in raw_map:
+#         raw_data_map.setdefault(r['amazon_order_id'], []).append(r['raw_data'])
+
+#     # ---------------- ORDER MAP ----------------
+#     asin_orders = (
+#         OrderItem.objects
+#         .filter(order_filter)
+#         .values('asin', 'parent_asin', 'order__amazon_order_id', 'quantity_ordered')
+#     )
+
+#     asin_map = {}
+#     for row in asin_orders:
+#         asin_map.setdefault(row['asin'], []).append(row)
+
+#     # ---------------- SKU MAP ----------------
+#     sku_asin_map = {
+#         normalize_sku(k): v
+#         for k, v in OrderItem.objects.filter(order_filter).values_list('seller_sku', 'asin')
+#     }
+
+#     # ---------------- TRANSACTION SHIPPING FEES ----------------
+    all_order_ids = [row['order__amazon_order_id'] for row in asin_orders]
+    tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+        identifier_name='ORDER_ID',
+        identifier_value__in=all_order_ids
+    ).values('transaction_id', 'identifier_value')
+    
+    tx_to_order = {
+        item['transaction_id']: item['identifier_value'] 
+        for item in tx_identifiers
+    }
+    
+    shipping_breakdowns = AmazonTransactionBreakdown.objects.filter(
+        transaction_id__in=tx_to_order.keys(),
+        breakdown_type__in=['Shipping', 'ShippingChargeback']
+    ).values('transaction_id').annotate(total=Sum('amount'))
+    
+    tx_shipping_map = {}
+    for bd in shipping_breakdowns:
+        t_id = bd['transaction_id']
+        oid = tx_to_order[t_id]
+        tx_shipping_map[oid] = tx_shipping_map.get(oid, 0) + float(bd['total'] or 0)
+
+    # ---------------- BUILD RESPONSE ----------------
+#     results = []
+
+#     total_sales = total_profit = total_ads = Decimal(0)
+#     total_net_sales = total_qty = Decimal(0)
+#     total_returns = total_shipping = Decimal(0)
+#     total_tcs = Decimal(0)
+#     total_mpfees = Decimal(0)   
+#     total_ret_percent = Decimal(0)  
+#     total_stdcost = Decimal(0) 
+#     adjusted_gross_sales = Decimal(0) 
+#     total_estimatefees = Decimal(0)
+#     total_mp_gst = Decimal(0)
+
+#     total_taxable_value = Decimal(0)
+#     total_gst_payable = Decimal(0)
+#     total_exp_settlement = Decimal(0)
+
+#     for row in items:
+
+#         asin = row['asin']
+#         parent_asin = row['parent_asin']
+#         child_sku = row['seller_sku']
+    
+#         orders = asin_map.get(asin, [])
+        
+#         # estimated_fees = estimated_fee_map.get(asin, Decimal("0"))
+
+#         fee_data = estimated_fee_map.get(asin, {})
+
+#         estimated_fees = fee_data.get("estimated_fees", Decimal("0"))
+
+#         referral_fee = fee_data.get("referral_fee", Decimal("0"))
+#         closing_fee = fee_data.get("closing_fee", Decimal("0"))
+#         per_item_fee = fee_data.get("per_item_fee", Decimal("0"))
+
+#         fba_fee = fee_data.get("fba_fee", Decimal("0"))
+#         fba_pick_pack_fee = fee_data.get("fba_pick_pack_fee", Decimal("0"))
+#         fba_weight_handling_fee = fee_data.get("fba_weight_handling_fee", Decimal("0"))
+
+#         tax_amount = fee_data.get("tax_amount", Decimal("0"))
+
+#         gross_qty = Decimal(row['grossqty'] or 0)
+#         gross_sales = Decimal(row['grosssales'] or 0)
+
+#         item_tax = Decimal(row.get('item_tax') or 0)
+#         promo_discount = Decimal(row.get('promotion_discount') or 0)
+
+#         shipping_price = Decimal(row.get('shipping_price') or 0)
+
+#         # ---------------- GST / TAXABLE ----------------
+
+#         # Gross sales excluding GST
+#         taxable_value = gross_sales
+
+#         # GST collected from order
+#         gst_to_pay_amount = item_tax
+
+#         # GST %
+#         gst_to_pay_perc = (
+#             (gst_to_pay_amount / taxable_value) * 100
+#             if taxable_value else Decimal("0")
+#         )
+
+#         # TCS = 1% of taxable value
+#         tcs_total = gst_to_pay_amount * Decimal("0.01")
+
+#         # adjusted_gross_sales = gross_sales + item_tax - promo_discount
+#         adjusted_gross_sales = gross_sales + item_tax - promo_discount + shipping_price
+
+#         refund = rto = ads = mpfees = shipping_fee = Decimal(0)
+#         return_units = Decimal(0)
+#         # tcs_total = Decimal(0)
+#         t_new_charge = Decimal(0)
+
+#         for o in orders:
+#             oid = o['order__amazon_order_id']
+#             qty = Decimal(o['quantity_ordered'] or 0)
+
+#             f = finance_map.get(oid, {})
+
+#             refund += Decimal(f.get('refund') or 0)
+#             rto += Decimal(f.get('rto') or 0)
+#             ads += Decimal(f.get('ads') or 0)
+
+#             mpfees += (
+#                 Decimal(f.get('commission') or 0) +
+#                 Decimal(f.get('fulfillment') or 0) +
+#                 Decimal(f.get('other_fee') or 0)
+#             )
+
+#             shipping_fee += Decimal(f.get('shipping_fee') or 0)
+
+#             order_fee_map = extract_fees_and_tcs_per_asin(
+#                 raw_data_map.get(oid, []),
+#                 sku_asin_map=sku_asin_map
+#             )
+
+#             if asin in order_fee_map:
+#                 t_new_charge += Decimal(order_fee_map[asin]["fee"])
+#                 # tcs_total += Decimal(order_fee_map[asin]["tcs"])
+
+#             r = Decimal(f.get('refund') or 0)
+#             rto_amt = Decimal(f.get('rto') or 0)
+
+#             refund += r
+#             rto += rto_amt
+
+#             # total_estimatefees += estimated_fees
+
+#             if r < 0 or rto_amt < 0:
+#                 return_units += qty
+
+#         # net_qty = max(gross_qty - return_units, 0)
+#         net_qty = max(gross_qty , 0)
+#         # net_sales = gross_sales + refund + rto
+#         net_sales = adjusted_gross_sales
+#         # total_estimatefees += estimated_fees
+#         shipping_final = Decimal(row['shipping_price'] or 0)
+
+#         # mp_gst = (net_sales + shipping_final) * 0.18
+       
+
+#         mp_gst = (net_sales + shipping_final) * Decimal("0.18")
+        
+#         # total_cost = Decimal(row['total_cost'] or 0)
+
+#         total_cost = Decimal(50) * net_qty
+
+#         # profit = net_sales + t_new_charge + shipping_final - total_cost + tcs_total
+#         # profit = net_sales - estimated_fees - shipping_final - tcs_total + mp_gst - total_cost
+#         profit = (
+#             net_sales
+#             - estimated_fees
+#             - shipping_final
+#             + tcs_total
+#             + mp_gst
+#             - total_cost
+#         )
+
+#         exp_settlement = (
+#             profit
+#             - total_cost
+#             - tcs_total
+#             - mp_gst
+#         )
+#         profit_margin = (profit / net_sales * 100) if net_sales else 0
+
+#         ret_percent = (return_units / net_qty * 100) if net_qty else 0
+        
+
+#         results.append({
+#             "asin": asin,
+#             "parent_asin": parent_asin,
+#             "name": row['title'],
+#             "child_sku": clean_sku(child_sku),
+#             "image_url": row['image_url'],
+#             "channel": "Amazon-India",
+#             "channel1": "Amazon-India",
+
+#             "grossqty": int(gross_qty),
+#             "netqty": int(net_qty),
+
+#             "grosssales": format_currency(gross_sales),
+#             "netsales": format_currency(net_sales),
+
+#             "ads": format_currency(ads),
+#             "mp_gst": format_currency(mp_gst),
+#             "new_mpfees": format_currency(t_new_charge),
+         
+#             "estimatefees": format_currency(-abs(estimated_fees)),
+#             "referral_fee": format_currency(referral_fee),
+#             "closing_fee": format_currency(closing_fee),
+#             "per_item_fee": format_currency(per_item_fee),
+
+#             "fba_fee": format_currency(fba_fee),
+#             "fba_pick_pack_fee": format_currency(fba_pick_pack_fee),
+#             "fba_weight_handling_fee": format_currency(fba_weight_handling_fee),
+
+#             "tax_amount": format_currency(tax_amount),
+#             "shippingfees": format_currency(shipping_final),
+#             "tcs": format_currency(tcs_total),
+
+#             "profit": format_currency(profit),
+#             "grossprofitper": round(profit_margin, 2),
+#             "retpercent": round(ret_percent, 2),
+#             "returnqty": int(return_units),
+#             # "tacos": round(tacos, 2),
+#             # "gst": format_currency(tcs_total),
+#             "gst": format_currency(0),
+
+#             "taxable_value": format_currency(taxable_value),
+#             "gst_to_pay_amount": format_currency(gst_to_pay_amount),
+#             "gst_to_pay_perc": round(gst_to_pay_perc, 2),
+#             "exp_settlement": format_currency(exp_settlement),
+
+#             "id": asin,
+#             "stdcost": format_currency(total_cost),
+#             "redirecturl": f"https://www.amazon.in/dp/{asin}" if asin else None,
+#         })
+
+
+#         total_sales += gross_sales
+#         total_net_sales += net_sales
+#         total_profit += profit
+#         total_ads += ads
+#         total_qty += net_qty
+#         total_returns += return_units
+#         total_shipping += shipping_final
+#         total_tcs += tcs_total
+#         total_mpfees += t_new_charge
+#         total_ret_percent += ret_percent
+#         total_stdcost += total_cost
+#         total_estimatefees += Decimal(estimated_fees)
+#         total_mp_gst += mp_gst
+#         total_taxable_value += taxable_value
+#         total_gst_payable += gst_to_pay_amount
+#         total_exp_settlement += exp_settlement
+
+#     return Response({
+#         "status": True,
+#         "message": "Success",
+#         "pagination": {
+#             "pageNo": page_no,
+#             "pageSize": page_size,
+#             "count": len(results)
+#         },
+#         "totals": {
+#             "ads": format_currency(total_ads),
+#             "netqty": total_qty,
+#             "totalreturn": total_returns,
+#             "totalreturnper": f"{round(total_ret_percent, 2)}%",
+#             "grosssales": format_currency(total_sales),
+#             "netsales": format_currency(total_net_sales),
+#             "profit": format_currency(total_profit),
+#             "grossprofitper": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
+#             "mpfees": format_currency(total_mpfees),
+#              "mp_gst": format_currency(total_mp_gst),
+#             # "estimatefees": format_currency(total_estimatefees),
+#             "estimatefees": format_currency(-abs(total_estimatefees)),
+#             "total_new_mpfees": format_currency(total_mpfees),
+#             "shippingfees": format_currency(total_shipping),
+#             "tacos": (total_ads / total_sales * 100) if total_sales else 0,
+#             "stdcost": format_currency(total_stdcost),
+#             # "totalgst": format_currency(total_tcs),
+#             "totalgst": format_currency(0),
+#             "tcs": format_currency(total_tcs),
+#             "taxable_value": format_currency(total_taxable_value),
+
+#             "gst_to_pay_amount": format_currency(total_gst_payable),
+#             "gst_to_pay_perc":f"{round((total_gst_payable / total_taxable_value * 100),2) if total_taxable_value else 1}%",
+
+#             "exp_settlement": format_currency(total_exp_settlement),
+#         },
+#         "response": results[page_no * page_size:(page_no + 1) * page_size]
+#     })
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def sku_profitability_list_filtered(request):
+
+    user = request.user
+    data = request.data
+
+    filters = data.get("filters", {})
+
+    profit_filter = filters.get("profit_filter")
+
+    pagination = data.get("pagination", {})
+
+    page_no = int(pagination.get("pageNo", 0))
+    page_size = int(pagination.get("pageSize", 25))
+
+    # ---------------- DATE FILTER ----------------
+    from_date = to_date = None
+    try:
+        if filters.get("fromDate"):
+            from_date = timezone.make_aware(datetime.strptime(filters["fromDate"], "%Y-%m-%d"))
+        if filters.get("toDate"):
+            to_date = timezone.make_aware(datetime.strptime(filters["toDate"], "%Y-%m-%d")) + timedelta(days=1)
+    except Exception as e:
+        print("Date error:", e)
+
+    order_filter = Q(order__user=user)
+
+    # ---------------- CHANNEL FILTER ----------------
+    CHANNEL_MAP = {"Amazon-India": "A21TJRUUN4KGV"}
+    channels = filters.get("channel", {}).get("IN", [])
+
+    if channels:
+        marketplace_ids = [CHANNEL_MAP.get(ch) for ch in channels if CHANNEL_MAP.get(ch)]
+        order_filter &= Q(order__marketplace_id__in=marketplace_ids)
+
+    # No parent filter needed for SKU list
+
+    # ---------------- DATE APPLY ----------------
+    if from_date:
+        order_filter &= Q(order__purchase_date__gte=from_date)
+    if to_date:
+        order_filter &= Q(order__purchase_date__lte=to_date)
+
+
+    # ============================================================
+    # ITEMS QUERY WITH SKU LEVEL GST / COST / TCS
+    # ============================================================
+
+    listing_qs = AmazonListingItem.objects.filter(
+        user=user,
+        sku=OuterRef("seller_sku")
+    ).order_by("-updated_at")
+
+    # ---------------- CHILD ASIN DATA ----------------
+    items = (
+        OrderItem.objects
+        .filter(order_filter)
+        .exclude(order__order_status__icontains='Cancel')
+        .annotate(
+
+            # SKU LEVEL DATA
+            sku_standard_cost=Subquery(
+                listing_qs.values("standard_cost")[:1]
+            ),
+
+            sku_gst_rate=Subquery(
+                listing_qs.values("gst_rate")[:1]
+            ),
+
+            sku_tcs_rate=Subquery(
+                listing_qs.values("tcs")[:1]
+            ),
+
+            sku_region=Subquery(
+                listing_qs.values("region")[:1]
+            ),
+
+            sku_shipping_estimate=Subquery(
+                listing_qs.values("shiping_estimate")[:1]
+            ),
+
+            sku_step_level=Subquery(
+                listing_qs.values("step_level")[:1]
+            ),
+        )
+        .values(
+            'asin',
+            'seller_sku',
+            'seller_sku',
+
+            # SKU DATA
+            'sku_standard_cost',
+            'sku_gst_rate',
+            'sku_tcs_rate',
+            'sku_region',
+            'sku_shipping_estimate',
+            'sku_step_level',
+        )
+        .annotate(
+            title=Max('title'),
+            image_url=Max('image_url'),
+
+            grossqty=Sum('quantity_ordered'),
+            quantity_shipped=Sum('quantity_shipped'),
+
+            shipping_price=Sum('shipping_price'),
+
+            total_cost=Sum(
+                F('cost_price') * F('quantity_ordered')
+            ),
+
+            grosssales=Sum('item_price'),
+            promotion_discount=Sum('promotion_discount'),
+            avg_cost=Avg('item_price'),
+            item_tax=Sum('item_tax'),
+        )
+    )
+
+
+    # ---------------- ESTIMATED FEES ----------------
+    estimated_fee_qs = AmazonEstimatedFee.objects.filter(
+        order_item__order__user=user
+    )
+
+    if from_date:
+        estimated_fee_qs = estimated_fee_qs.filter(
+            order_item__order__purchase_date__gte=from_date
+        )
+
+    if to_date:
+        estimated_fee_qs = estimated_fee_qs.filter(
+            order_item__order__purchase_date__lte=to_date
+        )
+
+    if channels:
+        estimated_fee_qs = estimated_fee_qs.filter(
+            order_item__order__marketplace_id__in=marketplace_ids
+        )
+
+
+    estimated_fee_data = (
+        estimated_fee_qs
+        .values('asin')
+        .annotate(
+            estimated_fees=Sum('total_fees'),
+
+            referral_fee=Sum('referral_fee'),
+            closing_fee=Sum('closing_fee'),
+            per_item_fee=Sum('per_item_fee'),
+
+            fba_fee=Sum('fba_fee'),
+            fba_pick_pack_fee=Sum('fba_pick_pack_fee'),
+            fba_weight_handling_fee=Sum('fba_weight_handling_fee'),
+
+            tax_amount=Sum('tax_amount'),
+        )
+    )
+
+
+    estimated_fee_map = {
+        row['asin']: {
+            "estimated_fees": Decimal(str(row['estimated_fees'] or 0)),
+
+            "referral_fee": Decimal(str(row['referral_fee'] or 0)),
+            "closing_fee": Decimal(str(row['closing_fee'] or 0)),
+            "per_item_fee": Decimal(str(row['per_item_fee'] or 0)),
+
+            "fba_fee": Decimal(str(row['fba_fee'] or 0)),
+            "fba_pick_pack_fee": Decimal(str(row['fba_pick_pack_fee'] or 0)),
+            "fba_weight_handling_fee": Decimal(str(row['fba_weight_handling_fee'] or 0)),
+
+            "tax_amount": Decimal(str(row['tax_amount'] or 0)),
+        }
+        for row in estimated_fee_data
+    }
+
+    # ---------------- FINANCE ----------------
+    finances_qs = FinancialEvent.objects.filter(user=user)
+
+    if from_date:
+        finances_qs = finances_qs.filter(posted_date__gte=from_date)
+    if to_date:
+        finances_qs = finances_qs.filter(posted_date__lte=to_date)
+
+    finance_data = (
+        finances_qs
+        .values('amazon_order_id')
+        .annotate(
+            refund=Sum('total_amount', filter=Q(event_group="REFUND")),
+            rto=Sum('total_amount', filter=Q(event_group="RTO")),
+            # ads=Sum('total_amount', filter=Q(event_type__icontains='Ad')),
+            commission=Sum('commission_fee'),
+            fulfillment=Sum('fulfillment_fee'),
+            other_fee=Sum('other_fee'),
+            shipping_fee=Sum('shipping_fee'),
+        )
+    )
+
+    finance_map = {f['amazon_order_id']: f for f in finance_data}
+
+    # ---------------- RAW MAP ----------------
+    raw_map = FinancialEvent.objects.filter(user=user).exclude(raw_data=None).values('amazon_order_id', 'raw_data')
+
+    raw_data_map = {}
+    for r in raw_map:
+        raw_data_map.setdefault(r['amazon_order_id'], []).append(r['raw_data'])
+
+    # ---------------- ORDER MAP ----------------
+    asin_orders = (
+        OrderItem.objects
+        .filter(order_filter)
+        .values('asin', 'seller_sku', 'order__amazon_order_id', 'quantity_ordered')
+    )
+
+    asin_map = {}
+    for row in asin_orders:
+        asin_map.setdefault(row['asin'], []).append(row)
+
+    # ---------------- SKU MAP ----------------
+    sku_asin_map = {
+        normalize_sku(k): v
+        for k, v in OrderItem.objects.filter(order_filter).values_list('seller_sku', 'asin')
+    }
+
+    # ============================================================
+    # ADS DATA MAP
+    # ============================================================
+
+    ads_metrics_qs = ProductAdMetric.objects.filter(
+        product_ad__amazon_account__user=user,
+        product_ad__amazon_account__is_primary=True,
+    )
+
+    if from_date:
+        ads_metrics_qs = ads_metrics_qs.filter(
+            report_date__gte=from_date.date()
+        )
+
+    if to_date:
+        ads_metrics_qs = ads_metrics_qs.filter(
+            report_date__lte=to_date.date()
+        )
+
+    # ============================================================
+    # MAP ADS BY ASIN
+    # ============================================================
+
+    ads_data = (
+        ads_metrics_qs
+        .values(
+            "product_ad__asin",
+            "product_ad__sku",
+        )
+        .annotate(
+            total_ads_cost=Sum("cost"),
+            total_impressions=Sum("impressions"),
+            total_clicks=Sum("clicks"),
+            total_sales=Sum("sales"),
+            total_orders=Sum("orders"),
+        )
+    )
+
+    # ============================================================
+    # ASIN ADS MAP
+    # ============================================================
+
+    ads_map = {}
+
+    for row in ads_data:
+
+        asin_key = (
+            row["product_ad__asin"] or ""
+        ).strip()
+
+        sku_key = normalize_sku(
+            row["product_ad__sku"] or ""
+        )
+
+        cost = Decimal(
+            str(row["total_ads_cost"] or 0)
+        )
+
+        if asin_key not in ads_map:
+
+            ads_map[asin_key] = {
+                "cost": Decimal("0"),
+                "clicks": 0,
+                "impressions": 0,
+                "sales": Decimal("0"),
+                "orders": 0,
+            }
+
+        ads_map[asin_key]["cost"] += cost
+        ads_map[asin_key]["clicks"] += int(
+            row["total_clicks"] or 0
+        )
+        ads_map[asin_key]["impressions"] += int(
+            row["total_impressions"] or 0
+        )
+        ads_map[asin_key]["sales"] += Decimal(
+            str(row["total_sales"] or 0)
+        )
+        ads_map[asin_key]["orders"] += int(
+            row["total_orders"] or 0
+        )
+
+        # optional SKU mapping
+        if sku_key:
+
+            if sku_key not in ads_map:
+
+                ads_map[sku_key] = {
+                    "cost": Decimal("0"),
+                    "clicks": 0,
+                    "impressions": 0,
+                    "sales": Decimal("0"),
+                    "orders": 0,
+                }
+
+            ads_map[sku_key]["cost"] += cost
+
+    
+    # ---------------- TRANSACTION SHIPPING FEES ----------------
+    all_order_ids = [row['order__amazon_order_id'] for row in asin_orders]
+    tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+        identifier_name='ORDER_ID',
+        identifier_value__in=all_order_ids
+    ).values('transaction_id', 'identifier_value')
+    
+    tx_to_order = {
+        item['transaction_id']: item['identifier_value'] 
+        for item in tx_identifiers
+    }
+    
+    shipping_breakdowns = AmazonTransactionBreakdown.objects.filter(
+        transaction_id__in=tx_to_order.keys(),
+        breakdown_type__in=['Shipping', 'ShippingChargeback']
+    ).values('transaction_id').annotate(total=Sum('amount'))
+    
+    tx_shipping_map = {}
+    for bd in shipping_breakdowns:
+        t_id = bd['transaction_id']
+        oid = tx_to_order[t_id]
+        tx_shipping_map[oid] = tx_shipping_map.get(oid, Decimal("0")) + Decimal(str(bd['total'] or 0))
+
+    # ---------------- BUILD RESPONSE ----------------
+    results = []
+
+    total_sales = total_profit = total_ads = Decimal(0)
+    total_net_sales = total_qty = Decimal(0)
+    total_returns = total_shipping = Decimal(0)
+    total_tcs = Decimal(0)
+    total_mpfees = Decimal(0)   
+    total_ret_percent = Decimal(0)  
+    total_stdcost = Decimal(0) 
+    adjusted_gross_sales = Decimal(0) 
+    total_estimatefees = Decimal(0)
+    total_mp_gst = Decimal(0)
+
+    total_taxable_value = Decimal(0)
+    total_gst_payable = Decimal(0)
+    total_exp_settlement = Decimal(0)
+
+    for row in items:
+
+        asin = row['asin']
+        seller_sku = row['seller_sku']
+        parent_asin = row.get('parent_asin')
+        child_sku = row['seller_sku']
+    
+        orders = asin_map.get(asin, [])
+        
+        # estimated_fees = estimated_fee_map.get(asin, Decimal("0"))
+
+        fee_data = estimated_fee_map.get(asin, {})
+
+        estimated_fees = fee_data.get("estimated_fees", Decimal("0"))
+
+        referral_fee = fee_data.get("referral_fee", Decimal("0"))
+        closing_fee = fee_data.get("closing_fee", Decimal("0"))
+        per_item_fee = fee_data.get("per_item_fee", Decimal("0"))
+
+        fba_fee = fee_data.get("fba_fee", Decimal("0"))
+        fba_pick_pack_fee = fee_data.get("fba_pick_pack_fee", Decimal("0"))
+        fba_weight_handling_fee = fee_data.get("fba_weight_handling_fee", Decimal("0"))
+
+        tax_amount = fee_data.get("tax_amount", Decimal("0"))
+
+        gross_qty = Decimal(row['grossqty'] or 0)
+        gross_sales = Decimal(row['grosssales'] or 0)
+
+        item_tax = Decimal(row.get('item_tax') or 0)
+        promo_discount = Decimal(row.get('promotion_discount') or 0)
+
+        tx_shipping_final = Decimal("0")
+        for o in orders:
+            oid = o['order__amazon_order_id']
+            tx_shipping_final += tx_shipping_map.get(oid, Decimal("0"))
+        shipping_price = tx_shipping_final
+        
+        
+        # estimated_fees += promo_discount #currently not use this 
+
+        # ---------------- GST / TAXABLE ----------------
+
+        # # Gross sales excluding GST
+        # taxable_value = gross_sales
+
+        # # GST collected from order
+        # gst_to_pay_amount = item_tax
+
+        # # GST %
+        # gst_to_pay_perc = (
+        #     (gst_to_pay_amount / taxable_value) * 100
+        #     if taxable_value else Decimal("0")
+        # )
+
+        # # TCS = 1% of taxable value
+        # tcs_total = gst_to_pay_amount * Decimal("0.01")
+
+        # # adjusted_gross_sales = gross_sales + item_tax - promo_discount
+        # adjusted_gross_sales = gross_sales + item_tax - promo_discount + shipping_price
+
+        # ------------------------------------------------------------
+        # ADJUSTED SALES
+        # ------------------------------------------------------------
+
+        # adjusted_gross_sales = (
+        #     gross_sales
+        #     + item_tax
+        #     - promo_discount
+        #     + shipping_price
+        # )
+        adjusted_gross_sales = (
+            gross_sales
+            + item_tax
+         
+            + shipping_price
+        )
+
+        # ------------------------------------------------------------
+        # SKU GST / TCS
+        # ------------------------------------------------------------
+
+        gst_rate = Decimal(str(row.get("sku_gst_rate") or 0))
+        tcs_rate = Decimal(str(row.get("sku_tcs_rate") or 0))
+
+        # ------------------------------------------------------------
+        # TAXABLE VALUE
+        # GST INCLUDED SALES -> REMOVE GST
+        # ------------------------------------------------------------
+
+        if gst_rate > 0:
+
+            taxable_value = (
+                adjusted_gross_sales / (1 + (gst_rate / 100))
+            )
+            gst_to_pay_amount = adjusted_gross_sales - taxable_value
+            
+            # taxable_value = gross_sales
+
+        else:
+
+            taxable_value = gross_sales
+            gst_to_pay_amount = item_tax
+
+        # ------------------------------------------------------------
+        # GST TO PAY
+        # ------------------------------------------------------------
+
+        # gst_to_pay_amount = (
+        #     adjusted_gross_sales - taxable_value
+        # )
+
+        # ------------------------------------------------------------
+        # TCS
+        # ------------------------------------------------------------
+
+        if tcs_rate:
+            tcs_total = (
+                gst_to_pay_amount *
+                (tcs_rate / Decimal("100"))
+            )
+        else:
+            # default 1% TCS
+            tcs_total = (
+                gst_to_pay_amount *
+                (Decimal("1") / Decimal("100"))
+            )   
+
+        # ------------------------------------------------------------
+        # GST %
+        # ------------------------------------------------------------
+
+        # gst_to_pay_perc = gst_rate
+        
+        if gst_rate:
+            gst_to_pay_perc = gst_rate
+
+        else:
+          
+            gst_to_pay_perc = (
+                (gst_to_pay_amount / taxable_value) * 100
+                if taxable_value else 1
+            )  
+
+
+
+
+        refund = rto = mpfees = shipping_fee = Decimal(0)
+        return_units = Decimal(0)
+        # tcs_total = Decimal(0)
+        t_new_charge = Decimal(0)
+
+        refund = rto = mpfees = shipping_fee = Decimal(0)
+
+        # ============================================================
+        # ADS SPEND
+        # ============================================================
+
+        ads = Decimal("0")
+
+        # by child asin
+        ads_row = ads_map.get(asin)
+
+        if not ads_row:
+
+            # fallback by sku
+            ads_row = ads_map.get(
+                normalize_sku(child_sku)
+            )
+
+        if ads_row:
+
+            ads = -abs(
+                Decimal(
+                    str(ads_row["cost"] or 0)
+                )
+            )
+
+        for o in orders:
+            oid = o['order__amazon_order_id']
+            qty = Decimal(o['quantity_ordered'] or 0)
+
+            f = finance_map.get(oid, {})
+
+            refund += Decimal(f.get('refund') or 0)
+            rto += Decimal(f.get('rto') or 0)
+            # ads += Decimal(f.get('ads') or 0)
+
+            mpfees += (
+                Decimal(f.get('commission') or 0) +
+                Decimal(f.get('fulfillment') or 0) +
+                Decimal(f.get('other_fee') or 0)
+            )
+
+            shipping_fee += Decimal(f.get('shipping_fee') or 0)
+
+            order_fee_map = extract_fees_and_tcs_per_asin(
+                raw_data_map.get(oid, []),
+                sku_asin_map=sku_asin_map
+            )
+
+            if asin in order_fee_map:
+                t_new_charge += Decimal(order_fee_map[asin]["fee"])
+                # tcs_total += Decimal(order_fee_map[asin]["tcs"])
+
+            r = Decimal(f.get('refund') or 0)
+            rto_amt = Decimal(f.get('rto') or 0)
+
+            refund += r
+            rto += rto_amt
+
+            # total_estimatefees += estimated_fees
+
+            if r < 0 or rto_amt < 0:
+                return_units += qty
+
+        # net_qty = max(gross_qty - return_units, 0)
+        net_qty = max(gross_qty , 0)
+        # net_sales = gross_sales + refund + rto
+        net_sales = adjusted_gross_sales
+        # total_estimatefees += estimated_fees
+        shipping_final = shipping_price
+
+        # mp_gst = (net_sales + shipping_final) * 0.18
+       
+
+        # mp_gst = (net_sales + shipping_final) * Decimal("0.18")  update on 13 july
+        mp_gst = (estimated_fees + shipping_final) * Decimal("0.18")
+        
+        # total_cost = Decimal(row['total_cost'] or 0)
+
+        # total_cost = Decimal(50) * net_qty
+        
+        standard_cost = Decimal(
+            str(row.get("sku_standard_cost") or 0)
+        )
+
+        total_cost = standard_cost * net_qty
+
+        # profit = net_sales + t_new_charge + shipping_final - total_cost + tcs_total
+        # profit = net_sales - estimated_fees - shipping_final - tcs_total + mp_gst - total_cost
+        
+        profit = (
+            net_sales
+            - estimated_fees
+            - shipping_final
+            + ads
+            + tcs_total
+            + mp_gst
+            - total_cost
+            - gst_to_pay_amount
+        )
+
+        # exp_settlement = (
+        #     profit
+        #     - total_cost
+        #     - tcs_total
+        #     - mp_gst
+        # )
+
+        exp_settlement = (
+            net_sales
+            - shipping_final
+            - tcs_total
+            - mp_gst
+        )
+        profit_margin = (profit / net_sales * 100) if net_sales else 0
+
+        tacos = (
+            (abs(ads) / gross_sales) * 100
+            if gross_sales else 0
+        )
+
+        ret_percent = (return_units / net_qty * 100) if net_qty else 0
+        
+
+        if profit_filter == "GT_0" and profit <= 0:
+            continue
+        if profit_filter == "LT_0" and profit >= 0:
+            continue
+
+        results.append({
+            "asin": asin,
+            "parent_asin": parent_asin,
+            "name": row['title'],
+            "child_sku": clean_sku(child_sku),
+            # "child_sku": row['child_sku'],
+            "image_url": row['image_url'],
+            "channel": "Amazon-India",
+            "channel1": "Amazon-India",
+
+            "grossqty": int(gross_qty),
+            "netqty": int(net_qty),
+
+            "grosssales": format_currency(gross_sales),
+            "netsales": format_currency(net_sales),
+
+            "ads": format_currency(ads),
+            "tacos": round(tacos, 2),
+            "mp_gst": format_currency(mp_gst),
+            "new_mpfees": format_currency(t_new_charge),
+         
+            "estimatefees": format_currency(-abs(estimated_fees)),
+            "referral_fee": format_currency(referral_fee),
+            "closing_fee": format_currency(closing_fee),
+            "per_item_fee": format_currency(per_item_fee),
+
+            "fba_fee": format_currency(fba_fee),
+            "fba_pick_pack_fee": format_currency(fba_pick_pack_fee),
+            "fba_weight_handling_fee": format_currency(fba_weight_handling_fee),
+
+            "tax_amount": format_currency(tax_amount),
+            "shippingfees": format_currency(shipping_final),
+            "tcs": format_currency(tcs_total),
+
+            "profit": format_currency(profit),
+            "grossprofitper": round(profit_margin, 2),
+            "retpercent": round(ret_percent, 2),
+            "returnqty": int(return_units),
+            # "tacos": round(tacos, 2),
+            # "gst": format_currency(tcs_total),
+            "gst": format_currency(0),
+
+            "taxable_value": format_currency(taxable_value),
+            "gst_to_pay_amount": format_currency(gst_to_pay_amount),
+            "gst_to_pay_perc": round(gst_to_pay_perc, 2),
+            "exp_settlement": format_currency(exp_settlement),
+
+            "id": asin,
+            "stdcost": format_currency(total_cost),
+            "redirecturl": f"https://www.amazon.in/dp/{asin}" if asin else None,
+        })
+
+
+        total_sales += gross_sales
+        total_net_sales += net_sales
+        total_profit += profit
+        total_ads += ads
+        total_qty += net_qty
+        total_returns += return_units
+        total_shipping += shipping_final
+        total_tcs += tcs_total
+        total_mpfees += t_new_charge
+        total_ret_percent += ret_percent
+        total_stdcost += total_cost
+        total_estimatefees += Decimal(estimated_fees)
+        total_mp_gst += mp_gst
+        total_taxable_value += taxable_value
+        total_gst_payable += gst_to_pay_amount
+        total_exp_settlement += exp_settlement
+
+    return Response({
+        "status": True,
+        "message": "Success",
+        "pagination": {
+            "pageNo": page_no,
+            "pageSize": page_size,
+            "count": len(results)
+        },
+        "totals": {
+            "ads": format_currency(total_ads),
+            "netqty": total_qty,
+            "totalreturn": total_returns,
+            "totalreturnper": f"{round(total_ret_percent, 2)}%",
+            "grosssales": format_currency(total_sales),
+            "netsales": format_currency(total_net_sales),
+            "profit": format_currency(total_profit),
+            "grossprofitper": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
+            "mpfees": format_currency(total_mpfees),
+             "mp_gst": format_currency(total_mp_gst),
+            # "estimatefees": format_currency(total_estimatefees),
+            "estimatefees": format_currency(-abs(total_estimatefees)),
+            "total_new_mpfees": format_currency(total_mpfees),
+            "shippingfees": format_currency(total_shipping),
+            "tacos": (total_ads / total_sales * 100) if total_sales else 0,
+            "stdcost": format_currency(total_stdcost),
+            # "totalgst": format_currency(total_tcs),
+            "totalgst": format_currency(0),
+            "tcs": format_currency(total_tcs),
+            "taxable_value": format_currency(total_taxable_value),
+
+            "gst_to_pay_amount": format_currency(total_gst_payable),
+            "gst_to_pay_perc":f"{round((total_gst_payable / total_taxable_value * 100),2) if total_taxable_value else 1}%",
+
+            "exp_settlement": format_currency(total_exp_settlement),
+        },
+        "response": results[page_no * page_size:(page_no + 1) * page_size]
+    })
+
+
+
+
+# workinng till may 20
+# 

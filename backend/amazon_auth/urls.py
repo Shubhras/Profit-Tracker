@@ -41,7 +41,6 @@ urlpatterns = [
         name='order-processing-dashboard'
     ),
 
-
     #finance
     path('sync-finances/', views.sync_finances, name='sync_finances'),
     path('orders/<str:order_id>/finances/', views.get_order_finances, name='get_order_finances'),
@@ -58,9 +57,14 @@ urlpatterns = [
     # Analytics
     path('product-analytics/', views.get_product_analytics, name='get_product_analytics'),
     path('dashboard-profitability/', views.get_amazon_data_profi_tability, name='get_amazon_data_profi_tability'),
-    path('profitability/details/', views.amazon_profitability_details, name='get_amazon_data_profi_tability_details'),
-    path('profitability/details/by-parent-asin/', views.amazon_profitability_parent, name='profi_tability_details_by_parent_asin'),
-    path('profitability/details/by-parentproductid/', views.sku_profit_report, name='profi_tability_details_by_parentproductid'),
+    # path('profitability/details/', views.amazon_profitability_details, name='get_amazon_data_profi_tability_details'),
+    path('profitability/details/', views.amazon_profitability_details_transactions_shipping, name='get_amazon_data_profi_tability_details'),    #new api to get shiping from transactions 
+    # path('profitability/details/by-parent-asin/', views.amazon_profitability_parent, name='profi_tability_details_by_parent_asin'),
+    path('profitability/details/by-parent-asin/', views.amazon_profitability_parent_transactions_shipping, name='profi_tability_details_by_parent_asin'),
+    path('profitability/list/by-sku/filtered/', views.sku_profitability_list_filtered, name='sku_profitability_list_filtered'),
+    # path('profitability/details/by-parentproductid/', views.sku_profit_report, name='profi_tability_details_by_parentproductid'),
+    
+    path('profitability/details/by-parentproductid/', views.sku_profit_report_transactions_shipping, name='profi_tability_details_by_parentproductid'),
     path('profitability-monthwise/', views.get_profitability_monthwise, name='get_profitability_monthwise'),
     path('reconcile-paymentsummary/', views.get_amazon_data_reconcile_paymentsummary, name='get_amazon_data_reconcile_paymentsummary'),
     path('bank/ransfer-summary/', views.get_bank_transfer_workflow, name='bank/ransfer-summary/'),
