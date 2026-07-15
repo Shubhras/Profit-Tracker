@@ -47,6 +47,10 @@ const actions = {
   GET_TICKET_DETAILS_SUCCESS: ' GET_TICKET_DETAILS_SUCCESS',
   GET_TICKET_DETAILS_ERR: 'GET_TICKET_DETAILS_ERR',
 
+  PROFIT_SKU_ID_BEGIN: 'PROFIT_SKU_ID_BEGIN',
+  PROFIT_SKU_ID_SUCCESS: 'PROFIT_SKU_ID_SUCCESS',
+  PROFIT_SKU_ID_ERR: 'PROFIT_SKU_ID_ERR',
+
   dashboardBegin: () => ({
     type: actions.DASHBOARD_BEGIN,
   }),
@@ -71,6 +75,11 @@ const actions = {
   profitBegin: () => ({ type: actions.PROFIT_BEGIN }),
   profitSuccess: (data) => ({ type: actions.PROFIT_SUCCESS, data }),
   profitErr: (err) => ({ type: actions.PROFIT_ERR, err }),
+
+  profitSKUIdBegin: () => ({ type: actions.PROFIT_SKU_ID_BEGIN }),
+  profitSKUIdSuccess: (data) => ({ type: actions.PROFIT_SKU_ID_SUCCESS, data }),
+  profitSKUIdErr: (err) => ({ type: actions.PROFIT_SKU_ID_ERR, err }),
+
   monthwiseProfitBegin: () => ({
     type: actions.MONTHWISE_PROFIT_BEGIN,
   }),

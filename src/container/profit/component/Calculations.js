@@ -100,7 +100,7 @@ function CalculationModal({ open, onClose, type, data }) {
               <div className="px-4 py-3 text-[13px] text-[#374151]">Shipping Paid by Customer</div>
 
               <div className="px-4 py-3 text-right text-[13px] text-[#111827] font-medium">
-                {formatCurrency(data?.netsales)}
+                {formatCurrency(data?.paidByCustomer)}
               </div>
             </div>
 

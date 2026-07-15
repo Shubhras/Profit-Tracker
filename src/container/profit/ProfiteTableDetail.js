@@ -908,7 +908,8 @@ export default function ProfitDetailsView() {
                             <div />
                           ) : (
                             <span
-                              className={`text-[13px] font-semibold ${
+                              // className={`text-[13px] font-semibold ${
+                              className={`text-[13px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis ${
                                 Number(value) > 0 && ['profitPercent'].includes(col.dataIndex)
                                   ? 'text-green-600'
                                   : Number(value) < 0

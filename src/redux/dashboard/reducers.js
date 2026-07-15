@@ -46,6 +46,10 @@ const {
   GET_TICKET_DETAILS_BEGIN,
   GET_TICKET_DETAILS_SUCCESS,
   GET_TICKET_DETAILS_ERR,
+
+  PROFIT_SKU_ID_BEGIN,
+  PROFIT_SKU_ID_SUCCESS,
+  PROFIT_SKU_ID_ERR,
 } = actions;
 
 const initialState = {
@@ -59,6 +63,7 @@ const initialState = {
   supportTickets: [],
   getsupportTickets: [],
   getTicketsDetails: [],
+  getProfitSkuData: [],
   error: null,
   dateRange: null,
   search: '',
@@ -307,6 +312,27 @@ const dashboardReducer = (state = initialState, action) => {
       };
 
     case GET_TICKET_DETAILS_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case PROFIT_SKU_ID_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case PROFIT_SKU_ID_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        getProfitSkuData: action.data,
+      };
+
+    case PROFIT_SKU_ID_ERR:
       return {
         ...state,
         loading: false,
