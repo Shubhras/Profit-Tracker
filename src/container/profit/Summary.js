@@ -713,7 +713,7 @@ export default function Summary() {
                       <button
                         type="button"
                         onClick={() =>
-                          navigate('/admin/profit/profitTableView/details', {
+                          navigate('/admin/profit/profitTableView/sku-profit', {
                             state: {
                               channels: globalChannel,
                               type: 'all',
@@ -731,11 +731,11 @@ export default function Summary() {
                             <FileDoneOutlined className="text-[#16a34a] text-[20px]" />
                           </div>
 
-                          <p className="text-[13px] font-semibold text-[#16a34a]">Profit IDs</p>
+                          <p className="text-[13px] font-semibold text-[#16a34a]">Profit SKU IDs</p>
                         </div>
 
                         <h2 className="text-[19px] font-semibold mb-1 text-[#111827]">
-                          #{dashboardData?.top_orders?.profitable?.total_count || 0}
+                          {dashboardData?.top_orders?.profitable?.total_count || 0}
                         </h2>
 
                         <p className="text-[#4b5563] text-[13px]">
@@ -749,7 +749,7 @@ export default function Summary() {
                       <button
                         type="button"
                         onClick={() =>
-                          navigate('/admin/profit/profitTableView/details', {
+                          navigate('/admin/profit/profitTableView/sku-profit', {
                             state: {
                               channels: globalChannel,
                               type: 'all',
@@ -767,11 +767,11 @@ export default function Summary() {
                             <FileExclamationOutlined className="text-[#ef4444] text-[20px]" />
                           </div>
 
-                          <p className="text-[13px] font-semibold text-[#ef4444]">Loss IDs</p>
+                          <p className="text-[13px] font-semibold text-[#ef4444]">Loss SKU IDs</p>
                         </div>
 
                         <h2 className="text-[19px] font-semibold mb-1 text-[#111827]">
-                          #{dashboardData?.top_orders?.losing?.total_count || 0}
+                          {dashboardData?.top_orders?.losing?.total_count || 0}
                         </h2>
 
                         <p className="text-[#4b5563] text-[13px]">

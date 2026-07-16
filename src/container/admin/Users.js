@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Table, Input, Tag, Switch, Modal, Button, Select, Tooltip } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { EyeOutlined, SearchOutlined } from '@ant-design/icons';
+import { EyeOutlined, SearchOutlined, LockOutlined, DeleteOutlined } from '@ant-design/icons';
 import { getUsersList } from '../../redux/admin/actionCreator';
 
 function UsersList() {
@@ -198,21 +198,35 @@ function UsersList() {
       width: 90,
       align: 'center',
       render: (_, record) => (
-        <Button
-          type="text"
-          icon={<EyeOutlined className="text-[#1677ff] text-[18px]" />}
-          // onClick={() => {
-          //   setSelectedSubscription(record.subscription);
-          //   setSubscriptionModal(true);
-          // }}
-          onClick={() => {
-            navigate('/super-admin/user/view', {
-              state: {
-                userId: record.user_id,
-              },
-            });
-          }}
-        />
+        <div className="flex items-center justify-center">
+          <Button
+            type="text"
+            icon={<EyeOutlined className="text-[#1677ff] text-[18px]" />}
+            // onClick={() => {
+            //   setSelectedSubscription(record.subscription);
+            //   setSubscriptionModal(true);
+            // }}
+            onClick={() => {
+              navigate('/super-admin/user/view', {
+                state: {
+                  userId: record.user_id,
+                },
+              });
+            }}
+          />
+          <Button
+            type="text"
+            icon={<LockOutlined className="text-orange-500 text-[16px]" />}
+            // onClick={() => handlePermissionModal(record)}
+          />
+
+          <Button
+            type="text"
+            danger
+            icon={<DeleteOutlined className="text-red-500 text-[16px]" />}
+            // onClick={() => handleDeleteClick(record)}
+          />
+        </div>
       ),
     },
 
