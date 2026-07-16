@@ -602,6 +602,51 @@ class AmazonTransactionContextInline(admin.TabularInline):
 # Amazon Transaction Admin
 # ==========================================
 
+# @admin.register(AmazonTransaction)
+# class AmazonTransactionAdmin(admin.ModelAdmin):
+
+#     list_display = (
+#         "id",
+#         "transaction_id",
+#         "transaction_type",
+#         "transaction_status",
+#         "total_amount",
+#         "currency_code",
+#         "posted_date",
+#         "amazon_account",
+#         "created_at",
+#     )
+
+#     list_filter = (
+#         "transaction_type",
+#         "transaction_status",
+#         "currency_code",
+#         "posted_date",
+#         "created_at",
+#     )
+
+#     search_fields = (
+#         "transaction_id",
+#         "description",
+#     )
+
+#     readonly_fields = (
+#         "created_at",
+#         "updated_at",
+#         "raw_payload",
+#     )
+
+#     inlines = [
+#         AmazonTransactionRelatedIdentifierInline,
+#         AmazonTransactionBreakdownInline,
+#         AmazonTransactionContextInline,
+#     ]
+
+#     ordering = ("-posted_date",)
+
+#     date_hierarchy = "posted_date"
+
+
 @admin.register(AmazonTransaction)
 class AmazonTransactionAdmin(admin.ModelAdmin):
 
@@ -643,9 +688,20 @@ class AmazonTransactionAdmin(admin.ModelAdmin):
     ]
 
     ordering = ("-posted_date",)
-
     date_hierarchy = "posted_date"
 
+    def get_search_results(self, request, queryset, search_term):
+        queryset, use_distinct = super().get_search_results(
+            request, queryset, search_term
+        )
+
+        if search_term:
+            queryset |= self.model.objects.filter(
+                related_identifiers__identifier_name="ORDER_ID",
+                related_identifiers__identifier_value__icontains=search_term,
+            )
+
+        return queryset.distinct(), use_distinct
 
 # ==========================================
 # Related Identifier Admin

@@ -19,6 +19,7 @@ from decimal import Decimal
 from django.db.models import Sum, Case, When, Value, DecimalField, Q ,F, FloatField
 from django.db.models.functions import Coalesce
 from .utils import * 
+from .utils import _get_sku_profits_for_dashboard
 import csv
 from io import StringIO
 from django.db import transaction
@@ -1948,119 +1949,9 @@ def get_product_analytics(request):
 #         "warnings": []
 #     })
 
-def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
-    from django.db.models import Sum, Max, Q, Subquery, OuterRef
-    from amazon_auth.models import OrderItem, AmazonEstimatedFee, AmazonListingItem
-    from amazon_ads.models import ProductAdMetric
-    from collections import defaultdict
 
-    order_filter = Q(order__user=user)
-    if start_date:
-        order_filter &= Q(order__purchase_date__gte=start_date)
-    if end_date:
-        order_filter &= Q(order__purchase_date__lte=end_date)
-    
-    channels = filters.get("channel", {}).get("IN", [])
-    if channels:
-        CHANNEL_MAP = {"Amazon-India": "A21TJRUUN4KGV"}
-        marketplace_ids = [CHANNEL_MAP[ch] for ch in channels if ch in CHANNEL_MAP]
-        if marketplace_ids:
-            order_filter &= Q(order__marketplace_id__in=marketplace_ids)
 
-    listing_qs = AmazonListingItem.objects.filter(
-        user=user,
-        sku=OuterRef("seller_sku")
-    ).order_by("-updated_at")
-
-    items = OrderItem.objects.filter(order_filter).exclude(
-        order__order_status__icontains='Cancel'
-    ).annotate(
-        sku_standard_cost=Subquery(listing_qs.values("standard_cost")[:1]),
-        sku_gst_rate=Subquery(listing_qs.values("gst_rate")[:1]),
-        sku_tcs_rate=Subquery(listing_qs.values("tcs")[:1]),
-    ).values('seller_sku').annotate(
-        grosssales=Sum('item_price'),
-        item_tax=Sum('item_tax'),
-        shipping_income=Sum('shipping_price'),
-        promotion_discount=Sum('promotion_discount'),
-        qty=Sum('quantity_ordered'),
-        title=Max('title'),
-        cost_price=Max('sku_standard_cost'),
-        gst_rate=Max('sku_gst_rate'),
-        tcs_rate=Max('sku_tcs_rate'),
-    )
-
-    ad_metrics = ProductAdMetric.objects.filter(
-        product_ad__amazon_account__user=user,
-        product_ad__amazon_account__is_primary=True
-    )
-    if start_date:
-        ad_metrics = ad_metrics.filter(report_date__gte=start_date.date())
-    if end_date:
-        ad_metrics = ad_metrics.filter(report_date__lte=end_date.date())
-    
-    ads_map = defaultdict(float)
-    for m in ad_metrics.select_related('product_ad'):
-        ads_map[m.product_ad.sku] += float(m.cost or 0)
-
-    fee_qs = AmazonEstimatedFee.objects.filter(
-        amazon_account__user=user
-    ).order_by('seller_sku', '-estimated_at')
-    
-    fee_map = {}
-    for f in fee_qs:
-        if f.seller_sku not in fee_map:
-            fee_map[f.seller_sku] = float(f.total_fees or 0)
-
-    sku_results = []
-    for row in items:
-        sku = row['seller_sku']
-        if not sku:
-            continue
-        
-        gross_sales = float(row['grosssales'] or 0)
-        item_tax = float(row['item_tax'] or 0)
-        promo_discount = float(row['promotion_discount'] or 0)
-        shipping_income = float(row['shipping_income'] or 0)
-        qty = int(row['qty'] or 0)
-        
-        cost = float(row['cost_price'] or 0) * qty
-        gst_rate = float(row['gst_rate'] or 0)
-        tcs_rate = float(row['tcs_rate'] or 1)
-        
-        ads = ads_map.get(sku, 0)
-        estimated_fees = fee_map.get(sku, 0) * qty
-        
-        adjusted_gross_sales = gross_sales + item_tax + shipping_income
-
-        if gst_rate > 0:
-            taxable_value = adjusted_gross_sales / (1 + (gst_rate / 100))
-            gst_to_pay = adjusted_gross_sales - taxable_value
-        else:
-            taxable_value = adjusted_gross_sales
-            gst_to_pay = item_tax
-
-        tcs_total = taxable_value * (tcs_rate / 100)
-        mp_gst = (estimated_fees + shipping_income) * 0.18
-
-        profit = (
-            adjusted_gross_sales
-            - estimated_fees
-            - shipping_income
-            - ads
-            - cost
-            + tcs_total
-            + mp_gst
-            - gst_to_pay
-        )
-        
-        sku_results.append({
-            "sku": sku,
-            "name": row['title'],
-            "profit": round(profit, 2)
-        })
-
-    return sku_results
+#     return sku_results
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
@@ -2333,6 +2224,11 @@ def get_full_dashboard(request):
         'total_amount': sum(s['profit'] for s in losing_skus),
         'data': losing_skus[:20]
     }
+    
+    total_shipping_final = sum(
+        s.get("shipping_final", 0)
+        for s in sku_profits
+    )
 
 
     cancelled_qty = cancelled_qs.count() 
@@ -2382,7 +2278,8 @@ def get_full_dashboard(request):
             "margin": f"{round(margin)}%",
             "roi": f"{round(roi)}%",
             "ad_spend": format_currency(ads_amount),
-            "tacos": f"{round(tacos)}%"
+            "tacos": f"{round(tacos)}%",
+            "shipping": format_currency(total_shipping_final),
         },
         "breakdown_table": {
             "gross": {"qty": total_q, "amount": format_currency(total_gross)}, 
@@ -8447,27 +8344,36 @@ def amazon_profitability_parent_transactions_shipping(request):
 
     
     # ---------------- TRANSACTION SHIPPING FEES ----------------
+    # ---------------- TRANSACTION SHIPPING FEES — MFN POSTAGE FEE ONLY ----------------
     all_order_ids = [row['order__amazon_order_id'] for row in asin_orders]
     tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
         identifier_name='ORDER_ID',
         identifier_value__in=all_order_ids
     ).values('transaction_id', 'identifier_value')
-    
+
     tx_to_order = {
-        item['transaction_id']: item['identifier_value'] 
+        item['transaction_id']: item['identifier_value']
         for item in tx_identifiers
     }
-    
-    shipping_breakdowns = AmazonTransactionBreakdown.objects.filter(
-        transaction_id__in=tx_to_order.keys(),
-        breakdown_type__in=['Shipping', 'ShippingChargeback']
-    ).values('transaction_id').annotate(total=Sum('amount'))
-    
+
     tx_shipping_map = {}
-    for bd in shipping_breakdowns:
-        t_id = bd['transaction_id']
-        oid = tx_to_order[t_id]
-        tx_shipping_map[oid] = tx_shipping_map.get(oid, Decimal("0")) + Decimal(str(bd['total'] or 0))
+
+    # MFN shipping cost posts as its own ServiceFee transaction
+    # (description "MfnPostageFee") — only count RELEASED (settled) ones
+    # to avoid double-counting the DEFERRED version of the same fee.
+    mfn_postage_txns = AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_type='ServiceFee',
+        transaction_status='RELEASED',
+        description__icontains='MfnPostageFee'
+    ).values('id', 'total_amount')
+
+    for t in mfn_postage_txns:
+        t_id = t['id']
+        oid = tx_to_order.get(t_id)
+        if not oid:
+            continue
+        tx_shipping_map[oid] = tx_shipping_map.get(oid, Decimal("0")) + Decimal(str(t['total_amount'] or 0))
 
     # ---------------- BUILD RESPONSE ----------------
     results = []
@@ -10489,6 +10395,37 @@ def sku_profit_report_transactions_shipping(request):
     # TRANSACTION SHIPPING FEES — DIRECT SUM (no FBA/FBM mismatch)
     # ============================================================
 
+    # tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+    #     identifier_name='ORDER_ID',
+    #     identifier_value__in=matching_order_ids
+    # ).values('transaction_id', 'identifier_value')
+
+    # tx_to_order = {
+    #     item['transaction_id']: item['identifier_value']
+    #     for item in tx_identifiers
+    # }
+
+    # shipping_breakdowns = AmazonTransactionBreakdown.objects.filter(
+    #     transaction_id__in=tx_to_order.keys(),
+    #     breakdown_type__in=['Shipping', 'ShippingChargeback']
+    # ).values('transaction_id').annotate(total=Sum('amount'))
+
+    # tx_shipping_map = {}
+
+    # for bd in shipping_breakdowns:
+    #     t_id = bd['transaction_id']
+    #     oid_val = tx_to_order[t_id]
+    #     tx_shipping_map[oid_val] = tx_shipping_map.get(oid_val, 0.0) + float(bd['total'] or 0)
+    
+    
+    # ============================================================
+    # TRANSACTION SHIPPING FEES
+    # ============================================================
+
+   # ============================================================
+    # TRANSACTION SHIPPING FEES — MFN POSTAGE FEE ONLY
+    # ============================================================
+
     tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
         identifier_name='ORDER_ID',
         identifier_value__in=matching_order_ids
@@ -10499,17 +10436,27 @@ def sku_profit_report_transactions_shipping(request):
         for item in tx_identifiers
     }
 
-    shipping_breakdowns = AmazonTransactionBreakdown.objects.filter(
-        transaction_id__in=tx_to_order.keys(),
-        breakdown_type__in=['Shipping', 'ShippingChargeback']
-    ).values('transaction_id').annotate(total=Sum('amount'))
-
     tx_shipping_map = {}
 
-    for bd in shipping_breakdowns:
-        t_id = bd['transaction_id']
-        oid_val = tx_to_order[t_id]
-        tx_shipping_map[oid_val] = tx_shipping_map.get(oid_val, 0.0) + float(bd['total'] or 0)
+    # MFN shipping cost posts as its own ServiceFee transaction
+    # (description "MfnPostageFee") — pull the transaction's own total_amount.
+    mfn_postage_txns = AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_type='ServiceFee',
+        transaction_status='RELEASED',
+        description__icontains='MfnPostageFee'
+    ).values('id', 'total_amount')
+
+    for t in mfn_postage_txns:
+        t_id = t['id']
+        oid_val = tx_to_order.get(t_id)
+        if not oid_val:
+            continue
+        tx_shipping_map[oid_val] = tx_shipping_map.get(oid_val, 0.0) + float(t['total_amount'] or 0)
+   
+    print(tx_to_order)
+    print(tx_shipping_map)        
+    print("tx_shipping_map>>>>>>>>>>>>>>>>>>", tx_shipping_map)  
 
     # ---------------- BUILD RESPONSE ----------------
     results = []
@@ -11232,29 +11179,37 @@ def amazon_profitability_details_transactions_shipping(request):
     for row in asin_orders:
         asin_map.setdefault(row['parent_asin'], []).append(row)
 
-    # ---------------- TRANSACTION SHIPPING FEES ----------------
+    # ---------------- TRANSACTION SHIPPING FEES — MFN POSTAGE FEE ONLY ----------------
     all_order_ids = [row['order__amazon_order_id'] for row in asin_orders]
     tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
         identifier_name='ORDER_ID',
         identifier_value__in=all_order_ids
     ).values('transaction_id', 'identifier_value')
-    
+
     tx_to_order = {
-        item['transaction_id']: item['identifier_value'] 
+        item['transaction_id']: item['identifier_value']
         for item in tx_identifiers
     }
-    
-    shipping_breakdowns = AmazonTransactionBreakdown.objects.filter(
-        transaction_id__in=tx_to_order.keys(),
-        breakdown_type__in=['Shipping', 'ShippingChargeback']
-    ).values('transaction_id').annotate(total=Sum('amount'))
-    
-    tx_shipping_map = {}
-    for bd in shipping_breakdowns:
-        t_id = bd['transaction_id']
-        oid = tx_to_order[t_id]
-        tx_shipping_map[oid] = tx_shipping_map.get(oid, 0) + float(bd['total'] or 0)
 
+    tx_shipping_map = {}
+
+    # MFN shipping cost posts as its own ServiceFee transaction
+    # (description "MfnPostageFee") — only count RELEASED (settled) ones
+    # to avoid double-counting the DEFERRED version of the same fee.
+    mfn_postage_txns = AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_type='ServiceFee',
+        transaction_status='RELEASED',
+        description__icontains='MfnPostageFee'
+    ).values('id', 'total_amount')
+
+    for t in mfn_postage_txns:
+        t_id = t['id']
+        oid = tx_to_order.get(t_id)
+        if not oid:
+            continue
+        tx_shipping_map[oid] = tx_shipping_map.get(oid, float("0")) + float(str(t['total_amount'] or 0))
+    print("tx_shipping_map",tx_shipping_map)
     # ---------------- BUILD RESPONSE ----------------
     results = []
 
@@ -11920,29 +11875,31 @@ def amazon_profitability_details_transactions_shipping(request):
 #     }
 
 #     # ---------------- TRANSACTION SHIPPING FEES ----------------
-    all_order_ids = [row['order__amazon_order_id'] for row in asin_orders]
-    tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
-        identifier_name='ORDER_ID',
-        identifier_value__in=all_order_ids
-    ).values('transaction_id', 'identifier_value')
+    # all_order_ids = [row['order__amazon_order_id'] for row in asin_orders]
+    # tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+    #     identifier_name='ORDER_ID',
+    #     identifier_value__in=all_order_ids
+    # ).values('transaction_id', 'identifier_value')
     
-    tx_to_order = {
-        item['transaction_id']: item['identifier_value'] 
-        for item in tx_identifiers
-    }
+    # tx_to_order = {
+    #     item['transaction_id']: item['identifier_value'] 
+    #     for item in tx_identifiers
+    # }
     
-    shipping_breakdowns = AmazonTransactionBreakdown.objects.filter(
-        transaction_id__in=tx_to_order.keys(),
-        breakdown_type__in=['Shipping', 'ShippingChargeback']
-    ).values('transaction_id').annotate(total=Sum('amount'))
+    # shipping_breakdowns = AmazonTransactionBreakdown.objects.filter(
+    #     transaction_id__in=tx_to_order.keys(),
+    #     breakdown_type__in=['Shipping', 'ShippingChargeback']
+    # ).values('transaction_id').annotate(total=Sum('amount'))
     
-    tx_shipping_map = {}
-    for bd in shipping_breakdowns:
-        t_id = bd['transaction_id']
-        oid = tx_to_order[t_id]
-        tx_shipping_map[oid] = tx_shipping_map.get(oid, 0) + float(bd['total'] or 0)
+    # tx_shipping_map = {}
+    # for bd in shipping_breakdowns:
+    #     t_id = bd['transaction_id']
+    #     oid = tx_to_order[t_id]
+    #     tx_shipping_map[oid] = tx_shipping_map.get(oid, 0) + float(bd['total'] or 0)
 
     # ---------------- BUILD RESPONSE ----------------
+
+
 #     results = []
 
 #     total_sales = total_profit = total_ads = Decimal(0)
@@ -12524,28 +12481,46 @@ def sku_profitability_list_filtered(request):
             ads_map[sku_key]["cost"] += cost
 
     
-    # ---------------- TRANSACTION SHIPPING FEES ----------------
+ 
+    # ---------------- TRANSACTION SHIPPING FEES — MFN POSTAGE FEE ONLY ----------------
+    # ---------------- TRANSACTION SHIPPING FEES — MFN POSTAGE FEE ONLY ----------------
     all_order_ids = [row['order__amazon_order_id'] for row in asin_orders]
     tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
         identifier_name='ORDER_ID',
         identifier_value__in=all_order_ids
     ).values('transaction_id', 'identifier_value')
-    
+
     tx_to_order = {
-        item['transaction_id']: item['identifier_value'] 
+        item['transaction_id']: item['identifier_value']
         for item in tx_identifiers
     }
-    
-    shipping_breakdowns = AmazonTransactionBreakdown.objects.filter(
-        transaction_id__in=tx_to_order.keys(),
-        breakdown_type__in=['Shipping', 'ShippingChargeback']
-    ).values('transaction_id').annotate(total=Sum('amount'))
-    
+
     tx_shipping_map = {}
-    for bd in shipping_breakdowns:
-        t_id = bd['transaction_id']
-        oid = tx_to_order[t_id]
-        tx_shipping_map[oid] = tx_shipping_map.get(oid, Decimal("0")) + Decimal(str(bd['total'] or 0))
+
+    # MFN shipping cost posts as its own ServiceFee transaction
+    # (description "MfnPostageFee") — only count RELEASED (settled) ones
+    # to avoid double-counting the DEFERRED version of the same fee.
+    mfn_postage_txns = AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_type='ServiceFee',
+        transaction_status='RELEASED',
+        description__icontains='MfnPostageFee'
+    ).values('id', 'total_amount')
+
+    for t in mfn_postage_txns:
+        t_id = t['id']
+        oid = tx_to_order.get(t_id)
+        if not oid:
+            continue
+        tx_shipping_map[oid] = tx_shipping_map.get(oid, Decimal("0")) + Decimal(str(t['total_amount'] or 0))
+        
+    t = AmazonTransaction.objects.filter(id=3140).values('id', 'transaction_type', 'transaction_status', 'description', 'total_amount').first()
+    print("direct lookup:", t)    
+        
+    print("all_order_ids sample:", "403-1212366-4156345" in all_order_ids)
+    print("tx_to_order:", tx_to_order)
+    print("mfn_postage_txns:", list(mfn_postage_txns))
+    print("tx_shipping_map:", tx_shipping_map)    
 
     # ---------------- BUILD RESPONSE ----------------
     results = []
