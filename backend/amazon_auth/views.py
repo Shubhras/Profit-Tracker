@@ -8345,35 +8345,99 @@ def amazon_profitability_parent_transactions_shipping(request):
     
     # ---------------- TRANSACTION SHIPPING FEES ----------------
     # ---------------- TRANSACTION SHIPPING FEES — MFN POSTAGE FEE ONLY ----------------
-    all_order_ids = [row['order__amazon_order_id'] for row in asin_orders]
+    # all_order_ids = [row['order__amazon_order_id'] for row in asin_orders]
+    # tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+    #     identifier_name='ORDER_ID',
+    #     identifier_value__in=all_order_ids
+    # ).values('transaction_id', 'identifier_value')
+
+    # tx_to_order = {
+    #     item['transaction_id']: item['identifier_value']
+    #     for item in tx_identifiers
+    # }
+
+    # tx_shipping_map = {}
+
+    # # MFN shipping cost posts as its own ServiceFee transaction
+    # # (description "MfnPostageFee") — only count RELEASED (settled) ones
+    # # to avoid double-counting the DEFERRED version of the same fee.
+    # mfn_postage_txns = AmazonTransaction.objects.filter(
+    #     id__in=tx_to_order.keys(),
+    #     transaction_type='ServiceFee',
+    #     transaction_status='RELEASED',
+    #     description__icontains='MfnPostageFee'
+    # ).values('id', 'total_amount')
+
+    # for t in mfn_postage_txns:
+    #     t_id = t['id']
+    #     oid = tx_to_order.get(t_id)
+    #     if not oid:
+    #         continue
+    #     tx_shipping_map[oid] = tx_shipping_map.get(oid, Decimal("0")) + Decimal(str(t['total_amount'] or 0))
+    
+    matching_order_ids = [row['order__amazon_order_id'] for row in asin_orders]
     tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
-        identifier_name='ORDER_ID',
-        identifier_value__in=all_order_ids
-    ).values('transaction_id', 'identifier_value')
+        identifier_name="ORDER_ID",
+        identifier_value__in=matching_order_ids
+    ).values("transaction_id", "identifier_value")
 
     tx_to_order = {
-        item['transaction_id']: item['identifier_value']
-        for item in tx_identifiers
+        row["transaction_id"]: row["identifier_value"]
+        for row in tx_identifiers
     }
 
     tx_shipping_map = {}
 
-    # MFN shipping cost posts as its own ServiceFee transaction
-    # (description "MfnPostageFee") — only count RELEASED (settled) ones
-    # to avoid double-counting the DEFERRED version of the same fee.
+    # ------------------------------------------------------------
+    # MFN SHIPPING
+    # ------------------------------------------------------------
     mfn_postage_txns = AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
-        transaction_type='ServiceFee',
-        transaction_status='RELEASED',
-        description__icontains='MfnPostageFee'
-    ).values('id', 'total_amount')
+        transaction_type="ServiceFee",
+        transaction_status="DEFERRED",
+        description__icontains="MfnPostageFee",
+    ).values("id", "total_amount")
 
-    for t in mfn_postage_txns:
-        t_id = t['id']
-        oid = tx_to_order.get(t_id)
-        if not oid:
+    for txn in mfn_postage_txns:
+        order_id = tx_to_order.get(txn["id"])
+        if not order_id:
             continue
-        tx_shipping_map[oid] = tx_shipping_map.get(oid, Decimal("0")) + Decimal(str(t['total_amount'] or 0))
+
+        tx_shipping_map[order_id] = (
+            tx_shipping_map.get(order_id, Decimal("0"))
+            + Decimal(str(txn["total_amount"] or 0))
+        )
+
+    # ------------------------------------------------------------
+    # AFN / FBA SHIPPING
+    # Shipment (DEFERRED)
+    # Shipping + FBAWeightBasedFee
+    # ------------------------------------------------------------
+
+    afn_tx_ids = AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_type="Shipment",
+        transaction_status="DEFERRED",
+    ).values_list("id", flat=True)
+
+    afn_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=afn_tx_ids,
+            breakdown_type__in=["FBAWeightBasedFee"],
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+
+    for bd in afn_breakdowns:
+        order_id = tx_to_order.get(bd["transaction_id"])
+        if not order_id:
+            continue
+
+        tx_shipping_map[order_id] = (
+            tx_shipping_map.get(order_id, Decimal("0"))
+            + Decimal(str(bd["total"] or 0))
+        )
 
     # ---------------- BUILD RESPONSE ----------------
     results = []
@@ -10391,8 +10455,9 @@ def sku_profit_report_transactions_shipping(request):
         if total_net_quantity else 0
     )
 
-    # ============================================================
-    # TRANSACTION SHIPPING FEES — DIRECT SUM (no FBA/FBM mismatch)
+
+   # ============================================================
+    # TRANSACTION SHIPPING FEES — MFN POSTAGE FEE ONLY
     # ============================================================
 
     # tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
@@ -10405,54 +10470,92 @@ def sku_profit_report_transactions_shipping(request):
     #     for item in tx_identifiers
     # }
 
-    # shipping_breakdowns = AmazonTransactionBreakdown.objects.filter(
-    #     transaction_id__in=tx_to_order.keys(),
-    #     breakdown_type__in=['Shipping', 'ShippingChargeback']
-    # ).values('transaction_id').annotate(total=Sum('amount'))
-
     # tx_shipping_map = {}
 
-    # for bd in shipping_breakdowns:
-    #     t_id = bd['transaction_id']
-    #     oid_val = tx_to_order[t_id]
-    #     tx_shipping_map[oid_val] = tx_shipping_map.get(oid_val, 0.0) + float(bd['total'] or 0)
-    
-    
-    # ============================================================
-    # TRANSACTION SHIPPING FEES
-    # ============================================================
+    # # MFN shipping cost posts as its own ServiceFee transaction
+    # # (description "MfnPostageFee") — pull the transaction's own total_amount.
+    # mfn_postage_txns = AmazonTransaction.objects.filter(
+    #     id__in=tx_to_order.keys(),
+    #     transaction_type='ServiceFee',
+    #     transaction_status='RELEASED',
+    #     description__icontains='MfnPostageFee'
+    # ).values('id', 'total_amount')
 
-   # ============================================================
-    # TRANSACTION SHIPPING FEES — MFN POSTAGE FEE ONLY
+    # for t in mfn_postage_txns:
+    #     t_id = t['id']
+    #     oid_val = tx_to_order.get(t_id)
+    #     if not oid_val:
+    #         continue
+    #     tx_shipping_map[oid_val] = tx_shipping_map.get(oid_val, 0.0) + float(t['total_amount'] or 0)
+    
+    # ============================================================
+    # TRANSACTION SHIPPING FEES (MFN + AFN)
     # ============================================================
 
     tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
-        identifier_name='ORDER_ID',
+        identifier_name="ORDER_ID",
         identifier_value__in=matching_order_ids
-    ).values('transaction_id', 'identifier_value')
+    ).values("transaction_id", "identifier_value")
 
     tx_to_order = {
-        item['transaction_id']: item['identifier_value']
-        for item in tx_identifiers
+        row["transaction_id"]: row["identifier_value"]
+        for row in tx_identifiers
     }
 
     tx_shipping_map = {}
 
-    # MFN shipping cost posts as its own ServiceFee transaction
-    # (description "MfnPostageFee") — pull the transaction's own total_amount.
+    # ------------------------------------------------------------
+    # MFN SHIPPING
+    # ------------------------------------------------------------
     mfn_postage_txns = AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
-        transaction_type='ServiceFee',
-        transaction_status='RELEASED',
-        description__icontains='MfnPostageFee'
-    ).values('id', 'total_amount')
+        transaction_type="ServiceFee",
+        transaction_status="DEFERRED",
+        description__icontains="MfnPostageFee",
+    ).values("id", "total_amount")
 
-    for t in mfn_postage_txns:
-        t_id = t['id']
-        oid_val = tx_to_order.get(t_id)
-        if not oid_val:
+    for txn in mfn_postage_txns:
+        order_id = tx_to_order.get(txn["id"])
+        if not order_id:
             continue
-        tx_shipping_map[oid_val] = tx_shipping_map.get(oid_val, 0.0) + float(t['total_amount'] or 0)
+
+        tx_shipping_map[order_id] = (
+            tx_shipping_map.get(order_id, 0.0)
+            + float(txn["total_amount"] or 0)
+        )
+
+    # ------------------------------------------------------------
+    # AFN / FBA SHIPPING
+    # Shipment (DEFERRED)
+    # Shipping + FBAWeightBasedFee
+    # ------------------------------------------------------------
+
+    afn_tx_ids = AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_type="Shipment",
+        transaction_status="DEFERRED",
+    ).values_list("id", flat=True)
+
+    afn_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=afn_tx_ids,
+            breakdown_type__in=["FBAWeightBasedFee"],
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+
+    for bd in afn_breakdowns:
+        order_id = tx_to_order.get(bd["transaction_id"])
+        if not order_id:
+            continue
+
+        tx_shipping_map[order_id] = (
+            tx_shipping_map.get(order_id, 0.0)
+            + float(bd["total"] or 0)
+        )
+
+    print(tx_shipping_map)
    
     print(tx_to_order)
     print(tx_shipping_map)        
@@ -11180,35 +11283,100 @@ def amazon_profitability_details_transactions_shipping(request):
         asin_map.setdefault(row['parent_asin'], []).append(row)
 
     # ---------------- TRANSACTION SHIPPING FEES — MFN POSTAGE FEE ONLY ----------------
-    all_order_ids = [row['order__amazon_order_id'] for row in asin_orders]
+    # all_order_ids = [row['order__amazon_order_id'] for row in asin_orders]
+    # tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+    #     identifier_name='ORDER_ID',
+    #     identifier_value__in=all_order_ids
+    # ).values('transaction_id', 'identifier_value')
+
+    # tx_to_order = {
+    #     item['transaction_id']: item['identifier_value']
+    #     for item in tx_identifiers
+    # }
+
+    # tx_shipping_map = {}
+
+    # # MFN shipping cost posts as its own ServiceFee transaction
+    # # (description "MfnPostageFee") — only count RELEASED (settled) ones
+    # # to avoid double-counting the DEFERRED version of the same fee.
+    # mfn_postage_txns = AmazonTransaction.objects.filter(
+    #     id__in=tx_to_order.keys(),
+    #     transaction_type='ServiceFee',
+    #     transaction_status='RELEASED',
+    #     description__icontains='MfnPostageFee'
+    # ).values('id', 'total_amount')
+
+    # for t in mfn_postage_txns:
+    #     t_id = t['id']
+    #     oid = tx_to_order.get(t_id)
+    #     if not oid:
+    #         continue
+    #     tx_shipping_map[oid] = tx_shipping_map.get(oid, float("0")) + float(str(t['total_amount'] or 0))
+    
+    
+    matching_order_ids = [row['order__amazon_order_id'] for row in asin_orders]
     tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
-        identifier_name='ORDER_ID',
-        identifier_value__in=all_order_ids
-    ).values('transaction_id', 'identifier_value')
+        identifier_name="ORDER_ID",
+        identifier_value__in=matching_order_ids
+    ).values("transaction_id", "identifier_value")
 
     tx_to_order = {
-        item['transaction_id']: item['identifier_value']
-        for item in tx_identifiers
+        row["transaction_id"]: row["identifier_value"]
+        for row in tx_identifiers
     }
 
     tx_shipping_map = {}
 
-    # MFN shipping cost posts as its own ServiceFee transaction
-    # (description "MfnPostageFee") — only count RELEASED (settled) ones
-    # to avoid double-counting the DEFERRED version of the same fee.
+    # ------------------------------------------------------------
+    # MFN SHIPPING
+    # ------------------------------------------------------------
     mfn_postage_txns = AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
-        transaction_type='ServiceFee',
-        transaction_status='RELEASED',
-        description__icontains='MfnPostageFee'
-    ).values('id', 'total_amount')
+        transaction_type="ServiceFee",
+        transaction_status="DEFERRED",
+        description__icontains="MfnPostageFee",
+    ).values("id", "total_amount")
 
-    for t in mfn_postage_txns:
-        t_id = t['id']
-        oid = tx_to_order.get(t_id)
-        if not oid:
+    for txn in mfn_postage_txns:
+        order_id = tx_to_order.get(txn["id"])
+        if not order_id:
             continue
-        tx_shipping_map[oid] = tx_shipping_map.get(oid, float("0")) + float(str(t['total_amount'] or 0))
+
+        tx_shipping_map[order_id] = (
+            tx_shipping_map.get(order_id, 0.0)
+            + float(txn["total_amount"] or 0)
+        )
+
+    # ------------------------------------------------------------
+    # AFN / FBA SHIPPING
+    # Shipment (DEFERRED)
+    # Shipping + FBAWeightBasedFee
+    # ------------------------------------------------------------
+
+    afn_tx_ids = AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_type="Shipment",
+        transaction_status="DEFERRED",
+    ).values_list("id", flat=True)
+
+    afn_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=afn_tx_ids,
+            breakdown_type__in=["FBAWeightBasedFee"],
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+
+    for bd in afn_breakdowns:
+        order_id = tx_to_order.get(bd["transaction_id"])
+        if not order_id:
+            continue
+
+        tx_shipping_map[order_id] = (
+            tx_shipping_map.get(order_id, 0.0)
+            + float(bd["total"] or 0)
+        )
     print("tx_shipping_map",tx_shipping_map)
     # ---------------- BUILD RESPONSE ----------------
     results = []

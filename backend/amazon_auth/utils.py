@@ -138,34 +138,106 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
         all_order_ids.add(row['order__amazon_order_id'])
 
     # ---------------- TRANSACTION SHIPPING FEES — MFN POSTAGE FEE ONLY ----------------
+    # tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+    #     identifier_name='ORDER_ID',
+    #     identifier_value__in=list(all_order_ids)
+    # ).values('transaction_id', 'identifier_value')
+
+    # tx_to_order = {
+    #     item['transaction_id']: item['identifier_value']
+    #     for item in tx_identifiers
+    # }
+
+    # tx_shipping_map = {}
+
+    # # MFN shipping cost posts as its own ServiceFee transaction
+    # # (description "MfnPostageFee") — only count RELEASED (settled) ones
+    # # to avoid double-counting the DEFERRED version of the same fee.
+    # mfn_postage_txns = AmazonTransaction.objects.filter(
+    #     id__in=tx_to_order.keys(),
+    #     transaction_type='ServiceFee',
+    #     transaction_status='RELEASED',
+    #     description__icontains='MfnPostageFee'
+    # ).values('id', 'total_amount')
+
+    # for t in mfn_postage_txns:
+    #     t_id = t['id']
+    #     oid = tx_to_order.get(t_id)
+    #     if not oid:
+    #         continue
+    #     tx_shipping_map[oid] = tx_shipping_map.get(oid, 0.0) + float(t['total_amount'] or 0)
+    
+    # ---------------- TRANSACTION SHIPPING FEES (MFN + AFN/FBA) ----------------
+
     tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
-        identifier_name='ORDER_ID',
+        identifier_name="ORDER_ID",
         identifier_value__in=list(all_order_ids)
-    ).values('transaction_id', 'identifier_value')
+    ).values("transaction_id", "identifier_value")
 
     tx_to_order = {
-        item['transaction_id']: item['identifier_value']
-        for item in tx_identifiers
+        row["transaction_id"]: row["identifier_value"]
+        for row in tx_identifiers
     }
 
     tx_shipping_map = {}
 
-    # MFN shipping cost posts as its own ServiceFee transaction
-    # (description "MfnPostageFee") — only count RELEASED (settled) ones
-    # to avoid double-counting the DEFERRED version of the same fee.
+    # ============================================================
+    # MFN SHIPPING
+    # ServiceFee -> RELEASED -> MfnPostageFee
+    # ============================================================
+
     mfn_postage_txns = AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
-        transaction_type='ServiceFee',
-        transaction_status='RELEASED',
-        description__icontains='MfnPostageFee'
-    ).values('id', 'total_amount')
+        transaction_type="ServiceFee",
+        transaction_status="DEFERRED",
+        description__icontains="MfnPostageFee",
+    ).values("id", "total_amount")
 
-    for t in mfn_postage_txns:
-        t_id = t['id']
-        oid = tx_to_order.get(t_id)
-        if not oid:
+    for txn in mfn_postage_txns:
+        order_id = tx_to_order.get(txn["id"])
+        if not order_id:
             continue
-        tx_shipping_map[oid] = tx_shipping_map.get(oid, 0.0) + float(t['total_amount'] or 0)
+
+        tx_shipping_map[order_id] = (
+            tx_shipping_map.get(order_id, 0.0)
+            + float(txn["total_amount"] or 0)
+        )
+
+    # ============================================================
+    # AFN/FBA SHIPPING
+    # Shipment -> DEFERRED
+    # Shipping + FBAWeightBasedFee
+    # ============================================================
+
+    afn_transaction_ids = list(
+        AmazonTransaction.objects.filter(
+            id__in=tx_to_order.keys(),
+            transaction_type="Shipment",
+            transaction_status="DEFERRED",
+        ).values_list("id", flat=True)
+    )
+
+    afn_shipping = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=afn_transaction_ids,
+            breakdown_type__in=[
+                "Shipping",
+                "FBAWeightBasedFee",
+            ],
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+
+    for row in afn_shipping:
+        order_id = tx_to_order.get(row["transaction_id"])
+        if not order_id:
+            continue
+
+        tx_shipping_map[order_id] = (
+            tx_shipping_map.get(order_id, 0.0)
+            + float(row["total"] or 0)
+        )
 
     sku_results = []
     for row in items:
