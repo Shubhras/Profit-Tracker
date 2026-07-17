@@ -1644,315 +1644,6 @@ def get_product_analytics(request):
 
 
 
-# @api_view(['GET', 'POST'])
-# @permission_classes([IsAuthenticated])
-# def get_full_dashboard(request):
-
-#     print(f"DEBUG: get_full_dashboard called for user {request.user}")
-#     user = request.user
-
-#     # ---------------- INPUT ----------------
-#     data_source_raw = request.data if request.method == 'POST' else request.GET
-#     data_source = {}
-
-#     if data_source_raw:
-#         if hasattr(data_source_raw, 'dict'):
-#             data_source.update(data_source_raw.dict())
-#         else:
-#             data_source.update(data_source_raw)
-
-#     if not data_source:
-#         try:
-#             import json
-#             body_data = json.loads(request._request.body)
-#             if isinstance(body_data, dict):
-#                 data_source.update(body_data)
-#         except:
-#             pass
-
-#     search_data = {}
-#     search_data.update(data_source)
-
-#     if isinstance(search_data.get('filters'), dict):
-#         search_data.update(search_data.get('filters'))
-
-#     def find_key(keys):
-#         for k in keys:
-#             val = search_data.get(k)
-#             if isinstance(val, list) and val:
-#                 val = val[0]
-#             if val:
-#                 return str(val)
-#         return None
-
-#     start_date = datetime.strptime(find_key(['fromDate'])[:10], '%Y-%m-%d')
-#     end_date = datetime.strptime(find_key(['toDate'])[:10], '%Y-%m-%d')
-#     end_date = end_date.replace(hour=23, minute=59, second=59)
-
-#     # ---------------- DATA ----------------
-#     orders_qs = Order.objects.filter(user=user, purchase_date__range=(start_date, end_date))
-#     finances_qs = FinancialEvent.objects.filter(user=user, posted_date__range=(start_date, end_date))
-
-#     # ---------------- ORDERS ----------------
-#     gross_sales = float(orders_qs.aggregate(val=Sum('total_amount'))['val'] or 0)
-#     gross_qty = orders_qs.count()
-
-#     items_data = orders_qs.aggregate(
-#         total_items=Sum(F('items_shipped') + F('items_unshipped'))
-#     )
-#     gross_item_qty = int(items_data['total_items'] or 0)
-
-#     cancelled_qs = orders_qs.filter(order_status__icontains='Cancel')
-#     cancelled_amount = float(cancelled_qs.aggregate(val=Sum('total_amount'))['val'] or 0)
-#     cancelled_amount = cancelled_amount if cancelled_amount < 0 else -cancelled_amount
-
-
-#     finance_totals = finances_qs.aggregate(
-#         principal=Sum('principal'),
-#         tax=Sum('tax'),
-
-#         shipping_income=Sum('shipping_income'),
-#         shipping_expense=Sum('shipping_fee'),
-
-#         commission=Sum('commission_fee'),
-#         fulfillment=Sum('fulfillment_fee'),
-#         other=Sum('other_fee'),
-
-#         promotion=Sum('promotion_discount'),
-#         refund=Sum('refund_amount'),
-
-#         total=Sum('total_amount'),
-#         qty=Sum('quantity')
-#     )
-
-#     principal = float(finance_totals['principal'] or 0)
-#     tax = float(finance_totals['tax'] or 0)
-
-#     shipping_income = float(finance_totals['shipping_income'] or 0)
-#     shipping_expense = float(finance_totals['shipping_expense'] or 0)
-
-#     commission = float(finance_totals['commission'] or 0)
-#     fulfillment = float(finance_totals['fulfillment'] or 0)
-#     other_fees = float(finance_totals['other'] or 0)
-
-#     promotion_discount = float(finance_totals['promotion'] or 0)
-#     refund_amount = float(finance_totals['refund'] or 0)
-
-#     total_qty = int(finance_totals['qty'] or 0)
-
-#     net_shipping = shipping_income - shipping_expense
-
-#     total_fees = commission + fulfillment + other_fees
-
-#     # ---------------- EVENT GROUPS ----------------
-#     returns_qs = finances_qs.filter(event_group="REFUND")
-#     rto_qs = finances_qs.filter(event_group="RTO")
-#     claim_qs = finances_qs.filter(event_group="CLAIM")
-
-#     # ---------------- RETURNS ----------------
-#     returns_amount = float(returns_qs.aggregate(val=Sum('total_amount'))['val'] or 0)
-#     returns_qty = int(returns_qs.aggregate(q=Sum('quantity'))['q'] or 0)
-
-#     # ---------------- RTO ----------------
-#     rto_amount = float(rto_qs.aggregate(val=Sum('total_amount'))['val'] or 0)
-#     rto_qty = int(rto_qs.aggregate(q=Sum('quantity'))['q'] or 0)
-    
-
-#     # ---------------- CLAIM ----------------
-#     claim_amount = float(claim_qs.aggregate(val=Sum('total_amount'))['val'] or 0)
-#     claim_qty = int(claim_qs.aggregate(q=Sum('quantity'))['q'] or 0)
-
-
-#     # net_sales = principal + shipping
-#     net_sales = principal + net_shipping - promotion_discount
-
-#     # ---------------- ADS ----------------
-#     # ad_metrics_qs = AdCampaignMetrics.objects.filter(
-#     #     campaign__user=user,
-#     #     date__range=(start_date.date(), end_date.date())
-#     # )
-
-#     ad_metrics_qs = AdCampaignMetrics.objects.filter(
-#         campaign__user=user,
-#         date__range=(start_date.date(), end_date.date())
-#     )
-
-#     ads_amount = float(
-#         ad_metrics_qs.aggregate(val=Sum('spend'))['val'] or 0
-#     )
-
-#     # 🔥 sanity cap (VERY IMPORTANT)
-#     if net_sales > 0 and abs(ads_amount) > net_sales:
-#         ads_amount = - (net_sales * 0.3)  # cap at 30%
-
-
-
-    
-
-#     # ---------------- PROFIT ----------------
-#     # profit = net_sales - total_fees + returns_amount + claim_amount + ads_amount
-#     profit = (
-#         net_sales
-#         - total_fees
-#         - refund_amount      # refund loss
-#         - claim_amount       # claim loss
-#         + ads_amount         # ads negative
-#     )
-
-#     # ---------------- METRICS ----------------
-#     margin = (profit / net_sales * 100) if net_sales else 0
-#     roi = (profit / abs(total_fees) * 100) if total_fees else 0
-#     tacos = (abs(ads_amount) / net_sales * 100) if net_sales else 0
-
-#     # ---------------- TRENDS ----------------
-#     trends = orders_qs.annotate(date=TruncDate('purchase_date')).values('date').annotate(
-#         sales=Sum('total_amount'),
-#         qty=Count('id')
-#     )
-
-#     trends_data = []
-#     for t in trends:
-#         sales = float(t['sales'] or 0)
-#         est_profit = sales * 0.3
-
-#         trends_data.append({
-#             "date": str(t['date']),
-#             "sales": round(sales, 2),
-#             "qty": t['qty'],
-#             "estimated_profit": round(est_profit, 2),
-#             "margin": f"{round((est_profit/sales)*100)}%" if sales else "0%"
-#         })
-
-#     # ---------------- GEO ----------------
-#     geo_data_detailed = []
-#     for state in orders_qs.values_list('state', flat=True).distinct():
-#         state_orders = orders_qs.filter(state=state)
-
-#         rev = float(state_orders.aggregate(val=Sum('total_amount'))['val'] or 0)
-#         st_profit = rev * 0.3
-
-#         geo_data_detailed.append({
-#             "id": state or "UNKNOWN",
-#             "revenue": f"{round(rev, 2)}",
-#             "mpfees": f"{round(-(rev * 0.15), 2)}",
-#             "profit": f"{round(st_profit, 2)}",
-#             "ads": f"{round(-(rev * 0.05), 2)}"
-#         })
-
-    
-#     # profit and losss asin
-#     from django.db.models import DecimalField, Value
-#     from django.db.models.functions import Coalesce
-
-#     item_profit_qs = finances_qs.values(
-#         'amazon_order_id'
-#     ).annotate(
-#         principal=Coalesce(Sum('principal'), Value(0), output_field=DecimalField()),
-#         shipping=Coalesce(Sum('shipping_fee'), Value(0), output_field=DecimalField()),
-#         tax=Coalesce(Sum('tax'), Value(0), output_field=DecimalField()),
-#         commission=Coalesce(Sum('commission_fee'), Value(0), output_field=DecimalField()),
-#         fulfillment=Coalesce(Sum('fulfillment_fee'), Value(0), output_field=DecimalField()),
-#         other=Coalesce(Sum('other_fee'), Value(0), output_field=DecimalField()),
-#     ).annotate(
-#         profit=(
-#             F('principal') +
-#             F('shipping') -
-#             F('tax') -
-#             F('commission') -
-#             F('fulfillment') -
-#             F('other')
-#         )
-#     )
-
-#     profitable_items = item_profit_qs.filter(profit__gt=0)
-#     losing_items = item_profit_qs.filter(profit__lte=0)
-
-
-#     profitable_summary = profitable_items.aggregate(
-#         total_count=Count('amazon_order_id'),
-#         total_amount=Sum('profit')
-#     )
-
-#     losing_summary = losing_items.aggregate(
-#         total_count=Count('amazon_order_id'),
-#         total_amount=Sum('profit')
-#     )
-#     cancelled_qty = cancelled_qs.count()
-
-#     total_q = (
-#         gross_item_qty
-#         + cancelled_qty
-#         + rto_qty
-#         + returns_qty
-#         # + claim_qty
-#     )
-
-#     # ---------------- RESPONSE ----------------
-#     return JsonResponse({
-#         "status": "success",
-#         "currency": "INR",
-#         "header_metrics": {
-#             "sales": round(net_sales, 2),
-#             "profit": round(profit, 2),
-#             "margin": f"{round(margin)}%",
-#             "roi": f"{round(roi)}%",
-#             "ad_spend": round(ads_amount, 2),
-#             "tacos": f"{round(tacos)}%"
-#         },
-#         "breakdown_table": {
-#             "gross": {"qty": total_q, "amount": format_currency(gross_sales)}, 
-#             "cancelled": {"qty": -abs(cancelled_qs.count()), "amount": format_currency(cancelled_amount)},
-#             "cancelled(RTO)": {"qty": -abs(rto_qty), "amount": format_currency(rto_amount)},
-#             "returned": {"qty": -abs(returns_qty), "amount": format_currency(returns_amount)},
-#             "returned(RTO)": {"qty": -abs(rto_qty), "amount": format_currency(rto_amount)},
-#             "returned(CRef)": {"qty": claim_qty, "amount": format_currency(claim_amount)},
-#             "fees": {"amount": round(total_fees, 2), "method": "calculated"},
-#             "net": {"qty": gross_item_qty, "amount": format_currency(net_sales)},
-#         },
-#         "trends": trends_data,
-#         "geography": geo_data_detailed,
-
-#         "top_orders": {
-#             "profitable": {
-#                 "total_count": profitable_summary['total_count'] or 0,
-#                 "total_amount": f"₹{round(float(profitable_summary['total_amount'] or 0), 2)}",
-#                 "data": list(
-#                     profitable_items.order_by('-profit')[:20].values(
-#                         'amazon_order_id',
-#                         'profit'
-#                     )
-#                 )
-#             },
-#             "losing": {
-#                 "total_count": losing_summary['total_count'] or 0,
-#                 "total_amount": f"-₹{abs(round(float(losing_summary['total_amount'] or 0), 2))}",
-#                 "data": list(
-#                     losing_items.order_by('profit')[:20].values(
-#                         'amazon_order_id',
-#                         'profit'
-#                     )
-#                 )
-#             }
-#         },
-#         # "top_orders": {
-#         #     "profitable": {
-#         #         "total_count": profitable_summary['total_count'] or 0,
-#         #         "total_amount": f"₹{round(float(profitable_summary['total_amount'] or 0), 2)}",
-#         #         "data": list(profitable_orders_qs.values('amazon_order_id', 'total_amount'))
-#         #     },
-#         #     "losing": {
-#         #         "total_count": losing_summary['total_count'] or 0,
-#         #         "total_amount": f"₹{round(float(losing_summary['total_amount'] or 0), 2)}",
-#         #         "data": list(losing_orders_qs.values('amazon_order_id', 'total_amount'))
-#         #     }
-#         # },
-#         "warnings": []
-#     })
-
-
-
-#     return sku_results
-
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def get_full_dashboard(request):
@@ -2052,6 +1743,22 @@ def get_full_dashboard(request):
     qty_canceled = canceled_data.aggregate(
         orderquantity=Sum('quantity_ordered')
     )
+    
+    # ---------------- ACCURATE NET SALES (matches details endpoint) ----------------
+    net_sales_items_qs = OrderItem.objects.filter(
+        order__user=user,
+        order__purchase_date__range=(start_date, end_date)
+    ).exclude(order__order_status__icontains='Cancel')
+
+    net_sales_agg = net_sales_items_qs.aggregate(
+        item_grosssales=Sum('item_price'),
+        item_tax_total=Sum('item_tax'),
+    )
+
+    accurate_net_sales = (
+        float(net_sales_agg['item_grosssales'] or 0)
+        + float(net_sales_agg['item_tax_total'] or 0)
+    )
 
     cancelled_qty = int(qty_canceled['orderquantity'] or 0)
 
@@ -2119,7 +1826,9 @@ def get_full_dashboard(request):
 
     # net_sales = principal + shipping
     # net_sales = principal + net_shipping - promotion_discount
-    net_sales = principal + net_shipping - promotion_discount
+    # net_sales = principal + net_shipping - promotion_discount
+    net_sales = principal  - promotion_discount
+    print("net_sales>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>",net_sales)
 
     # ---------------- ADS ----------------
     # ad_metrics_qs = AdCampaignMetrics.objects.filter(
@@ -2173,7 +1882,7 @@ def get_full_dashboard(request):
     )
 
     trends_data = []
-    margin_factor = profit / gross_sales if gross_sales else 0
+    margin_factor = profit / accurate_net_sales if accurate_net_sales else 0
 
     for t in trends:
         sales = float(t['sales'] or 0)
@@ -2255,10 +1964,13 @@ def get_full_dashboard(request):
 
     # net_gross_item_qty = gross_item_qty - cancelled_qty 
     net_gross_item_qty = gross_item_qty 
+    print("gross_sales>>>>>",gross_sales)
     net_gross_sales = gross_sales + cancelled_amount
+    
+    print("net_gross_sales>>>>>",net_gross_sales)
 
     total_gross = (
-        net_gross_sales
+        accurate_net_sales
         - rto_amount
         - returns_amount
         - cancelled_amount
@@ -2272,8 +1984,10 @@ def get_full_dashboard(request):
         "currency": "INR",
         "startDate": start_date,
         "endDate": end_date,
+       
         "header_metrics": {
-            "sales": round(net_gross_sales, 2),
+            # sales": round(net_gross_sales, 2),
+            "sales": round(accurate_net_sales, 2),
             "profit": round(profit, 2),
             "margin": f"{round(margin)}%",
             "roi": f"{round(roi)}%",
@@ -2290,8 +2004,8 @@ def get_full_dashboard(request):
             "returned(CRef)": {"qty": claim_qty, "amount": format_currency(claim_amount)},
             "claim": {"qty": claim_qty, "amount": format_currency(claim_amount)},
             "fees": {"amount": round(total_fees, 2), "method": "calculated"},
-            # "net": {"qty": gross_item_qty, "amount": format_currency(net_sales)},
-            "net": {"qty": net_gross_item_qty, "amount": format_currency(net_gross_sales)},
+            # "net": {"qty": net_gross_item_qty, "amount": format_currency(net_gross_sales)},
+            "net": {"qty": net_gross_item_qty, "amount": format_currency(accurate_net_sales)},
         },
         "trends": trends_data,
         # "geography": geo_data_detailed,
@@ -8523,14 +8237,13 @@ def amazon_profitability_parent_transactions_shipping(request):
         # adjusted_gross_sales = (
         #     gross_sales
         #     + item_tax
-        #     - promo_discount
+         
         #     + shipping_price
         # )
         adjusted_gross_sales = (
             gross_sales
             + item_tax
-         
-            + shipping_price
+        
         )
 
         # ------------------------------------------------------------
@@ -10626,7 +10339,8 @@ def sku_profit_report_transactions_shipping(request):
             ads_per_unit * gross_qty
         )
 
-        adjusted_gross_sales = gross_sales + item_tax + shipping_price
+        # adjusted_gross_sales = gross_sales + item_tax + shipping_price
+        adjusted_gross_sales = gross_sales + item_tax 
 
         standard_cost = float(row.get("sku_standard_cost") or 0)
 
@@ -11474,7 +11188,8 @@ def amazon_profitability_details_transactions_shipping(request):
         # ----------------------------------------------------------
 
         # adjusted_gross_sales = ( gross_sales + item_tax - promo_discount + shipping_price ) 
-        adjusted_gross_sales = ( gross_sales + item_tax + shipping_price )
+        # adjusted_gross_sales = ( gross_sales + item_tax + shipping_price )
+        adjusted_gross_sales = ( gross_sales + item_tax  )
 
         # ----------------------------------------------------------
         # GST RATE
@@ -11531,7 +11246,7 @@ def amazon_profitability_details_transactions_shipping(request):
         
 
         # adjusted_gross_sales = gross_sales + item_tax - promo_discount + shipping_price
-        adjusted_gross_sales = gross_sales + item_tax + shipping_price 
+        # adjusted_gross_sales = gross_sales + item_tax + shipping_price 
         # orders = asin_map.get(asin, [])
         orders = asin_map.get(parent_asin, [])
 
@@ -12652,40 +12367,104 @@ def sku_profitability_list_filtered(request):
  
     # ---------------- TRANSACTION SHIPPING FEES — MFN POSTAGE FEE ONLY ----------------
     # ---------------- TRANSACTION SHIPPING FEES — MFN POSTAGE FEE ONLY ----------------
-    all_order_ids = [row['order__amazon_order_id'] for row in asin_orders]
+    matching_order_ids = [row['order__amazon_order_id'] for row in asin_orders]
     tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
-        identifier_name='ORDER_ID',
-        identifier_value__in=all_order_ids
-    ).values('transaction_id', 'identifier_value')
+        identifier_name="ORDER_ID",
+        identifier_value__in=matching_order_ids
+    ).values("transaction_id", "identifier_value")
 
     tx_to_order = {
-        item['transaction_id']: item['identifier_value']
-        for item in tx_identifiers
+        row["transaction_id"]: row["identifier_value"]
+        for row in tx_identifiers
     }
 
     tx_shipping_map = {}
 
-    # MFN shipping cost posts as its own ServiceFee transaction
-    # (description "MfnPostageFee") — only count RELEASED (settled) ones
-    # to avoid double-counting the DEFERRED version of the same fee.
+    # ------------------------------------------------------------
+    # MFN SHIPPING
+    # ------------------------------------------------------------
     mfn_postage_txns = AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
-        transaction_type='ServiceFee',
-        transaction_status='RELEASED',
-        description__icontains='MfnPostageFee'
-    ).values('id', 'total_amount')
+        transaction_type="ServiceFee",
+        transaction_status="DEFERRED",
+        description__icontains="MfnPostageFee",
+    ).values("id", "total_amount")
 
-    for t in mfn_postage_txns:
-        t_id = t['id']
-        oid = tx_to_order.get(t_id)
-        if not oid:
+    for txn in mfn_postage_txns:
+        order_id = tx_to_order.get(txn["id"])
+        if not order_id:
             continue
-        tx_shipping_map[oid] = tx_shipping_map.get(oid, Decimal("0")) + Decimal(str(t['total_amount'] or 0))
+
+        tx_shipping_map[order_id] = (
+            tx_shipping_map.get(order_id, Decimal("0"))
+            + Decimal(str(txn["total_amount"] or 0))
+        )
+
+    # ------------------------------------------------------------
+    # AFN / FBA SHIPPING
+    # Shipment (DEFERRED)
+    # Shipping + FBAWeightBasedFee
+    # ------------------------------------------------------------
+
+    afn_tx_ids = AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_type="Shipment",
+        transaction_status="DEFERRED",
+    ).values_list("id", flat=True)
+
+    afn_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=afn_tx_ids,
+            breakdown_type__in=["FBAWeightBasedFee"],
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+
+    for bd in afn_breakdowns:
+        order_id = tx_to_order.get(bd["transaction_id"])
+        if not order_id:
+            continue
+
+        tx_shipping_map[order_id] = (
+            tx_shipping_map.get(order_id, Decimal("0"))
+            + Decimal(str(bd["total"] or 0))
+        )
+    
+    # all_order_ids = [row['order__amazon_order_id'] for row in asin_orders]
+    # tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+    #     identifier_name='ORDER_ID',
+    #     identifier_value__in=all_order_ids
+    # ).values('transaction_id', 'identifier_value')
+
+    # tx_to_order = {
+    #     item['transaction_id']: item['identifier_value']
+    #     for item in tx_identifiers
+    # }
+
+    # tx_shipping_map = {}
+
+    # # MFN shipping cost posts as its own ServiceFee transaction
+    # # (description "MfnPostageFee") — only count RELEASED (settled) ones
+    # # to avoid double-counting the DEFERRED version of the same fee.
+    # mfn_postage_txns = AmazonTransaction.objects.filter(
+    #     id__in=tx_to_order.keys(),
+    #     transaction_type='ServiceFee',
+    #     transaction_status='RELEASED',
+    #     description__icontains='MfnPostageFee'
+    # ).values('id', 'total_amount')
+
+    # for t in mfn_postage_txns:
+    #     t_id = t['id']
+    #     oid = tx_to_order.get(t_id)
+    #     if not oid:
+    #         continue
+    #     tx_shipping_map[oid] = tx_shipping_map.get(oid, Decimal("0")) + Decimal(str(t['total_amount'] or 0))
         
-    t = AmazonTransaction.objects.filter(id=3140).values('id', 'transaction_type', 'transaction_status', 'description', 'total_amount').first()
-    print("direct lookup:", t)    
+    # t = AmazonTransaction.objects.filter(id=3140).values('id', 'transaction_type', 'transaction_status', 'description', 'total_amount').first()
+    # print("direct lookup:", t)    
         
-    print("all_order_ids sample:", "403-1212366-4156345" in all_order_ids)
+    # print("all_order_ids sample:", "403-1212366-4156345" in all_order_ids)
     print("tx_to_order:", tx_to_order)
     print("mfn_postage_txns:", list(mfn_postage_txns))
     print("tx_shipping_map:", tx_shipping_map)    
@@ -12772,18 +12551,21 @@ def sku_profitability_list_filtered(request):
         # ADJUSTED SALES
         # ------------------------------------------------------------
 
+        
         # adjusted_gross_sales = (
         #     gross_sales
         #     + item_tax
-        #     - promo_discount
+         
         #     + shipping_price
         # )
+        
         adjusted_gross_sales = (
             gross_sales
             + item_tax
          
-            + shipping_price
+            # + shipping_price
         )
+
 
         # ------------------------------------------------------------
         # SKU GST / TCS
