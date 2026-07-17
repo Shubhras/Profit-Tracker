@@ -339,6 +339,237 @@ def extract_financials(raw_data):
 
 #     return sku_results
 
+# more in shiping 
+# def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
+#     from django.db.models import Sum, Max, Q, Subquery, OuterRef
+#     from amazon_auth.models import (
+#         OrderItem, AmazonEstimatedFee, AmazonListingItem,
+#         AmazonTransaction, AmazonTransactionRelatedIdentifier,
+#         AmazonTransactionBreakdown,
+#     )
+#     from amazon_ads.models import ProductAdMetric
+#     from collections import defaultdict
+
+#     order_filter = Q(order__user=user)
+#     if start_date:
+#         order_filter &= Q(order__purchase_date__gte=start_date)
+#     if end_date:
+#         order_filter &= Q(order__purchase_date__lte=end_date)
+
+#     channels = filters.get("channel", {}).get("IN", [])
+#     if channels:
+#         CHANNEL_MAP = {"Amazon-India": "A21TJRUUN4KGV"}
+#         marketplace_ids = [CHANNEL_MAP[ch] for ch in channels if ch in CHANNEL_MAP]
+#         if marketplace_ids:
+#             order_filter &= Q(order__marketplace_id__in=marketplace_ids)
+
+#     listing_qs = AmazonListingItem.objects.filter(
+#         user=user,
+#         sku=OuterRef("seller_sku")
+#     ).order_by("-updated_at")
+
+#     # ---------------- GROUP BY (ASIN, SELLER_SKU) — matches sku_profitability_list_filtered ----------------
+#     # sku_profitability_list_filtered groups by .values('asin', 'seller_sku', 'seller_sku'),
+#     # i.e. per ASIN+SKU pair (the duplicate 'seller_sku' is harmless). Grouping by ASIN alone
+#     # merges distinct SKU variants sharing an ASIN (e.g. "-Copy" listings) into one row and
+#     # produces wrong profit/counts, so we mirror the same composite grouping here.
+#     items = OrderItem.objects.filter(order_filter).exclude(
+#         order__order_status__icontains='Cancel'
+#     ).annotate(
+#         sku_standard_cost=Subquery(listing_qs.values("standard_cost")[:1]),
+#         sku_gst_rate=Subquery(listing_qs.values("gst_rate")[:1]),
+#         sku_tcs_rate=Subquery(listing_qs.values("tcs")[:1]),
+#     ).values('asin', 'seller_sku').annotate(
+#         grosssales=Sum('item_price'),
+#         item_tax=Sum('item_tax'),
+#         promotion_discount=Sum('promotion_discount'),
+#         qty=Sum('quantity_ordered'),
+#         title=Max('title'),
+#         cost_price=Max('sku_standard_cost'),
+#         gst_rate=Max('sku_gst_rate'),
+#         tcs_rate=Max('sku_tcs_rate'),
+#     )
+
+#     # ---------------- ESTIMATED FEES — summed per ASIN (shared across SKU variants of that ASIN,
+#     # matching sku_profitability_list_filtered's estimated_fee_map keyed by asin) ----------------
+#     estimated_fee_qs = AmazonEstimatedFee.objects.filter(
+#         order_item__order__user=user
+#     )
+#     if start_date:
+#         estimated_fee_qs = estimated_fee_qs.filter(order_item__order__purchase_date__gte=start_date)
+#     if end_date:
+#         estimated_fee_qs = estimated_fee_qs.filter(order_item__order__purchase_date__lte=end_date)
+#     if channels:
+#         estimated_fee_qs = estimated_fee_qs.filter(order_item__order__marketplace_id__in=marketplace_ids)
+
+#     estimated_fee_data = (
+#         estimated_fee_qs
+#         .values('asin')
+#         .annotate(estimated_fees=Sum('total_fees'))
+#     )
+#     fee_map = {
+#         row['asin']: float(row['estimated_fees'] or 0)
+#         for row in estimated_fee_data
+#     }
+
+#     # ---------------- ADS — ASIN first, normalized SKU fallback ----------------
+#     ad_metrics = ProductAdMetric.objects.filter(
+#         product_ad__amazon_account__user=user,
+#         product_ad__amazon_account__is_primary=True
+#     )
+#     if start_date:
+#         ad_metrics = ad_metrics.filter(report_date__gte=start_date.date())
+#     if end_date:
+#         ad_metrics = ad_metrics.filter(report_date__lte=end_date.date())
+
+#     ads_data = (
+#         ad_metrics.values("product_ad__asin", "product_ad__sku")
+#         .annotate(total_ads_cost=Sum("cost"))
+#     )
+
+#     ads_map = defaultdict(float)
+#     for row in ads_data:
+#         asin_key = (row["product_ad__asin"] or "").strip()
+#         sku_key = normalize_sku(row["product_ad__sku"] or "")
+#         cost = float(row["total_ads_cost"] or 0)
+#         if asin_key:
+#             ads_map[asin_key] += cost
+#         if sku_key:
+#             ads_map[sku_key] += cost
+
+#     # ---------------- ASIN -> ORDERS MAP (shipping is applied per ASIN, matching filtered-list
+#     # behavior where SKU variants of the same ASIN both draw from the same order set) ----------------
+#     asin_orders = (
+#         OrderItem.objects
+#         .filter(order_filter)
+#         .exclude(order__order_status__icontains='Cancel')
+#         .values('asin', 'order__amazon_order_id')
+#     )
+
+#     asin_to_orders = defaultdict(set)
+#     all_order_ids = set()
+#     for row in asin_orders:
+#         asin_to_orders[row['asin']].add(row['order__amazon_order_id'])
+#         all_order_ids.add(row['order__amazon_order_id'])
+
+#     # ---------------- TRANSACTION SHIPPING FEES (MFN + AFN/FBA) ----------------
+#     tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+#         identifier_name="ORDER_ID",
+#         identifier_value__in=list(all_order_ids)
+#     ).values("transaction_id", "identifier_value")
+
+#     tx_to_order = {
+#         row["transaction_id"]: row["identifier_value"]
+#         for row in tx_identifiers
+#     }
+
+#     tx_shipping_map = {}
+
+#     # MFN — ServiceFee, DEFERRED, MfnPostageFee (left as-is, per instruction)
+#     mfn_postage_txns = AmazonTransaction.objects.filter(
+#         id__in=tx_to_order.keys(),
+#         transaction_type="ServiceFee",
+#         transaction_status="DEFERRED",
+#         description__icontains="MfnPostageFee",
+#     ).values("id", "total_amount")
+
+#     for txn in mfn_postage_txns:
+#         order_id = tx_to_order.get(txn["id"])
+#         if not order_id:
+#             continue
+#         tx_shipping_map[order_id] = (
+#             tx_shipping_map.get(order_id, 0.0) + float(txn["total_amount"] or 0)
+#         )
+
+#     # AFN/FBA — Shipment, DEFERRED, FBAWeightBasedFee only (matches sku_profitability_list_filtered)
+#     afn_transaction_ids = list(
+#         AmazonTransaction.objects.filter(
+#             id__in=tx_to_order.keys(),
+#             transaction_type="Shipment",
+#             transaction_status="DEFERRED",
+#         ).values_list("id", flat=True)
+#     )
+
+#     afn_shipping = (
+#         AmazonTransactionBreakdown.objects.filter(
+#             transaction_id__in=afn_transaction_ids,
+#             breakdown_type__in=["FBAWeightBasedFee"],
+#         )
+#         .values("transaction_id")
+#         .annotate(total=Sum("amount"))
+#     )
+
+#     for row in afn_shipping:
+#         order_id = tx_to_order.get(row["transaction_id"])
+#         if not order_id:
+#             continue
+#         tx_shipping_map[order_id] = (
+#             tx_shipping_map.get(order_id, 0.0) + float(row["total"] or 0)
+#         )
+
+#     # ---------------- BUILD PER (ASIN, SKU) PROFIT ----------------
+#     sku_results = []
+#     for row in items:
+#         asin = row['asin']
+#         if not asin:
+#             continue
+
+#         seller_sku = row['seller_sku']
+#         gross_sales = float(row['grosssales'] or 0)
+#         item_tax = float(row['item_tax'] or 0)
+#         qty = int(row['qty'] or 0)
+
+#         # Shipping is looked up per ASIN (shared across SKU variants of that ASIN),
+#         # matching sku_profitability_list_filtered's asin_map-based lookup.
+#         shipping_final = sum(
+#             tx_shipping_map.get(oid, 0.0)
+#             for oid in asin_to_orders.get(asin, [])
+#         )
+
+#         stdcost = float(row['cost_price'] or 0) * qty
+#         gst_rate = float(row['gst_rate'] or 0)
+#         tcs_rate = float(row['tcs_rate'] or 1)
+
+#         # ads — ASIN first, normalized SKU fallback
+#         ads_cost = ads_map.get(asin)
+#         if ads_cost is None:
+#             ads_cost = ads_map.get(normalize_sku(seller_sku or ""), 0)
+#         ads = -abs(ads_cost)
+
+#         estimated_fees = fee_map.get(asin, 0)
+
+#         net_sales = gross_sales + item_tax  # shipping excluded from net_sales, per confirmed alignment
+
+#         if gst_rate > 0:
+#             taxable_value = net_sales / (1 + (gst_rate / 100))
+#             gst_to_pay_amount = net_sales - taxable_value
+#         else:
+#             taxable_value = net_sales
+#             gst_to_pay_amount = item_tax
+
+#         tcs_total = taxable_value * (tcs_rate / 100)
+#         mp_gst = (estimated_fees + shipping_final) * 0.18
+
+#         profit = (
+#             net_sales
+#             - estimated_fees
+#             - shipping_final
+#             - stdcost
+#             + tcs_total
+#             + mp_gst
+#             + ads
+#             - gst_to_pay_amount
+#         )
+
+#         sku_results.append({
+#             "sku": seller_sku,
+#             "name": row['title'],
+#             "profit": round(profit, 2),
+#             "shipping_final": round(shipping_final, 2),
+#         })
+
+#     return sku_results
+
 
 def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
     from django.db.models import Sum, Max, Q, Subquery, OuterRef
@@ -368,11 +599,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
         sku=OuterRef("seller_sku")
     ).order_by("-updated_at")
 
-    # ---------------- GROUP BY (ASIN, SELLER_SKU) — matches sku_profitability_list_filtered ----------------
-    # sku_profitability_list_filtered groups by .values('asin', 'seller_sku', 'seller_sku'),
-    # i.e. per ASIN+SKU pair (the duplicate 'seller_sku' is harmless). Grouping by ASIN alone
-    # merges distinct SKU variants sharing an ASIN (e.g. "-Copy" listings) into one row and
-    # produces wrong profit/counts, so we mirror the same composite grouping here.
+    # ---------------- GROUP BY (ASIN, SELLER_SKU) ----------------
     items = OrderItem.objects.filter(order_filter).exclude(
         order__order_status__icontains='Cancel'
     ).annotate(
@@ -390,8 +617,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
         tcs_rate=Max('sku_tcs_rate'),
     )
 
-    # ---------------- ESTIMATED FEES — summed per ASIN (shared across SKU variants of that ASIN,
-    # matching sku_profitability_list_filtered's estimated_fee_map keyed by asin) ----------------
+    # ---------------- ESTIMATED FEES — summed per ASIN ----------------
     estimated_fee_qs = AmazonEstimatedFee.objects.filter(
         order_item__order__user=user
     )
@@ -437,8 +663,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
         if sku_key:
             ads_map[sku_key] += cost
 
-    # ---------------- ASIN -> ORDERS MAP (shipping is applied per ASIN, matching filtered-list
-    # behavior where SKU variants of the same ASIN both draw from the same order set) ----------------
+    # ---------------- ASIN -> ORDERS MAP (restricted to this date range only) ----------------
     asin_orders = (
         OrderItem.objects
         .filter(order_filter)
@@ -481,7 +706,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
             tx_shipping_map.get(order_id, 0.0) + float(txn["total_amount"] or 0)
         )
 
-    # AFN/FBA — Shipment, DEFERRED, FBAWeightBasedFee only (matches sku_profitability_list_filtered)
+    # AFN/FBA — Shipment, DEFERRED, FBAWeightBasedFee only
     afn_transaction_ids = list(
         AmazonTransaction.objects.filter(
             id__in=tx_to_order.keys(),
@@ -508,6 +733,12 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
         )
 
     # ---------------- BUILD PER (ASIN, SKU) PROFIT ----------------
+    # Each order's shipping fee is counted exactly once across the whole
+    # result set — not once per child ASIN/SKU that shares that order.
+    # Only orders within the given date range (all_order_ids /
+    # tx_shipping_map, both already scoped to order_filter) are eligible.
+    claimed_shipping_order_ids = set()
+
     sku_results = []
     for row in items:
         asin = row['asin']
@@ -519,18 +750,22 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
         item_tax = float(row['item_tax'] or 0)
         qty = int(row['qty'] or 0)
 
-        # Shipping is looked up per ASIN (shared across SKU variants of that ASIN),
-        # matching sku_profitability_list_filtered's asin_map-based lookup.
+        # Only claim shipping for orders not already attributed to an
+        # earlier row (e.g. a sibling child ASIN of the same parent).
+        row_order_ids = asin_to_orders.get(asin, set())
+        unclaimed_order_ids = row_order_ids - claimed_shipping_order_ids
+
         shipping_final = sum(
             tx_shipping_map.get(oid, 0.0)
-            for oid in asin_to_orders.get(asin, [])
+            for oid in unclaimed_order_ids
         )
+
+        claimed_shipping_order_ids |= unclaimed_order_ids
 
         stdcost = float(row['cost_price'] or 0) * qty
         gst_rate = float(row['gst_rate'] or 0)
         tcs_rate = float(row['tcs_rate'] or 1)
 
-        # ads — ASIN first, normalized SKU fallback
         ads_cost = ads_map.get(asin)
         if ads_cost is None:
             ads_cost = ads_map.get(normalize_sku(seller_sku or ""), 0)
@@ -538,7 +773,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
 
         estimated_fees = fee_map.get(asin, 0)
 
-        net_sales = gross_sales + item_tax  # shipping excluded from net_sales, per confirmed alignment
+        net_sales = gross_sales + item_tax
 
         if gst_rate > 0:
             taxable_value = net_sales / (1 + (gst_rate / 100))
@@ -569,6 +804,8 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
         })
 
     return sku_results
+
+
 def export_order_to_excel(file_path="orders.xlsx"):
     wb = Workbook()
     ws = wb.active
