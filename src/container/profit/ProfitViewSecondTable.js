@@ -130,6 +130,9 @@ export default function ProfitViewSecondTable() {
         profit: item.profit || 0,
         // profitPercent: Number(item.grossprofitper) || 0,
         profitPercent: Math.round(Number(item.grossprofitper)) || 0,
+        return_type: item.return_type || '-',
+        claim_amount: item.claim_amount || 0,
+        promo_discount: item.promo_discount || 0,
 
         grossqty: item.grossqty || 0,
         netasp: item.netasp || 0,
@@ -154,6 +157,10 @@ export default function ProfitViewSecondTable() {
         fba_weight_handling_fee: item.fba_weight_handling_fee || 0,
         tax_amount: item.tax_amount || 0,
         other_charges: item.other_charges || 0,
+        courier_return_price: item.courier_return_price || 0,
+        customer_return_price: item.customer_return_price || 0,
+        courier_return_count: item.courier_return_count || 0,
+        customer_return_count: item.customer_return_count || 0,
 
         // settledamount: Number(item.profit_settled_amount) || 0,
       })) || [];
@@ -296,6 +303,39 @@ export default function ProfitViewSecondTable() {
       width: 70,
       ellipsis: true,
       sorter: (a, b) => a.returnqty - b.returnqty,
+    },
+    // {
+    //   title: 'Courier Return Price',
+    //   dataIndex: 'courier_return_price',
+    //   align: 'center',
+    //   width: 70,
+    //   ellipsis: true,
+    //   sorter: (a, b) => a.courier_return_price - b.courier_return_price,
+    // },
+    // {
+    //   title: 'Customer Return Price',
+    //   dataIndex: 'customer_return_price',
+    //   align: 'center',
+    //   width: 70,
+    //   ellipsis: true,
+    //   sorter: (a, b) => a.customer_return_price - b.customer_return_price,
+    // },
+
+    {
+      title: 'Courier Return Count',
+      dataIndex: 'courier_return_count',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.courier_return_count - b.courier_return_count,
+    },
+    {
+      title: 'Customer Return Count',
+      dataIndex: 'customer_return_count',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.customer_return_count - b.customer_return_count,
     },
     {
       title: 'Return %',
@@ -473,6 +513,30 @@ export default function ProfitViewSecondTable() {
     //     </button>
     //   ),
     // },
+    {
+      title: 'Return Type',
+      dataIndex: 'return_type',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.return_type - b.return_type,
+    },
+    {
+      title: 'Claim Amount',
+      dataIndex: 'claim_amount',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.claim_amount - b.claim_amount,
+    },
+    {
+      title: 'Promo Discount',
+      dataIndex: 'promo_discount',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.promo_discount - b.promo_discount,
+    },
     {
       title: 'Profit',
       dataIndex: 'profit',
@@ -1082,6 +1146,13 @@ export default function ProfitViewSecondTable() {
                       percentOfSales: 'percent_of_sales',
                       drr: 'drr',
                       lastOrderDate: 'lastOrderDate',
+                      claim_amount: 'total_claim_amount',
+                      return_type: 'return_type',
+                      promo_discount: 'total_promo_discount',
+                      courier_return_price: 'courier_return_price',
+                      customer_return_price: 'customer_return_price',
+                      courier_return_count: 'courier_return_count',
+                      customer_return_count: 'customer_return_count',
                     };
 
                     const value = totals[keyMap[col.dataIndex]];
@@ -1100,7 +1171,19 @@ export default function ProfitViewSecondTable() {
                             {col.dataIndex === 'profitPercent' ? `${value ?? 0}%` : value ?? 0}
                           </span>
                         ) : (
-                          <span>{value ?? 0}</span>
+                          // <span>{value ?? 0}</span>
+                          <span
+                            className={`text-[13px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis ${
+                              Number(value) > 0 && ['profitPercent'].includes(col.dataIndex)
+                                ? 'text-green-600'
+                                : Number(value) < 0
+                                ? 'text-red-600'
+                                : 'text-[#111827]'
+                            }`}
+                          >
+                            {value ?? 0}
+                            {['profitPercent'].includes(col.dataIndex) ? '%' : ''}
+                          </span>
                         )}
                       </Table.Summary.Cell>
                     );
