@@ -87,6 +87,8 @@ urlpatterns = [
 
     #get retunitems
     path("get-retunslist/", sync_returns , name ='get-retunslist'),
+    path("get-retuns-details/", courier_vs_customer_returns , name ='get-retunsdetails'),
+    path("get-financial-details/", financial_event_group_transactions , name ='get-rfinancialdetails'),
 
     #catelog details
     path('get-catlog/details/', get_catalog_details, name='get_catelog_details'),
