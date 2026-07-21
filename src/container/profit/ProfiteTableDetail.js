@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { Table, Card, Modal, Checkbox, Tooltip } from 'antd';
-import { RightOutlined, SearchOutlined, FilterOutlined, EyeOutlined } from '@ant-design/icons';
+import { Table, Card, Modal, Checkbox, Tooltip, Dropdown, Button } from 'antd';
+import { RightOutlined, SearchOutlined, FilterOutlined, EyeOutlined, SettingOutlined } from '@ant-design/icons';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 // import ProfitFilterBar from './component/ProfitFilterBar';
@@ -37,6 +37,7 @@ export default function ProfitDetailsView() {
   const [previewImage, setPreviewImage] = React.useState('');
   const [previewOpen, setPreviewOpen] = React.useState(false);
   const [showFilters, setShowFilters] = React.useState(false);
+  const [visibleColumns, setVisibleColumns] = React.useState([]);
   // const [columnSearch, setColumnSearch] = React.useState('');
 
   const channelLogoMap = {
@@ -141,6 +142,13 @@ export default function ProfitDetailsView() {
         fba_weight_handling_fee: item.fba_weight_handling_fee || 0,
         tax_amount: item.tax_amount || 0,
         other_charges: item.other_charges || 0,
+        return_type: item.return_type || '-',
+        claim_amount: item.claim_amount || 0,
+        promo_discount: item.promo_discount || 0,
+        courier_return_price: item.courier_return_price || 0,
+        customer_return_price: item.customer_return_price || 0,
+        courier_return_count: item.courier_return_count || 0,
+        customer_return_count: item.customer_return_count || 0,
 
         // grossprofit: Number(sitem.grossprofit) || 0,
         profit: item.profit || 0,
@@ -149,32 +157,6 @@ export default function ProfitDetailsView() {
 
         // settledamount: Number(item.profit_settled_amount) || 0,
       })) || [];
-
-    // const totalRow = {
-    //   key: 'total',
-    //   channel: 'Total',
-
-    //   view: Number(totals.view) || 0,
-    //   // qty: Number(totals.grossqty) || 0,
-    //   netQty: Number(totals.totalqty) || 0,
-    //   returnqty: Number(totals.totalreturn) || 0,
-    //   returnPercent: Number(totals.totalper) || 0,
-
-    //   netsales: Number(totals.netsales) || 0,
-    //   // netasp: 0,
-    //   // net_discount: 0,
-
-    //   mpfees: Number(totals.mpfees) || 0,
-    //   shipping: Number(totals.shippingfees) || 0,
-    //   adSpend: Number(totals.ads) || 0,
-    //   gst: Number(totals.gsttopay) || 0,
-
-    //   grossprofit: Number(totals.grossprofit) || 0,
-    //   profit: Number(totals.profit) || 0,
-    //   profitPercent: Math.round(Number(totals.grossprofitper)) || 0,
-
-    //   // settledamount: 0,
-    // };
 
     return rows;
   }, [profitData]);
@@ -283,6 +265,39 @@ export default function ProfitDetailsView() {
       width: 70,
       ellipsis: true,
       sorter: (a, b) => a.returnqty - b.returnqty,
+    },
+    // {
+    //   title: 'Courier Return Price',
+    //   dataIndex: 'courier_return_price',
+    //   align: 'center',
+    //   width: 70,
+    //   ellipsis: true,
+    //   sorter: (a, b) => a.courier_return_price - b.courier_return_price,
+    // },
+    // {
+    //   title: 'Customer Return Price',
+    //   dataIndex: 'customer_return_price',
+    //   align: 'center',
+    //   width: 70,
+    //   ellipsis: true,
+    //   sorter: (a, b) => a.customer_return_price - b.customer_return_price,
+    // },
+
+    {
+      title: 'Courier Return Count',
+      dataIndex: 'courier_return_count',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.courier_return_count - b.courier_return_count,
+    },
+    {
+      title: 'Customer Return Count',
+      dataIndex: 'customer_return_count',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.customer_return_count - b.customer_return_count,
     },
     {
       title: 'Return %',
@@ -462,6 +477,22 @@ export default function ProfitDetailsView() {
     //   ),
     // },
     {
+      title: 'Claim Amount',
+      dataIndex: 'claim_amount',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.claim_amount - b.claim_amount,
+    },
+    {
+      title: 'Promo Discount',
+      dataIndex: 'promo_discount',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.promo_discount - b.promo_discount,
+    },
+    {
       title: 'Profit',
       dataIndex: 'profit',
       align: 'center',
@@ -576,98 +607,77 @@ export default function ProfitDetailsView() {
       ),
     },
   ];
+
+  useEffect(() => {
+    if (columns.length && visibleColumns.length === 0) {
+      setVisibleColumns(columns.map((col) => col.dataIndex || col.key || col.title));
+    }
+  }, []);
+
+  const columnOptions = columns
+    .filter((col) => col.dataIndex !== 'action')
+    .map((col) => ({
+      key: col.dataIndex || col.key || col.title,
+      label: typeof col.title === 'string' ? col.title : col.dataIndex || 'Column',
+    }));
+
+  const manageColumnsDropdown = (
+    <div className="w-[260px] bg-white rounded-xl shadow-xl border border-[#e5e7eb]">
+      <div className="flex items-center justify-between px-4 py-3 border-b">
+        <span className="font-medium text-[14px]">Manage Columns</span>
+
+        <button
+          type="button"
+          className="text-[#6366f1] text-[12px]"
+          onClick={() => setVisibleColumns(columnOptions.map((item) => item.key))}
+        >
+          Restore
+        </button>
+      </div>
+
+      <div className="max-h-[350px] overflow-y-auto">
+        {columnOptions.map((item) => (
+          <div key={item.key} className="flex items-center justify-between px-4 py-2 hover:bg-[#f9fafb]">
+            <span className="text-[13px]">{item.label}</span>
+
+            <Checkbox
+              checked={visibleColumns.includes(item.key)}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setVisibleColumns((prev) => [...prev, item.key]);
+                } else {
+                  setVisibleColumns((prev) => prev.filter((c) => c !== item.key));
+                }
+              }}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const filteredColumns = columns.filter((col) => {
+    const key = col.dataIndex || col.key || col.title;
+
+    if (
+      col.fixed === 'left' ||
+      col.fixed === 'right' ||
+      col.dataIndex === 'image' ||
+      col.dataIndex === 'channel' ||
+      col.key === 'action'
+    ) {
+      return true;
+    }
+
+    return visibleColumns.includes(key);
+  });
+  const tableWidth = filteredColumns.reduce((total, col) => total + (col.width || 120), 0);
+
   const handleApply = () => {
     dispatch(getProfitDetails(buildPayload()));
     setShowFilters(false);
   };
 
-  // const handleClear = () => {
-  //   setFilters({
-  //     channel: '',
-  //     sku: '',
-  //     productId: '',
-  //     parentId: '',
-  //     mkt: '',
-
-  //     ads: 'without',
-  //     gst: 'without',
-  //     estimate: 'with',
-  //     expenses: 'with',
-  //     accountCharges: 'with',
-  //   });
-  // };
-
-  // const allColumnsList = [
-  //   { key: 'grossQty', label: 'Gross Qty' },
-  //   { key: 'netQty', label: 'Net Qty' },
-  //   { key: 'returnqty', label: 'Return Qty' },
-  //   { key: 'returnPercent', label: 'Return %' },
-
-  //   { key: 'netMRP', label: 'Net MRP' },
-  //   { key: 'mrpNetDiscount', label: 'MRP Net Discount%' },
-  //   { key: 'mrpCustomerDiscount', label: 'MRP Customer Discount%' },
-
-  //   { key: 'grossSales', label: 'Gross Sales' },
-  //   { key: 'netsales', label: 'Net Sales' },
-  //   { key: 'tcs', label: 'tcs' },
-  //   { key: 'mpfees', label: 'mpfees' },
-  //   // { key: 'stdcost', label: 'Std Cost' },
-
-  //   { key: 'shipping', label: 'Shipping' },
-  //   { key: 'adSpend', label: 'Ad spend' },
-  //   { key: 'stdCost', label: 'Product Cost' },
-
-  //   { key: 'stdCostMS', label: 'Std Cost M/S %' },
-  //   { key: 'accountCharges', label: 'Account Charges' },
-  //   { key: 'otherExpenses', label: 'Other Expenses' },
-
-  //   { key: 'gst', label: 'GST to Pay' },
-  //   // { key: 'grossprofit', label: 'Gross Profit' },
-  //   { key: 'profit', label: 'Profit' },
-
-  //   { key: 'settledAmount', label: 'Settled Amount' },
-  //   { key: 'tacos', label: 'TACOS' },
-  //   { key: 'grossProfitPercent', label: 'Gross Profit %' },
-
-  //   { key: 'profitPercent', label: 'Profit %' },
-  //   { key: 'percentOfSales', label: '% of Sales' },
-  //   { key: 'drr', label: 'DRR (Daily Run Rate)' },
-
-  //   { key: 'lastOrderDate', label: 'Last Order Date' },
-  // ];
-  // const [visibleColumns, setVisibleColumns] = React.useState([
-  //   'view',
-  //   'netQty',
-  //   'returnqty',
-  //   'returnPercent',
-  //   'mpfees',
-  //   'netsales',
-  //   'mp_gst',
-  //   'tcs',
-  //   'stdcost',
-  //   'shipping',
-  //   'adSpend',
-  //   'gst',
-  //   'profit',
-  //   'profitPercent',
-  // ]);
-  // const handleSelectAll = (checked) => {
-  //   if (checked) {
-  //     setVisibleColumns(allColumnsList.map((col) => col.key));
-  //   } else {
-  //     setVisibleColumns([]);
-  //   }
-  // };
-
-  // const filteredColumns = columns.filter((col) => {
-  //   if (col.dataIndex === 'image' || col.dataIndex === 'channel' || col.key === 'action') return true;
-
-  //   return visibleColumns.some(
-  //     (key) =>
-  //       key === col.dataIndex ||
-  //       key.toLowerCase() === col.dataIndex.toLowerCase(),
-  //   );
-  // });
   return (
     <>
       {/* <PageHeader
@@ -836,10 +846,18 @@ export default function ProfitDetailsView() {
                   </div>
                 )}
               </div>
+              <Dropdown trigger={['click']} dropdownRender={() => manageColumnsDropdown} placement="bottomRight">
+                <Button
+                  icon={<SettingOutlined />}
+                  className="flex items-center !h-[35px] !rounded-xl !border-[#e5e7eb]"
+                >
+                  Manage Columns
+                </Button>
+              </Dropdown>
             </div>
           </div>
           <Table
-            columns={columns}
+            columns={filteredColumns}
             dataSource={dataSource}
             showSorterTooltip={false}
             loading={loading}
@@ -855,7 +873,8 @@ export default function ProfitDetailsView() {
               setPagination(pag);
             }}
             size="small"
-            scroll={{ x: 1800 }}
+            // scroll={{ x: 'true' }}
+            scroll={{ x: tableWidth }}
             className="
     [&_.ant-table-thead>tr>th]:!text-[12px]
     [&_.ant-table-thead>tr>th]:!font-semibold
@@ -867,7 +886,7 @@ export default function ProfitDetailsView() {
               return (
                 <Table.Summary fixed>
                   <Table.Summary.Row className="bg-[#fafafa] font-semibold">
-                    {columns.map((col, index) => {
+                    {filteredColumns.map((col, index) => {
                       const keyMap = {
                         netQty: 'netqty',
                         returnqty: 'totalreturn',
@@ -893,6 +912,13 @@ export default function ProfitDetailsView() {
                         tacos: 'tacos',
                         grossProfitPercent: 'grossprofit_percent',
                         percentOfSales: 'percent_of_sales',
+                        claim_amount: 'total_claim_amount',
+                        return_type: 'return_type',
+                        promo_discount: 'total_promo_discount',
+                        courier_return_price: 'courier_return_price',
+                        customer_return_price: 'customer_return_price',
+                        courier_return_count: 'courier_return_count',
+                        customer_return_count: 'customer_return_count',
                         drr: 'drr',
                       };
 
@@ -930,113 +956,6 @@ export default function ProfitDetailsView() {
             }}
           />
         </Card>
-        {/* <Modal
-          open={openSettings}
-          onCancel={() => setOpenSettings(false)}
-          footer={null}
-          closable={false}
-          width={380}
-          bodyStyle={{
-            padding: 0,
-            borderRadius: 18,
-            overflow: 'hidden',
-          }}
-        >
-          <div className="flex items-center justify-between px-4 py-4 border-b border-[#f1f1f1]">
-            <div className="flex items-center gap-2">
-              <h2 className="text-[15px] font-semibold text-[#111827]">Manage Column</h2>
-
-              <span className="min-w-[22px] h-[22px] rounded-full bg-[#f3f4f6] text-[#6b7280] text-[11px] font-semibold flex items-center justify-center mb-2">
-                {visibleColumns.length}
-              </span>
-            </div>
-          </div>
-
-          <div className="px-4 py-3 border-b border-[#f5f5f5]">
-            <div
-              className="
-        h-[38px]
-        rounded-xl
-        border border-[#e5e7eb] px-3 flex items-center gap-2 bg-white"
-            >
-              <SearchOutlined
-                style={{
-                  color: '#9ca3af',
-                  fontSize: 14,
-                }}
-              />
-
-              <input
-                type="text"
-                placeholder="Search"
-                value={columnSearch}
-                onChange={(e) => setColumnSearch(e.target.value)}
-                className="
-          flex-1
-          outline-none
-          border-none
-          text-[13px]
-          bg-transparent
-        "
-              />
-            </div>
-          </div>
-
-          <div className="max-h-[420px] overflow-y-auto">
-            {allColumnsList
-              .filter((col) => col.label.toLowerCase().includes(columnSearch.toLowerCase()))
-              .map((col) => {
-                const isSelected = visibleColumns.includes(col.key);
-
-                return (
-                  <button
-                    key={col.key}
-                    type="button"
-                    onClick={() => {
-                      if (isSelected) {
-                        setVisibleColumns(visibleColumns.filter((c) => c !== col.key));
-                      } else {
-                        setVisibleColumns([...visibleColumns, col.key]);
-                      }
-                    }}
-                    className={`
-              w-full flex items-center justify-between
-              px-4 py-3 border-b border-[#f5f5f5]
-              transition-all text-left hover:bg-[#f9fafb]
-              ${isSelected ? 'bg-[#f5f3ff]' : 'bg-white'}
-            `}
-                  >
-                    <span
-                      className={`
-                text-[13px] font-medium
-                ${isSelected ? 'text-[#4f46e5]' : 'text-[#374151]'}
-              `}
-                    >
-                      {col.label}
-                    </span>
-
-                    <span>
-                      {isSelected ? (
-                        <EyeOutlined
-                          style={{
-                            color: '#4f46e5',
-                            fontSize: 15,
-                          }}
-                        />
-                      ) : (
-                        <EyeInvisibleOutlined
-                          style={{
-                            color: '#c4c4c4',
-                            fontSize: 15,
-                          }}
-                        />
-                      )}
-                    </span>
-                  </button>
-                );
-              })}
-          </div>
-        </Modal> */}
       </main>
       <Modal open={previewOpen} footer={null} onCancel={() => setPreviewOpen(false)} centered>
         <img src={previewImage} alt="preview" style={{ width: '100%', borderRadius: 8 }} />
@@ -1054,15 +973,6 @@ export default function ProfitDetailsView() {
           })
         }
       />
-
-      {/* <ProfitModal
-        open={detailModal.open}
-        record={detailModal.record}
-        type={detailModal.type}
-        modalLabel={detailModal.modalLabel}
-        modalValue={detailModal.modalValue}
-        onClose={() => setDetailModal({ open: false, record: null, type: '' })}
-      /> */}
     </>
   );
 }

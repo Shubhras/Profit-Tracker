@@ -843,30 +843,30 @@ export default function Summary() {
                     },
                     {
                       label: 'Returned(RTO)',
-                      qty: dashboardData?.breakdown_table?.returned?.qty || 0,
-                      sales: dashboardData?.breakdown_table?.returned?.amount || 0,
+                      qty: dashboardData?.breakdown_table?.returned_courier?.qty || 0,
+                      sales: dashboardData?.breakdown_table?.returned_courier?.amount || 0,
                       red: true,
                     },
-                    {
-                      label: 'Cancelled(RTO)',
-                      qty: dashboardData?.breakdown_table?.cancelledrtosummaryqty?.qty || 0,
-                      sales: dashboardData?.breakdown_table?.cancelledrtosummarysales?.amount || 0,
-                    },
+                    // {
+                    //   label: 'Cancelled(RTO)',
+                    //   qty: dashboardData?.breakdown_table?.cancelledrtosummaryqty?.qty || 0,
+                    //   sales: dashboardData?.breakdown_table?.cancelledrtosummarysales?.amount || 0,
+                    // },
                     {
                       label: 'Returned(CReF)',
-                      qty: dashboardData?.breakdown_table?.creturnsummaryqty?.qty || 0,
-                      sales: dashboardData?.breakdown_table?.returnedcref?.amount || 0,
+                      qty: dashboardData?.breakdown_table?.returned_customer?.qty || 0,
+                      sales: dashboardData?.breakdown_table?.returned_customer?.amount || 0,
                     },
                     {
                       label: 'Claimed',
                       qty: dashboardData?.breakdown_table?.claim?.qty || 0,
                       sales: dashboardData?.breakdown_table?.claim?.amount || 0,
                     },
-                    {
-                      label: 'Standard Cost',
-                      qty: dashboardData?.breakdown_table?.claimqty?.qty || 0,
-                      sales: dashboardData?.breakdown_table?.claimsales?.amount || 0,
-                    },
+                    // {
+                    //   label: 'Standard Cost',
+                    //   qty: dashboardData?.breakdown_table?.claimqty?.qty || 0,
+                    //   sales: dashboardData?.breakdown_table?.claimsales?.amount || 0,
+                    // },
                   ].map((row) => (
                     <div key={row.label} className="grid grid-cols-3 px-4 py-1 text-[12px] border-b border-[#f1f5f9]">
                       <span className="text-[#374151] font-semibold">{row.label}</span>
@@ -950,7 +950,7 @@ export default function Summary() {
                 {
                   title: 'Return',
                   color: '#ef4444',
-                  value: dashboardData?.breakdown_table?.returned?.qty || 0,
+                  value: dashboardData?.header_metrics?.total_return_count || 0,
                   icon: <ReloadOutlined />,
                   label: 'Total Return',
                 },
