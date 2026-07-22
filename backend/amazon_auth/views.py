@@ -8841,12 +8841,18 @@ def amazon_profitability_parent_transactions_shipping(request):
     asin_orders = (
         OrderItem.objects
         .filter(order_filter)
-        .values('asin', 'parent_asin', 'order__amazon_order_id', 'quantity_ordered')
+        .values('asin','seller_sku', 'parent_asin', 'order__amazon_order_id', 'quantity_ordered')
     )
 
+    # asin_map = {}
+    # for row in asin_orders:
+    #     asin_map.setdefault(row['asin'], []).append(row)
+    
+    
     asin_map = {}
     for row in asin_orders:
-        asin_map.setdefault(row['asin'], []).append(row)
+        key = (row["asin"], row["seller_sku"])
+        asin_map.setdefault(key, []).append(row)
 
     # ---------------- SKU MAP ----------------
     sku_asin_map = {
@@ -9129,7 +9135,8 @@ def amazon_profitability_parent_transactions_shipping(request):
         parent_asin = row['parent_asin']
         child_sku = row['seller_sku']
     
-        orders = asin_map.get(asin, [])
+        # orders = asin_map.get(asin, [])
+        orders = asin_map.get((asin, child_sku), [])
         
         # estimated_fees = estimated_fee_map.get(asin, Decimal("0"))
 
