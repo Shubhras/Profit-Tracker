@@ -10858,7 +10858,8 @@ def sku_profit_report(request):
     })
 
 
-# working till 20 july
+
+# working till 22 july
 # @api_view(['POST'])
 # @permission_classes([IsAuthenticated])
 # def sku_profit_report_transactions_shipping(request):
@@ -11216,38 +11217,6 @@ def sku_profit_report(request):
 #         if total_net_quantity else 0
 #     )
 
-
-#    # ============================================================
-#     # TRANSACTION SHIPPING FEES — MFN POSTAGE FEE ONLY
-#     # ============================================================
-
-#     # tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
-#     #     identifier_name='ORDER_ID',
-#     #     identifier_value__in=matching_order_ids
-#     # ).values('transaction_id', 'identifier_value')
-
-#     # tx_to_order = {
-#     #     item['transaction_id']: item['identifier_value']
-#     #     for item in tx_identifiers
-#     # }
-
-#     # tx_shipping_map = {}
-
-#     # # MFN shipping cost posts as its own ServiceFee transaction
-#     # # (description "MfnPostageFee") — pull the transaction's own total_amount.
-#     # mfn_postage_txns = AmazonTransaction.objects.filter(
-#     #     id__in=tx_to_order.keys(),
-#     #     transaction_type='ServiceFee',
-#     #     transaction_status='RELEASED',
-#     #     description__icontains='MfnPostageFee'
-#     # ).values('id', 'total_amount')
-
-#     # for t in mfn_postage_txns:
-#     #     t_id = t['id']
-#     #     oid_val = tx_to_order.get(t_id)
-#     #     if not oid_val:
-#     #         continue
-#     #     tx_shipping_map[oid_val] = tx_shipping_map.get(oid_val, 0.0) + float(t['total_amount'] or 0)
     
 #     # ============================================================
 #     # TRANSACTION SHIPPING FEES (MFN + AFN)
@@ -11321,6 +11290,125 @@ def sku_profit_report(request):
 #     print(tx_to_order)
 #     print(tx_shipping_map)        
 #     print("tx_shipping_map>>>>>>>>>>>>>>>>>>", tx_shipping_map)  
+    
+    
+#     # ============================================================
+#     # RETURN CLASSIFICATION (COURIER vs CUSTOMER) — scoped to this SKU's orders
+#     # ============================================================
+#     FULFILLMENT_FEE_REFUND_PATTERNS = ["FulfillmentFeeRefund"]
+
+#     refund_txns = AmazonTransaction.objects.filter(
+#         amazon_account__user=user,
+#         transaction_type='Refund',
+#         transaction_status__in=['DEFERRED', 'DEFERRED_RELEASED']
+#     )
+#     # if from_date:
+#     #     refund_txns = refund_txns.filter(posted_date__gte=from_date)
+#     # if to_date:
+#     #     refund_txns = refund_txns.filter(posted_date__lt=to_date)
+
+#     refund_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+#         transaction__in=refund_txns,
+#         identifier_name='ORDER_ID',
+#         identifier_value__in=matching_order_ids
+#     ).values('transaction_id', 'identifier_value')
+
+#     refund_tx_to_order = {
+#         row['transaction_id']: row['identifier_value']
+#         for row in refund_identifiers
+#     }
+
+#     order_ids_with_refund = set(refund_tx_to_order.values())
+
+#     fee_refund_q = Q()
+#     for pattern in FULFILLMENT_FEE_REFUND_PATTERNS:
+#         fee_refund_q |= Q(description__icontains=pattern)
+
+#     fee_refund_txns = AmazonTransaction.objects.filter(
+#         amazon_account__user=user,
+#         transaction_type='ServiceFee',
+#         transaction_status__in=['DEFERRED', 'DEFERRED_RELEASED']
+#     ).filter(fee_refund_q)
+#     # if from_date:
+#     #     fee_refund_txns = fee_refund_txns.filter(posted_date__gte=from_date)
+#     # if to_date:
+#     #     fee_refund_txns = fee_refund_txns.filter(posted_date__lt=to_date)
+
+#     fee_refund_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+#         transaction__in=fee_refund_txns,
+#         identifier_name='ORDER_ID',
+#         identifier_value__in=matching_order_ids
+#     ).values_list('identifier_value', flat=True)
+
+#     order_ids_with_fee_refund = set(fee_refund_identifiers)
+
+#     # Map order_id -> total refund amount (for courier/customer price split)
+#     # Map order_id -> total refund amount AND count of refund transactions
+#     # (an order can have more than one Refund transaction, e.g. partial refunds)
+#     refund_amount_by_order = {}
+#     refund_count_by_order = {}
+#     for txn in refund_txns.filter(id__in=refund_tx_to_order.keys()):
+#         oid = refund_tx_to_order.get(txn.id)
+#         if not oid:
+#             continue
+#         refund_amount_by_order[oid] = (
+#             refund_amount_by_order.get(oid, 0.0) + float(txn.total_amount or 0)
+#         )
+#         refund_count_by_order[oid] = refund_count_by_order.get(oid, 0) + 1
+
+#     courier_return_count = 0
+#     customer_return_count = 0
+#     courier_return_price = 0.0
+#     customer_return_price = 0.0
+
+#     for order_id in order_ids_with_refund:
+#         amount = refund_amount_by_order.get(order_id, 0.0)
+#         if order_id in order_ids_with_fee_refund:
+#             courier_return_count += 1
+#             courier_return_price += amount
+#         else:
+#             customer_return_count += 1
+#             customer_return_price += amount
+
+#     total_return_count = courier_return_count + customer_return_count
+    
+#     # ============================================================
+#     # CLAIM AMOUNT — Transaction Type "Adjustment", description "SERRACReimbursement"
+#     # ============================================================
+#     claim_txns = AmazonTransaction.objects.filter(
+#         amazon_account__user=user,
+#         transaction_type='Adjustment',
+#         description__icontains='SERRACReimbursement',
+#     )
+#     # if from_date:
+#     #     claim_txns = claim_txns.filter(posted_date__gte=from_date)
+#     # if to_date:
+#     #     claim_txns = claim_txns.filter(posted_date__lt=to_date)
+
+#     claim_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+#         transaction__in=claim_txns,
+#         identifier_name='ORDER_ID',
+#         identifier_value__in=matching_order_ids
+#     ).values('transaction_id', 'identifier_value')
+
+#     claim_tx_to_order = {
+#         row['transaction_id']: row['identifier_value']
+#         for row in claim_identifiers
+#     }
+
+#     claim_amount_by_order = {}
+#     claim_count_by_order = {}
+#     for txn in claim_txns.filter(id__in=claim_tx_to_order.keys()):
+#         oid = claim_tx_to_order.get(txn.id)
+#         if not oid:
+#             continue
+#         claim_amount_by_order[oid] = (
+#             claim_amount_by_order.get(oid, 0.0) + float(txn.total_amount or 0)
+#         )
+#         claim_count_by_order[oid] = claim_count_by_order.get(oid, 0) + 1
+
+#     total_claim_amount = sum(claim_amount_by_order.values())
+#     total_claim_count = len(claim_amount_by_order)
 
 #     # ---------------- BUILD RESPONSE ----------------
 #     results = []
@@ -11337,7 +11425,7 @@ def sku_profit_report(request):
 
 #     total_taxable_value = 0
 #     total_gst_payable = 0
-
+#     total_promo_discount = 0
 #     total_exp_settlement = 0
 
 #     for row in items:
@@ -11373,7 +11461,61 @@ def sku_profit_report(request):
 
 #         shipping_income = tx_shipping
 #         shipping_price = tx_shipping
+        
+#         # ------------------------------------------------------------
+#         # RETURN STATUS FOR THIS SPECIFIC ORDER
+#         # ------------------------------------------------------------
+#         # order_has_return = oid in order_ids_with_refund
+#         # order_is_courier_return = oid in order_ids_with_fee_refund
+#         # order_return_amount = refund_amount_by_order.get(oid, 0.0)
+#         # order_return_count = refund_count_by_order.get(oid, 0)
 
+#         # if order_has_return and order_is_courier_return:
+#         #     order_return_type = "COURIER_RETURN"
+#         # elif order_has_return:
+#         #     order_return_type = "CUSTOMER_RETURN"
+#         # else:
+#         #     order_return_type = None
+        
+#         # ------------------------------------------------------------
+#         # RETURN / CLAIM — aggregated across all orders for this parent_asin row
+#         # ------------------------------------------------------------
+#         order_has_return = oid in order_ids_with_refund
+#         order_is_courier_return = oid in order_ids_with_fee_refund
+
+#         order_return_amount = refund_amount_by_order.get(oid, 0.0)
+#         order_return_count = refund_count_by_order.get(oid, 0)
+
+#         if order_has_return and order_is_courier_return:
+#             order_return_type = "COURIER_RETURN"
+#         elif order_has_return:
+#             order_return_type = "CUSTOMER_RETURN"
+#         else:
+#             order_return_type = None
+
+#         row_courier_return_count = 1 if order_is_courier_return else 0
+#         row_customer_return_count = 1 if (order_has_return and not order_is_courier_return) else 0
+
+#         row_courier_return_price = (
+#             order_return_amount if order_is_courier_return else 0.0
+#         )
+
+#         row_customer_return_price = (
+#             order_return_amount if (order_has_return and not order_is_courier_return) else 0.0
+#         )
+
+#         order_claim_amount = claim_amount_by_order.get(oid, 0.0)
+#         order_claim_count = claim_count_by_order.get(oid, 0)
+#         order_has_claim = order_claim_count > 0
+                    
+            
+            
+#         # ------------------------------------------------------------
+#         # CLAIM AMOUNT FOR THIS SPECIFIC ORDER
+#         # ------------------------------------------------------------
+#         order_claim_amount = claim_amount_by_order.get(oid, 0.0)
+#         order_claim_count = claim_count_by_order.get(oid, 0)
+#         order_has_claim = order_claim_count > 0    
 #         # estimated_fees += promo_discount  #currently not use this 
 
 #         # ============================================================
@@ -11514,7 +11656,9 @@ def sku_profit_report(request):
 #             if gross_sales else 0
 #         )
 #         drr = tacos
-#         ret_percent = (return_units / net_qty * 100) if net_qty else 0
+#         # ret_percent = (return_units / net_qty * 100) if net_qty else 0
+        
+#         ret_percent = (order_return_count / net_qty * 100) if net_qty else 0
 
 #         results.append({
 #             "order_id": oid,
@@ -11561,6 +11705,7 @@ def sku_profit_report(request):
 #             "grossprofitper": round(profit_margin, 2),
 
 #             "returnqty": return_units,
+#             "returnqty": order_return_count,
 #             "retpercent": round(ret_percent, 2),
 
 #             "tacos": round(tacos, 2),
@@ -11571,6 +11716,22 @@ def sku_profit_report(request):
 #             "gst": format_currency(0),
 #             "tcs": format_currency(tcs),
 #             "exp_settlement": format_currency(exp_settlement),
+#             "promo_discount":format_currency(promo_discount),
+            
+#             "return_type": order_return_type,
+#             "is_return": order_has_return,
+#             "return_count": order_return_count,
+#             "return_amount": format_currency(order_return_amount),
+            
+#             "courier_return_count": row_courier_return_count,
+#             "customer_return_count": row_customer_return_count,
+#             "courier_return_price": format_currency(row_courier_return_price),
+#             "customer_return_price": format_currency(row_customer_return_price),
+            
+#             "is_claim": order_has_claim,
+#             "claim_count": order_claim_count,
+#             "claim_amount": format_currency(order_claim_amount),
+        
 #         })
 
 #         # ---------------- TOTALS ----------------
@@ -11591,6 +11752,7 @@ def sku_profit_report(request):
 #         total_taxable_value += taxable_value
 #         total_gst_payable += gst_to_pay_amount
 #         total_exp_settlement += exp_settlement
+#         total_promo_discount += promo_discount
 
 #     print("totale ads spends", total_ads)
 
@@ -11608,8 +11770,11 @@ def sku_profit_report(request):
 #             "netsales": format_currency(total_net_sales),
 #             "total_netquantity": total_qty,
 #             "profit": format_currency(total_profit),
-#             "total_returns": total_returns,
-#             "total_ret_percent": f"{round((total_returns / total_qty * 100), 2) if total_qty else 0.0}%",
+#             # "total_returns": total_returns,
+#             # "total_ret_percent": f"{round((total_returns / total_qty * 100), 2) if total_qty else 0.0}%",
+            
+#             "total_returns": total_return_count,
+#             "total_ret_percent": f"{round((total_return_count / total_qty * 100), 2) if total_qty else 0.0}%",
 
 #             "totalprofitmargin": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
 
@@ -11624,16 +11789,22 @@ def sku_profit_report(request):
 #             "cost": format_currency(total_cost),
 
 #             "taxable_value": format_currency(total_taxable_value),
-
 #             "gst_to_pay_amount": format_currency(total_gst_payable),
-
 #             "gst_to_pay_perc": f"{round((total_gst_payable / total_taxable_value * 100), 2) if total_taxable_value else 1}%",
-
 #             "exp_settlement": format_currency(total_exp_settlement),
+            
+#             "total_promo_discount":format_currency(total_promo_discount),
+#             "total_return_count": total_return_count,
+#             "courier_return_count": courier_return_count,
+#             "customer_return_count": customer_return_count,
+#             "courier_return_price": format_currency(courier_return_price),
+#             "customer_return_price": format_currency(customer_return_price),
+            
+#             "total_claim_count": total_claim_count,
+#             "total_claim_amount": format_currency(total_claim_amount),
 #         },
 #         "response": results[page_no * page_size:(page_no + 1) * page_size]
 #     })
-
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -12184,6 +12355,41 @@ def sku_profit_report_transactions_shipping(request):
 
     total_claim_amount = sum(claim_amount_by_order.values())
     total_claim_count = len(claim_amount_by_order)
+    
+    # ============================================================
+    # REPLACEMENT RETURN — Transaction Type "Shipment",
+    # description "Order Payment", total_amount = 0
+    # (a free replacement shipment — order payment transaction with
+    # zero value, since the customer isn't charged again for a replacement)
+    # ============================================================
+    replacement_txns = AmazonTransaction.objects.filter(
+        amazon_account__user=user,
+        transaction_type='Shipment',
+        description='Order Payment',
+        total_amount=0,
+    )
+
+    replacement_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+        transaction__in=replacement_txns,
+        identifier_name='ORDER_ID',
+        identifier_value__in=matching_order_ids
+    ).values('transaction_id', 'identifier_value')
+
+    replacement_tx_to_order = {
+        row['transaction_id']: row['identifier_value']
+        for row in replacement_identifiers
+    }
+
+    order_ids_with_replacement = set(replacement_tx_to_order.values())
+
+    replacement_count_by_order = {}
+    for txn in replacement_txns.filter(id__in=replacement_tx_to_order.keys()):
+        oid = replacement_tx_to_order.get(txn.id)
+        if not oid:
+            continue
+        replacement_count_by_order[oid] = replacement_count_by_order.get(oid, 0) + 1
+
+    total_replacement_return_count = len(order_ids_with_replacement)
 
     # ---------------- BUILD RESPONSE ----------------
     results = []
@@ -12291,7 +12497,17 @@ def sku_profit_report_transactions_shipping(request):
         order_claim_amount = claim_amount_by_order.get(oid, 0.0)
         order_claim_count = claim_count_by_order.get(oid, 0)
         order_has_claim = order_claim_count > 0    
-        # estimated_fees += promo_discount  #currently not use this 
+        
+        
+        
+        # ------------------------------------------------------------
+        # REPLACEMENT RETURN STATUS FOR THIS SPECIFIC ORDER
+        # ------------------------------------------------------------
+        order_is_replacement = oid in order_ids_with_replacement
+        order_replacement_count = replacement_count_by_order.get(oid, 0)
+        
+        
+        # estimated_fees += promo_discount  #currently not use this        
 
         # ============================================================
         # ADS SPEND
@@ -12506,6 +12722,9 @@ def sku_profit_report_transactions_shipping(request):
             "is_claim": order_has_claim,
             "claim_count": order_claim_count,
             "claim_amount": format_currency(order_claim_amount),
+            
+            "is_replacement_return": order_is_replacement,
+            "replacement_return_count": order_replacement_count,
         
         })
 
@@ -12577,9 +12796,12 @@ def sku_profit_report_transactions_shipping(request):
             
             "total_claim_count": total_claim_count,
             "total_claim_amount": format_currency(total_claim_amount),
+            
+            "total_replacement_return_count": total_replacement_return_count,
         },
         "response": results[page_no * page_size:(page_no + 1) * page_size]
     })
+
 
 
 
