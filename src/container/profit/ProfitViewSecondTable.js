@@ -1,6 +1,13 @@
 import React, { useEffect } from 'react';
-import { Table, Card, Modal, Checkbox, Tooltip, Button } from 'antd';
-import { RightOutlined, EyeOutlined, FilterOutlined, SearchOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { Table, Card, Modal, Checkbox, Tooltip, Button, Dropdown } from 'antd';
+import {
+  RightOutlined,
+  EyeOutlined,
+  FilterOutlined,
+  SearchOutlined,
+  ArrowLeftOutlined,
+  SettingOutlined,
+} from '@ant-design/icons';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 // import ProfitFilterBar from './component/ProfitFilterBar';
@@ -35,6 +42,7 @@ export default function ProfitViewSecondTable() {
   const [previewImage, setPreviewImage] = React.useState('');
   const [previewOpen, setPreviewOpen] = React.useState(false);
   const [showFilters, setShowFilters] = React.useState(false);
+  const [visibleColumns, setVisibleColumns] = React.useState([]);
   const channelLogoMap = {
     'Amazon-India': amazon,
     // 'Flipkart-India': flipkart,
@@ -161,6 +169,7 @@ export default function ProfitViewSecondTable() {
         customer_return_price: item.customer_return_price || 0,
         courier_return_count: item.courier_return_count || 0,
         customer_return_count: item.customer_return_count || 0,
+        final_net_qty: item.final_net_qty || 0,
 
         // settledamount: Number(item.profit_settled_amount) || 0,
       })) || [];
@@ -297,6 +306,14 @@ export default function ProfitViewSecondTable() {
       sorter: (a, b) => a.netQty - b.netQty,
     },
     {
+      title: 'Final Net Qty',
+      dataIndex: 'final_net_qty',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.final_net_qty - b.final_net_qty,
+    },
+    {
       title: 'Return Qty',
       dataIndex: 'returnqty',
       align: 'center',
@@ -345,6 +362,14 @@ export default function ProfitViewSecondTable() {
       ellipsis: true,
       sorter: (a, b) => a.returnPercent - b.returnPercent,
       render: (value) => `${Number(value || 0).toFixed(2)}%`,
+    },
+    {
+      title: 'Promo Discount',
+      dataIndex: 'promo_discount',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.promo_discount - b.promo_discount,
     },
     {
       title: 'Net Sales',
@@ -482,6 +507,14 @@ export default function ProfitViewSecondTable() {
       render: (v) => <span>{v}%</span>,
     },
     {
+      title: 'Claim Amount',
+      dataIndex: 'claim_amount',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.claim_amount - b.claim_amount,
+    },
+    {
       title: 'Expected Settlement',
       dataIndex: 'settleAmount',
       align: 'center',
@@ -513,30 +546,6 @@ export default function ProfitViewSecondTable() {
     //     </button>
     //   ),
     // },
-    {
-      title: 'Return Type',
-      dataIndex: 'return_type',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => a.return_type - b.return_type,
-    },
-    {
-      title: 'Claim Amount',
-      dataIndex: 'claim_amount',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => a.claim_amount - b.claim_amount,
-    },
-    {
-      title: 'Promo Discount',
-      dataIndex: 'promo_discount',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => a.promo_discount - b.promo_discount,
-    },
     {
       title: 'Profit',
       dataIndex: 'profit',
@@ -669,133 +678,80 @@ export default function ProfitViewSecondTable() {
       ),
     },
   ];
+
+  useEffect(() => {
+    if (columns.length && visibleColumns.length === 0) {
+      setVisibleColumns(columns.map((col) => col.dataIndex || col.key || col.title));
+    }
+  }, []);
+
+  const columnOptions = columns
+    .filter((col) => col.dataIndex !== 'action')
+    .map((col) => ({
+      key: col.dataIndex || col.key || col.title,
+      label: typeof col.title === 'string' ? col.title : col.dataIndex || 'Column',
+    }));
+
+  const manageColumnsDropdown = (
+    <div className="w-[260px] bg-white rounded-xl shadow-xl border border-[#e5e7eb]">
+      <div className="flex items-center justify-between px-4 py-3 border-b">
+        <span className="font-medium text-[14px]">Manage Columns</span>
+
+        <button
+          type="button"
+          className="text-[#6366f1] text-[12px]"
+          onClick={() => setVisibleColumns(columnOptions.map((item) => item.key))}
+        >
+          Restore
+        </button>
+      </div>
+
+      <div className="max-h-[350px] overflow-y-auto">
+        {columnOptions.map((item) => (
+          <div key={item.key} className="flex items-center justify-between px-4 py-2 hover:bg-[#f9fafb]">
+            <span className="text-[13px]">{item.label}</span>
+
+            <Checkbox
+              checked={visibleColumns.includes(item.key)}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setVisibleColumns((prev) => [...prev, item.key]);
+                } else {
+                  setVisibleColumns((prev) => prev.filter((c) => c !== item.key));
+                }
+              }}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const filteredColumns = columns.filter((col) => {
+    const key = col.dataIndex || col.key || col.title;
+
+    if (
+      col.fixed === 'left' ||
+      col.fixed === 'right' ||
+      col.dataIndex === 'image' ||
+      col.dataIndex === 'channel' ||
+      col.key === 'action'
+    ) {
+      return true;
+    }
+
+    return visibleColumns.includes(key);
+  });
+
   const handleApply = () => {
     dispatch(getSecondDetials(buildPayload()));
     setShowFilters(false);
   };
 
-  // const handleClear = () => {
-  //   setFilters({
-  //     channel: '',
-  //     sku: '',
-  //     productId: '',
-  //     parentId: '',
-  //     mkt: '',
-
-  //     ads: 'without',
-  //     gst: 'without',
-  //     estimate: 'with',
-  //     expenses: 'with',
-  //     accountCharges: 'with',
-  //   });
-  // };
-
-  // const allColumnsList = [
-  //   { key: 'grossQty', label: 'Gross Qty' },
-  //   { key: 'netQty', label: 'Net Qty' },
-  //   { key: 'returnqty', label: 'Return Qty' },
-  //   { key: 'returnPercent', label: 'Return %' },
-
-  //   { key: 'netMRP', label: 'Net MRP' },
-  //   { key: 'mrpNetDiscount', label: 'MRP Net Discount%' },
-  //   { key: 'mrpCustomerDiscount', label: 'MRP Customer Discount%' },
-
-  //   { key: 'grossSales', label: 'Gross Sales' },
-  //   { key: 'netsales', label: 'Net Sales' },
-  //   { key: 'mp_gst', label: 'MP-GST' },
-
-  //   { key: 'mpfees', label: 'mpfees' },
-  //   // { key: 'stdcost', label: 'Std Cost' },
-
-  //   { key: 'shipping', label: 'Shipping' },
-  //   { key: 'adSpend', label: 'Ad spend' },
-  //   { key: 'stdCost', label: 'Product Cost' },
-
-  //   { key: 'stdCostMS', label: 'Std Cost M/S %' },
-  //   { key: 'accountCharges', label: 'Account Charges' },
-  //   { key: 'otherExpenses', label: 'Other Expenses' },
-
-  //   { key: 'gst', label: 'GST to Pay' },
-  //   // { key: 'grossprofit', label: 'Gross Profit' },
-  //   { key: 'profit', label: 'Profit' },
-
-  //   // { key: 'settledAmount', label: 'Settled Amount' },
-  //   { key: 'tacos', label: 'TACOS' },
-  //   { key: 'grossProfitPercent', label: 'Gross Profit %' },
-
-  //   { key: 'profitPercent', label: 'Profit %' },
-  //   { key: 'percentOfSales', label: '% of Sales' },
-  //   { key: 'drr', label: 'DRR (Daily Run Rate)' },
-
-  //   { key: 'lastOrderDate', label: 'Last Order Date' },
-  // ];
-
-  // const [visibleColumns, setVisibleColumns] = React.useState([
-  //   'view',
-  //   // 'grossQty',
-  //   'netQty',
-  //   'returnqty',
-  //   'returnPercent',
-  //   'mp_gst',
-  //   'tcs',
-  //   'mpfees',
-  //   'netsales',
-  //   'stdcost',
-  //   'shipping',
-  //   'adSpend',
-  //   'gst',
-  //   // 'grossprofit',
-  //   'profit',
-  //   'profitPercent',
-  // ]);
-  // const handleSelectAll = (checked) => {
-  //   if (checked) {
-  //     setVisibleColumns(allColumnsList.map((col) => col.key));
-  //   } else {
-  //     setVisibleColumns([]);
-  //   }
-  // };
-
-  // const filteredColumns = columns.filter((col) => {
-  //   if (col.dataIndex === 'image' || col.dataIndex === 'channel' || col.key === 'action') return true;
-
-  //   return visibleColumns.some(
-  //     (key) =>
-  //       key === col.dataIndex || // direct match
-  //       key.toLowerCase() === col.dataIndex.toLowerCase(), // handle grossQty vs grossqty
-  //   );
-  // });
-
   return (
     <>
-      {/* <PageHeader
-        routes={PageRoutes}
-        className="flex justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 bg-transparent"
-      /> */}
-
       <main className="min-h-[600px] px-3 pb-[10px] py-3">
-        {/* <div className="mb-3 px-2 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="w-[35px] h-[35px] rounded-xl border border-[#dbe1e8] bg-white flex items-center justify-center hover:bg-[#f8fafc] transition-all duration-200 shadow-sm"
-          >
-            <ArrowLeftOutlined className="text-[#374151]" />
-          </button>
-
-          <h1 className="text-[20px] font-semibold text-[#111827] m-0">Details</h1>
-        </div> */}
-
         <Card bordered={false}>
-          {/* <ProfitFilterBar
-            filters={filters}
-            setFilters={setFilters}
-            handleApply={handleApply}
-            handleClear={handleClear}
-            showFilters={showFilters}
-            setShowFilters={setShowFilters}
-          /> */}
-          {/* Top Action Bar */}
           <div className="flex items-center justify-between gap-3 mb-5">
             <button
               type="button"
@@ -818,136 +774,143 @@ export default function ProfitViewSecondTable() {
                 </span>
               </div>
 
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="h-[35px] px-2 rounded-xl  border border-[#e5e7eb] bg-white flex items-center gap-2 text-[12px] font-medium shadow-sm transition-all"
-                >
-                  <span className="flex items-center">
-                    <FilterOutlined style={{ fontSize: 14 }} />
-                  </span>
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="h-[35px] px-2 rounded-xl  border border-[#e5e7eb] bg-white flex items-center gap-2 text-[12px] font-medium shadow-sm transition-all"
+                  >
+                    <span className="flex items-center">
+                      <FilterOutlined style={{ fontSize: 14 }} />
+                    </span>
 
-                  <span>Filters</span>
+                    <span>Filters</span>
 
-                  {/* Selected Count */}
-                  <span className=" min-w-[16px] h-[16px] rounded-full bg-[#22c55e] text-white text-[12px] font-semiboldflex items-center justify-center   px-1   ">
-                    {
-                      [
-                        filters.ads === 'with',
-                        filters.gst === 'with',
-                        filters.expenses === 'with',
-                        filters.accountCharges === 'with',
-                        filters.estimate === 'with',
-                      ].filter(Boolean).length
-                    }
-                  </span>
-                </button>
+                    {/* Selected Count */}
+                    <span className=" min-w-[16px] h-[16px] rounded-full bg-[#22c55e] text-white text-[12px] font-semiboldflex items-center justify-center   px-1   ">
+                      {
+                        [
+                          filters.ads === 'with',
+                          filters.gst === 'with',
+                          filters.expenses === 'with',
+                          filters.accountCharges === 'with',
+                          filters.estimate === 'with',
+                        ].filter(Boolean).length
+                      }
+                    </span>
+                  </button>
 
-                {/* Dropdown */}
-                {showFilters && (
-                  <div className="  absolute right-0 top-[50px]  w-[260px]  bg-white border border-[#ebecef] rounded-2x shadow-xl p-4 z-50  ">
-                    <div className="space-y-4">
-                      {/* With Ads */}
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <Checkbox
-                          checked={filters.ads === 'with'}
-                          onChange={(e) =>
-                            setFilters({
-                              ...filters,
-                              ads: e.target.checked ? 'with' : 'without',
-                            })
-                          }
-                        />
-                        <span className="text-[13px] font-medium text-[#374151]">With Ads</span>
-                      </label>
+                  {/* Dropdown */}
+                  {showFilters && (
+                    <div className="  absolute right-0 top-[50px]  w-[260px]  bg-white border border-[#ebecef] rounded-2x shadow-xl p-4 z-50  ">
+                      <div className="space-y-4">
+                        {/* With Ads */}
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <Checkbox
+                            checked={filters.ads === 'with'}
+                            onChange={(e) =>
+                              setFilters({
+                                ...filters,
+                                ads: e.target.checked ? 'with' : 'without',
+                              })
+                            }
+                          />
+                          <span className="text-[13px] font-medium text-[#374151]">With Ads</span>
+                        </label>
 
-                      {/* With GST */}
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <Checkbox
-                          checked={filters.gst === 'with'}
-                          onChange={(e) =>
-                            setFilters({
-                              ...filters,
-                              gst: e.target.checked ? 'with' : 'without',
-                            })
-                          }
-                        />
-                        <span className="text-[13px] font-medium text-[#374151]">With GST</span>
-                      </label>
+                        {/* With GST */}
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <Checkbox
+                            checked={filters.gst === 'with'}
+                            onChange={(e) =>
+                              setFilters({
+                                ...filters,
+                                gst: e.target.checked ? 'with' : 'without',
+                              })
+                            }
+                          />
+                          <span className="text-[13px] font-medium text-[#374151]">With GST</span>
+                        </label>
 
-                      {/* With Expense */}
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <Checkbox
-                          checked={filters.expenses === 'with'}
-                          onChange={(e) =>
-                            setFilters({
-                              ...filters,
-                              expenses: e.target.checked ? 'with' : 'without',
-                            })
-                          }
-                        />
-                        <span className="text-[13px] font-medium text-[#374151]">With Expense</span>
-                      </label>
+                        {/* With Expense */}
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <Checkbox
+                            checked={filters.expenses === 'with'}
+                            onChange={(e) =>
+                              setFilters({
+                                ...filters,
+                                expenses: e.target.checked ? 'with' : 'without',
+                              })
+                            }
+                          />
+                          <span className="text-[13px] font-medium text-[#374151]">With Expense</span>
+                        </label>
 
-                      {/* With Estimate */}
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <Checkbox
-                          checked={filters.estimate === 'with'}
-                          onChange={(e) =>
-                            setFilters({
-                              ...filters,
-                              estimate: e.target.checked ? 'with' : 'without',
-                            })
-                          }
-                        />
-                        <span className="text-[13px] font-medium text-[#374151]">With Estimate</span>
-                      </label>
+                        {/* With Estimate */}
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <Checkbox
+                            checked={filters.estimate === 'with'}
+                            onChange={(e) =>
+                              setFilters({
+                                ...filters,
+                                estimate: e.target.checked ? 'with' : 'without',
+                              })
+                            }
+                          />
+                          <span className="text-[13px] font-medium text-[#374151]">With Estimate</span>
+                        </label>
 
-                      {/* With Account Charges */}
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <Checkbox
-                          checked={filters.accountCharges === 'with'}
-                          onChange={(e) =>
-                            setFilters({
-                              ...filters,
-                              accountCharges: e.target.checked ? 'with' : 'without',
-                            })
-                          }
-                        />
-                        <span className="text-[13px] font-medium text-[#374151]">With Account Charges</span>
-                      </label>
+                        {/* With Account Charges */}
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <Checkbox
+                            checked={filters.accountCharges === 'with'}
+                            onChange={(e) =>
+                              setFilters({
+                                ...filters,
+                                accountCharges: e.target.checked ? 'with' : 'without',
+                              })
+                            }
+                          />
+                          <span className="text-[13px] font-medium text-[#374151]">With Account Charges</span>
+                        </label>
+                      </div>
+                      <div className="flex items-center gap-2 mt-5">
+                        <button
+                          type="button"
+                          onClick={() => setShowFilters(false)}
+                          className="  flex-1 h-[38px]  rounded-xl border border-[#e5e7eb] text-[13px] font-medium hover:bg-gray-50"
+                        >
+                          Cancel
+                        </button>
+
+                        <Button
+                          type="primary"
+                          onClick={() => {
+                            handleApply();
+                            setShowFilters(false);
+                          }}
+                          className=" flex-1 h-[38px] rounded-xl text-white text-[13px] font-medium"
+                        >
+                          Apply
+                        </Button>
+                      </div>
                     </div>
-
-                    {/* Footer Buttons */}
-                    {/* Footer Buttons */}
-                    <div className="flex items-center gap-2 mt-5">
-                      <button
-                        type="button"
-                        onClick={() => setShowFilters(false)}
-                        className="  flex-1 h-[38px]  rounded-xl border border-[#e5e7eb] text-[13px] font-medium hover:bg-gray-50"
-                      >
-                        Cancel
-                      </button>
-
-                      <Button
-                        type="primary"
-                        onClick={() => {
-                          handleApply();
-                          setShowFilters(false);
-                        }}
-                        className=" flex-1 h-[38px] rounded-xl text-white text-[13px] font-medium"
-                      >
-                        Apply
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
+                <Dropdown trigger={['click']} dropdownRender={() => manageColumnsDropdown} placement="bottomRight">
+                  <Button
+                    icon={<SettingOutlined />}
+                    className="flex items-center !h-[35px] !rounded-xl !border-[#e5e7eb]"
+                  >
+                    Manage Columns
+                  </Button>
+                </Dropdown>
               </div>
             </div>
           </div>
           <Table
-            columns={columns}
+            columns={filteredColumns}
             dataSource={dataSource}
             showSorterTooltip={false}
             loading={loading}
@@ -974,146 +937,13 @@ export default function ProfitViewSecondTable() {
     [&_.ant-table-cell]:!px-2
     [&_.ant-table-cell]:!py-[6px]
   "
-            // summary={() => {
-            //   const summaryItems = columns
-            //     .filter(
-            //       (col) => !['image', 'channel', 'view', 'lastOrderDate', 'action'].includes(col.dataIndex || col.key),
-            //     )
-            //     .map((col) => {
-            //       const keyMap = {
-            //         netQty: 'netqty',
-            //         returnqty: 'totalreturn',
-            //         returnPercent: 'totalreturnper',
-            //         netsales: 'netsales',
-            //         tcs: 'tcs',
-            //         mp_gst: 'mp_gst',
-            //         mpfees: 'estimatefees',
-            //         stdcost: 'stdcost',
-            //         shipping: 'shippingfees',
-            //         adSpend: 'ads',
-            //         gst: 'totalgst',
-            //         profit: 'profit',
-            //         profitPercent: 'grossprofitper',
-
-            //         grossQty: 'grossqty',
-            //         netmrp: 'netmrp',
-            //         mrpNetDiscount: 'mrp_net_discount',
-            //         mrpCustomerDiscount: 'mrpCustomerDiscount',
-            //         accountCharges: 'account_charges',
-            //         otherExpenses: 'other_expenses',
-            //         tacos: 'tacos',
-            //         grossProfitPercent: 'grossprofit_percent',
-            //         percentOfSales: 'percent_of_sales',
-            //         drr: 'drr',
-            //         lastOrderDate: 'lastOrderDate',
-            //       };
-
-            //       return {
-            //         label: col.title,
-            //         dataIndex: col.dataIndex,
-            //         value: totals[keyMap[col.dataIndex]],
-            //       };
-            //     });
-
-            //   return (
-            //     <Table.Summary fixed>
-            //       <Table.Summary.Row>
-            //         <Table.Summary.Cell
-            //           index={0}
-            //           colSpan={columns.length}
-            //           style={{
-            //             background: '#fff',
-            //             zIndex: 20,
-            //             minWidth: 220,
-            //             left: 0,
-            //             position: 'sticky',
-            //             padding: '14px',
-            //           }}
-            //         >
-            //           <div className="w-full rounded-2xl border border-dashed border-[#8b5cf6] bg-gradient-to-r from-[#faf7ff] to-[#ffffff] px-4 py-1">
-            //             <div className="flex items-center gap-4 overflow-x-auto">
-            //               <div className="min-w-[320px] h-[88px] rounded-2xl bg-white border border-[#ede9fe] flex items-center gap-3 px-4 shadow-sm">
-            //                 <div className="w-11 h-11 rounded-xl bg-[#f3e8ff] flex items-center justify-center">
-            //                   <BarChartOutlined
-            //                     style={{
-            //                       color: '#7c3aed',
-            //                       fontSize: 18,
-            //                     }}
-            //                   />
-            //                 </div>
-
-            //                 <div>
-            //                   <h3 className="text-[17px] font-semibold text-[#111827] mb-1">Total Summary</h3>
-
-            //                   <p className="text-[12px] text-[#6b7280]">For selected period</p>
-            //                 </div>
-            //               </div>
-
-            //               {/* Metrics */}
-            //               <div className="flex items-stretch gap-3">
-            //                 {/* {summaryItems.map((item, index) => { */}
-            //                 {summaryItems
-            //                   .filter((item) => item.dataIndex !== 'lastOrderDate')
-            //                   .map((item, index) => {
-            //                     const isNegative = Number(item.value) < 0;
-
-            //                     const isPercent = [
-            //                       'profitPercent',
-            //                       'grossProfitPercent',
-            //                       'mrpNetDiscount',
-            //                       'percentOfSales',
-            //                       'tacos',
-            //                       // 'returnPercent',
-            //                     ].includes(item.dataIndex);
-
-            //                     return (
-            //                       <Table.Summary.Cell
-            //                         key={index}
-            //                         index={index + 3}
-            //                         align="center"
-            //                         style={{
-            //                           background: '#fff',
-            //                           padding: '10px 8px',
-            //                           minWidth: 140,
-            //                         }}
-            //                       >
-            //                         <div className="min-w-[135px] h-[88px] rounded-2xl bg-white border border-[#f3f4f6] px-4 py-3 flex flex-col justify-center shadow-sm hover:shadow-md transition-all">
-            //                           <div
-            //                             className={`text-[18px] font-bold mb-1 ${
-            //                               isNegative
-            //                                 ? 'text-[#ef4444]'
-            //                                 : item.dataIndex === 'profitPercent'
-            //                                 ? 'text-[#16a34a]'
-            //                                 : 'text-[#111827]'
-            //                             }`}
-            //                           >
-            //                             {item.value ?? 0}
-            //                             {isPercent ? '%' : ''}
-            //                           </div>
-
-            //                           <div className="text-[12px] font-medium text-[#6b7280] whitespace-nowrap">
-            //                             {item.label}
-            //                           </div>
-            //                         </div>
-            //                       </Table.Summary.Cell>
-            //                     );
-            //                   })}
-            //               </div>
-            //             </div>
-            //           </div>
-            //         </Table.Summary.Cell>
-            //       </Table.Summary.Row>
-            //     </Table.Summary>
-            //   );
-            // }}
-
             summary={() => (
               <Table.Summary.Row style={{ background: '#fafafa', fontWeight: 500, fontSize: '13px', color: 'black' }}>
                 <Table.Summary.Cell index={0}>Total</Table.Summary.Cell>
                 <Table.Summary.Cell index={1} fixed="left" />
                 <Table.Summary.Cell index={2} fixed="left" />
 
-                {columns
+                {filteredColumns
                   .filter((col) => !['image', 'channel', 'view'].includes(col.dataIndex))
                   .map((col, index) => {
                     const keyMap = {
@@ -1153,6 +983,7 @@ export default function ProfitViewSecondTable() {
                       customer_return_price: 'customer_return_price',
                       courier_return_count: 'courier_return_count',
                       customer_return_count: 'customer_return_count',
+                      final_net_qty: 'final_net_qty ',
                     };
 
                     const value = totals[keyMap[col.dataIndex]];
@@ -1192,141 +1023,6 @@ export default function ProfitViewSecondTable() {
             )}
           />
         </Card>
-        {/* <Modal
-          open={openSettings}
-          onCancel={() => setOpenSettings(false)}
-          footer={null}
-          closable={false}
-          width={380}
-          bodyStyle={{
-            padding: 0,
-            borderRadius: 18,
-            overflow: 'hidden',
-          }}
-        >
-          <div className="flex items-center justify-between px-4 py-4 border-b border-[#f1f1f1]">
-            <div className="flex items-center gap-2">
-              <h2 className="text-[15px] font-semibold text-[#111827]">Manage Column</h2>
-
-              <span className=" min-w-[22px] h-[22px] rounded-full bg-[#f3f4f6] text-[#6b7280] text-[11px] font-semibold flex items-center justify-center mb-2 ">
-                {visibleColumns.length}
-              </span>
-            </div>
-
-           
-          </div>
-
-          <div className="px-4 py-3 border-b border-[#f5f5f5]">
-            <div
-              className="
-        h-[38px]
-        rounded-xl
-        border border-[#e5e7eb]
-        px-3
-        flex items-center gap-2
-        bg-white
-      "
-            >
-              <SearchOutlined style={{ color: '#9ca3af', fontSize: 14 }} />
-
-              <input
-                type="text"
-                placeholder="Search"
-                value={columnSearch}
-                onChange={(e) => setColumnSearch(e.target.value)}
-                className=" flex-1 outline-none border-none text-[13px] bg-transparent "
-              />
-            </div>
-          </div>
-
-          <div className="max-h-[420px] overflow-y-auto">
-            {allColumnsList
-              .filter((col) => col.label.toLowerCase().includes(columnSearch.toLowerCase()))
-              .map((col) => {
-                const isSelected = visibleColumns.includes(col.key);
-
-                return (
-                  <button
-                    key={col.key}
-                    type="button"
-                    onClick={() => {
-                      if (isSelected) {
-                        setVisibleColumns(visibleColumns.filter((c) => c !== col.key));
-                      } else {
-                        setVisibleColumns([...visibleColumns, col.key]);
-                      }
-                    }}
-                    className={` w-full flex items-center justify-between  px-4 py-3  border-b border-[#f5f5f5]  transition-all text-left hover:bg-[#f9fafb] ${
-                      isSelected ? 'bg-[#f5f3ff]' : 'bg-white'
-                    } `}
-                  >
-                    <span className={` text-[13px] font-medium  ${isSelected ? 'text-[#4f46e5]' : 'text-[#374151]'}  `}>
-                      {col.label}
-                    </span>
-
-                    <span>
-                      {isSelected ? (
-                        <EyeOutlined
-                          style={{
-                            color: '#4f46e5',
-                            fontSize: 15,
-                          }}
-                        />
-                      ) : (
-                        <EyeInvisibleOutlined
-                          style={{
-                            color: '#c4c4c4',
-                            fontSize: 15,
-                          }}
-                        />
-                      )}
-                    </span>
-                  </button>
-                );
-              })}
-          </div>
-        </Modal> */}
-        {/* <Modal
-          title="Customize Your Columns"
-          open={openSettings}
-          onCancel={() => setOpenSettings(false)}
-          footer={null}
-          width={900}
-        >
-          <div className="mb-3 flex items-center gap-2">
-            <Checkbox
-              checked={visibleColumns.length === allColumnsList.length}
-              onChange={(e) => handleSelectAll(e.target.checked)}
-            >
-              Select All
-            </Checkbox>
-          </div>
-
-          <div className="grid grid-cols-3 gap-3 max-h-[400px] overflow-y-auto pr-1">
-            {allColumnsList.map((col) => (
-              <div
-                key={col.key}
-                className="flex items-center justify-between gap-2 p-2 bg-gray-100 rounded whitespace-nowrap"
-              >
-                <Checkbox
-                  className="whitespace-nowrap"
-                  checked={visibleColumns.includes(col.key)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setVisibleColumns([...visibleColumns, col.key]);
-                    } else {
-                      setVisibleColumns(visibleColumns.filter((c) => c !== col.key));
-                    }
-                  }}
-                >
-                  {col.label}
-                </Checkbox>
-
-               
-              </div>
-            ))}
-          </div>
-        </Modal> */}
       </main>
       <Modal open={previewOpen} footer={null} onCancel={() => setPreviewOpen(false)} centered>
         <img src={previewImage} alt="preview" style={{ width: '100%', borderRadius: 8 }} />
