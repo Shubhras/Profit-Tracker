@@ -142,10 +142,12 @@ export default function ProfitDetailsView() {
       closing_fee: item.closing_fee || 0,
       per_item_fee: item.per_item_fee || 0,
       fba_fee: item.fba_fee || 0,
-      fba_pick_pack_fee: item.fba_pick_pack_fee || 0,
-      fba_weight_handling_fee: item.fba_weight_handling_fee || 0,
-      tax_amount: item.tax_amount || 0,
-      other_charges: item.other_charges || 0,
+      claim_amount: item.claim_amount || 0,
+      promo_discount: item.promo_discount || 0,
+      courier_return_price: item.courier_return_price || 0,
+      customer_return_price: item.customer_return_price || 0,
+      courier_return_count: item.courier_return_count || 0,
+      customer_return_count: item.customer_return_count || 0,
     })) || [];
 
   // const allColumnOptions = [
@@ -278,11 +280,45 @@ export default function ProfitDetailsView() {
       ellipsis: true,
       sorter: (a, b) => a.returnqty - b.returnqty,
     },
+    // {
+    //   title: 'Courier Return Price',
+    //   dataIndex: 'courier_return_price',
+    //   align: 'center',
+    //   width: 70,
+    //   ellipsis: true,
+    //   sorter: (a, b) => a.courier_return_price - b.courier_return_price,
+    // },
+    // {
+    //   title: 'Customer Return Price',
+    //   dataIndex: 'customer_return_price',
+    //   align: 'center',
+    //   width: 70,
+    //   ellipsis: true,
+    //   sorter: (a, b) => a.customer_return_price - b.customer_return_price,
+    // },
+
+    {
+      title: 'Courier Return Count',
+      dataIndex: 'courier_return_count',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.courier_return_count - b.courier_return_count,
+    },
+    {
+      title: 'Customer Return Count',
+      dataIndex: 'customer_return_count',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.customer_return_count - b.customer_return_count,
+    },
     {
       title: 'Return %',
       dataIndex: 'returnPercent',
       align: 'center',
       width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.returnPercent - b.returnPercent,
       render: (v) => <span>{v}%</span>,
     },
@@ -344,6 +380,7 @@ export default function ProfitDetailsView() {
       dataIndex: 'mp_gst',
       align: 'center',
       width: 70,
+      ellipsis: true,
       sorter: (a, b) => a.mp_gst - b.mp_gst,
     },
 
@@ -402,6 +439,22 @@ export default function ProfitDetailsView() {
       width: 70,
       ellipsis: true,
       sorter: (a, b) => a.std - b.std,
+    },
+    {
+      title: 'Claim Amount',
+      dataIndex: 'claim_amount',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.claim_amount - b.claim_amount,
+    },
+    {
+      title: 'Promo Discount',
+      dataIndex: 'promo_discount',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.promo_discount - b.promo_discount,
     },
 
     {
@@ -684,7 +737,7 @@ export default function ProfitDetailsView() {
               setPagination(pag);
             }}
             size="small"
-            scroll={{ x: 1800 }}
+            scroll={{ x: 'true' }}
             className="
     [&_.ant-table-thead>tr>th]:!text-[12px]
     [&_.ant-table-thead>tr>th]:!font-semibold
@@ -692,170 +745,6 @@ export default function ProfitDetailsView() {
     [&_.ant-table-cell]:!px-2
     [&_.ant-table-cell]:!py-[6px]
   "
-            // summary={() => {
-            //   const summaryItems = columns
-            //     .filter(
-            //       (col) => !['image', 'channel', 'view', 'lastOrderDate', 'action'].includes(col.dataIndex || col.key),
-            //     )
-            //     .map((col) => {
-            //       const keyMap = {
-            //         netqty: 'total_netquantity',
-            //         returnqty: 'total_returns',
-            //         returnPercent: 'total_ret_percent',
-            //         netsales: 'netsales',
-            //         tcs: 'tcs',
-            //         mp_gst: 'mp_gst',
-            //         shipping: 'shipping',
-            //         adSpend: 'adSpend',
-            //         taxableValue: 'taxable_value',
-            //         gst_to_pay_perc: 'gst_to_pay_perc',
-            //         std: 'cost',
-            //         mpfees: 'estimatefees',
-            //         profit: 'profit',
-            //         profitPercent: 'totalprofitmargin',
-            //         settleAmount: 'settle_amount',
-
-            //         grossqty: 'grossqty',
-            //         netasp: 'netasp',
-            //         mrp: 'mrp',
-            //         mrpNetDiscount: 'mrpNetDiscount',
-            //         grossSales: 'grosssales',
-            //         accountCharges: 'accountCharges',
-            //         otherExpenses: 'otherExpenses',
-            //         grossProfit: 'grossProfit',
-            //         grossProfitPercent: 'grossProfitPercent',
-            //         percentOfSales: 'percentOfSales',
-            //         drr: 'drr',
-            //         lastOrderDate: 'lastOrderDate',
-            //       };
-
-            //       return {
-            //         label: col.title,
-            //         dataIndex: col.dataIndex,
-            //         value: profitData?.totals?.[keyMap[col.dataIndex]],
-            //       };
-            //     });
-
-            //   return (
-            //     <Table.Summary fixed>
-            //       <Table.Summary.Row>
-            //         <Table.Summary.Cell
-            //           index={0}
-            //           colSpan={columns.length}
-            //           style={{
-            //             background: '#fff',
-            //             zIndex: 20,
-            //             minWidth: 220,
-            //             left: 0,
-            //             position: 'sticky',
-            //             padding: '14px',
-            //           }}
-            //         >
-            //           <div
-            //             className="
-            //   w-full rounded-2xl border border-dashed border-[#8b5cf6]
-            //   bg-gradient-to-r from-[#faf7ff] to-[#ffffff]
-            //   px-4 py-1
-            // "
-            //           >
-            //             <div className="flex items-center gap-4 overflow-x-auto">
-            //               {/* Left Summary Card */}
-            //               <div
-            //                 className="
-            //       min-w-[280px] h-[88px] rounded-2xl bg-white
-            //       border border-[#ede9fe]
-            //       flex items-center gap-3 px-4 shadow-sm
-            //     "
-            //               >
-            //                 <div
-            //                   className="
-            //         w-11 h-11 rounded-xl bg-[#f3e8ff]
-            //         flex items-center justify-center
-            //       "
-            //                 >
-            //                   <BarChartOutlined
-            //                     style={{
-            //                       color: '#7c3aed',
-            //                       fontSize: 18,
-            //                     }}
-            //                   />
-            //                 </div>
-
-            //                 <div>
-            //                   <h3 className="text-[17px] font-semibold text-[#111827] mb-1">Total Summary</h3>
-
-            //                   <p className="text-[12px] text-[#6b7280]">For selected period</p>
-            //                 </div>
-            //               </div>
-
-            //               {/* Summary Metrics */}
-            //               <div className="flex items-stretch gap-3">
-            //                 {summaryItems
-            //                   .filter((item) => item.dataIndex !== 'lastOrderDate')
-            //                   .map((item, index) => {
-            //                     const isNegative = Number(item.value) < 0;
-
-            //                     const isPercent = [
-            //                       'profitPercent',
-            //                       'grossProfitPercent',
-            //                       'mrpNetDiscount',
-            //                       'percentOfSales',
-            //                       'tacos',
-            //                       'returnPercent',
-            //                     ].includes(item.dataIndex);
-
-            //                     return (
-            //                       <Table.Summary.Cell
-            //                         key={index}
-            //                         index={index + 3}
-            //                         align="center"
-            //                         style={{
-            //                           background: '#fff',
-            //                           padding: '10px 8px',
-            //                           minWidth: 140,
-            //                         }}
-            //                       >
-            //                         <button
-            //                           type="button"
-            //                           className="min-w-[135px] h-[88px] rounded-2xl bg-white border border-[#f3f4f6] px-4 py-3 flex flex-col justify-center shadow-sm hover:shadow-md transition-all cursor-pointer"
-            //                           onClick={() =>
-            //                             setDetailModal({
-            //                               open: true,
-            //                               record: profitData?.totals,
-            //                               type: 'qty',
-            //                               modalLabel: 'OrderId',
-            //                               modalValue: 'Total',
-            //                             })
-            //                           }
-            //                         >
-            //                           <div
-            //                             className={`text-[18px] font-bold mb-1 ${
-            //                               isNegative
-            //                                 ? 'text-[#ef4444]'
-            //                                 : item.dataIndex === 'profitPercent'
-            //                                 ? 'text-[#16a34a]'
-            //                                 : 'text-[#111827]'
-            //                             }`}
-            //                           >
-            //                             {item.value ?? 0}
-            //                             {isPercent ? '%' : ''}
-            //                           </div>
-
-            //                           <div className="text-[12px] font-medium text-[#6b7280] whitespace-nowrap">
-            //                             {item.label}
-            //                           </div>
-            //                         </button>
-            //                       </Table.Summary.Cell>
-            //                     );
-            //                   })}
-            //               </div>
-            //             </div>
-            //           </div>
-            //         </Table.Summary.Cell>
-            //       </Table.Summary.Row>
-            //     </Table.Summary>
-            //   );
-            // }}
             summary={() => (
               <Table.Summary.Row style={{ background: '#fafafa', fontWeight: 500, fontSize: '13px', color: 'black' }}>
                 <Table.Summary.Cell index={0} fixed="left">
@@ -896,29 +785,45 @@ export default function ProfitDetailsView() {
                       percentOfSales: 'percentOfSales',
                       drr: 'drr',
                       lastOrderDate: 'lastOrderDate',
+                      claim_amount: 'total_claim_amount',
+                      return_type: 'return_type',
+                      promo_discount: 'total_promo_discount',
+                      courier_return_price: 'courier_return_price',
+                      customer_return_price: 'customer_return_price',
+                      courier_return_count: 'courier_return_count',
+                      customer_return_count: 'customer_return_count',
                     };
 
                     const value = profitData?.totals?.[keyMap[col.dataIndex]];
 
                     return (
-                      <Table.Summary.Cell key={index} index={index + 3} align="center" fixed={col.fixed}>
-                        {col.key === 'action' ? (
-                          <div className="w-full h-full" />
-                        ) : col.dataIndex === 'profitPercent' ? (
-                          <span
-                            className={`font-semibold ${
-                              Number(value) > 0
-                                ? 'text-green-600'
-                                : Number(value) < 0
-                                ? 'text-red-600'
-                                : 'text-gray-600'
-                            }`}
-                          >
-                            {Number(value || 0).toFixed(2)}%
-                          </span>
-                        ) : (
-                          <span>{value ?? 0}</span>
-                        )}
+                      <Table.Summary.Cell
+                        key={index}
+                        index={index + 3}
+                        align="center"
+                        fixed={col.fixed}
+                        width={col.width}
+                      >
+                        <div className="flex items-center justify-center min-h-[40px] whitespace-nowrap">
+                          {col.key === 'action' ? (
+                            <div className="w-full h-full" />
+                          ) : col.dataIndex === 'profitPercent' ? (
+                            <span
+                              // className={`font-semibold ${
+                              className={`text-[13px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis ${
+                                Number(value) > 0
+                                  ? 'text-green-600'
+                                  : Number(value) < 0
+                                  ? 'text-red-600'
+                                  : 'text-gray-600'
+                              }`}
+                            >
+                              {Number(value || 0).toFixed(2)}%
+                            </span>
+                          ) : (
+                            <span>{value ?? 0}</span>
+                          )}
+                        </div>
                       </Table.Summary.Cell>
                     );
                   })}
