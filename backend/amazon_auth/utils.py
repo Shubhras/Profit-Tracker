@@ -537,6 +537,40 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
             claim_amount_by_order.get(oid, 0.0) + float(txn.total_amount or 0)
         )
         claim_count_by_order[oid] = claim_count_by_order.get(oid, 0) + 1
+        
+    # ============================================================
+    # REPLACEMENT RETURN — Transaction Type "Shipment",
+    # description "Order Payment", total_amount = 0
+    # ============================================================
+    replacement_txns = AmazonTransaction.objects.filter(
+        amazon_account__user=user,
+        transaction_type='Shipment',
+        description='Order Payment',
+        total_amount=0,
+    )
+
+    replacement_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+        transaction__in=replacement_txns,
+        identifier_name='ORDER_ID',
+        identifier_value__in=all_order_ids
+    ).values('transaction_id', 'identifier_value')
+
+    replacement_tx_to_order = {
+        row['transaction_id']: row['identifier_value']
+        for row in replacement_identifiers
+    }
+
+    order_ids_with_replacement = set(replacement_tx_to_order.values())
+
+    replacement_count_by_order = {}
+    for txn in replacement_txns.filter(id__in=replacement_tx_to_order.keys()):
+        oid = replacement_tx_to_order.get(txn.id)
+        if not oid:
+            continue
+        replacement_count_by_order[oid] = replacement_count_by_order.get(oid, 0) + 1
+
+    total_replacement_return_count = len(order_ids_with_replacement)    
+    
 
     # ============================================================
     # DEDUPLICATED RETURN/CLAIM SUMMARY — each order counted exactly once,
@@ -548,6 +582,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
     total_return_amount = 0.0
     courier_return_amount = 0.0
     customer_return_amount = 0.0
+    replacement_return_count = 0.0
 
     for order_id in order_ids_with_refund:
         amount = refund_amount_by_order.get(order_id, 0.0)
@@ -562,6 +597,8 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
 
     total_claim_amount = sum(claim_amount_by_order.values())
     total_claim_count = len(claim_amount_by_order)
+    
+    replacement_return_count = len(replacement_count_by_order)
 
     return_claim_summary = {
         "total_return_count": total_return_count,
@@ -572,6 +609,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
         "customer_return_amount": round(customer_return_amount, 2),
         "total_claim_count": total_claim_count,
         "total_claim_amount": round(total_claim_amount, 2),
+        "replacement_return_count": replacement_return_count,
     }
 
     # ---------------- BUILD PER (ASIN, SKU) PROFIT ----------------
@@ -653,16 +691,35 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
         tcs_total = taxable_value * (tcs_rate / 100)
         mp_gst = (estimated_fees + shipping_final) * 0.18
 
+        # profit = (
+        #     net_sales
+        #     - estimated_fees
+        #     - shipping_final
+        #     - stdcost
+        #     + tcs_total
+        #     + mp_gst
+        #     + ads
+        #     - gst_to_pay_amount
+        # )
+        
         profit = (
             net_sales
             - estimated_fees
-            - shipping_final
+            + shipping_final  #subsctract shiping
             - stdcost
             + tcs_total
-            + mp_gst
-            + ads
-            - gst_to_pay_amount
+            - mp_gst        # added in profit
+            + ads           # substracting add which is alredy in -ve
+            - gst_to_pay_amount 
+        
         )
+        print("shipping_final****************",shipping_final)
+        print("stdcost>>>>>>>>>>>****************",stdcost)
+        print("gst_to_pay_amount>>>>>>>>>>>****************",gst_to_pay_amount)
+        print("estimated_fees****************",estimated_fees)
+        print("tcs_total>>>>>>>>>>>****************",tcs_total)
+        print("mp_gst>>>>>>>>>>>****************",mp_gst)
+        print("ads****************",ads)
 
         sku_results.append({
             "sku": seller_sku,
