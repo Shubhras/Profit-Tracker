@@ -117,6 +117,7 @@ export default function ProfitDetailsView() {
         asin: item.asin,
         redirecturl: item.redirecturl,
         netQty: item.netqty || 0,
+        final_net_qty: item.final_net_qty || 0,
         returnqty: item.returnqty || 0,
         settleAmount: item.exp_settlement,
         returnPercent: item.retpercent || 0,
@@ -160,6 +161,40 @@ export default function ProfitDetailsView() {
 
     return rows;
   }, [profitData]);
+
+  const getDynamicWidth = (dataIndex, defaultWidth = 70) => {
+    const keyMap = {
+      netQty: 'netqty',
+      returnqty: 'totalreturn',
+      returnPercent: 'totalreturnper',
+      netsales: 'netsales',
+      tcs: 'tcs',
+      mp_gst: 'mp_gst',
+      mpfees: 'estimatefees',
+      stdcost: 'stdcost',
+      shipping: 'shippingfees',
+      adSpend: 'ads',
+      gst_to_pay_amount: 'gst_to_pay_amount',
+      gst_to_pay_perc: 'gst_to_pay_perc',
+      profit: 'profit',
+      profitPercent: 'grossprofitper',
+      taxableValue: 'taxable_value',
+      settleAmount: 'exp_settlement',
+      claim_amount: 'total_claim_amount',
+      promo_discount: 'total_promo_discount',
+      courier_return_count: 'courier_return_count',
+      customer_return_count: 'customer_return_count',
+      final_net_qty: 'total_final_net_qty',
+    };
+
+    const value = totals?.[keyMap[dataIndex]];
+
+    if (value == null) return defaultWidth;
+
+    const text = String(value);
+
+    return Math.max(defaultWidth, text.length * 10 + 30);
+  };
 
   const columns = [
     {
@@ -254,15 +289,26 @@ export default function ProfitDetailsView() {
       title: 'Net Qty',
       dataIndex: 'netQty',
       align: 'center',
-      width: 70,
+      // width: 70,
+      width: getDynamicWidth('netQty', 70),
       ellipsis: true,
       sorter: (a, b) => a.netQty - b.netQty,
+    },
+    {
+      title: 'Final Net Qty',
+      dataIndex: 'final_net_qty',
+      align: 'center',
+      // width: 70,
+      width: getDynamicWidth('final_net_qty', 70),
+      ellipsis: true,
+      sorter: (a, b) => a.final_net_qty - b.final_net_qty,
     },
     {
       title: 'Return Qty',
       dataIndex: 'returnqty',
       align: 'center',
-      width: 70,
+      // width: 70,
+      width: getDynamicWidth('returnqty', 70),
       ellipsis: true,
       sorter: (a, b) => a.returnqty - b.returnqty,
     },
@@ -287,7 +333,8 @@ export default function ProfitDetailsView() {
       title: 'Courier Return Count',
       dataIndex: 'courier_return_count',
       align: 'center',
-      width: 70,
+      // width: 70,
+      width: getDynamicWidth('courier_return_count', 70),
       ellipsis: true,
       sorter: (a, b) => a.courier_return_count - b.courier_return_count,
     },
@@ -295,7 +342,8 @@ export default function ProfitDetailsView() {
       title: 'Customer Return Count',
       dataIndex: 'customer_return_count',
       align: 'center',
-      width: 70,
+      // width: 70,
+      width: getDynamicWidth('customer_return_count', 70),
       ellipsis: true,
       sorter: (a, b) => a.customer_return_count - b.customer_return_count,
     },
@@ -303,16 +351,27 @@ export default function ProfitDetailsView() {
       title: 'Return %',
       dataIndex: 'returnPercent',
       align: 'center',
-      width: 70,
+      // width: 70,
+      width: getDynamicWidth('returnPercent', 70),
       ellipsis: true,
       sorter: (a, b) => a.returnPercent - b.returnPercent,
       render: (v) => <span>{v}%</span>,
     },
     {
+      title: 'Promo Discount',
+      dataIndex: 'promo_discount',
+      align: 'center',
+      // width: 70,
+      width: getDynamicWidth('promo_discount', 70),
+      ellipsis: true,
+      sorter: (a, b) => a.promo_discount - b.promo_discount,
+    },
+    {
       title: 'Net Sales',
       dataIndex: 'netsales',
       align: 'center',
-      width: 70,
+      // width: 70,
+      width: getDynamicWidth('netsales', 70),
       ellipsis: true,
       sorter: (a, b) => a.netsales - b.netsales,
     },
@@ -337,7 +396,8 @@ export default function ProfitDetailsView() {
       title: 'MP fees',
       dataIndex: 'mpfees',
       align: 'center',
-      width: 70,
+      // width: 70,
+      width: getDynamicWidth('mpfees', 70),
       ellipsis: true,
       sorter: (a, b) => a.mpfees - b.mpfees,
       render: (v, record) => (
@@ -360,7 +420,8 @@ export default function ProfitDetailsView() {
       title: 'Shipping',
       dataIndex: 'shipping',
       align: 'center',
-      width: 70,
+      // width: 70,
+      width: getDynamicWidth('shipping', 70),
       ellipsis: true,
       sorter: (a, b) => a.shipping - b.shipping,
       render: (v, record) => (
@@ -383,7 +444,8 @@ export default function ProfitDetailsView() {
       title: 'MP-GST',
       dataIndex: 'mp_gst',
       align: 'center',
-      width: 70,
+      // width: 70,
+      width: getDynamicWidth('mp_gst', 70),
       ellipsis: true,
       sorter: (a, b) => a.mp_gst - b.mp_gst,
     },
@@ -392,7 +454,8 @@ export default function ProfitDetailsView() {
       title: 'TCS',
       dataIndex: 'tcs',
       align: 'center',
-      width: 100,
+      // width: 100,
+      width: getDynamicWidth('tcs', 70),
       ellipsis: true,
       sorter: (a, b) => a.tcs - b.tcs,
     },
@@ -413,7 +476,8 @@ export default function ProfitDetailsView() {
       title: 'Ad Spend',
       dataIndex: 'adSpend',
       align: 'center',
-      width: 70,
+      // width: 70,
+      width: getDynamicWidth('adSpend', 70),
       ellipsis: true,
       sorter: (a, b) => a.adSpend - b.adSpend,
     },
@@ -422,7 +486,8 @@ export default function ProfitDetailsView() {
       title: 'Taxable Value',
       dataIndex: 'taxableValue',
       align: 'center',
-      width: 70,
+      // width: 70,
+      width: getDynamicWidth('taxableValue', 70),
       ellipsis: true,
       sorter: (a, b) => a.taxableValue - b.taxableValue,
     },
@@ -431,7 +496,8 @@ export default function ProfitDetailsView() {
       title: 'GST to Pay',
       dataIndex: 'gst_to_pay_amount',
       align: 'center',
-      width: 70,
+      // width: 70,
+      width: getDynamicWidth('gst_to_pay_amount', 70),
       ellipsis: true,
       sorter: (a, b) => a.gst_to_pay_amount - b.gst_to_pay_amount,
     },
@@ -439,16 +505,27 @@ export default function ProfitDetailsView() {
       title: 'GST to Pay %',
       dataIndex: 'gst_to_pay_perc',
       align: 'center',
-      width: 70,
+      // width: 70,
+      width: getDynamicWidth('gst_to_pay_perc', 70),
       ellipsis: true,
       sorter: (a, b) => a.gst_to_pay_perc - b.gst_to_pay_perc,
       render: (v) => <span>{v}%</span>,
     },
     {
+      title: 'Claim Amount',
+      dataIndex: 'claim_amount',
+      align: 'center',
+      // width: 70,
+      width: getDynamicWidth('claim_amount', 70),
+      ellipsis: true,
+      sorter: (a, b) => a.claim_amount - b.claim_amount,
+    },
+    {
       title: 'Expected Settlement',
       dataIndex: 'settleAmount',
       align: 'center',
-      width: 70,
+      // width: 70,
+      width: getDynamicWidth('settleAmount', 70),
       ellipsis: true,
       sorter: (a, b) => a.settleAmount - b.settleAmount,
     },
@@ -456,7 +533,8 @@ export default function ProfitDetailsView() {
       title: 'Product Cost',
       dataIndex: 'stdcost',
       align: 'center',
-      width: 70,
+      // width: 70,
+      width: getDynamicWidth('stdcost', 70),
       ellipsis: true,
       sorter: (a, b) => a.stdcost - b.stdcost,
     },
@@ -477,26 +555,11 @@ export default function ProfitDetailsView() {
     //   ),
     // },
     {
-      title: 'Claim Amount',
-      dataIndex: 'claim_amount',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => a.claim_amount - b.claim_amount,
-    },
-    {
-      title: 'Promo Discount',
-      dataIndex: 'promo_discount',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => a.promo_discount - b.promo_discount,
-    },
-    {
       title: 'Profit',
       dataIndex: 'profit',
       align: 'center',
-      width: 100,
+      // width: 100,
+      width: getDynamicWidth('profit', 70),
       ellipsis: true,
       sorter: (a, b) => a.profit - b.profit,
       // render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>₹{v}</span>,
@@ -520,7 +583,8 @@ export default function ProfitDetailsView() {
       title: 'Profit %',
       dataIndex: 'profitPercent',
       align: 'center',
-      width: 70,
+      // width: 70,
+      width: getDynamicWidth('profitPercent', 70),
       ellipsis: true,
       sorter: (a, b) => a.profitPercent - b.profitPercent,
       render: (v) => {
@@ -920,6 +984,7 @@ export default function ProfitDetailsView() {
                         courier_return_count: 'courier_return_count',
                         customer_return_count: 'customer_return_count',
                         drr: 'drr',
+                        final_net_qty: 'total_final_net_qty',
                       };
 
                       const value = totals?.[keyMap[col.dataIndex]];
@@ -927,15 +992,28 @@ export default function ProfitDetailsView() {
                       const isPercent = ['profitPercent'].includes(col.dataIndex);
 
                       return (
-                        <Table.Summary.Cell key={index} index={index} align="center" fixed={col.fixed}>
+                        <Table.Summary.Cell
+                          key={index}
+                          index={index}
+                          align="center"
+                          fixed={col.fixed}
+                          // style={{
+                          //   whiteSpace: 'nowrap',
+                          //   overflow: 'visible',
+                          //   whiteSpace: 'nowrap',
+                          //   paddingLeft: '14px',
+                          //   paddingRight: '14px',
+                          //   paddingInline: '18px',
+                          // }}
+                        >
                           {index === 0 ? (
                             <span className="font-bold text-[13px] text-[#111827]">Total</span>
                           ) : index === 1 || col.dataIndex === 'view' || col.key === 'action' ? (
                             <div />
                           ) : (
                             <span
-                              // className={`text-[13px] font-semibold ${
-                              className={`text-[13px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis ${
+                              className={`text-[13px] font-semibold ${
+                                // className={`inline-block min-w-[90px] text-[13px] font-semibold ${
                                 Number(value) > 0 && ['profitPercent'].includes(col.dataIndex)
                                   ? 'text-green-600'
                                   : Number(value) < 0
