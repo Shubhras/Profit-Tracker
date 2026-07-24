@@ -983,7 +983,7 @@ export default function ProfitViewSecondTable() {
                       customer_return_price: 'customer_return_price',
                       courier_return_count: 'courier_return_count',
                       customer_return_count: 'customer_return_count',
-                      final_net_qty: 'final_net_qty ',
+                      final_net_qty: 'total_final_net_qty',
                     };
 
                     const value = totals[keyMap[col.dataIndex]];
