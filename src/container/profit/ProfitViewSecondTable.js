@@ -298,7 +298,7 @@ export default function ProfitViewSecondTable() {
     //   // render: (v) => v ?? 0,
     // },
     {
-      title: 'Net Qty',
+      title: 'Gross Qty',
       dataIndex: 'netQty',
       align: 'center',
       width: 70,
@@ -306,7 +306,7 @@ export default function ProfitViewSecondTable() {
       sorter: (a, b) => a.netQty - b.netQty,
     },
     {
-      title: 'Final Net Qty',
+      title: 'Net Qty',
       dataIndex: 'final_net_qty',
       align: 'center',
       width: 70,
@@ -372,7 +372,7 @@ export default function ProfitViewSecondTable() {
       sorter: (a, b) => a.promo_discount - b.promo_discount,
     },
     {
-      title: 'Net Sales',
+      title: 'Gross Sales',
       dataIndex: 'netsales',
       align: 'center',
       width: 70,
@@ -685,13 +685,22 @@ export default function ProfitViewSecondTable() {
     }
   }, []);
 
+  // const columnOptions = columns
+  //   .filter((col) => col.dataIndex !== 'action')
+  //   .map((col) => ({
+  //     key: col.dataIndex || col.key || col.title,
+  //     label: typeof col.title === 'string' ? col.title : col.dataIndex || 'Column',
+  //   }));
+
   const columnOptions = columns
-    .filter((col) => col.dataIndex !== 'action')
+    .filter(
+      (col) =>
+        col.key !== 'action' && col.dataIndex !== 'image' && col.dataIndex !== 'view' && col.dataIndex !== 'channel',
+    )
     .map((col) => ({
       key: col.dataIndex || col.key || col.title,
-      label: typeof col.title === 'string' ? col.title : col.dataIndex || 'Column',
+      label: typeof col.title === 'string' ? col.title : col.dataIndex || col.key,
     }));
-
   const manageColumnsDropdown = (
     <div className="w-[260px] bg-white rounded-xl shadow-xl border border-[#e5e7eb]">
       <div className="flex items-center justify-between px-4 py-3 border-b">
