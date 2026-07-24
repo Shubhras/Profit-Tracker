@@ -15432,6 +15432,7 @@ def amazon_profitability_details_transactions_shipping(request):
         "totals": {
             "ads": format_currency(total_ads),
             "netqty": total_qty,
+            "total_final_net_qty":total_final_net_qty,
             # "totalreturn": total_returns,
             "totalreturn": total_return_count,
             "totalreturnper": f"{round(total_ret_percent, 2)}%",
@@ -16721,15 +16722,27 @@ def sku_profitability_list_filtered(request):
         # profit = net_sales + t_new_charge + shipping_final - total_cost + tcs_total
         # profit = net_sales - estimated_fees - shipping_final - tcs_total + mp_gst - total_cost
         
+        # profit = (
+        #     net_sales
+        #     - estimated_fees
+        #     - shipping_final
+        #     + ads
+        #     + tcs_total
+        #     + mp_gst
+        #     - total_cost
+        #     - gst_to_pay_amount
+        # )
+        
         profit = (
             net_sales
             - estimated_fees
-            - shipping_final
-            + ads
-            + tcs_total
-            + mp_gst
+            + shipping_final  #subsctract shiping
             - total_cost
-            - gst_to_pay_amount
+            + tcs_total
+            - mp_gst        # added in profit
+            + ads           # substracting add which is alredy in -ve
+            - gst_to_pay_amount 
+        
         )
 
         # exp_settlement = (
