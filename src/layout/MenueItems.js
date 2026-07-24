@@ -2096,6 +2096,14 @@ function MenuItems({ toggleCollapsed }) {
     ),
   ];
 
+  const selectedKey = React.useMemo(() => {
+    if (location.pathname === '/admin/profit/profitTableView/details') {
+      return 'skuwiseprofit';
+    }
+
+    return mainPathSplit.length === 1 ? 'home' : mainPathSplit.length === 2 ? mainPathSplit[1] : mainPathSplit[2];
+  }, [location.pathname]);
+
   const isSuperAdmin = Cookies.get('isSuperAdmin') === 'true';
 
   const adminSelectedKey = location.pathname.split('/')[2];
@@ -2108,16 +2116,17 @@ function MenuItems({ toggleCollapsed }) {
       onClick={onClick}
       mode={!topMenu || window.innerWidth <= 991 ? 'inline' : 'horizontal'}
       // // eslint-disable-next-line no-nested-ternary
-      selectedKeys={isSuperAdmin ? [adminSelectedKey] : undefined}
-      defaultSelectedKeys={
-        !topMenu
-          ? [
-              `${
-                mainPathSplit.length === 1 ? 'home' : mainPathSplit.length === 2 ? mainPathSplit[1] : mainPathSplit[2]
-              }`,
-            ]
-          : []
-      }
+      // selectedKeys={isSuperAdmin ? [adminSelectedKey] : undefined}
+      selectedKeys={isSuperAdmin ? [adminSelectedKey] : [selectedKey]}
+      // defaultSelectedKeys={
+      //   !topMenu
+      //     ? [
+      //         `${
+      //           mainPathSplit.length === 1 ? 'home' : mainPathSplit.length === 2 ? mainPathSplit[1] : mainPathSplit[2]
+      //         }`,
+      //       ]
+      //     : []
+      // }
       defaultOpenKeys={!topMenu ? [`${mainPathSplit.length > 2 ? mainPathSplit[1] : 'dashboard'}`] : []}
       overflowedIndicator={<UilEllipsisV />}
       openKeys={openKeys}
