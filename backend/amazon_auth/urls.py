@@ -59,6 +59,8 @@ urlpatterns = [
     path('dashboard-profitability/', views.get_amazon_data_profi_tability, name='get_amazon_data_profi_tability'),
     # path('profitability/details/', views.amazon_profitability_details, name='get_amazon_data_profi_tability_details'),
     path('profitability/details/', views.amazon_profitability_details_transactions_shipping, name='get_amazon_data_profi_tability_details'),    #new api to get shiping from transactions 
+    
+    path('profitability/ads-spend/by-parent-asin/', views.get_parent_asin_ad_spend, name='get_parent_asin_ad_spend'),
     # path('profitability/details/by-parent-asin/', views.amazon_profitability_parent, name='profi_tability_details_by_parent_asin'),
     path('profitability/details/by-parent-asin/', views.amazon_profitability_parent_transactions_shipping, name='profi_tability_details_by_parent_asin'),
     path('profitability/list/by-sku/filtered/', views.sku_profitability_list_filtered, name='sku_profitability_list_filtered'),
