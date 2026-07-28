@@ -9251,6 +9251,33 @@ def amazon_profitability_parent_transactions_shipping(request):
         for row in refund_identifiers
     }
 
+    # ============================================================
+    # REFUNDED SALES MAP
+    # ============================================================
+    
+    refund_tx_ids = refund_tx_to_order.keys()
+    
+    refunded_sales_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=refund_tx_ids,
+            breakdown_type="Refunded Sales"
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+    
+    refunded_sales_by_order = {}
+    
+    for row in refunded_sales_breakdowns:
+        order_id = refund_tx_to_order.get(row["transaction_id"])
+        if not order_id:
+            continue
+    
+        refunded_sales_by_order[order_id] = (
+            refunded_sales_by_order.get(order_id, 0.0)
+            + float(row["total"] or 0)
+        )
+
     order_ids_with_refund = set(refund_tx_to_order.values())
 
     fee_refund_q = Q()
@@ -9270,6 +9297,32 @@ def amazon_profitability_parent_transactions_shipping(request):
     ).values_list('identifier_value', flat=True)
 
     order_ids_with_fee_refund = set(fee_refund_identifiers)
+
+    # ============================================================
+    # FULFILLMENT FEE REFUND MAP
+    # ============================================================
+    
+    fulfillment_fee_refund_breakdowns = (
+        AmazonTransaction.objects.filter(
+            id__in=tx_to_order.keys(),
+            transaction_type="ServiceFee",
+            transaction_status__in=["DEFERRED", "DEFERRED_RELEASED"],
+            description__icontains="EasyshipFulfillmentFeeRefund",
+        )
+        .values("id", "total_amount")
+    )
+    
+    fulfillment_fee_refund_by_order = {}
+    
+    for txn in fulfillment_fee_refund_breakdowns:
+        order_id = tx_to_order.get(txn["id"])
+        if not order_id:
+            continue
+    
+        fulfillment_fee_refund_by_order[order_id] = (
+            fulfillment_fee_refund_by_order.get(order_id, 0.0)
+            + float(txn["total_amount"] or 0)
+        )
 
     refund_amount_by_order = {}
     refund_count_by_order = {}
@@ -9352,6 +9405,7 @@ def amazon_profitability_parent_transactions_shipping(request):
 
     total_sales = total_profit = total_final_net_qty = total_ads = Decimal(0)
     total_net_sales = total_qty = Decimal(0)
+    total_final_net_sales = 0
     total_returns = total_shipping = Decimal(0)
     total_tcs = Decimal(0)
     total_mpfees = Decimal(0)   
@@ -9421,12 +9475,26 @@ def amazon_profitability_parent_transactions_shipping(request):
         # RETURN / CLAIM — aggregated across all orders for this parent_asin row
         # ------------------------------------------------------------
         row_order_ids = [o['order__amazon_order_id'] for o in orders]
-
+        order_fulfillment_fee_refund = Decimal(
+            str(
+                sum(
+                    fulfillment_fee_refund_by_order.get(oid, 0.0)
+                    for oid in row_order_ids
+                )
+            )
+        )
         order_return_amount = sum(refund_amount_by_order.get(oid, 0.0) for oid in row_order_ids)
         order_return_count = sum(refund_count_by_order.get(oid, 0) for oid in row_order_ids)
         order_has_return = any(oid in order_ids_with_refund for oid in row_order_ids)
         order_is_courier_return = any(oid in order_ids_with_fee_refund for oid in row_order_ids)
-
+        order_refunded_sales = Decimal(
+            str(
+                sum(
+                    refunded_sales_by_order.get(oid, 0.0)
+                    for oid in row_order_ids
+                )
+            )
+        )
         if order_has_return and order_is_courier_return:
             order_return_type = "COURIER_RETURN"
         elif order_has_return:
@@ -9483,6 +9551,8 @@ def amazon_profitability_parent_transactions_shipping(request):
         
         )
 
+        final_net_sales = adjusted_gross_sales + order_refunded_sales
+
         # ------------------------------------------------------------
         # SKU GST / TCS
         # ------------------------------------------------------------
@@ -9498,9 +9568,9 @@ def amazon_profitability_parent_transactions_shipping(request):
         if gst_rate > 0:
 
             taxable_value = (
-                adjusted_gross_sales / (1 + (gst_rate / 100))
+                final_net_sales / (1 + (gst_rate / 100))
             )
-            gst_to_pay_amount = adjusted_gross_sales - taxable_value
+            gst_to_pay_amount = final_net_sales - taxable_value
             
             # taxable_value = gross_sales
 
@@ -9609,7 +9679,7 @@ def amazon_profitability_parent_transactions_shipping(request):
         # net_sales = gross_sales + refund + rto
         net_sales = adjusted_gross_sales
         # total_estimatefees += estimated_fees
-        shipping_final = shipping_price
+        shipping_final = ( shipping_price + order_fulfillment_fee_refund )
 
         # mp_gst = (net_sales + shipping_final) * 0.18
        
@@ -9641,18 +9711,7 @@ def amazon_profitability_parent_transactions_shipping(request):
         #     - gst_to_pay_amount
         # )
         
-        profit = (
-            net_sales
-            - estimated_fees
-            + shipping_final  #subsctract shiping
-            - total_cost
-            + tcs_total
-            - mp_gst    # added in profit
-            + ads      # substracting add which is alredy in -ve
-            - gst_to_pay_amount
-        
-        )
-        
+
         print("shipping_final****************",shipping_final)
         print("total_cost>>>>>>>>>>>****************",total_cost)
         print("gst_to_pay_amount>>>>>>>>>>>****************",gst_to_pay_amount)
@@ -9669,11 +9728,29 @@ def amazon_profitability_parent_transactions_shipping(request):
         # )
 
         exp_settlement = (
-            net_sales
-            - shipping_final
+            final_net_sales
+            + shipping_final
             - tcs_total
-            - mp_gst
+            + mp_gst
+            - gst_to_pay_amount
+            - estimated_fees
+            - promo_discount
+            - Decimal(order_claim_amount)
         )
+        
+        profit = (
+            final_net_sales
+            - estimated_fees
+            + shipping_final  #subsctract shiping
+            - total_cost
+            + tcs_total
+            - mp_gst    # added in profit
+            + ads      # substracting add which is alredy in -ve
+            - gst_to_pay_amount
+            - promo_discount
+            - Decimal(order_claim_amount)
+        )
+        
         profit_margin = (profit / net_sales * 100) if net_sales else 0
 
         tacos = (
@@ -9710,7 +9787,6 @@ def amazon_profitability_parent_transactions_shipping(request):
         final_net_qty = final_net_qty - order_return_count 
         
         ret_percent = (order_return_count / net_qty * 100) if net_qty else 0
-        
 
         results.append({
             "asin": asin,
@@ -9728,7 +9804,7 @@ def amazon_profitability_parent_transactions_shipping(request):
 
             "grosssales": format_currency(gross_sales),
             "netsales": format_currency(net_sales),
-
+            "final_net_sales": format_currency(final_net_sales),
             "ads": format_currency(ads),
             "tacos": round(tacos, 2),
             "mp_gst": format_currency(mp_gst),
@@ -9788,6 +9864,7 @@ def amazon_profitability_parent_transactions_shipping(request):
 
         total_sales += gross_sales
         total_net_sales += net_sales
+        total_final_net_sales += final_net_sales
         total_profit += profit
         total_ads += ads
         total_qty += net_qty
@@ -9796,7 +9873,7 @@ def amazon_profitability_parent_transactions_shipping(request):
         total_shipping += shipping_final
         total_tcs += tcs_total
         total_mpfees += t_new_charge
-        total_ret_percent += ret_percent
+        total_ret_percent += Decimal(ret_percent)
         total_stdcost += total_cost
         total_estimatefees += Decimal(estimated_fees)
         total_mp_gst += mp_gst
@@ -9892,6 +9969,7 @@ def amazon_profitability_parent_transactions_shipping(request):
             "totalreturnper": f"{round(total_ret_percent, 2)}%",
             "grosssales": format_currency(total_sales),
             "netsales": format_currency(total_net_sales),
+            "total_final_net_sales": format_currency(total_final_net_sales),
             "profit": format_currency(total_profit),
             "grossprofitper": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
             "mpfees": format_currency(total_mpfees),
@@ -12593,6 +12671,33 @@ def sku_profit_report_transactions_shipping(request):
         for row in refund_identifiers
     }
 
+    # ============================================================
+    # REFUNDED SALES MAP
+    # ============================================================
+    
+    refund_tx_ids = refund_tx_to_order.keys()
+    
+    refunded_sales_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=refund_tx_ids,
+            breakdown_type="Refunded Sales"
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+    
+    refunded_sales_by_order = {}
+    
+    for row in refunded_sales_breakdowns:
+        order_id = refund_tx_to_order.get(row["transaction_id"])
+        if not order_id:
+            continue
+    
+        refunded_sales_by_order[order_id] = (
+            refunded_sales_by_order.get(order_id, 0.0)
+            + float(row["total"] or 0)
+        )
+
     order_ids_with_refund = set(refund_tx_to_order.values())
 
     fee_refund_q = Q()
@@ -12617,6 +12722,55 @@ def sku_profit_report_transactions_shipping(request):
 
     order_ids_with_fee_refund = set(fee_refund_identifiers)
 
+    # ============================================================
+    # FULFILLMENT FEE REFUND MAP
+    # ============================================================
+    
+    fulfillment_fee_refund_breakdowns = (
+        AmazonTransaction.objects.filter(
+            id__in=tx_to_order.keys(),
+            transaction_type="ServiceFee",
+            transaction_status__in=["DEFERRED", "DEFERRED_RELEASED"],
+            description__icontains="EasyshipFulfillmentFeeRefund",
+        )
+        .values("id", "total_amount")
+    )
+    
+    fulfillment_fee_refund_by_order = {}
+    # ============================================================
+    # AMAZON FEES REFUND MAP
+    # ============================================================
+    
+    amazon_fee_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=refund_tx_to_order.keys(),
+            breakdown_type="AmazonFees",
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+    
+    amazon_fee_refund_by_order = {}
+    
+    for row in amazon_fee_breakdowns:
+        order_id = refund_tx_to_order.get(row["transaction_id"])
+        if not order_id:
+            continue
+    
+        amazon_fee_refund_by_order[order_id] = (
+            amazon_fee_refund_by_order.get(order_id, 0.0)
+            + float(row["total"] or 0)
+        )
+
+    for txn in fulfillment_fee_refund_breakdowns:
+        order_id = tx_to_order.get(txn["id"])
+        if not order_id:
+            continue
+    
+        fulfillment_fee_refund_by_order[order_id] = (
+            fulfillment_fee_refund_by_order.get(order_id, 0.0)
+            + float(txn["total_amount"] or 0)
+        )
     # Map order_id -> total refund amount (for courier/customer price split)
     # Map order_id -> total refund amount AND count of refund transactions
     # (an order can have more than one Refund transaction, e.g. partial refunds)
@@ -12727,6 +12881,7 @@ def sku_profit_report_transactions_shipping(request):
     total_ads = total_mpfees = total_shipping = 0
     total_gst = total_tcs = total_cost = 0
     total_net_sales = 0
+    total_final_net_sales = 0
     total_returns = 0
     total_new_charge = 0
     adjusted_gross_sales = 0
@@ -12866,6 +13021,10 @@ def sku_profit_report_transactions_shipping(request):
             float(f.get('other_fee') or 0)
         )
 
+        amazon_fee_refund = amazon_fee_refund_by_order.get(oid, 0.0)
+        
+        estimated_fees -= amazon_fee_refund
+
         shipping_fee = float(f.get('shipping_fee') or 0)
 
         gst = float(f.get('gst') or 0)
@@ -12875,23 +13034,30 @@ def sku_profit_report_transactions_shipping(request):
         gst_rate = float(str(row.get("sku_gst_rate") or 0))
         tcs_rate = float(str(row.get("sku_tcs_rate") or 0))
 
+        refunded_sales = refunded_sales_by_order.get(oid, 0.0)
+        
+        final_net_sales = (
+            adjusted_gross_sales
+            + refunded_sales
+        )
+
         if gst_rate > 0:
 
             taxable_value = (
-                adjusted_gross_sales /
+                final_net_sales /
                 (float("1") + (gst_rate / float("100")))
             )
 
             gst_to_pay_amount = (
-                adjusted_gross_sales - taxable_value
+                final_net_sales - taxable_value
             )
 
             gst_to_pay_perc = gst_rate
 
         else:
 
-            taxable_value = gross_sales
-            gst_to_pay_amount = item_tax
+            taxable_value = final_net_sales
+            gst_to_pay_amount = 0
 
             gst_to_pay_perc = (
                 (gst_to_pay_amount / taxable_value) * float("100")
@@ -12949,9 +13115,12 @@ def sku_profit_report_transactions_shipping(request):
         # ---------------- CALCULATIONS ----------------
         net_sales = adjusted_gross_sales
         
-        final_net_sales = adjusted_gross_sales
 
-        shipping_final = shipping_income
+
+        shipping_final = (
+            shipping_income
+            + fulfillment_fee_refund_by_order.get(oid, 0.0)
+        )
         print("shipping_final>>>>>>>>>>>>>>>>",shipping_final)
 
         mp_gst = (estimated_fees + shipping_final) * 0.18
@@ -12966,22 +13135,27 @@ def sku_profit_report_transactions_shipping(request):
         # print("ads****************",ads)
         
         profit = (
-            net_sales
+            final_net_sales
             - estimated_fees
             + shipping_final  #subsctract shiping
             - cost
             + tcs
             - mp_gst        # added in profit
             + ads           # substracting add which is alredy in -ve
-            - gst_to_pay_amount 
-        
+            - gst_to_pay_amount
+            - promo_discount 
+            - order_claim_amount
         )
 
         exp_settlement = (
-            net_sales
-            - shipping_final
+            final_net_sales
+            + shipping_final
             - tcs
             - mp_gst
+            - gst_to_pay_amount
+            - estimated_fees
+            - promo_discount
+            - order_claim_amount
         )
 
         profit_margin = (profit / net_sales * 100) if net_sales else 0
@@ -13017,6 +13191,8 @@ def sku_profit_report_transactions_shipping(request):
 
             "grosssales": round(gross_sales, 2),
             "netsales": format_currency(net_sales),
+
+            "final_net_sales": format_currency(final_net_sales),
 
             "taxable_value":
             format_currency(taxable_value),
@@ -13082,6 +13258,7 @@ def sku_profit_report_transactions_shipping(request):
         # ---------------- TOTALS ----------------
         total_sales += gross_sales
         total_net_sales += net_sales
+        total_final_net_sales += final_net_sales
         total_profit += profit
         total_qty += net_qty
         total_final_net_qty += final_net_qty
@@ -13118,6 +13295,8 @@ def sku_profit_report_transactions_shipping(request):
         "totals": {
             "grosssales": round(total_sales, 2),
             "netsales": format_currency(total_net_sales),
+            "total_net_sales": format_currency(total_net_sales),
+            "total_final_net_sales": format_currency(total_final_net_sales),
             "total_netquantity": total_qty,
             "total_final_net_qty":total_final_net_qty,
             "profit": format_currency(total_profit),
@@ -14677,6 +14856,28 @@ def amazon_profitability_details_transactions_shipping(request):
         for row in refund_identifiers
     }
 
+    refunded_sales_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=refund_tx_to_order.keys(),
+            breakdown_type="Refunded Sales",
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+    
+    refunded_sales_by_order = {}
+    
+    for row in refunded_sales_breakdowns:
+        order_id = refund_tx_to_order.get(row["transaction_id"])
+        if not order_id:
+            continue
+    
+        refunded_sales_by_order[order_id] = (
+            refunded_sales_by_order.get(order_id, 0.0)
+            + float(row["total"] or 0)
+        )
+        
+
     order_ids_with_refund = set(refund_tx_to_order.values())
 
     fee_refund_q = Q()
@@ -14696,6 +14897,32 @@ def amazon_profitability_details_transactions_shipping(request):
     ).values_list('identifier_value', flat=True)
 
     order_ids_with_fee_refund = set(fee_refund_identifiers)
+
+    # ============================================================
+    # FULFILLMENT FEE REFUND MAP
+    # ============================================================
+    
+    fulfillment_fee_refund_breakdowns = (
+        AmazonTransaction.objects.filter(
+            id__in=tx_to_order.keys(),
+            transaction_type="ServiceFee",
+            transaction_status__in=["DEFERRED", "DEFERRED_RELEASED"],
+            description__icontains="EasyshipFulfillmentFeeRefund",
+        )
+        .values("id", "total_amount")
+    )
+    
+    fulfillment_fee_refund_by_order = {}
+    
+    for txn in fulfillment_fee_refund_breakdowns:
+        order_id = tx_to_order.get(txn["id"])
+        if not order_id:
+            continue
+    
+        fulfillment_fee_refund_by_order[order_id] = (
+            fulfillment_fee_refund_by_order.get(order_id, 0.0)
+            + float(txn["total_amount"] or 0)
+        )
 
     refund_amount_by_order = {}
     refund_count_by_order = {}
@@ -14796,6 +15023,7 @@ def amazon_profitability_details_transactions_shipping(request):
 
     total_sales = total_profit = total_ads = 0
     total_mpfees = total_net_sales = total_qty = total_final_net_qty = 0
+    total_final_net_sales = 0
     total_returns = total_shipping = 0
     total_stdcost = 0
     total_ret_percent = 0
@@ -14957,15 +15185,23 @@ def amazon_profitability_details_transactions_shipping(request):
         
         print("estimated_fees after ????????????????????",estimated_fees)
         
-        shipping_price = tx_shipping_final
         
         
         # ------------------------------------------------------------
         # RETURN / CLAIM — aggregated across all orders for this parent_asin row
         # ------------------------------------------------------------
         row_order_ids = [o['order__amazon_order_id'] for o in orders]
-
+        order_fulfillment_fee_refund = sum(
+                    fulfillment_fee_refund_by_order.get(oid, 0.0)
+                    for oid in row_order_ids
+                )
+            
+        
         order_return_amount = sum(refund_amount_by_order.get(oid, 0.0) for oid in row_order_ids)
+        order_refunded_sales = sum(
+            refunded_sales_by_order.get(oid, 0.0)
+            for oid in row_order_ids
+        )
         order_return_count = sum(refund_count_by_order.get(oid, 0) for oid in row_order_ids)
         order_has_return = any(oid in order_ids_with_refund for oid in row_order_ids)
         order_is_courier_return = any(oid in order_ids_with_fee_refund for oid in row_order_ids)
@@ -15009,6 +15245,10 @@ def amazon_profitability_details_transactions_shipping(request):
         # adjusted_gross_sales = ( gross_sales + item_tax + shipping_price )
         adjusted_gross_sales = ( gross_sales + item_tax  )
 
+        final_net_sales = (
+            adjusted_gross_sales
+            + order_refunded_sales
+        )
         # ----------------------------------------------------------
         # GST RATE
         # ----------------------------------------------------------
@@ -15029,18 +15269,18 @@ def amazon_profitability_details_transactions_shipping(request):
         if gst_rate > 0:
 
             taxable_value = (
-                adjusted_gross_sales /
+                final_net_sales /
                 (1 + (gst_rate / float("100")))
             )
 
             gst_to_pay_amount = (
-                adjusted_gross_sales
+                final_net_sales
                 - taxable_value
             )
 
         else:
 
-            taxable_value = adjusted_gross_sales
+            taxable_value = final_net_sales
 
             gst_to_pay_amount = item_tax
 
@@ -15143,10 +15383,11 @@ def amazon_profitability_details_transactions_shipping(request):
         final_net_qty = max(gross_qty , 0)
     
         net_sales = adjusted_gross_sales
-        shipping_final = shipping_price 
+        
+        shipping_final = ( shipping_price + order_fulfillment_fee_refund ) 
 
         # mp_gst = (net_sales + shipping_final) * 0.18   changes on 13 july
-        mp_gst = (estimated_fees + shipping_final) * 0.18 
+        mp_gst = (estimated_fees + shipping_final) * 0.18
 
         
 
@@ -15184,17 +15425,7 @@ def amazon_profitability_details_transactions_shipping(request):
         
         # )
         
-        profit = (
-            net_sales
-            - estimated_fees
-            + shipping_final  #subsctract shiping
-            - stdcost
-            + tcs_total
-            - mp_gst        # added in profit
-            + ads           # substracting add which is alredy in -ve
-            - gst_to_pay_amount 
-        
-        )
+
         # print("shipping_final****************",shipping_final)
         # print("stdcost>>>>>>>>>>>****************",stdcost)
         # print("gst_to_pay_amount>>>>>>>>>>>****************",gst_to_pay_amount)
@@ -15212,12 +15443,27 @@ def amazon_profitability_details_transactions_shipping(request):
         #     - mp_gst
         # )
         exp_settlement = (
-            net_sales
-            - shipping_final
+            final_net_sales
+            + shipping_final
             - tcs_total
             - mp_gst
+            - gst_to_pay_amount
+            - estimated_fees
+            - promo_discount
+            - order_claim_amount
         )
-        
+        profit = (
+            final_net_sales
+            - estimated_fees
+            + shipping_final  #subsctract shiping
+            - stdcost
+            + tcs_total
+            - mp_gst        # added in profit
+            + ads           # substracting add which is alredy in -ve
+            - gst_to_pay_amount
+            - promo_discount 
+            - order_claim_amount
+        )
         profit_margin = (profit / net_sales * 100) if net_sales else 0
         # tacos = (ads / gross_sales * 100) if gross_sales else 0
         tacos = (
@@ -15232,8 +15478,7 @@ def amazon_profitability_details_transactions_shipping(request):
         final_net_qty = final_net_qty - order_return_count        
         
         ret_percent = (order_return_count / net_qty * 100) if net_qty else 0
-
-
+    
         results.append({
             # "asin": asin,
             "asin": parent_asin, 
@@ -15247,6 +15492,7 @@ def amazon_profitability_details_transactions_shipping(request):
             "final_net_qty":final_net_qty,   # final_net_qty - all retur
             "grosssales": format_currency(gross_sales),
             "netsales": format_currency(net_sales),
+            "final_net_sales": format_currency(final_net_sales),
             # "ads": format_currency(ads),
             "ads": format_currency(ads),
             "ads_sales": format_currency(ads_sales),
@@ -15312,6 +15558,7 @@ def amazon_profitability_details_transactions_shipping(request):
         # -------- TOTALS --------
         total_sales += gross_sales
         total_net_sales += net_sales
+        total_final_net_sales +=  final_net_sales
         total_profit += profit
         total_ads += ads
         total_mpfees += t_new_charge
@@ -15438,6 +15685,7 @@ def amazon_profitability_details_transactions_shipping(request):
             "totalreturnper": f"{round(total_ret_percent, 2)}%",
             "grosssales": format_currency(total_sales),
             "netsales": format_currency(total_net_sales),
+            "total_final_net_sales": format_currency(total_final_net_sales),
             "profit": format_currency(total_profit),
             "grossprofitper": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
             "mpfees": format_currency(total_mpfees),
