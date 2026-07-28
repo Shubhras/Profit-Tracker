@@ -123,6 +123,7 @@ export default function ProfitDetailsView() {
         returnPercent: item.retpercent || 0,
 
         netsales: item.netsales || 0,
+        final_net_sales: item.final_net_sales || 0,
         tcs: item.tcs || 0,
         mp_gst: item.mp_gst,
         mpfees: item.estimatefees || 0,
@@ -185,6 +186,7 @@ export default function ProfitDetailsView() {
       courier_return_count: 'courier_return_count',
       customer_return_count: 'customer_return_count',
       final_net_qty: 'total_final_net_qty',
+      final_net_sales: 'total_final_net_sales',
     };
 
     const value = totals?.[keyMap[dataIndex]];
@@ -374,6 +376,15 @@ export default function ProfitDetailsView() {
       width: getDynamicWidth('netsales', 70),
       ellipsis: true,
       sorter: (a, b) => a.netsales - b.netsales,
+    },
+    {
+      title: 'Net Sales',
+      dataIndex: 'final_net_sales',
+      align: 'center',
+      // width: 70,
+      width: getDynamicWidth('final_net_sales', 70),
+      ellipsis: true,
+      sorter: (a, b) => a.final_net_sales - b.final_net_sales,
     },
     // {
     //   title: 'TCS-IGST',
@@ -994,6 +1005,7 @@ export default function ProfitDetailsView() {
                         customer_return_count: 'customer_return_count',
                         drr: 'drr',
                         final_net_qty: 'total_final_net_qty',
+                        final_net_sales: 'total_final_net_sales',
                       };
 
                       const value = totals?.[keyMap[col.dataIndex]];

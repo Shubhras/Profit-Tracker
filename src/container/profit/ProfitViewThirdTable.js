@@ -150,6 +150,7 @@ export default function ProfitDetailsView() {
       courier_return_count: item.courier_return_count || 0,
       customer_return_count: item.customer_return_count || 0,
       final_net_qty: item.final_net_qty || 0,
+      final_net_sales: item.final_net_sales || 0,
     })) || [];
 
   const columns = [
@@ -309,6 +310,14 @@ export default function ProfitDetailsView() {
       width: 70,
       ellipsis: true,
       sorter: (a, b) => a.netsales - b.netsales,
+    },
+    {
+      title: 'Net Sales',
+      dataIndex: 'final_net_sales',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.final_net_sales - b.final_net_sales,
     },
     {
       title: 'MP fees',
@@ -795,6 +804,7 @@ export default function ProfitDetailsView() {
                       courier_return_count: 'courier_return_count',
                       customer_return_count: 'customer_return_count',
                       final_net_qty: 'total_final_net_qty',
+                      final_net_sales: 'total_final_net_sales',
                     };
 
                     const value = profitData?.totals?.[keyMap[col.dataIndex]];
