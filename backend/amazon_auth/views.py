@@ -9324,6 +9324,31 @@ def amazon_profitability_parent_transactions_shipping(request):
             + float(txn["total_amount"] or 0)
         )
 
+    # ============================================================
+    # AMAZON FEES REFUND MAP
+    # ============================================================
+    
+    amazon_fee_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=refund_tx_to_order.keys(),
+            breakdown_type="AmazonFees",
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+    
+    amazon_fee_refund_by_order = {}
+    
+    for row in amazon_fee_breakdowns:
+        order_id = refund_tx_to_order.get(row["transaction_id"])
+        if not order_id:
+            continue
+    
+        amazon_fee_refund_by_order[order_id] = (
+            amazon_fee_refund_by_order.get(order_id, Decimal("0"))
+            + Decimal(str(row["total"] or 0))
+        )
+
     refund_amount_by_order = {}
     refund_count_by_order = {}
     for txn in refund_txns.filter(id__in=refund_tx_to_order.keys()):
@@ -9475,6 +9500,13 @@ def amazon_profitability_parent_transactions_shipping(request):
         # RETURN / CLAIM — aggregated across all orders for this parent_asin row
         # ------------------------------------------------------------
         row_order_ids = [o['order__amazon_order_id'] for o in orders]
+        order_amazon_fee_refund = sum(
+            (
+                amazon_fee_refund_by_order.get(oid, Decimal("0"))
+                for oid in row_order_ids
+            ),
+            Decimal("0")
+        )
         order_fulfillment_fee_refund = Decimal(
             str(
                 sum(
@@ -9483,6 +9515,8 @@ def amazon_profitability_parent_transactions_shipping(request):
                 )
             )
         )
+        estimated_fees -= order_amazon_fee_refund
+        print("order_amazon_fee_refund", order_amazon_fee_refund)
         order_return_amount = sum(refund_amount_by_order.get(oid, 0.0) for oid in row_order_ids)
         order_return_count = sum(refund_count_by_order.get(oid, 0) for oid in row_order_ids)
         order_has_return = any(oid in order_ids_with_refund for oid in row_order_ids)
@@ -9685,7 +9719,7 @@ def amazon_profitability_parent_transactions_shipping(request):
        
 
         # mp_gst = (net_sales + shipping_final) * Decimal("0.18")  update on 13 july
-        mp_gst = (estimated_fees + shipping_final) * Decimal("0.18")
+        mp_gst = (-abs(estimated_fees) + shipping_final) * Decimal("0.18")
         
         # total_cost = Decimal(row['total_cost'] or 0)
 
@@ -9730,9 +9764,9 @@ def amazon_profitability_parent_transactions_shipping(request):
         exp_settlement = (
             final_net_sales
             + shipping_final
-            - tcs_total
-            + mp_gst
-            - gst_to_pay_amount
+            + ads 
+            + tcs_total
+            - mp_gst
             - estimated_fees
             - promo_discount
             - Decimal(order_claim_amount)
@@ -9740,15 +9774,14 @@ def amazon_profitability_parent_transactions_shipping(request):
         
         profit = (
             final_net_sales
-            - estimated_fees
             + shipping_final  #subsctract shiping
-            - total_cost
-            + tcs_total
-            - mp_gst    # added in profit
             + ads      # substracting add which is alredy in -ve
-            - gst_to_pay_amount
+            + tcs_total
+            - estimated_fees
+            + mp_gst    # added in profit
             - promo_discount
             - Decimal(order_claim_amount)
+            - total_cost
         )
         
         profit_margin = (profit / net_sales * 100) if net_sales else 0
@@ -9786,7 +9819,7 @@ def amazon_profitability_parent_transactions_shipping(request):
         
         final_net_qty = final_net_qty - order_return_count 
         
-        ret_percent = (order_return_count / net_qty * 100) if net_qty else 0
+        ret_percent = (order_return_count / final_net_qty * 100) if net_qty else 0
 
         results.append({
             "asin": asin,
@@ -9865,6 +9898,7 @@ def amazon_profitability_parent_transactions_shipping(request):
         total_sales += gross_sales
         total_net_sales += net_sales
         total_final_net_sales += final_net_sales
+        total_promo_discount += promo_discount
         total_profit += profit
         total_ads += ads
         total_qty += net_qty
@@ -9873,7 +9907,7 @@ def amazon_profitability_parent_transactions_shipping(request):
         total_shipping += shipping_final
         total_tcs += tcs_total
         total_mpfees += t_new_charge
-        total_ret_percent += Decimal(ret_percent)
+        total_ret_percent = (total_return_count / total_final_net_qty * 100) if total_final_net_qty else 0
         total_stdcost += total_cost
         total_estimatefees += Decimal(estimated_fees)
         total_mp_gst += mp_gst
@@ -9893,7 +9927,7 @@ def amazon_profitability_parent_transactions_shipping(request):
         ads_cost = -abs(data["cost"])
         if ads_cost == 0:
             continue
-            
+        ads_margin = (ads_cost / 100 * 100) if 1 else 0
         results.append({
             "asin": data["asin"],
             "parent_asin": data["parent_asin"],
@@ -9922,7 +9956,7 @@ def amazon_profitability_parent_transactions_shipping(request):
             "shippingfees": format_currency(0),
             "tcs": format_currency(0),
             "profit": format_currency(ads_cost),
-            "grossprofitper": 0,
+            "grossprofitper": round(ads_margin, 2),
             "retpercent": 0,
             "returnqty": 0,
             "gst": format_currency(0),
@@ -12638,11 +12672,11 @@ def sku_profit_report_transactions_shipping(request):
             + float(bd["total"] or 0)
         )
 
-    print(tx_shipping_map)
+    # print(tx_shipping_map)
    
-    print(tx_to_order)
-    print(tx_shipping_map)        
-    print("tx_shipping_map>>>>>>>>>>>>>>>>>>", tx_shipping_map)  
+    # print(tx_to_order)
+    # print(tx_shipping_map)        
+    # print("tx_shipping_map>>>>>>>>>>>>>>>>>>", tx_shipping_map)  
     
     
     # ============================================================
@@ -13038,8 +13072,10 @@ def sku_profit_report_transactions_shipping(request):
         
         final_net_sales = (
             adjusted_gross_sales
-            + refunded_sales
         )
+        if  order_replacement_count or order_has_return and gross_qty == order_return_count:
+            final_net_sales = 0
+            cost = 0
 
         if gst_rate > 0:
 
@@ -13116,14 +13152,13 @@ def sku_profit_report_transactions_shipping(request):
         net_sales = adjusted_gross_sales
         
 
-
         shipping_final = (
             shipping_income
             + fulfillment_fee_refund_by_order.get(oid, 0.0)
         )
-        print("shipping_final>>>>>>>>>>>>>>>>",shipping_final)
+        # print("shipping_final>>>>>>>>>>>>>>>>",shipping_final)
 
-        mp_gst = (estimated_fees + shipping_final) * 0.18
+        mp_gst = (-abs(estimated_fees) + shipping_final) * 0.18
 
         
         # print("shipping_final****************",shipping_final)
@@ -13136,27 +13171,28 @@ def sku_profit_report_transactions_shipping(request):
         
         profit = (
             final_net_sales
-            - estimated_fees
-            + shipping_final  #subsctract shiping
-            - cost
+            + shipping_final
+            + ads
             + tcs
-            - mp_gst        # added in profit
-            + ads           # substracting add which is alredy in -ve
-            - gst_to_pay_amount
-            - promo_discount 
+            - estimated_fees
+            - mp_gst
+            - promo_discount
             - order_claim_amount
+            - cost
+        
         )
 
         exp_settlement = (
             final_net_sales
             + shipping_final
-            - tcs
-            - mp_gst
-            - gst_to_pay_amount
+            + ads
+            + tcs
             - estimated_fees
+            - mp_gst
             - promo_discount
             - order_claim_amount
         )
+
 
         profit_margin = (profit / net_sales * 100) if net_sales else 0
         tacos = (
@@ -13259,7 +13295,7 @@ def sku_profit_report_transactions_shipping(request):
         total_sales += gross_sales
         total_net_sales += net_sales
         total_final_net_sales += final_net_sales
-        total_profit += profit
+        total_profit += round(profit, 2)
         total_qty += net_qty
         total_final_net_qty += final_net_qty
         total_returns += return_units
@@ -13267,19 +13303,18 @@ def sku_profit_report_transactions_shipping(request):
         total_mpfees += mpfees
         total_shipping += shipping_final
         total_gst += gst
-        total_tcs += tcs
+        total_tcs += round(tcs, 2)
         total_cost += cost
         total_new_charge += new_charge
         total_estimatefees += estimated_fees
-        total_mp_gst += mp_gst
-        total_taxable_value += taxable_value
-        total_gst_payable += gst_to_pay_amount
-        total_exp_settlement += exp_settlement
+        total_mp_gst += round(mp_gst, 2)
+        total_taxable_value += round(taxable_value, 2)
+        total_gst_payable += round(gst_to_pay_amount, 2)
+        total_exp_settlement += round(exp_settlement, 2)
         total_promo_discount += promo_discount
         
         total_return_count += order_replacement_count
         customer_return_count += order_replacement_count
-        
 
     print("totale ads spends", total_ads)
 
@@ -13304,7 +13339,7 @@ def sku_profit_report_transactions_shipping(request):
             # "total_ret_percent": f"{round((total_returns / total_qty * 100), 2) if total_qty else 0.0}%",
             
             "total_returns": total_return_count,
-            "total_ret_percent": f"{round((total_return_count / total_qty * 100), 2) if total_qty else 0.0}%",
+            "total_ret_percent": f"{round((total_return_count / total_final_net_qty * 100), 2) if total_final_net_qty else 0.0}%",
 
             "totalprofitmargin": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
 
@@ -15445,26 +15480,26 @@ def amazon_profitability_details_transactions_shipping(request):
         exp_settlement = (
             final_net_sales
             + shipping_final
-            - tcs_total
-            - mp_gst
-            - gst_to_pay_amount
+            + ads
+            + tcs_total
             - estimated_fees
+            - mp_gst
             - promo_discount
             - order_claim_amount
         )
         profit = (
             final_net_sales
-            - estimated_fees
-            + shipping_final  #subsctract shiping
-            - stdcost
+            + shipping_final
+            + ads
             + tcs_total
-            - mp_gst        # added in profit
-            + ads           # substracting add which is alredy in -ve
-            - gst_to_pay_amount
-            - promo_discount 
+            - estimated_fees
+            - mp_gst
+            - promo_discount
             - order_claim_amount
+            - stdcost
+        
         )
-        profit_margin = (profit / net_sales * 100) if net_sales else 0
+        profit_margin = (profit / final_net_sales * 100) if net_sales else 0
         # tacos = (ads / gross_sales * 100) if gross_sales else 0
         tacos = (
             abs(ads) / gross_sales * 100
@@ -15477,7 +15512,7 @@ def amazon_profitability_details_transactions_shipping(request):
         
         final_net_qty = final_net_qty - order_return_count        
         
-        ret_percent = (order_return_count / net_qty * 100) if net_qty else 0
+        ret_percent = (order_return_count / final_net_qty * 100) if net_qty else 0
     
         results.append({
             # "asin": asin,
@@ -15569,7 +15604,7 @@ def amazon_profitability_details_transactions_shipping(request):
         total_stdcost += stdcost
         total_gst += gst
         total_tcs += tcs_total
-        total_ret_percent += ret_percent
+        
         total_estimatefees += estimated_fees
         total_mp_gst += mp_gst
 
@@ -15581,7 +15616,7 @@ def amazon_profitability_details_transactions_shipping(request):
         total_return_count += order_replacement_count
         
         customer_return_count += order_replacement_count
-
+        total_ret_percent = (total_return_count / total_final_net_qty * 100) if total_final_net_qty else 0
     # ====== START: ADD ASINS WITH AD SPEND BUT NO ORDERS ======
     for p_asin, data in ads_by_parent.items():
         if p_asin in processed_parent_asins:
@@ -15593,7 +15628,8 @@ def amazon_profitability_details_transactions_shipping(request):
         ads_cost = -abs(data["cost"])
         if ads_cost == 0:
             continue
-            
+        ads_margin = (ads_cost / 100 * 100) if 1 else 0
+        # ads_margin = 0
         results.append({
             "asin": p_asin, 
             "parent_asin": p_asin, 
@@ -15624,7 +15660,7 @@ def amazon_profitability_details_transactions_shipping(request):
             "tax_amount": format_currency(0),
             "shippingfees": format_currency(0),
             "profit": format_currency(ads_cost),
-            "grossprofitper": 0,
+            "grossprofitper": round(ads_margin, 2),
             "returnqty": 0,
             "retpercent": 0,
             "tacos": 0,
@@ -15687,7 +15723,7 @@ def amazon_profitability_details_transactions_shipping(request):
             "netsales": format_currency(total_net_sales),
             "total_final_net_sales": format_currency(total_final_net_sales),
             "profit": format_currency(total_profit),
-            "grossprofitper": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
+            "grossprofitper": round((total_profit / total_final_net_sales * 100), 2) if total_final_net_sales else 0,
             "mpfees": format_currency(total_mpfees),
             "mp_gst": format_currency(total_mp_gst),
             # "estimatefees": format_currency(total_estimatefees),
