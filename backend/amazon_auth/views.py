@@ -2346,8 +2346,8 @@ def get_full_dashboard(request):
     # tacos = (abs(ads_amount) / net_sales * 100) if net_sales else 0
     
     # ---------------- METRICS ----------------
-    margin = (profit / accurate_net_sales * 100) if net_sales else 0
-    roi = (ads_sales / abs(ads_amount) * 100) if total_fees else 0
+    margin = (profit / accurate_net_sales * 100) if accurate_net_sales else 0
+    roi = (ads_sales / abs(ads_amount) * 100) if ads_amount else 0
     # roi = (ads_amount / abs(ads_sales) * 100) if total_fees else 0
     print("net_sales>>>>>>>>>>>>>>>>>>>>>",net_sales)
     tacos = (abs(ads_amount) / accurate_net_sales * 100) if accurate_net_sales else 0
