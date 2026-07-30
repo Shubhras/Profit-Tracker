@@ -58,8 +58,50 @@ class UserLoginAPI(APIView):
         refresh = RefreshToken.for_user(user)
 
         # ✅ subscription check
-        sub = UserSubscription.objects.filter(user=user).order_by("-created_at").first()
+        # sub = UserSubscription.objects.filter(user=user).order_by("-created_at").first()
+        # has_subscription = sub is not None and sub.status == "active"
+        sub = (
+            UserSubscription.objects
+            .select_related("plan")
+            .prefetch_related("plan__modules", "plan__submodules")
+            .filter(user=user)
+            .order_by("-created_at")
+            .first()
+        )
+
         has_subscription = sub is not None and sub.status == "active"
+
+        subscription_data = None
+
+        if sub and sub.plan:
+            subscription_data = {
+                "subscription_id": sub.id,
+                "plan_id": sub.plan.id,
+                "plan_name": sub.plan.plan_name,
+                "slug": sub.plan.slug,
+                "billing_cycle": sub.billing_cycle,
+                "status": sub.status,
+                "start_date": sub.start_date,
+                "end_date": sub.end_date,
+                "amount": sub.amount,
+                "modules": [
+                    {
+                        "module_id": module.id,
+                        "module_name": module.module_name,
+                        "slug": getattr(module, "slug", None),
+                    }
+                    for module in sub.plan.modules.all()
+                ],
+                "submodules": [
+                    {
+                        "submodule_id": submodule.id,
+                        "submodule_name": submodule.submodule_name,
+                        "slug": getattr(submodule, "slug", None),
+                        "module_id": submodule.module.id if getattr(submodule, "module", None) else None,
+                    }
+                    for submodule in sub.plan.submodules.select_related("module")
+                ]
+            }
 
         return Response({
             "statusCode": 200,
@@ -78,6 +120,7 @@ class UserLoginAPI(APIView):
 
                 # ✅ new field
                 "has_subscription": has_subscription,
-                "subscription_status": sub.status if sub else "no_subscription"
+                "subscription_status": sub.status if sub else "no_subscription",
+                "subscription": subscription_data
             }
         }, status=status.HTTP_200_OK)
