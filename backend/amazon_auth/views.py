@@ -10696,7 +10696,7 @@ def amazon_profitability_parent_transactions_shipping(request):
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
-        .values('asin','seller_sku', 'parent_asin', 'order__amazon_order_id', 'quantity_ordered', 'item_price', 'item_tax')
+        .values('asin','seller_sku', 'parent_asin', 'order__amazon_order_id', 'quantity_ordered', 'item_price', 'item_tax', 'promotion_discount')
     )
 
     # asin_map = {}
@@ -11296,7 +11296,8 @@ def amazon_profitability_parent_transactions_shipping(request):
             if o_replacement_count or (o_has_return and qty == o_return_count):
                 o_gross = Decimal("0")
                 o_cost = Decimal("0")
-                promo_discount = Decimal("0")
+                o_promo = Decimal(str(o.get('promotion_discount') or 0))
+                promo_discount -= o_promo
 
             final_net_sales += o_gross
             total_cost += o_cost
@@ -11504,7 +11505,8 @@ def amazon_profitability_parent_transactions_shipping(request):
         total_mp_gst += Decimal(str(round(mp_gst, 2)))
         total_taxable_value += Decimal(str(round(taxable_value, 2)))
         total_gst_payable += Decimal(str(round(gst_to_pay_amount, 2)))
-        total_exp_settlement += Decimal(str(round(exp_settlement, 2)))
+        total_exp_settlement += Decimal(str(round(exp_settlement, 2)))  
+        total_promo_discount += Decimal(str(round(promo_discount, 2))) 
         
         # total_return_count += order_replacement_count
         # print("total_return_count out >>>>>>>>>>>>>>>>>>>>>>>>>>>",total_return_count)
@@ -18865,7 +18867,7 @@ def amazon_profitability_details_transactions_shipping(request):
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
-        .values('asin','parent_asin', 'order__amazon_order_id', 'quantity_ordered', 'item_price', 'item_tax')
+        .values('asin','parent_asin', 'order__amazon_order_id', 'quantity_ordered', 'item_price', 'item_tax', 'promotion_discount')
     )
 
     child_parent_map = {}
@@ -19386,7 +19388,8 @@ def amazon_profitability_details_transactions_shipping(request):
             if o_replacement_count or (o_has_return and qty == o_return_count):
                 o_gross = 0.0
                 o_cost = 0.0
-                promo_discount =  0.0
+                o_promo = float(str(o.get('promotion_discount') or 0))
+                promo_discount -= o_promo
 
             final_net_sales += o_gross
             total_cost += o_cost
