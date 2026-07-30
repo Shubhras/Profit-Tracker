@@ -11589,8 +11589,8 @@ def amazon_profitability_parent_transactions_shipping(request):
             "replacement_return_count": 0,
         })
         
-    total_ads += ads_cost
-    total_profit += ads_cost
+        total_ads += ads_cost
+        total_profit += ads_cost
     
     # total_return_count += order_replacement_count
     print("total_customer_return_count out >>>>>>>>>>>>>>>>>>>>>>>>>>>",total_customer_return_count)
@@ -19730,7 +19730,12 @@ def amazon_profitability_details_transactions_shipping(request):
             "netsales": format_currency(total_net_sales),
             "total_final_net_sales": format_currency(total_final_net_sales),
             "profit": format_currency(total_profit),
-            "grossprofitper": round((total_profit / total_final_net_sales * 100), 2) if total_final_net_sales else 0,
+            # "grossprofitper": round((total_profit / total_final_net_sales * 100), 2) if total_final_net_sales else 0,
+            "grossprofitper": (
+                round((total_profit / total_final_net_sales) * 100, 2)
+                if total_final_net_sales
+                else round(total_profit, 2)
+            ),
             "mpfees": format_currency(total_mpfees),
             "mp_gst": format_currency(total_mp_gst),
             # "estimatefees": format_currency(total_estimatefees),
