@@ -155,7 +155,7 @@ export default function ProfitDetailsView() {
         // grossprofit: Number(sitem.grossprofit) || 0,
         profit: item.profit || 0,
         // profitPercent: Number(item.grossprofitper) || 0,
-        profitPercent: Math.round(Number(item.grossprofitper)) || 0,
+        profitPercent: item.grossprofitper || 0,
 
         // settledamount: Number(item.profit_settled_amount) || 0,
       })) || [];
@@ -598,21 +598,32 @@ export default function ProfitDetailsView() {
       width: getDynamicWidth('profitPercent', 70),
       ellipsis: true,
       sorter: (a, b) => a.profitPercent - b.profitPercent,
-      render: (v) => {
-        const value = Math.round(v || 0);
+      // render: (v) => {
+      //   const value = Math.round(v || 0);
 
-        return (
-          <button type="button" className="cursor-pointer bg-transparent border-none">
-            <span
-              style={{
-                color: value < 0 ? 'red' : 'green',
-              }}
-            >
-              {value}%
-            </span>
-          </button>
-        );
-      },
+      //   return (
+      //     <button type="button" className="cursor-pointer bg-transparent border-none">
+      //       <span
+      //         style={{
+      //           color: value < 0 ? 'red' : 'green',
+      //         }}
+      //       >
+      //         {value}%
+      //       </span>
+      //     </button>
+      //   );
+      // },
+      render: (v) => (
+        <button type="button" className="cursor-pointer bg-transparent border-none">
+          <span
+            style={{
+              color: Number(v) < 0 ? 'red' : 'green',
+            }}
+          >
+            {v ?? 0}%
+          </span>
+        </button>
+      ),
     },
 
     // {

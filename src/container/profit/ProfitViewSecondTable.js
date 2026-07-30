@@ -137,7 +137,7 @@ export default function ProfitViewSecondTable() {
         // grossprofit: Number(sitem.grossprofit) || 0,
         profit: item.profit || 0,
         // profitPercent: Number(item.grossprofitper) || 0,
-        profitPercent: Math.round(Number(item.grossprofitper)) || 0,
+        profitPercent: item.grossprofitper || 0,
         return_type: item.return_type || '-',
         claim_amount: item.claim_amount || 0,
         promo_discount: item.promo_discount || 0,
