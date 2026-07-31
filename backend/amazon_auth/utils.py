@@ -7,7 +7,7 @@ import time
 import pandas as pd
 from .models import * 
 
-# 🔴 IMPORTANT: change app name here
+#  IMPORTANT: change app name here
 from amazon_auth.models import Order  
 
 # ---------------------------
@@ -838,7 +838,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
-        .values('asin', 'seller_sku', 'order__amazon_order_id', 'quantity_ordered', 'item_price', 'item_tax')
+        .values('asin', 'seller_sku', 'order__amazon_order_id', 'quantity_ordered', 'item_price', 'item_tax', 'promotion_discount')
     )
 
     asin_to_orders = defaultdict(list)
@@ -1116,7 +1116,6 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
     # but they are NOT deduplicated across rows that share an ASIN with
     # multiple seller_sku variants — do not sum them across sku_results to
     # get a dataset-wide total. Use return_claim_summary (above) for that.
-    claimed_shipping_order_ids = set()
     processed_skus = set()
 
     sku_results = []
@@ -1131,29 +1130,24 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
         item_tax = float(row['item_tax'] or 0)
         qty = int(row['qty'] or 0)
 
-        # Only claim shipping for orders not already attributed to an
-        # earlier row (e.g. a sibling child ASIN of the same parent).
         row_orders = asin_to_orders.get((asin, seller_sku), [])
         row_order_ids = {o['order__amazon_order_id'] for o in row_orders}
-        unclaimed_order_ids = row_order_ids - claimed_shipping_order_ids
 
         amazon_fee_refund_total = sum(
             amazon_fee_refund_by_order.get(oid, 0.0)
-            for oid in unclaimed_order_ids
+            for oid in row_order_ids
         )
         fulfillment_fee_refund_total = sum(
             fulfillment_fee_refund_by_order.get(oid, 0.0)
-            for oid in unclaimed_order_ids
+            for oid in row_order_ids
         )
 
         shipping_final = sum(
             tx_shipping_map.get(oid, 0.0)
-            for oid in unclaimed_order_ids
+            for oid in row_order_ids
         )
         
         shipping_final += fulfillment_fee_refund_total
-
-        claimed_shipping_order_ids |= unclaimed_order_ids
 
         # ------------------------------------------------------------
         # RETURN / CLAIM — aggregated across all orders for this ASIN row
@@ -1199,7 +1193,8 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
             if o_replacement_count or (o_has_return and o_qty == o_return_count):
                 o_gross = 0.0
                 o_cost = 0.0
-                promo_discount = 0.0
+                o_promo = float(str(o.get('promotion_discount') or 0))
+                promo_discount -= o_promo
 
             final_net_sales += o_gross
             stdcost += o_cost
@@ -1281,6 +1276,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
             "is_claim": order_has_claim,
             "claim_count": order_claim_count,
             "claim_amount": round(order_claim_amount, 2),
+            "promo_discount": round(promo_discount, 2),
         })
 
     # ====== START: ADD SKUS WITH AD SPEND BUT NO ORDERS ======
@@ -1329,6 +1325,8 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
     # ====== END: ADD SKUS WITH AD SPEND BUT NO ORDERS ======
 
     return sku_results, return_claim_summary
+
+
 
 def export_order_to_excel(file_path="orders.xlsx"):
     wb = Workbook()
@@ -1687,18 +1685,6 @@ def normalize_financial_events(payload):
     return result
 
 
-
-# def classify_event(event_type):
-#     if event_type == "ShipmentEvent":
-#         return "SALE"
-#     elif event_type == "RefundEvent":
-#         return "REFUND"
-#     elif event_type == "GuaranteeClaimEvent":
-#         return "CLAIM"
-#     elif event_type in ["ServiceFeeEvent", "FeeEvent"]:
-#         return "FEE"
-#     else:
-#         return "OTHER"
     
 
 def classify_event(event_type):
@@ -1727,50 +1713,6 @@ def get_val(row, *keys, default=0):
 def format_currency(value):
     value = float(value or 0)
     return f"-₹{abs(round(value, 2))}" if value < 0 else f"₹{round(value, 2)}"
-
-# def extract_fees_and_tcs_per_asin(raw_list, sku_asin_map=None):
-#     asin_map = {}
-
-#     for raw in raw_list:
-#         if not isinstance(raw, dict):
-#             continue
-
-#         try:
-#             item_lists = []
-#             item_lists.extend(raw.get("ShipmentItemList", []))
-#             item_lists.extend(raw.get("ShipmentItemAdjustmentList", []))
-
-#             for item in item_lists:
-#                 # sku = item.get("SellerSKU")
-#                 asin = item.get("ASIN")
-#                 sku = normalize_sku(item.get("SellerSKU"))
-
-#                 # 🔥 FIX SKU → ASIN
-#                 if not asin and sku and sku_asin_map:
-#                     asin = sku_asin_map.get(sku)
-
-#                 if not asin:
-#                     continue
-
-#                 asin_map.setdefault(asin, {"fee": 0, "tcs": 0})
-
-#                 # -------- FEES --------
-#                 for fee in item.get("ItemFeeList", []) + item.get("ItemFeeAdjustmentList", []):
-#                     asin_map[asin]["fee"] += float(
-#                         fee.get("FeeAmount", {}).get("CurrencyAmount", 0) or 0
-#                     )
-
-#                 # -------- TCS --------
-#                 for charge in item.get("ItemChargeList", []):
-#                     if charge.get("ChargeType") == "TCS-IGST":
-#                         asin_map[asin]["tcs"] += float(
-#                             charge.get("ChargeAmount", {}).get("CurrencyAmount", 0) or 0
-#                         )
-
-#         except Exception:
-#             pass
-
-#     return asin_map
 
 
 from decimal import Decimal
