@@ -1,6 +1,13 @@
 import React, { useEffect } from 'react';
 import { Table, Card, Modal, Tooltip, Checkbox, Button, Dropdown } from 'antd';
-import { EyeOutlined, FilterOutlined, SearchOutlined, ArrowLeftOutlined, SettingOutlined } from '@ant-design/icons';
+import {
+  EyeOutlined,
+  FilterOutlined,
+  SearchOutlined,
+  ArrowLeftOutlined,
+  SettingOutlined,
+  CloseCircleOutlined,
+} from '@ant-design/icons';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 // import ProfitFilterBar from './component/ProfitFilterBar';
@@ -64,6 +71,8 @@ export default function ProfitDetailsView() {
   const [previewImage, setPreviewImage] = React.useState('');
   const [previewOpen, setPreviewOpen] = React.useState(false);
   const [visibleColumns, setVisibleColumns] = React.useState([]);
+  const [search, setSearch] = React.useState('');
+  const [debouncedSearch, setDebouncedSearch] = React.useState('');
 
   const channelLogoMap = {
     'Amazon-India': amazon,
@@ -76,6 +85,10 @@ export default function ProfitDetailsView() {
 
   const apipayload = {
     filters: {
+      ...(debouncedSearch.trim() && {
+        search: debouncedSearch.trim(),
+      }),
+
       fromDate: dateRange?.fromDate || null,
       endDate: dateRange?.endDate || null,
       channel: {
@@ -98,9 +111,21 @@ export default function ProfitDetailsView() {
   };
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPagination((prev) => ({
+        ...prev,
+        current: 1,
+      }));
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
     if (!id) return;
     dispatch(getProfitDetailsByParentId(apipayload));
-  }, [id, dateRange, globalChannel, pagination]);
+  }, [id, dateRange, globalChannel, pagination, debouncedSearch]);
 
   const dataSource =
     profitData?.response?.map((item, index) => ({
@@ -623,7 +648,7 @@ export default function ProfitDetailsView() {
     <>
       <main className="min-h-[600px] px-3 py-3 pb-[10px]">
         <Card bordered={false}>
-          <div className="flex items-center justify-between gap-3 mb-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
             <button
               type="button"
               onClick={() => navigate(-1)}
@@ -632,24 +657,37 @@ export default function ProfitDetailsView() {
               <ArrowLeftOutlined className="text-[#374151]" />
             </button>
 
-            <div className="flex items-center gap-3">
-              <div className="relative w-[220px]">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+              {/* Search */}
+              <div className="relative w-[220px] lg:w-full md:w-full sm:w-full">
                 <input
                   type="text"
                   placeholder="Search..."
-                  className="w-full h-[35px] rounded-xl border border-[#e5e7eb] bg-white pl-4 pr-10 text-[12px] outline-none shadow-sm"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full h-[35px] rounded-lg border border-[#e5e7eb] bg-white pl-4 pr-10 text-[12px] outline-none shadow-sm"
                 />
 
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af]">
-                  <SearchOutlined style={{ fontSize: 14 }} />
+                  {search ? (
+                    <button
+                      type="button"
+                      onClick={() => setSearch('')}
+                      className="flex items-center justify-center cursor-pointer hover:text-[#374151]"
+                    >
+                      <CloseCircleOutlined size={16} />
+                    </button>
+                  ) : (
+                    <SearchOutlined style={{ fontSize: 14 }} />
+                  )}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 lg:w-full lg:justify-end md:w-full md:justify-between sm:w-full sm:justify-between">
                 <div className="relative">
                   <button
                     type="button"
                     onClick={() => setShowFilters(!showFilters)}
-                    className="h-[35px] px-2 rounded-xl border border-[#e5e7eb] bg-white flex items-center gap-2 text-[12px] font-medium shadow-sm transition-all"
+                    className="h-[35px] px-3 rounded-lg border border-[#e5e7eb] bg-white flex items-center gap-2 text-[12px] font-medium shadow-sm transition-all whitespace-nowrap"
                   >
                     <FilterOutlined style={{ fontSize: 14 }} />
 
@@ -669,7 +707,7 @@ export default function ProfitDetailsView() {
                   </button>
 
                   {showFilters && (
-                    <div className="absolute right-0 top-[50px] w-[260px] bg-white border border-[#ebecef] rounded-2xl shadow-xl p-4 z-50">
+                    <div className="absolute right-0 top-[50px] w-[260px] max-w-[calc(100vw-24px)] bg-white border border-[#ebecef] rounded-2xl shadow-xl p-4 z-50">
                       <div className="space-y-4">
                         {[
                           ['ads', 'With Ads'],
@@ -718,10 +756,10 @@ export default function ProfitDetailsView() {
                 </div>
                 <Dropdown trigger={['click']} dropdownRender={() => manageColumnsDropdown} placement="bottomRight">
                   <Button
-                    icon={<SettingOutlined />}
-                    className="flex items-center !h-[35px] !rounded-xl !border-[#e5e7eb]"
+                    icon={<SettingOutlined style={{ fontSize: 14 }} />}
+                    className="!flex !items-center !h-[35px] !rounded-lg !border-[#e5e7eb] whitespace-nowrap"
                   >
-                    Manage Columns
+                    <span className="text-[#4B5563] text-[13px]">Manage Columns</span>
                   </Button>
                 </Dropdown>
               </div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Spin, Tooltip, Checkbox, Dropdown, Button } from 'antd';
-import { SearchOutlined, SettingOutlined } from '@ant-design/icons';
+import { SearchOutlined, SettingOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { getEstimatedFees } from '../../redux/dashboard/actionCreator';
 
@@ -275,24 +275,37 @@ function EstimatedFees() {
       <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
         <h2 className="text-[20px] font-semibold mb-4">Estimated Fees</h2>
 
-        <div className="flex items-center justify-between gap-3 mb-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           {/* Search */}
-          <div className="relative w-[280px]">
+          <div className="relative flex-1 min-w-[240px] lg:min-w-full md:w-full">
             <input
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               placeholder="Search by SKU, ASIN, OrderID, "
-              className="w-full h-[30px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[12px] outline-none"
+              className="w-full h-[35px] rounded-lg border border-[#e5e7eb] bg-white pl-4 pr-10 text-[12px] outline-none shadow-sm"
             />
-            <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
+            {/* <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af]" /> */}
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af]">
+              {searchText ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchText('')}
+                  className="flex items-center justify-center cursor-pointer hover:text-[#374151]"
+                >
+                  <CloseCircleOutlined size={16} />
+                </button>
+              ) : (
+                <SearchOutlined style={{ fontSize: 14 }} />
+              )}
+            </span>
           </div>
 
           {/* Right Side */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 lg:w-full lg:justify-end md:w-full md:justify-between sm:w-full sm:justify-between">
             <select
               value={fullfilment}
               onChange={(e) => setFullfilment(e.target.value)}
-              className="h-[30px] w-[150px] px-2 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
+              className="h-[30px] w-[150px] lg:flex-1 md:flex-1 sm:w-full px-2 rounded-lg border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
             >
               <option value="">All Fulfillment</option>
               <option value="AFN">AFN</option>
@@ -301,10 +314,10 @@ function EstimatedFees() {
 
             <Dropdown trigger={['click']} dropdownRender={() => manageColumnsDropdown} placement="bottomRight">
               <Button
-                icon={<SettingOutlined />}
-                className="!h-[30px] !flex !items-center !justify-center gap-1 text-[13px] !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium"
+                icon={<SettingOutlined style={{ fontSize: 14 }} />}
+                className="!h-[30px] !flex !items-center !justify-center gap-1 text-[13px] !rounded-lg !border-[#dbe1e8] !text-[#374151] !font-medium"
               >
-                Manage Columns
+                <span className="text-[#4B5563] text-[13px]">Manage Columns</span>
               </Button>
             </Dropdown>
           </div>

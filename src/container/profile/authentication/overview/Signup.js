@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-// import ReCAPTCHA from 'react-google-recaptcha';
+import ReCAPTCHA from 'react-google-recaptcha';
 import { Link, useNavigate } from 'react-router-dom';
 import { Form, Input, Button, message } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
@@ -10,14 +10,18 @@ function SignUp() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, error } = useSelector((state) => state.auth);
+  const [captchaToken, setCaptchaToken] = useState(null);
 
   const [checked, setChecked] = useState(false);
-  // const [captchaToken, setCaptchaToken] = useState(null);
 
   const handleSubmit = useCallback(
     (values) => {
       if (!checked) {
         message.error('You must accept Terms & Conditions before registering.');
+        return;
+      }
+      if (!captchaToken) {
+        message.error('Please verify that you are not a robot.');
         return;
       }
       // if (!captchaToken) {
@@ -37,7 +41,7 @@ function SignUp() {
         state: values.state,
         pin_code: values.pincode,
         accepted_terms: true,
-        // captcha_token: captchaToken,
+        captcha_token: captchaToken,
       };
 
       console.log('Register Payload:', payload);
@@ -49,8 +53,13 @@ function SignUp() {
         }),
       );
     },
-    [dispatch, navigate, checked],
+    [dispatch, navigate, checked, captchaToken],
   );
+  // console.log('SITE KEY:', process.env.REACT_APP_RECAPTCHA_SITE_KEY);
+  // console.log('API =>', process.env.REACT_APP_API_ENDPOINT);
+  // console.log('SITE =>', process.env.REACT_APP_RECAPTCHA_SITE_KEY);
+  // console.log('MY CAPTCHA =>', process.env.REACT_APP_MY_CAPTCHA_KEY);
+  // console.log(process.env);
 
   return (
     <div className="w-full mt-14 min-md:mt-0">
@@ -88,25 +97,82 @@ function SignUp() {
           <Form.Item
             label={<span className="font-medium text-gray-700">Mobile Number</span>}
             name="mobile"
-            rules={[{ required: true, message: 'Please enter mobile number' }]}
+            rules={[
+              { required: true, message: 'Please enter mobile number' },
+              {
+                pattern: /^[0-9]{10}$/,
+                message: 'Please enter a valid 10-digit mobile number',
+              },
+            ]}
           >
-            <Input className="rounded-lg py-2" placeholder="Mobile Number" />
+            <Input
+              className="rounded-lg py-2"
+              placeholder="Mobile Number"
+              maxLength={10}
+              inputMode="numeric"
+              onChange={(e) => {
+                e.target.value = e.target.value.replace(/\D/g, '');
+              }}
+            />
           </Form.Item>
 
-          <Form.Item
+          {/* <Form.Item
             label={<span className="font-medium text-gray-700">Password</span>}
             name="password"
             rules={[{ required: true, message: 'Please enter password' }]}
           >
             <Input.Password className="rounded-lg py-2" placeholder="Password" />
+          </Form.Item> */}
+          <Form.Item
+            label={<span className="font-medium text-gray-700">Password</span>}
+            name="password"
+            rules={[
+              {
+                required: true,
+                message: 'Please enter password',
+              },
+              {
+                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+=[\]{};':"\\|,.<>/?-]).{8,}$/,
+                message:
+                  'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.',
+              },
+            ]}
+          >
+            <Input.Password className="rounded-lg py-2" placeholder="Password" />
           </Form.Item>
 
-          <Form.Item
+          {/* <Form.Item
             label={<span className="font-medium text-gray-700">Confirm Password</span>}
             name="confirmPassword"
             dependencies={['password']}
             rules={[
               { required: true, message: 'Please confirm password' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue('password') === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error('Passwords do not match'));
+                },
+              }),
+            ]}
+          >
+            <Input.Password className="rounded-lg py-2" placeholder="Confirm Password" />
+          </Form.Item> */}
+          <Form.Item
+            label={<span className="font-medium text-gray-700">Confirm Password</span>}
+            name="confirmPassword"
+            dependencies={['password']}
+            rules={[
+              {
+                required: true,
+                message: 'Please confirm password',
+              },
+              {
+                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+=[\]{};':"\\|,.<>/?-]).{8,}$/,
+                message:
+                  'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.',
+              },
               ({ getFieldValue }) => ({
                 validator(_, value) {
                   if (!value || getFieldValue('password') === value) {
@@ -180,9 +246,15 @@ function SignUp() {
             </span>
           </Checkbox>
         </div>
-        {/* <div className="mb-6 flex justify-center">
-          <ReCAPTCHA sitekey="6LdxwD0tAAAAAO2TvLS6roENrpn_32Jx4pPOpIna" onChange={(token) => setCaptchaToken(token)} />
-        </div> */}
+        <div className="mb-6 flex justify-center">
+          <ReCAPTCHA
+            sitekey={process.env.REACT_APP_MY_CAPTCHA_KEY}
+            onChange={(token) => {
+              console.log('CAPTCHA TOKEN =>', token);
+              setCaptchaToken(token);
+            }}
+          />
+        </div>
 
         {error && (
           <div className="mb-6 p-4 rounded-lg bg-red-50 text-red-600 text-sm border border-red-100">{error}</div>
@@ -194,7 +266,7 @@ function SignUp() {
             type="primary"
             htmlType="submit"
             loading={loading}
-            disabled={!checked}
+            disabled={!checked || !captchaToken}
           >
             Create Account
           </Button>
