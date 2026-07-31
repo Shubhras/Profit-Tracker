@@ -5345,13 +5345,29 @@ def amazon_profitability_parent_transactions_shipping(request):
 
     # ---------------- DATE FILTER ----------------
     from_date = to_date = None
+    from zoneinfo import ZoneInfo
+
+    IST = ZoneInfo("Asia/Kolkata")
+
+    from_date = to_date = None
     try:
         if filters.get("fromDate"):
-            from_date = timezone.make_aware(datetime.strptime(filters["fromDate"], "%Y-%m-%d"))
+            naive_from = datetime.strptime(filters["fromDate"], "%Y-%m-%d")
+            from_date = naive_from.replace(tzinfo=IST).astimezone(ZoneInfo("UTC"))
+
         if filters.get("toDate"):
-            to_date = timezone.make_aware(datetime.strptime(filters["toDate"], "%Y-%m-%d")) + timedelta(days=1)
+            naive_to = datetime.strptime(filters["toDate"], "%Y-%m-%d") + timedelta(days=1)
+            to_date = naive_to.replace(tzinfo=IST).astimezone(ZoneInfo("UTC"))
     except Exception as e:
         print("Date error:", e)
+        
+    # try:
+    #     if filters.get("fromDate"):
+    #         from_date = timezone.make_aware(datetime.strptime(filters["fromDate"], "%Y-%m-%d"))
+    #     if filters.get("toDate"):
+    #         to_date = timezone.make_aware(datetime.strptime(filters["toDate"], "%Y-%m-%d")) + timedelta(days=1)
+    # except Exception as e:
+    #     print("Date error:", e)
 
     order_filter = Q(order__user=user)
 
@@ -7313,20 +7329,41 @@ def sku_profit_report_transactions_shipping(request):
     # ---------------- DATE FILTER ----------------
     from_date = None
     to_date = None
+    
+    from zoneinfo import ZoneInfo
 
+    IST = ZoneInfo("Asia/Kolkata")
+    UTC = ZoneInfo("UTC")
+
+    from_date = to_date = None
     try:
         if filters.get("fromDate"):
-            from_date = timezone.make_aware(
-                datetime.strptime(filters["fromDate"], "%Y-%m-%d")
-            )
+            naive_from = datetime.strptime(filters["fromDate"], "%Y-%m-%d")
+            from_date = naive_from.replace(tzinfo=IST).astimezone(UTC)
 
         if filters.get("endDate"):
-            to_date = timezone.make_aware(
-                datetime.strptime(filters["endDate"], "%Y-%m-%d")
-            ) + timedelta(days=1)
+            naive_to = datetime.strptime(filters["endDate"], "%Y-%m-%d") + timedelta(days=1)
+            to_date = naive_to.replace(tzinfo=IST).astimezone(UTC)
 
         if from_date and not to_date:
             to_date = from_date + timedelta(days=1)
+
+    except Exception as e:
+        print("Date error:", e)
+
+    # try:
+    #     if filters.get("fromDate"):
+    #         from_date = timezone.make_aware(
+    #             datetime.strptime(filters["fromDate"], "%Y-%m-%d")
+    #         )
+
+    #     if filters.get("endDate"):
+    #         to_date = timezone.make_aware(
+    #             datetime.strptime(filters["endDate"], "%Y-%m-%d")
+    #         ) + timedelta(days=1)
+
+    #     if from_date and not to_date:
+    #         to_date = from_date + timedelta(days=1)
 
     except Exception as e:
         print("Date error:", e)
@@ -8587,8 +8624,13 @@ def amazon_profitability_details_transactions_shipping(request):
     page_size = int(pagination.get("pageSize", 25))
 
     from_date = to_date = None
+    
+    from zoneinfo import ZoneInfo
+
+    IST = ZoneInfo("Asia/Kolkata")
+
     def parse_dt(dt_str, is_end=False):
-        if not dt_str or not isinstance(dt_str, (str, bytes, date, datetime)) or len(str(dt_str)) < 10: 
+        if not dt_str or not isinstance(dt_str, (str, bytes, date, datetime)) or len(str(dt_str)) < 10:
             return None
         try:
             if isinstance(dt_str, (datetime, date)):
@@ -8596,13 +8638,35 @@ def amazon_profitability_details_transactions_shipping(request):
             else:
                 clean_str = str(dt_str).split('T')[0]
                 dt = datetime.strptime(clean_str, '%Y-%m-%d')
+
             if is_end:
                 dt = dt.replace(hour=23, minute=59, second=59)
-            if timezone.is_naive(dt):
-                return timezone.make_aware(dt)
-            return dt
+            else:
+                dt = dt.replace(hour=0, minute=0, second=0)
+
+            # Treat the incoming date as an IST calendar day, then convert to UTC
+            # for comparison against purchase_date / posted_date (stored in UTC)
+            dt_ist = dt.replace(tzinfo=IST)
+            return dt_ist.astimezone(ZoneInfo("UTC"))
         except Exception:
             return None
+    
+    # def parse_dt(dt_str, is_end=False):
+    #     if not dt_str or not isinstance(dt_str, (str, bytes, date, datetime)) or len(str(dt_str)) < 10: 
+    #         return None
+    #     try:
+    #         if isinstance(dt_str, (datetime, date)):
+    #             dt = dt_str
+    #         else:
+    #             clean_str = str(dt_str).split('T')[0]
+    #             dt = datetime.strptime(clean_str, '%Y-%m-%d')
+    #         if is_end:
+    #             dt = dt.replace(hour=23, minute=59, second=59)
+    #         if timezone.is_naive(dt):
+    #             return timezone.make_aware(dt)
+    #         return dt
+    #     except Exception:
+    #         return None
 
     from_date = parse_dt(from_date_str, is_end=False)
     to_date = parse_dt(to_date_str, is_end=True)
