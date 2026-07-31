@@ -308,6 +308,82 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
 #         }
 
 
+# class UserProfileSerializer(serializers.ModelSerializer):
+#     # Profile fields
+#     name = serializers.CharField(source="profile.name", read_only=True)
+#     business_name = serializers.CharField(source="profile.business_name", read_only=True)
+#     mobile_number = serializers.CharField(source="profile.mobile_number", read_only=True)
+
+#     address = serializers.CharField(source="profile.address", read_only=True)
+#     city = serializers.CharField(source="profile.city", read_only=True)
+#     state = serializers.CharField(source="profile.state", read_only=True)
+#     pin_code = serializers.CharField(source="profile.pin_code", read_only=True)
+
+#     accepted_terms = serializers.BooleanField(
+#         source="profile.accepted_terms",
+#         read_only=True
+#     )
+
+#     subscription = serializers.SerializerMethodField()
+#     unread_notification_count = serializers.SerializerMethodField()
+    
+
+#     class Meta:
+#         model = User
+#         fields = [
+#             "id",
+#             "username",
+#             "email",
+
+#             "name",
+#             "business_name",
+#             "mobile_number",
+
+#             "address",
+#             "city",
+#             "state",
+#             "pin_code",
+#             "accepted_terms",
+
+#             "subscription",
+#             "unread_notification_count",
+#         ]
+
+#     def get_unread_notification_count(self, obj):
+#         return UserNotification.objects.filter(
+#             user=obj,
+#             is_read=False
+#         ).count()
+
+#     def get_subscription(self, obj):
+
+#         subscription = (
+#             UserSubscription.objects
+#             .filter(
+#                 user=obj,
+#                 status="active",
+#                 is_paid=True
+#             )
+#             .select_related("plan")
+#             .order_by("-created_at")
+#             .first()
+#         )
+
+#         if not subscription:
+#             return None
+
+#         return {
+#             "subscription_id": subscription.id,
+#             "plan_id": subscription.plan.id if subscription.plan else None,
+#             "plan_name": subscription.plan.plan_name if subscription.plan else None,
+#             "billing_cycle": subscription.billing_cycle,
+#             "amount": subscription.amount,
+#             "status": subscription.status,
+#             "is_paid": subscription.is_paid,
+#             "start_date": subscription.start_date,
+#             "end_date": subscription.end_date,
+#         }
+          
 class UserProfileSerializer(serializers.ModelSerializer):
     # Profile fields
     name = serializers.CharField(source="profile.name", read_only=True)
@@ -358,12 +434,16 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
         subscription = (
             UserSubscription.objects
+            .select_related("plan")
+            .prefetch_related(
+                "plan__modules",
+                "plan__submodules__module"
+            )
             .filter(
                 user=obj,
                 status="active",
                 is_paid=True
             )
-            .select_related("plan")
             .order_by("-created_at")
             .first()
         )
@@ -375,45 +455,35 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "subscription_id": subscription.id,
             "plan_id": subscription.plan.id if subscription.plan else None,
             "plan_name": subscription.plan.plan_name if subscription.plan else None,
+            "slug": subscription.plan.slug if subscription.plan else None,
             "billing_cycle": subscription.billing_cycle,
             "amount": subscription.amount,
             "status": subscription.status,
             "is_paid": subscription.is_paid,
             "start_date": subscription.start_date,
             "end_date": subscription.end_date,
+
+            "modules": [
+                {
+                    "module_id": module.id,
+                    "module_name": module.name,
+                    "slug": getattr(module, "slug", None),
+                }
+                for module in subscription.plan.modules.all()
+            ],
+
+            "submodules": [
+                {
+                    "submodule_id": submodule.id,
+                    "submodule_name": submodule.name,
+                    "slug": getattr(submodule, "slug", None),
+                    "module_id": submodule.module.id if submodule.module else None,
+                    "module_name": submodule.module.name if submodule.module else None,
+                }
+                for submodule in subscription.plan.submodules.all()
+            ]
         }
-          
 
-# class ModuleSimpleSerializer(serializers.ModelSerializer):
-
-#     class Meta:
-#         model = Module
-#         fields = [
-#             "id",
-#             "name",
-#             "slug"
-#         ]
-
-
-# class SubModuleSimpleSerializer(serializers.ModelSerializer):
-
-#     module = serializers.SerializerMethodField()
-
-#     class Meta:
-#         model = SubModule
-#         fields = [
-#             "id",
-#             "name",
-#             "slug",
-#             "module"
-#         ]
-
-#     def get_module(self, obj):
-#         return {
-#             "id": obj.module.id,
-#             "name": obj.module.name,
-#             "slug": obj.module.slug,
-#         }                        
 class ModuleSimpleSerializer(serializers.ModelSerializer):
 
     class Meta:

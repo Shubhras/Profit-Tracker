@@ -1691,18 +1691,38 @@ def get_full_dashboard(request):
     from_date_str = find_key(['fromDate'])
     to_date_str = find_key(['toDate'])
 
-    try:
-        start_date = datetime.strptime(from_date_str[:10], '%Y-%m-%d') if from_date_str else (timezone.now() - timedelta(days=30))
-        end_date = datetime.strptime(to_date_str[:10], '%Y-%m-%d') if to_date_str else timezone.now()
-    except Exception:
-        start_date = timezone.now() - timedelta(days=30)
-        end_date = timezone.now()
+    # try:
+    #     start_date = datetime.strptime(from_date_str[:10], '%Y-%m-%d') if from_date_str else (timezone.now() - timedelta(days=30))
+    #     end_date = datetime.strptime(to_date_str[:10], '%Y-%m-%d') if to_date_str else timezone.now()
+    # except Exception:
+    #     start_date = timezone.now() - timedelta(days=30)
+    #     end_date = timezone.now()
 
-    end_date = end_date.replace(hour=23, minute=59, second=59)
+    # end_date = end_date.replace(hour=23, minute=59, second=59)
 
 
-    # ---------------- DATA ----------------
+    # # ---------------- DATA ----------------
+    # orders_qs = Order.objects.filter(user=user, purchase_date__range=(start_date, end_date))
+    
+    from zoneinfo import ZoneInfo
+
+    IST = ZoneInfo("Asia/Kolkata")
+    UTC = ZoneInfo("UTC")
+
+    # Parse the user's selected calendar day (assumed IST, matching Seller Central)
+    from_date_ist = datetime.strptime(from_date_str[:10], '%Y-%m-%d').replace(
+        hour=0, minute=0, second=0, tzinfo=IST
+    )
+    to_date_ist = datetime.strptime(to_date_str[:10], '%Y-%m-%d').replace(
+        hour=23, minute=59, second=59, tzinfo=IST
+    )
+
+    # Convert to UTC for querying, since purchase_date is stored in UTC
+    start_date = from_date_ist.astimezone(UTC)
+    end_date = to_date_ist.astimezone(UTC)
+
     orders_qs = Order.objects.filter(user=user, purchase_date__range=(start_date, end_date))
+
     finances_qs = FinancialEvent.objects.filter(user=user, posted_date__range=(start_date, end_date))
 
     # ---------------- ORDERS ----------------
@@ -10067,7 +10087,8 @@ def sku_profitability_list_filtered(request):
         else:
             taxable_value = final_net_sales; gst_to_pay_amount = Decimal("0")
 
-        tcs_total = gst_to_pay_amount * (tcs_rate / Decimal("100")) if tcs_rate else gst_to_pay_amount * (Decimal("1") / Decimal("100"))
+        # tcs_total = gst_to_pay_amount * (tcs_rate / Decimal("100")) if tcs_rate else gst_to_pay_amount * (Decimal("1") / Decimal("100"))
+        tcs_total = taxable_value * (tcs_rate / Decimal("100"))  if tcs_rate else taxable_value * (Decimal("1") / Decimal("100"))
         gst_to_pay_perc = gst_rate if gst_rate else ((gst_to_pay_amount / taxable_value) * 100 if taxable_value else 1)
 
         profit = (final_net_sales + shipping_final + ads + tcs_total - estimated_fees - mp_gst - promo_discount - Decimal(str(order_claim_amount)) - total_cost)
@@ -10167,8 +10188,6 @@ def sku_profitability_list_filtered(request):
         },
         "response": results[page_no * page_size:(page_no + 1) * page_size]
     })
-
-
 
 
 
