@@ -27,6 +27,8 @@ const login = (values, callback) => {
       // console.log('Login Success:', response.data);
 
       if (response.data.status === true) {
+        console.log('LOGIN API DATA', response.data.data);
+
         // Store tokens
         Cookies.set('access_token', response.data.data.access);
         Cookies.set('refresh_token', response.data.data.refresh);
