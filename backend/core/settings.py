@@ -176,6 +176,9 @@ DATABASES = {
     }
 }
 
+# settings.py
+RECAPTCHA_SECRET_KEY = "6LdxwD0tAAAAADARKjfDJPWipOxJFNOA4dDJ_ftD"
+RECAPTCHA_VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify"
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

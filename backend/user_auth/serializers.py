@@ -3,6 +3,63 @@ from rest_framework import serializers
 from user_auth.models import *
 from subscription.models import UserSubscription
 
+import requests
+from django.conf import settings
+
+
+# class UserRegisterSerializer(serializers.Serializer):
+#     name = serializers.CharField()
+#     business_name = serializers.CharField()
+#     email = serializers.EmailField()
+#     mobile_number = serializers.CharField()
+
+#     password = serializers.CharField(write_only=True)
+#     confirm_password = serializers.CharField(write_only=True)
+
+#     #gst_number = serializers.CharField(required=False, allow_blank=True)
+#     address = serializers.CharField()
+#     city = serializers.CharField()
+#     state = serializers.CharField()
+#     pin_code = serializers.CharField()
+
+#     accepted_terms = serializers.BooleanField()
+
+#     def validate(self, data):
+#         if data["password"] != data["confirm_password"]:
+#             raise serializers.ValidationError("Passwords do not match")
+
+#         if not data["accepted_terms"]:
+#             raise serializers.ValidationError("You must accept Terms & Conditions")
+
+#         if User.objects.filter(email=data["email"]).exists():
+#             raise serializers.ValidationError("Email already registered")
+
+#         return data
+
+#     def create(self, validated_data):
+#         password = validated_data.pop("password")
+#         validated_data.pop("confirm_password")
+
+#         user = User.objects.create_user(
+#             username=validated_data["email"],  
+#             email=validated_data["email"],
+#             password=password
+#         )
+
+#         UserProfile.objects.create(
+#             user=user,
+#             name=validated_data["name"],
+#             business_name=validated_data["business_name"],
+#             mobile_number=validated_data["mobile_number"],
+#             #gst_number=validated_data.get("gst_number"),
+#             address=validated_data["address"],
+#             city=validated_data["city"],
+#             state=validated_data["state"],
+#             pin_code=validated_data["pin_code"],
+#             accepted_terms=validated_data["accepted_terms"]
+#         )
+
+#         return user
 
 class UserRegisterSerializer(serializers.Serializer):
     name = serializers.CharField()
@@ -13,13 +70,31 @@ class UserRegisterSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
     confirm_password = serializers.CharField(write_only=True)
 
-    #gst_number = serializers.CharField(required=False, allow_blank=True)
     address = serializers.CharField()
     city = serializers.CharField()
     state = serializers.CharField()
     pin_code = serializers.CharField()
 
     accepted_terms = serializers.BooleanField()
+
+    # ✅ new field — frontend sends the captcha token here
+    captcha_token = serializers.CharField(write_only=True)
+
+    def validate_captcha_token(self, value):
+        response = requests.post(
+            settings.RECAPTCHA_VERIFY_URL,
+            data={
+                "secret": settings.RECAPTCHA_SECRET_KEY,
+                "response": value,
+            },
+            timeout=5,
+        )
+        result = response.json()
+
+        if not result.get("success"):
+            raise serializers.ValidationError("Captcha verification failed")
+
+        return value
 
     def validate(self, data):
         if data["password"] != data["confirm_password"]:
@@ -36,9 +111,10 @@ class UserRegisterSerializer(serializers.Serializer):
     def create(self, validated_data):
         password = validated_data.pop("password")
         validated_data.pop("confirm_password")
+        validated_data.pop("captcha_token")  # ✅ not a model field, remove before saving
 
         user = User.objects.create_user(
-            username=validated_data["email"],  
+            username=validated_data["email"],
             email=validated_data["email"],
             password=password
         )
@@ -48,7 +124,6 @@ class UserRegisterSerializer(serializers.Serializer):
             name=validated_data["name"],
             business_name=validated_data["business_name"],
             mobile_number=validated_data["mobile_number"],
-            #gst_number=validated_data.get("gst_number"),
             address=validated_data["address"],
             city=validated_data["city"],
             state=validated_data["state"],
@@ -57,7 +132,7 @@ class UserRegisterSerializer(serializers.Serializer):
         )
 
         return user
-
+    
 class SubscriptionPlanSerializer(serializers.ModelSerializer):
     discount_percentage = serializers.SerializerMethodField()
     average_discount = serializers.SerializerMethodField()
