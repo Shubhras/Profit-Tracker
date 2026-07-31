@@ -11,7 +11,7 @@ const AuthLayout = (WraperContent) => {
     return (
       <div className="min-h-screen w-full flex overflow-hidden bg-white">
         {/* Left Side - Responsive Split (1/2 MD, 2/3 XL) */}
-        <div className="hidden min-md:flex min-md:w-1/2 min-xl:w-2/3 h-screen bg-slate-50 relative flex-col justify-between p-10 min-xl:p-18 overflow-hidden">
+        <div className="hidden min-md:flex min-md:w-1/2 min-xl:w-[60%]  h-screen bg-slate-50 relative flex-col justify-between p-10 min-xl:p-18 overflow-hidden">
           {/* Background Effects */}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-emerald-100/40 via-slate-50 to-slate-50" />
           <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none translate-x-1/3 -translate-y-1/3" />
@@ -87,12 +87,12 @@ const AuthLayout = (WraperContent) => {
         </div>
 
         {/* Right Side - Scrollable Form (1/2 MD, 1/3 XL) */}
-        <div className="w-full min-md:w-1/2 min-xl:w-1/3 h-screen overflow-y-auto bg-white relative">
+        <div className="w-full min-md:w-1/2 min-xl:w-[40%]  h-screen overflow-y-auto bg-white relative">
           <div className="block min-md:hidden">
             <Navbar />
           </div>
           <div className="min-h-full w-full flex flex-col items-center justify-center p-6 md:p-12">
-            <div className="w-full max-w-[400px]">
+            <div className="w-full max-w-[530px]">
               {/* Mobile Logo Logo */}
               {/* <div className="lg:hidden mb-10 text-center">
                 <Link to="/" className="inline-flex items-center gap-2 text-gray-900 text-2xl font-bold">

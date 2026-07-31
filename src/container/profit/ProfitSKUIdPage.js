@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Table, Card, Modal, Checkbox, Tooltip } from 'antd';
-import { SearchOutlined, FilterOutlined, EyeOutlined } from '@ant-design/icons';
+import { SearchOutlined, FilterOutlined, EyeOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { useParams, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 // import ProfitFilterBar from './component/ProfitFilterBar';
@@ -36,6 +36,9 @@ export default function ProfitSKUIdPage() {
   const [previewImage, setPreviewImage] = React.useState('');
   const [previewOpen, setPreviewOpen] = React.useState(false);
   const [showFilters, setShowFilters] = React.useState(false);
+  const [search, setSearch] = React.useState('');
+  const [debouncedSearch, setDebouncedSearch] = React.useState('');
+
   // const [columnSearch, setColumnSearch] = React.useState('');
 
   const channelLogoMap = {
@@ -46,6 +49,19 @@ export default function ProfitSKUIdPage() {
     current: 1,
     pageSize: 10,
   });
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPagination((prev) => ({
+        ...prev,
+        current: 1,
+      }));
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
   const [filters, setFilters] = React.useState({
     channel: '',
     sku: '',
@@ -61,6 +77,9 @@ export default function ProfitSKUIdPage() {
 
   const buildPayload = () => ({
     filters: {
+      ...(debouncedSearch.trim() && {
+        search: debouncedSearch.trim(),
+      }),
       fromDate: dateRange?.fromDate,
       toDate: dateRange?.endDate,
 
@@ -81,7 +100,7 @@ export default function ProfitSKUIdPage() {
     if (decodedChannel) {
       dispatch(getProfitSKUId(buildPayload()));
     }
-  }, [dateRange, decodedChannel]);
+  }, [dateRange, decodedChannel, debouncedSearch]);
 
   // const PageRoutes = [
   //   { path: 'index', breadcrumbName: 'Profit' },
@@ -563,11 +582,23 @@ export default function ProfitSKUIdPage() {
               <input
                 type="text"
                 placeholder="Search..."
-                className="w-full h-[35px] rounded-xl border border-[#e5e7eb] bg-white pl-4 pr-10 text-[12px] outline-none shadow-sm"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full h-[35px] rounded-lg border border-[#e5e7eb] bg-white pl-4 pr-10 text-[12px] outline-none shadow-sm "
               />
 
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af]">
-                <SearchOutlined style={{ fontSize: 14 }} />
+                {search ? (
+                  <button
+                    type="button"
+                    onClick={() => setSearch('')}
+                    className="flex items-center justify-center cursor-pointer hover:text-[#374151]"
+                  >
+                    <CloseCircleOutlined size={16} />
+                  </button>
+                ) : (
+                  <SearchOutlined style={{ fontSize: 14 }} />
+                )}
               </span>
             </div>
 
@@ -578,7 +609,7 @@ export default function ProfitSKUIdPage() {
                 <button
                   type="button"
                   onClick={() => setShowFilters(!showFilters)}
-                  className="h-[35px] px-2 rounded-xl border border-[#e5e7eb] bg-white flex items-center gap-2 text-[12px] font-medium shadow-sm"
+                  className="h-[35px] px-2 rounded-lg border border-[#e5e7eb] bg-white flex items-center gap-2 text-[12px] font-medium shadow-sm"
                 >
                   <span className="flex items-center">
                     <FilterOutlined style={{ fontSize: 14 }} />
