@@ -87,7 +87,7 @@ class UserLoginAPI(APIView):
                 "modules": [
                     {
                         "module_id": module.id,
-                        "module_name": module.module_name,
+                        "module_name": module.name,
                         "slug": getattr(module, "slug", None),
                     }
                     for module in sub.plan.modules.all()
@@ -95,7 +95,7 @@ class UserLoginAPI(APIView):
                 "submodules": [
                     {
                         "submodule_id": submodule.id,
-                        "submodule_name": submodule.submodule_name,
+                        "submodule_name": submodule.name,
                         "slug": getattr(submodule, "slug", None),
                         "module_id": submodule.module.id if getattr(submodule, "module", None) else None,
                     }
