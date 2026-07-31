@@ -7,6 +7,7 @@ import {
   SearchOutlined,
   ArrowLeftOutlined,
   SettingOutlined,
+  CloseCircleOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -43,6 +44,8 @@ export default function ProfitViewSecondTable() {
   const [previewOpen, setPreviewOpen] = React.useState(false);
   const [showFilters, setShowFilters] = React.useState(false);
   const [visibleColumns, setVisibleColumns] = React.useState([]);
+  const [search, setSearch] = React.useState('');
+  const [debouncedSearch, setDebouncedSearch] = React.useState('');
   const channelLogoMap = {
     'Amazon-India': amazon,
     // 'Flipkart-India': flipkart,
@@ -51,6 +54,19 @@ export default function ProfitViewSecondTable() {
     current: 1,
     pageSize: 10,
   });
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPagination((prev) => ({
+        ...prev,
+        current: 1,
+      }));
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
   const [filters, setFilters] = React.useState({
     channel: '',
     sku: '',
@@ -73,6 +89,9 @@ export default function ProfitViewSecondTable() {
   const buildPayload = () => {
     return {
       filters: {
+        ...(debouncedSearch.trim() && {
+          search: debouncedSearch.trim(),
+        }),
         channel: {
           // IN: [decodedChannel],
           IN: channels,
@@ -95,7 +114,7 @@ export default function ProfitViewSecondTable() {
   };
   useEffect(() => {
     dispatch(getSecondDetials(buildPayload()));
-  }, [dispatch]);
+  }, [dispatch, pagination, globalChannel, debouncedSearch]);
 
   // const PageRoutes = [
   //   { path: 'index', breadcrumbName: 'Profit' },
@@ -137,7 +156,7 @@ export default function ProfitViewSecondTable() {
         // grossprofit: Number(sitem.grossprofit) || 0,
         profit: item.profit || 0,
         // profitPercent: Number(item.grossprofitper) || 0,
-        profitPercent: Math.round(Number(item.grossprofitper)) || 0,
+        profitPercent: item.grossprofitper || 0,
         return_type: item.return_type || '-',
         claim_amount: item.claim_amount || 0,
         promo_discount: item.promo_discount || 0,
@@ -279,7 +298,7 @@ export default function ProfitViewSecondTable() {
               onClick={() => window.open(record.redirecturl, '_blank')}
               className="text-blue-500 hover:text-blue-600 underline font-medium bg-transparent border-none p-0 cursor-pointer"
             >
-              {v?.length > 15 ? `${v.slice(0, 8)}...` : v}
+              {v?.length > 7 ? `${v.slice(0, 8)}...` : v}
             </button>
           </Tooltip>
         );
@@ -770,7 +789,7 @@ export default function ProfitViewSecondTable() {
     <>
       <main className="min-h-[600px] px-3 pb-[10px] py-3">
         <Card bordered={false}>
-          <div className="flex items-center justify-between gap-3 mb-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
             <button
               type="button"
               onClick={() => navigate(-1)}
@@ -779,25 +798,37 @@ export default function ProfitViewSecondTable() {
               <ArrowLeftOutlined className="text-[#374151]" />
             </button>
 
-            <div className="flex items-center gap-3">
-              <div className="relative w-[220px]">
+            <div className="flex flex-1 flex-wrap items-center justify-end gap-3 lg:w-full md:w-full">
+              <div className="relative w-[220px] lg:flex-1 lg:min-w-[220px] md:w-full sm:w-full">
                 <input
                   type="text"
                   placeholder="Search..."
-                  className="w-full h-[35px] rounded-xl border border-[#e5e7eb] bg-white pl-4 pr-10 text-[12px] outline-none shadow-sm "
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full h-[35px] rounded-lg border border-[#e5e7eb] bg-white pl-4 pr-10 text-[12px] outline-none shadow-sm "
                 />
 
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af]">
-                  <SearchOutlined style={{ fontSize: 14 }} />
+                  {search ? (
+                    <button
+                      type="button"
+                      onClick={() => setSearch('')}
+                      className="flex items-center justify-center cursor-pointer hover:text-[#374151]"
+                    >
+                      <CloseCircleOutlined size={16} />
+                    </button>
+                  ) : (
+                    <SearchOutlined style={{ fontSize: 14 }} />
+                  )}
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 lg:w-full lg:justify-end md:w-full md:justify-between sm:w-full sm:justify-between">
                 <div className="relative">
                   <button
                     type="button"
                     onClick={() => setShowFilters(!showFilters)}
-                    className="h-[35px] px-2 rounded-xl  border border-[#e5e7eb] bg-white flex items-center gap-2 text-[12px] font-medium shadow-sm transition-all"
+                    className="h-[35px] px-3 rounded-lg border border-[#e5e7eb] bg-white flex items-center gap-2 text-[12px] font-medium shadow-sm transition-all whitespace-nowrap"
                   >
                     <span className="flex items-center">
                       <FilterOutlined style={{ fontSize: 14 }} />
@@ -908,7 +939,7 @@ export default function ProfitViewSecondTable() {
                             handleApply();
                             setShowFilters(false);
                           }}
-                          className=" flex-1 h-[38px] rounded-xl text-white text-[13px] font-medium"
+                          className=" flex-1 h-[38px] rounded-lg text-white text-[13px] font-medium"
                         >
                           Apply
                         </Button>
@@ -918,10 +949,10 @@ export default function ProfitViewSecondTable() {
                 </div>
                 <Dropdown trigger={['click']} dropdownRender={() => manageColumnsDropdown} placement="bottomRight">
                   <Button
-                    icon={<SettingOutlined />}
-                    className="flex items-center !h-[35px] !rounded-xl !border-[#e5e7eb]"
+                    icon={<SettingOutlined style={{ fontSize: 14 }} />}
+                    className="!flex !items-center !h-[35px] !rounded-lg !border-[#e5e7eb] whitespace-nowrap"
                   >
-                    Manage Columns
+                    <span className="text-[#4B5563] text-[13px]">Manage Columns</span>
                   </Button>
                 </Dropdown>
               </div>

@@ -1,6 +1,13 @@
 import React, { useEffect } from 'react';
 import { Table, Card, Modal, Checkbox, Tooltip, Dropdown, Button } from 'antd';
-import { RightOutlined, SearchOutlined, FilterOutlined, EyeOutlined, SettingOutlined } from '@ant-design/icons';
+import {
+  RightOutlined,
+  SearchOutlined,
+  FilterOutlined,
+  EyeOutlined,
+  SettingOutlined,
+  CloseCircleOutlined,
+} from '@ant-design/icons';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 // import ProfitFilterBar from './component/ProfitFilterBar';
@@ -38,6 +45,9 @@ export default function ProfitDetailsView() {
   const [previewOpen, setPreviewOpen] = React.useState(false);
   const [showFilters, setShowFilters] = React.useState(false);
   const [visibleColumns, setVisibleColumns] = React.useState([]);
+  const [search, setSearch] = React.useState('');
+  const [debouncedSearch, setDebouncedSearch] = React.useState('');
+
   // const [columnSearch, setColumnSearch] = React.useState('');
 
   const channelLogoMap = {
@@ -48,6 +58,19 @@ export default function ProfitDetailsView() {
     current: 1,
     pageSize: 10,
   });
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPagination((prev) => ({
+        ...prev,
+        current: 1,
+      }));
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
   const [filters, setFilters] = React.useState({
     channel: '',
     sku: '',
@@ -70,6 +93,10 @@ export default function ProfitDetailsView() {
   const buildPayload = () => {
     return {
       filters: {
+        ...(debouncedSearch.trim() && {
+          search: debouncedSearch.trim(),
+        }),
+
         channel: {
           // IN: [decodedChannel],
           IN: channels,
@@ -88,8 +115,8 @@ export default function ProfitDetailsView() {
       },
       metric: getMetricFromFilters(),
       pagination: {
-        pageNo: 0,
-        pageSize: 1000,
+        pageNo: pagination.current - 1,
+        pageSize: pagination.pageSize,
       },
     };
   };
@@ -97,7 +124,7 @@ export default function ProfitDetailsView() {
     if (decodedChannel) {
       dispatch(getProfitDetails(buildPayload()));
     }
-  }, [dateRange, decodedChannel]);
+  }, [dateRange, decodedChannel, pagination, debouncedSearch]);
 
   // const PageRoutes = [
   //   { path: 'index', breadcrumbName: 'Profit' },
@@ -155,7 +182,7 @@ export default function ProfitDetailsView() {
         // grossprofit: Number(sitem.grossprofit) || 0,
         profit: item.profit || 0,
         // profitPercent: Number(item.grossprofitper) || 0,
-        profitPercent: Math.round(Number(item.grossprofitper)) || 0,
+        profitPercent: item.grossprofitper || 0,
 
         // settledamount: Number(item.profit_settled_amount) || 0,
       })) || [];
@@ -598,21 +625,32 @@ export default function ProfitDetailsView() {
       width: getDynamicWidth('profitPercent', 70),
       ellipsis: true,
       sorter: (a, b) => a.profitPercent - b.profitPercent,
-      render: (v) => {
-        const value = Math.round(v || 0);
+      // render: (v) => {
+      //   const value = Math.round(v || 0);
 
-        return (
-          <button type="button" className="cursor-pointer bg-transparent border-none">
-            <span
-              style={{
-                color: value < 0 ? 'red' : 'green',
-              }}
-            >
-              {value}%
-            </span>
-          </button>
-        );
-      },
+      //   return (
+      //     <button type="button" className="cursor-pointer bg-transparent border-none">
+      //       <span
+      //         style={{
+      //           color: value < 0 ? 'red' : 'green',
+      //         }}
+      //       >
+      //         {value}%
+      //       </span>
+      //     </button>
+      //   );
+      // },
+      render: (v) => (
+        <button type="button" className="cursor-pointer bg-transparent border-none">
+          <span
+            style={{
+              color: Number(v) < 0 ? 'red' : 'green',
+            }}
+          >
+            {v ?? 0}%
+          </span>
+        </button>
+      ),
     },
 
     // {
@@ -785,28 +823,41 @@ export default function ProfitDetailsView() {
             setShowFilters={setShowFilters}
           /> */}
 
-          <div className="flex items-center justify-between gap-3 mb-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
             {/* Search */}
-            <div className="relative w-[220px]">
+            <div className="relative w-[220px] lg:w-full md:w-full sm:w-full">
               <input
                 type="text"
                 placeholder="Search..."
-                className="w-full h-[35px] rounded-xl border border-[#e5e7eb] bg-white pl-4 pr-10 text-[12px] outline-none shadow-sm"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full h-[35px] rounded-lg border border-[#e5e7eb] bg-white pl-4 pr-10 text-[12px] outline-none shadow-sm"
               />
 
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af]">
-                <SearchOutlined style={{ fontSize: 14 }} />
+                {search ? (
+                  <button
+                    type="button"
+                    onClick={() => setSearch('')}
+                    className="flex items-center justify-center cursor-pointer hover:text-[#374151]"
+                  >
+                    <CloseCircleOutlined size={16} />
+                  </button>
+                ) : (
+                  <SearchOutlined style={{ fontSize: 14 }} />
+                )}
               </span>
             </div>
 
             {/* Right Actions */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 flex-wrap lg:w-full lg:justify-end md:w-full md:justify-between sm:w-full sm:justify-between">
               {/* Filter Button */}
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setShowFilters(!showFilters)}
-                  className="h-[35px] px-2 rounded-xl border border-[#e5e7eb] bg-white flex items-center gap-2 text-[12px] font-medium shadow-sm"
+                  // className="h-[35px] px-2 rounded-lg border border-[#e5e7eb] bg-white flex items-center gap-2 text-[12px] font-medium shadow-sm"
+                  className="h-[35px] px-3 rounded-lg border border-[#e5e7eb] bg-white flex items-center gap-2 text-[12px] font-medium shadow-sm whitespace-nowrap"
                 >
                   <span className="flex items-center">
                     <FilterOutlined style={{ fontSize: 14 }} />
@@ -932,10 +983,10 @@ export default function ProfitDetailsView() {
               </div>
               <Dropdown trigger={['click']} dropdownRender={() => manageColumnsDropdown} placement="bottomRight">
                 <Button
-                  icon={<SettingOutlined />}
-                  className="flex items-center !h-[35px] !rounded-xl !border-[#e5e7eb]"
+                  icon={<SettingOutlined style={{ fontSize: 14 }} />}
+                  className="flex items-center !h-[35px] !rounded-lg !border-[#e5e7eb] whitespace-nowrap"
                 >
-                  Manage Columns
+                  <span className="text-[#4B5563] text-[13px]">Manage Columns</span>
                 </Button>
               </Dropdown>
             </div>
@@ -949,6 +1000,9 @@ export default function ProfitDetailsView() {
             locale={{ emptyText: 'No Data Found' }}
             pagination={{
               ...pagination,
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: profitData?.pagination?.count || 0,
               showSizeChanger: true,
               pageSizeOptions: ['10', '20', '50', '100'],
               showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
