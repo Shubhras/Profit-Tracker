@@ -657,8 +657,9 @@ export default function ProfitDetailsView() {
               <ArrowLeftOutlined className="text-[#374151]" />
             </button>
 
-            <div className="flex flex-1 flex-wrap items-center justify-end gap-3 lg:w-full md:w-full">
-              <div className="relative flex-1 min-w-[220px] lg:min-w-full md:w-full">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+              {/* Search */}
+              <div className="relative w-[220px] lg:w-full md:w-full sm:w-full">
                 <input
                   type="text"
                   placeholder="Search..."
