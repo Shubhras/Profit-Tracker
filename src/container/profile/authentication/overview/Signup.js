@@ -233,7 +233,13 @@ function SignUp() {
           </Checkbox>
         </div>
         <div className="mb-6 flex justify-center">
-          <ReCAPTCHA sitekey={process.env.REACT_APP_MY_CAPTCHA_KEY} onChange={(token) => setCaptchaToken(token)} />
+          <ReCAPTCHA
+            sitekey={process.env.REACT_APP_MY_CAPTCHA_KEY}
+            onChange={(token) => {
+              console.log('CAPTCHA TOKEN =>', token);
+              setCaptchaToken(token);
+            }}
+          />
         </div>
 
         {error && (
