@@ -53,7 +53,7 @@ function SignUp() {
         }),
       );
     },
-    [dispatch, navigate, checked],
+    [dispatch, navigate, checked, captchaToken],
   );
   // console.log('SITE KEY:', process.env.REACT_APP_RECAPTCHA_SITE_KEY);
   // console.log('API =>', process.env.REACT_APP_API_ENDPOINT);
@@ -97,9 +97,23 @@ function SignUp() {
           <Form.Item
             label={<span className="font-medium text-gray-700">Mobile Number</span>}
             name="mobile"
-            rules={[{ required: true, message: 'Please enter mobile number' }]}
+            rules={[
+              { required: true, message: 'Please enter mobile number' },
+              {
+                pattern: /^[0-9]{10}$/,
+                message: 'Please enter a valid 10-digit mobile number',
+              },
+            ]}
           >
-            <Input className="rounded-lg py-2" placeholder="Mobile Number" />
+            <Input
+              className="rounded-lg py-2"
+              placeholder="Mobile Number"
+              maxLength={10}
+              inputMode="numeric"
+              onChange={(e) => {
+                e.target.value = e.target.value.replace(/\D/g, '');
+              }}
+            />
           </Form.Item>
 
           {/* <Form.Item
@@ -252,7 +266,7 @@ function SignUp() {
             type="primary"
             htmlType="submit"
             loading={loading}
-            disabled={!checked}
+            disabled={!checked || !captchaToken}
           >
             Create Account
           </Button>
