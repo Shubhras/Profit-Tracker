@@ -490,5 +490,44 @@ class SPAPIManager:
             path,
             params=params
         )
+        
+        
+    def search_orders_v2026(self, **kwargs):
+        """
+        Returns orders created or updated during the time period that you specify.
+        Calls GET /orders/2026-01-01/orders.
+        """
+        path = "/orders/2026-01-01/orders"
+        params = {}
+        
+        # MarketplaceIds is required by the API
+        if "marketplaceIds" not in kwargs:
+            params["marketplaceIds"] = self.marketplace_id
+        else:
+            marketplaces = kwargs.get("marketplaceIds")
+            if isinstance(marketplaces, list):
+                params["marketplaceIds"] = ",".join(marketplaces)
+            else:
+                params["marketplaceIds"] = marketplaces
+                
+        # Query parameters mapping
+        param_mapping = [
+            "createdAfter", "createdBefore", "lastUpdatedAfter", "lastUpdatedBefore",
+            "fulfillmentStatuses", "fulfilledBy", "maxResultsPerPage", "paginationToken",
+            "includedData"
+        ]
+        
+        for key in param_mapping:
+            if key in kwargs and kwargs[key] is not None:
+                val = kwargs[key]
+                if isinstance(val, list):
+                    params[key] = ",".join(val)
+                elif isinstance(val, bool):
+                    params[key] = "true" if val else "false"
+                else:
+                    params[key] = val
+                    
+        return self.request("GET", path, params=params)
+    
     
   

@@ -30,6 +30,8 @@ urlpatterns = [
     path('orders/', views.get_orders, name='get_orders'),
     path('orders/<str:order_id>/', views.get_order_details, name='get_order_details'),
     
+    path('search-orders/', views.search_orders, name='search_orders'),   #live api test
+    
     # path('orders/<str:order_id>/buyerInfo/', views.get_order_buyer_info, name='get_order_buyer_info'),
     path('orders/<str:order_id>/address/', views.get_order_address, name='get_order_address'),
     path('orders/<str:order_id>/orderItems/live/', views.get_order_items, name='get_order_items_live'),

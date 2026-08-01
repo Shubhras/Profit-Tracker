@@ -169,7 +169,7 @@ def amazon_callback(request):
     })
 
 
-
+# perfect working upto 1 aug
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def sync_reports(request):
@@ -441,6 +441,350 @@ def sync_reports(request):
             "message": str(e),
             "trace": traceback.format_exc()
         }, status=500)
+
+
+
+# new updated on 1 aug
+# @api_view(['GET'])
+# @permission_classes([IsAuthenticated])
+# def sync_reports(request):
+#     try:
+#         user = request.user
+#         if user.is_anonymous:
+#             from django.contrib.auth.models import User
+#             user = User.objects.first()
+
+#         accounts = AmazonAccount.objects.filter(user=user)
+
+#         if not accounts.exists():
+#             return JsonResponse({"status": "error", "message": "No Amazon accounts connected."}, status=400)
+
+#         total_saved = 0
+#         sync_details = []
+
+#         for account in accounts:
+#             manager = SPAPIManager(user=user, account=account)
+
+#             params = request.GET.dict()
+#             if not params.get('reportTypes') and not params.get('nextToken'):
+#                 params['reportTypes'] = [
+#                     'GET_V2_SETTLEMENT_REPORT_DATA_FLAT_FILE',
+#                     'GET_FLAT_FILE_ALL_ORDERS_DATA_BY_LAST_UPDATE_GENERAL',
+#                     'GET_SALES_AND_TRAFFIC_REPORT',  # ✅ FIXED
+#                 ]
+
+#             # ⚠️ OPTIONAL: Only run via cron (not every API hit)
+#             # manager.new_create_report(...)
+
+#             manager.new_create_report(
+#                 report_type="GET_SALES_AND_TRAFFIC_REPORT",
+#                 start_date="2026-05-26T00:00:00Z",
+#                 end_date="2026-06-30T23:59:59Z"
+#             )
+
+#             data = manager.get_reports(**params)
+
+#             if "errors" in data:
+#                 sync_details.append({
+#                     "seller_id": account.seller_central_id,
+#                     "status": "error",
+#                     "errors": data["errors"]
+#                 })
+#                 continue
+
+#             reports = data.get("reports", [])
+#             account_saved_count = 0
+
+#             for report in reports:
+#                 report_type = report.get("reportType")
+#                 print("report_type  ====",report_type)
+
+#                 Report.objects.update_or_create(
+#                     amazon_report_id=report.get("reportId"),
+#                     amazon_account=account,
+#                     defaults={
+#                         "user": user,
+#                         "report_type": report_type,
+#                         "processing_status": report.get("processingStatus"),
+#                         "created_time": parse_date(report.get("createdTime")),
+#                         "data_start_time": parse_date(report.get("dataStartTime")) if report.get("dataStartTime") else None,
+#                         "data_end_time": parse_date(report.get("dataEndTime")) if report.get("dataEndTime") else None,
+#                         "report_document_id": report.get("reportDocumentId"),
+#                         "raw_data": report
+#                     }
+#                 )
+
+#                 account_saved_count += 1
+
+#                 if report.get("processingStatus") != "DONE":
+#                     continue
+
+#                 doc_id = report.get("reportDocumentId")
+#                 if not doc_id:
+#                     continue
+
+#                 doc = manager.get_report_document(doc_id)
+#                 url = doc.get("url")
+#                 if not url:
+#                     continue
+
+#                 response = requests.get(url)
+#                 content = response.content.decode("utf-8")
+#                 reader = csv.DictReader(StringIO(content))
+
+#                 # =========================
+#                 # ✅ BUSINESS REPORT
+#                 # =========================
+
+#                 # =========================
+#                 # SAFE HELPERS
+#                 # =========================
+#                 def to_float(val):
+#                     try:
+#                         return float(val)
+#                     except:
+#                         return 0.0
+
+#                 def to_int(val):
+#                     try:
+#                         return int(float(val))
+#                     except:
+#                         return 0
+
+
+#                 # =========================
+#                 # ✅ BUSINESS REPORT
+#                 # =========================
+#                 if report_type == "GET_SALES_AND_TRAFFIC_REPORT":
+#                     print(" get GET_SALES_AND_TRAFFIC_REPORT   start ==============")
+
+#                     for row in reader:
+#                         try:
+#                             parent_asin = row.get("parent-asin")
+#                             # child_asin = row.get("child-asin")
+#                             child_asin = row.get("child-asin") or ""
+#                             date_str = row.get("date")
+
+#                             if not parent_asin or not date_str:
+#                                 continue
+
+#                             # ✅ FIX: convert date
+#                             from datetime import datetime
+#                             date = datetime.strptime(date_str, "%Y-%m-%d").date()
+
+#                             child_asin = row.get("child-asin") or ""
+
+#                             BusinessReport.objects.update_or_create(
+#                                 amazon_account=account,
+#                                 date=date,
+#                                 parent_asin=parent_asin,
+#                                 child_asin=child_asin,
+#                                 defaults={
+#                                     "user": user,
+
+#                                     "ordered_product_sales": to_float(row.get("ordered-product-sales")),
+#                                     "ordered_product_sales_b2b": to_float(row.get("ordered-product-sales-b2b")),
+
+#                                     "units_ordered": to_int(row.get("units-ordered")),
+#                                     "units_ordered_b2b": to_int(row.get("units-ordered-b2b")),
+
+#                                     "total_order_items": to_int(row.get("total-order-items")),
+
+#                                     "sessions_total": to_int(row.get("sessions-total")),
+#                                     "sessions_total_b2b": to_int(row.get("sessions-total-b2b")),
+
+#                                     "page_views_total": to_int(row.get("page-views-total")),
+#                                     "page_views_total_b2b": to_int(row.get("page-views-total-b2b")),
+
+#                                     "unit_session_percentage": to_float(row.get("unit-session-percentage")),
+#                                     "unit_session_percentage_b2b": to_float(row.get("unit-session-percentage-b2b")),
+
+#                                     "buy_box_percentage": to_float(row.get("buy-box-percentage")),
+#                                     "buy_box_percentage_b2b": to_float(row.get("buy-box-percentage-b2b")),
+
+#                                     "units_refunded": to_int(row.get("units-refunded")),
+#                                     "refund_rate": to_float(row.get("refund-rate")),
+
+#                                     "orders_shipped": to_int(row.get("orders-shipped")),
+#                                     "shipped_product_sales": to_float(row.get("shipped-product-sales")),
+#                                 }
+#                             )
+
+#                         except Exception as e:
+#                             print("Business report row error:", e)
+
+#                     continue  # ✅ skip order logic
+
+#                 # if report_type == "GET_SALES_AND_TRAFFIC_REPORT":
+
+#                 #     for row in reader:
+#                 #         try:
+#                 #             parent_asin = row.get("parent-asin")
+#                 #             child_asin = row.get("child-asin")
+#                 #             date = row.get("date")
+
+#                 #             if not parent_asin or not date:
+#                 #                 continue
+
+#                 #             BusinessReport.objects.update_or_create(
+#                 #                 amazon_account=account,
+#                 #                 date=date,
+#                 #                 parent_asin=parent_asin,
+#                 #                 child_asin=child_asin,
+#                 #                 defaults={
+#                 #                     "user": user,
+#                 #                     "ordered_product_sales": float(row.get("ordered-product-sales", 0)),
+#                 #                     "units_ordered": int(float(row.get("units-ordered", 0))),
+#                 #                     "total_order_items": int(float(row.get("total-order-items", 0))),
+#                 #                     "sessions_total": int(float(row.get("sessions-total", 0))),
+#                 #                     "sou  ": float(row.get("unit-session-percentage", 0)),
+#                 #                     "buy_box_percentage": float(row.get("buy-box-percentage", 0)),
+#                 #                 }
+#                 #             )
+#                 #         except Exception as e:
+#                 #             print("Business report error:", e)
+
+#                 #     continue  # 🔥 IMPORTANT: skip order logic
+
+#                 # =========================
+#                 # ✅ ORDER REPORT (EXISTING)
+#                 # =========================
+#                 orders_to_recalculate = {}
+#                 orders_currency = {}
+#                 orders_status = {}
+#                 orders_last_update = {}
+
+#                 for row in reader:
+#                     sku = row.get("sku") or row.get("seller-sku")
+#                     order_id = row.get("amazon-order-id")
+#                     if not sku or not order_id:
+#                         continue
+
+#                     purchase_date_str = row.get("purchase-date")
+#                     purchase_date = parse_date(purchase_date_str) if purchase_date_str else timezone.now()
+
+#                     # 1. Find or create Order
+#                     order, created = Order.objects.get_or_create(
+#                         amazon_order_id=order_id,
+#                         amazon_account=account,
+#                         defaults={
+#                             "user": user,
+#                             "purchase_date": purchase_date,
+#                             "last_update_date": parse_date(row.get("last-updated-date")) if row.get("last-updated-date") else timezone.now(),
+#                             "order_status": row.get("order-status") or "Pending",
+#                             "fulfillment_channel": row.get("fulfillment-channel") or "",
+#                             "currency_code": row.get("currency") or "INR",
+#                             "city": row.get("ship-city") or "",
+#                             "state": row.get("ship-state") or "",
+#                             "country": row.get("ship-country") or "",
+#                             "marketplace_id": account.marketplace_id,
+#                             "total_amount": 0.00,
+#                             "items_shipped": int(row.get("quantity", 0) or row.get("quantity-ordered", 0) or 0),
+#                             "items_unshipped": 0,
+#                         }
+#                     )
+
+#                     if not created:
+#                         status = row.get("order-status")
+#                         if status:
+#                             order.order_status = status
+#                         last_update_str = row.get("last-updated-date")
+#                         if last_update_str:
+#                             order.last_update_date = parse_date(last_update_str)
+#                         order.save()
+
+#                     # 2. Find or create OrderItem
+#                     item = OrderItem.objects.filter(
+#                         order=order,
+#                         seller_sku=sku
+#                     ).first()
+
+#                     if not item:
+#                         item = OrderItem.objects.create(
+#                             order=order,
+#                             order_item_id=row.get("order-item-id") or f"{order_id}_{sku}",
+#                             seller_sku=sku,
+#                             quantity_ordered=int(row.get("quantity", 0) or row.get("quantity-ordered", 0) or 1),
+#                             product_name=row.get("product-name") or "",
+#                         )
+
+#                     # 3. Update OrderItem fields
+#                     try:
+#                         item_price = float(row.get("item-price", 0) or 0)
+#                         item_tax = float(row.get("item-tax", 0) or 0)
+#                         shipping_price = float(row.get("shipping-price", 0) or 0)
+#                         promo = abs(float(row.get("promotion-discount", 0) or row.get("item-promotion-discount", 0) or 0))
+#                         ship_promo = abs(float(row.get("ship-promotion-discount", 0) or 0))
+
+#                         item.mrp = item_price + item_tax
+#                         item.selling_price = item_price
+#                         item.promotion_discount = promo
+#                         item.discount = item.mrp - item.selling_price
+#                         item.net_sales = item_price - promo
+#                         item.total_amount = item.net_sales
+#                         item.shipping_price = shipping_price
+                        
+#                         item.save()
+
+#                         # Accumulate order totals
+#                         row_net = item_price + shipping_price - promo - ship_promo
+#                         if order_id not in orders_to_recalculate:
+#                             orders_to_recalculate[order_id] = 0.0
+#                         orders_to_recalculate[order_id] += row_net
+
+#                         currency = row.get("currency")
+#                         if currency:
+#                             orders_currency[order_id] = currency
+
+#                         status = row.get("order-status")
+#                         if status:
+#                             orders_status[order_id] = status
+
+#                         last_update_str = row.get("last-updated-date")
+#                         if last_update_str:
+#                             orders_last_update[order_id] = parse_date(last_update_str)
+
+#                     except Exception as e:
+#                         print("Order row error:", e)
+
+#                 # Update parent Order totals and statuses in DB
+#                 for oid, amount in orders_to_recalculate.items():
+#                     try:
+#                         Order.objects.filter(
+#                             amazon_order_id=oid,
+#                             amazon_account=account
+#                         ).update(
+#                             total_amount=amount,
+#                             currency_code=orders_currency.get(oid, "INR"),
+#                             order_status=orders_status.get(oid, "Pending"),
+#                             last_update_date=orders_last_update.get(oid, timezone.now())
+#                         )
+#                     except Exception as e:
+#                         print(f"Error updating Order {oid} total amount:", e)
+
+#             total_saved += account_saved_count
+
+#             sync_details.append({
+#                 "seller_id": account.seller_central_id,
+#                 "status": "success",
+#                 "synced_count": account_saved_count
+#             })
+
+#         return JsonResponse({
+#             "status": "success",
+#             "message": f"Reports synced & processed for {len(sync_details)} accounts",
+#             "total_synced": total_saved,
+#             "details": sync_details
+#         })
+
+#     except Exception as e:
+#         import traceback
+#         return JsonResponse({
+#             "status": "error",
+#             "message": str(e),
+#             "trace": traceback.format_exc()
+#         }, status=500)
+
 
 
 # request for create rport 
@@ -1316,7 +1660,6 @@ def sync_orders(request):
 
 
 
-
 @login_required
 def list_db_orders(request):
     """Returns all orders stored in the local database for this user"""
@@ -1379,6 +1722,47 @@ def get_orders(request):
         return JsonResponse(response)
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def search_orders(request):
+    """
+    Calls the SP-API SearchOrders (v2026-01-01) and returns the raw response.
+    Example: /api/amazon/search-orders/?marketplaceIds=A21TJRUUN4KGV&createdAfter=2026-07-01T00:00:00Z
+    """
+    try:
+        manager = SPAPIManager(user=request.user)
+        
+        # Capture all parameters
+        params = {}
+        for key in ['createdAfter', 'createdBefore', 'lastUpdatedAfter', 'lastUpdatedBefore', 'maxResultsPerPage', 'paginationToken']:
+            if key in request.GET:
+                params[key] = request.GET[key]
+                
+        # List parameters
+        for key in ['marketplaceIds', 'fulfillmentStatuses', 'fulfilledBy', 'includedData']:
+            val_list = request.GET.getlist(key)
+            if not val_list and key in request.GET:
+                val_list = [v.strip() for v in request.GET[key].split(',') if v.strip()]
+            if val_list:
+                params[key] = val_list
+                
+        # Add aliases for marketplaceIds
+        if 'marketplace_id' in request.GET and 'marketplaceIds' not in params:
+            params['marketplaceIds'] = [request.GET['marketplace_id']]
+        elif 'marketplaceId' in request.GET and 'marketplaceIds' not in params:
+            params['marketplaceIds'] = [request.GET['marketplaceId']]
+            
+        response = manager.search_orders_v2026(**params)
+        return JsonResponse(response)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+
+
 
 @login_required
 def get_order_details(request, order_id):
