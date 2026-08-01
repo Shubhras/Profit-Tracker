@@ -136,6 +136,8 @@ function Module() {
             setIsActive(true);
 
             dispatch(getModules());
+          } else {
+            message.error(response?.errors?.name?.[0] || response?.message || 'Something went wrong');
           }
         }),
       );
@@ -242,77 +244,92 @@ function Module() {
 
             {/* Loading */}
             <Spin spinning={loading}>
-              <div className="grid grid-cols-1 min-md:grid-cols-2 min-xl:grid-cols-3 gap-6">
-                {' '}
-                {moduleData.map((item) => (
-                  <div
-                    key={item.id}
-                    className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden"
-                  >
-                    {/* Top */}
-                    <div className="p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
-                          <AppstoreOutlined
-                            style={{
-                              fontSize: 24,
-                              color: '#2563eb',
-                            }}
-                          />
+              {moduleData.length === 0 ? (
+                <div className="flex items-center justify-center h-[350px]">
+                  <div className="text-center">
+                    <AppstoreOutlined
+                      style={{
+                        fontSize: 52,
+                        color: '#d1d5db',
+                      }}
+                    />
+                    <p className="mt-4 text-lg font-semibold text-gray-500">No Modules Found</p>
+                    <p className="text-sm text-gray-400">Create your first module to get started.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 min-md:grid-cols-2 min-xl:grid-cols-3 gap-6">
+                  {' '}
+                  {moduleData.map((item) => (
+                    <div
+                      key={item.id}
+                      className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden"
+                    >
+                      {/* Top */}
+                      <div className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
+                            <AppstoreOutlined
+                              style={{
+                                fontSize: 24,
+                                color: '#2563eb',
+                              }}
+                            />
+                          </div>
+
+                          <Tag color={item.status ? 'green' : 'red'}>{item.status ? 'Active' : 'Inactive'}</Tag>
                         </div>
 
-                        <Tag color={item.status ? 'green' : 'red'}>{item.status ? 'Active' : 'Inactive'}</Tag>
+                        <h3 className="text-lg font-semibold text-gray-800 mt-3">{item.name}</h3>
+
+                        <p className="text-sm text-gray-500 mt-1 line-clamp-1">
+                          {item.description || 'No description available'}
+                        </p>
+
+                        <div className="mt-3 text-[13px] text-gray-400">Created on</div>
+
+                        <div className="text-[14px] font-medium text-gray-700">
+                          {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '-'}
+                        </div>
                       </div>
 
-                      <h3 className="text-lg font-semibold text-gray-800 mt-3">{item.name}</h3>
+                      {/* Footer */}
+                      <div className="grid grid-cols-3 border-t">
+                        <Button
+                          type="text"
+                          icon={<EyeOutlined />}
+                          onClick={() => handleView(item)}
+                          className="h-12 rounded-none flex items-center"
+                        >
+                          View
+                        </Button>
 
-                      <p className="text-sm text-gray-500 mt-1 line-clamp-1">
-                        {item.description || 'No description available'}
-                      </p>
+                        <Button
+                          type="text"
+                          icon={<FormOutlined />}
+                          className="h-12 rounded-none border-x flex items-center"
+                          onClick={() => handleEdit(item)}
+                        >
+                          Edit
+                        </Button>
 
-                      <div className="mt-3 text-[13px] text-gray-400">Created on</div>
-
-                      <div className="text-[14px] font-medium text-gray-700">
-                        {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '-'}
+                        <Button
+                          danger
+                          type="text"
+                          icon={<DeleteOutlined />}
+                          className="h-12 rounded-none flex items-center"
+                          onClick={() => {
+                            setSelectedModule(item);
+                            setDeleteModal(true);
+                          }}
+                        >
+                          Delete
+                        </Button>
                       </div>
                     </div>
-
-                    {/* Footer */}
-                    <div className="grid grid-cols-3 border-t">
-                      <Button
-                        type="text"
-                        icon={<EyeOutlined />}
-                        onClick={() => handleView(item)}
-                        className="h-12 rounded-none flex items-center"
-                      >
-                        View
-                      </Button>
-
-                      <Button
-                        type="text"
-                        icon={<FormOutlined />}
-                        className="h-12 rounded-none border-x flex items-center"
-                        onClick={() => handleEdit(item)}
-                      >
-                        Edit
-                      </Button>
-
-                      <Button
-                        danger
-                        type="text"
-                        icon={<DeleteOutlined />}
-                        className="h-12 rounded-none flex items-center"
-                        onClick={() => {
-                          setSelectedModule(item);
-                          setDeleteModal(true);
-                        }}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </Spin>
           </div>
         </div>

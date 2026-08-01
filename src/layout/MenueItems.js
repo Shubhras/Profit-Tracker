@@ -39,12 +39,12 @@ import {
   UilArrowGrowth,
   UilMegaphone,
   UilBookOpen,
-  UilCreateDashboard,
-  UilFileShieldAlt,
-  UilSetting,
-  UilChartGrowth,
-  UilProcess,
-  UilLayersAlt,
+  // UilCreateDashboard,
+  // UilFileShieldAlt,
+  // UilSetting,
+  // UilChartGrowth,
+  // UilProcess,
+  // UilLayersAlt,
   UilApps,
   UilUsersAlt,
   UilTag,
@@ -72,6 +72,15 @@ import propTypes from 'prop-types';
 function MenuItems({ toggleCollapsed }) {
   const { t } = useTranslation();
   const location = useLocation();
+
+  const profile = useSelector((state) => state.auth.profile);
+
+  const modules = profile?.subscription?.modules || [];
+  const submodules = profile?.subscription?.submodules || [];
+
+  const hasModule = (slug) => modules.some((m) => m.slug === slug);
+
+  const hasSubmodule = (slug) => submodules.some((s) => s.slug === slug);
 
   function getItem(label, key, icon, children, type) {
     return {
@@ -166,1844 +175,562 @@ function MenuItems({ toggleCollapsed }) {
       !topMenu && <UilBookOpen />,
     ),
 
-    getItem(t('profit'), 'profit', !topMenu && <UilArrowGrowth />, [
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/profit/summary`}>
-          {t('summary')}
-        </NavLink>,
-        'summary',
-        null,
-      ),
-      // getItem(
-      //   <NavLink onClick={toggleCollapsed} to={`${path}/profit/salesTrend`}>
-      //     {t('salesTrend')}
-      //   </NavLink>,
-      //   'salesTrend',
-      //   null,
-      // ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to="/admin/profit/profitTableView/details">
-          {t('SKU Wise Profit')}
-        </NavLink>,
-        'skuwiseprofit',
-        null,
-      ),
-
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/profit/estimatedfees`}>
-          {t('MarketPlace Fees Estimate')}
-        </NavLink>,
-        'estimatedfees',
-        null,
-      ),
-
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/profit/shippingestimate`}>
-          {t('Shipping Estimate')}
-        </NavLink>,
-        'shippingestimate',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/profit/claims`}>
-          {t('Claims')}
-        </NavLink>,
-        'claims',
-        null,
-      ),
-
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/profit/returnfees`}>
-          {t('Return Fees')}
-        </NavLink>,
-        'returnfees',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/profit/profitTableView`}>
-          {t('profitTableView')}
-        </NavLink>,
-        'profitTableView',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/profit/profitMonthlyView`}>
-          {t('profitMonthlyView')}
-        </NavLink>,
-        'profitMonthlyView',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/profit/taxcalculation`}>
-          {t('Tax Calculations')}
-        </NavLink>,
-        'taxcalculation',
-        null,
-      ),
-
-      // getItem(
-      //   <NavLink onClick={toggleCollapsed} to={`${path}/profit/canvasMYOR`}>
-      //     {t('canvasMYOR')}
-      //   </NavLink>,
-      //   'canvasMYOR',
-      //   null,
-      // ),
-    ]),
-
-    getItem(t('paymentreconcile'), 'reconcile', !topMenu && <UilCreateDashboard />, [
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-overview`}>
-          {t('Overview')}
-        </NavLink>,
-        'payment-overview',
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-reconcile`}>
-          {t('Payment')}
-        </NavLink>,
-        'payment-reconcile',
-      ),
-      // getItem(
-      //   <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/summary`}>
-      //     {t('summary')}
-      //   </NavLink>,
-      //   'reconcile-summary',
-      // ),
-
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/ordersettlement`}>
-          {t('Order & Settlements')}
-        </NavLink>,
-        'order-settlements',
-      ),
-
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/marketPayment`}>
-          {t('Marketplace Payments')}
-        </NavLink>,
-        'marketplace-payment',
-      ),
-
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/returnsAdjust`}>
-          {t('Returns & Adjustments')}
-        </NavLink>,
-        'returns-adjustments',
-      ),
-
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/allLeaks`}>
-          {t('All Leaks')}
-        </NavLink>,
-        'payment-leaks',
-      ),
-
-      // getItem(
-      //   <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/cashflow`}>
-      //     {t('Cashflow Planning')}
-      //   </NavLink>,
-      //   'cashflow-planning',
-      // ),
-
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/reimbursement`}>
-          {t('Reimbursement Planning')}
-        </NavLink>,
-        'reimbursement-planning',
-      ),
-
-      // getItem(
-      //   <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/os-payment`}>
-      //     {t('osPayment')}
-      //   </NavLink>,
-      //   'os-payment',
-      // ),
-
-      /* ================= B2C Reconciliation ================= */
-      // getItem(t('b2cReconciliation'), 'b2c-reconciliation', null, [
-      //   getItem(
-      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2c-reconciliation/settled-order`}>
-      //       {t('settledOrder')}
-      //     </NavLink>,
-      //     'settled-order',
-      //   ),
-
-      //   getItem(
-      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2c-reconciliation/unsettled-order`}>
-      //       {t('unsettledOrder')}
-      //     </NavLink>,
-      //     'unsettled-order',
-      //   ),
-
-      //   getItem(
-      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2c-reconciliation/invoice-reconciliation`}>
-      //       {t('invoiceReconciliation')}
-      //     </NavLink>,
-      //     'invoice-reconciliation',
-      //   ),
-      // ]),
-
-      /* ================= B2B Reconciliation ================= */
-      // getItem(t('b2bReconciliation'), 'b2b-reconciliation', null, [
-      //   getItem(
-      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2b-reconciliation/avcp`}>
-      //       {t('avcp')}
-      //     </NavLink>,
-      //     'avcp',
-      //   ),
-      //   getItem(
-      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2b-reconciliation/quick-com`}>
-      //       {t('quickCom')}
-      //     </NavLink>,
-      //     'quick-com',
-      //   ),
-
-      //   getItem(
-      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2b-reconciliation/others`}>
-      //       {t('others')}
-      //     </NavLink>,
-      //     'others',
-      //   ),
-
-      //   getItem(
-      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/b2b-reconciliation/customer-ledger`}>
-      //       {t('custLedger')}
-      //     </NavLink>,
-      //     'custLedger',
-      //   ),
-      // ]),
-
-      // Fee Leaks
-      // getItem(
-      //   <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/fee-leaks`}>
-      //     {t('feeLeaks')}
-      //   </NavLink>,
-      //   'fee-leaks',
-      // ),
-
-      // getItem(
-      //   <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/min-settlement-leaks`}>
-      //     {t('minSettLeaks')}
-      //   </NavLink>,
-      //   'minSettLeaks',
-      // ),
-      /* ================= Returns ================= */
-      // getItem(t('returns'), 'returns', null, [
-      //   getItem(
-      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/return/summary`}>
-      //       {t('summary')}
-      //     </NavLink>,
-      //     'returns-summary',
-      //   ),
-
-      //   getItem(
-      //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/return/ledger`}>
-      //       {t('ledger')}
-      //     </NavLink>,
-      //     'returns-ledger',
-      //   ),
-      // ]),
-    ]),
-
-    getItem(t('Advertising'), 'advertising', !topMenu && <UilMegaphone />, [
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/overview`}>
-          {t('Overview')}
-        </NavLink>,
-        'advertising-overview',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/create-campaign`}>
-          {t('Create Campaign')}
-        </NavLink>,
-        'create-campaign',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/campaigns`}>
-          {t('Campaigns')}
-        </NavLink>,
-        'campaigns',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/AdProducts`}>
-          {t('Ad Products')}
-        </NavLink>,
-        'adproducts',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/adsgroup`}>
-          {t('Ad Groups')}
-        </NavLink>,
-        'adsgroup',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/searchTerms`}>
-          {t('Search Terms')}
-        </NavLink>,
-        'searchTerms',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/keywords`}>
-          {t('Keywords')}
-        </NavLink>,
-        'keywords',
-        null,
-      ),
-      // getItem(
-      //   <NavLink onClick={toggleCollapsed} to={`${path}/advertising/placements`}>
-      //     {t('Placements')}
-      //   </NavLink>,
-      //   'placements',
-      //   null,
-      // ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/targets`}>
-          {t('Targets')}
-        </NavLink>,
-        'targets',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/negativeKey`}>
-          {t('Negative Keywords')}
-        </NavLink>,
-        'negativeKey',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/advertising/rulesAuto`}>
-          {t('Rules & Automation')}
-        </NavLink>,
-        'rulesAuto',
-        null,
-      ),
-    ]),
-
-    getItem(t('Organic Performance'), 'organicperformance', !topMenu && <UilChartGrowth />, [
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/overview`}>
-          {t('Overview')}
-        </NavLink>,
-        'perofrmance-Overview',
-        null,
-      ),
-
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/trafficVisibility`}>
-          {t('Traffic & Visibility')}
-        </NavLink>,
-        'traffic-visibility',
-        null,
-      ),
-
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/salesDrivers`}>
-          {t('Sales Drivers')}
-        </NavLink>,
-        'sales-drivers',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/Keyperformance`}>
-          {t('Keyword Performance')}
-        </NavLink>,
-        'keyperformance',
-        null,
-      ),
-
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/productranking`}>
-          {t('Product Ranking')}
-        </NavLink>,
-        'product-ranking',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/reviewRating`}>
-          {t('Reviews & Ratings')}
-        </NavLink>,
-        'Reviews-Rating',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/inventoryImpact`}>
-          {t('Inventory Impact')}
-        </NavLink>,
-        'inventoryImpact',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/reports`}>
-          {t('Reports')}
-        </NavLink>,
-        'reports',
-        null,
-      ),
-    ]),
-
-    getItem(t('Operations'), 'Operations', !topMenu && <UilProcess />, [
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/operations/dailyOperations`}>
-          {t('Daily Operations')}
-        </NavLink>,
-        'dailyoperations',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/operations/orderProcessing`}>
-          {t('Order Processing')}
-        </NavLink>,
-        'orderProcessing',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/operations/inventorySync`}>
-          {t('Inventory Sync')}
-        </NavLink>,
-        'inventorySync',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/operations/autoClaims`}>
-          {t('Auto Claims')}
-        </NavLink>,
-        'autoClaims',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/operations/logsHistory`}>
-          {t('Logs & History')}
-        </NavLink>,
-        'logshistory',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/operations/settings`}>
-          {t('Settings')}
-        </NavLink>,
-        'settings',
-        null,
-      ),
-    ]),
-
-    getItem(t('Value Added Services'), 'valueadded', !topMenu && <UilLayersAlt />, [
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/overview`}>
-          {t('Overview')}
-        </NavLink>,
-        'valueadded-overview',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/accountmanage`}>
-          {t('Account Management')}
-        </NavLink>,
-        'accountmanage',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/digitalmarketing`}>
-          {t('Digital Marketing')}
-        </NavLink>,
-        'digitalmarketing',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/QuickCommerce`}>
-          {t('Quick Commerce')}
-        </NavLink>,
-        'quickcommerce',
-        null,
-      ),
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/myservices`}>
-          {t('My Services')}
-        </NavLink>,
-        'myservices',
-        null,
-      ),
-      // getItem(
-      //   <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/invoicebilling`}>
-      //     {t('Invoices & Billing')}
-      //   </NavLink>,
-      //   'invoicebilling',
-      //   null,
-      // ),
-    ]),
-
-    getItem(
-      <NavLink onClick={toggleCollapsed} to={`${path}/pages/download`}>
-        {t('download')}
-      </NavLink>,
-      'download',
-      !topMenu && (
-        <NavLink className="menuItem-iocn" to={`${path}/pages/download`}>
-          <UilFileShieldAlt />
-        </NavLink>
-      ),
-    ),
-
-    getItem(t('settings'), 'settings', !topMenu && <UilSetting />, [
-      getItem(t('productSettings'), 'productSettings', null, [
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/overview`}>
-            {t('overview')}
-          </NavLink>,
-          'overview',
-        ),
-
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/product-configuration`}>
-            {t('productConfiguration')}
-          </NavLink>,
-          'productConfiguration',
-        ),
-
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/finance-configuration`}>
-            {t('financeConfiguration')}
-          </NavLink>,
-          'financeConfiguration',
-        ),
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/invoicebilling`}>
-            {t('Invoices & Billing')}
-          </NavLink>,
-          'invoicebilling',
-          null,
-        ),
-      ]),
-
-      getItem(t('userSettings'), 'userSettings', null, [
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/settings/user-setting/account-settings`}>
-            {t('accountSettings')}
-          </NavLink>,
-          'accountSettings',
-        ),
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/settings/user-setting/marketplace-settings`}>
-            {t('marketPlaceSettings')}
-          </NavLink>,
-          'marketPlaceSettings',
-        ),
-
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/settings/user-setting/user-management`}>
-            {t('userManagement')}
-          </NavLink>,
-          'userManagement',
-        ),
-      ]),
-    ]),
-
-    // getItem(t('dashboard'), 'dashboard', !topMenu && <UilCreateDashboard />, [
+    // getItem(t('profit'), 'profit', !topMenu && <UilArrowGrowth />, [
     //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/demo-1`}>
-    //       {t('demo')} {t('1')}
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/profit/summary`}>
+    //       {t('summary')}
     //     </NavLink>,
-    //     'demo-1',
+    //     'summary',
+    //     null,
+    //   ),
+
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to="/admin/profit/profitTableView/details">
+    //       {t('SKU Wise Profit')}
+    //     </NavLink>,
+    //     'skuwiseprofit',
+    //     null,
+    //   ),
+
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/profit/estimatedfees`}>
+    //       {t('MarketPlace Fees Estimate')}
+    //     </NavLink>,
+    //     'estimatedfees',
+    //     null,
+    //   ),
+
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/profit/shippingestimate`}>
+    //       {t('Shipping Estimate')}
+    //     </NavLink>,
+    //     'shippingestimate',
     //     null,
     //   ),
     //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/demo-2`}>
-    //       {t('demo')} {t('2')}
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/profit/claims`}>
+    //       {t('Claims')}
     //     </NavLink>,
-    //     'demo-2',
+    //     'claims',
+    //     null,
+    //   ),
+
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/profit/returnfees`}>
+    //       {t('Return Fees')}
+    //     </NavLink>,
+    //     'returnfees',
     //     null,
     //   ),
     //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/demo-3`}>
-    //       {t('demo')} {t('3')}
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/profit/profitTableView`}>
+    //       {t('profitTableView')}
     //     </NavLink>,
-    //     'demo-3',
+    //     'profitTableView',
     //     null,
     //   ),
     //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/demo-4`}>
-    //       {t('demo')} {t('4')}
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/profit/profitMonthlyView`}>
+    //       {t('profitMonthlyView')}
     //     </NavLink>,
-    //     'demo-4',
+    //     'profitMonthlyView',
     //     null,
     //   ),
     //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/demo-5`}>
-    //       {t('demo')} {t('5')}
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/profit/taxcalculation`}>
+    //       {t('Tax Calculations')}
     //     </NavLink>,
-    //     'demo-5',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/demo-6`}>
-    //       {t('demo')} {t('6')}
-    //     </NavLink>,
-    //     'demo-6',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/demo-7`}>
-    //       {t('demo')} {t('7')}
-    //     </NavLink>,
-    //     'demo-7',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/demo-8`}>
-    //       {t('demo')} {t('8')}
-    //     </NavLink>,
-    //     'demo-8',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/demo-9`}>
-    //       {t('demo')} {t('9')}
-    //     </NavLink>,
-    //     'demo-9',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/demo-10`}>
-    //       {t('demo')} {t('10')}
-    //     </NavLink>,
-    //     'demo-10',
+    //     'taxcalculation',
     //     null,
     //   ),
     // ]),
 
-    // getItem(t('layouts'), 'layout', !topMenu && <UilWindowSection />, [
+    hasModule('profit') &&
+      getItem(
+        'Profit',
+        'profit',
+        !topMenu && <UilArrowGrowth />,
+        [
+          hasSubmodule('summary') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/profit/summary`}>
+                Summary
+              </NavLink>,
+              'summary',
+            ),
+
+          hasSubmodule('sku-wise-profit') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to="/admin/profit/profitTableView/details">
+                SKU Wise Profit
+              </NavLink>,
+              'skuwiseprofit',
+            ),
+
+          hasSubmodule('marketplace-fees-estimate') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/profit/estimatedfees`}>
+                MarketPlace Fees Estimate
+              </NavLink>,
+              'estimatedfees',
+            ),
+
+          hasSubmodule('shipping-estimate') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/profit/shippingestimate`}>
+                Shipping Estimate
+              </NavLink>,
+              'shippingestimate',
+            ),
+
+          hasSubmodule('claims') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/profit/claims`}>
+                Claims
+              </NavLink>,
+              'claims',
+            ),
+
+          hasSubmodule('return-fees') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/profit/returnfees`}>
+                Return Fees
+              </NavLink>,
+              'returnfees',
+            ),
+
+          hasSubmodule('profit-table-view') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/profit/profitTableView`}>
+                Profit Table View
+              </NavLink>,
+              'profitTableView',
+            ),
+
+          hasSubmodule('profit-monthly-view') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/profit/profitMonthlyView`}>
+                Profit Monthly View
+              </NavLink>,
+              'profitMonthlyView',
+            ),
+        ].filter(Boolean),
+      ),
+
+    // getItem(t('paymentreconcile'), 'reconcile', !topMenu && <UilCreateDashboard />, [
     //   getItem(
-    //     <NavLink
-    //       onClick={() => {
-    //         toggleCollapsed();
-    //         darkmodeDiactivated();
-    //         changeLayout('lightMode');
-    //       }}
-    //       to="#"
-    //     >
-    //       {t('light')} {t('mode')}
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-overview`}>
+    //       {t('Overview')}
     //     </NavLink>,
-    //     'light',
+    //     'payment-overview',
+    //   ),
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-reconcile`}>
+    //       {t('Payment')}
+    //     </NavLink>,
+    //     'payment-reconcile',
+    //   ),
+
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/ordersettlement`}>
+    //       {t('Order & Settlements')}
+    //     </NavLink>,
+    //     'order-settlements',
+    //   ),
+
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/marketPayment`}>
+    //       {t('Marketplace Payments')}
+    //     </NavLink>,
+    //     'marketplace-payment',
+    //   ),
+
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/returnsAdjust`}>
+    //       {t('Returns & Adjustments')}
+    //     </NavLink>,
+    //     'returns-adjustments',
+    //   ),
+
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/allLeaks`}>
+    //       {t('All Leaks')}
+    //     </NavLink>,
+    //     'payment-leaks',
+    //   ),
+
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/reimbursement`}>
+    //       {t('Reimbursement Planning')}
+    //     </NavLink>,
+    //     'reimbursement-planning',
+    //   ),
+    // ]),
+
+    // getItem(t('Advertising'), 'advertising', !topMenu && <UilMegaphone />, [
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/advertising/overview`}>
+    //       {t('Overview')}
+    //     </NavLink>,
+    //     'advertising-overview',
     //     null,
     //   ),
     //   getItem(
-    //     <NavLink
-    //       onClick={() => {
-    //         toggleCollapsed();
-    //         darkmodeActivated();
-    //         changeLayout('darkMode');
-    //       }}
-    //       to="#"
-    //     >
-    //       {t('dark')} {t('mode')}
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/advertising/create-campaign`}>
+    //       {t('Create Campaign')}
     //     </NavLink>,
-    //     'dark',
+    //     'create-campaign',
     //     null,
     //   ),
     //   getItem(
-    //     <NavLink
-    //       onClick={() => {
-    //         toggleCollapsed();
-    //         changeNavbar(true);
-    //       }}
-    //       to="#"
-    //     >
-    //       {t('top')} {t('menu')}
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/advertising/campaigns`}>
+    //       {t('Campaigns')}
     //     </NavLink>,
-    //     'topMenu',
+    //     'campaigns',
     //     null,
     //   ),
     //   getItem(
-    //     <NavLink
-    //       onClick={() => {
-    //         toggleCollapsed();
-    //         changeNavbar(false);
-    //       }}
-    //       to="#"
-    //     >
-    //       {t('side')} {t('menu')}
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/advertising/AdProducts`}>
+    //       {t('Ad Products')}
     //     </NavLink>,
-    //     'sideMenu',
+    //     'adproducts',
     //     null,
     //   ),
     //   getItem(
-    //     <NavLink
-    //       onClick={() => {
-    //         toggleCollapsed();
-    //         changeLayoutDirection(true);
-    //       }}
-    //       to="#"
-    //     >
-    //       RTL
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/advertising/adsgroup`}>
+    //       {t('Ad Groups')}
     //     </NavLink>,
-    //     'rtl',
+    //     'adsgroup',
     //     null,
     //   ),
     //   getItem(
-    //     <NavLink
-    //       onClick={() => {
-    //         toggleCollapsed();
-    //         changeLayoutDirection(false);
-    //       }}
-    //       to="#"
-    //     >
-    //       LTR
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/advertising/searchTerms`}>
+    //       {t('Search Terms')}
     //     </NavLink>,
-    //     'ltr',
+    //     'searchTerms',
+    //     null,
+    //   ),
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/advertising/keywords`}>
+    //       {t('Keywords')}
+    //     </NavLink>,
+    //     'keywords',
+    //     null,
+    //   ),
+
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/advertising/targets`}>
+    //       {t('Targets')}
+    //     </NavLink>,
+    //     'targets',
+    //     null,
+    //   ),
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/advertising/negativeKey`}>
+    //       {t('Negative Keywords')}
+    //     </NavLink>,
+    //     'negativeKey',
+    //     null,
+    //   ),
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/advertising/rulesAuto`}>
+    //       {t('Rules & Automation')}
+    //     </NavLink>,
+    //     'rulesAuto',
     //     null,
     //   ),
     // ]),
+
+    hasModule('advertising') &&
+      getItem(
+        'Advertising',
+        'advertising',
+        !topMenu && <UilMegaphone />,
+        [
+          hasSubmodule('create-campaign') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/create-campaign`}>
+                Create Campaign
+              </NavLink>,
+              'create-campaign',
+            ),
+
+          hasSubmodule('campaigns') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/campaigns`}>
+                Campaigns
+              </NavLink>,
+              'campaigns',
+            ),
+
+          hasSubmodule('ad-products') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/AdProducts`}>
+                Ad Products
+              </NavLink>,
+              'adproducts',
+            ),
+
+          hasSubmodule('ad-groups') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/adsgroup`}>
+                Ad Groups
+              </NavLink>,
+              'adsgroup',
+            ),
+
+          hasSubmodule('search-terms') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/searchTerms`}>
+                Search Terms
+              </NavLink>,
+              'searchTerms',
+            ),
+
+          hasSubmodule('keywords') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/keywords`}>
+                Keywords
+              </NavLink>,
+              'keywords',
+            ),
+
+          hasSubmodule('targets') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/targets`}>
+                Targets
+              </NavLink>,
+              'targets',
+            ),
+
+          hasSubmodule('negative-keywords') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/negativeKey`}>
+                Negative Keywords
+              </NavLink>,
+              'negativeKey',
+            ),
+
+          hasSubmodule('rules-automation') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/rulesAuto`}>
+                Rules & Automation
+              </NavLink>,
+              'rulesAuto',
+            ),
+        ].filter(Boolean),
+      ),
+
+    // getItem(t('Organic Performance'), 'organicperformance', !topMenu && <UilChartGrowth />, [
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/overview`}>
+    //       {t('Overview')}
+    //     </NavLink>,
+    //     'perofrmance-Overview',
+    //     null,
+    //   ),
+
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/trafficVisibility`}>
+    //       {t('Traffic & Visibility')}
+    //     </NavLink>,
+    //     'traffic-visibility',
+    //     null,
+    //   ),
+
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/salesDrivers`}>
+    //       {t('Sales Drivers')}
+    //     </NavLink>,
+    //     'sales-drivers',
+    //     null,
+    //   ),
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/Keyperformance`}>
+    //       {t('Keyword Performance')}
+    //     </NavLink>,
+    //     'keyperformance',
+    //     null,
+    //   ),
+
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/productranking`}>
+    //       {t('Product Ranking')}
+    //     </NavLink>,
+    //     'product-ranking',
+    //     null,
+    //   ),
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/reviewRating`}>
+    //       {t('Reviews & Ratings')}
+    //     </NavLink>,
+    //     'Reviews-Rating',
+    //     null,
+    //   ),
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/inventoryImpact`}>
+    //       {t('Inventory Impact')}
+    //     </NavLink>,
+    //     'inventoryImpact',
+    //     null,
+    //   ),
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/reports`}>
+    //       {t('Reports')}
+    //     </NavLink>,
+    //     'reports',
+    //     null,
+    //   ),
+    // ]),
+
+    // getItem(t('Operations'), 'Operations', !topMenu && <UilProcess />, [
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/operations/dailyOperations`}>
+    //       {t('Daily Operations')}
+    //     </NavLink>,
+    //     'dailyoperations',
+    //     null,
+    //   ),
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/operations/orderProcessing`}>
+    //       {t('Order Processing')}
+    //     </NavLink>,
+    //     'orderProcessing',
+    //     null,
+    //   ),
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/operations/inventorySync`}>
+    //       {t('Inventory Sync')}
+    //     </NavLink>,
+    //     'inventorySync',
+    //     null,
+    //   ),
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/operations/autoClaims`}>
+    //       {t('Auto Claims')}
+    //     </NavLink>,
+    //     'autoClaims',
+    //     null,
+    //   ),
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/operations/logsHistory`}>
+    //       {t('Logs & History')}
+    //     </NavLink>,
+    //     'logshistory',
+    //     null,
+    //   ),
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/operations/settings`}>
+    //       {t('Settings')}
+    //     </NavLink>,
+    //     'settings',
+    //     null,
+    //   ),
+    // ]),
+
+    // getItem(t('Value Added Services'), 'valueadded', !topMenu && <UilLayersAlt />, [
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/overview`}>
+    //       {t('Overview')}
+    //     </NavLink>,
+    //     'valueadded-overview',
+    //     null,
+    //   ),
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/accountmanage`}>
+    //       {t('Account Management')}
+    //     </NavLink>,
+    //     'accountmanage',
+    //     null,
+    //   ),
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/digitalmarketing`}>
+    //       {t('Digital Marketing')}
+    //     </NavLink>,
+    //     'digitalmarketing',
+    //     null,
+    //   ),
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/QuickCommerce`}>
+    //       {t('Quick Commerce')}
+    //     </NavLink>,
+    //     'quickcommerce',
+    //     null,
+    //   ),
+    //   getItem(
+    //     <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/myservices`}>
+    //       {t('My Services')}
+    //     </NavLink>,
+    //     'myservices',
+    //     null,
+    //   ),
+    // ]),
+
     // getItem(
-    //   <NavLink onClick={toggleCollapsed} to={`${path}/pages/changelog`}>
-    //     {t('changelog')}
-    //     <span className="badge badge-primary menuItem">{versions[0].version}</span>
+    //   <NavLink onClick={toggleCollapsed} to={`${path}/pages/download`}>
+    //     {t('download')}
     //   </NavLink>,
-    //   'changelog',
-    //   !topMenu && <UilArrowGrowth />,
-    // ),
-    // getItem(
+    //   'download',
     //   !topMenu && (
-    //     <NavTitle className="flex text-[12px] font-medium uppercase text-light mt-[20px] dark:text-white87 p-0">
-    //       {t('application')}
-    //     </NavTitle>
-    //   ),
-    //   'app-title',
-    //   null,
-    //   null,
-    //   'group',
-    // ),
-    // getItem(t('email'), 'email', !topMenu && <UilEnvelope />, [
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/email/inbox`}>
-    //       {t('inbox')}
-    //     </NavLink>,
-    //     'inbox',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/email/single/1585118055048`}>
-    //       {t('read')} {t('email')}
-    //     </NavLink>,
-    //     'single',
-    //     null,
-    //   ),
-    // ]),
-    // getItem(
-    //   <NavLink onClick={toggleCollapsed} to={`${path}/main/chat/private/rofiq@gmail.com`}>
-    //     {t('chat')}
-    //   </NavLink>,
-    //   'chat',
-    //   !topMenu && (
-    //     <NavLink className="menuItem-iocn" to={`${path}/main/chat/private/rofiq@gmail.com`}>
-    //       <UilChat />
-    //     </NavLink>
-    //   ),
-    // ),
-    // getItem(t('eCommerce'), 'ecommerce', !topMenu && <UilShoppingCart />, [
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/ecommerce/products/grid`}>
-    //       {t('products')}
-    //     </NavLink>,
-    //     'products',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/ecommerce/productDetails/1`}>
-    //       {t('product')} {t('details')}
-    //     </NavLink>,
-    //     'productDetails',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/ecommerce/add-product`}>
-    //       {t('product')} {t('add')}
-    //     </NavLink>,
-    //     'add-product',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/ecommerce/edit-product`}>
-    //       {t('product')} {t('edit')}
-    //     </NavLink>,
-    //     'edit-product',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/ecommerce/cart`}>
-    //       {t('cart')}
-    //     </NavLink>,
-    //     'cart',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/ecommerce/orders`}>
-    //       {t('orders')}
-    //     </NavLink>,
-    //     'orsers',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/ecommerce/sellers`}>
-    //       {t('sellers')}
-    //     </NavLink>,
-    //     'sellers',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/ecommerce/Invoice`}>
-    //       {t('invoices')}
-    //     </NavLink>,
-    //     'Invoice',
-    //     null,
-    //   ),
-    // ]),
-    // getItem(`${t('social')} ${t('app')}`, 'profile', !topMenu && <Uil500px />, [
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/profile/myProfile/overview`}>
-    //       {t('my')} {t('profile')}
-    //     </NavLink>,
-    //     'myProfile',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/profile/myProfile/timeline`}>
-    //       {t('timeline')}
-    //     </NavLink>,
-    //     'profileTimeline',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/profile/myProfile/activity`}>
-    //       {t('activity')}
-    //     </NavLink>,
-    //     'profileActivity',
-    //     null,
-    //   ),
-    // ]),
-    // getItem(t('project'), 'project', !topMenu && <UilBagAlt />, [
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/project/view/grid`}>
-    //       {t('project')} {t('grid')}
-    //     </NavLink>,
-    //     'projectGrid',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/project/view/list`}>
-    //       {t('project')} {t('list')}
-    //     </NavLink>,
-    //     'projectList',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/project/create`}>
-    //       {t('create')} {t('project')}
-    //     </NavLink>,
-    //     'ProjectCreate',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/project/projectDetails/1/tasklist`}>
-    //       {t('project')} {t('details')}
-    //     </NavLink>,
-    //     'projectDetails',
-    //     null,
-    //   ),
-    // ]),
-    // getItem(
-    //   <NavLink onClick={toggleCollapsed} to={`${path}/app/calendar/month`}>
-    //     {t('calendar')}
-    //   </NavLink>,
-    //   't-menu-calendar',
-    //   !topMenu && (
-    //     <NavLink className="menuItem-iocn" to={`${path}/app/calendar/month`}>
-    //       <UilCalendarAlt />
-    //     </NavLink>
-    //   ),
-    // ),
-    // getItem(t('users'), 'users', !topMenu && <UilUsersAlt />, [
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/users/team`}>
-    //       {t('team')}
-    //     </NavLink>,
-    //     'team',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/users/grid`}>
-    //       {t('users')} {t('grid')}
-    //     </NavLink>,
-    //     'user-grid',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/users/list`}>
-    //       {t('users')} {t('list')}
-    //     </NavLink>,
-    //     'user-list',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/users/grid-style`}>
-    //       {t('users')} {t('grid')} {t('style')}
-    //     </NavLink>,
-    //     'grid-style',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/users/add-user/info`}>
-    //       {t('add')} {t('user')}
-    //     </NavLink>,
-    //     'addUser',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/users/dataTable`}>
-    //       {t('users')} {t('table')}
-    //     </NavLink>,
-    //     'user-dataTable',
-    //     null,
-    //   ),
-    // ]),
-    // getItem(t('contact'), 'contact', !topMenu && <UilAt />, [
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/contact/grid`}>
-    //       {t('contact')} {t('grid')}
-    //     </NavLink>,
-    //     'contact-grid',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/contact/list`}>
-    //       {t('contact')} {t('list')}
-    //     </NavLink>,
-    //     'contact-list',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/contact/addNew`}>
-    //       {t('contact')} {t('create')}
-    //     </NavLink>,
-    //     'addNew',
-    //     null,
-    //   ),
-    // ]),
-    // getItem(
-    //   <NavLink onClick={toggleCollapsed} to={`${path}/app/note/all`}>
-    //     {t('note')}
-    //   </NavLink>,
-    //   'note',
-    //   !topMenu && (
-    //     <NavLink className="menuItem-iocn" to={`${path}/app/note/all`}>
-    //       <UilClipboardAlt />
-    //     </NavLink>
-    //   ),
-    // ),
-    // getItem(
-    //   <NavLink onClick={toggleCollapsed} to={`${path}/app/to-do`}>
-    //     {t('to')} {t('do')}
-    //   </NavLink>,
-    //   'to-do',
-    //   !topMenu && (
-    //     <NavLink className="menuItem-iocn" to={`${path}/app/to-do`}>
-    //       <UilCheckSquare />
-    //     </NavLink>
-    //   ),
-    // ),
-    // // getItem(
-    // //   <NavLink onClick={toggleCollapsed} to={`${path}/app/kanban`}>
-    // //     {t('kanban Board')}
-    // //   </NavLink>,
-    // //   'kanban',
-    // //   !topMenu && <UilExpandArrowsAlt />,
-    // // ),
-    // getItem(`${t('import')} ${t('export')}`, 'importExport', !topMenu && <UilExchange />, [
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/importExport/import`}>
-    //       {t('import')}
-    //     </NavLink>,
-    //     'import',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/importExport/export`}>
-    //       {t('export')}
-    //     </NavLink>,
-    //     'export',
-    //     null,
-    //   ),
-    // ]),
-    // getItem(
-    //   <NavLink onClick={toggleCollapsed} to={`${path}/app/task/all`}>
-    //     {t('task')}
-    //   </NavLink>,
-    //   'task',
-    //   !topMenu && <UilFile />,
-    // ),
-    // getItem(t('support'), 'supports', !topMenu && <UilHeadphones />, [
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/app/support/tickets`}>
-    //       {t('support')}
-    //     </NavLink>,
-    //     'support',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/app/support/tickets/add`}>
-    //       {t('add')} {t('support')}
-    //     </NavLink>,
-    //     'add-support',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/app/support/ticketDetails/01`}>
-    //       {t('view')} {t('support')}
-    //     </NavLink>,
-    //     'view-support',
-    //     null,
-    //   ),
-    // ]),
-    // getItem(`${t('learning')} ${t('app')}`, 'course', !topMenu && <UilBookReader />, [
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/app/course`}>
-    //       {t('courses')}
-    //     </NavLink>,
-    //     'course-list',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/app/course/courseDetails/1`}>
-    //       {t('course')} {t('single')}
-    //     </NavLink>,
-    //     'single-course',
-    //     null,
-    //   ),
-    // ]),
-    // getItem(`${t('jobs')} ${t('search')}`, 'job-search', !topMenu && <UilHeadphones />, [
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/app/jobs/grid`}>
-    //       {t('jobs')}
-    //     </NavLink>,
-    //     'jobs',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/app/jobDetails/1`}>
-    //       {t('jobs')} {t('details')}
-    //     </NavLink>,
-    //     'job-details',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/app/job/apply`}>
-    //       {t('job')} {t('apply')}
-    //     </NavLink>,
-    //     'job-apply',
-    //     null,
-    //   ),
-    // ]),
-    // getItem(
-    //   !topMenu && (
-    //     <NavTitle className="flex text-[12px] font-medium uppercase text-light mt-[20px] dark:text-white87 p-0">
-    //       {t('crud')}
-    //     </NavTitle>
-    //   ),
-    //   'CRUD-title',
-    //   null,
-    //   null,
-    //   'group',
-    // ),
-    // getItem(t('axios'), 'axios', !topMenu && <UilDatabase />, [
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/axios/crud/axios-view`}>
-    //       {t('view')} {t('all')}
-    //     </NavLink>,
-    //     'axios-view',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/axios/crud/add`}>
-    //       {t('add')} {t('new')}
-    //     </NavLink>,
-    //     'axios-add',
-    //     null,
-    //   ),
-    // ]),
-    // getItem(
-    //   !topMenu && (
-    //     <NavTitle className="flex text-[12px] font-medium uppercase text-light mt-[20px] dark:text-white87 p-0">
-    //       {t('features')}
-    //     </NavTitle>
-    //   ),
-    //   'features-title',
-    //   null,
-    //   null,
-    //   'group',
-    // ),
-    // getItem(t('ui elements'), 'components', !topMenu && <UilLayerGroup />, [
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/alerts`}>
-    //       {t('alerts')}
-    //     </NavLink>,
-    //     'alerts',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/auto-complete`}>
-    //       {t('autocomplete')}
-    //     </NavLink>,
-    //     'auto-complete',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/avatar`}>
-    //       {t('avatar')}
-    //     </NavLink>,
-    //     'avatar',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/badge`}>
-    //       {t('badge')}
-    //     </NavLink>,
-    //     'badge',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/breadcrumb`}>
-    //       {t('breadcrumb')}
-    //     </NavLink>,
-    //     'breadcrumb',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/button`}>
-    //       {t('button')}
-    //     </NavLink>,
-    //     'button',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/calendar`}>
-    //       {t('calendar')}
-    //     </NavLink>,
-    //     'calendar',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/cards`}>
-    //       {t('cards')}
-    //     </NavLink>,
-    //     'cards',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/carousel`}>
-    //       {t('carousel')}
-    //     </NavLink>,
-    //     'carousel',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/cascader`}>
-    //       {t('casecader')}
-    //     </NavLink>,
-    //     'cascader',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/checkbox`}>
-    //       {t('checkbox')}
-    //     </NavLink>,
-    //     'checkbox',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/collapse`}>
-    //       {t('collapse')}
-    //     </NavLink>,
-    //     'callapse',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/comments`}>
-    //       {t('comments')}
-    //     </NavLink>,
-    //     'comments',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/base`}>
-    //       {t('dashboard')} {t('base')}
-    //     </NavLink>,
-    //     'base',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/date-picker`}>
-    //       {t('datepicker')}
-    //     </NavLink>,
-    //     'date-picker',
-    //     null,
-    //   ),
-    //   getItem(<NavLink to="/admin/components/drag">Drag & Drop</NavLink>, 'drag', null),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/drawer`}>
-    //       {t('drawer')}
-    //     </NavLink>,
-    //     'drawer',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/dropdown`}>
-    //       {t('dropdown')}
-    //     </NavLink>,
-    //     'dropdown',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/empty`}>
-    //       {t('empty')}
-    //     </NavLink>,
-    //     'empty',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/grid`}>
-    //       {t('grid')}
-    //     </NavLink>,
-    //     '-dash-grid',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/input`}>
-    //       {t('input')}
-    //     </NavLink>,
-    //     'input',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/list`}>
-    //       {t('list')}
-    //     </NavLink>,
-    //     'dash-list',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/menu`}>
-    //       {t('menu')}
-    //     </NavLink>,
-    //     'menu',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/message`}>
-    //       {t('message')}
-    //     </NavLink>,
-    //     'message',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/modals`}>
-    //       {t('modals')}
-    //     </NavLink>,
-    //     'modals',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/notification`}>
-    //       {t('notification')}
-    //     </NavLink>,
-    //     'notifications',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/page-headers`}>
-    //       {t('page')} {t('headers')}
-    //     </NavLink>,
-    //     'page-headers',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/pagination`}>
-    //       {t('paginations')}
-    //     </NavLink>,
-    //     'paginations',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/confirm`}>
-    //       {t('popconfirm')}
-    //     </NavLink>,
-    //     'popconfirme',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/popover`}>
-    //       {t('popover')}
-    //     </NavLink>,
-    //     'popover',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/progress`}>
-    //       {t('progress')}
-    //     </NavLink>,
-    //     'progress',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/radio`}>
-    //       {t('radio')}
-    //     </NavLink>,
-    //     'radio',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/rate`}>
-    //       {t('rate')}
-    //     </NavLink>,
-    //     'rate',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/result`}>
-    //       {t('result')}
-    //     </NavLink>,
-    //     'result',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/select`}>
-    //       {t('select')}
-    //     </NavLink>,
-    //     'select',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/skeleton`}>
-    //       {t('skeleton')}
-    //     </NavLink>,
-    //     'skeleton',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/slider`}>
-    //       {t('slider')}
-    //     </NavLink>,
-    //     'slider',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/spiner`}>
-    //       {t('spinner')}
-    //     </NavLink>,
-    //     'spiner',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/statistic`}>
-    //       {t('statistics')}
-    //     </NavLink>,
-    //     'statistics',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/steps`}>
-    //       {t('steps')}
-    //     </NavLink>,
-    //     'steps',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/switch`}>
-    //       {t('switch')}
-    //     </NavLink>,
-    //     'switch',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/tabs`}>
-    //       {t('tabs')}
-    //     </NavLink>,
-    //     'tabs',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/tags`}>
-    //       {t('tags')}
-    //     </NavLink>,
-    //     'tags',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/timeline`}>
-    //       {t('timeline')}
-    //     </NavLink>,
-    //     'timeline',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/timepicker`}>
-    //       {t('timepicker')}
-    //     </NavLink>,
-    //     'timepicker',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/tree-select`}>
-    //       {t('treeselect')}
-    //     </NavLink>,
-    //     'treeselect',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/components/upload`}>
-    //       {t('upload')}
-    //     </NavLink>,
-    //     'upload',
-    //     null,
-    //   ),
-    // ]),
-    // getItem(t('charts'), 'charts', !topMenu && <UilChartBar />, [
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/charts/chartjs`}>
-    //       {t('chart')} {t('js')}
-    //     </NavLink>,
-    //     'chartjs',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/charts/google-chart`}>
-    //       {t('google')} {t('chart')}
-    //     </NavLink>,
-    //     'google-chart',
-    //     null,
-    //   ),
-    //   getItem(t('recharts'), 'recharts', !topMenu && <UilChartBar />, [
-    //     getItem(
-    //       <NavLink onClick={toggleCollapsed} to={`${path}/charts/recharts/bar`}>
-    //         {t('bar')} {t('chart')}
-    //       </NavLink>,
-    //       'bar',
-    //       null,
-    //     ),
-    //     getItem(
-    //       <NavLink onClick={toggleCollapsed} to={`${path}/charts/recharts/area`}>
-    //         {t('Area')} {t('chart')}
-    //       </NavLink>,
-    //       'area',
-    //       null,
-    //     ),
-    //     getItem(
-    //       <NavLink onClick={toggleCollapsed} to={`${path}/charts/recharts/composed`}>
-    //         {t('Composed')} {t('chart')}
-    //       </NavLink>,
-    //       'composed',
-    //       null,
-    //     ),
-    //     getItem(
-    //       <NavLink onClick={toggleCollapsed} to={`${path}/charts/recharts/line`}>
-    //         {t('Line')} {t('chart')}
-    //       </NavLink>,
-    //       'line',
-    //       null,
-    //     ),
-    //     getItem(
-    //       <NavLink onClick={toggleCollapsed} to={`${path}/charts/recharts/pie`}>
-    //         {t('Pie')} {t('chart')}
-    //       </NavLink>,
-    //       'pie',
-    //       null,
-    //     ),
-    //     getItem(
-    //       <NavLink onClick={toggleCollapsed} to={`${path}/charts/recharts/radar`}>
-    //         {t('radar')} {t('chart')}
-    //       </NavLink>,
-    //       'radar',
-    //       null,
-    //     ),
-    //     getItem(
-    //       <NavLink onClick={toggleCollapsed} to={`${path}/charts/recharts/radial`}>
-    //         {t('radial')} {t('charts')}
-    //       </NavLink>,
-    //       'radial',
-    //       null,
-    //     ),
-    //   ]),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/charts/peity`}>
-    //       {t('peity')} {t('charts')}
-    //     </NavLink>,
-    //     'peity',
-    //     null,
-    //   ),
-    // ]),
-    // getItem(t('forms'), 'forms', !topMenu && <UilCompactDisc />, [
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/features/form-layout`}>
-    //       {t('form')} {t('layouts')}
-    //     </NavLink>,
-    //     'form-layout',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/features/form-elements`}>
-    //       {t('form')} {t('elements')}
-    //     </NavLink>,
-    //     'form-elements',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/features/form-components`}>
-    //       {t('form')} {t('components')}
-    //     </NavLink>,
-    //     'form-components',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/features/form-validation`}>
-    //       {t('form')} {t('validation')}
-    //     </NavLink>,
-    //     'form-validation',
-    //     null,
-    //   ),
-    // ]),
-    // getItem(t('table'), 'table', !topMenu && <UilTable />, [
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/tables/basic`}>
-    //       {t('basic')} {t('table')}
-    //     </NavLink>,
-    //     'basicTable',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/tables/dataTable`}>
-    //       {t('data')} {t('table')}
-    //     </NavLink>,
-    //     'dataTable',
-    //     null,
-    //   ),
-    // ]),
-    // getItem(t('widgets'), 'widgets', !topMenu && <UilServer />, [
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/widgets/chart`}>
-    //       {t('chart')}
-    //     </NavLink>,
-    //     'chart',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/widgets/card`}>
-    //       {t('card')}
-    //     </NavLink>,
-    //     'card',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/widgets/mixed`}>
-    //       {t('mixed')}
-    //     </NavLink>,
-    //     'mixed',
-    //     null,
-    //   ),
-    // ]),
-    // getItem(t('Wizards'), 'wizards', !topMenu && <UilSquareFull />, [
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/pages/wizards/one`}>
-    //       {t('Wizard')} {t('1')}
-    //     </NavLink>,
-    //     'wizard-one',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/pages/wizards/two`}>
-    //       {t('Wizard')} {t('2')}
-    //     </NavLink>,
-    //     'wizard-two',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/pages/wizards/three`}>
-    //       {t('Wizard')} {t('3')}
-    //     </NavLink>,
-    //     'wizard-three',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/pages/wizards/four`}>
-    //       {t('Wizard')} {t('4')}
-    //     </NavLink>,
-    //     'wizard-four',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/pages/wizards/five`}>
-    //       {t('Wizard')} {t('5')}
-    //     </NavLink>,
-    //     'wizard-five',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/pages/wizards/six`}>
-    //       {t('Wizard')} {t('6')}
-    //     </NavLink>,
-    //     'wizard-six',
-    //     null,
-    //   ),
-    // ]),
-    // getItem(t('icons'), 'icons', !topMenu && <UilIcons />, [
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/icons/unicon`}>
-    //       {t('unicon(svg)')}
-    //     </NavLink>,
-    //     'unicons',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/icons/font-awesome`}>
-    //       {t('fontawesome')}
-    //     </NavLink>,
-    //     'font-awesome',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/icons/antd`}>
-    //       {t('ant')} {t('design')} {t('icons')}
-    //     </NavLink>,
-    //     'antd',
-    //     null,
-    //   ),
-    // ]),
-    // getItem(
-    //   <NavLink onClick={toggleCollapsed} to={`${path}/editor`}>
-    //     {t('editors')}
-    //   </NavLink>,
-    //   'editor',
-    //   !topMenu && (
-    //     <NavLink className="menuItem-iocn" to={`${path}/editor`}>
-    //       <UilEdit />
-    //     </NavLink>
-    //   ),
-    // ),
-    // getItem(t('maps'), 'maps', !topMenu && <UilMap />, [
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/maps/google`}>
-    //       {t('google')} {t('maps')}
-    //     </NavLink>,
-    //     'google',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/maps/leaflet`}>
-    //       {t('leaflet')} {t('map')}
-    //     </NavLink>,
-    //     'leaflet',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/maps/Vector`}>
-    //       {t('simple')} {t('map')}
-    //     </NavLink>,
-    //     'vector',
-    //     null,
-    //   ),
-    // ]),
-    // getItem(
-    //   !topMenu && (
-    //     <NavTitle className="flex text-[12px] font-medium uppercase text-light mt-[20px] dark:text-white87 p-0">
-    //       {t('Pages')}
-    //     </NavTitle>
-    //   ),
-    //   'page-title',
-    //   null,
-    //   null,
-    //   'group',
-    // ),
-    // getItem(
-    //   <NavLink onClick={toggleCollapsed} to={`${path}/pages/settings`}>
-    //     {t('settings')}
-    //   </NavLink>,
-    //   'profileSettings',
-    //   !topMenu && (
-    //     <NavLink className="menuItem-iocn" to={`${path}/pages/settings`}>
-    //       <UilSetting />
-    //     </NavLink>
-    //   ),
-    // ),
-    // getItem(t('gallery'), 'gallery', !topMenu && <UilImages />, [
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/gallery/one`}>
-    //       {t('gallery')} {t('1')}
-    //     </NavLink>,
-    //     'galllery-one',
-    //     null,
-    //   ),
-    // ]),
-    // getItem(
-    //   <NavLink onClick={toggleCollapsed} to={`${path}/pages/pricing`}>
-    //     {t('pricing')}
-    //   </NavLink>,
-    //   'pricing',
-    //   !topMenu && (
-    //     <NavLink className="menuItem-iocn" to={`${path}/pages/pricing`}>
-    //       <UilUsdCircle />
-    //     </NavLink>
-    //   ),
-    // ),
-    // getItem(
-    //   <NavLink onClick={toggleCollapsed} to={`${path}/pages/banners`}>
-    //     {t('banners')}
-    //   </NavLink>,
-    //   'banners',
-    //   !topMenu && (
-    //     <NavLink className="menuItem-iocn" to={`${path}/pages/banners`}>
-    //       <UilPresentation />
-    //     </NavLink>
-    //   ),
-    // ),
-    // getItem(
-    //   <NavLink onClick={toggleCollapsed} to={`${path}/pages/testimonials`}>
-    //     {t('testimonials')}
-    //   </NavLink>,
-    //   'testimonials',
-    //   !topMenu && (
-    //     <NavLink className="menuItem-iocn" to={`${path}/pages/testimonials`}>
-    //       <UilBookOpen />
-    //     </NavLink>
-    //   ),
-    // ),
-    // getItem(
-    //   <NavLink onClick={toggleCollapsed} to={`${path}/pages/faq`}>
-    //     {t('faqs')}
-    //   </NavLink>,
-    //   'faq',
-    //   !topMenu && (
-    //     <NavLink className="menuItem-iocn" to={`${path}/pages/faq`}>
-    //       <UilQuestionCircle />
-    //     </NavLink>
-    //   ),
-    // ),
-    // getItem(
-    //   <NavLink onClick={toggleCollapsed} to={`${path}/pages/search`}>
-    //     {t('search')} {t('results')}
-    //   </NavLink>,
-    //   'search',
-    //   !topMenu && (
-    //     <NavLink className="menuItem-iocn" to={`${path}/pages/search`}>
-    //       <UilSearch />
-    //     </NavLink>
-    //   ),
-    // ),
-    // getItem(
-    //   <NavLink onClick={toggleCollapsed} to={`${path}/pages/starter`}>
-    //     {t('blank')} {t('page')}
-    //   </NavLink>,
-    //   'starter',
-    //   !topMenu && (
-    //     <NavLink className="menuItem-iocn" to={`${path}/pages/starter`}>
-    //       <UilCircle />
-    //     </NavLink>
-    //   ),
-    // ),
-    // getItem(t('Knowledgebase'), 'knowledgebase', !topMenu && <UilBookAlt />, [
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/knowledgebase/plugins`}>
-    //       {t('knowledge')} {t('base')}
-    //     </NavLink>,
-    //     'plugins',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/all-articles`}>
-    //       {t('all')} {t('article')}
-    //     </NavLink>,
-    //     'all-articles',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/knowledgebaseSingle/1`}>
-    //       {t('single')} {t('article')}
-    //     </NavLink>,
-    //     'knowledgebaseSingle',
-    //     null,
-    //   ),
-    // ]),
-    // getItem(t('blog'), 'blog', !topMenu && <UilDocumentLayoutLeft />, [
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/pages/blog/blogone`}>
-    //       {t('blog')} {t('one')}
-    //     </NavLink>,
-    //     'blog-one',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/pages/blog/blogtwo`}>
-    //       {t('blog')} {t('two')}
-    //     </NavLink>,
-    //     'blog-2',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/pages/blog/blogthree`}>
-    //       {t('blog')} {t('three')}
-    //     </NavLink>,
-    //     'blog-3',
-    //     null,
-    //   ),
-    //   getItem(
-    //     <NavLink onClick={toggleCollapsed} to={`${path}/pages/blog/details`}>
-    //       {t('blog')} {t('details')}
-    //     </NavLink>,
-    //     'blog-details',
-    //     null,
-    //   ),
-    // ]),
-    // getItem(
-    //   <NavLink onClick={toggleCollapsed} to={`${path}/pages/maintenance`}>
-    //     {t('maintanance')}
-    //   </NavLink>,
-    //   'maintenance',
-    //   !topMenu && <UilAirplay />,
-    // ),
-    // getItem(
-    //   <NavLink onClick={toggleCollapsed} to={`${path}/pages/404`}>
-    //     {t('404')}
-    //   </NavLink>,
-    //   '404',
-    //   !topMenu && (
-    //     <NavLink className="menuItem-iocn" to={`${path}/pages/404`}>
-    //       <UilExclamationOctagon />
-    //     </NavLink>
-    //   ),
-    // ),
-    // getItem(
-    //   <NavLink onClick={toggleCollapsed} to={`${path}/pages/comingSoon`}>
-    //     {t('coming')} {t('soon')}
-    //   </NavLink>,
-    //   'comingsoon',
-    //   !topMenu && (
-    //     <NavLink className="menuItem-iocn" to={`${path}/pages/comingSoon`}>
-    //       <UilClock />
-    //     </NavLink>
-    //   ),
-    // ),
-    // getItem(
-    //   <NavLink onClick={toggleCollapsed} to={`${path}/pages/termCondition`}>
-    //     {t('terms')} {t('&')} {t('conditions')}
-    //   </NavLink>,
-    //   'termcondition',
-    //   !topMenu && (
-    //     <NavLink className="menuItem-iocn" to={`${path}/pages/termCondition`}>
+    //     <NavLink className="menuItem-iocn" to={`${path}/pages/download`}>
     //       <UilFileShieldAlt />
     //     </NavLink>
     //   ),
     // ),
+
+    // getItem(t('settings'), 'settings', !topMenu && <UilSetting />, [
+    //   getItem(t('productSettings'), 'productSettings', null, [
+    //     getItem(
+    //       <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/overview`}>
+    //         {t('overview')}
+    //       </NavLink>,
+    //       'overview',
+    //     ),
+
+    //     getItem(
+    //       <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/product-configuration`}>
+    //         {t('productConfiguration')}
+    //       </NavLink>,
+    //       'productConfiguration',
+    //     ),
+
+    //     getItem(
+    //       <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/finance-configuration`}>
+    //         {t('financeConfiguration')}
+    //       </NavLink>,
+    //       'financeConfiguration',
+    //     ),
+    //     getItem(
+    //       <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/invoicebilling`}>
+    //         {t('Invoices & Billing')}
+    //       </NavLink>,
+    //       'invoicebilling',
+    //       null,
+    //     ),
+    //   ]),
+
+    //   getItem(t('userSettings'), 'userSettings', null, [
+    //     getItem(
+    //       <NavLink onClick={toggleCollapsed} to={`${path}/settings/user-setting/account-settings`}>
+    //         {t('accountSettings')}
+    //       </NavLink>,
+    //       'accountSettings',
+    //     ),
+    //     getItem(
+    //       <NavLink onClick={toggleCollapsed} to={`${path}/settings/user-setting/marketplace-settings`}>
+    //         {t('marketPlaceSettings')}
+    //       </NavLink>,
+    //       'marketPlaceSettings',
+    //     ),
+
+    //     getItem(
+    //       <NavLink onClick={toggleCollapsed} to={`${path}/settings/user-setting/user-management`}>
+    //         {t('userManagement')}
+    //       </NavLink>,
+    //       'userManagement',
+    //     ),
+    //   ]),
+    // ]),
   ];
 
   const superAdminItems = [
