@@ -266,6 +266,54 @@ function MenuItems({ toggleCollapsed }) {
               </NavLink>,
               'skuwiseprofit',
             ),
+
+          hasSubmodule('marketplace-fees-estimate') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/profit/estimatedfees`}>
+                MarketPlace Fees Estimate
+              </NavLink>,
+              'estimatedfees',
+            ),
+
+          hasSubmodule('shipping-estimate') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/profit/shippingestimate`}>
+                Shipping Estimate
+              </NavLink>,
+              'shippingestimate',
+            ),
+
+          hasSubmodule('claims') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/profit/claims`}>
+                Claims
+              </NavLink>,
+              'claims',
+            ),
+
+          hasSubmodule('return-fees') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/profit/returnfees`}>
+                Return Fees
+              </NavLink>,
+              'returnfees',
+            ),
+
+          hasSubmodule('profit-table-view') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/profit/profitTableView`}>
+                Profit Table View
+              </NavLink>,
+              'profitTableView',
+            ),
+
+          hasSubmodule('profit-monthly-view') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/profit/profitMonthlyView`}>
+                Profit Monthly View
+              </NavLink>,
+              'profitMonthlyView',
+            ),
         ].filter(Boolean),
       ),
 
@@ -392,6 +440,7 @@ function MenuItems({ toggleCollapsed }) {
     //     null,
     //   ),
     // ]),
+
     hasModule('advertising') &&
       getItem(
         'Advertising',
@@ -412,6 +461,62 @@ function MenuItems({ toggleCollapsed }) {
                 Campaigns
               </NavLink>,
               'campaigns',
+            ),
+
+          hasSubmodule('ad-products') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/AdProducts`}>
+                Ad Products
+              </NavLink>,
+              'adproducts',
+            ),
+
+          hasSubmodule('ad-groups') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/adsgroup`}>
+                Ad Groups
+              </NavLink>,
+              'adsgroup',
+            ),
+
+          hasSubmodule('search-terms') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/searchTerms`}>
+                Search Terms
+              </NavLink>,
+              'searchTerms',
+            ),
+
+          hasSubmodule('keywords') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/keywords`}>
+                Keywords
+              </NavLink>,
+              'keywords',
+            ),
+
+          hasSubmodule('targets') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/targets`}>
+                Targets
+              </NavLink>,
+              'targets',
+            ),
+
+          hasSubmodule('negative-keywords') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/negativeKey`}>
+                Negative Keywords
+              </NavLink>,
+              'negativeKey',
+            ),
+
+          hasSubmodule('rules-automation') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/rulesAuto`}>
+                Rules & Automation
+              </NavLink>,
+              'rulesAuto',
             ),
         ].filter(Boolean),
       ),
