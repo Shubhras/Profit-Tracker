@@ -510,6 +510,14 @@ class SPAPIManager:
             else:
                 params["marketplaceIds"] = marketplaces
                 
+        # Default includedData to all fields to get the "full response"
+        if "includedData" not in kwargs:
+            kwargs["includedData"] = [
+                "BUYER", "RECIPIENT", "PROCEEDS", "EXPENSE", "PROMOTION", 
+                "CANCELLATION", "FULFILLMENT", "PACKAGES", "TAX", "PAYMENT", 
+                "FULFILLMENT_ORDERS"
+            ]
+
         # Query parameters mapping
         param_mapping = [
             "createdAfter", "createdBefore", "lastUpdatedAfter", "lastUpdatedBefore",
@@ -528,6 +536,6 @@ class SPAPIManager:
                     params[key] = val
                     
         return self.request("GET", path, params=params)
-    
-    
+
+   
   
