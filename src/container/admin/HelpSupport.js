@@ -13,6 +13,7 @@ function HelpSupport() {
     pageSize: 10,
   });
 
+  // const page=01
   const [statusModal, setStatusModal] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState('');
