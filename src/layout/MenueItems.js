@@ -72,7 +72,6 @@ import propTypes from 'prop-types';
 function MenuItems({ toggleCollapsed }) {
   const { t } = useTranslation();
   const location = useLocation();
-
   const profile = useSelector((state) => state.auth.profile);
 
   const modules = profile?.subscription?.modules || [];
