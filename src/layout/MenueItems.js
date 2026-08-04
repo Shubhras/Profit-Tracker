@@ -40,11 +40,11 @@ import {
   UilMegaphone,
   UilBookOpen,
   // UilCreateDashboard,
-  // UilFileShieldAlt,
-  // UilSetting,
-  // UilChartGrowth,
-  // UilProcess,
-  // UilLayersAlt,
+  UilFileShieldAlt,
+  UilSetting,
+  UilChartGrowth,
+  UilProcess,
+  UilLayersAlt,
   UilApps,
   UilUsersAlt,
   UilTag,
@@ -72,7 +72,6 @@ import propTypes from 'prop-types';
 function MenuItems({ toggleCollapsed }) {
   const { t } = useTranslation();
   const location = useLocation();
-
   const profile = useSelector((state) => state.auth.profile);
 
   const modules = profile?.subscription?.modules || [];
@@ -583,6 +582,78 @@ function MenuItems({ toggleCollapsed }) {
     //   ),
     // ]),
 
+    hasModule('organic-performance') &&
+      getItem(
+        'Organic Performance',
+        'organicperformance',
+        !topMenu && <UilChartGrowth />,
+        [
+          hasSubmodule('overview') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/overview`}>
+                Overview
+              </NavLink>,
+              'perofrmance-Overview',
+            ),
+
+          hasSubmodule('traffic-visibility') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/trafficVisibility`}>
+                Traffic & Visibility
+              </NavLink>,
+              'traffic-visibility',
+            ),
+
+          hasSubmodule('sales-drivers') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/salesDrivers`}>
+                Sales Drivers
+              </NavLink>,
+              'sales-drivers',
+            ),
+
+          hasSubmodule('keyword-performance') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/Keyperformance`}>
+                Keyword Performance
+              </NavLink>,
+              'keyperformance',
+            ),
+
+          hasSubmodule('product-ranking') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/productranking`}>
+                Product Ranking
+              </NavLink>,
+              'product-ranking',
+            ),
+
+          hasSubmodule('reviews-ratings') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/reviewRating`}>
+                Reviews & Ratings
+              </NavLink>,
+              'Reviews-Rating',
+            ),
+
+          hasSubmodule('inventory-impact') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/inventoryImpact`}>
+                Inventory Impact
+              </NavLink>,
+              'inventoryImpact',
+            ),
+
+          hasSubmodule('reports') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/reports`}>
+                Reports
+              </NavLink>,
+              'reports',
+            ),
+        ].filter(Boolean),
+      ),
+
     // getItem(t('Operations'), 'Operations', !topMenu && <UilProcess />, [
     //   getItem(
     //     <NavLink onClick={toggleCollapsed} to={`${path}/operations/dailyOperations`}>
@@ -628,6 +699,62 @@ function MenuItems({ toggleCollapsed }) {
     //   ),
     // ]),
 
+    hasModule('operations') &&
+      getItem(
+        'Operations',
+        'Operations',
+        !topMenu && <UilProcess />,
+        [
+          hasSubmodule('daily-operations') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/operations/dailyOperations`}>
+                Daily Operations
+              </NavLink>,
+              'dailyoperations',
+            ),
+
+          hasSubmodule('order-processing') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/operations/orderProcessing`}>
+                Order Processing
+              </NavLink>,
+              'orderProcessing',
+            ),
+
+          hasSubmodule('inventory-sync') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/operations/inventorySync`}>
+                Inventory Sync
+              </NavLink>,
+              'inventorySync',
+            ),
+
+          hasSubmodule('auto-claims') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/operations/autoClaims`}>
+                Auto Claims
+              </NavLink>,
+              'autoClaims',
+            ),
+
+          hasSubmodule('logs-history') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/operations/logsHistory`}>
+                Logs & History
+              </NavLink>,
+              'logshistory',
+            ),
+
+          hasSubmodule('settings') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/operations/settings`}>
+                Settings
+              </NavLink>,
+              'settings',
+            ),
+        ].filter(Boolean),
+      ),
+
     // getItem(t('Value Added Services'), 'valueadded', !topMenu && <UilLayersAlt />, [
     //   getItem(
     //     <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/overview`}>
@@ -666,6 +793,54 @@ function MenuItems({ toggleCollapsed }) {
     //   ),
     // ]),
 
+    hasModule('value-added-services') &&
+      getItem(
+        'Value Added Services',
+        'valueadded',
+        !topMenu && <UilLayersAlt />,
+        [
+          hasSubmodule('overview') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/overview`}>
+                Overview
+              </NavLink>,
+              'valueadded-overview',
+            ),
+
+          hasSubmodule('account-management') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/accountmanage`}>
+                Account Management
+              </NavLink>,
+              'accountmanage',
+            ),
+
+          hasSubmodule('digital-marketing') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/digitalmarketing`}>
+                Digital Marketing
+              </NavLink>,
+              'digitalmarketing',
+            ),
+
+          hasSubmodule('quick-commerce') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/QuickCommerce`}>
+                Quick Commerce
+              </NavLink>,
+              'quickcommerce',
+            ),
+
+          hasSubmodule('my-services') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/myservices`}>
+                My Services
+              </NavLink>,
+              'myservices',
+            ),
+        ].filter(Boolean),
+      ),
+
     // getItem(
     //   <NavLink onClick={toggleCollapsed} to={`${path}/pages/download`}>
     //     {t('download')}
@@ -677,6 +852,19 @@ function MenuItems({ toggleCollapsed }) {
     //     </NavLink>
     //   ),
     // ),
+
+    hasModule('download') &&
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/pages/download`}>
+          Download
+        </NavLink>,
+        'download',
+        !topMenu && (
+          <NavLink className="menuItem-iocn" to={`${path}/pages/download`}>
+            <UilFileShieldAlt />
+          </NavLink>
+        ),
+      ),
 
     // getItem(t('settings'), 'settings', !topMenu && <UilSetting />, [
     //   getItem(t('productSettings'), 'productSettings', null, [
@@ -731,6 +919,63 @@ function MenuItems({ toggleCollapsed }) {
     //     ),
     //   ]),
     // ]),
+
+    hasModule('settings') &&
+      getItem('Settings', 'settings', !topMenu && <UilSetting />, [
+        getItem(
+          'Product Settings',
+          'productSettings',
+          null,
+          [
+            hasSubmodule('product-configuration') &&
+              getItem(
+                <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/product-configuration`}>
+                  Product Configuration
+                </NavLink>,
+                'productConfiguration',
+              ),
+
+            hasSubmodule('finance-configuration') &&
+              getItem(
+                <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/finance-configuration`}>
+                  Finance Configuration
+                </NavLink>,
+                'financeConfiguration',
+              ),
+          ].filter(Boolean),
+        ),
+
+        getItem(
+          'User Settings',
+          'userSettings',
+          null,
+          [
+            hasSubmodule('account-settings') &&
+              getItem(
+                <NavLink onClick={toggleCollapsed} to={`${path}/settings/user-setting/account-settings`}>
+                  Account Settings
+                </NavLink>,
+                'accountSettings',
+              ),
+
+            hasSubmodule('marketplace-settings') &&
+              getItem(
+                <NavLink onClick={toggleCollapsed} to={`${path}/settings/user-setting/marketplace-settings`}>
+                  Marketplace Settings
+                </NavLink>,
+                'marketPlaceSettings',
+              ),
+
+            hasSubmodule('user-management') &&
+              getItem(
+                <NavLink onClick={toggleCollapsed} to={`${path}/settings/user-setting/user-management`}>
+                  User Management
+                </NavLink>,
+                'userManagement',
+              ),
+          ].filter(Boolean),
+        ),
+      ]),
   ];
 
   const superAdminItems = [
