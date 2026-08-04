@@ -132,9 +132,9 @@ function SignUp() {
                 message: 'Please enter password',
               },
               {
-                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+=[\]{};':"\\|,.<>/?-]).{8,}$/,
+                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$/,
                 message:
-                  'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.',
+                  'Password must be at least 12 characters and include uppercase, lowercase, number, and special character.',
               },
             ]}
           >
@@ -169,9 +169,9 @@ function SignUp() {
                 message: 'Please confirm password',
               },
               {
-                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+=[\]{};':"\\|,.<>/?-]).{8,}$/,
+                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$/,
                 message:
-                  'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.',
+                  'Password must be at least 12 characters and include uppercase, lowercase, number, and special character.',
               },
               ({ getFieldValue }) => ({
                 validator(_, value) {

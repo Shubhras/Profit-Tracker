@@ -79,7 +79,7 @@ function AdminDashboard() {
       color: 'bg-green-50 text-green-600',
     },
     {
-      title: 'New This Weel',
+      title: 'New This Week',
       value: getadmindashboard?.data?.overview?.new_this_week || 0,
       // growth: '',
       icon: <ShoppingCartOutlined />,
