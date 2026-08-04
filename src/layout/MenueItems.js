@@ -39,7 +39,7 @@ import {
   UilArrowGrowth,
   UilMegaphone,
   UilBookOpen,
-  // UilCreateDashboard,
+  UilCreateDashboard,
   UilFileShieldAlt,
   UilSetting,
   UilChartGrowth,
@@ -365,6 +365,70 @@ function MenuItems({ toggleCollapsed }) {
     //     'reimbursement-planning',
     //   ),
     // ]),
+
+    hasModule('payment-reconcile') &&
+      getItem(
+        'Payment Reconcile',
+        'reconcile',
+        !topMenu && <UilCreateDashboard />,
+        [
+          hasSubmodule('overview') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-overview`}>
+                Overview
+              </NavLink>,
+              'payment-overview',
+            ),
+
+          hasSubmodule('payment') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-reconcile`}>
+                Payment
+              </NavLink>,
+              'payment-reconcile',
+            ),
+
+          hasSubmodule('order-settlement') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/ordersettlement`}>
+                Order & Settlement
+              </NavLink>,
+              'order-settlements',
+            ),
+
+          hasSubmodule('marketplace-payments') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/marketPayment`}>
+                Marketplace Payments
+              </NavLink>,
+              'marketplace-payment',
+            ),
+
+          hasSubmodule('returns-adjustments') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/returnsAdjust`}>
+                Returns & Adjustments
+              </NavLink>,
+              'returns-adjustments',
+            ),
+
+          hasSubmodule('all-leaks') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/allLeaks`}>
+                All Leaks
+              </NavLink>,
+              'payment-leaks',
+            ),
+
+          hasSubmodule('reimbursement-planning') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/reimbursement`}>
+                Reimbursement Planning
+              </NavLink>,
+              'reimbursement-planning',
+            ),
+        ].filter(Boolean),
+      ),
 
     // getItem(t('Advertising'), 'advertising', !topMenu && <UilMegaphone />, [
     //   getItem(
