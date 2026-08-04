@@ -72,7 +72,12 @@ class Order(models.Model):
 
     # Financial Info
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    
+    new_total_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     currency_code = models.CharField(max_length=10, null=True, blank=True)
+    raw_data = models.JSONField(null=True, blank=True)
+    
+
 
     # Shipping Address
     buyer_name = models.CharField(max_length=255, null=True, blank=True)
@@ -231,6 +236,9 @@ class OrderItem(models.Model):
     shipping_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     shipping_income = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     shipping_expense = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    
+    new_item_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    raw_data = models.JSONField(null=True, blank=True)
 
     # ===== REPORT DATA (CRITICAL) =====
     mrp = models.DecimalField(max_digits=12, decimal_places=2, default=0)

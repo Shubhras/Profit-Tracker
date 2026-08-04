@@ -444,7 +444,7 @@ def sync_reports(request):
 
 
 
-# new updated on 1 aug
+# new updated on 1 aug  if recured for report 
 # @api_view(['GET'])
 # @permission_classes([IsAuthenticated])
 # def sync_reports(request):
@@ -1630,6 +1630,50 @@ def sync_orders(request):
                     except Exception as e:
                         print(f"Item sync failed for order {amazon_order_id}: {str(e)}")
                         traceback.print_exc()
+                        
+                        
+                        #  update order item price have inpending status
+                # if order and order.order_status and order.order_status.upper() == "PENDING":
+                #     try:
+                #         from datetime import timedelta
+                #         last_updated_after = (order.last_update_date or order.purchase_date - timedelta(minutes=5)).strftime("%Y-%m-%dT%H:%M:%SZ")
+                #         p_params = {
+                #             "lastUpdatedAfter": last_updated_after,
+                #             "marketplaceIds": [account.marketplace_id]
+                #         }
+                #         p_response = manager.search_orders_v2026(**p_params)
+                #         p_orders_list = p_response.get("orders") or []
+                #         for po in p_orders_list:
+                #             if po.get("orderId") == amazon_order_id:
+                #                 total_amt = 0.0
+                #                 order_items_list = po.get("orderItems") or []
+                #                 for item_data in order_items_list:
+                #                     unit_price = float(item_data.get("product", {}).get("price", {}).get("unitPrice", {}).get("amount", 0) or 0)
+                #                     qty = int(item_data.get("quantityOrdered", 0) or 0)
+                #                     total_amt += unit_price * qty
+                                
+                #                 order.new_total_amount = total_amt
+                #                 order.raw_data = po
+                #                 order.save(update_fields=['new_total_amount', 'raw_data'])
+                                
+                #                 for item_data in order_items_list:
+                #                     sku = item_data.get("product", {}).get("sellerSku")
+                #                     order_item_id = item_data.get("orderItemId")
+                                    
+                #                     order_item = None
+                #                     if order_item_id:
+                #                         order_item = OrderItem.objects.filter(order=order, order_item_id=order_item_id).first()
+                #                     if not order_item and sku:
+                #                         order_item = OrderItem.objects.filter(order=order, seller_sku=sku).first()
+                                        
+                #                     if order_item:
+                #                         unit_price = float(item_data.get("product", {}).get("price", {}).get("unitPrice", {}).get("amount", 0) or 0)
+                #                         order_item.new_item_price = unit_price
+                #                         order_item.raw_data = item_data
+                #                         order_item.save(update_fields=['new_item_price', 'raw_data'])
+                #                 break
+                #     except Exception as pe:
+                #         logger.error(f"Failed to sync pending order details for {amazon_order_id}: {str(pe)}")        
 
            
 
@@ -1756,6 +1800,84 @@ def search_orders(request):
             params['marketplaceIds'] = [request.GET['marketplaceId']]
             
         response = manager.search_orders_v2026(**params)
+        return JsonResponse(response)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def new_search_orders_update(request):
+    """
+    Calls the SP-API SearchOrders (v2026-01-01) and returns the raw response.
+    Example: /api/amazon/search-orders/?marketplaceIds=A21TJRUUN4KGV&createdAfter=2026-07-01T00:00:00Z
+    """
+    try:
+        manager = SPAPIManager(user=request.user)
+        
+        # Capture all parameters
+        params = {}
+        for key in ['createdAfter', 'createdBefore', 'lastUpdatedAfter', 'lastUpdatedBefore', 'maxResultsPerPage', 'paginationToken']:
+            if key in request.GET:
+                params[key] = request.GET[key]
+                
+        # List parameters
+        for key in ['marketplaceIds', 'fulfillmentStatuses', 'fulfilledBy', 'includedData']:
+            val_list = request.GET.getlist(key)
+            if not val_list and key in request.GET:
+                val_list = [v.strip() for v in request.GET[key].split(',') if v.strip()]
+            if val_list:
+                params[key] = val_list
+                
+        # Add aliases for marketplaceIds
+        if 'marketplace_id' in request.GET and 'marketplaceIds' not in params:
+            params['marketplaceIds'] = [request.GET['marketplace_id']]
+        elif 'marketplaceId' in request.GET and 'marketplaceIds' not in params:
+            params['marketplaceIds'] = [request.GET['marketplaceId']]
+            
+        response = manager.search_orders_v2026(**params)
+        
+        # Sync logic for existing pending orders
+        orders_list = response.get("orders") or []
+        for o in orders_list:
+            order_id = o.get("orderId")
+            if not order_id:
+                continue
+            
+            # Find the order in local database
+            order = Order.objects.filter(amazon_order_id=order_id, amazon_account=manager.account).first()
+            if order and order.order_status and order.order_status.upper() == "PENDING":
+                # Calculate new_total_amount as sum of (unit price * quantity)
+                total_amt = 0.0
+                order_items_list = o.get("orderItems") or []
+                for item_data in order_items_list:
+                    unit_price = float(item_data.get("product", {}).get("price", {}).get("unitPrice", {}).get("amount", 0) or 0)
+                    qty = int(item_data.get("quantityOrdered", 0) or 0)
+                    total_amt += unit_price * qty
+                
+                # Update only new_total_amount and raw_data
+                order.new_total_amount = total_amt
+                order.raw_data = o
+                order.save(update_fields=['new_total_amount', 'raw_data'])
+                
+                # Update corresponding existing OrderItems
+                for item_data in order_items_list:
+                    sku = item_data.get("product", {}).get("sellerSku")
+                    order_item_id = item_data.get("orderItemId")
+                    
+                    order_item = None
+                    if order_item_id:
+                        order_item = OrderItem.objects.filter(order=order, order_item_id=order_item_id).first()
+                    if not order_item and sku:
+                        order_item = OrderItem.objects.filter(order=order, seller_sku=sku).first()
+                        
+                    if order_item:
+                        unit_price = float(item_data.get("product", {}).get("price", {}).get("unitPrice", {}).get("amount", 0) or 0)
+                        order_item.new_item_price = unit_price
+                        order_item.raw_data = item_data
+                        order_item.save(update_fields=['new_item_price', 'raw_data'])
+                        
         return JsonResponse(response)
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
@@ -2154,12 +2276,27 @@ def get_full_dashboard(request):
     ).exclude(order__order_status__icontains='Cancel')
 
     net_sales_agg = net_sales_items_qs.aggregate(
-        item_grosssales=Sum('item_price'),
+        # item_grosssales=Sum('item_price'),   previus calculating
+        grosssales=Sum(
+            Case(
+                When(Q(order__order_status__icontains='Pending') & Q(item_price=0), then=F('new_item_price')),
+                default=F('item_price'),
+                output_field=DecimalField(max_digits=12, decimal_places=2)
+            )
+        ),
+        avg_cost=Avg(
+            Case(
+                When(Q(order__order_status__icontains='Pending') & Q(item_price=0), then=F('new_item_price')),
+                default=F('item_price'),
+                output_field=DecimalField(max_digits=12, decimal_places=2)
+            )
+        ),
         item_tax_total=Sum('item_tax'),
     )
 
     accurate_net_sales = (
-        float(net_sales_agg['item_grosssales'] or 0)
+        # float(net_sales_agg['item_grosssales'] or 0)
+        float(net_sales_agg['grosssales'] or 0)
         + float(net_sales_agg['item_tax_total'] or 0)
     )
 
@@ -2287,8 +2424,32 @@ def get_full_dashboard(request):
     print("ads_sales>>>>>>>>>>>>>>>>>>>>>",ads_sales)
     
 
+    # # ---------------- TRENDS ----------------
+    # trends = orders_qs.annotate(date=TruncDate('purchase_date')).values('date').annotate(
+    #     sales=Sum('total_amount'),
+    #     qty=Sum('items__quantity_ordered')
+    # )
+    
+    
+    #     # ---------------- TRENDS ----------------
+    # trends = net_sales_items_qs.annotate(
+    #     date=TruncDate('order__purchase_date')
+    # ).values('date').annotate(
+    #     # sales_price=Sum('item_price'),
+    #     sales_price=Sum(
+    #         Case(
+    #             When(Q(order__order_status__icontains='Pending') & Q(item_price=0), then=F('new_item_price')),
+    #             default=F('item_price'),
+    #             output_field=DecimalField(max_digits=12, decimal_places=2)
+    #         )
+    #     ),
+    #     sales_tax=Sum('item_tax'),
+    #     qty=Sum('quantity_ordered')
+    # ).order_by('date')
+    
+    
     # ---------------- TRENDS ----------------
-    trends = orders_qs.annotate(date=TruncDate('purchase_date')).values('date').annotate(
+    trends = orders_qs.annotate(date=TruncDate('purchase_date', tzinfo=IST)).values('date').annotate(
         sales=Sum('total_amount'),
         qty=Sum('items__quantity_ordered')
     )
@@ -2296,9 +2457,16 @@ def get_full_dashboard(request):
     
         # ---------------- TRENDS ----------------
     trends = net_sales_items_qs.annotate(
-        date=TruncDate('order__purchase_date')
+        date=TruncDate('order__purchase_date', tzinfo=IST)
     ).values('date').annotate(
-        sales_price=Sum('item_price'),
+        # sales_price=Sum('item_price'),
+        sales_price=Sum(
+            Case(
+                When(Q(order__order_status__icontains='Pending') & Q(item_price=0), then=F('new_item_price')),
+                default=F('item_price'),
+                output_field=DecimalField(max_digits=12, decimal_places=2)
+            )
+        ),
         sales_tax=Sum('item_tax'),
         qty=Sum('quantity_ordered')
     ).order_by('date')
@@ -5855,9 +6023,24 @@ def amazon_profitability_parent_transactions_shipping(request):
                 F('cost_price') * F('quantity_ordered')
             ),
 
-            grosssales=Sum('item_price'),
+            # grosssales=Sum('item_price'),
+            # promotion_discount=Sum('promotion_discount'),
+            # avg_cost=Avg('item_price'),
+            grosssales=Sum(
+                Case(
+                    When(Q(order__order_status__icontains='Pending') & Q(item_price=0), then=F('new_item_price')),
+                    default=F('item_price'),
+                    output_field=DecimalField(max_digits=12, decimal_places=2)
+                )
+            ),
             promotion_discount=Sum('promotion_discount'),
-            avg_cost=Avg('item_price'),
+            avg_cost=Avg(
+                Case(
+                    When(Q(order__order_status__icontains='Pending') & Q(item_price=0), then=F('new_item_price')),
+                    default=F('item_price'),
+                    output_field=DecimalField(max_digits=12, decimal_places=2)
+                )
+            ),
             item_tax=Sum('item_tax'),
         )
     )
@@ -7848,9 +8031,25 @@ def sku_profit_report_transactions_shipping(request):
             asin=Max('asin'),
 
             grossqty=Sum('quantity_ordered'),
-            grosssales=Sum('item_price'),
+            # grosssales=Sum('item_price'),
+            # promotion_discount=Sum('promotion_discount'),
+            # avg_cost=Avg('item_price'),
+            
+            grosssales=Sum(
+                Case(
+                    When(Q(order__order_status__icontains='Pending') & Q(item_price=0), then=F('new_item_price')),
+                    default=F('item_price'),
+                    output_field=DecimalField(max_digits=12, decimal_places=2)
+                )
+            ),
             promotion_discount=Sum('promotion_discount'),
-            avg_cost=Avg('item_price'),
+            avg_cost=Avg(
+                Case(
+                    When(Q(order__order_status__icontains='Pending') & Q(item_price=0), then=F('new_item_price')),
+                    default=F('item_price'),
+                    output_field=DecimalField(max_digits=12, decimal_places=2)
+                )
+            ),
             item_tax=Sum('item_tax'),
 
             shipping_income=Sum('shipping_price'),
@@ -9137,13 +9336,29 @@ def amazon_profitability_details_transactions_shipping(request):
             shipping_price=Sum('shipping_price'),
 
             discount=Sum('discount'),
-            promotion_discount=Sum('promotion_discount'),
+            # promotion_discount=Sum('promotion_discount'),
 
-            avg_cost=Avg('item_price'),
+            # avg_cost=Avg('item_price'),
 
             item_tax=Sum('item_tax'),
 
-            grosssales=Sum('item_price'),
+            # grosssales=Sum('item_price'),
+            
+            grosssales=Sum(
+                Case(
+                    When(Q(order__order_status__icontains='Pending') & Q(item_price=0), then=F('new_item_price')),
+                    default=F('item_price'),
+                    output_field=DecimalField(max_digits=12, decimal_places=2)
+                )
+            ),
+            promotion_discount=Sum('promotion_discount'),
+            avg_cost=Avg(
+                Case(
+                    When(Q(order__order_status__icontains='Pending') & Q(item_price=0), then=F('new_item_price')),
+                    default=F('item_price'),
+                    output_field=DecimalField(max_digits=12, decimal_places=2)
+                )
+            ),
 
             sku_standard_cost=Max('sku_standard_cost'),
             sku_gst_rate=Max('sku_gst_rate'),
@@ -10181,11 +10396,32 @@ def sku_profitability_list_filtered(request):
         search_term = str(search_term).strip()
 
     from_date = to_date = None
+    # try:
+    #     if filters.get("fromDate"):
+    #         from_date = timezone.make_aware(datetime.strptime(filters["fromDate"], "%Y-%m-%d"))
+    #     if filters.get("toDate"):
+    #         to_date = timezone.make_aware(datetime.strptime(filters["toDate"], "%Y-%m-%d")) + timedelta(days=1)
+    # except Exception as e:
+    #     print("Date error:", e)
+    
+    
     try:
+        from zoneinfo import ZoneInfo
+        IST = ZoneInfo("Asia/Kolkata")
+        UTC = ZoneInfo("UTC")
+
         if filters.get("fromDate"):
-            from_date = timezone.make_aware(datetime.strptime(filters["fromDate"], "%Y-%m-%d"))
-        if filters.get("toDate"):
-            to_date = timezone.make_aware(datetime.strptime(filters["toDate"], "%Y-%m-%d")) + timedelta(days=1)
+            naive_from = datetime.strptime(filters["fromDate"], "%Y-%m-%d")
+            from_date = naive_from.replace(tzinfo=IST).astimezone(UTC)
+
+        if filters.get("endDate") or filters.get("toDate"):
+            end_date_key = "endDate" if filters.get("endDate") else "toDate"
+            naive_to = datetime.strptime(filters[end_date_key], "%Y-%m-%d") + timedelta(days=1)
+            to_date = naive_to.replace(tzinfo=IST).astimezone(UTC)
+
+        if from_date and not to_date:
+            to_date = from_date + timedelta(days=1)
+
     except Exception as e:
         print("Date error:", e)
 
@@ -10223,8 +10459,25 @@ def sku_profitability_list_filtered(request):
             title=Max('title'), image_url=Max('image_url'),
             grossqty=Sum('quantity_ordered'), quantity_shipped=Sum('quantity_shipped'),
             shipping_price=Sum('shipping_price'), total_cost=Sum(F('cost_price') * F('quantity_ordered')),
-            grosssales=Sum('item_price'), promotion_discount=Sum('promotion_discount'),
-            avg_cost=Avg('item_price'), item_tax=Sum('item_tax'),
+            # grosssales=Sum('item_price'), promotion_discount=Sum('promotion_discount'),
+            # avg_cost=Avg('item_price'), item_tax=Sum('item_tax'),
+            
+            grosssales=Sum(
+                Case(
+                    When(Q(order__order_status__icontains='Pending') & Q(item_price=0), then=F('new_item_price')),
+                    default=F('item_price'),
+                    output_field=DecimalField(max_digits=12, decimal_places=2)
+                )
+            ),
+            promotion_discount=Sum('promotion_discount'),
+            avg_cost=Avg(
+                Case(
+                    When(Q(order__order_status__icontains='Pending') & Q(item_price=0), then=F('new_item_price')),
+                    default=F('item_price'),
+                    output_field=DecimalField(max_digits=12, decimal_places=2)
+                )
+            ),
+            item_tax=Sum('item_tax'),
         )
     )
 

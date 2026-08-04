@@ -31,6 +31,7 @@ urlpatterns = [
     path('orders/<str:order_id>/', views.get_order_details, name='get_order_details'),
     
     path('search-orders/', views.search_orders, name='search_orders'),   #live api test
+    path('search-orders-update/', views.new_search_orders_update, name='search_orders_update'),  #live api check and update pending orders
     
     # path('orders/<str:order_id>/buyerInfo/', views.get_order_buyer_info, name='get_order_buyer_info'),
     path('orders/<str:order_id>/address/', views.get_order_address, name='get_order_address'),
