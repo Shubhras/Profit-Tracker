@@ -1,10 +1,11 @@
-from datetime import date, timedelta
 import base64
+import logging
+from datetime import date, timedelta
 
 import requests
 from django.conf import settings
 
-
+logger = logging.getLogger(__name__)
 # class MyntraClient:
 
 #     BASE_URL = "https://api-integration.myntra.com"
@@ -137,10 +138,30 @@ class MyntraClient:
 
     BASE_URL = "https://api-integration.myntra.com"
 
-    def __init__(self, basic_token=None, access_token=None, base_url=None):
-        self.basic_token = basic_token
-        self.access_token = access_token
-        self.base_url = base_url or getattr(settings, "MYNTRA_BASE_URL", self.BASE_URL)
+    def __init__(
+        self,
+        connection=None,
+        basic_token=None,
+        access_token=None,
+        base_url=None,
+    ):
+        self.base_url = base_url or getattr(
+            settings,
+            "MYNTRA_BASE_URL",
+            self.BASE_URL,
+        )
+
+        self.connection = connection
+
+        if connection:
+            self.basic_token = self.build_basic_token(
+                connection.merchant_id,
+                connection.secret_key,
+            )
+            self.access_token = connection.access_token
+        else:
+            self.basic_token = basic_token
+            self.access_token = access_token
 
     @staticmethod
     def build_basic_token(merchant_id, secret_key):
@@ -161,6 +182,16 @@ class MyntraClient:
             headers["access_token"] = access_token
 
         return headers
+   
+    @property
+    def api_base_url(self):
+        if (
+            "pretr" in self.base_url
+            or "api-integration" not in self.base_url
+        ):
+            return "https://api.pretr.com"
+    
+        return self.base_url
 
     def _default_date_range(self):
         today = date.today()
@@ -186,10 +217,7 @@ class MyntraClient:
         for attempt in range(3):
             try:
                 response = requests.post(
-                    url,
-                    json=payload,
-                    headers=self.headers(),
-                    timeout=10
+                    url, json=payload, headers=self.headers(), timeout=10
                 )
 
                 try:
@@ -223,9 +251,6 @@ class MyntraClient:
             return {"error": str(e)}
 
     def download_csv(self, url):
-
-        try:
-            response = requests.get(url, timeout=10)
-            return response.content
-        except Exception as e:
-            return b""
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+        return response.content
