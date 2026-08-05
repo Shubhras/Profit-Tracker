@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
@@ -17,12 +19,30 @@ class MyntraConnection(models.Model):
     partner_type = models.CharField(max_length=50, blank=True, null=True)
     warehouse_code = models.CharField(max_length=50, blank=True, null=True)
     access_token = models.TextField(blank=True, null=True)
-
+    # NEW
+    refresh_token = models.TextField(blank=True, null=True)
+    
+    # NEW
+    access_token_expires_at = models.DateTimeField(
+        blank=True,
+        null=True,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    def access_token_is_valid(self):
+        if not self.access_token:
+            return False
+    
+        if not self.access_token_expires_at:
+            return False
+    
+        # Treat it as expired 24 hours early.
+        return (
+            timezone.now()
+            < self.access_token_expires_at - timedelta(hours=24)
+        )
     def __str__(self):
-        return f"MyntraConnection(user={self.user_id})"
+        return f"MyntraConnection(user={self.user})"
 
 # This model is in use 
 class MyntraOrder(models.Model): 

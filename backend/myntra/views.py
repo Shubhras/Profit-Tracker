@@ -1,18 +1,18 @@
-import time
 import csv
-from io import StringIO
 import os
+import time
 from datetime import date, timedelta
+from io import StringIO
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from django.db.models import Sum
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from .services.myntra_client import MyntraClient
+from .models import MyntraConnection, MyntraOrder
 from .services.csv_parser import safe_float
-from .models import MyntraOrder, MyntraConnection
+from .services.myntra_client import MyntraClient
 
 
 # ✅ 1️⃣ FULL AUTO SYNC (MAIN API)
@@ -305,13 +305,21 @@ class UploadMyntraOrders(APIView):
 
 # ✅ 3️⃣ CONNECTION API (USER SETTINGS)
 class MyntraConnectionView(APIView):
-
     permission_classes = [IsAuthenticated]
+
+    # =====================================================
+    # GET CONNECTION STATUS
+    # =====================================================
 
     def get(self, request):
         connection = MyntraConnection.objects.filter(user=request.user).first()
+
         if not connection:
-            return Response({"connected": False})
+            return Response(
+                {
+                    "connected": False,
+                }
+            )
 
         return Response(
             {
@@ -321,47 +329,179 @@ class MyntraConnectionView(APIView):
                 "warehouse_code": connection.warehouse_code,
                 "has_secret_key": bool(connection.secret_key),
                 "has_access_token": bool(connection.access_token),
+                "has_refresh_token": bool(connection.refresh_token),
+                "access_token_expires_at": (connection.access_token_expires_at),
+                "token_valid": connection.access_token_is_valid(),
                 "updated_at": connection.updated_at,
             }
         )
 
+    # =====================================================
+    # CREATE CONNECTION
+    # =====================================================
+
     def post(self, request):
         return self._upsert(request)
+
+    # =====================================================
+    # UPDATE CONNECTION
+    # =====================================================
 
     def put(self, request):
         return self._upsert(request)
 
+    # =====================================================
+    # DELETE CONNECTION
+    # =====================================================
+
     def delete(self, request):
         MyntraConnection.objects.filter(user=request.user).delete()
-        return Response({"status": "SUCCESS", "connected": False})
+
+        return Response(
+            {
+                "status": "SUCCESS",
+                "connected": False,
+            }
+        )
+
+    # =====================================================
+    # CREATE / UPDATE
+    # =====================================================
 
     def _upsert(self, request):
+
         allowed_fields = {
             "merchant_id",
             "secret_key",
             "partner_type",
             "warehouse_code",
-            "access_token",
         }
 
         updates = {}
+
         for field in allowed_fields:
             if field in request.data:
                 value = request.data.get(field)
+
                 updates[field] = value if value not in ("", None) else None
 
         if not updates:
             return Response(
-                {"status": "failed", "error": "No fields provided to update."},
+                {
+                    "status": "FAILED",
+                    "error": "No fields provided to update.",
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        connection, created = MyntraConnection.objects.update_or_create(
-            user=request.user,
-            defaults=updates,
+        # =================================================
+        # GET / CREATE CONNECTION
+        # =================================================
+
+        connection, created = MyntraConnection.objects.get_or_create(user=request.user)
+
+        # =================================================
+        # DETECT CREDENTIAL CHANGE
+        # =================================================
+
+        old_merchant_id = connection.merchant_id
+        old_secret_key = connection.secret_key
+
+        for field, value in updates.items():
+            setattr(connection, field, value)
+
+        credentials_changed = (
+            created
+            or ("merchant_id" in updates and old_merchant_id != connection.merchant_id)
+            or ("secret_key" in updates and old_secret_key != connection.secret_key)
         )
 
-        return Response({"status": "SUCCESS", "created": created})
+        # =================================================
+        # CLEAR OLD TOKENS IF CREDENTIALS CHANGED
+        # =================================================
+
+        if credentials_changed:
+            connection.access_token = None
+            connection.refresh_token = None
+            connection.access_token_expires_at = None
+
+        connection.save()
+
+        # =================================================
+        # INITIAL AUTHENTICATION
+        # =================================================
+
+        if credentials_changed:
+            if not connection.merchant_id:
+                return Response(
+                    {
+                        "status": "FAILED",
+                        "error": "merchant_id is required.",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if not connection.secret_key:
+                return Response(
+                    {
+                        "status": "FAILED",
+                        "error": "secret_key is required.",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            try:
+                client = MyntraClient(connection=connection)
+
+                client.generate_access_token()
+
+            except Exception as exc:
+                # Credentials/token generation failed.
+                #
+                # Don't leave the connection looking like
+                # a successfully authenticated connection.
+                connection.access_token = None
+                connection.refresh_token = None
+                connection.access_token_expires_at = None
+
+                connection.save(
+                    update_fields=[
+                        "access_token",
+                        "refresh_token",
+                        "access_token_expires_at",
+                        "updated_at",
+                    ]
+                )
+
+                return Response(
+                    {
+                        "status": "FAILED",
+                        "connected": False,
+                        "error": str(exc),
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        # =================================================
+        # RESPONSE
+        # =================================================
+
+        connection.refresh_from_db()
+
+        return Response(
+            {
+                "status": "SUCCESS",
+                "created": created,
+                "connected": bool(connection.access_token),
+                "merchant_id": connection.merchant_id,
+                "partner_type": connection.partner_type,
+                "warehouse_code": connection.warehouse_code,
+                "has_access_token": bool(connection.access_token),
+                "has_refresh_token": bool(connection.refresh_token),
+                "access_token_expires_at": (connection.access_token_expires_at),
+                "token_valid": (connection.access_token_is_valid()),
+            }
+        )
 
 
 # ✅ 4️⃣ ORDERS LIST API

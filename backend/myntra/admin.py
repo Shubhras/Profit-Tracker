@@ -30,6 +30,7 @@ class OrderAdmin(admin.ModelAdmin):
     )
     search_fields = (
         "style_id",
+        "order_id_fk",
         "order_line_id",
         "seller_order_id",
         "seller_sku_code",
