@@ -105,7 +105,6 @@ function PricingCard({ plan, index, onSelect, selectedPlanId, setSelectedPlanId 
         }}
         style={{ background: 'linear-gradient(135deg, var(--tw-gradient-stops))' }}
       >
-        {/* Popular Badge */}
         {isSelected && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -118,7 +117,6 @@ function PricingCard({ plan, index, onSelect, selectedPlanId, setSelectedPlanId 
           </motion.div>
         )}
 
-        {/* Plan Badge */}
         <div className="flex items-center gap-2 mb-2">
           <motion.div
             whileHover={{ rotate: [0, -10, 10, 0] }}
@@ -137,51 +135,56 @@ function PricingCard({ plan, index, onSelect, selectedPlanId, setSelectedPlanId 
 
           <Text className="text-gray-600 text-base mt-1 block">{plan.subtitle}</Text>
 
-          <div className="mt-4 space-y-3">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedType('monthly');
-              }}
-              className="flex items-center justify-between border rounded-xl px-3 py-2 cursor-pointer w-full"
-            >
-              <div className="flex items-center gap-2">
-                <div
-                  className={`w-4 h-4 rounded-full border-2 ${
-                    selectedType === 'monthly' ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300'
-                  }`}
-                />
-                <span>Monthly</span>
-              </div>
+          <div className="mt-5 grid grid-cols-2 gap-4">
+            {[
+              {
+                key: 'monthly',
+                label: 'Monthly',
+                price: plan.monthly_price,
+              },
+              {
+                key: 'annual',
+                label: 'Annual',
+                price: plan.annual_price,
+                badge: 'Best Value',
+              },
+            ].map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedType(item.key);
+                }}
+                className={`relative rounded-2xl border p-4 transition-all duration-300 text-left overflow-hidden
+${
+  selectedType === item.key
+    ? 'border-emerald-500 bg-gradient-to-br from-emerald-50 via-white to-emerald-100 scale-[1.02]'
+    : 'border-gray-300 bg-white hover:border-emerald-300 hover:shadow-lg'
+}`}
+              >
+                {item.badge && (
+                  <span className="absolute -top-2 right-3 bg-orange-500 text-white text-[10px] px-2 py-1 rounded-full">
+                    {item.badge}
+                  </span>
+                )}
 
-              <span className="font-semibold">
-                {/* ₹{plan.monthly_price} */}₹{Math.trunc(Number(plan.monthly_price || 0))}
-              </span>
-            </button>
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-gray-800">{item.label}</h4>
 
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedType('annual');
-              }}
-              className="flex items-center justify-between border rounded-xl px-3 py-2 cursor-pointer w-full"
-            >
-              <div className="flex items-center gap-2">
-                <div
-                  className={`w-4 h-4 rounded-full border-2 ${
-                    selectedType === 'annual' ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300'
-                  }`}
-                />
-                <span>Annual</span>
-              </div>
+                  <div
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center
+          ${selectedType === item.key ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300'}`}
+                  >
+                    {selectedType === item.key && <div className="w-2 h-2 rounded-full bg-white" />}
+                  </div>
+                </div>
 
-              <span className="font-semibold">
-                ₹{Math.trunc(Number(plan.annual_price || 0))}
-                {/* ₹{plan.annual_price} */}
-              </span>
-            </button>
+                <p className="text-2xl font-bold mt-3 text-gray-900">₹{Math.trunc(Number(item.price || 0))}</p>
+
+                <p className="text-sm text-gray-500">/ {item.key === 'monthly' ? 'month' : 'year'}</p>
+              </button>
+            ))}
           </div>
         </div>
 
@@ -328,70 +331,6 @@ function PricingCards() {
     }
   };
 
-  // Map API response to component format
-  // const mapApiPlanToComponent = (apiPlan) => {
-  //   const isFree = apiPlan.price === 0;
-  //   const isCustom = apiPlan.price === null;
-  //   const features = [
-  //     `${apiPlan.sync_frequency} Sync`,
-  //     `${apiPlan.order_volume} Orders`,
-  //     `${apiPlan.integrations} Integrations`,
-  //     ...apiPlan.features,
-  //   ];
-  //   return {
-  //     badge: {
-  //       text: apiPlan.name,
-  //     },
-  //     title: isFree ? apiPlan.name : isCustom ? 'Custom' : apiPlan.price.toString(),
-  //     subtitle: isCustom ? 'Tailored for large teams' : `For ${apiPlan.order_volume} Orders`,
-  //     price: isFree || isCustom ? null : '₹',
-  //     perMonth: apiPlan.billing_cycle === 'yearly' ? 'year' : apiPlan.billing_cycle === 'monthly' ? 'month' : null,
-  //     features,
-  //     button: {
-  //       text: isFree ? 'Current Plan' : isCustom ? 'Contact Sales' : 'Subscribe Now',
-  //     },
-  //     plan_id: apiPlan.plan_id,
-  //   };
-  // };
-
-  // const mapApiPlanToComponent = (apiPlan) => {
-  //   const isFree = apiPlan.plan_id === 'FREE' || apiPlan.price === 0;
-  //   const isEnterprise = apiPlan.contact_sales === true || apiPlan.billing_cycle === 'custom';
-
-  //   const features = [
-  //     `${apiPlan.sync_frequency} Sync`,
-  //     `${apiPlan.order_volume} Orders`,
-  //     `${apiPlan.integrations} Integrations`,
-  //     ...apiPlan.features,
-  //   ];
-
-  //   return {
-  //     badge: {
-  //       text: apiPlan.name,
-  //     },
-
-  //     // Title
-  //     title: isFree ? 'Free' : isEnterprise ? 'Custom' : apiPlan.price.toString(),
-
-  //     // Subtitle
-  //     subtitle: isEnterprise ? 'For large businesses & enterprises' : `Up to ${apiPlan.order_volume} Orders`,
-
-  //     // Price symbol
-  //     price: isFree || isEnterprise ? null : '₹',
-
-  //     // Billing cycle text
-  //     perMonth: apiPlan.billing_cycle === 'yearly' ? 'Year' : apiPlan.billing_cycle === 'monthly' ? 'Month' : null,
-
-  //     features,
-
-  //     button: {
-  //       text: isFree ? 'Try Now' : isEnterprise ? 'Contact Sales' : 'Subscribe Now',
-  //     },
-
-  //     plan_id: apiPlan.plan_id,
-  //   };
-  // };
-
   const mapApiPlanToComponent = (plan) => ({
     badge: {
       text: plan.plan_name,
@@ -419,52 +358,6 @@ function PricingCards() {
     id: plan.id,
     subscription_type: plan.subscription_type,
   });
-
-  // const fetchPricingPlans = async () => {
-  //   setLoading(true);
-  //   setError(null);
-
-  //   try {
-  //     const response = await DataService.get('/subscription-plans/');
-
-  //     if (response.data.status && response.data.data?.plans) {
-  //       const mappedPlans = response.data.data.plans.map(mapApiPlanToComponent);
-  //       setPricingPlans(mappedPlans);
-  //     } else {
-  //       setError('Invalid response format');
-  //     }
-  //   } catch (err) {
-  //     console.error('Error fetching pricing plans:', err);
-  //     setError(err.response?.data?.message || err.message || 'Failed to load pricing plans. Please try again later.');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // const fetchPricingPlans = async () => {
-  //   setLoading(true);
-  //   setError(null);
-
-  //   try {
-  //     const response = await DataService.get('/subscription-plans/');
-
-  //     if (response.data.status && response.data.data?.plans) {
-  //       const mappedPlans = response.data.data.plans.map(mapApiPlanToComponent);
-  //       setPricingPlans(mappedPlans);
-  //     } else {
-  //       setError('Invalid response format');
-  //     }
-  //   } catch (err) {
-  //     console.error('Error fetching pricing plans:', err);
-  //     setError(err.response?.data?.message || err.message || 'Failed to load pricing plans. Please try again later.');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   fetchPricingPlans();
-  // }, []);
 
   // Loading state - show skeleton cards
   if (loading) {
@@ -495,28 +388,6 @@ function PricingCards() {
       </main>
     );
   }
-
-  // Error state
-  // if (error) {
-  //   return (
-  //     <main className="px-[3%] pt-10 min-lg:pt-20 pb-10 min-lg:pb-20 max-w-7xl mx-auto">
-  //       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-  //         <Alert
-  //           message="Error Loading Pricing Plans"
-  //           description={error}
-  //           type="error"
-  //           showIcon
-  //           className="rounded-xl"
-  //           action={
-  //             <Button type="primary" size="small" onClick={fetchPricingPlans} className="rounded-lg">
-  //               Retry
-  //             </Button>
-  //           }
-  //         />
-  //       </motion.div>
-  //     </main>
-  //   );
-  // }
 
   // Empty state
   if (pricingPlans.length === 0) {
@@ -575,28 +446,6 @@ function PricingCards() {
           ))}
         </AnimatePresence>
       </div>
-
-      {/* Money Back Guarantee */}
-      {/* <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.5 }}
-        className="text-center mt-12"
-      >
-        <div className="inline-flex items-center gap-3 px-6 py-4 bg-emerald-50 rounded-2xl border border-emerald-100">
-          <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center">
-            <span className="text-2xl">🛡️</span>
-          </div>
-
-          <div className="text-left">
-            <Text strong className="block text-gray-900">
-              30-Day Money-Back Guarantee
-            </Text>
-            <Text className="text-sm text-gray-600">Not satisfied? Get a full refund, no questions asked.</Text>
-          </div>
-        </div>
-      </motion.div> */}
     </main>
   );
 }

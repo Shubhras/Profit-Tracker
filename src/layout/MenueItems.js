@@ -396,21 +396,21 @@ function MenuItems({ toggleCollapsed }) {
               'order-settlements',
             ),
 
-          hasSubmodule('marketplace-payments') &&
-            getItem(
-              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/marketPayment`}>
-                Marketplace Payments
-              </NavLink>,
-              'marketplace-payment',
-            ),
+          // hasSubmodule('marketplace-payments') &&
+          //   getItem(
+          //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/marketPayment`}>
+          //       Marketplace Payments
+          //     </NavLink>,
+          //     'marketplace-payment',
+          //   ),
 
-          hasSubmodule('returns-adjustments') &&
-            getItem(
-              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/returnsAdjust`}>
-                Returns & Adjustments
-              </NavLink>,
-              'returns-adjustments',
-            ),
+          // hasSubmodule('returns-adjustments') &&
+          //   getItem(
+          //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/returnsAdjust`}>
+          //       Returns & Adjustments
+          //     </NavLink>,
+          //     'returns-adjustments',
+          //   ),
 
           hasSubmodule('all-leaks') &&
             getItem(
@@ -420,13 +420,13 @@ function MenuItems({ toggleCollapsed }) {
               'payment-leaks',
             ),
 
-          hasSubmodule('reimbursement-planning') &&
-            getItem(
-              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/reimbursement`}>
-                Reimbursement Planning
-              </NavLink>,
-              'reimbursement-planning',
-            ),
+          // hasSubmodule('reimbursement-planning') &&
+          //   getItem(
+          //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/reimbursement`}>
+          //       Reimbursement Planning
+          //     </NavLink>,
+          //     'reimbursement-planning',
+          //   ),
         ].filter(Boolean),
       ),
 
