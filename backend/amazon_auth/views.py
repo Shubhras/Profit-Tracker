@@ -1503,7 +1503,10 @@ def sync_orders(request):
                     account_saved_count += 1
 
                 else:
-                    continue
+                    if sync_items and not OrderItem.objects.filter(order=order).exists():
+                        should_sync_items = True
+                    else:
+                        continue
 
                 #  MOVE ITEM SYNC HERE
                 if sync_items and should_sync_items:
