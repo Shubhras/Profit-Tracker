@@ -1,12 +1,25 @@
 import logging
 from datetime import datetime, timedelta
 from django.db import transaction
+from django.http import HttpResponse
 from django.utils import timezone
 import pytz
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+
+from myntra.constants import MyntraReports
+from myntra.parsers.payment_history_parser import PaymentHistoryParser
+from myntra.services.profit.calculator import MyntraProfitCalculator
+from myntra.services.profit.export import MyntraProfitCSVExporter
+from myntra.services.profit.hierarchy_csv import MyntraProfitHierarchyCSVExporter
+from myntra.services.profit.style_summary import StyleSummary
+from myntra.services.profit.validation_export import MyntraProfitValidationExporter
+from myntra.services.report_service import MyntraReportService
+from myntra.services.sync.order_sync import OrderSyncService
+from myntra.services.sync.payment_sync import PaymentSyncService
+from myntra.services.sync.return_sync import ReturnSyncService
 
 from .models import MyntraConnection, MyntraOrderNew, MyntraOrderItemNew, MyntraReturnItemNew, MyntraPaymentNew
 from .services.myntra_client_v4 import MyntraClientV4
@@ -281,3 +294,354 @@ class SyncMyntraDetailsView(APIView):
                 "payments_synced": payments_synced
             }
         })
+
+
+class MyntraPaymentHistoryAPIView(APIView):
+
+    def get(self, request):
+
+        connection = MyntraConnection.objects.first()
+
+        if not connection:
+            return Response(
+                {"error": "No Myntra connection found"},
+                status=400
+            )
+
+        client = MyntraClientV4(connection)
+
+        payment_method = request.GET.get("payment_method", "prepaid")
+        from_date = request.GET.get("from_date")
+        to_date = request.GET.get("to_date")
+        page_no = int(request.GET.get("page", 0))
+        page_size = int(request.GET.get("page_size", 20))
+
+        response = client.get_payment_history(
+            payment_method=payment_method,
+            from_date=from_date,
+            to_date=to_date,
+            page_no=page_no,
+            page_size=page_size,
+        )
+
+        return Response(response)
+
+class MyntraPaymentCSVAPIView(APIView): # For debugging Temporary class
+
+    def get(self, request):
+
+        connection = MyntraConnection.objects.first()
+
+        service = PaymentSyncService(connection)
+        
+        data = service.sync(
+            payment_method="PREPAID",
+            from_date="2026-07-01",
+            to_date="2026-07-31",
+        )
+        
+        return Response(data)
+
+class ScheduleReportAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        connection = MyntraConnection.objects.filter(
+            user=request.user
+        ).first()
+
+        if not connection:
+            return Response(
+                {"error": "Connection not found"},
+                status=400,
+            )
+
+        service = MyntraReportService(connection)
+
+        response = service.schedule(
+            report_name=MyntraReports.ORDERS,
+            partner_type=request.data.get("partnerType"),
+            from_date=request.data.get("fromDate"),
+            to_date=request.data.get("toDate"),
+        )
+
+        return Response(response)
+
+class FetchReportAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        connection = MyntraConnection.objects.filter(
+            user=request.user
+        ).first()
+
+        if not connection:
+            return Response(
+                {"error": "Connection not found"},
+                status=400,
+            )
+
+        job_id = request.data.get("jobId")
+
+        if not job_id:
+            return Response(
+                {"error": "jobId is required"},
+                status=400,
+            )
+
+        service = MyntraReportService(connection)
+
+        response = service.is_ready(job_id)
+
+        return Response(response)
+
+class DownloadReportAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        connection = MyntraConnection.objects.filter(
+            user=request.user
+        ).first()
+
+        if not connection:
+            return Response(
+                {"error": "Connection not found"},
+                status=400,
+            )
+
+        download_url = request.data.get("download_url")
+
+        if not download_url:
+            return Response(
+                {"error": "download_url is required"},
+                status=400,
+            )
+
+        service = MyntraReportService(connection)
+
+        csv_bytes = service.download(download_url)
+
+        return HttpResponse(
+            csv_bytes,
+            content_type="text/csv",
+            headers={
+                "Content-Disposition": 'attachment; filename="report.csv"'
+            },
+        )
+
+# class MyntraProfitExportAPIView(APIView):
+
+#     def get(self, request):
+
+#         calculator = MyntraProfitCalculator(
+#             user=request.user,
+#             filters=request.query_params,
+#         )
+
+#         summary = StyleSummary(calculator)
+
+#         data = summary.execute()
+
+#         return MyntraProfitCSVExporter.export(
+#             data=data,
+#             filename="myntra_profit_style.csv",
+#         )
+
+class MyntraProfitExportAPIView(APIView):
+
+    def get(self, request):
+
+        calculator = MyntraProfitCalculator(
+            user=request.user,
+            filters=request.query_params,
+        )
+
+        exporter = MyntraProfitHierarchyCSVExporter(
+            calculator=calculator,
+        )
+
+        return exporter.export(
+            filename="myntra_profit_hierarchy.csv",
+        )
+
+class MyntraProfitValidationExportAPIView(APIView):
+
+    def get(self, request):
+
+        exporter = MyntraProfitValidationExporter(
+            user=request.user
+        )
+
+        return exporter.export()
+
+class UploadMyntraOrderReportAPIView(APIView):
+    """
+    Manually upload a Myntra Orders CSV.
+
+    Intended for importing historical Orders reports
+    downloaded from the Myntra seller dashboard.
+    """
+
+    def post(self, request):
+
+        uploaded_file = request.FILES.get("file")
+
+        if not uploaded_file:
+            return Response(
+                {
+                    "status": False,
+                    "message": "Orders CSV file is required.",
+                },
+                status=400,
+            )
+
+        # ------------------------------------------
+        # Validate file type
+        # ------------------------------------------
+
+        if not uploaded_file.name.lower().endswith(".csv"):
+            return Response(
+                {
+                    "status": False,
+                    "message": "Only CSV files are supported.",
+                },
+                status=400,
+            )
+
+        # ------------------------------------------
+        # Get user's Myntra connection
+        # ------------------------------------------
+
+        try:
+            connection = MyntraConnection.objects.get(
+                user=request.user
+            )
+
+        except MyntraConnection.objects:
+            return Response(
+                {
+                    "status": False,
+                    "message": "Myntra connection not found.",
+                },
+                status=404,
+            )
+
+        try:
+
+            csv_bytes = uploaded_file.read()
+
+            service = OrderSyncService(
+                connection
+            )
+
+            result = service.process_uploaded_file(
+                csv_bytes
+            )
+
+            return Response(
+                {
+                    "status": True,
+                    "message": "Myntra Orders report imported successfully.",
+                    "data": result,
+                },
+                status=200,
+            )
+
+        except Exception as exc:
+
+            return Response(
+                {
+                    "status": False,
+                    "message": "Failed to import Myntra Orders report.",
+                    "error": str(exc),
+                },
+                status=400,
+            )
+
+class UploadMyntraReturnReportAPIView(APIView):
+    """
+    Manually upload a Myntra Returns CSV.
+
+    Intended for importing historical Returns reports
+    downloaded from the Myntra seller dashboard.
+    """
+
+    def post(self, request):
+
+        uploaded_file = request.FILES.get("file")
+
+        if not uploaded_file:
+            return Response(
+                {
+                    "status": False,
+                    "message": "Returns CSV file is required.",
+                },
+                status=400,
+            )
+
+        # ------------------------------------------
+        # Validate file type
+        # ------------------------------------------
+
+        if not uploaded_file.name.lower().endswith(".csv"):
+            return Response(
+                {
+                    "status": False,
+                    "message": "Only CSV files are supported.",
+                },
+                status=400,
+            )
+
+        # ------------------------------------------
+        # Get user's Myntra connection
+        # ------------------------------------------
+
+        try:
+            connection = MyntraConnection.objects.get(
+                user=request.user
+            )
+
+        except MyntraConnection.object:
+            return Response(
+                {
+                    "status": False,
+                    "message": "Myntra connection not found.",
+                },
+                status=404,
+            )
+
+        try:
+            csv_bytes = uploaded_file.read()
+
+            service = ReturnSyncService(
+                connection
+            )
+
+            result = service.process_uploaded_file(
+                csv_bytes
+            )
+
+            return Response(
+                {
+                    "status": True,
+                    "message": "Myntra Returns report imported successfully.",
+                    "data": result,
+                },
+                status=200,
+            )
+
+        except Exception as exc:
+            return Response(
+                {
+                    "status": False,
+                    "message": "Failed to import Myntra Returns report.",
+                    "error": str(exc),
+                },
+                status=400,
+            )
