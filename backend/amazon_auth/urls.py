@@ -14,6 +14,7 @@ from .orders import *
 from .feesestimate import *
 from .transations import *
 from .reconcile import *
+from . import exports
 
 urlpatterns = [
     path('dashboard-stats/', views.get_full_dashboard, name='dashboard-stats'),
@@ -156,6 +157,20 @@ urlpatterns = [
         AmazonRefundTransactionsAPIView.as_view(),
         name="amazon-refund-transactions"
     ),
+    
+    # EXPORT ENDPOINTS
+    path('profitability/details/export/', exports.export_profitability_details),
+    path('profitability/details/by-parent-asin/export/', exports.export_profitability_details_by_parent_asin),
+    path('profitability/details/by-parentproductid/export/', exports.export_sku_profit_report),
+    path('profitability/list/by-sku/filtered/export/', exports.export_sku_profitability_list_filtered),
+    path('profitability-monthwise/export/', exports.export_profitability_monthwise),
+    path('reconcile-paymentsummary/export/', exports.export_paymentsummary),
+    path('bank/ransfer-summary/export/', exports.export_bank_transfer_workflow),
+    path('grouped-transactions/export/', exports.export_grouped_transactions),
+    path('order-settlement-dashboard/export/', exports.export_order_settlement_dashboard),
+    path('refund-transactions/export/', exports.export_refund_transactions),
+    path('exports/history/', exports.list_export_history),
+    path('exports/history/<int:export_id>/download/', exports.download_export_file),
  
 ]
 

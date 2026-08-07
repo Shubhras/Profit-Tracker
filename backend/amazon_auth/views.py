@@ -1633,47 +1633,47 @@ def sync_orders(request):
                         
                         
                         #  update order item price have inpending status
-                # if order and order.order_status and order.order_status.upper() == "PENDING":
-                #     try:
-                #         from datetime import timedelta
-                #         last_updated_after = (order.last_update_date or order.purchase_date - timedelta(minutes=5)).strftime("%Y-%m-%dT%H:%M:%SZ")
-                #         p_params = {
-                #             "lastUpdatedAfter": last_updated_after,
-                #             "marketplaceIds": [account.marketplace_id]
-                #         }
-                #         p_response = manager.search_orders_v2026(**p_params)
-                #         p_orders_list = p_response.get("orders") or []
-                #         for po in p_orders_list:
-                #             if po.get("orderId") == amazon_order_id:
-                #                 total_amt = 0.0
-                #                 order_items_list = po.get("orderItems") or []
-                #                 for item_data in order_items_list:
-                #                     unit_price = float(item_data.get("product", {}).get("price", {}).get("unitPrice", {}).get("amount", 0) or 0)
-                #                     qty = int(item_data.get("quantityOrdered", 0) or 0)
-                #                     total_amt += unit_price * qty
+                if order and order.order_status and order.order_status.upper() == "PENDING":
+                    try:
+                        from datetime import timedelta
+                        last_updated_after = (order.last_update_date or order.purchase_date - timedelta(minutes=5)).strftime("%Y-%m-%dT%H:%M:%SZ")
+                        p_params = {
+                            "lastUpdatedAfter": last_updated_after,
+                            "marketplaceIds": [account.marketplace_id]
+                        }
+                        p_response = manager.search_orders_v2026(**p_params)
+                        p_orders_list = p_response.get("orders") or []
+                        for po in p_orders_list:
+                            if po.get("orderId") == amazon_order_id:
+                                total_amt = 0.0
+                                order_items_list = po.get("orderItems") or []
+                                for item_data in order_items_list:
+                                    unit_price = float(item_data.get("product", {}).get("price", {}).get("unitPrice", {}).get("amount", 0) or 0)
+                                    qty = int(item_data.get("quantityOrdered", 0) or 0)
+                                    total_amt += unit_price * qty
                                 
-                #                 order.new_total_amount = total_amt
-                #                 order.raw_data = po
-                #                 order.save(update_fields=['new_total_amount', 'raw_data'])
+                                order.new_total_amount = total_amt
+                                order.raw_data = po
+                                order.save(update_fields=['new_total_amount', 'raw_data'])
                                 
-                #                 for item_data in order_items_list:
-                #                     sku = item_data.get("product", {}).get("sellerSku")
-                #                     order_item_id = item_data.get("orderItemId")
+                                for item_data in order_items_list:
+                                    sku = item_data.get("product", {}).get("sellerSku")
+                                    order_item_id = item_data.get("orderItemId")
                                     
-                #                     order_item = None
-                #                     if order_item_id:
-                #                         order_item = OrderItem.objects.filter(order=order, order_item_id=order_item_id).first()
-                #                     if not order_item and sku:
-                #                         order_item = OrderItem.objects.filter(order=order, seller_sku=sku).first()
+                                    order_item = None
+                                    if order_item_id:
+                                        order_item = OrderItem.objects.filter(order=order, order_item_id=order_item_id).first()
+                                    if not order_item and sku:
+                                        order_item = OrderItem.objects.filter(order=order, seller_sku=sku).first()
                                         
-                #                     if order_item:
-                #                         unit_price = float(item_data.get("product", {}).get("price", {}).get("unitPrice", {}).get("amount", 0) or 0)
-                #                         order_item.new_item_price = unit_price
-                #                         order_item.raw_data = item_data
-                #                         order_item.save(update_fields=['new_item_price', 'raw_data'])
-                #                 break
-                #     except Exception as pe:
-                #         logger.error(f"Failed to sync pending order details for {amazon_order_id}: {str(pe)}")        
+                                    if order_item:
+                                        unit_price = float(item_data.get("product", {}).get("price", {}).get("unitPrice", {}).get("amount", 0) or 0)
+                                        order_item.new_item_price = unit_price
+                                        order_item.raw_data = item_data
+                                        order_item.save(update_fields=['new_item_price', 'raw_data'])
+                                break
+                    except Exception as pe:
+                        logger.error(f"Failed to sync pending order details for {amazon_order_id}: {str(pe)}")        
 
            
 

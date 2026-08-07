@@ -1004,4 +1004,19 @@ class AmazonTransactionContext(models.Model):
     def __str__(self):
         return f"{self.context_type} - {self.transaction.transaction_id}"    
     
-            
+
+class ExportedReport(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="exported_reports")
+    report_type = models.CharField(max_length=255)
+    file_name = models.CharField(max_length=255)
+    file = models.FileField(upload_to="exported_reports/", null=True, blank=True)
+    format = models.CharField(max_length=10)
+    from_date = models.DateField(null=True, blank=True)
+    to_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=50, default="PENDING")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.file_name} ({self.status})"
+    
+                
