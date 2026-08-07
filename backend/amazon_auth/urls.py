@@ -37,7 +37,8 @@ urlpatterns = [
     # path('orders/<str:order_id>/buyerInfo/', views.get_order_buyer_info, name='get_order_buyer_info'),
     path('orders/<str:order_id>/address/', views.get_order_address, name='get_order_address'),
     path('orders/<str:order_id>/orderItems/live/', views.get_order_items, name='get_order_items_live'),
-    path('orders/<str:order_id>/orderItems/', views.list_db_order_items, name='list_db_order_items'),
+     path('orders/new/<str:order_id>/orderItems/live/', views.by_token_get_order_items, name='get_order_items_live'),
+    path('orders/<str:order_id>/orderItems/', views.by_token_list_db_order_items, name='list_db_order_items'),
     
     path('order-processing-dashboard/',OrderProcessingDashboardAPIView.as_view(),name='order-processing-dashboard'),
     #finance

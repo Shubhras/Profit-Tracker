@@ -1736,6 +1736,25 @@ def list_db_order_items(request, order_id):
         return JsonResponse({"status": "success", "items": data})
     except Order.DoesNotExist:
         return JsonResponse({"status": "error", "message": "Order not found"}, status=404)
+    
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def by_token_list_db_order_items(request, order_id):
+    """Returns all items for a specific order stored in the local database"""
+    try:
+        order = Order.objects.get(amazon_order_id=order_id, user=request.user)
+        items = order.items.all()
+        data = [{
+            "item_id": i.order_item_id,
+            "sku": i.seller_sku,
+            "title": i.title,
+            "qty": i.quantity_ordered,
+            "price": float(i.item_price)
+        } for i in items]
+        return JsonResponse({"status": "success", "items": data})
+    except Order.DoesNotExist:
+        return JsonResponse({"status": "error", "message": "Order not found"}, status=404)    
 
 
 # =========================================
@@ -1939,6 +1958,22 @@ def get_order_items(request, order_id):
         return JsonResponse(response)
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])    
+def by_token_get_order_items(request, order_id):
+    """
+    Fetches detailed order item information for a single Amazon Order ID.
+    Supports NextToken for pagination.
+    Example: /api/amazon/orders/404-1274605-5615510/orderItems/
+    """
+    try:
+        manager = SPAPIManager(user=request.user)
+        next_token = request.GET.get('NextToken')
+        response = manager.get_order_items(order_id, next_token=next_token)
+        return JsonResponse(response)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)    
 
 # @login_required
 def get_order_finances(request, order_id):
