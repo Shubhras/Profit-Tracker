@@ -6177,7 +6177,7 @@ def amazon_profitability_parent_transactions_shipping(request):
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
-        .values('asin','seller_sku', 'parent_asin', 'order__amazon_order_id', 'quantity_ordered', 'item_price', 'item_tax', 'promotion_discount')
+        .values('asin','seller_sku', 'parent_asin', 'order__amazon_order_id', 'quantity_ordered', 'item_price','new_item_price', 'item_tax', 'promotion_discount')
     )
 
     # asin_map = {}
@@ -6735,8 +6735,9 @@ def amazon_profitability_parent_transactions_shipping(request):
 
         for o in orders:
             oid = o['order__amazon_order_id']
-            qty = Decimal(o['quantity_ordered'] or 0)
+            qty = Decimal(o['quantity_ordered'] or 0)  
             o_item_price = Decimal(str(o.get('item_price') or 0))
+            o_new_item_price = Decimal(str(o.get('new_item_price') or 0))
             o_item_tax = Decimal(str(o.get('item_tax') or 0))
 
             f = finance_map.get(oid, {})
@@ -6767,6 +6768,20 @@ def amazon_profitability_parent_transactions_shipping(request):
                 return_units += qty
 
             # Calculate final net sales and cost for this specific order
+            
+            # Calculate final net sales and cost for this specific order
+            
+            o_item_price = (
+                o_new_item_price
+                if o_item_price == 0
+                else o_item_price
+            )
+            o_gross = o_item_price + o_item_tax
+            # o_new_item_price
+            print("o_new_item_price newwwwwwwww>>>>>>>>>>>>>>>>",o_new_item_price)
+            
+            print("o_item_price first>>>>>>>>>>>>>>>>",o_item_price)
+            
             o_gross = o_item_price + o_item_tax
             o_cost = standard_cost * qty
 
@@ -9500,7 +9515,7 @@ def amazon_profitability_details_transactions_shipping(request):
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
-        .values('asin','parent_asin', 'order__amazon_order_id', 'quantity_ordered', 'item_price', 'item_tax', 'promotion_discount')
+        .values('asin','parent_asin', 'order__amazon_order_id', 'quantity_ordered', 'item_price','new_item_price', 'item_tax', 'promotion_discount')
     )
 
     child_parent_map = {}
@@ -9977,7 +9992,8 @@ def amazon_profitability_details_transactions_shipping(request):
         for o in orders:
             oid = o['order__amazon_order_id']
             qty = float(o['quantity_ordered'] or 0)
-            o_item_price = float(str(o.get('item_price') or 0))
+            o_item_price = float(str(o.get('item_price') or 0))  
+            o_new_item_price = float(str(o.get('new_item_price') or 0)) 
             o_item_tax = float(str(o.get('item_tax') or 0))
 
             f = finance_map.get(oid, {})
@@ -10011,7 +10027,19 @@ def amazon_profitability_details_transactions_shipping(request):
                 return_units += qty
 
             # Calculate final net sales and cost for this specific order
+            
+            o_item_price = (
+                o_new_item_price
+                if o_item_price == 0
+                else o_item_price
+            )
             o_gross = o_item_price + o_item_tax
+            # o_new_item_price
+            print("o_new_item_price newwwwwwwww>>>>>>>>>>>>>>>>",o_new_item_price)
+            
+            print("o_item_price first>>>>>>>>>>>>>>>>",o_item_price)
+            
+            print("o_gross first>>>>>>>>>>>>>>>>",o_gross)
             o_cost = standard_cost * qty
 
             o_replacement_count = replacement_count_by_order.get(oid, 0)
@@ -10075,6 +10103,7 @@ def amazon_profitability_details_transactions_shipping(request):
         # ------------------------------------------------------------
         # TAXABLE VALUE
         # ------------------------------------------------------------
+        print("final_net_sales first>>>>>>>>>>>>>>>>",final_net_sales)
         
         if gst_rate > 0:
             taxable_value = (
@@ -10146,6 +10175,11 @@ def amazon_profitability_details_transactions_shipping(request):
             - stdcost
         )
         profit_margin = (profit / final_net_sales * 100) if final_net_sales else 0
+        
+        
+        print("final_net_sales>>>>>>>>>>>>>>>>",final_net_sales)
+        print("gross_qty>>>>>>>>>>>>>>>>",gross_qty)
+        print("gross_sales>>>>>>>>>>>??????????????????????",gross_sales)
 
         tacos = (
             abs(ads) / gross_sales * 100
