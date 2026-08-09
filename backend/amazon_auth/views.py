@@ -10583,7 +10583,7 @@ def sku_profitability_list_filtered(request):
     for r in raw_map: raw_data_map.setdefault(r['amazon_order_id'], []).append(r['raw_data'])
 
     asin_orders = OrderItem.objects.filter(order_filter).exclude(order__order_status__icontains='Cancel').values(
-        'asin', 'seller_sku', 'order__amazon_order_id', 'quantity_ordered', 'item_price', 'item_tax', 'promotion_discount'
+        'asin', 'seller_sku', 'order__amazon_order_id', 'quantity_ordered', 'item_price', 'new_item_price','item_tax', 'promotion_discount'
     )
     asin_map = {}
     for row in asin_orders: asin_map.setdefault((row['asin'], row['seller_sku']), []).append(row)
@@ -10816,6 +10816,7 @@ def sku_profitability_list_filtered(request):
             oid = o['order__amazon_order_id']
             qty = Decimal(o['quantity_ordered'] or 0)
             o_item_price = Decimal(str(o.get('item_price') or 0))
+            o_new_item_price = float(str(o.get('new_item_price') or 0)) 
             o_item_tax = Decimal(str(o.get('item_tax') or 0))
             f = finance_map.get(oid, {})
 
@@ -10835,8 +10836,21 @@ def sku_profitability_list_filtered(request):
             if not fee_matched and p_asin in order_fee_map: t_new_charge += Decimal(order_fee_map[p_asin]["fee"])
 
             if Decimal(f.get('refund') or 0) < 0 or rto_amt < 0: return_units += qty
-
+            
+            o_item_price = (
+                o_new_item_price
+                if o_item_price == 0
+                else o_item_price
+            )
             o_gross = o_item_price + o_item_tax
+            
+            print("o_new_item_price newwwwwwwww>>>>>>>>>>>>>>>>",o_new_item_price)
+            
+            print("o_item_price first>>>>>>>>>>>>>>>>",o_item_price)
+            
+            print("o_gross first>>>>>>>>>>>>>>>>",o_gross)
+
+            # o_gross = o_item_price + o_item_tax
             o_cost = standard_cost * qty
 
             o_replacement_count = replacement_count_by_order.get(oid, 0)

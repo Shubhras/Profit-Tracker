@@ -256,7 +256,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
-        .values('asin','parent_asin', 'order__amazon_order_id', 'quantity_ordered', 'item_price', 'item_tax', 'promotion_discount')
+        .values('asin','parent_asin', 'order__amazon_order_id', 'quantity_ordered', 'item_price','new_item_price','item_tax', 'promotion_discount')
     )
 
     child_parent_map = {}
@@ -734,6 +734,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
             oid = o['order__amazon_order_id']
             qty = float(o['quantity_ordered'] or 0)
             o_item_price = float(str(o.get('item_price') or 0))
+            o_new_item_price = float(str(o.get('new_item_price') or 0)) 
             o_item_tax = float(str(o.get('item_tax') or 0))
 
             f = finance_map.get(oid, {})
@@ -767,7 +768,21 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
                 return_units += qty
 
             # Calculate final net sales and cost for this specific order
+            
+            o_item_price = (
+                o_new_item_price
+                if o_item_price == 0
+                else o_item_price
+            )
             o_gross = o_item_price + o_item_tax
+            
+            print("o_new_item_price newwwwwwwww>>>>>>>>>>>>>>>>",o_new_item_price)
+            
+            print("o_item_price first>>>>>>>>>>>>>>>>",o_item_price)
+            
+            print("o_gross first>>>>>>>>>>>>>>>>",o_gross)
+            
+            # o_gross = o_item_price + o_item_tax
             o_cost = standard_cost * qty
 
             o_replacement_count = replacement_count_by_order.get(oid, 0)
