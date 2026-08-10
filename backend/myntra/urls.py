@@ -1,5 +1,6 @@
 from django.urls import path
 
+from myntra.amazon_adapter import MyntraAmazonOrderSummaryAPIView, MyntraAmazonSKUSummaryAPIView, MyntraAmazonStyleSummaryAPIView
 from myntra.profit import (
     MyntraOrderSummaryAPIView,
     MyntraSKUSummaryAPIView,
@@ -18,6 +19,7 @@ from .views_v4 import (
     ScheduleReportAPIView,
     SyncMyntraDetailsView,
     UploadMyntraOrderReportAPIView,
+    UploadMyntraPaymentReportAPIView,
     UploadMyntraReturnReportAPIView,
 )
 
@@ -80,5 +82,25 @@ urlpatterns = [
         "reports/returns/upload/",
         UploadMyntraReturnReportAPIView.as_view(),
         name="myntra-returns-report-upload",
+    ),
+    path(
+        "reports/payments/upload/",
+        UploadMyntraPaymentReportAPIView.as_view(),
+        name="myntra-payments-report-upload",
+    ),
+    path(
+        "profit/amazon-compatible/style/",
+        MyntraAmazonStyleSummaryAPIView.as_view(),
+        name="myntra-amazon-style-summary",
+    ),
+    path(
+        "profit/amazon-compatible/sku/<str:style_id>/",
+        MyntraAmazonSKUSummaryAPIView.as_view(),
+        name="myntra-amazon-sku-summary",
+    ),
+    path(
+        "profit/amazon-compatible/order/<str:seller_sku>/",
+        MyntraAmazonOrderSummaryAPIView.as_view(),
+        name="myntra-amazon-order-summary",
     ),
 ]

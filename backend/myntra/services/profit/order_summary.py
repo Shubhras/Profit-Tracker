@@ -176,9 +176,7 @@ class OrderSummary:
 
             fixed_fee = mp_fee_breakdown.get("fixed_fee") or Decimal(0)
 
-            pick_and_pack_fee = mp_fee_breakdown.get("pick_and_pack_fee") or Decimal(
-                0
-            )
+            pick_and_pack_fee = mp_fee_breakdown.get("pick_and_pack_fee") or Decimal(0)
 
             payment_gateway_fee = mp_fee_breakdown.get(
                 "payment_gateway_fee"
@@ -194,13 +192,9 @@ class OrderSummary:
                 order_payments
             )
 
-            forward_shipping = shipping_breakdown.get("forward_shipping") or Decimal(
-                0
-            )
+            forward_shipping = shipping_breakdown.get("forward_shipping") or Decimal(0)
 
-            reverse_shipping = shipping_breakdown.get("reverse_shipping") or Decimal(
-                0
-            )
+            reverse_shipping = shipping_breakdown.get("reverse_shipping") or Decimal(0)
 
             forward_logistics = shipping_breakdown.get("forward_logistics") or Decimal(
                 0
@@ -248,15 +242,19 @@ class OrderSummary:
             ) or Decimal(0)
 
             # ==========================================
+            # Claims
+            # ==========================================
+
+            claim_amount = self.calculator.calculate_claims(order_payments) or Decimal(
+                0
+            )
+
+            # ==========================================
             # FUTURE DATA SOURCES
             # ==========================================
 
             # Ads integration will populate this later.
             ads = Decimal(0)
-
-            # Claims integration will populate these later.
-            claim_count = 0
-            claim_amount = Decimal(0)
 
             # User product-cost configuration will
             # populate this later.
@@ -280,7 +278,7 @@ class OrderSummary:
                 # remain untouched above so they can
                 # later be exposed in Reconciliation.
                 # --------------------------------------
-
+                promo_discount = Decimal(0),
                 expected_settlement = Decimal(0)
                 profit = Decimal(0)
                 profit_percentage = Decimal(0)
@@ -397,7 +395,6 @@ class OrderSummary:
                     # ----------------------------------
                     # CLAIMS
                     # ----------------------------------
-                    "claim_count": claim_count,
                     "claim_amount": claim_amount,
                     # ----------------------------------
                     # EXPECTED SETTLEMENT

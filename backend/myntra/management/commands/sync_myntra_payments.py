@@ -12,7 +12,7 @@ class Command(BaseCommand):
             "--payment-method",
             type=str,
             required=True,
-            help="Payment method (PREPAID, COD, etc.)",
+            help="Payment method (PREPAID or POSTPAID.)",
         )
 
         parser.add_argument(

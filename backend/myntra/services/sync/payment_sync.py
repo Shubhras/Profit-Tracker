@@ -1,3 +1,5 @@
+import hashlib
+import json
 from datetime import datetime
 from decimal import Decimal
 
@@ -64,9 +66,24 @@ class PaymentSyncService:
 
         return None
 
+    def _transaction_key(self, row):
+        normalized = {
+            str(key): "" if value is None else str(value).strip()
+            for key, value in row.items()
+        }
+
+        payload = json.dumps(
+            normalized,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+
+        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
     def _build(self, row, payment_method):
         return MyntraPaymentTransaction(
             myntra_connection=self.connection,
+            transaction_key=self._transaction_key(row),
             payment_method=payment_method,
             neft_ref=row.get("neft_ref"),
             payment_date=self._date(row.get("payment_date")),
@@ -93,6 +110,7 @@ class PaymentSyncService:
             seller_discount=self._decimal(row.get("seller_discount")),
             platform_discount=self._decimal(row.get("platform_discount")),
             total_discount=self._decimal(row.get("total_discount")),
+            nod_comment=row.get("nod_comment"),
             comments=row.get("comments"),
             raw_data=row,
         )
@@ -103,12 +121,7 @@ class PaymentSyncService:
             return 0, 0
 
         existing = {
-            (
-                obj.neft_ref,
-                obj.order_line_id,
-                obj.order_type,
-                obj.comments,
-            ): obj
+            obj.transaction_key: obj
             for obj in MyntraPaymentTransaction.objects.filter(
                 myntra_connection=self.connection
             )
@@ -118,12 +131,7 @@ class PaymentSyncService:
         update_list = []
 
         for transaction in transactions:
-            key = (
-                transaction.neft_ref,
-                transaction.order_line_id,
-                transaction.order_type,
-                transaction.comments,
-            )
+            key = transaction.transaction_key
 
             obj = existing.get(key)
 
@@ -163,6 +171,8 @@ class PaymentSyncService:
                     "seller_discount",
                     "platform_discount",
                     "total_discount",
+                    "nod_comment",
+                    "comments",
                     "raw_data",
                 ],
             )
@@ -191,27 +201,66 @@ class PaymentSyncService:
 
         total_created = 0
         total_updated = 0
+        skipped = 0
+        failed = 0
 
         for payment in payments:
-            csv_bytes = self.download_csv(payment)
+            download_url = payment.get("utrDetailsLink")
+
+            # ==========================================
+            # VALIDATE DOWNLOAD LINK
+            # ==========================================
+
+            if (
+                not download_url
+                or not isinstance(download_url, str)
+                or not download_url.startswith(("http://", "https://"))
+            ):
+                skipped += 1
+
+                print(
+                    "Skipping payment report - download link unavailable:",
+                    {
+                        "utrNumber": payment.get("utrNumber"),
+                        "paymentDate": payment.get("paymentDate"),
+                        "amount": payment.get("amount"),
+                        "utrDetailsLink": download_url,
+                    },
+                )
+
+                continue
+
+            # ==========================================
+            # DOWNLOAD
+            # ==========================================
+
+            try:
+                csv_bytes = self.download_csv(payment)
+
+            except Exception as exc:
+                failed += 1
+
+                print(
+                    "Failed to download payment report:",
+                    {
+                        "utrNumber": payment.get("utrNumber"),
+                        "error": str(exc),
+                    },
+                )
+
+                continue
+
+            # ==========================================
+            # PARSE
+            # ==========================================
 
             rows = self.parser.parse(csv_bytes)
 
             transactions = [self._build(row, payment_method) for row in rows]
-            for row in rows:
-                if row.get("order_type") == "NOD":
-                    print(
-                        {
-                            "neft_ref": row.get("neft_ref"),
-                            "order_release_id": row.get("order_release_id"),
-                            "packet_id": row.get("packet_id"),
-                            "store_order_id": row.get("store_order_id"),
-                            "seller_order_id": row.get("seller_order_id"),
-                            "return_id": row.get("return_id"),
-                            "settled_amount": row.get("settled_amount"),
-                            "payment_date": row.get("payment_date"),
-                        }
-                    )
+
+            # ==========================================
+            # SAVE
+            # ==========================================
 
             created, updated = self._save(transactions)
 
@@ -222,4 +271,37 @@ class PaymentSyncService:
             "payments": len(payments),
             "created": total_created,
             "updated": total_updated,
+            "skipped": skipped,
+            "failed": failed,
+        }
+
+    def sync_uploaded_csv(
+        self,
+        csv_bytes,
+        payment_method,
+    ):
+        """
+        Import a manually uploaded Myntra payment transaction CSV.
+
+        Uses the same parser, model builder and upsert logic
+        as the Payment History API sync.
+        """
+
+        rows = self.parser.parse(csv_bytes)
+
+        if not rows:
+            return {
+                "rows": 0,
+                "created": 0,
+                "updated": 0,
+            }
+
+        transactions = [self._build(row, payment_method) for row in rows]
+
+        created, updated = self._save(transactions)
+
+        return {
+            "rows": len(rows),
+            "created": created,
+            "updated": updated,
         }
