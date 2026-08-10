@@ -10816,7 +10816,7 @@ def sku_profitability_list_filtered(request):
             oid = o['order__amazon_order_id']
             qty = Decimal(o['quantity_ordered'] or 0)
             o_item_price = Decimal(str(o.get('item_price') or 0))
-            o_new_item_price = float(str(o.get('new_item_price') or 0)) 
+            o_new_item_price = Decimal(str(o.get('new_item_price') or 0)) 
             o_item_tax = Decimal(str(o.get('item_tax') or 0))
             f = finance_map.get(oid, {})
 
