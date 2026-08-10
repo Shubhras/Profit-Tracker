@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta   
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -14,7 +14,7 @@ from myntra.models import (
 from myntra.services.report_service import MyntraReportService
 
 
-class Command(BaseCommand):
+class Command(BaseCommand):     #first command
     help = "Schedule Myntra reports"
 
     REPORTS = [
