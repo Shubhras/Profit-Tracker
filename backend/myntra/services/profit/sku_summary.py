@@ -214,9 +214,7 @@ class SKUSummary:
 
             fixed_fee = mp_fee_breakdown.get("fixed_fee") or Decimal(0)
 
-            pick_and_pack_fee = mp_fee_breakdown.get("pick_and_pack_fee") or Decimal(
-                0
-            )
+            pick_and_pack_fee = mp_fee_breakdown.get("pick_and_pack_fee") or Decimal(0)
 
             payment_gateway_fee = mp_fee_breakdown.get(
                 "payment_gateway_fee"
@@ -232,13 +230,9 @@ class SKUSummary:
                 sku_payments
             )
 
-            forward_shipping = shipping_breakdown.get("forward_shipping") or Decimal(
-                0
-            )
+            forward_shipping = shipping_breakdown.get("forward_shipping") or Decimal(0)
 
-            reverse_shipping = shipping_breakdown.get("reverse_shipping") or Decimal(
-                0
-            )
+            reverse_shipping = shipping_breakdown.get("reverse_shipping") or Decimal(0)
 
             forward_logistics = shipping_breakdown.get("forward_logistics") or Decimal(
                 0
@@ -287,13 +281,16 @@ class SKUSummary:
             ) or Decimal(0)
 
             # ==========================================
+            # Claims
+            # ==========================================
+
+            claim_amount = self.calculator.calculate_claims(sku_payments) or Decimal(0)
+
+            # ==========================================
             # FUTURE DATA SOURCES
             # ==========================================
 
             ads = Decimal(0)
-
-            claim_count = 0
-            claim_amount = Decimal(0)
 
             product_cost = Decimal(0)
 
@@ -401,9 +398,7 @@ class SKUSummary:
                 # ORDER TAX
                 # --------------------------------------
 
-                order_tcs = self.calculator.calculate_tcs(order_payments) or Decimal(
-                    0
-                )
+                order_tcs = self.calculator.calculate_tcs(order_payments) or Decimal(0)
 
                 order_gst_to_pay = self.calculator.calculate_gst_to_pay(
                     order_payments
@@ -551,7 +546,6 @@ class SKUSummary:
                     # ----------------------------------
                     # CLAIMS
                     # ----------------------------------
-                    "claim_count": claim_count,
                     "claim_amount": claim_amount,
                     # ----------------------------------
                     # EXPECTED SETTLEMENT

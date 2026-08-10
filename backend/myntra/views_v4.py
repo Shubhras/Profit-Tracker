@@ -4,7 +4,7 @@ from django.db import transaction
 from django.http import HttpResponse
 from django.utils import timezone
 import pytz
-
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -644,4 +644,81 @@ class UploadMyntraReturnReportAPIView(APIView):
                     "error": str(exc),
                 },
                 status=400,
+            )
+
+class UploadMyntraPaymentReportAPIView(APIView):
+    """
+    Temporary/manual importer for Myntra payment transaction reports.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        uploaded_file = request.FILES.get("file")
+
+        if not uploaded_file:
+            return Response(
+                {
+                    "status": "FAILED",
+                    "error": "CSV file is required.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        payment_method = request.data.get(
+            "payment_method",
+            "PREPAID",
+        ).upper()
+
+        if payment_method not in {"PREPAID", "POSTPAID"}:
+            return Response(
+                {
+                    "status": "FAILED",
+                    "error": (
+                        "payment_method must be "
+                        "PREPAID or POSTPAID."
+                    ),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        connection = MyntraConnection.objects.filter(
+            user=request.user
+        ).first()
+
+        if not connection:
+            return Response(
+                {
+                    "status": "FAILED",
+                    "error": "Myntra connection not found.",
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        try:
+            csv_bytes = uploaded_file.read()
+
+            service = PaymentSyncService(
+                connection=connection
+            )
+
+            result = service.sync_uploaded_csv(
+                csv_bytes=csv_bytes,
+                payment_method=payment_method,
+            )
+
+            return Response(
+                {
+                    "status": "SUCCESS",
+                    **result,
+                }
+            )
+
+        except Exception as exc:
+            return Response(
+                {
+                    "status": "FAILED",
+                    "error": str(exc),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )

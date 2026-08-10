@@ -434,6 +434,33 @@ class MyntraProfitCalculator:
         return fee_base * MP_GST_RATE / HUNDRED
 
     # =====================================================
+    # CLAIM
+    # =====================================================
+
+    def calculate_claims(self, payments):
+        """
+        Claims/ForwardAutoSPF.
+
+        Currently it is considered that the ForwardAutoSPF in NOD
+        type transactions which contains order_line_id is claim
+        """
+        
+        claim_amount = ZERO
+
+        for payment in payments:
+            order_type = (payment.order_type or "").strip().lower()
+            nod_comment = (payment.nod_comment or "").strip().lower()
+
+            if (
+                order_type == "nod"
+                and nod_comment == "forwardautospf"
+                and payment.order_line_id
+            ):
+                claim_amount += payment.settled_amount or ZERO
+
+        return claim_amount
+
+    # =====================================================
     # TCS
     # =====================================================
 
