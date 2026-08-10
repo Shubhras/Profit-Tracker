@@ -21,7 +21,7 @@ class MyntraConnection(models.Model):
     access_token = models.TextField(blank=True, null=True)
     # NEW
     refresh_token = models.TextField(blank=True, null=True)
-    
+
     # NEW
     access_token_expires_at = models.DateTimeField(
         blank=True,
@@ -29,23 +29,23 @@ class MyntraConnection(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
     def access_token_is_valid(self):
         if not self.access_token:
             return False
-    
+
         if not self.access_token_expires_at:
             return False
-    
+
         # Treat it as expired 24 hours early.
-        return (
-            timezone.now()
-            < self.access_token_expires_at - timedelta(hours=24)
-        )
+        return timezone.now() < self.access_token_expires_at - timedelta(hours=24)
+
     def __str__(self):
         return f"MyntraConnection(user={self.user})"
 
-# This model is in use 
-class MyntraOrder(models.Model): 
+
+# This model is in use
+class MyntraOrder(models.Model):
     """
     Represents a single row from the Seller Orders Report.
     One row == One Order Line.
@@ -298,7 +298,8 @@ class MyntraPaymentNew(models.Model):
     def __str__(self):
         return f"{self.utr_number} ({self.amount})"
 
-# This model is in use 
+
+# This model is in use
 class MyntraReturn(models.Model):
     myntra_connection = models.ForeignKey(
         MyntraConnection,
@@ -376,11 +377,12 @@ class MyntraReturn(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-  
+
     def __str__(self):
         return f"{self.order_line_id} ({self.type})"
 
-# This model is in use 
+
+# This model is in use
 class MyntraListing(models.Model):
     myntra_connection = models.ForeignKey(
         MyntraConnection,
@@ -459,12 +461,20 @@ class MyntraListing(models.Model):
     def __str__(self):
         return f"{self.seller_sku_code} ({self.size})"
 
+
 # This model is in use
 class MyntraPaymentTransaction(models.Model):
     myntra_connection = models.ForeignKey(
         MyntraConnection,
         on_delete=models.CASCADE,
         related_name="payment_transactions",
+    )
+
+    transaction_key = models.CharField(
+        max_length=64,
+        db_index=True,
+        blank=True,
+        null=True,
     )
 
     neft_ref = models.CharField(
@@ -480,6 +490,8 @@ class MyntraPaymentTransaction(models.Model):
 
     order_line_id = models.CharField(
         max_length=100,
+        blank=True,
+        null=True,
     )
 
     seller_order_id = models.CharField(
@@ -641,6 +653,11 @@ class MyntraPaymentTransaction(models.Model):
         null=True,
     )
 
+    nod_comment = models.TextField(
+        blank=True,
+        null=True,
+    )
+
     raw_data = models.JSONField(
         default=dict,
         blank=True,
@@ -663,22 +680,18 @@ class MyntraPaymentTransaction(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=[
-                    "neft_ref",
-                    "order_line_id",
-                    "order_type",
-                    "comments",
+                    "myntra_connection",
+                    "transaction_key",
                 ],
-                name="unique_myntra_payment_transaction",
+                name="unique_myntra_payment_transaction_key",
             )
         ]
 
     def __str__(self):
-        return (
-            f"{self.order_line_id} - "
-            f"{self.settled_amount}"
-        )
+        return f"{self.order_line_id} - {self.settled_amount}"
 
-# This model is in use 
+
+# This model is in use
 class MyntraReportQueue(models.Model):
     myntra_connection = models.ForeignKey(
         MyntraConnection,
