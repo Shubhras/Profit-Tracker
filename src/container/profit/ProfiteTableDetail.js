@@ -786,6 +786,7 @@ export default function ProfitDetailsView() {
       col.fixed === 'right' ||
       col.dataIndex === 'image' ||
       col.dataIndex === 'channel' ||
+      col.dataIndex === 'view' ||
       col.key === 'action'
     ) {
       return true;
@@ -816,7 +817,7 @@ export default function ProfitDetailsView() {
         <Card bordered={false}>
           {/* <ProfitFilterBar
             filters={filters}
-            setFilters={setFilters}
+            setFilters={setFiltersss}
             handleApply={handleApply}
             handleClear={handleClear}
             showFilters={showFilters}

@@ -166,13 +166,21 @@ function MenuItems({ toggleCollapsed }) {
 
   // const items = [
   const userItems = [
-    getItem(
-      <NavLink onClick={toggleCollapsed} to={`${path}/pages/actionsrequired`}>
-        {t('actionsRequired')}
-      </NavLink>,
-      'actionsRequired',
-      !topMenu && <UilBookOpen />,
-    ),
+    // getItem(
+    //   <NavLink onClick={toggleCollapsed} to={`${path}/pages/actionsrequired`}>
+    //     {t('actionsRequired')}
+    //   </NavLink>,
+    //   'actionsRequired',
+    //   !topMenu && <UilBookOpen />,
+    // ),
+    hasModule('action-required') &&
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/pages/actionsrequired`}>
+          {t('actionsRequired')}
+        </NavLink>,
+        'actionsRequired',
+        !topMenu && <UilBookOpen />,
+      ),
 
     // getItem(t('profit'), 'profit', !topMenu && <UilArrowGrowth />, [
     //   getItem(
@@ -985,61 +993,44 @@ function MenuItems({ toggleCollapsed }) {
     // ]),
 
     hasModule('settings') &&
-      getItem('Settings', 'settings', !topMenu && <UilSetting />, [
-        getItem(
-          'Product Settings',
-          'productSettings',
-          null,
-          [
-            hasSubmodule('product-configuration') &&
-              getItem(
-                <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/product-configuration`}>
-                  Product Configuration
-                </NavLink>,
-                'productConfiguration',
-              ),
+      getItem(
+        'Settings',
+        'settings',
+        !topMenu && <UilSetting />,
+        [
+          hasSubmodule('product-configuration') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/product-configuration`}>
+                Product Configuration
+              </NavLink>,
+              'productConfiguration',
+            ),
 
-            hasSubmodule('finance-configuration') &&
-              getItem(
-                <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/finance-configuration`}>
-                  Finance Configuration
-                </NavLink>,
-                'financeConfiguration',
-              ),
-          ].filter(Boolean),
-        ),
+          hasSubmodule('finance-configuration') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/finance-configuration`}>
+                Finance Configuration
+              </NavLink>,
+              'financeConfiguration',
+            ),
 
-        getItem(
-          'User Settings',
-          'userSettings',
-          null,
-          [
-            hasSubmodule('account-settings') &&
-              getItem(
-                <NavLink onClick={toggleCollapsed} to={`${path}/settings/user-setting/account-settings`}>
-                  Account Settings
-                </NavLink>,
-                'accountSettings',
-              ),
+          hasSubmodule('marketplace-settings') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/settings/user-setting/marketplace-settings`}>
+                Marketplace Settings
+              </NavLink>,
+              'marketPlaceSettings',
+            ),
 
-            hasSubmodule('marketplace-settings') &&
-              getItem(
-                <NavLink onClick={toggleCollapsed} to={`${path}/settings/user-setting/marketplace-settings`}>
-                  Marketplace Settings
-                </NavLink>,
-                'marketPlaceSettings',
-              ),
-
-            hasSubmodule('user-management') &&
-              getItem(
-                <NavLink onClick={toggleCollapsed} to={`${path}/settings/user-setting/user-management`}>
-                  User Management
-                </NavLink>,
-                'userManagement',
-              ),
-          ].filter(Boolean),
-        ),
-      ]),
+          hasSubmodule('user-management') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/settings/user-setting/user-management`}>
+                User Management
+              </NavLink>,
+              'userManagement',
+            ),
+        ].filter(Boolean),
+      ),
   ];
 
   const superAdminItems = [
