@@ -9300,9 +9300,6 @@ def amazon_profitability_details_transactions_shipping(request):
     to_date, to_date_ist = parse_dt(to_date_str, is_end=True)
         
 
-    from_date = parse_dt(from_date_str, is_end=False)
-    to_date = parse_dt(to_date_str, is_end=True)
-
     order_filter = Q(order__user=user)
 
     # ---------------- CHANNEL FILTER ----------------
