@@ -2418,12 +2418,21 @@ def get_full_dashboard(request):
     # ADS SPEND
     # ============================================================
 
+    # ads_metrics_qs = ProductAdMetric.objects.filter(
+    #     product_ad__amazon_account__user=user,
+    #     product_ad__amazon_account__is_primary=True,
+    #     report_date__range=(
+    #         start_date.date(),
+    #         end_date.date()
+    #     )
+    # )
+    
     ads_metrics_qs = ProductAdMetric.objects.filter(
         product_ad__amazon_account__user=user,
         product_ad__amazon_account__is_primary=True,
         report_date__range=(
-            start_date.date(),
-            end_date.date()
+            from_date_ist.date(),   # was start_date.date()
+            to_date_ist.date()      # was end_date.date()
         )
     )
 
@@ -2445,7 +2454,11 @@ def get_full_dashboard(request):
 
     # ---------------- PROFIT ----------------
     # Use accurate SKU-level profits (which include COGS, GST, and shipping)
-    sku_profits, return_claim_summary = _get_sku_profits_for_dashboard(user, start_date, end_date, search_data)
+    # sku_profits, return_claim_summary = _get_sku_profits_for_dashboard(user, start_date, end_date, search_data)
+    sku_profits, return_claim_summary = _get_sku_profits_for_dashboard(
+        user, start_date, end_date, search_data,
+        from_date_ist=from_date_ist, to_date_ist=to_date_ist
+    )
     profit = sum(s['profit'] for s in sku_profits)
     total_final_net_sales = sum(s.get('net_sales', 0) for s in sku_profits)
 
@@ -2453,37 +2466,13 @@ def get_full_dashboard(request):
     # margin = (profit / total_final_net_sales * 100) if total_final_net_sales else 0  by final sales 
     margin = (profit / accurate_net_sales * 100) if accurate_net_sales else 0    #by accureate sale 
     roi = (ads_sales / abs(ads_amount) * 100) if ads_amount else 0
-    # roi = (ads_amount / abs(ads_sales) * 100) if total_fees else 0
-    print("net_sales>>>>>>>>>>>>>>>>>>>>>",net_sales)
-    # tacos = (abs(ads_amount) / total_final_net_sales * 100) if total_final_net_sales else 0 
+    
     tacos = (abs(ads_amount) / accurate_net_sales * 100) if accurate_net_sales else 0
     
     print("total_final_net_sales>>>>>>>>>>>>>>>>>>>>>",total_final_net_sales)
     print("ads_sales>>>>>>>>>>>>>>>>>>>>>",ads_sales)
+    print("net_sales>>>>>>>>>>>>>>>>>>>>>",net_sales)
     
-
-    # # ---------------- TRENDS ----------------
-    # trends = orders_qs.annotate(date=TruncDate('purchase_date')).values('date').annotate(
-    #     sales=Sum('total_amount'),
-    #     qty=Sum('items__quantity_ordered')
-    # )
-    
-    
-    #     # ---------------- TRENDS ----------------
-    # trends = net_sales_items_qs.annotate(
-    #     date=TruncDate('order__purchase_date')
-    # ).values('date').annotate(
-    #     # sales_price=Sum('item_price'),
-    #     sales_price=Sum(
-    #         Case(
-    #             When(Q(order__order_status__icontains='Pending') & Q(item_price=0), then=F('new_item_price')),
-    #             default=F('item_price'),
-    #             output_field=DecimalField(max_digits=12, decimal_places=2)
-    #         )
-    #     ),
-    #     sales_tax=Sum('item_tax'),
-    #     qty=Sum('quantity_ordered')
-    # ).order_by('date')
     
     
     # ---------------- TRENDS ----------------
@@ -2528,21 +2517,6 @@ def get_full_dashboard(request):
             # "margin": f"{round((est_profit/sales)*100)}%" if sales else "0%"
         })
 
-
-    # trends_data = []
-    # margin_factor = profit / total_final_net_sales if total_final_net_sales else 0
-
-    # for t in trends:
-    #     sales = float(t['sales'] or 0)
-    #     est_profit = sales * margin_factor
-
-    #     trends_data.append({
-    #         "date": t['date'].strftime('%m-%d') if t['date'] else "",
-    #         "sales": round(sales, 2),
-    #         "qty": t['qty'] or 0,
-    #         "estimated_profit": round(est_profit, 2),
-    #         "margin": f"{round((est_profit/sales)*100)}%" if sales else "0%"
-    #     })
 
 
     # ---------------- GEO ----------------
@@ -2623,13 +2597,7 @@ def get_full_dashboard(request):
     
     print("net_gross_sales>>>>>",net_gross_sales)
 
-    # total_gross = (
-    #     accurate_net_sales
-    #     - rto_amount
-    #     - returns_amount
-    #     - cancelled_amount
-    #     - claim_amount
-    # )
+
     
     total_gross = (
         accurate_net_sales

@@ -57,7 +57,8 @@ def extract_financials(raw_data):
     return result
 
 # correct one 
-def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
+# def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
+def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_date_ist=None, to_date_ist=None):
     
     from django.db.models import Sum, Max, Avg, Q, Subquery, OuterRef, Case, When, F, DecimalField
     from amazon_auth.models import (
@@ -591,14 +592,23 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
     # ====== PRE-COMPUTE ADS SPEND ======
     from amazon_auth.models import ProductMapping
     
+    # ads_metrics_qs = ProductAdMetric.objects.filter(
+    #     product_ad__amazon_account__user=user,
+    #     product_ad__amazon_account__is_primary=True,
+    # )
+    # if from_date:
+    #     ads_metrics_qs = ads_metrics_qs.filter(report_date__gte=from_date.date())
+    # if to_date:
+    #     ads_metrics_qs = ads_metrics_qs.filter(report_date__lte=to_date.date())
+    
     ads_metrics_qs = ProductAdMetric.objects.filter(
         product_ad__amazon_account__user=user,
         product_ad__amazon_account__is_primary=True,
     )
-    if from_date:
-        ads_metrics_qs = ads_metrics_qs.filter(report_date__gte=from_date.date())
-    if to_date:
-        ads_metrics_qs = ads_metrics_qs.filter(report_date__lte=to_date.date())
+    if from_date_ist:
+        ads_metrics_qs = ads_metrics_qs.filter(report_date__gte=from_date_ist.date())
+    if to_date_ist:
+        ads_metrics_qs = ads_metrics_qs.filter(report_date__lte=to_date_ist.date())
         
     ads_agg = ads_metrics_qs.values("product_ad__sku").annotate(
         total_ads_cost=Sum("cost"),
