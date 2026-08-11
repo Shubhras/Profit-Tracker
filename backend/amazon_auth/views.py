@@ -5919,6 +5919,16 @@ def amazon_profitability_parent_transactions_shipping(request):
     except Exception as e:
         print("Date error:", e)
         
+        
+    from_date_local = to_date_local = None
+    try:
+        if filters.get("fromDate"):
+            from_date_local = datetime.strptime(filters["fromDate"], "%Y-%m-%d").date()
+        if filters.get("toDate"):
+            to_date_local = datetime.strptime(filters["toDate"], "%Y-%m-%d").date()
+    except Exception as e:
+        print("Date error:", e)    
+        
     # try:
     #     if filters.get("fromDate"):
     #         from_date = timezone.make_aware(datetime.strptime(filters["fromDate"], "%Y-%m-%d"))
@@ -6167,21 +6177,32 @@ def amazon_profitability_parent_transactions_shipping(request):
     # ============================================================
     # ADS DATA MAP
     # ============================================================
-
+    
     ads_metrics_qs = ProductAdMetric.objects.filter(
         product_ad__amazon_account__user=user,
         product_ad__amazon_account__is_primary=True,
     )
 
-    if from_date:
-        ads_metrics_qs = ads_metrics_qs.filter(
-            report_date__gte=from_date.date()
-        )
+    if from_date_local:
+        ads_metrics_qs = ads_metrics_qs.filter(report_date__gte=from_date_local)
 
-    if to_date:
-        ads_metrics_qs = ads_metrics_qs.filter(
-            report_date__lte=to_date.date()
-        )
+    if to_date_local:
+        ads_metrics_qs = ads_metrics_qs.filter(report_date__lte=to_date_local)
+
+    # ads_metrics_qs = ProductAdMetric.objects.filter(
+    #     product_ad__amazon_account__user=user,
+    #     product_ad__amazon_account__is_primary=True,
+    # )
+
+    # if from_date:
+    #     ads_metrics_qs = ads_metrics_qs.filter(
+    #         report_date__gte=from_date.date()
+    #     )
+
+    # if to_date:
+    #     ads_metrics_qs = ads_metrics_qs.filter(
+    #         report_date__lte=to_date.date()
+    #     )
 
     # ============================================================
     # MAP ADS BY SKU (and associate to parent_asin)
@@ -7938,23 +7959,19 @@ def sku_profit_report_transactions_shipping(request):
 
     except Exception as e:
         print("Date error:", e)
-
-    # try:
-    #     if filters.get("fromDate"):
-    #         from_date = timezone.make_aware(
-    #             datetime.strptime(filters["fromDate"], "%Y-%m-%d")
-    #         )
-
-    #     if filters.get("endDate"):
-    #         to_date = timezone.make_aware(
-    #             datetime.strptime(filters["endDate"], "%Y-%m-%d")
-    #         ) + timedelta(days=1)
-
-    #     if from_date and not to_date:
-    #         to_date = from_date + timedelta(days=1)
-
+        
+        
+    from_date_local = to_date_local = None    #for ads timezone
+    try:
+        if filters.get("fromDate"):
+            from_date_local = datetime.strptime(filters["fromDate"], "%Y-%m-%d").date()
+        if filters.get("endDate"):
+            to_date_local = datetime.strptime(filters["endDate"], "%Y-%m-%d").date()
+        if from_date_local and not to_date_local:
+            to_date_local = from_date_local
     except Exception as e:
-        print("Date error:", e)
+        print("Date error:", e)    
+
 
     order_filter = Q(
         order__user=user,
@@ -8182,23 +8199,25 @@ def sku_profit_report_transactions_shipping(request):
         for sku in sku_list
     ]
 
-    ads_metrics_qs = (
-        ProductAdMetric.objects
-        .filter(
-            product_ad__amazon_account__user=user,
-            product_ad__amazon_account__is_primary=True,
-        )
+    # ads_metrics_qs = (
+    #     ProductAdMetric.objects
+    #     .filter(
+    #         product_ad__amazon_account__user=user,
+    #         product_ad__amazon_account__is_primary=True,
+    #     )
+    # )
+    
+    # if from_date_local:
+    #     ads_metrics_qs = ads_metrics_qs.filter(report_date__gte=from_date_local)
+    # if to_date_local:
+    #     ads_metrics_qs = ads_metrics_qs.filter(report_date__lte=to_date_local)
+    
+    ads_metrics_qs = ProductAdMetric.objects.filter(
+        product_ad__amazon_account__user=user,
+        product_ad__amazon_account__is_primary=True,
     )
+    ads_metrics_qs = filter_ads_by_local_range(ads_metrics_qs, from_date_local, to_date_local)
 
-    if from_date:
-        ads_metrics_qs = ads_metrics_qs.filter(
-            report_date__gte=from_date.date()
-        )
-
-    if to_date:
-        ads_metrics_qs = ads_metrics_qs.filter(
-            report_date__lte=to_date.date()
-        )
 
     ads_data = (
         ads_metrics_qs
@@ -9233,9 +9252,32 @@ def amazon_profitability_details_transactions_shipping(request):
 
     IST = ZoneInfo("Asia/Kolkata")
 
+    # def parse_dt(dt_str, is_end=False):
+    #     if not dt_str or not isinstance(dt_str, (str, bytes, date, datetime)) or len(str(dt_str)) < 10:
+    #         return None
+    #     try:
+    #         if isinstance(dt_str, (datetime, date)):
+    #             dt = dt_str
+    #         else:
+    #             clean_str = str(dt_str).split('T')[0]
+    #             dt = datetime.strptime(clean_str, '%Y-%m-%d')
+
+    #         if is_end:
+    #             dt = dt.replace(hour=23, minute=59, second=59)
+    #         else:
+    #             dt = dt.replace(hour=0, minute=0, second=0)
+
+    #         # Treat the incoming date as an IST calendar day, then convert to UTC
+    #         # for comparison against purchase_date / posted_date (stored in UTC)
+    #         dt_ist = dt.replace(tzinfo=IST)
+    #         return dt_ist.astimezone(ZoneInfo("UTC"))
+    #     except Exception:
+    #         return None
+    
+    
     def parse_dt(dt_str, is_end=False):
         if not dt_str or not isinstance(dt_str, (str, bytes, date, datetime)) or len(str(dt_str)) < 10:
-            return None
+            return None, None
         try:
             if isinstance(dt_str, (datetime, date)):
                 dt = dt_str
@@ -9248,29 +9290,15 @@ def amazon_profitability_details_transactions_shipping(request):
             else:
                 dt = dt.replace(hour=0, minute=0, second=0)
 
-            # Treat the incoming date as an IST calendar day, then convert to UTC
-            # for comparison against purchase_date / posted_date (stored in UTC)
             dt_ist = dt.replace(tzinfo=IST)
-            return dt_ist.astimezone(ZoneInfo("UTC"))
+            dt_utc = dt_ist.astimezone(ZoneInfo("UTC"))
+            return dt_utc, dt_ist   # return both
         except Exception:
-            return None
-    
-    # def parse_dt(dt_str, is_end=False):
-    #     if not dt_str or not isinstance(dt_str, (str, bytes, date, datetime)) or len(str(dt_str)) < 10: 
-    #         return None
-    #     try:
-    #         if isinstance(dt_str, (datetime, date)):
-    #             dt = dt_str
-    #         else:
-    #             clean_str = str(dt_str).split('T')[0]
-    #             dt = datetime.strptime(clean_str, '%Y-%m-%d')
-    #         if is_end:
-    #             dt = dt.replace(hour=23, minute=59, second=59)
-    #         if timezone.is_naive(dt):
-    #             return timezone.make_aware(dt)
-    #         return dt
-    #     except Exception:
-    #         return None
+            return None, None
+
+    from_date, from_date_ist = parse_dt(from_date_str, is_end=False)
+    to_date, to_date_ist = parse_dt(to_date_str, is_end=True)
+        
 
     from_date = parse_dt(from_date_str, is_end=False)
     to_date = parse_dt(to_date_str, is_end=True)
@@ -9818,14 +9846,22 @@ def amazon_profitability_details_transactions_shipping(request):
     # ====== PRE-COMPUTE ADS SPEND ======
     from amazon_auth.models import ProductMapping
     
+    # ads_metrics_qs = ProductAdMetric.objects.filter(
+    #     product_ad__amazon_account__user=user,
+    #     product_ad__amazon_account__is_primary=True,
+    # )
+    # if from_date:
+    #     ads_metrics_qs = ads_metrics_qs.filter(report_date__gte=from_date.date())
+    # if to_date:
+    #     ads_metrics_qs = ads_metrics_qs.filter(report_date__lte=to_date.date())
     ads_metrics_qs = ProductAdMetric.objects.filter(
         product_ad__amazon_account__user=user,
         product_ad__amazon_account__is_primary=True,
     )
-    if from_date:
-        ads_metrics_qs = ads_metrics_qs.filter(report_date__gte=from_date.date())
-    if to_date:
-        ads_metrics_qs = ads_metrics_qs.filter(report_date__lte=to_date.date())
+    if from_date_ist:
+        ads_metrics_qs = ads_metrics_qs.filter(report_date__gte=from_date_ist.date())
+    if to_date_ist:
+        ads_metrics_qs = ads_metrics_qs.filter(report_date__lte=to_date_ist.date())
         
     ads_agg = ads_metrics_qs.values("product_ad__sku").annotate(
         total_ads_cost=Sum("cost"),
@@ -10436,13 +10472,6 @@ def sku_profitability_list_filtered(request):
         search_term = str(search_term).strip()
 
     from_date = to_date = None
-    # try:
-    #     if filters.get("fromDate"):
-    #         from_date = timezone.make_aware(datetime.strptime(filters["fromDate"], "%Y-%m-%d"))
-    #     if filters.get("toDate"):
-    #         to_date = timezone.make_aware(datetime.strptime(filters["toDate"], "%Y-%m-%d")) + timedelta(days=1)
-    # except Exception as e:
-    #     print("Date error:", e)
     
     
     try:
@@ -10464,6 +10493,19 @@ def sku_profitability_list_filtered(request):
 
     except Exception as e:
         print("Date error:", e)
+        
+        
+    from_date_local = to_date_local = None
+    try:
+        if filters.get("fromDate"):
+            from_date_local = datetime.strptime(filters["fromDate"], "%Y-%m-%d").date()
+        if filters.get("endDate") or filters.get("toDate"):
+            end_date_key = "endDate" if filters.get("endDate") else "toDate"
+            to_date_local = datetime.strptime(filters[end_date_key], "%Y-%m-%d").date()
+        if from_date_local and not to_date_local:
+            to_date_local = from_date_local
+    except Exception as e:
+        print("Date error:", e)    
 
     order_filter = Q(order__user=user)
     CHANNEL_MAP = {"Amazon-India": "A21TJRUUN4KGV"}
@@ -10559,8 +10601,11 @@ def sku_profitability_list_filtered(request):
     sku_asin_map = {normalize_sku(k): v for k, v in OrderItem.objects.filter(order_filter).values_list('seller_sku', 'asin')}
 
     ads_metrics_qs = ProductAdMetric.objects.filter(product_ad__amazon_account__user=user, product_ad__amazon_account__is_primary=True)
-    if from_date: ads_metrics_qs = ads_metrics_qs.filter(report_date__gte=from_date.date())
-    if to_date: ads_metrics_qs = ads_metrics_qs.filter(report_date__lte=to_date.date())
+    # if from_date: ads_metrics_qs = ads_metrics_qs.filter(report_date__gte=from_date.date())
+    # if to_date: ads_metrics_qs = ads_metrics_qs.filter(report_date__lte=to_date.date())
+    
+    if from_date_local: ads_metrics_qs = ads_metrics_qs.filter(report_date__gte=from_date_local)
+    if to_date_local: ads_metrics_qs = ads_metrics_qs.filter(report_date__lte=to_date_local)
 
     ads_data = ads_metrics_qs.values("product_ad__asin", "product_ad__sku").annotate(
         total_ads_cost=Sum("cost"), total_impressions=Sum("impressions"), total_clicks=Sum("clicks"),
