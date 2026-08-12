@@ -15,6 +15,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import CalculationModal from './component/Calculations';
 import ProfitModal from './component/ProfitModal';
 import amazon from '../../assets/icons/amazon.svg';
+import myntra from '../../assets/icons/myntraLogo.jpg';
 // import flipkart from "../../assets/icons/flipkart.png";
 import { getSecondDetials } from '../../redux/dashboard/actionCreator';
 // import { PageHeader } from '../../components/page-headers/page-headers';
@@ -49,6 +50,7 @@ export default function ProfitViewSecondTable() {
   const channelLogoMap = {
     'Amazon-India': amazon,
     // 'Flipkart-India': flipkart,
+    'Myntra-India': myntra,
   };
   const [pagination, setPagination] = React.useState({
     current: 1,

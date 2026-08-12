@@ -14,7 +14,7 @@ import { useDispatch, useSelector } from 'react-redux';
 // import ProfitModal from './component/ProfitModal'
 import CalculationModal from './component/Calculations';
 import amazon from '../../assets/icons/amazon.svg';
-// import flipkart from "../../assets/icons/flipkart.png";
+import myntra from '../../assets/icons/myntraLogo.jpg';
 import { getProfitDetails } from '../../redux/dashboard/actionCreator';
 // import { PageHeader } from '../../components/page-headers/page-headers';
 
@@ -53,6 +53,7 @@ export default function ProfitDetailsView() {
   const channelLogoMap = {
     'Amazon-India': amazon,
     // 'Flipkart-India': flipkart,
+    'Myntra-India': myntra,
   };
   const [pagination, setPagination] = React.useState({
     current: 1,

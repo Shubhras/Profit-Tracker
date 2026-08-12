@@ -16,6 +16,7 @@ import CalculationModal from './component/Calculations';
 import { getProfitDetailsByParentId } from '../../redux/dashboard/actionCreator';
 // import { PageHeader } from '../../components/page-headers/page-headers';
 import amazon from '../../assets/icons/amazon.svg';
+import myntra from '../../assets/icons/myntraLogo.jpg';
 
 export default function ProfitDetailsView() {
   const { id } = useParams();
@@ -76,6 +77,7 @@ export default function ProfitDetailsView() {
 
   const channelLogoMap = {
     'Amazon-India': amazon,
+    'Myntra-India': myntra,
   };
 
   // const PageRoutes = [
@@ -130,7 +132,7 @@ export default function ProfitDetailsView() {
   const dataSource =
     profitData?.response?.map((item, index) => ({
       key: index,
-      channel: 'Amazon-India',
+      channel: item.channel,
       image: item.image,
       view: item.order_id,
       redirecturl: item.redirecturl,
