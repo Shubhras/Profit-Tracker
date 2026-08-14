@@ -27,8 +27,8 @@ class Command(BaseCommand):     #first command
         parser.add_argument(
             "--days",
             type=int,
-            default=1,
-            help="Number of days to fetch (default: 1)",
+            default=15,
+            help="Number of days to fetch (default: 15)",
         )
 
     def handle(self, *args, **options):
