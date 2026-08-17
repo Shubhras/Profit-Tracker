@@ -778,5 +778,33 @@ class AmazonTransactionContextAdmin(admin.ModelAdmin):
         "sku",
         "transaction__transaction_id",
     )
-    
-        
+
+
+
+@admin.register(ExportedReport)
+class ExportedReportAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "user",
+        "report_type",
+        "file_name",
+        "format",
+        "status",
+        "from_date",
+        "to_date",
+        "created_at",
+    )
+    list_filter = (
+        "status",
+        "report_type",
+        "format",
+        "created_at",
+    )
+    search_fields = (
+        "file_name",
+        "report_type",
+        "user__username",
+        "user__email",
+    )
+    readonly_fields = ("created_at",)
+    ordering = ("-created_at",)

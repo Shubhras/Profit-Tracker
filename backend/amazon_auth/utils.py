@@ -6,6 +6,12 @@ from django.apps import apps
 import time
 import pandas as pd
 from .models import * 
+# amazon_auth/date_utils.py (or wherever shared helpers live)
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+
+IST = ZoneInfo("Asia/Kolkata")
+UTC = ZoneInfo("UTC")
 
 #  IMPORTANT: change app name here
 from amazon_auth.models import Order  
@@ -57,7 +63,8 @@ def extract_financials(raw_data):
     return result
 
 # correct one 
-def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
+# def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
+def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_date_ist=None, to_date_ist=None):
     
     from django.db.models import Sum, Max, Avg, Q, Subquery, OuterRef, Case, When, F, DecimalField
     from amazon_auth.models import (
@@ -256,7 +263,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
-        .values('asin','parent_asin', 'order__amazon_order_id', 'quantity_ordered', 'item_price', 'item_tax', 'promotion_discount')
+        .values('asin','parent_asin', 'order__amazon_order_id', 'quantity_ordered', 'item_price','new_item_price','item_tax', 'promotion_discount')
     )
 
     child_parent_map = {}
@@ -591,14 +598,23 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
     # ====== PRE-COMPUTE ADS SPEND ======
     from amazon_auth.models import ProductMapping
     
+    # ads_metrics_qs = ProductAdMetric.objects.filter(
+    #     product_ad__amazon_account__user=user,
+    #     product_ad__amazon_account__is_primary=True,
+    # )
+    # if from_date:
+    #     ads_metrics_qs = ads_metrics_qs.filter(report_date__gte=from_date.date())
+    # if to_date:
+    #     ads_metrics_qs = ads_metrics_qs.filter(report_date__lte=to_date.date())
+    
     ads_metrics_qs = ProductAdMetric.objects.filter(
         product_ad__amazon_account__user=user,
         product_ad__amazon_account__is_primary=True,
     )
-    if from_date:
-        ads_metrics_qs = ads_metrics_qs.filter(report_date__gte=from_date.date())
-    if to_date:
-        ads_metrics_qs = ads_metrics_qs.filter(report_date__lte=to_date.date())
+    if from_date_ist:
+        ads_metrics_qs = ads_metrics_qs.filter(report_date__gte=from_date_ist.date())
+    if to_date_ist:
+        ads_metrics_qs = ads_metrics_qs.filter(report_date__lte=to_date_ist.date())
         
     ads_agg = ads_metrics_qs.values("product_ad__sku").annotate(
         total_ads_cost=Sum("cost"),
@@ -734,6 +750,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
             oid = o['order__amazon_order_id']
             qty = float(o['quantity_ordered'] or 0)
             o_item_price = float(str(o.get('item_price') or 0))
+            o_new_item_price = float(str(o.get('new_item_price') or 0)) 
             o_item_tax = float(str(o.get('item_tax') or 0))
 
             f = finance_map.get(oid, {})
@@ -767,7 +784,21 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
                 return_units += qty
 
             # Calculate final net sales and cost for this specific order
+            
+            o_item_price = (
+                o_new_item_price
+                if o_item_price == 0
+                else o_item_price
+            )
             o_gross = o_item_price + o_item_tax
+            
+            print("o_new_item_price newwwwwwwww>>>>>>>>>>>>>>>>",o_new_item_price)
+            
+            print("o_item_price first>>>>>>>>>>>>>>>>",o_item_price)
+            
+            print("o_gross first>>>>>>>>>>>>>>>>",o_gross)
+            
+            # o_gross = o_item_price + o_item_tax
             o_cost = standard_cost * qty
 
             o_replacement_count = replacement_count_by_order.get(oid, 0)
@@ -1109,573 +1140,6 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
         "replacement_return_count": total_replacement_return_count,
     }
     return sku_results, return_claim_summary
-
-
-
-# with final sale 
-# def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
-#     from django.db.models import Sum, Max, Q, Subquery, OuterRef
-#     from amazon_auth.models import (
-#         OrderItem, AmazonEstimatedFee, AmazonListingItem,
-#         AmazonTransaction, AmazonTransactionRelatedIdentifier,
-#         AmazonTransactionBreakdown,
-#     )
-#     from amazon_ads.models import ProductAdMetric
-#     from collections import defaultdict
-
-#     order_filter = Q(order__user=user)
-#     if start_date:
-#         order_filter &= Q(order__purchase_date__gte=start_date)
-#     if end_date:
-#         order_filter &= Q(order__purchase_date__lte=end_date)
-
-#     channels = filters.get("channel", {}).get("IN", [])
-#     if channels:
-#         CHANNEL_MAP = {"Amazon-India": "A21TJRUUN4KGV"}
-#         marketplace_ids = [CHANNEL_MAP[ch] for ch in channels if ch in CHANNEL_MAP]
-#         if marketplace_ids:
-#             order_filter &= Q(order__marketplace_id__in=marketplace_ids)
-
-#     listing_qs = AmazonListingItem.objects.filter(
-#         user=user,
-#         sku=OuterRef("seller_sku")
-#     ).order_by("-updated_at")
-
-#     # ---------------- GROUP BY (ASIN, SELLER_SKU) ----------------
-#     items = OrderItem.objects.filter(order_filter).exclude(
-#         order__order_status__icontains='Cancel'
-#     ).annotate(
-#         sku_standard_cost=Subquery(listing_qs.values("standard_cost")[:1]),
-#         sku_gst_rate=Subquery(listing_qs.values("gst_rate")[:1]),
-#         sku_tcs_rate=Subquery(listing_qs.values("tcs")[:1]),
-#     ).values('asin', 'seller_sku').annotate(
-#         grosssales=Sum('item_price'),
-#         item_tax=Sum('item_tax'),
-#         promotion_discount=Sum('promotion_discount'),
-#         qty=Sum('quantity_ordered'),
-#         title=Max('title'),
-#         cost_price=Max('sku_standard_cost'),
-#         gst_rate=Max('sku_gst_rate'),
-#         tcs_rate=Max('sku_tcs_rate'),
-#     )
-
-#     # ---------------- ESTIMATED FEES — summed per ASIN ----------------
-#     estimated_fee_qs = AmazonEstimatedFee.objects.filter(
-#         order_item__order__user=user
-#     )
-#     if start_date:
-#         estimated_fee_qs = estimated_fee_qs.filter(order_item__order__purchase_date__gte=start_date)
-#     if end_date:
-#         estimated_fee_qs = estimated_fee_qs.filter(order_item__order__purchase_date__lte=end_date)
-#     if channels:
-#         estimated_fee_qs = estimated_fee_qs.filter(order_item__order__marketplace_id__in=marketplace_ids)
-
-#     estimated_fee_data = (
-#         estimated_fee_qs
-#         .values('asin', 'order_item__seller_sku')
-#         .annotate(estimated_fees=Sum('total_fees'))
-#     )
-#     fee_map = {
-#         (row['asin'], row['order_item__seller_sku']): float(row['estimated_fees'] or 0)
-#         for row in estimated_fee_data
-#     }
-
-#     # ---------------- ADS — ASIN first, normalized SKU fallback ----------------
-#     ad_metrics = ProductAdMetric.objects.filter(
-#         product_ad__amazon_account__user=user,
-#         product_ad__amazon_account__is_primary=True
-#     )
-#     if start_date:
-#         ad_metrics = ad_metrics.filter(report_date__gte=start_date.date())
-#     if end_date:
-#         ad_metrics = ad_metrics.filter(report_date__lte=end_date.date())
-
-#     ads_data = (
-#         ad_metrics.values("product_ad__asin", "product_ad__sku")
-#         .annotate(total_ads_cost=Sum("cost"))
-#     )
-
-#     ads_map = defaultdict(float)
-#     for row in ads_data:
-#         asin_key = (row["product_ad__asin"] or "").strip()
-#         sku_key = normalize_sku(row["product_ad__sku"] or "")
-#         cost = float(row["total_ads_cost"] or 0)
-#         if asin_key:
-#             ads_map[asin_key] += cost
-#         if sku_key:
-#             ads_map[sku_key] += cost
-
-#     # ---------------- ASIN -> ORDERS MAP (restricted to this date range only) ----------------
-#     asin_orders = (
-#         OrderItem.objects
-#         .filter(order_filter)
-#         .exclude(order__order_status__icontains='Cancel')
-#         .values('asin', 'seller_sku', 'order__amazon_order_id', 'quantity_ordered', 'item_price', 'item_tax', 'promotion_discount')
-#     )
-
-#     asin_to_orders = defaultdict(list)
-#     all_order_ids = set()
-#     for row in asin_orders:
-#         asin_to_orders[(row['asin'], row['seller_sku'])].append(row)
-#         all_order_ids.add(row['order__amazon_order_id'])
-
-#     # ---------------- TRANSACTION SHIPPING FEES (MFN + AFN/FBA) ----------------
-#     tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
-#         identifier_name="ORDER_ID",
-#         identifier_value__in=list(all_order_ids)
-#     ).values("transaction_id", "identifier_value")
-
-#     tx_to_order = {
-#         row["transaction_id"]: row["identifier_value"]
-#         for row in tx_identifiers
-#     }
-
-#     tx_shipping_map = {}
-
-#     # MFN — ServiceFee, DEFERRED, MfnPostageFee (left as-is, per instruction)
-#     mfn_postage_txns = AmazonTransaction.objects.filter(
-#         id__in=tx_to_order.keys(),
-#         transaction_type="ServiceFee",
-#         transaction_status="DEFERRED",
-#         description__icontains="MfnPostageFee",
-#     ).values("id", "total_amount")
-
-#     for txn in mfn_postage_txns:
-#         order_id = tx_to_order.get(txn["id"])
-#         if not order_id:
-#             continue
-#         tx_shipping_map[order_id] = (
-#             tx_shipping_map.get(order_id, 0.0) + float(txn["total_amount"] or 0)
-#         )
-
-#     # AFN/FBA — Shipment, DEFERRED, FBAWeightBasedFee only
-#     afn_transaction_ids = list(
-#         AmazonTransaction.objects.filter(
-#             id__in=tx_to_order.keys(),
-#             transaction_type="Shipment",
-#             transaction_status="DEFERRED",
-#         ).values_list("id", flat=True)
-#     )
-
-#     afn_shipping = (
-#         AmazonTransactionBreakdown.objects.filter(
-#             transaction_id__in=afn_transaction_ids,
-#             breakdown_type__in=["FBAWeightBasedFee"],
-#         )
-#         .values("transaction_id")
-#         .annotate(total=Sum("amount"))
-#     )
-
-#     for row in afn_shipping:
-#         order_id = tx_to_order.get(row["transaction_id"])
-#         if not order_id:
-#             continue
-#         tx_shipping_map[order_id] = (
-#             tx_shipping_map.get(order_id, 0.0) + float(row["total"] or 0)
-#         )
-
-#     # ============================================================
-#     # RETURN CLASSIFICATION (COURIER vs CUSTOMER) — matched by order_id
-#     # ============================================================
-#     FULFILLMENT_FEE_REFUND_PATTERNS = ["FulfillmentFeeRefund"]
-
-#     refund_txns = AmazonTransaction.objects.filter(
-#         amazon_account__user=user,
-#         transaction_type='Refund',
-#         transaction_status__in=['DEFERRED', 'DEFERRED_RELEASED']
-#     )
-
-#     refund_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
-#         transaction__in=refund_txns,
-#         identifier_name='ORDER_ID',
-#         identifier_value__in=list(all_order_ids)
-#     ).values('transaction_id', 'identifier_value')
-
-#     refund_tx_to_order = {
-#         row['transaction_id']: row['identifier_value']
-#         for row in refund_identifiers
-#     }
-
-#     order_ids_with_refund = set(refund_tx_to_order.values())
-
-#     fee_refund_q = Q()
-#     for pattern in FULFILLMENT_FEE_REFUND_PATTERNS:
-#         fee_refund_q |= Q(description__icontains=pattern)
-
-#     fee_refund_txns = AmazonTransaction.objects.filter(
-#         amazon_account__user=user,
-#         transaction_type='ServiceFee',
-#         transaction_status__in=['DEFERRED', 'DEFERRED_RELEASED']
-#     ).filter(fee_refund_q)
-
-#     fee_refund_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
-#         transaction__in=fee_refund_txns,
-#         identifier_name='ORDER_ID',
-#         identifier_value__in=list(all_order_ids)
-#     ).values_list('identifier_value', flat=True)
-
-#     order_ids_with_fee_refund = set(fee_refund_identifiers)
-
-#     # ============================================================
-#     # AMAZON FEES REFUND MAP
-#     # ============================================================
-#     amazon_fee_breakdowns = (
-#         AmazonTransactionBreakdown.objects.filter(
-#             transaction_id__in=refund_tx_to_order.keys(),
-#             breakdown_type="AmazonFees",
-#         )
-#         .values("transaction_id")
-#         .annotate(total=Sum("amount"))
-#     )
-    
-#     amazon_fee_refund_by_order = {}
-#     for row in amazon_fee_breakdowns:
-#         order_id = refund_tx_to_order.get(row["transaction_id"])
-#         if not order_id:
-#             continue
-#         amazon_fee_refund_by_order[order_id] = (
-#             amazon_fee_refund_by_order.get(order_id, 0.0)
-#             + float(row["total"] or 0)
-#         )
-
-#     # ============================================================
-#     # FULFILLMENT FEE REFUND MAP
-#     # ============================================================
-#     fulfillment_fee_refund_breakdowns = (
-#         AmazonTransaction.objects.filter(
-#             id__in=tx_to_order.keys(),
-#             transaction_type="ServiceFee",
-#             transaction_status__in=["DEFERRED", "DEFERRED_RELEASED"],
-#             description__icontains="EasyshipFulfillmentFeeRefund",
-#         )
-#         .values("id", "total_amount")
-#     )
-    
-#     fulfillment_fee_refund_by_order = {}
-#     for txn in fulfillment_fee_refund_breakdowns:
-#         order_id = tx_to_order.get(txn["id"])
-#         if not order_id:
-#             continue
-#         fulfillment_fee_refund_by_order[order_id] = (
-#             fulfillment_fee_refund_by_order.get(order_id, 0.0)
-#             + float(txn["total_amount"] or 0)
-#         )
-
-#     refund_amount_by_order = {}
-#     refund_count_by_order = {}
-#     for txn in refund_txns.filter(id__in=refund_tx_to_order.keys()):
-#         oid = refund_tx_to_order.get(txn.id)
-#         if not oid:
-#             continue
-#         refund_amount_by_order[oid] = (
-#             refund_amount_by_order.get(oid, 0.0) + float(txn.total_amount or 0)
-#         )
-#         refund_count_by_order[oid] = refund_count_by_order.get(oid, 0) + 1
-
-#     # ============================================================
-#     # CLAIM AMOUNT — Transaction Type "Adjustment", description "SERRACReimbursement"
-#     # ============================================================
-#     claim_txns = AmazonTransaction.objects.filter(
-#         amazon_account__user=user,
-#         transaction_type='Adjustment',
-#         description__icontains='SERRACReimbursement',
-#     )
-
-#     claim_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
-#         transaction__in=claim_txns,
-#         identifier_name='ORDER_ID',
-#         identifier_value__in=list(all_order_ids)
-#     ).values('transaction_id', 'identifier_value')
-
-#     claim_tx_to_order = {
-#         row['transaction_id']: row['identifier_value']
-#         for row in claim_identifiers
-#     }
-
-#     claim_amount_by_order = {}
-#     claim_count_by_order = {}
-#     for txn in claim_txns.filter(id__in=claim_tx_to_order.keys()):
-#         oid = claim_tx_to_order.get(txn.id)
-#         if not oid:
-#             continue
-#         claim_amount_by_order[oid] = (
-#             claim_amount_by_order.get(oid, 0.0) + float(txn.total_amount or 0)
-#         )
-#         claim_count_by_order[oid] = claim_count_by_order.get(oid, 0) + 1
-        
-#     # ============================================================
-#     # REPLACEMENT RETURN — Transaction Type "Shipment",
-#     # description "Order Payment", total_amount = 0
-#     # ============================================================
-#     replacement_txns = AmazonTransaction.objects.filter(
-#         amazon_account__user=user,
-#         transaction_type='Shipment',
-#         description='Order Payment',
-#         total_amount=0,
-#     )
-
-#     replacement_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
-#         transaction__in=replacement_txns,
-#         identifier_name='ORDER_ID',
-#         identifier_value__in=all_order_ids
-#     ).values('transaction_id', 'identifier_value')
-
-#     replacement_tx_to_order = {
-#         row['transaction_id']: row['identifier_value']
-#         for row in replacement_identifiers
-#     }
-
-#     order_ids_with_replacement = set(replacement_tx_to_order.values())
-
-#     replacement_count_by_order = {}
-#     for txn in replacement_txns.filter(id__in=replacement_tx_to_order.keys()):
-#         oid = replacement_tx_to_order.get(txn.id)
-#         if not oid:
-#             continue
-#         replacement_count_by_order[oid] = replacement_count_by_order.get(oid, 0) + 1
-
-#     total_replacement_return_count = len(order_ids_with_replacement)    
-    
-
-#     # ============================================================
-#     # DEDUPLICATED RETURN/CLAIM SUMMARY — each order counted exactly once,
-#     # regardless of how many (asin, seller_sku) rows share that order.
-#     # ============================================================
-#     total_return_count = 0
-#     courier_return_count = 0
-#     customer_return_count = 0
-#     total_return_amount = 0.0
-#     courier_return_amount = 0.0
-#     customer_return_amount = 0.0
-#     replacement_return_count = 0.0
-
-#     for order_id in order_ids_with_refund:
-#         amount = refund_amount_by_order.get(order_id, 0.0)
-#         total_return_amount += amount
-#         if order_id in order_ids_with_fee_refund:
-#             courier_return_count += 1
-#             courier_return_amount += amount
-#         else:
-#             customer_return_count += 1
-#             customer_return_amount += amount
-#     total_return_count = courier_return_count + customer_return_count
-
-#     total_claim_amount = sum(claim_amount_by_order.values())
-#     total_claim_count = len(claim_amount_by_order)
-    
-#     replacement_return_count = len(replacement_count_by_order)
-
-#     return_claim_summary = {
-#         "total_return_count": total_return_count,
-#         "courier_return_count": courier_return_count,
-#         "customer_return_count": customer_return_count,
-#         "total_return_amount": round(total_return_amount, 2),
-#         "courier_return_amount": round(courier_return_amount, 2),
-#         "customer_return_amount": round(customer_return_amount, 2),
-#         "total_claim_count": total_claim_count,
-#         "total_claim_amount": round(total_claim_amount, 2),
-#         "replacement_return_count": replacement_return_count,
-#     }
-
-
-#     processed_skus = set()
-
-#     sku_results = []
-#     for row in items:
-#         asin = row['asin']
-#         if not asin:
-#             continue
-
-#         seller_sku = row['seller_sku']
-#         processed_skus.add(seller_sku)
-#         gross_sales = float(row['grosssales'] or 0)
-#         item_tax = float(row['item_tax'] or 0)
-#         qty = int(row['qty'] or 0)
-
-#         row_orders = asin_to_orders.get((asin, seller_sku), [])
-#         row_order_ids = {o['order__amazon_order_id'] for o in row_orders}
-
-#         amazon_fee_refund_total = sum(
-#             amazon_fee_refund_by_order.get(oid, 0.0)
-#             for oid in row_order_ids
-#         )
-#         fulfillment_fee_refund_total = sum(
-#             fulfillment_fee_refund_by_order.get(oid, 0.0)
-#             for oid in row_order_ids
-#         )
-
-#         shipping_final = sum(
-#             tx_shipping_map.get(oid, 0.0)
-#             for oid in row_order_ids
-#         )
-        
-#         shipping_final += fulfillment_fee_refund_total
-
-#         # ------------------------------------------------------------
-#         # RETURN / CLAIM — aggregated across all orders for this ASIN row
-#         # (display-only per-row values; see note above)
-#         # ------------------------------------------------------------
-#         order_return_amount = sum(refund_amount_by_order.get(oid, 0.0) for oid in row_order_ids)
-#         order_return_count = sum(refund_count_by_order.get(oid, 0) for oid in row_order_ids)
-#         order_has_return = any(oid in order_ids_with_refund for oid in row_order_ids)
-#         order_is_courier_return = any(oid in order_ids_with_fee_refund for oid in row_order_ids)
-
-#         if order_has_return and order_is_courier_return:
-#             order_return_type = "COURIER_RETURN"
-#         elif order_has_return:
-#             order_return_type = "CUSTOMER_RETURN"
-#         else:
-#             order_return_type = None
-
-#         order_claim_amount = sum(claim_amount_by_order.get(oid, 0.0) for oid in row_order_ids)
-#         order_claim_count = sum(claim_count_by_order.get(oid, 0) for oid in row_order_ids)
-#         order_has_claim = order_claim_count > 0
-
-#         cost_price = float(row['cost_price'] or 0)
-#         gst_rate = float(row['gst_rate'] or 0)
-#         tcs_rate = float(row['tcs_rate'] or 1)
-#         promo_discount = float(row.get('promotion_discount') or 0)
-
-#         final_net_sales = 0.0
-#         stdcost = 0.0
-
-#         for o in row_orders:
-#             oid = o['order__amazon_order_id']
-#             o_qty = float(o['quantity_ordered'] or 0)
-#             o_item_price = float(str(o.get('item_price') or 0))
-#             o_item_tax = float(str(o.get('item_tax') or 0))
-
-#             o_gross = o_item_price + o_item_tax
-#             o_cost = cost_price * o_qty
-
-#             o_replacement_count = replacement_count_by_order.get(oid, 0)
-#             o_return_count = refund_count_by_order.get(oid, 0)
-#             o_has_return = oid in order_ids_with_refund
-
-#             if o_replacement_count or (o_has_return and o_qty == o_return_count):
-#                 o_gross = 0.0
-#                 o_cost = 0.0
-#                 o_promo = float(str(o.get('promotion_discount') or 0))
-#                 promo_discount -= o_promo
-
-#             final_net_sales += o_gross
-#             stdcost += o_cost
-
-#         ads_cost = ads_map.get(asin)
-#         if ads_cost is None:
-#             ads_cost = ads_map.get(normalize_sku(seller_sku or ""), 0)
-#         ads = -abs(ads_cost)
-
-#         estimated_fees = fee_map.get((asin, seller_sku), 0)
-#         estimated_fees -= amazon_fee_refund_total
-
-#         net_sales = final_net_sales
-
-#         if gst_rate > 0:
-#             taxable_value = net_sales / (1 + (gst_rate / 100))
-#             gst_to_pay_amount = net_sales - taxable_value
-#         else:
-#             taxable_value = net_sales
-#             gst_to_pay_amount = 0.0
-
-#         tcs_total = taxable_value * (tcs_rate / 100)
-#         mp_gst = (-abs(estimated_fees) + shipping_final) * 0.18
-
-#         # profit = (
-#         #     net_sales
-#         #     - estimated_fees
-#         #     - shipping_final
-#         #     - stdcost
-#         #     + tcs_total
-#         #     + mp_gst
-#         #     + ads
-#         #     - gst_to_pay_amount
-#         # )
-        
-#         profit = (
-#             net_sales
-#             - estimated_fees
-#             + shipping_final  #subsctract shiping
-#             - stdcost
-#             - promo_discount
-#             - float((order_claim_amount))
-#             + tcs_total
-#             - mp_gst        # added in profit
-#             + ads           # substracting add which is alredy in -ve
-#         )
-#         # print("shipping_final****************",shipping_final)
-#         # print("stdcost>>>>>>>>>>>****************",stdcost)
-#         # print("gst_to_pay_amount>>>>>>>>>>>****************",gst_to_pay_amount)
-#         # print("estimated_fees****************",estimated_fees)
-#         # print("tcs_total>>>>>>>>>>>****************",tcs_total)
-#         # print("mp_gst>>>>>>>>>>>****************",mp_gst)
-#         # print("ads****************",ads)
-
-#         sku_results.append({
-#             "sku": seller_sku,
-#             "name": row['title'],
-#             "profit": round(profit, 2),
-#             "shipping_final": round(shipping_final, 2),
-#             "net_sales": round(net_sales, 2),
-
-#             "return_type": order_return_type,
-#             "is_return": order_has_return,
-#             "return_count": order_return_count,
-#             "return_amount": round(order_return_amount, 2),
-
-#             "is_claim": order_has_claim,
-#             "claim_count": order_claim_count,
-#             "claim_amount": round(order_claim_amount, 2),
-#             "promo_discount": round(promo_discount, 2),
-#         })
-
-#     # ====== START: ADD SKUS WITH AD SPEND BUT NO ORDERS ======
-#     skus_with_ads = set(x["product_ad__sku"] for x in ads_data if x["product_ad__sku"])
-#     unprocessed_skus = skus_with_ads - processed_skus
-
-#     if unprocessed_skus:
-#         pm_mappings = ProductMapping.objects.filter(account__user=user, seller_sku__in=unprocessed_skus).values("seller_sku", "product_name")
-#         pm_dict = {m["seller_sku"]: m for m in pm_mappings}
-        
-#         missing_skus = [sku for sku in unprocessed_skus if sku not in pm_dict]
-#         if missing_skus:
-#             ali_mappings = AmazonListingItem.objects.filter(user=user, sku__in=missing_skus).values("sku", "item_name")
-#             for ali in ali_mappings:
-#                 if ali["sku"] not in pm_dict:
-#                     pm_dict[ali["sku"]] = {
-#                         "seller_sku": ali["sku"],
-#                         "product_name": ali["item_name"],
-#                     }
-
-#         for sku in unprocessed_skus:
-#             ads_cost = ads_map.get(normalize_sku(sku), 0)
-#             if not ads_cost: continue
-            
-#             ads = -abs(ads_cost)
-#             if ads == 0: continue
-            
-#             pm = pm_dict.get(sku, {})
-#             title = pm.get("product_name", sku)
-            
-#             sku_results.append({
-#                 "sku": sku,
-#                 "name": title,
-#                 "profit": round(ads, 2),
-#                 "shipping_final": 0.0,
-#                 "net_sales": 0.0,
-
-#                 "return_type": None,
-#                 "is_return": False,
-#                 "return_count": 0,
-#                 "return_amount": 0.0,
-
-#                 "is_claim": False,
-#                 "claim_count": 0,
-#                 "claim_amount": 0.0,
-#             })
-#     # ====== END: ADD SKUS WITH AD SPEND BUT NO ORDERS ======
-
-#     return sku_results, return_claim_summary
 
 
 
@@ -2111,3 +1575,45 @@ def clean_sku(sku):
     if not sku:
         return sku
     return sku.replace("       ", "").strip()
+
+
+
+
+def parse_ist_range(from_date_str, to_date_str, end_exclusive=True):
+    """
+    Parses fromDate/toDate strings (YYYY-MM-DD, assumed IST calendar days)
+    into both a UTC datetime range (for purchase_date/posted_date filters)
+    and a local date range (for report_date / other local DateField filters).
+
+    end_exclusive=True mimics the existing '+1 day' pattern used for
+    order__purchase_date__lte comparisons in several endpoints.
+    """
+    from_date_utc = to_date_utc = None
+    from_date_local = to_date_local = None
+
+    if from_date_str:
+        from_date_local = datetime.strptime(from_date_str[:10], "%Y-%m-%d").date()
+        from_date_utc = datetime.combine(from_date_local, datetime.min.time(), tzinfo=IST).astimezone(UTC)
+
+    if to_date_str:
+        to_date_local = datetime.strptime(to_date_str[:10], "%Y-%m-%d").date()
+        if end_exclusive:
+            naive_to = datetime.combine(to_date_local, datetime.min.time()) + timedelta(days=1)
+            to_date_utc = naive_to.replace(tzinfo=IST).astimezone(UTC)
+        else:
+            to_date_utc = datetime.combine(to_date_local, datetime.max.time().replace(microsecond=0), tzinfo=IST).astimezone(UTC)
+
+    if from_date_utc and not to_date_utc:
+        to_date_utc = from_date_utc + timedelta(days=1)
+        to_date_local = from_date_local
+
+    return from_date_utc, to_date_utc, from_date_local, to_date_local
+
+
+def filter_ads_by_local_range(ads_qs, from_date_local, to_date_local):
+    if from_date_local:
+        ads_qs = ads_qs.filter(report_date__gte=from_date_local)
+    if to_date_local:
+        ads_qs = ads_qs.filter(report_date__lte=to_date_local)
+    return ads_qs
+

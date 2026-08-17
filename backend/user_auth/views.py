@@ -1,7 +1,9 @@
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from amazon_ads.models import AmazonAdsAccount
 from amazon_auth.models import AmazonAccount
+from myntra.models import MyntraConnection
 
 
 class ConnectedMarketplacesView(APIView):
@@ -12,6 +14,8 @@ class ConnectedMarketplacesView(APIView):
 
         #  Count Amazon accounts
         amazon_count = AmazonAccount.objects.filter(user=user).count()
+        amazon_ads_count = AmazonAdsAccount.objects.filter(user=user).count()
+        myntra_count = MyntraConnection.objects.filter(user=user).count()
 
         #  Default marketplaces list
         marketplaces = [
@@ -38,6 +42,18 @@ class ConnectedMarketplacesView(APIView):
                 if amazon_count > 0:
                     marketplace["status"] = "connected"
                     marketplace["connectedCount"] = amazon_count
+
+        for marketplace in marketplaces:
+            if marketplace["id"] == "amazon_ads":
+                if amazon_ads_count > 0:
+                    marketplace["status"] = "connected"
+                    marketplace["connectedCount"] = amazon_ads_count
+
+        for marketplace in marketplaces:
+            if marketplace["id"] == "myntra":
+                if myntra_count > 0:
+                    marketplace["status"] = "connected"
+                    marketplace["connectedCount"] = myntra_count
 
         return Response({
             "status": "success",
