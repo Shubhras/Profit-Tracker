@@ -13,6 +13,7 @@ from rest_framework.views import APIView
 from .models import MyntraConnection, MyntraOrder
 from .services.csv_parser import safe_float
 from .services.myntra_client import MyntraClient
+from myntra.services.initial_sync_service import MyntraInitialSyncService
 
 
 # ✅ 1️⃣ FULL AUTO SYNC (MAIN API)
@@ -480,6 +481,24 @@ class MyntraConnectionView(APIView):
                         "error": str(exc),
                     },
                     status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        # =================================================
+        # INITIAL 30-DAY SYNC FOR NEW CONNECTION
+        # =================================================
+        
+        if created:
+            try:
+                MyntraInitialSyncService(connection).run()
+        
+            except Exception as exc:
+                return Response(
+                    {
+                        "status": "FAILED",
+                        "connected": True,
+                        "error": f"Initial sync failed: {str(exc)}",
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
 
         # =================================================
