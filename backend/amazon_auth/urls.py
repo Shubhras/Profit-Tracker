@@ -15,9 +15,11 @@ from .feesestimate import *
 from .transations import *
 from .reconcile import *
 from . import exports
+from . import profit
 
 urlpatterns = [
-    path('dashboard-stats/', views.get_full_dashboard, name='dashboard-stats'),
+    path('dashboard-stats-old/', views.get_full_dashboard, name='dashboard-stats-old'),
+    path('dashboard-stats/', profit.combined_get_full_dashboard, name='dashboard-stats'),
     path('pivot-stats/', views.get_pivot_dashboard, name='pivot-stats'),
     path('', views.home, name='home'),
     path('connect/', views.amazon_connect, name='amazon_connect'),
@@ -58,14 +60,21 @@ urlpatterns = [
     path('product-analytics/', views.get_product_analytics, name='get_product_analytics'),
     path('dashboard-profitability/', views.get_amazon_data_profi_tability, name='get_amazon_data_profi_tability'),
     
-    #1page asin level sale
-    path('profitability/details/', views.amazon_profitability_details_transactions_shipping, name='get_amazon_data_profi_tability_details'),    #new api to get shiping from transactions 
+    # 1page asin level sale
+    path('profitability/details/export/', exports.export_profitability_details, name='export_profitability_details'),
+    path('profitability/details-old/', views.amazon_profitability_details_transactions_shipping, name='get_amazon_data_profi_tability_details_old'),    #new api to get shiping from transactions 
+    path('profitability/details/', profit.combined_profitability_details_transactions_shipping, name='get_amazon_data_profi_tability_details'),    #new api to get shiping from transactions 
+    path('profitability/details/combined/', profit.combined_profitability_details_transactions_shipping, name='combined_profitability_details'),
 
     #2 page sku level sale
-    path('profitability/details/by-parent-asin/', views.amazon_profitability_parent_transactions_shipping, name='profi_tability_details_by_parent_asin'),
+    path('profitability/details/by-parent-asin-old/', views.amazon_profitability_parent_transactions_shipping, name='profi_tability_details_by_parent_asin_old'),
+    path('profitability/details/by-parent-asin/', profit.combined_profitability_parent_transactions_shipping, name='profi_tability_details_by_parent_asin'),
+    path('profitability/details/combined/by-parent-asin/', profit.combined_profitability_parent_transactions_shipping, name='combined_profitability_details_by_parent_asin'),
     
     #3page order level sale
-    path('profitability/details/by-parentproductid/', views.sku_profit_report_transactions_shipping, name='profi_tability_details_by_parentproductid'),
+    path('profitability/details/by-parentproductid-old/', views.sku_profit_report_transactions_shipping, name='profi_tability_details_by_parentproductid_old'),
+    path('profitability/details/by-parentproductid/', profit.combined_sku_profit_report_transactions_shipping, name='profi_tability_details_by_parentproductid'),
+    path('profitability/details/combined/by-parentproductid/', profit.combined_sku_profit_report_transactions_shipping, name='combined_sku_profit_report_transactions_shipping'),
     
     
     path('profitability/ads-spend/by-parent-asin/', views.get_parent_asin_ad_spend, name='get_parent_asin_ad_spend'),

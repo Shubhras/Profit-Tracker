@@ -18,6 +18,12 @@ from .views import (
     get_amazon_data_reconcile_paymentsummary,
     get_bank_transfer_workflow
 )
+from .profit import (
+    combined_profitability_details_transactions_shipping,
+    combined_profitability_parent_transactions_shipping,
+    combined_sku_profit_report_transactions_shipping,
+    get_undecorated_view
+)
 from .reconcile import (
     AmazonTransactionsGroupedAPIView,
     AmazonOrderRelatedTransactionsAPIView,
@@ -28,24 +34,42 @@ from .models import ExportedReport
 from .export_utils import generate_csv, generate_xlsx, generate_pdf
 
 def get_data_from_view(view_func_or_class, request, override_params=None):
-    django_req = HttpRequest()
-    django_req.method = request.method
-    django_req.user = request.user
-    
-    # Copy query params
-    django_req.GET = request.GET.copy()
+    if hasattr(request, '_request'):
+        django_req = request._request
+    else:
+        django_req = request
+        
+    # Copy query params if GET available
+    if hasattr(request, 'GET') and request.GET:
+        django_req.GET = request.GET.copy()
     
     # Apply GET overrides
     if override_params and "GET" in override_params:
+        if not hasattr(django_req, 'GET') or django_req.GET is None:
+            django_req.GET = {}
         for gk, gv in override_params["GET"].items():
             django_req.GET[gk] = gv
+
+    # Parse channel filter if present in query params or request data
+    channel_list = []
+    get_channel = None
+    if hasattr(request, 'GET'):
+        get_channel = request.GET.get("channel") or request.GET.get("filters[channel]")
+    if get_channel:
+        if isinstance(get_channel, str):
+            if get_channel.lower() in ["all", "combined"]:
+                channel_list = ["Amazon-India", "Myntra"]
+            else:
+                channel_list = [c.strip() for c in get_channel.split(",") if c.strip()]
+        elif isinstance(get_channel, list):
+            channel_list = get_channel
             
     # Handle POST data
+    post_data = {}
     if request.method == 'POST':
-        post_data = {}
         if hasattr(request, 'data') and isinstance(request.data, dict):
             post_data.update(request.data)
-        elif request.body:
+        elif getattr(request, 'body', None):
             try:
                 post_data.update(json.loads(request.body.decode('utf-8')))
             except:
@@ -53,17 +77,53 @@ def get_data_from_view(view_func_or_class, request, override_params=None):
         if override_params and 'POST' in override_params:
             post_data.update(override_params['POST'])
             
+        filters = post_data.setdefault("filters", {})
+        if not isinstance(filters, dict):
+            filters = {}
+            post_data["filters"] = filters
+
+        if channel_list and "channel" not in filters:
+            filters["channel"] = {"IN": channel_list}
+            
         django_req._body = json.dumps(post_data).encode('utf-8')
         django_req.META['CONTENT_TYPE'] = 'application/json'
+    else:
+        # Construct DRF POST payload for GET requests if target view requires POST filters
+        post_data = {"pagination": {"pageNo": 0, "pageSize": 100000}}
+        filters = {}
+        if channel_list:
+            filters["channel"] = {"IN": channel_list}
         
-    drf_req = Request(django_req)
-    drf_req.user = request.user
+        from_date_val = request.GET.get("fromDate") or request.GET.get("from_date") or request.GET.get("startDate")
+        if from_date_val:
+            filters["fromDate"] = from_date_val
+            
+        to_date_val = request.GET.get("toDate") or request.GET.get("to_date") or request.GET.get("endDate")
+        if to_date_val:
+            filters["toDate"] = to_date_val
+            
+        search_val = request.GET.get("search") or request.GET.get("q") or request.GET.get("searchTerm")
+        if search_val:
+            filters["search"] = search_val
+
+        if override_params and 'POST' in override_params:
+            post_data.update(override_params['POST'])
+
+        post_data["filters"] = filters
+        django_req._body = json.dumps(post_data).encode('utf-8')
+        django_req.META['CONTENT_TYPE'] = 'application/json'
+
+    from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
+    drf_req = Request(django_req, parsers=[JSONParser(), FormParser(), MultiPartParser()])
+    drf_req.user = getattr(request, 'user', None)
+    drf_req._full_data = post_data
     
     if hasattr(view_func_or_class, 'as_view'):
         view_func = view_func_or_class.as_view()
         response = view_func(drf_req)
     else:
-        response = view_func_or_class(drf_req)
+        target_func = get_undecorated_view(view_func_or_class)
+        response = target_func(drf_req)
         
     if hasattr(response, 'data'):
         return response.data
@@ -101,18 +161,22 @@ def generic_export_view(request, view_func_or_class, column_mapping, filename_ba
             except:
                 pass
 
-    # Create model entry in database
-    exported_report = ExportedReport.objects.create(
-        user=request.user,
-        report_type=filename_base,
-        file_name=f"{filename_base}.{response_format}",
-        format=response_format,
-        from_date=from_date,
-        to_date=to_date,
-        status="PROCESSING"
-    )
-    
+    user = getattr(request, 'user', None)
+    if user and not getattr(user, 'is_authenticated', False):
+        user = None
+
+    exported_report = None
     try:
+        exported_report = ExportedReport.objects.create(
+            user=user,
+            report_type=filename_base,
+            file_name=f"{filename_base}.{response_format}",
+            format=response_format,
+            from_date=from_date,
+            to_date=to_date,
+            status="PROCESSING"
+        )
+        
         # Call the target view
         data = get_data_from_view(view_func_or_class, request, override_params)
         
@@ -121,12 +185,14 @@ def generic_export_view(request, view_func_or_class, column_mapping, filename_ba
             data_list = formatter_func(data)
             totals_dict = None
         else:
-            data_list = data.get(list_key, [])
+            data_list = data.get(list_key) if isinstance(data, dict) else None
+            if data_list is None and isinstance(data, dict):
+                data_list = data.get('response') or data.get('results') or data.get('data') or []
             if not isinstance(data_list, list) and isinstance(data, list):
                 data_list = data
             elif not isinstance(data_list, list):
                 data_list = []
-            totals_dict = data.get(totals_key) if totals_key else None
+            totals_dict = data.get(totals_key) if totals_key and isinstance(data, dict) else None
             
         headers = list(column_mapping.values())
         keys = list(column_mapping.keys())
@@ -144,9 +210,10 @@ def generic_export_view(request, view_func_or_class, column_mapping, filename_ba
             
         # Save file to ExportedReport instance
         filename_with_ext = f"{filename_base}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.{response_format}"
-        exported_report.file.save(filename_with_ext, ContentFile(file_data))
-        exported_report.status = "COMPLETED"
-        exported_report.save()
+        if exported_report:
+            exported_report.file.save(filename_with_ext, ContentFile(file_data))
+            exported_report.status = "COMPLETED"
+            exported_report.save()
         
         # Return response with file download
         response = HttpResponse(file_data, content_type=content_type)
@@ -154,18 +221,21 @@ def generic_export_view(request, view_func_or_class, column_mapping, filename_ba
         return response
         
     except Exception as e:
-        exported_report.status = "FAILED"
-        exported_report.save()
+        import traceback
+        traceback.print_exc()
+        if exported_report:
+            exported_report.status = "FAILED"
+            exported_report.save()
         return Response({"success": False, "message": f"Export failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # COLUMN MAPPINGS
 DETAILS_COLUMNS = {
-    "asin": "ASIN",
-    "parent_asin": "Parent ASIN",
+    "asin": "ASIN / Style ID",
+    "parent_asin": "Parent ASIN / Style ID",
     "name": "Title",
     "channel": "Channel",
     "grossqty": "Gross Qty",
-    "netqty": "Net Qty",
+    "qty": "Net Qty",
     "final_net_qty": "Final Net Qty",
     "grosssales": "Gross Sales",
     "netsales": "Net Sales",
@@ -209,7 +279,10 @@ DETAILS_COLUMNS = {
     "replacement_return_count": "Replacement Return Qty"
 }
 
-PARENT_COLUMNS = {"child_sku": "Child SKU", **DETAILS_COLUMNS}
+PARENT_COLUMNS = {
+    "child_sku": "Child SKU / Style Code",
+    **DETAILS_COLUMNS
+}
 
 SKU_REPORT_COLUMNS = {
     "order_id": "Order ID",
@@ -315,8 +388,8 @@ TRANSACTION_COLUMNS = {
 
 # FORMATTERS FOR CARD SUMMARIES
 def format_payment_summary(response_data):
-    data = response_data.get("data", [{}, {}])
-    row0 = data[0] if len(data) > 0 else {}
+    data = response_data.get("data", [{}, {}]) if isinstance(response_data, dict) else [{}, {}]
+    row0 = data[0] if isinstance(data, list) and len(data) > 0 else {}
     return [
         {
             "metric": "Settled Orders",
@@ -336,7 +409,7 @@ def format_payment_summary(response_data):
     ]
 
 def format_bank_transfer(response_data):
-    data = response_data.get("data", {})
+    data = response_data.get("data", {}) if isinstance(response_data, dict) else {}
     metrics = [
         ("Remittance Amount", data.get("remittance_amount", 0.0)),
         ("Negative Adjustment", data.get("negative_adjustment", 0.0)),
@@ -355,22 +428,33 @@ def format_bank_transfer(response_data):
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def export_profitability_details(request):
-    response_format = request.query_params.get("format", "xlsx").lower()
-    override_params = {
-        "POST": {
-            "pagination": {"pageNo": 0, "pageSize": 100000}
+    print("DEBUG 1 - ENTER EXPORT VIEW")
+    try:
+        response_format = request.query_params.get("format", "xlsx").lower()
+        print("DEBUG 2 - GOT FORMAT", response_format)
+        override_params = {
+            "POST": {
+                "pagination": {"pageNo": 0, "pageSize": 100000}
+            }
         }
-    }
-    return generic_export_view(
-        request,
-        amazon_profitability_details_transactions_shipping,
-        DETAILS_COLUMNS,
-        "profitability_details",
-        response_format,
-        override_params=override_params,
-        list_key="results",
-        totals_key="totals"
-    )
+        print("DEBUG 3 - CALLING GENERIC EXPORT VIEW")
+        res = generic_export_view(
+            request,
+            combined_profitability_details_transactions_shipping,
+            DETAILS_COLUMNS,
+            "profitability_details",
+            response_format,
+            override_params=override_params,
+            list_key="response",
+            totals_key="totals"
+        )
+        print("DEBUG 4 - GENERIC EXPORT VIEW RETURNED", type(res), getattr(res, 'status_code', None))
+        return res
+    except Exception as e:
+        import traceback
+        print("DEBUG EXCEPTION IN EXPORT VIEW:")
+        traceback.print_exc()
+        raise e
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
@@ -383,12 +467,12 @@ def export_profitability_details_by_parent_asin(request):
     }
     return generic_export_view(
         request,
-        amazon_profitability_parent_transactions_shipping,
+        combined_profitability_parent_transactions_shipping,
         PARENT_COLUMNS,
         "profitability_details_by_parent_asin",
         response_format,
         override_params=override_params,
-        list_key="results",
+        list_key="response",
         totals_key="totals"
     )
 
@@ -403,12 +487,12 @@ def export_sku_profit_report(request):
     }
     return generic_export_view(
         request,
-        sku_profit_report_transactions_shipping,
+        combined_sku_profit_report_transactions_shipping,
         SKU_REPORT_COLUMNS,
         "sku_profit_report",
         response_format,
         override_params=override_params,
-        list_key="results",
+        list_key="response",
         totals_key="totals"
     )
 
@@ -428,7 +512,7 @@ def export_sku_profitability_list_filtered(request):
         "sku_profitability_list_filtered",
         response_format,
         override_params=override_params,
-        list_key="results",
+        list_key="response",
         totals_key="totals"
     )
 
