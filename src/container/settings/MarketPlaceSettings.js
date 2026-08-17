@@ -75,7 +75,9 @@ export default function MarketPlaceSettings() {
     // In a real app, you might pass the market ID as a query param, e.g. ?market=flipkart
     // For now, just opening the page as requested.
     const statusParam = market.status === 'connected' ? '&status=connected' : '';
-    window.open(`/admin/settings/user-setting/marketplace-connection?market=${market.id}${statusParam}`, '_blank');
+    window.location.href = `/admin/settings/user-setting/marketplace-connection?market=${market.id}${statusParam}`;
+
+    // window.open(`/admin/settings/user-setting/marketplace-connection?market=${market.id}${statusParam}`, '_blank');
   };
 
   const iconMap = {

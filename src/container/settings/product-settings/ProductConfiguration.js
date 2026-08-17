@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { Tabs, Spin, Modal, Button } from 'antd';
 import ProductConfigTab from './ProductConfigurationTabs/ProductConfigTab';
-import InventoryMastertab from './ProductConfigurationTabs/InventoryMastertab';
-import PincodeTab from './ProductConfigurationTabs/PincodeTab';
+// import InventoryMastertab from './ProductConfigurationTabs/InventoryMastertab';
+// import PincodeTab from './ProductConfigurationTabs/PincodeTab';
 import { getProductConfiguration } from '../../../redux/Settings/actionCreator';
 import { exportProfitData } from '../../../redux/dashboard/actionCreator';
 import { PageHeader } from '../../../components/page-headers/page-headers';
@@ -105,10 +105,10 @@ export default function ProductConfiguration() {
     switch (activeTab) {
       case 'product':
         return <ProductConfigTab pagination={pagination} setPagination={setPagination} />;
-      case 'inventory':
-        return <InventoryMastertab />;
-      case 'pincode':
-        return <PincodeTab />;
+      // case 'inventory':
+      //   return <InventoryMastertab />;
+      // case 'pincode':
+      //   return <PincodeTab />;
       default:
         return null;
     }
@@ -171,8 +171,8 @@ export default function ProductConfiguration() {
           tabBarGutter={24}
           items={[
             { key: 'product', label: 'Product Configuration' },
-            { key: 'inventory', label: 'Inventory Master Configuration' },
-            { key: 'pincode', label: 'Pincode' },
+            // { key: 'inventory', label: 'Inventory Master Configuration' },
+            // { key: 'pincode', label: 'Pincode' },
           ]}
         />
 

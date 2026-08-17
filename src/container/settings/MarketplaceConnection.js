@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Modal, Form, Input, Spin } from 'antd';
+import { Button, Modal, Form, Input, Spin, message } from 'antd';
 import { useSearchParams } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
 // Import Local Icons (Mapping needed to show correct logo)
@@ -17,6 +18,7 @@ import zeptoIcon from '../../assets/icons/zepto.png';
 import swiggyIcon from '../../assets/icons/swiggy.png';
 import tallyIcon from '../../assets/icons/tally.png';
 import zohoIcon from '../../assets/icons/zoho.png';
+import { connectMyntra } from '../../redux/Settings/actionCreator';
 
 const iconMap = {
   flipkart: flipkartIcon,
@@ -35,6 +37,7 @@ const iconMap = {
 };
 
 export default function MarketplaceConnection() {
+  const dispatch = useDispatch();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -48,6 +51,7 @@ export default function MarketplaceConnection() {
   const [credentialModalVisible, setCredentialModalVisible] = useState(false);
   const [isConnected, setIsConnected] = useState(marketStatus === 'connected'); // Toggle logic
   const [form] = Form.useForm();
+  const [credentialForm] = Form.useForm();
 
   // Mock Market Data (In real app, fetch from API)
   const marketName = marketId ? marketId.charAt(0).toUpperCase() + marketId.slice(1) : 'Marketplace';
@@ -63,6 +67,39 @@ export default function MarketplaceConnection() {
     window.open('https://partners.myntrainfo.com/', '_blank');
     handleModalClose();
     setIsConnected(true);
+  };
+
+  const handleCredentialSubmit = async (values) => {
+    if (marketId !== 'myntra') {
+      return;
+    }
+
+    try {
+      const payload = {
+        merchant_id: values.merchantId,
+        secret_key: values.secretKey,
+        partner_type: values.partnerType,
+        warehouse_code: values.warehouseCode,
+      };
+
+      console.log('Myntra Payload:', payload);
+
+      const response = await dispatch(connectMyntra(payload));
+
+      if (response?.status === true || response?.status === 'success') {
+        message.success(response?.message || 'Myntra connected successfully');
+
+        credentialForm.resetFields();
+        setCredentialModalVisible(false);
+        setIsConnected(true);
+      } else {
+        message.error(response?.message || 'Myntra connection failed');
+      }
+    } catch (error) {
+      console.error('Myntra connection error:', error);
+
+      message.error(error?.response?.data?.message || 'Something went wrong while connecting Myntra');
+    }
   };
 
   const PageRoutes = [
@@ -133,7 +170,7 @@ export default function MarketplaceConnection() {
                   <Button
                     type="primary"
                     size="large"
-                    className="bg-blue-800 hover:bg-blue-900 border-none px-8 h-12 rounded-lg font-bold flex items-center gap-2 shadow-lg shadow-blue-900/10"
+                    className="border-none px-8 h-12 rounded-lg font-bold flex items-center gap-2 shadow-lg shadow-blue-900/10"
                     onClick={() => setModalVisible(true)}
                   >
                     <span>+</span> ADD NEW CONNECTION
@@ -142,7 +179,7 @@ export default function MarketplaceConnection() {
                   <Button
                     type="primary"
                     size="large"
-                    className="bg-blue-800 hover:bg-blue-900 border-none px-8 h-12 rounded-lg font-bold flex items-center gap-2 shadow-lg shadow-blue-900/10"
+                    className="border-none px-8 h-12 rounded-lg font-bold flex items-center gap-2 shadow-lg shadow-blue-900/10"
                     onClick={() => setCredentialModalVisible(true)}
                   >
                     <span>+</span> ADD CREDENTIALS
@@ -224,41 +261,73 @@ export default function MarketplaceConnection() {
             title={null}
             footer={null}
             visible={credentialModalVisible}
-            onCancel={() => setCredentialModalVisible(false)}
+            onCancel={() => {
+              setCredentialModalVisible(false);
+              credentialForm.resetFields();
+            }}
             width={500}
             centered
           >
             <div className="p-6">
               <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">Add Credentials</h3>
 
-              <Form layout="vertical">
+              <Form form={credentialForm} layout="vertical" onFinish={handleCredentialSubmit}>
                 <Form.Item
                   name="secretKey"
                   label="Secret Key"
-                  rules={[{ required: true, message: 'Please enter secret key' }]}
+                  rules={[
+                    {
+                      required: true,
+                      message: 'Please enter secret key',
+                    },
+                  ]}
                 >
-                  <Input size="large" className="rounded-lg" placeholder="Enter secret key" />
+                  <Input.Password size="large" className="rounded-lg" placeholder="Enter secret key" />
                 </Form.Item>
 
                 <Form.Item
                   name="merchantId"
                   label="Merchant ID"
-                  rules={[{ required: true, message: 'Please enter merchant id' }]}
+                  rules={[
+                    {
+                      required: true,
+                      message: 'Please enter merchant ID',
+                    },
+                  ]}
                 >
-                  <Input size="large" className="rounded-lg" placeholder="Enter merchant id" />
+                  <Input size="large" className="rounded-lg" placeholder="Enter merchant ID" />
                 </Form.Item>
 
                 <Form.Item
-                  name="warehouse"
-                  label="Warehouse"
-                  rules={[{ required: true, message: 'Please enter warehouse' }]}
+                  name="partnerType"
+                  label="Partner Type"
+                  rules={[
+                    {
+                      required: true,
+                      message: 'Please enter partner type',
+                    },
+                  ]}
                 >
-                  <Input size="large" className="rounded-lg" placeholder="Enter warehouse" />
+                  <Input size="large" className="rounded-lg" placeholder="Enter partner type e.g. PPMP" />
+                </Form.Item>
+
+                <Form.Item
+                  name="warehouseCode"
+                  label="Warehouse Code"
+                  rules={[
+                    {
+                      required: true,
+                      message: 'Please enter warehouse code',
+                    },
+                  ]}
+                >
+                  <Input size="large" className="rounded-lg" placeholder="Enter warehouse code" />
                 </Form.Item>
 
                 <Form.Item className="mb-0 mt-8">
                   <Button
                     type="primary"
+                    htmlType="submit"
                     size="large"
                     className="w-full bg-blue-600 hover:bg-blue-700 rounded-lg font-bold h-11"
                   >

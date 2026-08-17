@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Table, Tag, Button, Tooltip, Modal, message } from 'antd';
+import { Table, Button, Tooltip, Modal, message } from 'antd';
 import { UploadOutlined, ExportOutlined } from '@ant-design/icons';
 // import { EditOutlined } from '@ant-design/icons';
 import { PageHeader } from '../../../../components/page-headers/page-headers';
@@ -64,106 +64,75 @@ export default function ProductConfigTab({ pagination, setPagination }) {
         </Tooltip>
       ),
     },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      align: 'center',
-      render: (status) => <Tag color={status === 'BUYABLE' ? 'green' : 'red'}>{status || '-'}</Tag>,
-    },
-    {
-      title: 'Name',
-      dataIndex: 'name',
-      align: 'center',
-      // sorter: (a, b) => a.name - b.name,
-      render: (text) => (
-        <Tooltip title={text} color="black" overlayInnerStyle={{ color: '#fff' }}>
-          <span className="truncate cursor-pointer block max-w-[250px]">{text}</span>
-        </Tooltip>
-      ),
-    },
-    {
-      title: 'Fulfillment Channel Code',
-      dataIndex: 'fulfilments',
-      align: 'center',
-      render: (fulfilments) => {
-        const channel = fulfilments?.[0]?.fulfillmentChannelCode;
-
-        const isFBM = channel === 'DEFAULT';
-
-        return (
-          <span
-            className={`px-3 py-1 rounded-full text-[12px] font-medium ${
-              isFBM ? 'bg-[#dbeafe] text-[#2563eb]' : 'bg-[#dcfce7] text-[#16a34a]'
-            }`}
-          >
-            {isFBM ? 'FBM' : 'FBA'}
-          </span>
-        );
-      },
-    },
-    {
-      title: 'Item Weight',
-      dataIndex: 'itemWeight',
-      align: 'center',
-    },
-    {
-      title: 'Item Pkg Weight',
-      dataIndex: 'itempkgWeight',
-      align: 'center',
-    },
-
     // {
-    //   title: 'Length',
-    //   dataIndex: 'length',
+    //   title: 'Status',
+    //   dataIndex: 'status',
+    //   align: 'center',
+    //   render: (status) => <Tag color={status === 'BUYABLE' ? 'green' : 'red'}>{status || '-'}</Tag>,
+    // },
+    // {
+    //   title: 'Name',
+    //   dataIndex: 'name',
+    //   align: 'center',
+    //   render: (text) => (
+    //     <Tooltip title={text} color="black" overlayInnerStyle={{ color: '#fff' }}>
+    //       <span className="truncate cursor-pointer block max-w-[250px]">{text}</span>
+    //     </Tooltip>
+    //   ),
+    // },
+    // {
+    //   title: 'Fulfillment Channel Code',
+    //   dataIndex: 'fulfilments',
+    //   align: 'center',
+    //   render: (fulfilments) => {
+    //     const channel = fulfilments?.[0]?.fulfillmentChannelCode;
+
+    //     const isFBM = channel === 'DEFAULT';
+
+    //     return (
+    //       <span
+    //         className={`px-3 py-1 rounded-full text-[12px] font-medium ${
+    //           isFBM ? 'bg-[#dbeafe] text-[#2563eb]' : 'bg-[#dcfce7] text-[#16a34a]'
+    //         }`}
+    //       >
+    //         {isFBM ? 'FBM' : 'FBA'}
+    //       </span>
+    //     );
+    //   },
+    // },
+    // {
+    //   title: 'Item Weight',
+    //   dataIndex: 'itemWeight',
+    //   align: 'center',
+    // },
+    // {
+    //   title: 'Item Pkg Weight',
+    //   dataIndex: 'itempkgWeight',
+    //   align: 'center',
+    // },
+    // {
+    //   title: 'Pkg Length',
+    //   dataIndex: 'pkgLength',
     //   align: 'center',
     // },
 
     // {
-    //   title: 'Width',
-    //   dataIndex: 'width',
+    //   title: 'Pkg Width',
+    //   dataIndex: 'pkgWidth',
     //   align: 'center',
     // },
 
     // {
-    //   title: 'Height',
-    //   dataIndex: 'height',
-    //   align: 'center',
-    // },
-
-    {
-      title: 'Pkg Length',
-      dataIndex: 'pkgLength',
-      align: 'center',
-    },
-
-    {
-      title: 'Pkg Width',
-      dataIndex: 'pkgWidth',
-      align: 'center',
-    },
-
-    {
-      title: 'Pkg Height',
-      dataIndex: 'pkgHeight',
-      align: 'center',
-    },
-    // {
-    //   title: 'Shipping Estimate Charges',
-    //   dataIndex: 'shippinCharge',
+    //   title: 'Pkg Height',
+    //   dataIndex: 'pkgHeight',
     //   align: 'center',
     // },
 
     // {
-    //   title: 'Region',
-    //   dataIndex: 'region',
+    //   title: 'Step Level',
+    //   dataIndex: 'stateLevel',
     //   align: 'center',
     // },
-
-    {
-      title: 'Step Level',
-      dataIndex: 'stateLevel',
-      align: 'center',
-    },
 
     {
       title: 'Product Cost',
@@ -281,7 +250,7 @@ export default function ProductConfigTab({ pagination, setPagination }) {
             <Button
               type="primary"
               icon={<ExportOutlined className="!text-[16px] !font-bold" />}
-              className="!h-[40px] !rounded-xl !border-[#dbe1e8] !text-white !font-bold !flex !items-center !justify-center"
+              className="!h-[35px] !rounded-l !border-[#dbe1e8] !text-white !font-semibold !flex !items-center !justify-center"
               loading={exportLoading}
               onClick={() => dispatch(exportProductConfiguration())}
             >
@@ -290,7 +259,7 @@ export default function ProductConfigTab({ pagination, setPagination }) {
             <Button
               type="primary"
               icon={<UploadOutlined className="!text-[16px] !font-bold" />}
-              className="!h-[40px] !rounded-xl !border-[#dbe1e8] !text-white !font-bold !flex !items-center !justify-center"
+              className="!h-[35px] !rounded-l !border-[#dbe1e8] !text-white !font-semibold !flex !items-center !justify-center"
               onClick={() => setIsFieldModalOpen(true)}
             >
               Upload
