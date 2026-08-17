@@ -173,6 +173,12 @@ export const getChannels = () => {
   };
 };
 
+export const connectMyntra = (payload) => async () => {
+  const response = await DataService.post('/myntra/connection/', payload);
+
+  return response.data;
+};
+
 export const getUserInfo = (payload) => {
   return async (dispatch) => {
     dispatch(userinfoBegin());

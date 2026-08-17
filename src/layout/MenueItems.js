@@ -380,7 +380,7 @@ function MenuItems({ toggleCollapsed }) {
         'reconcile',
         !topMenu && <UilCreateDashboard />,
         [
-          hasSubmodule('overview') &&
+          hasSubmodule('payment-reconcile-overview') &&
             getItem(
               <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-overview`}>
                 Overview
@@ -660,7 +660,7 @@ function MenuItems({ toggleCollapsed }) {
         'organicperformance',
         !topMenu && <UilChartGrowth />,
         [
-          hasSubmodule('overview') &&
+          hasSubmodule('Organic-Performance-overview') &&
             getItem(
               <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/overview`}>
                 Overview

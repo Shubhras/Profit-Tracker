@@ -3,15 +3,17 @@ import { Modal } from 'antd';
 import { CloseOutlined, InfoCircleOutlined } from '@ant-design/icons';
 
 function CalculationModal({ open, onClose, type, data }) {
-  const formatCurrency = (value) => {
-    if (!value) return '₹0.00';
+  // const formatCurrency = (value) => {
+  //   if (!value) return '₹0.00';
 
-    if (typeof value === 'string') {
-      return value.startsWith('₹') ? value : `₹${value}`;
-    }
+  //   const stringValue = String(value).trim();
 
-    return `₹${Number(value).toFixed(2)}`;
-  };
+  //   if (stringValue.includes('₹')) {
+  //     return stringValue;
+  //   }
+
+  //   return `₹${Number(stringValue).toFixed(2)}`;
+  // };
   const renderShippingUI = () => {
     return (
       <div className="rounded-2xl overflow-hidden bg-white max-h-[85vh] overflow-y-auto">
@@ -99,18 +101,14 @@ function CalculationModal({ open, onClose, type, data }) {
             <div className="grid grid-cols-2 border-b">
               <div className="px-4 py-3 text-[13px] text-[#374151]">Shipping Paid by Customer</div>
 
-              <div className="px-4 py-3 text-right text-[13px] text-[#111827] font-medium">
-                {formatCurrency(data?.paidByCustomer)}
-              </div>
+              <div className="px-4 py-3 text-right text-[13px] text-[#111827] font-medium">{data?.paidByCustomer}</div>
             </div>
 
             {/* Row */}
             <div className="grid grid-cols-2 border-b">
               <div className="px-4 py-3 text-[13px] text-[#374151]">Shipping Cost (Actual Shipping Charges)</div>
 
-              <div className="px-4 py-3 text-right text-[13px] font-semibold text-red-500">
-                {formatCurrency(data?.shipping)}
-              </div>
+              <div className="px-4 py-3 text-right text-[13px] font-semibold text-red-500">{data?.shipping}</div>
             </div>
 
             {/* Total */}
@@ -118,12 +116,10 @@ function CalculationModal({ open, onClose, type, data }) {
               <div className="px-4 py-2 text-[13px] font-semibold text-[#111827]">Net Shipping</div>
 
               <div className="px-4 py-3 text-right text-[15px] font-bold text-[#16a34a]">
-                {formatCurrency(
-                  (
-                    parseFloat(String(data?.netsales || 0).replace(/[₹,]/g, '')) -
-                    parseFloat(String(data?.shipping || 0).replace(/[₹,]/g, ''))
-                  ).toFixed(2),
-                )}
+                {(
+                  parseFloat(String(data?.shipping || 0).replace(/[₹,]/g, '')) -
+                  parseFloat(String(data?.paidByCustomer || 0).replace(/[₹,]/g, ''))
+                ).toFixed(2)}
               </div>
             </div>
           </div>
