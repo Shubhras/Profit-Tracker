@@ -1069,20 +1069,7 @@ export default function ProfitDetailsView() {
                       const isPercent = ['profitPercent'].includes(col.dataIndex);
 
                       return (
-                        <Table.Summary.Cell
-                          key={index}
-                          index={index}
-                          align="center"
-                          fixed={col.fixed}
-                          // style={{
-                          //   whiteSpace: 'nowrap',
-                          //   overflow: 'visible',
-                          //   whiteSpace: 'nowrap',
-                          //   paddingLeft: '14px',
-                          //   paddingRight: '14px',
-                          //   paddingInline: '18px',
-                          // }}
-                        >
+                        <Table.Summary.Cell key={index} index={index} align="center" fixed={col.fixed}>
                           {index === 0 ? (
                             <span className="font-bold text-[13px] text-[#111827]">Total</span>
                           ) : index === 1 || col.dataIndex === 'view' || col.key === 'action' ? (
@@ -1090,7 +1077,6 @@ export default function ProfitDetailsView() {
                           ) : (
                             <span
                               className={`text-[13px] font-semibold ${
-                                // className={`inline-block min-w-[90px] text-[13px] font-semibold ${
                                 Number(value) > 0 && ['profitPercent'].includes(col.dataIndex)
                                   ? 'text-green-600'
                                   : Number(value) < 0
