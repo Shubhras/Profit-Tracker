@@ -7,6 +7,7 @@ import {
   EyeOutlined,
   SettingOutlined,
   CloseCircleOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -991,6 +992,12 @@ export default function ProfitDetailsView() {
                   <span className="text-[#4B5563] text-[13px]">Manage Columns</span>
                 </Button>
               </Dropdown>
+              <Button
+                icon={<DownloadOutlined style={{ fontSize: 14 }} />}
+                className="flex items-center !h-[35px] !rounded-lg !border-[#e5e7eb] whitespace-nowrap"
+              >
+                <span className="text-[#4B5563] text-[13px]">Export</span>
+              </Button>
             </div>
           </div>
           <Table
