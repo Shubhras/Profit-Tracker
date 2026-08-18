@@ -543,6 +543,85 @@ class MyntraAmazonProfitAdapter:
             "totalgst": cls._money(total("mp_gst")),
         }
 
+    @classmethod
+    def order_totals(cls, rows):
+        def total(field):
+            return sum(
+                (cls._decimal(row.get(field)) for row in rows),
+                Decimal(0),
+            )
+
+        gross_qty = sum(int(row.get("gross_qty") or 0) for row in rows)
+        net_qty = sum(int(row.get("net_qty") or 0) for row in rows)
+        return_qty = sum(int(row.get("returnqty") or 0) for row in rows)
+
+        gross_sales = total("gross_sales")
+        net_sales = total("net_sales")
+        final_net_sales = sum(
+            (cls._decimal(row.get("final_net_sales") if row.get("final_net_sales") else row.get("net_sales")) for row in rows),
+            Decimal(0),
+        )
+
+        profit = total("profit")
+
+        if final_net_sales > Decimal(0):
+            profit_percentage = (profit / final_net_sales) * Decimal(100)
+        elif net_sales > Decimal(0):
+            profit_percentage = (profit / net_sales) * Decimal(100)
+        elif gross_sales > Decimal(0):
+            profit_percentage = (profit / gross_sales) * Decimal(100)
+        else:
+            profit_percentage = Decimal(0)
+
+        return_percentage = (
+            (Decimal(return_qty) / Decimal(gross_qty) * Decimal(100))
+            if gross_qty
+            else Decimal(0)
+        )
+
+        taxable_val = total("taxable_value")
+        gst_pay_amt = total("gst_to_pay_amount")
+        gst_pay_perc = (
+            f"{round((gst_pay_amt / taxable_val * Decimal(100)), 2)}%"
+            if taxable_val > Decimal(0)
+            else "0%"
+        )
+
+        return {
+            "grosssales": float(round(gross_sales, 2)),
+            "netsales": cls._money(net_sales),
+            "total_net_sales": cls._money(net_sales),
+            "total_final_net_sales": cls._money(final_net_sales),
+            "total_netquantity": gross_qty,
+            "total_final_net_qty": net_qty,
+            "profit": cls._money(profit),
+            "total_returns": return_qty,
+            "total_ret_percent": f"{round(return_percentage, 2)}%",
+            "totalprofitmargin": float(round(profit_percentage, 2)),
+            "adSpend": cls._money(total("ads")),
+            "mpfees": float(round(total("mp_fees"), 2)),
+            "mp_gst": cls._money(total("mp_gst")),
+            "estimatefees": cls._money(-abs(total("mp_fees"))),
+            "total_new_mpfees": cls._money(total("mp_fees")),
+            "shipping": cls._money(total("shipping_fees")),
+            "gst": cls._money(0),
+            "tcs": cls._money(total("tcs")),
+            "cost": cls._money(total("product_cost")),
+            "taxable_value": cls._money(taxable_val),
+            "gst_to_pay_amount": cls._money(gst_pay_amt),
+            "gst_to_pay_perc": gst_pay_perc,
+            "exp_settlement": cls._money(total("expected_settlement")),
+            "total_promo_discount": cls._money(total("promo_discount")),
+            "total_return_count": return_qty,
+            "courier_return_count": sum(int(row.get("courier_return_count") or 0) for row in rows),
+            "customer_return_count": sum(int(row.get("customer_return_count") or 0) for row in rows),
+            "courier_return_price": cls._money(0),
+            "customer_return_price": cls._money(0),
+            "total_claim_count": sum(int(row.get("claim_count") or 0) for row in rows),
+            "total_claim_amount": cls._money(total("claim_amount")),
+            "total_replacement_return_count": 0,
+        }
+
     # =========================================================
     # FULL AMAZON RESPONSE CONTRACT
     # =========================================================
@@ -649,6 +728,17 @@ class MyntraAmazonProfitAdapter:
         page_no=0,
         page_size=10,
     ):
+        """
+        Produce:
+
+        {
+            "status": True,
+            "message": "Success",
+            "pagination": { ... },
+            "totals": { ... },
+            "response": [ ... ]
+        }
+        """
         rows = list(rows)
 
         total_count = len(rows)
@@ -676,7 +766,7 @@ class MyntraAmazonProfitAdapter:
                 "pageSize": page_size,
                 "count": total_count,
             },
-            "totals": cls.style_totals(rows),
+            "totals": cls.order_totals(rows),
             "response": [cls.order_row(row) for row in page_rows],
         }
 

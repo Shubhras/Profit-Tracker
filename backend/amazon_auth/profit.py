@@ -111,47 +111,71 @@ def _combine_totals(amazon_t, myntra_t, type="style"):
         
     elif type == "order":
         total_qty = get_sum("total_netquantity", is_currency=False)
-        total_returns = get_sum("total_returns", is_currency=False)
-        
+        if total_qty == 0:
+            total_qty = get_sum("netqty", is_currency=False) or get_sum("gross_qty", is_currency=False)
+
+        total_final_net_qty = get_sum("total_final_net_qty", is_currency=False)
+        if total_final_net_qty == 0:
+            total_final_net_qty = get_sum("net_qty", is_currency=False)
+
+        total_returns = get_sum("total_returns", is_currency=False) or get_sum("totalreturn", is_currency=False)
+
         if total_qty > 0:
             return_percentage = (Decimal(total_returns) / Decimal(total_qty)) * Decimal(100)
         else:
             return_percentage = Decimal(0)
-            
+
         grosssales = get_sum("grosssales")
-        netsales = get_sum("netsales")
+        netsales = get_sum("netsales") or get_sum("net_sales")
+        total_final_net_sales = get_sum("total_final_net_sales") or get_sum("final_net_sales")
         profit = get_sum("profit")
-        
+
         if netsales > 0:
             profit_perc = (profit / netsales) * Decimal(100)
         elif grosssales > 0:
             profit_perc = (profit / grosssales) * Decimal(100)
         else:
             profit_perc = Decimal(0)
-            
+
+        ad_spend = get_sum("adSpend") or get_sum("ads")
+        shipping = get_sum("shipping") or get_sum("shippingfees")
+
         combined.update({
             "grosssales": float(round(grosssales, 2)),
             "netsales": format_currency(netsales),
+            "total_net_sales": format_currency(netsales),
+            "total_final_net_sales": format_currency(total_final_net_sales),
             "total_netquantity": total_qty,
+            "total_final_net_qty": total_final_net_qty,
             "profit": format_currency(profit),
             "total_returns": total_returns,
             "total_ret_percent": f"{round(return_percentage, 2)}%",
             "totalprofitmargin": float(round(profit_perc, 2)),
-            
-            "adSpend": format_currency(get_sum("adSpend")),
+
+            "adSpend": format_currency(ad_spend),
             "mpfees": float(round(get_sum("mpfees"), 2)),
             "mp_gst": format_currency(get_sum("mp_gst")),
             "estimatefees": format_currency(-abs(get_sum("estimatefees"))),
             "total_new_mpfees": format_currency(get_sum("total_new_mpfees")),
-            "shipping": format_currency(get_sum("shipping")),
+            "shipping": format_currency(shipping),
             "gst": format_currency(0),
             "tcs": format_currency(get_sum("tcs")),
-            "cost": format_currency(get_sum("cost")),
-            
+            "cost": format_currency(get_sum("cost") or get_sum("stdcost")),
+
             "taxable_value": format_currency(get_sum("taxable_value")),
             "gst_to_pay_amount": format_currency(get_sum("gst_to_pay_amount")),
             "gst_to_pay_perc": f"{round((get_sum('gst_to_pay_amount') / get_sum('taxable_value') * Decimal(100)), 2) if get_sum('taxable_value') else 0}%",
             "exp_settlement": format_currency(get_sum("exp_settlement")),
+            "total_promo_discount": format_currency(get_sum("total_promo_discount")),
+            "total_return_count": get_sum("total_return_count", is_currency=False) or total_returns,
+            "courier_return_count": get_sum("courier_return_count", is_currency=False),
+            "customer_return_count": get_sum("customer_return_count", is_currency=False),
+            "courier_return_price": format_currency(get_sum("courier_return_price")),
+            "customer_return_price": format_currency(get_sum("customer_return_price")),
+
+            "total_claim_count": get_sum("total_claim_count", is_currency=False),
+            "total_claim_amount": format_currency(get_sum("total_claim_amount")),
+            "total_replacement_return_count": get_sum("total_replacement_return_count", is_currency=False),
         })
         
     return combined
@@ -630,6 +654,7 @@ def combined_sku_profit_report_transactions_shipping(request):
     from_date_str = filters.get('fromDate')
     to_date_str = filters.get('endDate')
     sku = data.get("sku") or filters.get("sku")
+    parent_product_id = data.get("parentProductId") or filters.get("parentProductId") or filters.get("parent_product_id") or data.get("asin") or filters.get("asin") or filters.get("parent_asin")
     
     channels = filters.get("channel", {}).get("IN", []) if isinstance(filters.get("channel"), dict) else []
     
@@ -674,10 +699,10 @@ def combined_sku_profit_report_transactions_shipping(request):
         calculator = MyntraProfitCalculator(user=user, filters=myntra_filters)
         summary = OrderSummary(calculator)
         
-        if sku:
-            myntra_raw_rows = summary.execute(seller_sku=sku)
+        if sku or parent_product_id:
+            myntra_raw_rows = summary.execute(seller_sku=sku, style_id=parent_product_id)
         else:
-            myntra_raw_rows = []
+            myntra_raw_rows = summary.execute()
             
         if search_term:
             search_term_lower = search_term.lower()
