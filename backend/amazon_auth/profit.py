@@ -52,7 +52,9 @@ def _combine_totals(amazon_t, myntra_t, type="style"):
         total_final_net_qty = get_sum("total_final_net_qty", is_currency=False)
         totalreturn = get_sum("totalreturn", is_currency=False)
         
-        if total_final_net_qty > 0:
+        if netqty > 0:
+            return_percentage = (Decimal(totalreturn) / Decimal(netqty)) * Decimal(100)
+        elif total_final_net_qty > 0:
             return_percentage = (Decimal(totalreturn) / Decimal(total_final_net_qty)) * Decimal(100)
         else:
             return_percentage = Decimal(0)
@@ -78,6 +80,7 @@ def _combine_totals(amazon_t, myntra_t, type="style"):
             "total_final_net_qty": total_final_net_qty,
             "totalreturn": totalreturn,
             "totalreturnper": f"{round(return_percentage, 2)}%",
+            "total_ret_percent": f"{round(return_percentage, 2)}%",
             "grosssales": format_currency(grosssales),
             "netsales": format_currency(netsales),
             "total_final_net_sales": format_currency(total_final_net_sales),
@@ -149,6 +152,7 @@ def _combine_totals(amazon_t, myntra_t, type="style"):
             "total_final_net_qty": total_final_net_qty,
             "profit": format_currency(profit),
             "total_returns": total_returns,
+            "totalreturnper": f"{round(return_percentage, 2)}%",
             "total_ret_percent": f"{round(return_percentage, 2)}%",
             "totalprofitmargin": float(round(profit_perc, 2)),
 
