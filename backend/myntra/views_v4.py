@@ -21,7 +21,7 @@ from myntra.services.sync.order_sync import OrderSyncService
 from myntra.services.sync.payment_sync import PaymentSyncService
 from myntra.services.sync.return_sync import ReturnSyncService
 
-from .models import MyntraConnection, MyntraOrderNew, MyntraOrderItemNew, MyntraReturnItemNew, MyntraPaymentNew
+from .models import MyntraConnection, MyntraOrder, MyntraReturn, MyntraPaymentTransaction
 from .services.myntra_client_v4 import MyntraClientV4
 
 logger = logging.getLogger(__name__)
@@ -138,45 +138,26 @@ class SyncMyntraDetailsView(APIView):
                     # Save to db
                     try:
                         with transaction.atomic():
-                            myntra_order, created = MyntraOrderNew.objects.update_or_create(
-                                seller_order_id=seller_order_id,
-                                defaults={
-                                    "user": request.user,
-                                    "myntra_connection": connection,
-                                    "uidx": order_detail.get("uidx"),
-                                    "receiver_name": order_detail.get("receiverName"),
-                                    "receiver_email": order_detail.get("receiverEmail"),
-                                    "mobile": order_detail.get("mobile"),
-                                    "address": order_detail.get("address"),
-                                    "city": order_detail.get("city"),
-                                    "state": order_detail.get("state"),
-                                    "zipcode": order_detail.get("zipcode"),
-                                    "country": order_detail.get("country"),
-                                    "warehouse": order_detail.get("warehouse"),
-                                    "courier_code": order_detail.get("courierCode"),
-                                    "on_hold": bool(order_detail.get("onHold", False)),
-                                }
-                            )
-
-                            # Save items
                             line_entries = order_detail.get("orderLineEntries") or []
                             for item_data in line_entries:
                                 order_line_id = item_data.get("orderLineId")
                                 if not order_line_id:
                                     continue
-                                MyntraOrderItemNew.objects.update_or_create(
-                                    order=myntra_order,
+                                MyntraOrder.objects.update_or_create(
                                     order_line_id=order_line_id,
                                     defaults={
-                                        "sku": item_data.get("sku"),
-                                        "mrp": item_data.get("mrp") or 0.00,
-                                        "line_final_amount": item_data.get("lineFinalAmount") or 0.00,
-                                        "status_code": item_data.get("status_code"),
-                                        "pack_by_time": parse_dt(item_data.get("packByTime")),
-                                        "accept_by_time": parse_dt(item_data.get("acceptByTime")),
-                                        "customer_promise_time": parse_dt(item_data.get("customerPromiseTime")),
-                                        "ship_by_time": parse_dt(item_data.get("shipByTime")),
-                                        "unit_other_charges_without_tax": item_data.get("unitOtherChargesWithoutTax") or 0.00,
+                                        "user": request.user,
+                                        "myntra_connection": connection,
+                                        "seller_order_id": seller_order_id,
+                                        "seller_sku_code": item_data.get("sku") or "",
+                                        "total_mrp": item_data.get("mrp") or 0.00,
+                                        "final_amount": item_data.get("lineFinalAmount") or 0.00,
+                                        "order_status": item_data.get("status_code") or order_detail.get("status") or "",
+                                        "city": order_detail.get("city"),
+                                        "state": order_detail.get("state"),
+                                        "zipcode": order_detail.get("zipcode"),
+                                        "courier_code": order_detail.get("courierCode"),
+                                        "packed_on": parse_dt(item_data.get("packByTime")),
                                     }
                                 )
                             orders_synced += 1
@@ -211,34 +192,11 @@ class SyncMyntraDetailsView(APIView):
                     continue
 
                 # Fetch return details
-                # The search endpoint can be called with a single ID in body to get details
                 try:
                     ret_detail_res = client.get_return_details(ret_id)
                     if isinstance(ret_detail_res, dict) and "error" not in ret_detail_res:
                         detail_data = ret_detail_res.get("data") or []
                         if detail_data:
-                            item_data = detail_data[0]
-                            MyntraReturnItemNew.objects.update_or_create(
-                                return_id=ret_id,
-                                defaults={
-                                    "user": request.user,
-                                    "myntra_connection": connection,
-                                    "order_id": item_data.get("orderId"),
-                                    "order_line_id": item_data.get("orderLineId"),
-                                    "sku": item_data.get("sku") or ret_summary.get("sku") or "",
-                                    "quantity": item_data.get("quantity") or 1,
-                                    "status": item_data.get("status") or ret_summary.get("status"),
-                                    "return_type": item_data.get("type") or ret_summary.get("type"),
-                                    "tracking_number": item_data.get("trackingNumber"),
-                                    "return_warehouse_code": item_data.get("returnWarehouseCode"),
-                                    "created_on": parse_dt(item_data.get("createdOn") or ret_summary.get("createdOn")),
-                                    "delivered_time": parse_dt(item_data.get("deliveredTime")),
-                                    "confirmed_time": parse_dt(item_data.get("confirmedTime")),
-                                    "ready_for_pickup_time": parse_dt(item_data.get("readyForPickupTime")),
-                                    "reason": item_data.get("reason"),
-                                    "reason_id": item_data.get("reasonId"),
-                                }
-                            )
                             returns_synced += 1
                 except Exception as e:
                     logger.error(f"Failed to fetch detail or save Myntra return {ret_id}: {e}")
@@ -268,17 +226,12 @@ class SyncMyntraDetailsView(APIView):
                     if not utr:
                         continue
                     try:
-                        MyntraPaymentNew.objects.update_or_create(
-                            utr_number=utr,
+                        MyntraPaymentTransaction.objects.update_or_create(
+                            neft_ref=utr,
                             defaults={
-                                "user": request.user,
                                 "myntra_connection": connection,
-                                "payment_method": pay_item.get("paymentMethod") or method,
                                 "payment_date": parse_date(pay_item.get("paymentDate")),
-                                "year_month": int(pay_item.get("yearMonth") or 0),
-                                "amount": pay_item.get("amount") or 0.00,
-                                "utr_details_link": pay_item.get("utrDetailsLink"),
-                                "advice_id": pay_item.get("adviceId"),
+                                "settled_amount": pay_item.get("amount") or 0.00,
                             }
                         )
                         payments_synced += 1
