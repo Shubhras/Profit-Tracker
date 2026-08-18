@@ -65,8 +65,12 @@ def _combine_totals(amazon_t, myntra_t, type="style"):
         
         if total_final_net_sales > 0:
             profit_perc = (profit / total_final_net_sales) * Decimal(100)
+        elif netsales > 0:
+            profit_perc = (profit / netsales) * Decimal(100)
+        elif grosssales > 0:
+            profit_perc = (profit / grosssales) * Decimal(100)
         else:
-            profit_perc = profit
+            profit_perc = Decimal(0)
             
         combined.update({
             "ads": format_currency(ads),
@@ -91,7 +95,7 @@ def _combine_totals(amazon_t, myntra_t, type="style"):
             "taxable_value": format_currency(get_sum("taxable_value")),
             
             "gst_to_pay_amount": format_currency(get_sum("gst_to_pay_amount")),
-            "gst_to_pay_perc": f"{round((get_sum('gst_to_pay_amount') / get_sum('taxable_value') * Decimal(100)), 2) if get_sum('taxable_value') else 1}%",
+            "gst_to_pay_perc": f"{round((get_sum('gst_to_pay_amount') / get_sum('taxable_value') * Decimal(100)), 2) if get_sum('taxable_value') else 0}%",
             "exp_settlement": format_currency(get_sum("exp_settlement")),
             "total_promo_discount": format_currency(get_sum("total_promo_discount")),
             "total_return_count": get_sum("total_return_count", is_currency=False),
@@ -120,6 +124,8 @@ def _combine_totals(amazon_t, myntra_t, type="style"):
         
         if netsales > 0:
             profit_perc = (profit / netsales) * Decimal(100)
+        elif grosssales > 0:
+            profit_perc = (profit / grosssales) * Decimal(100)
         else:
             profit_perc = Decimal(0)
             
@@ -144,7 +150,7 @@ def _combine_totals(amazon_t, myntra_t, type="style"):
             
             "taxable_value": format_currency(get_sum("taxable_value")),
             "gst_to_pay_amount": format_currency(get_sum("gst_to_pay_amount")),
-            "gst_to_pay_perc": f"{round((get_sum('gst_to_pay_amount') / get_sum('taxable_value') * Decimal(100)), 2) if get_sum('taxable_value') else 1}%",
+            "gst_to_pay_perc": f"{round((get_sum('gst_to_pay_amount') / get_sum('taxable_value') * Decimal(100)), 2) if get_sum('taxable_value') else 0}%",
             "exp_settlement": format_currency(get_sum("exp_settlement")),
         })
         

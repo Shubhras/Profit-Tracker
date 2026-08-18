@@ -10180,7 +10180,11 @@ def amazon_profitability_details_transactions_shipping(request):
             "grossprofitper": (
                 round((total_profit / total_final_net_sales) * 100, 2)
                 if total_final_net_sales
-                else round(total_profit, 2)
+                else round((total_profit / total_net_sales) * 100, 2)
+                if total_net_sales
+                else round((total_profit / total_sales) * 100, 2)
+                if total_sales
+                else 0
             ),
             "mpfees": format_currency(total_mpfees),
             "mp_gst": format_currency(total_mp_gst),
@@ -10196,7 +10200,7 @@ def amazon_profitability_details_transactions_shipping(request):
             "taxable_value": format_currency(total_taxable_value),
 
             "gst_to_pay_amount": format_currency(total_gst_payable),
-            "gst_to_pay_perc":f"{round((total_gst_payable / total_taxable_value * 100),2) if total_taxable_value else 1}%",
+            "gst_to_pay_perc":f"{round((total_gst_payable / total_taxable_value * 100),2) if total_taxable_value else 0}%",
             "exp_settlement": format_currency(total_exp_settlement),
             
             "total_promo_discount": format_currency(total_promo_discount),
@@ -10737,7 +10741,7 @@ def sku_profitability_list_filtered(request):
             "grosssales": format_currency(total_sales), "netsales": format_currency(total_net_sales),
             "total_net_sales": format_currency(total_net_sales), "total_final_net_sales": format_currency(total_final_net_sales),
             "profit": format_currency(total_profit),
-            "grossprofitper": round((total_profit / total_net_sales) * 100, 2) if total_net_sales else round(total_profit, 2) if total_profit else 0,
+            "grossprofitper": round((total_profit / total_final_net_sales) * 100, 2) if total_final_net_sales else round((total_profit / total_net_sales) * 100, 2) if total_net_sales else round((total_profit / total_sales) * 100, 2) if total_sales else 0,
             "mpfees": format_currency(total_mpfees), "mp_gst": format_currency(total_mp_gst),
             "estimatefees": format_currency(-abs(total_estimatefees)), "total_new_mpfees": format_currency(total_mpfees),
             "shippingfees": format_currency(total_shipping), "tacos": (abs(total_ads) / total_sales * 100) if total_sales else 0,

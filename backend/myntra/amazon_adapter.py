@@ -469,20 +469,37 @@ class MyntraAmazonProfitAdapter:
         return_qty = sum(int(row.get("returnqty") or 0) for row in rows)
 
         gross_sales = total("gross_sales")
-        final_net_sales = total("final_net_sales")
+        net_sales = total("net_sales")
+        final_net_sales = sum(
+            (cls._decimal(row.get("final_net_sales") if row.get("final_net_sales") else row.get("net_sales")) for row in rows),
+            Decimal(0),
+        )
 
         profit = total("profit")
 
         # Weighted/overall profit percentage rather than
         # summing row percentages.
-        profit_percentage = (
-            (profit / final_net_sales * Decimal(100)) if final_net_sales else Decimal(0)
-        )
+        if final_net_sales > Decimal(0):
+            profit_percentage = (profit / final_net_sales) * Decimal(100)
+        elif net_sales > Decimal(0):
+            profit_percentage = (profit / net_sales) * Decimal(100)
+        elif gross_sales > Decimal(0):
+            profit_percentage = (profit / gross_sales) * Decimal(100)
+        else:
+            profit_percentage = Decimal(0)
 
         return_percentage = (
             (Decimal(return_qty) / Decimal(gross_qty) * Decimal(100))
             if gross_qty
             else Decimal(0)
+        )
+
+        taxable_val = total("taxable_value")
+        gst_pay_amt = total("gst_to_pay_amount")
+        gst_pay_perc = (
+            f"{round((gst_pay_amt / taxable_val * Decimal(100)), 2)}%"
+            if taxable_val > Decimal(0)
+            else "0%"
         )
 
         return {
@@ -505,9 +522,9 @@ class MyntraAmazonProfitAdapter:
             "shippingfees": cls._money(total("shipping_fees")),
             "stdcost": cls._money(total("product_cost")),
             "tcs": cls._money(total("tcs")),
-            "taxable_value": cls._money(total("taxable_value")),
-            "gst_to_pay_amount": cls._money(total("gst_to_pay_amount")),
-            "gst_to_pay_perc": "0.0%",
+            "taxable_value": cls._money(taxable_val),
+            "gst_to_pay_amount": cls._money(gst_pay_amt),
+            "gst_to_pay_perc": gst_pay_perc,
             "exp_settlement": cls._money(total("expected_settlement")),
             "total_promo_discount": cls._money(total("promo_discount")),
             "total_return_count": return_qty,

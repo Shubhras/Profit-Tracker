@@ -9,9 +9,12 @@ import {
   UserOutlined,
   AppstoreOutlined,
 } from '@ant-design/icons';
+import { useSelector } from 'react-redux';
 import { DataService } from '../../config/dataService/dataService';
 
 function ApiCallLogs() {
+  const reduxDateRange = useSelector((state) => state.dashboard.dateRange);
+
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState({
     summary: {
@@ -54,11 +57,14 @@ function ApiCallLogs() {
     return () => clearTimeout(timer);
   }, [searchText]);
 
+  const startDate = reduxDateRange?.fromDate || '';
+  const endDate = reduxDateRange?.endDate || '';
+
   const fetchData = async () => {
     setLoading(true);
     try {
       const response = await DataService.get(
-        `user/admin/api-logs/?search=${debouncedSearch}&service_type=${serviceTypeFilter}&page=${pagination.current}&limit=${pagination.pageSize}`,
+        `user/admin/api-logs/?search=${debouncedSearch}&service_type=${serviceTypeFilter}&start_date=${startDate}&end_date=${endDate}&page=${pagination.current}&limit=${pagination.pageSize}`,
       );
       if (response.data?.status || response.data?.summary) {
         setData(response.data);
@@ -72,7 +78,7 @@ function ApiCallLogs() {
 
   useEffect(() => {
     fetchData();
-  }, [debouncedSearch, serviceTypeFilter, pagination.current, pagination.pageSize]);
+  }, [debouncedSearch, serviceTypeFilter, reduxDateRange, pagination.current, pagination.pageSize]);
 
   const handleOpenBreakdown = (title, breakdownDict) => {
     setBreakdownModal({
