@@ -129,16 +129,49 @@ export default function ProfitDetailsView() {
     }
   }, [dateRange, decodedChannel, pagination, debouncedSearch]);
 
-  const handleExport = async () => {
+  // const handleExport = async () => {
+  //   setExportLoading(true);
+  //   try {
+  //     const payload = buildPayload();
+  //     await dispatch(exportProfitabilityDetails(payload));
+  //   } catch (err) {
+  //     console.error(err);
+  //   } finally {
+  //     setExportLoading(false);
+  //   }
+  // };
+
+  const handleExport = async (format = 'xlsx') => {
     setExportLoading(true);
+
     try {
       const payload = buildPayload();
-      await dispatch(exportProfitabilityDetails(payload));
+
+      await dispatch(exportProfitabilityDetails(payload, format));
     } catch (err) {
-      console.error(err);
+      console.error('Export error:', err);
     } finally {
       setExportLoading(false);
     }
+  };
+  const exportMenu = {
+    items: [
+      {
+        key: 'xlsx',
+        label: 'Excel',
+      },
+      {
+        key: 'csv',
+        label: 'CSV',
+      },
+      {
+        key: 'pdf',
+        label: 'PDF',
+      },
+    ],
+    onClick: ({ key }) => {
+      handleExport(key);
+    },
   };
 
   useEffect(() => {
@@ -882,14 +915,15 @@ export default function ProfitDetailsView() {
             {/* Right Actions */}
             <div className="flex items-center gap-2 flex-wrap lg:w-full lg:justify-end md:w-full md:justify-between sm:w-full sm:justify-between">
               {/* Export Button */}
-              <Button
-                icon={<DownloadOutlined style={{ fontSize: 14 }} />}
-                loading={exportLoading}
-                onClick={handleExport}
-                className="flex items-center !h-[35px] !rounded-lg !border-[#e5e7eb] whitespace-nowrap"
-              >
-                <span className="text-[#4B5563] text-[13px]">Export</span>
-              </Button>
+              <Dropdown menu={exportMenu} trigger={['click']} placement="bottomRight">
+                <Button
+                  icon={<DownloadOutlined style={{ fontSize: 14 }} />}
+                  loading={exportLoading}
+                  className="flex items-center !h-[35px] !rounded-lg !border-[#e5e7eb] whitespace-nowrap"
+                >
+                  <span className="text-[#4B5563] text-[13px]">Export</span>
+                </Button>
+              </Dropdown>
 
               {/* Filter Button */}
               <div className="relative">
