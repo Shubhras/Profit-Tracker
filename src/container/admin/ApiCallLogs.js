@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Input, Tag, Button, Modal, Select, Tooltip, Card, Tabs, Spin, Row, Col } from 'antd';
+import { Table, Input, Tag, Button, Modal, Select, Tooltip, Row, Col } from 'antd';
 import {
   SearchOutlined,
   EyeOutlined,
@@ -485,6 +485,7 @@ function ApiCallLogs() {
           {/* Navigation Tabs */}
           <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg">
             <button
+              type="button"
               onClick={() => setActiveTab('dashboard')}
               className={`px-3 py-1 text-[12px] font-medium rounded-md transition-all ${
                 activeTab === 'dashboard' ? 'bg-white text-blue-600 shadow-xs' : 'text-gray-600 hover:text-gray-900'
@@ -493,6 +494,7 @@ function ApiCallLogs() {
               Account Usage Dashboard
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab('logs')}
               className={`px-3 py-1 text-[12px] font-medium rounded-md transition-all ${
                 activeTab === 'logs' ? 'bg-white text-blue-600 shadow-xs' : 'text-gray-600 hover:text-gray-900'

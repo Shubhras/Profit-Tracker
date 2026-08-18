@@ -201,7 +201,11 @@ export const exportProfitData = (payload) => {
   };
 };
 
-export const exportProfitabilityDetails = (payload, format = 'xlsx', endpoint = '/amazon/profitability/details/export/') => {
+export const exportProfitabilityDetails = (
+  payload,
+  format = 'xlsx',
+  endpoint = '/amazon/profitability/details/export/',
+) => {
   return async () => {
     try {
       const response = await DataService.post(`${endpoint}?file_format=${format}`, payload, {
@@ -218,9 +222,15 @@ export const exportProfitabilityDetails = (payload, format = 'xlsx', endpoint = 
       const contentDisposition = response.headers['content-disposition'];
       let filename = `profitability_details.${format}`;
       if (contentDisposition) {
+        // const match = contentDisposition.match(/filename="?([^"]+)"?/);
+        // if (match && match[1]) {
+        //   filename = match[1];
+        // }
         const match = contentDisposition.match(/filename="?([^"]+)"?/);
-        if (match && match[1]) {
-          filename = match[1];
+        const [, matchedFilename] = match || [];
+
+        if (matchedFilename) {
+          filename = matchedFilename;
         }
       }
 
@@ -234,7 +244,6 @@ export const exportProfitabilityDetails = (payload, format = 'xlsx', endpoint = 
     }
   };
 };
-
 
 export const getSecondDetials = (payload) => {
   return async (dispatch) => {

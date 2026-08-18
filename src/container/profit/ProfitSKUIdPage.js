@@ -101,7 +101,9 @@ export default function ProfitSKUIdPage() {
     try {
       setExportLoading(true);
       const payload = buildPayload();
-      await dispatch(exportProfitabilityDetails(payload, 'xlsx', '/amazon/profitability/details/by-parent-asin/export/'));
+      await dispatch(
+        exportProfitabilityDetails(payload, 'xlsx', '/amazon/profitability/details/by-parent-asin/export/'),
+      );
     } catch (error) {
       console.error('Export failed:', error);
     } finally {
