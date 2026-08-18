@@ -324,15 +324,15 @@ class ProfitabilityDTOAdapter:
         order_id = _safe_str(row.get("order_id") or "")
         date = _safe_str(row.get("date") or row.get("order_date") or "")
 
-        grossqty = _safe_int(row.get("grossqty") if row.get("grossqty") is not None else row.get("gross_qty"))
+        grossqty = _safe_int(row.get("grossqty") if row.get("grossqty") is not None else (row.get("gross_qty") or row.get("qty")))
         netqty = _safe_int(row.get("netqty") if row.get("netqty") is not None else (row.get("gross_qty") or grossqty))
+        qty = grossqty
         if row.get("final_net_qty") is not None:
             final_net_qty = _safe_int(row.get("final_net_qty"))
         elif row.get("net_qty") is not None:
             final_net_qty = _safe_int(row.get("net_qty"))
         else:
-            final_net_qty = netqty
-        qty = final_net_qty
+            final_net_qty = _safe_int(row.get("qty") if row.get("qty") is not None else netqty)
         returnqty = _safe_int(row.get("returnqty") or row.get("totalreturn") or row.get("return_count") or row.get("returns"))
         courier_return_count = _safe_int(row.get("courier_return_count") or row.get("courier_returns"))
         customer_return_count = _safe_int(row.get("customer_return_count") or row.get("customer_returns"))

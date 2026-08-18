@@ -82,6 +82,7 @@ class MyntraAmazonProfitAdapter:
             # Current Amazon frontend labels item.netqty
             # as "Gross Qty".
             "grossqty": gross_qty,
+            "qty": gross_qty,
             "netqty": gross_qty,
             "final_net_qty": net_qty,
             # -------------------------------------------------
@@ -223,6 +224,7 @@ class MyntraAmazonProfitAdapter:
             # QUANTITY
             # ==========================================
             "grossqty": gross_qty,
+            "qty": gross_qty,
             "netqty": gross_qty,
             "final_net_qty": net_qty,
             # ==========================================
@@ -356,6 +358,7 @@ class MyntraAmazonProfitAdapter:
             # QUANTITY
             # ==========================================
             "grossqty": gross_qty,
+            "qty": gross_qty,
             "netqty": gross_qty,
             "final_net_qty": net_qty,
             # ==========================================
