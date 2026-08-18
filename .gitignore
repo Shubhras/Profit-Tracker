@@ -93,3 +93,4 @@ pytest_cache/
 # Build files
 # -------------------------
 # build/
+backend/profit_tracker_pg/postgres_data.sql
