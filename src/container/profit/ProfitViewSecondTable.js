@@ -8,6 +8,7 @@ import {
   ArrowLeftOutlined,
   SettingOutlined,
   CloseCircleOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -17,7 +18,7 @@ import ProfitModal from './component/ProfitModal';
 import amazon from '../../assets/icons/amazon.svg';
 import myntra from '../../assets/icons/myntraLogo.jpg';
 // import flipkart from "../../assets/icons/flipkart.png";
-import { getSecondDetials } from '../../redux/dashboard/actionCreator';
+import { getSecondDetials, exportProfitabilityDetails } from '../../redux/dashboard/actionCreator';
 // import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function ProfitViewSecondTable() {
@@ -114,6 +115,19 @@ export default function ProfitViewSecondTable() {
       },
     };
   };
+  const [exportLoading, setExportLoading] = React.useState(false);
+  const handleExport = async () => {
+    try {
+      setExportLoading(true);
+      const payload = buildPayload();
+      await dispatch(exportProfitabilityDetails(payload, 'xlsx', '/amazon/profitability/details/by-parent-asin/export/'));
+    } catch (error) {
+      console.error('Export failed:', error);
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   useEffect(() => {
     dispatch(getSecondDetials(buildPayload()));
   }, [dispatch, pagination, globalChannel, debouncedSearch]);
@@ -826,6 +840,16 @@ export default function ProfitViewSecondTable() {
               </div>
 
               <div className="flex flex-wrap items-center gap-2 lg:w-full lg:justify-end md:w-full md:justify-between sm:w-full sm:justify-between">
+                {/* Export Button */}
+                <Button
+                  icon={<DownloadOutlined style={{ fontSize: 14 }} />}
+                  loading={exportLoading}
+                  onClick={handleExport}
+                  className="flex items-center !h-[35px] !rounded-lg !border-[#e5e7eb] whitespace-nowrap"
+                >
+                  <span className="text-[#4B5563] text-[13px]">Export</span>
+                </Button>
+
                 <div className="relative">
                   <button
                     type="button"

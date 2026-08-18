@@ -1268,68 +1268,6 @@ def process_reports():
     return True
 
 
-# def process_reports():
-
-#     reports = AdsReportLog.objects.all()
-
-#     print("TOTAL REPORTS:", reports.count())
-
-#     for report in reports:
-
-#         print("PROCESSING:", report.report_id)
-#         print("CURRENT STATUS:", report.status)
-
-#         response = ads_matrix_api_request(
-
-#             account=report.amazon_account,
-
-#             method="GET",
-
-#             endpoint=f"/reporting/reports/{report.report_id}",
-
-#             content_type="application/vnd.createasyncreportrequest.v3+json",
-
-#             accept_type="application/vnd.createasyncreportrequest.v3+json"
-#         )
-
-#         print("API STATUS:", response.status_code)
-#         print("API BODY:", response.text)
-
-#         data = response.json()
-
-#         status = data.get("status")
-
-#         report.status = status
-
-#         if status == "COMPLETED":
-
-#             report.download_url = data.get("url")
-
-#         report.raw_response = data
-
-#         report.save()
-
-#         print("UPDATED STATUS:", status)
-
-#         if status != "COMPLETED":
-#             continue
-
-#         if not report.download_url:
-#             continue
-
-#         r = requests.get(report.download_url)
-
-#         rows = json.loads(
-#             gzip.decompress(r.content)
-#         )
-
-#         print("ROWS:", len(rows))
-
-#     return True
-
-
-
-
 
 def check_pending_reports():
 

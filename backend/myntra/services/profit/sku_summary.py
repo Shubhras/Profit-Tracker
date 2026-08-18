@@ -12,7 +12,7 @@ class SKUSummary:
     def __init__(self, calculator):
         self.calculator = calculator
 
-    def execute(self, style_id):
+    def execute(self, style_id=None):
         """
         Entry point for SKU Summary.
         """
@@ -27,7 +27,7 @@ class SKUSummary:
 
         sku_map = self.build_sku_map(
             orders,
-            style_id,
+            style_id=style_id,
         )
 
         payment_map = self.calculator.build_payment_map(payments)
@@ -43,7 +43,7 @@ class SKUSummary:
     def build_sku_map(
         self,
         orders,
-        style_id,
+        style_id=None,
     ):
         """
         Group all orders belonging to a Style
@@ -53,7 +53,7 @@ class SKUSummary:
         sku_map = defaultdict(list)
 
         for order in orders:
-            if order.style_id != style_id:
+            if style_id is not None and order.style_id != style_id:
                 continue
 
             sku_map[order.seller_sku_code].append(order)

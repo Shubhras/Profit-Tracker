@@ -17,6 +17,8 @@ from .support_ticket import *
 from .sub_user import *
 
 
+from admin_auth.apis.api_logs import AdminApiLogsAPI
+
 urlpatterns = [
     path('register/', UserRegisterAPI.as_view()),
     path('login/', UserLoginAPI.as_view()),
@@ -29,6 +31,7 @@ urlpatterns = [
     path('connected-accounts/', ConnectedMarketplacesView.as_view(), name='connected-accounts'),
     
     path('admin/dashboard/', AdminDashboardAPI.as_view(), name='admin-dashboard'),
+    path('admin/api-logs/', AdminApiLogsAPI.as_view(), name='admin-api-logs'),
     
     path(
         "admin/user-list/",

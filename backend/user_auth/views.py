@@ -14,7 +14,7 @@ class ConnectedMarketplacesView(APIView):
 
         #  Count Amazon accounts
         amazon_count = AmazonAccount.objects.filter(user=user).count()
-        amazon_ads_count = AmazonAdsAccount.objects.filter(user=user).count()
+        amazon_ads_count = AmazonAdsAccount.objects.filter(user=user, is_primary=True).count()
         myntra_count = MyntraConnection.objects.filter(user=user).count()
 
         #  Default marketplaces list

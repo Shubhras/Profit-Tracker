@@ -8,6 +8,8 @@ from admin_auth.apis.password import (
     ResetPasswordAPI
 )
 
+from admin_auth.apis.api_logs import AdminApiLogsAPI
+
 urlpatterns = [
     path('login/', AdminLoginAPI.as_view()),
     path('subuser-login/', AdminSubUserLoginAPI.as_view(), name='admin-subuser-login'),
@@ -15,4 +17,5 @@ urlpatterns = [
     path('change-password/', ChangePasswordAPI.as_view()),
     path('forgot-password/', ForgotPasswordAPI.as_view()),
     path('reset-password/', ResetPasswordAPI.as_view()),
+    path('api-logs/', AdminApiLogsAPI.as_view(), name='admin-api-logs'),
 ]

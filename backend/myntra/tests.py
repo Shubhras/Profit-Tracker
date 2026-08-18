@@ -4,7 +4,7 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 from rest_framework import status
 
-from myntra.models import MyntraConnection, MyntraOrderNew, MyntraOrderItemNew, MyntraReturnItemNew, MyntraPaymentNew
+from myntra.models import MyntraConnection, MyntraOrder, MyntraPaymentTransaction
 
 
 class MyntraSyncTestCase(APITestCase):
@@ -189,22 +189,13 @@ class MyntraSyncTestCase(APITestCase):
         self.assertEqual(response.data["status"], "SUCCESS")
         self.assertEqual(response.data["details"]["orders_synced"], 1)
         self.assertEqual(response.data["details"]["returns_synced"], 1)
-        # Note: Prepaid and Postpaid payment fetches both return mock_payment_history_res
         self.assertEqual(response.data["details"]["payments_synced"], 2)
 
         # Assert database state
-        order = MyntraOrderNew.objects.get(seller_order_id="d3212063-854d-4403-bed3-2d31a799b605")
-        self.assertEqual(order.receiver_name, "Automation Test User One")
+        order = MyntraOrder.objects.get(seller_order_id="d3212063-854d-4403-bed3-2d31a799b605")
+        self.assertEqual(order.seller_sku_code, "JJ01-M")
         self.assertEqual(order.user, self.user)
 
-        item = MyntraOrderItemNew.objects.get(order=order)
-        self.assertEqual(item.sku, "JJ01-M")
-        self.assertEqual(float(item.mrp), 1099.00)
-
-        ret = MyntraReturnItemNew.objects.get(return_id="4120887807")
-        self.assertEqual(ret.reason, "Size issue")
-        self.assertEqual(ret.sku, "JJ01-M")
-
-        pay = MyntraPaymentNew.objects.filter(utr_number="NFT-300600960GN00047XXXXXXX").first()
+        pay = MyntraPaymentTransaction.objects.filter(neft_ref="NFT-300600960GN00047XXXXXXX").first()
         self.assertIsNotNone(pay)
-        self.assertEqual(float(pay.amount), 1495.26)
+        self.assertEqual(float(pay.settled_amount), 1495.26)

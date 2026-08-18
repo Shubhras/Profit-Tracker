@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { Table, Card, Modal, Checkbox, Tooltip } from 'antd';
-import { SearchOutlined, FilterOutlined, EyeOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { Table, Card, Modal, Checkbox, Tooltip, Button } from 'antd';
+import { SearchOutlined, FilterOutlined, EyeOutlined, CloseCircleOutlined, DownloadOutlined } from '@ant-design/icons';
 import { useParams, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 // import ProfitFilterBar from './component/ProfitFilterBar';
@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import CalculationModal from './component/Calculations';
 import amazon from '../../assets/icons/amazon.svg';
 // import flipkart from "../../assets/icons/flipkart.png";
-import { getProfitSKUId } from '../../redux/dashboard/actionCreator';
+import { getProfitSKUId, exportProfitabilityDetails } from '../../redux/dashboard/actionCreator';
 // import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function ProfitSKUIdPage() {
@@ -95,6 +95,19 @@ export default function ProfitSKUIdPage() {
       pageSize: pagination.pageSize,
     },
   });
+
+  const [exportLoading, setExportLoading] = React.useState(false);
+  const handleExport = async () => {
+    try {
+      setExportLoading(true);
+      const payload = buildPayload();
+      await dispatch(exportProfitabilityDetails(payload, 'xlsx', '/amazon/profitability/details/by-parent-asin/export/'));
+    } catch (error) {
+      console.error('Export failed:', error);
+    } finally {
+      setExportLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (decodedChannel) {
@@ -604,6 +617,16 @@ export default function ProfitSKUIdPage() {
 
             {/* Right Actions */}
             <div className="flex items-center gap-3">
+              {/* Export Button */}
+              <Button
+                icon={<DownloadOutlined style={{ fontSize: 14 }} />}
+                loading={exportLoading}
+                onClick={handleExport}
+                className="flex items-center !h-[35px] !rounded-lg !border-[#e5e7eb] whitespace-nowrap"
+              >
+                <span className="text-[#4B5563] text-[13px]">Export</span>
+              </Button>
+
               {/* Filter Button */}
               <div className="relative">
                 <button
