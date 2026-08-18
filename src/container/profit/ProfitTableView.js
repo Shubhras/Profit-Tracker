@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from 'react-redux';
 // import { PageHeader } from '../../components/page-headers/page-headers';
 import { getProfitData, exportProfitData, exportProfitabilityDetails } from '../../redux/dashboard/actionCreator';
 import amazon from '../../assets/icons/amazon.svg';
+import myntra from '../../assets/icons/myntraLogo.jpg';
 // import flipkartLogo from '../../assets/flipkart.png';
 
 export default function ProfitTableView() {
@@ -28,8 +29,11 @@ export default function ProfitTableView() {
   // });
 
   const getLogo = (channel) => {
-    if (channel?.includes('Amazon-India')) return amazon;
-    // if (channel?.toLowerCase().includes('flipkart')) return flipkartLogo;
+    // if (channel?.includes('Amazon-India')) return amazon;
+    const channelName = channel?.toLowerCase() || '';
+
+    if (channelName.includes('amazon')) return amazon;
+    if (channelName.includes('myntra')) return myntra;
     return null;
   };
 

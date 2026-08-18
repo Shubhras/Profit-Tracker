@@ -133,7 +133,7 @@ export default function ProfitDetailsView() {
     profitData?.response?.map((item, index) => ({
       key: index,
       channel: item.channel,
-      image: item.image,
+      image: item.image_url,
       view: item.order_id,
       redirecturl: item.redirecturl,
       netqty: item.qty || 0,

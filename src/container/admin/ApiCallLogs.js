@@ -378,7 +378,7 @@ function ApiCallLogs() {
   ];
 
   return (
-    <div className="p-3 px-2 min-h-screen">
+    <div className="p-3 px-4 min-h-screen">
       <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
         {/* Page Header */}
         <div className="flex flex-wrap items-center justify-between px-4 py-3.5 border-b border-gray-100">

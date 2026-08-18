@@ -29,17 +29,17 @@ export const HEADER_ACTIONS = {
   // },
 
   // '/settings/product-setting/finance-configuration': ['export', 'upload', 'addexpense', 'recalculate', 'delete'],
-  '/settings/product-setting/finance-configuration': {
-    otherExpenses: ['upload', 'export', 'addexpense', 'recalculate', 'delete'],
+  // '/settings/product-setting/finance-configuration': {
+  //   otherExpenses: ['upload', 'export', 'addexpense', 'recalculate', 'delete'],
 
-    cashback: ['export', 'upload', 'add', 'sync', 'delete'],
+  //   cashback: ['export', 'upload', 'add', 'sync', 'delete'],
 
-    inventoryConfig: ['upload', 'export'],
+  //   inventoryConfig: ['upload', 'export'],
 
-    rule: ['upload', 'addrule', 'recalculate', 'addrules'],
+  //   rule: ['upload', 'addrule', 'recalculate', 'addrules'],
 
-    feeWaiverConfig: ['upload', 'export', 'delete'],
+  //   feeWaiverConfig: ['upload', 'export', 'delete'],
 
-    settledAmountConfig: ['upload', 'export', 'delete'],
-  },
+  //   settledAmountConfig: ['upload', 'export', 'delete'],
+  // },
 };
