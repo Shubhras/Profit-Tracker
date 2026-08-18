@@ -3,7 +3,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from decimal import Decimal
 from django.http import JsonResponse
-from datetime import datetime
+from datetime import datetime, timedelta
+from calendar import monthrange
+from django.utils import timezone
+from rest_framework.test import APIRequestFactory, force_authenticate
 
 from .views import (
     amazon_profitability_details_transactions_shipping,
@@ -1183,3 +1186,292 @@ def combined_get_full_dashboard(request):
         
     res_data = _combine_dashboard_stats(amazon_res_data, myntra_res_data)
     return JsonResponse(res_data)
+
+
+def _parse_num_safe(val):
+    if val is None:
+        return 0.0
+    if isinstance(val, (int, float)):
+        return float(val)
+    s = str(val).replace('₹', '').replace(',', '').strip()
+    try:
+        return float(s)
+    except Exception:
+        return 0.0
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def combined_dashboard_profitability(request):
+    """
+    Returns channel-level summary for dashboard-profitability API
+    using the exact same calculation formulas & filters as combined_profitability_details_transactions_shipping.
+    """
+    req_to_pass = getattr(request, '_request', request)
+    res = combined_profitability_details_transactions_shipping(req_to_pass)
+    
+    if res.status_code != 200 or not isinstance(res.data, dict):
+        return res
+
+    detail_rows = res.data.get("response", [])
+    overall_totals = res.data.get("totals", {})
+
+    by_channel = {}
+    for r in detail_rows:
+        ch = r.get("channel") or "Amazon-India"
+        if ch not in by_channel:
+            by_channel[ch] = []
+        by_channel[ch].append(r)
+
+    channel_summary = []
+    for ch, rows in by_channel.items():
+        gross_qty = sum(_parse_num_safe(r.get("grossqty")) for r in rows)
+        net_qty = sum(_parse_num_safe(r.get("final_net_qty") or r.get("netqty")) for r in rows)
+        return_qty = sum(_parse_num_safe(r.get("returnqty")) for r in rows)
+        
+        gross_sales = sum(_parse_num_safe(r.get("grosssales")) for r in rows)
+        net_sales = sum(_parse_num_safe(r.get("final_net_sales") or r.get("netsales")) for r in rows)
+        mp_fees = sum(_parse_num_safe(r.get("estimatefees") or r.get("mpfees")) for r in rows)
+        shipping = sum(_parse_num_safe(r.get("shippingfees") or r.get("shipping")) for r in rows)
+        mp_gst = sum(_parse_num_safe(r.get("mp_gst")) for r in rows)
+        tcs = sum(_parse_num_safe(r.get("tcs")) for r in rows)
+        ads = sum(_parse_num_safe(r.get("ads")) for r in rows)
+        std_cost = sum(_parse_num_safe(r.get("stdcost")) for r in rows)
+        gst_to_pay = sum(_parse_num_safe(r.get("gst_to_pay_amount")) for r in rows)
+        claim_amt = sum(_parse_num_safe(r.get("claim_amount")) for r in rows)
+        settlement = sum(_parse_num_safe(r.get("exp_settlement") or r.get("settleAmount")) for r in rows)
+        profit = sum(_parse_num_safe(r.get("profit")) for r in rows)
+
+        ret_pct = round((return_qty / gross_qty * 100), 2) if gross_qty else 0.0
+        profit_pct = round((profit / net_sales * 100), 2) if net_sales else 0.0
+        gross_profit = net_sales + mp_fees + shipping
+
+        channel_summary.append({
+            "channel": ch,
+            "channel1": ch,
+            "view": ch,
+            "name": ch,
+            "id": ch,
+            "producttitle": ch,
+            "grossqty": int(gross_qty),
+            "netqty": int(net_qty),
+            "returnqty": int(return_qty),
+            "retpercent": ret_pct,
+            "grosssales": round(gross_sales, 2),
+            "netsales": round(net_sales, 2),
+            "mpfees": round(mp_fees, 2),
+            "shippingfees": round(shipping, 2),
+            "shipping": round(shipping, 2),
+            "mp_gst": round(mp_gst, 2),
+            "tcs": round(tcs, 2),
+            "ads": round(ads, 2),
+            "stdcost": round(std_cost, 2),
+            "stdCost": round(std_cost, 2),
+            "gsttopay": round(gst_to_pay, 2),
+            "claim_amount": round(claim_amt, 2),
+            "exp_settlement": round(settlement, 2),
+            "profit": round(profit, 2),
+            "grossprofit": round(gross_profit, 2),
+            "grossprofitper": profit_pct,
+            "profitmargin": profit_pct,
+            "rowcount": len(rows),
+        })
+
+    # Compute overall totals by summing channel summary
+    total_gross_qty = sum(c["grossqty"] for c in channel_summary)
+    total_net_qty = sum(c["netqty"] for c in channel_summary)
+    total_return_qty = sum(c["returnqty"] for c in channel_summary)
+    total_gross_sales = sum(c["grosssales"] for c in channel_summary)
+    total_net_sales = sum(c["netsales"] for c in channel_summary)
+    total_mp_fees = sum(c["mpfees"] for c in channel_summary)
+    total_shipping = sum(c["shippingfees"] for c in channel_summary)
+    total_ads = sum(c["ads"] for c in channel_summary)
+    total_std_cost = sum(c["stdcost"] for c in channel_summary)
+    total_gst_to_pay = sum(c["gsttopay"] for c in channel_summary)
+    total_claim_amt = sum(c["claim_amount"] for c in channel_summary)
+    total_settlement = sum(c["exp_settlement"] for c in channel_summary)
+    total_profit = sum(c["profit"] for c in channel_summary)
+    total_gross_profit = sum(c["grossprofit"] for c in channel_summary)
+
+    total_ret_pct = round((total_return_qty / total_gross_qty * 100), 2) if total_gross_qty else 0.0
+    total_profit_pct = round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0.0
+
+    totals = {
+        "grossqty": total_gross_qty,
+        "netqty": total_net_qty,
+        "returnqty": total_return_qty,
+        "retpercent": total_ret_pct,
+        "grosssales": round(total_gross_sales, 2),
+        "netsales": round(total_net_sales, 2),
+        "mpfees": round(total_mp_fees, 2),
+        "shippingfees": round(total_shipping, 2),
+        "shipping": round(total_shipping, 2),
+        "ads": round(total_ads, 2),
+        "stdcost": round(total_std_cost, 2),
+        "stdCost": round(total_std_cost, 2),
+        "gsttopay": round(total_gst_to_pay, 2),
+        "claim_amount": round(total_claim_amt, 2),
+        "exp_settlement": round(total_settlement, 2),
+        "profit": round(total_profit, 2),
+        "grossprofit": round(total_gross_profit, 2),
+        "grossprofitper": total_profit_pct,
+        "profitmargin": total_profit_pct,
+    }
+
+    return Response({
+        "status": True,
+        "message": "Success",
+        "response": channel_summary,
+        "totals": totals,
+        "pagination": {
+            "pageNo": 0,
+            "pageSize": 25,
+            "total": len(channel_summary)
+        }
+    })
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def combined_profitability_monthwise(request):
+    """
+    Returns monthly summarized profitability data using the exact same calculation logic
+    as combined_profitability_details_transactions_shipping for complete formula parity across the app.
+    """
+    data_source_raw = getattr(request, 'data', None) or (request.POST if request.method == 'POST' else request.GET)
+    data_source = {}
+    if data_source_raw:
+        if hasattr(data_source_raw, 'dict'):
+            data_source.update(data_source_raw.dict())
+        elif isinstance(data_source_raw, dict):
+            data_source.update(data_source_raw)
+            
+    f_child = data_source.get('filter') or data_source.get('filters') or {}
+    if isinstance(f_child, dict):
+        data_source.update(f_child)
+
+    def find_val(keys):
+        for k in keys:
+            v = data_source.get(k)
+            if isinstance(v, list) and len(v) > 0: v = v[0]
+            if v and str(v).strip(): return str(v).strip()
+            for sk, sv in data_source.items():
+                if sk.lower() == k.lower():
+                    if isinstance(sv, list) and len(sv) > 0: sv = sv[0]
+                    if sv and str(sv).strip(): return str(sv).strip()
+        return None
+
+    from_date_str = find_val(['fromDate', 'start_date', 'from_date', 'startDate'])
+    to_date_str = find_val(['toDate', 'end_date', 'to_date', 'endDate'])
+
+    def parse_dt(dt_str, is_end=False):
+        if not dt_str or len(str(dt_str)) < 10:
+            return (timezone.now() - timedelta(days=60)) if not is_end else timezone.now()
+        try:
+            clean_str = str(dt_str).split('T')[0]
+            dt = datetime.strptime(clean_str, '%Y-%m-%d')
+            if is_end:
+                dt = dt.replace(hour=23, minute=59, second=59)
+            return dt
+        except Exception:
+            return (timezone.now() - timedelta(days=60)) if not is_end else timezone.now()
+
+    start_date = parse_dt(from_date_str, False)
+    end_date = parse_dt(to_date_str, True)
+
+    channels = data_source.get('channel') or data_source.get('channels')
+    if isinstance(channels, dict) and 'IN' in channels:
+        channels = channels['IN']
+    elif not isinstance(channels, list):
+        channels = ['Amazon-India', 'Myntra']
+
+    curr = start_date.replace(day=1).date() if isinstance(start_date, datetime) else start_date.replace(day=1)
+    last = end_date.replace(day=1).date() if isinstance(end_date, datetime) else end_date.replace(day=1)
+
+    factory = APIRequestFactory()
+    response_list = []
+
+    while curr <= last:
+        _, max_day = monthrange(curr.year, curr.month)
+        m_start = f'{curr.year:04d}-{curr.month:02d}-01'
+        m_end = f'{curr.year:04d}-{curr.month:02d}-{max_day:02d}'
+        month_key = curr.strftime('%m-%Y')
+
+        m_filters = {
+            'channel': {'IN': channels},
+            'fromDate': m_start,
+            'toDate': m_end
+        }
+
+        month_req = factory.post('/api/amazon/profitability/details/', {'filters': m_filters}, format='json')
+        force_authenticate(month_req, user=request.user)
+
+        res = combined_profitability_details_transactions_shipping(month_req)
+        detail_rows = res.data.get('response', []) if res.status_code == 200 and isinstance(res.data, dict) else []
+
+        gross_qty = sum(_parse_num_safe(r.get('grossqty')) for r in detail_rows)
+        net_qty = sum(_parse_num_safe(r.get('final_net_qty') or r.get('netqty')) for r in detail_rows)
+        return_qty = sum(_parse_num_safe(r.get('returnqty')) for r in detail_rows)
+        claim_qty = sum(_parse_num_safe(r.get('claim_count')) for r in detail_rows)
+        courier_ret = sum(_parse_num_safe(r.get('courier_return_count')) for r in detail_rows)
+
+        gross_sales = sum(_parse_num_safe(r.get('grosssales')) for r in detail_rows)
+        net_sales = sum(_parse_num_safe(r.get('final_net_sales') or r.get('netsales')) for r in detail_rows)
+        mp_fees = sum(_parse_num_safe(r.get('estimatefees') or r.get('mpfees')) for r in detail_rows)
+        shipping = sum(_parse_num_safe(r.get('shippingfees') or r.get('shipping')) for r in detail_rows)
+        ads = sum(_parse_num_safe(r.get('ads')) for r in detail_rows)
+        std_cost = sum(_parse_num_safe(r.get('stdcost')) for r in detail_rows)
+        claim_amt = sum(_parse_num_safe(r.get('claim_amount')) for r in detail_rows)
+        profit = sum(_parse_num_safe(r.get('profit')) for r in detail_rows)
+        return_sales = sum(_parse_num_safe(r.get('customer_return_price')) for r in detail_rows)
+
+        ret_pct = round((return_qty / gross_qty * 100), 2) if gross_qty else 0.0
+        profit_pct = round((profit / net_sales * 100), 2) if net_sales else 0.0
+        gross_asp = round(gross_sales / gross_qty, 2) if gross_qty else 0.0
+        net_asp = round(net_sales / net_qty, 2) if net_qty else 0.0
+        tacos = round(abs(ads) / net_sales * 100, 2) if net_sales else 0.0
+
+        response_list.append({
+            'month': month_key,
+            'grossqty': int(gross_qty),
+            'netqty': int(net_qty),
+            'claimqty': int(claim_qty),
+            'cancelledcanqty': 0,
+            'cancelledrtoqty': int(courier_ret),
+            'returnedrtoqty': int(courier_ret),
+            'returnedcreturnqty': int(return_qty),
+            'replacedqty': 0,
+            'grosssales': round(gross_sales, 2),
+            'cancelledcansales': 0.0,
+            'cancelledrtosales': 0.0,
+            'returnedrtosales': 0.0,
+            'returnedcreturnsales': round(abs(return_sales), 2),
+            'claimsales': round(claim_amt, 2),
+            'netsales': round(net_sales, 2),
+            'marketplacefees': round(mp_fees, 2),
+            'shipfees': round(shipping, 2),
+            'stdcost': round(std_cost, 2),
+            'ads': round(ads, 2),
+            'accountcharges': 0.0,
+            'otherfees': 0.0,
+            'profit': round(profit, 2),
+            'grossasp': gross_asp,
+            'netasp': net_asp,
+            'tacos': tacos,
+            'retpercent': ret_pct,
+            'profitmargin': profit_pct
+        })
+
+        if curr.month == 12:
+            curr = curr.replace(year=curr.year + 1, month=1)
+        else:
+            curr = curr.replace(month=curr.month + 1)
+
+    return Response({
+        "status": True,
+        "message": "Success",
+        "message_code": "E1",
+        "response": response_list
+    })
+
+

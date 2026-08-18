@@ -201,6 +201,41 @@ export const exportProfitData = (payload) => {
   };
 };
 
+export const exportProfitabilityDetails = (payload, format = 'xlsx', endpoint = '/amazon/profitability/details/export/') => {
+  return async () => {
+    try {
+      const response = await DataService.post(`${endpoint}?file_format=${format}`, payload, {
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([response.data], {
+        type: response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = `profitability_details.${format}`;
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (match && match[1]) {
+          filename = match[1];
+        }
+      }
+
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export error:', error);
+    }
+  };
+};
+
+
 export const getSecondDetials = (payload) => {
   return async (dispatch) => {
     dispatch(profitabilityBegin());

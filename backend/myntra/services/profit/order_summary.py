@@ -11,7 +11,7 @@ class OrderSummary:
     def __init__(self, calculator):
         self.calculator = calculator
 
-    def execute(self, seller_sku):
+    def execute(self, seller_sku=None):
         """
         Entry point for Order Summary.
         """
@@ -37,9 +37,9 @@ class OrderSummary:
     def build_order_summary(
         self,
         orders,
-        seller_sku,
         payment_map,
         return_map,
+        seller_sku=None,
     ):
         """
         Build one row per Myntra order.
@@ -63,7 +63,7 @@ class OrderSummary:
             # SKU FILTER
             # ==========================================
 
-            if order.seller_sku_code != seller_sku:
+            if seller_sku is not None and order.seller_sku_code != seller_sku:
                 continue
 
             # ==========================================
@@ -278,7 +278,7 @@ class OrderSummary:
                 # remain untouched above so they can
                 # later be exposed in Reconciliation.
                 # --------------------------------------
-                promo_discount = Decimal(0),
+                promo_discount = Decimal(0)
                 expected_settlement = Decimal(0)
                 profit = Decimal(0)
                 profit_percentage = Decimal(0)

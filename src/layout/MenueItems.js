@@ -56,6 +56,7 @@ import {
   UilCube,
   UilUserCheck,
   UilLayerGroup,
+  UilAnalysis,
 } from '@iconscout/react-unicons';
 import { Menu } from 'antd';
 import React from 'react';
@@ -1120,6 +1121,14 @@ function MenuItems({ toggleCollapsed }) {
       </NavLink>,
       'privacy-policy',
       !topMenu && <UilShieldCheck />,
+    ),
+
+    getItem(
+      <NavLink onClick={toggleCollapsed} to="/super-admin/api-logs">
+        {t('API Call Logs')}
+      </NavLink>,
+      'api-logs',
+      !topMenu && <UilAnalysis />,
     ),
   ];
 

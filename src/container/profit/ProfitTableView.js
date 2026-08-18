@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
-import { Table, Card, Modal, Checkbox, Tooltip } from 'antd';
-import { RightOutlined } from '@ant-design/icons';
+import { Table, Card, Modal, Checkbox, Tooltip, Button } from 'antd';
+import { RightOutlined, DownloadOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 // import ProfitFilterBar from './component/ProfitFilterBar';
 // import ProfitModal from './component/ProfitModal';
 // import { PageHeader } from '../../components/page-headers/page-headers';
-import { getProfitData, exportProfitData } from '../../redux/dashboard/actionCreator';
+import { getProfitData, exportProfitData, exportProfitabilityDetails } from '../../redux/dashboard/actionCreator';
 import amazon from '../../assets/icons/amazon.svg';
 // import flipkartLogo from '../../assets/flipkart.png';
 
@@ -109,6 +109,19 @@ export default function ProfitTableView() {
   //     }),
   //   );
   // }, [dispatch, dateRange]);
+  const [exportLoading, setExportLoading] = React.useState(false);
+  const handleExport = async () => {
+    try {
+      setExportLoading(true);
+      const payload = buildPayload();
+      await dispatch(exportProfitabilityDetails(payload, 'xlsx', '/amazon/profitability/details/export/'));
+    } catch (error) {
+      console.error('Export failed:', error);
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   useEffect(() => {
     const payload = buildPayload();
     dispatch(getProfitData(payload));
@@ -549,8 +562,16 @@ export default function ProfitTableView() {
         className="flex  justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 sm:pb-[30px] bg-transparent sm:flex-col"
       /> */}
       <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-3 py-3 xl:px-[15px] pb-[10px] bg-transparent">
-        <div className="mb-3">
+        <div className="flex items-center justify-between mb-3">
           <h1 className="text-[20px] font-semibold text-[#111827]">Sales Details</h1>
+          <Button
+            icon={<DownloadOutlined style={{ fontSize: 14 }} />}
+            loading={exportLoading}
+            onClick={handleExport}
+            className="flex items-center !h-[35px] !rounded-lg !border-[#e5e7eb] whitespace-nowrap"
+          >
+            <span className="text-[#4B5563] text-[13px]">Export</span>
+          </Button>
         </div>
         <Card bordered={false} className="sales-table-wrapper">
           {/* <ProfitFilterBar

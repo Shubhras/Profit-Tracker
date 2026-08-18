@@ -58,7 +58,8 @@ urlpatterns = [
 
     # Analytics
     path('product-analytics/', views.get_product_analytics, name='get_product_analytics'),
-    path('dashboard-profitability/', views.get_amazon_data_profi_tability, name='get_amazon_data_profi_tability'),
+    path('dashboard-profitability/', profit.combined_dashboard_profitability, name='get_amazon_data_profi_tability'),
+    path('dashboard-profitability-old/', views.get_amazon_data_profi_tability, name='get_amazon_data_profi_tability_old'),
     
     # 1page asin level sale
     path('profitability/details/export/', exports.export_profitability_details, name='export_profitability_details'),
@@ -84,7 +85,8 @@ urlpatterns = [
     # path('profitability/details/by-parentproductid/', views.sku_profit_report, name='profi_tability_details_by_parentproductid'),
     
    
-    path('profitability-monthwise/', views.get_profitability_monthwise, name='get_profitability_monthwise'),
+    path('profitability-monthwise/', profit.combined_profitability_monthwise, name='get_profitability_monthwise'),
+    path('profitability-monthwise-old/', views.get_profitability_monthwise, name='get_profitability_monthwise_old'),
     path('reconcile-paymentsummary/', views.get_amazon_data_reconcile_paymentsummary, name='get_amazon_data_reconcile_paymentsummary'),
     path('bank/ransfer-summary/', views.get_bank_transfer_workflow, name='bank/ransfer-summary/'),
     path('outstanding-payments/', views.get_outstanding_payments, name='get_outstanding_payments'),

@@ -13,6 +13,7 @@ import Module from '../../container/admin/Module';
 import Notification from '../../container/admin/Notifications';
 import SubModule from '../../container/admin/SubModule';
 import AdminUsers from '../../container/admin/AdminUsers';
+import ApiCallLogs from '../../container/admin/ApiCallLogs';
 import withAdminLayout from '../../layout/withAdminLayout';
 import AddSubscription from '../../container/admin/AddSubscription';
 
@@ -33,6 +34,7 @@ function SuperAdminRoutes() {
       <Route path="module" element={<Module />} />
       <Route path="submodule" element={<SubModule />} />
       <Route path="admin-users" element={<AdminUsers />} />
+      <Route path="api-logs" element={<ApiCallLogs />} />
 
       <Route path="privacy-policy" element={<PrivacyPolicy />} />
       <Route path="marketplaceIntegration" element={<MarketplaceIntegration />} />

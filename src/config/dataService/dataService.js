@@ -273,24 +273,24 @@ client.interceptors.response.use(
 
 // DATA SERVICE
 class DataService {
-  static get(path = '') {
-    return client.get(path);
+  static get(path = '', config = {}) {
+    return client.get(path, config);
   }
 
-  static post(path = '', data = {}) {
-    return client.post(path, data);
+  static post(path = '', data = {}, config = {}) {
+    return client.post(path, data, config);
   }
 
-  static patch(path = '', data = {}) {
-    return client.patch(path, data);
+  static patch(path = '', data = {}, config = {}) {
+    return client.patch(path, data, config);
   }
 
-  static put(path = '', data = {}) {
-    return client.put(path, data);
+  static put(path = '', data = {}, config = {}) {
+    return client.put(path, data, config);
   }
 
-  static delete(path = '') {
-    return client.delete(path);
+  static delete(path = '', config = {}) {
+    return client.delete(path, config);
   }
 }
 
