@@ -689,7 +689,7 @@ class AmazonCatalogDetails(models.Model):
     material = models.CharField(max_length=255, null=True, blank=True)
     size = models.CharField(max_length=255, null=True, blank=True)
 
-    item_type_name = models.CharField(max_length=255, null=True, blank=True)
+    item_type_name = models.TextField(null=True, blank=True)
 
     # DESCRIPTION
     bullet_points = models.JSONField(default=list, blank=True)

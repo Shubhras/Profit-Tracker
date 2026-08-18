@@ -36,7 +36,7 @@ class UserProfile(models.Model):
 
     name = models.CharField(max_length=100)
     business_name = models.CharField(max_length=150)
-    mobile_number = models.CharField(max_length=15)
+    mobile_number = models.CharField(max_length=50)
     #gst_number = models.CharField(max_length=20, blank=True, null=True)
 
     address = models.TextField()
@@ -479,7 +479,7 @@ class SubUser(models.Model):
         related_name="sub_users"
     )
     name = models.CharField(max_length=100)
-    mobile_number = models.CharField(max_length=15)
+    mobile_number = models.CharField(max_length=50)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -109,6 +109,9 @@ def ensure_sample_logs_if_empty():
                 response_time_ms=380
             )
 
+from datetime import datetime
+from django.utils import timezone
+
 class AdminApiLogsAPI(APIView):
     permission_classes = [AllowAny]
 
@@ -117,8 +120,46 @@ class AdminApiLogsAPI(APIView):
 
         search = request.GET.get('search', '').strip()
         service_type_filter = request.GET.get('service_type', '').strip()
+        start_date_str = request.GET.get('start_date', '').strip()
+        end_date_str = request.GET.get('end_date', '').strip()
+
         page = int(request.GET.get('page', 1))
         limit = int(request.GET.get('limit', 10))
+
+        start_dt = None
+        end_dt = None
+
+        if start_date_str:
+            try:
+                parsed_s = datetime.strptime(start_date_str, '%Y-%m-%d')
+                start_dt = timezone.make_aware(datetime.combine(parsed_s.date(), datetime.min.time())) if timezone.is_naive(parsed_s) else parsed_s
+            except Exception:
+                pass
+
+        if end_date_str:
+            try:
+                parsed_e = datetime.strptime(end_date_str, '%Y-%m-%d')
+                end_dt = timezone.make_aware(datetime.combine(parsed_e.date(), datetime.max.time())) if timezone.is_naive(parsed_e) else parsed_e
+            except Exception:
+                pass
+
+        # Helper filters for queries
+        log_date_q = Q()
+        amz_order_date_q = Q()
+        myn_order_date_q = Q()
+        report_date_q = Q()
+
+        if start_dt:
+            log_date_q &= Q(created_at__gte=start_dt)
+            amz_order_date_q &= Q(purchase_date__gte=start_dt)
+            myn_order_date_q &= Q(created_on__gte=start_dt)
+            report_date_q &= Q(created_at__gte=start_dt)
+
+        if end_dt:
+            log_date_q &= Q(created_at__lte=end_dt)
+            amz_order_date_q &= Q(purchase_date__lte=end_dt)
+            myn_order_date_q &= Q(created_on__lte=end_dt)
+            report_date_q &= Q(created_at__lte=end_dt)
 
         # Overall summary totals
         total_users = User.objects.count()
@@ -126,13 +167,27 @@ class AdminApiLogsAPI(APIView):
         total_ads_accounts = AmazonAdsAccount.objects.filter(is_primary=True).count()
         total_myntra_accounts = MyntraConnection.objects.count()
         
-        amazon_orders_count = Order.objects.count()
-        myntra_orders_count = MyntraOrder.objects.count()
+        amazon_orders_count = Order.objects.filter(amz_order_date_q).count()
+        myntra_orders_count = MyntraOrder.objects.filter(myn_order_date_q).count()
         total_orders = amazon_orders_count + myntra_orders_count
 
-        total_api_calls = ApiCallLog.objects.aggregate(t=Sum('call_count'))['t'] or 0
+        total_api_calls = ApiCallLog.objects.filter(log_date_q).aggregate(t=Sum('call_count'))['t'] or 0
         try:
-            report_requests_count = ReportRequest.objects.count() + AmazonReport.objects.count() + AdsReportLog.objects.count()
+            amz_rep_q = Q(created_at__gte=start_dt) if start_dt else Q()
+            if end_dt:
+                amz_rep_q &= Q(created_at__lte=end_dt)
+
+            rep_req_q = Q(created_at__gte=start_dt) if start_dt else Q()
+            if end_dt:
+                rep_req_q &= Q(created_at__lte=end_dt)
+
+            ads_rep_q = Q(created_at__gte=start_dt) if start_dt else Q()
+            if end_dt:
+                ads_rep_q &= Q(created_at__lte=end_dt)
+
+            report_requests_count = ReportRequest.objects.filter(rep_req_q).count() + \
+                                    AmazonReport.objects.filter(amz_rep_q).count() + \
+                                    AdsReportLog.objects.filter(ads_rep_q).count()
             total_api_calls += report_requests_count
         except Exception:
             pass
@@ -158,14 +213,26 @@ class AdminApiLogsAPI(APIView):
             # 1. Amazon Accounts
             amz_accs = AmazonAccount.objects.filter(user=u)
             amazon_data = []
-            amz_orders = Order.objects.filter(user=u).count()
+            amz_orders = Order.objects.filter(user=u).filter(amz_order_date_q).count()
 
-            amz_logs = ApiCallLog.objects.filter(user=u, service_type='SP-API')
+            amz_logs = ApiCallLog.objects.filter(user=u, service_type='SP-API').filter(log_date_q)
             amz_log_calls = amz_logs.aggregate(t=Sum('call_count'))['t'] or 0
             
             amz_report_calls = 0
             try:
-                amz_report_calls = AmazonReport.objects.filter(account__user=u).count() + ReportRequest.objects.filter(amazon_account__user=u).count()
+                amz_rep_user_q = Q(account__user=u)
+                if start_dt:
+                    amz_rep_user_q &= Q(created_at__gte=start_dt)
+                if end_dt:
+                    amz_rep_user_q &= Q(created_at__lte=end_dt)
+
+                req_rep_user_q = Q(amazon_account__user=u)
+                if start_dt:
+                    req_rep_user_q &= Q(created_at__gte=start_dt)
+                if end_dt:
+                    req_rep_user_q &= Q(created_at__lte=end_dt)
+
+                amz_report_calls = AmazonReport.objects.filter(amz_rep_user_q).count() + ReportRequest.objects.filter(req_rep_user_q).count()
             except Exception:
                 pass
 
@@ -219,12 +286,17 @@ class AdminApiLogsAPI(APIView):
             except Exception:
                 pass
 
-            ads_logs = ApiCallLog.objects.filter(user=u, service_type='Amazon-Ads')
+            ads_logs = ApiCallLog.objects.filter(user=u, service_type='Amazon-Ads').filter(log_date_q)
             ads_log_calls = ads_logs.aggregate(t=Sum('call_count'))['t'] or 0
             
             ads_report_calls = 0
             try:
-                ads_report_calls = AdsReportLog.objects.filter(user=u).count()
+                ads_rep_u_q = Q(user=u)
+                if start_dt:
+                    ads_rep_u_q &= Q(created_at__gte=start_dt)
+                if end_dt:
+                    ads_rep_u_q &= Q(created_at__lte=end_dt)
+                ads_report_calls = AdsReportLog.objects.filter(ads_rep_u_q).count()
             except Exception:
                 pass
 
@@ -262,13 +334,18 @@ class AdminApiLogsAPI(APIView):
             # 3. Myntra Accounts
             myn_accs = MyntraConnection.objects.filter(user=u)
             myn_data = []
-            myn_orders = MyntraOrder.objects.filter(user=u).count()
-            myn_logs = ApiCallLog.objects.filter(user=u, service_type='Myntra')
+            myn_orders = MyntraOrder.objects.filter(user=u).filter(myn_order_date_q).count()
+            myn_logs = ApiCallLog.objects.filter(user=u, service_type='Myntra').filter(log_date_q)
             myn_log_calls = myn_logs.aggregate(t=Sum('call_count'))['t'] or 0
             
             myn_report_calls = 0
             try:
-                myn_report_calls = MyntraReportQueue.objects.filter(user=u).count()
+                myn_rep_u_q = Q(user=u)
+                if start_dt:
+                    myn_rep_u_q &= Q(created_at__gte=start_dt)
+                if end_dt:
+                    myn_rep_u_q &= Q(created_at__lte=end_dt)
+                myn_report_calls = MyntraReportQueue.objects.filter(myn_rep_u_q).count()
             except Exception:
                 pass
 
@@ -335,7 +412,7 @@ class AdminApiLogsAPI(APIView):
             })
 
         # Detailed API Log Query
-        logs_qs = ApiCallLog.objects.select_related('user').all()
+        logs_qs = ApiCallLog.objects.select_related('user').filter(log_date_q)
         if service_type_filter and service_type_filter != 'ALL':
             logs_qs = logs_qs.filter(service_type__iexact=service_type_filter)
         if search:
