@@ -618,7 +618,7 @@ class VerifyPaymentAPIView(APIView):
             message="Payment verified successfully",
             data={
                 "subscription_id": subscription.id,
-                "plan_name": subscription.plan.plan_name,
+                "plan_name": subscription.plan.plan_name if subscription.plan else None,
                 "billing_cycle": subscription.billing_cycle,
                 "start_date": subscription.start_date,
                 "end_date": subscription.end_date,
