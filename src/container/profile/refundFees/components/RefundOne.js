@@ -8,12 +8,6 @@ import {
   AccountBookOutlined,
 } from '@ant-design/icons';
 
-import profitSummaryImg from '../../../../assets/icons/Dashboard.png';
-import profitTableImg from '../../../../assets/icons/profitTablenewimag.png';
-import advertisingImg from '../../../../assets/icons/advertising.png';
-import returnsAdjustmentsImg from '../../../../assets/icons/returns.png';
-import paymentReconcile from '../../../../assets/icons/paymentReconcile.png';
-
 const features = [
   {
     id: 'profit-summary',
@@ -30,7 +24,7 @@ const features = [
     color: 'emerald',
     media: {
       type: 'screenshot',
-      src: profitSummaryImg,
+      src: '/icons/Dashboard.png',
       alt: 'Profit summary dashboard showing total sales, total profit and sales details',
     },
   },
@@ -47,7 +41,11 @@ const features = [
       'Export to spreadsheet for your accountant or your own model',
     ],
     color: 'blue',
-    media: { type: 'screenshot', src: profitTableImg, alt: 'Profit table view showing per-order financial breakdown' },
+    media: {
+      type: 'screenshot',
+      src: '/icons/profitTablenewimag.png',
+      alt: 'Profit table view showing per-order financial breakdown',
+    },
   },
   {
     id: 'advertising',
@@ -64,7 +62,7 @@ const features = [
     color: 'purple',
     media: {
       type: 'screenshot',
-      src: advertisingImg,
+      src: '/icons/advertising.png',
       alt: 'Advertising dashboard showing ACOS, TACOS, ROAS and campaign performance',
     },
   },
@@ -83,7 +81,7 @@ const features = [
     color: 'amber',
     media: {
       type: 'screenshot',
-      src: returnsAdjustmentsImg,
+      src: '/icons/returns.png',
       alt: 'Returns and adjustments dashboard with trend chart and transaction table',
     },
   },
@@ -104,7 +102,7 @@ const features = [
     color: 'cyan',
     media: {
       type: 'screenshot',
-      src: paymentReconcile,
+      src: '/icons/paymentReconcile.png',
       alt: 'Payment reconciliation dashboard showing settlements, leaks, recoverable amounts and reimbursement tracking',
     },
   },

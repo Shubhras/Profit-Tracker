@@ -8,50 +8,44 @@ import {
 } from '@ant-design/icons';
 
 import { UilArrowGrowth } from '@iconscout/react-unicons';
-import profitImg from '../../../../assets/icons/Dashboard.png';
-import advertisingImg from '../../../../assets/icons/advertising.png';
-import skuImg from '../../../../assets/icons/profitTablenewimag.png';
-import customersImg from '../../../../assets/icons/paymentReconcile.png';
-import reportsImg from '../../../../assets/icons/returns.png';
-import inventoryImg from '../../../../assets/icons/operations.png';
 
 const features = [
   {
     id: 1,
     title: 'Profit',
     icon: <UilArrowGrowth />,
-    image: profitImg,
+    image: '/icons/Dashboard.png',
   },
   {
     id: 2,
     title: 'Advertising',
     icon: <NotificationOutlined />,
-    image: advertisingImg,
+    image: '/icons/advertising.png',
   },
   {
     id: 3,
     title: 'SKU',
     icon: <BarcodeOutlined />,
-    image: skuImg,
+    image: '/icons/profitTablenewimag.png',
   },
 
   {
     id: 5,
     title: 'Reconcile',
     icon: <AuditOutlined />,
-    image: customersImg,
+    image: '/icons/paymentReconcile.png',
   },
   {
     id: 6,
     title: 'Returns',
     icon: <BarChartOutlined />,
-    image: reportsImg,
+    image: '/icons/returns.png',
   },
   {
     id: 7,
     title: 'Operations',
     icon: <AppstoreOutlined />,
-    image: inventoryImg,
+    image: '/icons/operations.png',
   },
 ];
 

@@ -1,64 +1,67 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import accentz from '../../../../assets/brand-logo/accentz.jpg';
-import aparna from '../../../../assets/brand-logo/aparna.jpeg';
-import aromala from '../../../../assets/brand-logo/aromala.png';
-import clay from '../../../../assets/brand-logo/clay-karma.png';
-import decopix from '../../../../assets/brand-logo/decopix.png';
-import doctor from '../../../../assets/brand-logo/doctor.jpg';
-import doggo from '../../../../assets/brand-logo/doggo.jpeg';
-import excent from '../../../../assets/brand-logo/excent.jpeg';
-import expresso from '../../../../assets/brand-logo/expresso.jpg';
-import fishway from '../../../../assets/brand-logo/fshway.jpeg';
-import gruti from '../../../../assets/brand-logo/gruti.jpg';
-import happy from '../../../../assets/brand-logo/happy-herbs.png';
-import hhm from '../../../../assets/brand-logo/hhm.jpg';
-import jj from '../../../../assets/brand-logo/jj.jpeg';
-import maha from '../../../../assets/brand-logo/maha-sakthi.png';
-import meshear from '../../../../assets/brand-logo/meshear.jpeg';
-import nikira from '../../../../assets/brand-logo/nikira.png';
-import paperly from '../../../../assets/brand-logo/paperly.jpg';
-import parent from '../../../../assets/brand-logo/parent.jpeg';
-import psvm from '../../../../assets/brand-logo/psvm.jpg';
-import rawa from '../../../../assets/brand-logo/rawa.jpeg';
-import remarkable from '../../../../assets/brand-logo/remarkable.jpeg';
-import secure from '../../../../assets/brand-logo/secure-steps.png';
-import stickme from '../../../../assets/brand-logo/stickme.jpg';
-import swaroop from '../../../../assets/brand-logo/swaroop.png';
-import syutam from '../../../../assets/brand-logo/syutam.jpeg';
-import tweak from '../../../../assets/brand-logo/tweak.jpeg';
-import woody from '../../../../assets/brand-logo/woody.png';
 
 const logos = [
-  accentz,
-  aparna,
-  aromala,
-  clay,
-  decopix,
-  doctor,
-  doggo,
-  excent,
-  expresso,
-  fishway,
-  gruti,
-  happy,
-  hhm,
-  jj,
-  maha,
-  meshear,
-  nikira,
-  paperly,
-  parent,
-  psvm,
-  rawa,
-  remarkable,
-  secure,
-  stickme,
-  swaroop,
-  syutam,
-  tweak,
-  woody,
+  '/brand-logo/accentz.jpg',
+  '/brand-logo/aparna.jpeg',
+  '/brand-logo/aromala.png',
+  '/brand-logo/clay-karma.png',
+  '/brand-logo/decopix.png',
+  '/brand-logo/doctor.jpg',
+  '/brand-logo/doggo.jpeg',
+  '/brand-logo/excent.jpeg',
+  '/brand-logo/expresso.jpg',
+  '/brand-logo/fshway.jpeg',
+  '/brand-logo/gruti.jpg',
+  '/brand-logo/happy-herbs.png',
+  '/brand-logo/hhm.jpg',
+  '/brand-logo/jj.jpeg',
+  '/brand-logo/maha-sakthi.png',
+  '/brand-logo/meshear.jpeg',
+  '/brand-logo/nikira.png',
+  '/brand-logo/paperly.jpg',
+  '/brand-logo/parent.jpeg',
+  '/brand-logo/psvm.jpg',
+  '/brand-logo/rawa.jpeg',
+  '/brand-logo/remarkable.jpeg',
+  '/brand-logo/secure-steps.png',
+  '/brand-logo/stickme.jpg',
+  '/brand-logo/swaroop.png',
+  '/brand-logo/syutam.jpeg',
+  '/brand-logo/tweak.jpeg',
+  '/brand-logo/woody.png',
 ];
+
+// const logos = [
+//   accentz,
+//   aparna,
+//   aromala,
+//   clay,
+//   decopix,
+//   doctor,
+//   doggo,
+//   excent,
+//   expresso,
+//   fishway,
+//   gruti,
+//   happy,
+//   hhm,
+//   jj,
+//   maha,
+//   meshear,
+//   nikira,
+//   paperly,
+//   parent,
+//   psvm,
+//   rawa,
+//   remarkable,
+//   secure,
+//   stickme,
+//   swaroop,
+//   syutam,
+//   tweak,
+//   woody,
+// ];
 
 function Marque() {
   return (
