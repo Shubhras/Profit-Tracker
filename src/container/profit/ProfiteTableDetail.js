@@ -17,8 +17,8 @@ import { useDispatch, useSelector } from 'react-redux';
 // import ProfitFilterBar from './component/ProfitFilterBar';
 // import ProfitModal from './component/ProfitModal'
 import CalculationModal from './component/Calculations';
-import amazon from '../../assets/icons/amazon.svg';
-import myntra from '../../assets/icons/myntraLogo.jpg';
+// import amazon from '../../../public/icons/amazon.svg';
+// import myntra from '../../../public/icons/myntraLogo.jpg';
 import { getProfitDetails, exportProfitabilityDetails } from '../../redux/dashboard/actionCreator';
 // import { PageHeader } from '../../components/page-headers/page-headers';
 
@@ -56,9 +56,10 @@ export default function ProfitDetailsView() {
   // const [columnSearch, setColumnSearch] = React.useState('');
 
   const channelLogoMap = {
-    'Amazon-India': amazon,
-    // 'Flipkart-India': flipkart,
-    'Myntra-India': myntra,
+    // 'Amazon-India': amazon,
+    // 'Myntra-India': myntra,
+    'Amazon-India': '/icons/amazon.svg',
+    'Myntra-India': '/icons/myntraLogo.jpg',
   };
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -310,17 +311,31 @@ export default function ProfitDetailsView() {
       dataIndex: 'channel',
       width: 70,
       fixed: 'left',
-      render: (value) => {
-        // if (record.key === 'total') {
-        //   return <span>Total</span>;
-        // }
+      //   render: (value) => {
+
+      //     const logo = channelLogoMap[value];
+
+      //     return (
+      //       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      //         {logo && <img src={logo} alt={value} style={{ width: 24, height: 24, objectFit: 'contain' }} />}
+      //       </div>
+      //     );
+      //   },
+      // },
+      render: (value, record) => {
+        if (record.key === 'total') {
+          return <span>Total</span>;
+        }
 
         const logo = channelLogoMap[value];
 
         return (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {logo && <img src={logo} alt={value} style={{ width: 24, height: 24, objectFit: 'contain' }} />}
-            {/* <span>{value}</span> */}
+          <div className="flex items-center justify-center w-full">
+            {logo ? (
+              <img src={logo} alt={value} className="w-6 h-6 object-contain" />
+            ) : (
+              <span className="text-gray-400">-</span>
+            )}
           </div>
         );
       },
