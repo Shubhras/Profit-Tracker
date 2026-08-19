@@ -17,8 +17,6 @@ import { useDispatch, useSelector } from 'react-redux';
 // import ProfitFilterBar from './component/ProfitFilterBar';
 // import ProfitModal from './component/ProfitModal'
 import CalculationModal from '../profit/component/Calculations';
-import amazon from '../../assets/icons/amazon.svg';
-import myntra from '../../assets/icons/myntraLogo.jpg';
 // import flipkart from "../../assets/icons/flipkart.png";
 import {
   getProfitDetails,
@@ -61,10 +59,12 @@ export default function ProfitDetailsView() {
   // const [columnSearch, setColumnSearch] = React.useState('');
 
   const channelLogoMap = {
-    'Amazon-India': amazon,
-    'Myntra-India': myntra,
-    Myntra: myntra,
-    // 'Flipkart-India': flipkart,
+    // 'Amazon-India': amazon,
+    // 'Myntra-India': myntra,
+    // Myntra: myntra,
+    'Amazon-India': '/icons/amazon.svg',
+    'Myntra-India': '/icons/myntraLogo.jpg',
+    Myntra: '/icons/myntraLogo.jpg',
   };
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -321,17 +321,33 @@ export default function ProfitDetailsView() {
       dataIndex: 'channel',
       width: 70,
       fixed: 'left',
-      render: (value) => {
-        // if (record.key === 'total') {
-        //   return <span>Total</span>;
-        // }
+      // render: (value) => {
+      //   const logo = channelLogoMap[value] || (value && value.toLowerCase().includes('myntra') ? myntra : null);
 
-        const logo = channelLogoMap[value] || (value && value.toLowerCase().includes('myntra') ? myntra : null);
+      //   return (
+      //     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      //       {logo && <img src={logo} alt={value} style={{ width: 24, height: 24, objectFit: 'contain' }} />}
+      //       {/* <span>{value}</span> */}
+      //     </div>
+      //   );
+      // },
+      render: (value) => {
+        const logo =
+          channelLogoMap[value] || (value && value.toLowerCase().includes('myntra') ? '/icons/myntraLogo.jpg' : null);
 
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {logo && <img src={logo} alt={value} style={{ width: 24, height: 24, objectFit: 'contain' }} />}
-            {/* <span>{value}</span> */}
+            {logo && (
+              <img
+                src={logo}
+                alt={value}
+                style={{
+                  width: 24,
+                  height: 24,
+                  objectFit: 'contain',
+                }}
+              />
+            )}
           </div>
         );
       },

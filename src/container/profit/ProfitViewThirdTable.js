@@ -21,8 +21,6 @@ import {
   getPaymentReconcileDetailsByParentProductId,
   exportProfitabilityDetails,
 } from '../../redux/dashboard/actionCreator';
-import amazon from '../../assets/icons/amazon.svg';
-import myntra from '../../assets/icons/myntraLogo.jpg';
 
 export default function ProfitDetailsView() {
   const { id } = useParams();
@@ -71,8 +69,10 @@ export default function ProfitDetailsView() {
   const [exportLoading, setExportLoading] = React.useState(false);
 
   const channelLogoMap = {
-    'Amazon-India': amazon,
-    'Myntra-India': myntra,
+    // 'Amazon-India': amazon,
+    // 'Myntra-India': myntra,
+    'Amazon-India': '/icons/amazon.svg',
+    'Myntra-India': '/icons/myntraLogo.jpg',
   };
 
   const apipayload = {
