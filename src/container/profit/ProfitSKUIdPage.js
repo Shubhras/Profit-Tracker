@@ -1,6 +1,15 @@
 import React, { useEffect } from 'react';
-import { Table, Card, Modal, Checkbox, Tooltip, Button } from 'antd';
-import { SearchOutlined, FilterOutlined, EyeOutlined, CloseCircleOutlined, DownloadOutlined } from '@ant-design/icons';
+import { Table, Card, Modal, Checkbox, Tooltip, Button, Dropdown } from 'antd';
+import {
+  SearchOutlined,
+  FilterOutlined,
+  EyeOutlined,
+  CloseCircleOutlined,
+  ExportOutlined,
+  DownOutlined,
+  FileExcelOutlined,
+  FileTextOutlined,
+} from '@ant-design/icons';
 import { useParams, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 // import ProfitFilterBar from './component/ProfitFilterBar';
@@ -97,12 +106,12 @@ export default function ProfitSKUIdPage() {
   });
 
   const [exportLoading, setExportLoading] = React.useState(false);
-  const handleExport = async () => {
+  const handleExport = async (format = 'xlsx') => {
     try {
       setExportLoading(true);
       const payload = buildPayload();
       await dispatch(
-        exportProfitabilityDetails(payload, 'xlsx', '/amazon/profitability/details/by-parent-asin/export/'),
+        exportProfitabilityDetails(payload, format, '/amazon/profitability/details/by-parentproductid/export/'),
       );
     } catch (error) {
       console.error('Export failed:', error);
@@ -110,6 +119,21 @@ export default function ProfitSKUIdPage() {
       setExportLoading(false);
     }
   };
+
+  const exportMenuItems = [
+    {
+      key: 'xlsx',
+      label: 'Excel (.xlsx)',
+      icon: <FileExcelOutlined style={{ color: '#10b981' }} />,
+      onClick: () => handleExport('xlsx'),
+    },
+    {
+      key: 'csv',
+      label: 'CSV (.csv)',
+      icon: <FileTextOutlined style={{ color: '#3b82f6' }} />,
+      onClick: () => handleExport('csv'),
+    },
+  ];
 
   useEffect(() => {
     if (decodedChannel) {
@@ -619,16 +643,6 @@ export default function ProfitSKUIdPage() {
 
             {/* Right Actions */}
             <div className="flex items-center gap-3">
-              {/* Export Button */}
-              <Button
-                icon={<DownloadOutlined style={{ fontSize: 14 }} />}
-                loading={exportLoading}
-                onClick={handleExport}
-                className="flex items-center !h-[35px] !rounded-lg !border-[#e5e7eb] whitespace-nowrap"
-              >
-                <span className="text-[#4B5563] text-[13px]">Export</span>
-              </Button>
-
               {/* Filter Button */}
               <div className="relative">
                 <button
@@ -758,6 +772,18 @@ export default function ProfitSKUIdPage() {
                   </div>
                 )}
               </div>
+
+              {/* Export Button */}
+              <Dropdown menu={{ items: exportMenuItems }} trigger={['click']} placement="bottomRight">
+                <Button
+                  type="primary"
+                  icon={<ExportOutlined />}
+                  loading={exportLoading}
+                  className="bg-[#10b981] hover:bg-[#059669] border-none text-white font-medium px-4 h-[35px] rounded-lg flex items-center gap-1.5 shadow-sm"
+                >
+                  Export <DownOutlined style={{ fontSize: 10 }} />
+                </Button>
+              </Dropdown>
             </div>
           </div>
           <Table

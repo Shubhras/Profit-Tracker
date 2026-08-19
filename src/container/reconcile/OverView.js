@@ -7,6 +7,10 @@ import {
   EyeOutlined,
   SettingOutlined,
   CloseCircleOutlined,
+  ExportOutlined,
+  DownOutlined,
+  FileExcelOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -14,14 +18,20 @@ import { useDispatch, useSelector } from 'react-redux';
 // import ProfitModal from './component/ProfitModal'
 import CalculationModal from '../profit/component/Calculations';
 import amazon from '../../assets/icons/amazon.svg';
+import myntra from '../../assets/icons/myntraLogo.jpg';
 // import flipkart from "../../assets/icons/flipkart.png";
-import { getProfitDetails } from '../../redux/dashboard/actionCreator';
+import {
+  getProfitDetails,
+  getPaymentReconcileDetails,
+  exportProfitabilityDetails,
+} from '../../redux/dashboard/actionCreator';
+
 // import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function ProfitDetailsView() {
   const { channel } = useParams();
   const location = useLocation();
-  const decodedChannel = decodeURIComponent(channel);
+  const decodedChannel = channel ? decodeURIComponent(channel) : null;
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { dateRange, profitData, loading, channel: globalChannel } = useSelector((state) => state.dashboard);
@@ -52,6 +62,8 @@ export default function ProfitDetailsView() {
 
   const channelLogoMap = {
     'Amazon-India': amazon,
+    'Myntra-India': myntra,
+    Myntra: myntra,
     // 'Flipkart-India': flipkart,
   };
   const [pagination, setPagination] = React.useState({
@@ -120,10 +132,36 @@ export default function ProfitDetailsView() {
       },
     };
   };
-  useEffect(() => {
-    if (decodedChannel) {
-      dispatch(getProfitDetails(buildPayload()));
+  const [exportLoading, setExportLoading] = React.useState(false);
+  const handleExport = async (format = 'xlsx') => {
+    try {
+      setExportLoading(true);
+      const payload = buildPayload();
+      await dispatch(exportProfitabilityDetails(payload, format, '/amazon/payment-reconcile/details/export/'));
+    } catch (error) {
+      console.error('Export failed:', error);
+    } finally {
+      setExportLoading(false);
     }
+  };
+
+  const exportMenuItems = [
+    {
+      key: 'xlsx',
+      label: 'Excel (.xlsx)',
+      icon: <FileExcelOutlined style={{ color: '#10b981' }} />,
+      onClick: () => handleExport('xlsx'),
+    },
+    {
+      key: 'csv',
+      label: 'CSV (.csv)',
+      icon: <FileTextOutlined style={{ color: '#3b82f6' }} />,
+      onClick: () => handleExport('csv'),
+    },
+  ];
+
+  useEffect(() => {
+    dispatch(getPaymentReconcileDetails(buildPayload()));
   }, [dateRange, decodedChannel, pagination, debouncedSearch]);
 
   // const PageRoutes = [
@@ -184,7 +222,17 @@ export default function ProfitDetailsView() {
         // profitPercent: Number(item.grossprofitper) || 0,
         profitPercent: item.grossprofitper || 0,
 
-        // settledamount: Number(item.profit_settled_amount) || 0,
+        // Reconcile metrics
+        actual_fees: item.actual_fees || '₹0.0',
+        fees_leaks: item.fees_leaks || '₹0.0',
+        actual_shipping_charges: item.actual_shipping_charges || '₹0.0',
+        shipping_leaks: item.shipping_leaks || '₹0.0',
+        actual_mp_gst: item.actual_mp_gst || '₹0.0',
+        actual_tcs: item.actual_tcs || '₹0.0',
+        tcs_leaks: item.tcs_leaks || '₹0.0',
+        expected_settlement: item.expected_settlement || item.exp_settlement || '₹0.0',
+        settlement_paid_in_bank: item.settlement_paid_in_bank || '₹0.0',
+        unsettled_not_paid: item.unsettled_not_paid || '₹0.0',
       })) || [];
 
     return rows;
@@ -214,6 +262,16 @@ export default function ProfitDetailsView() {
       customer_return_count: 'customer_return_count',
       final_net_qty: 'total_final_net_qty',
       final_net_sales: 'total_final_net_sales',
+      actual_fees: 'total_actual_fees',
+      fees_leaks: 'total_fees_leaks',
+      actual_shipping_charges: 'total_actual_shipping',
+      shipping_leaks: 'total_shipping_leaks',
+      actual_mp_gst: 'total_actual_mp_gst',
+      actual_tcs: 'total_actual_tcs',
+      tcs_leaks: 'total_tcs_leaks',
+      expected_settlement: 'total_expected_settlement',
+      settlement_paid_in_bank: 'total_settlement_paid_in_bank',
+      unsettled_not_paid: 'total_unsettled_not_paid',
     };
 
     const value = totals?.[keyMap[dataIndex]];
@@ -268,7 +326,7 @@ export default function ProfitDetailsView() {
         //   return <span>Total</span>;
         // }
 
-        const logo = channelLogoMap[value];
+        const logo = channelLogoMap[value] || (value && value.toLowerCase().includes('myntra') ? myntra : null);
 
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -652,13 +710,82 @@ export default function ProfitDetailsView() {
         </button>
       ),
     },
-
-    // {
-    //   title: 'Settled amount',
-    //   dataIndex: 'settledamount',
-    //   align: 'center',
-    //   sorter: (a, b) => a.settledamount - b.settledamount,
-    // },
+    {
+      title: 'Actual MP Fees',
+      dataIndex: 'actual_fees',
+      align: 'center',
+      width: getDynamicWidth('actual_fees', 90),
+      ellipsis: true,
+      sorter: (a, b) => (parseFloat(a.actual_fees) || 0) - (parseFloat(b.actual_fees) || 0),
+    },
+    {
+      title: 'Fee Leaks',
+      dataIndex: 'fees_leaks',
+      align: 'center',
+      width: getDynamicWidth('fees_leaks', 80),
+      ellipsis: true,
+      sorter: (a, b) => (parseFloat(a.fees_leaks) || 0) - (parseFloat(b.fees_leaks) || 0),
+      render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+    },
+    {
+      title: 'Actual Shipping',
+      dataIndex: 'actual_shipping_charges',
+      align: 'center',
+      width: getDynamicWidth('actual_shipping_charges', 90),
+      ellipsis: true,
+      sorter: (a, b) => (parseFloat(a.actual_shipping_charges) || 0) - (parseFloat(b.actual_shipping_charges) || 0),
+    },
+    {
+      title: 'Shipping Leaks',
+      dataIndex: 'shipping_leaks',
+      align: 'center',
+      width: getDynamicWidth('shipping_leaks', 80),
+      ellipsis: true,
+      sorter: (a, b) => (parseFloat(a.shipping_leaks) || 0) - (parseFloat(b.shipping_leaks) || 0),
+      render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+    },
+    {
+      title: 'Actual MP-GST',
+      dataIndex: 'actual_mp_gst',
+      align: 'center',
+      width: getDynamicWidth('actual_mp_gst', 80),
+      ellipsis: true,
+      sorter: (a, b) => (parseFloat(a.actual_mp_gst) || 0) - (parseFloat(b.actual_mp_gst) || 0),
+    },
+    {
+      title: 'Actual TCS',
+      dataIndex: 'actual_tcs',
+      align: 'center',
+      width: getDynamicWidth('actual_tcs', 80),
+      ellipsis: true,
+      sorter: (a, b) => (parseFloat(a.actual_tcs) || 0) - (parseFloat(b.actual_tcs) || 0),
+    },
+    {
+      title: 'TCS Leaks',
+      dataIndex: 'tcs_leaks',
+      align: 'center',
+      width: getDynamicWidth('tcs_leaks', 80),
+      ellipsis: true,
+      sorter: (a, b) => (parseFloat(a.tcs_leaks) || 0) - (parseFloat(b.tcs_leaks) || 0),
+      render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+    },
+    {
+      title: 'Bank Settled Amount',
+      dataIndex: 'settlement_paid_in_bank',
+      align: 'center',
+      width: getDynamicWidth('settlement_paid_in_bank', 100),
+      ellipsis: true,
+      sorter: (a, b) => (parseFloat(a.settlement_paid_in_bank) || 0) - (parseFloat(b.settlement_paid_in_bank) || 0),
+    },
+    {
+      title: 'Unsettled Amount',
+      dataIndex: 'unsettled_not_paid',
+      align: 'center',
+      width: getDynamicWidth('unsettled_not_paid', 100),
+      ellipsis: true,
+      sorter: (a, b) => (parseFloat(a.unsettled_not_paid) || 0) - (parseFloat(b.unsettled_not_paid) || 0),
+      render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+    },
     {
       key: 'action',
       fixed: 'right',
@@ -667,7 +794,7 @@ export default function ProfitDetailsView() {
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
           <button
             type="button"
-            onClick={() => navigate(`../second/${record.asin}`)}
+            onClick={() => navigate(`/admin/reconcile/second/${record.asin}`, { state: { isReconcile: true } })}
             className="w-[28px] h-[28px] rounded-full border border-[#dbe1e8]
   flex items-center justify-center cursor-pointer hover:text-black transition-all duration-200 mx-auto"
           >
@@ -989,6 +1116,16 @@ export default function ProfitDetailsView() {
                   <span className="text-[#4B5563] text-[13px]">Manage Columns</span>
                 </Button>
               </Dropdown>
+              <Dropdown menu={{ items: exportMenuItems }} trigger={['click']} placement="bottomRight">
+                <Button
+                  type="primary"
+                  icon={<ExportOutlined />}
+                  loading={exportLoading}
+                  className="bg-[#10b981] hover:bg-[#059669] border-none text-white font-medium px-4 h-[35px] rounded-lg flex items-center gap-1.5 shadow-sm"
+                >
+                  Export <DownOutlined style={{ fontSize: 10 }} />
+                </Button>
+              </Dropdown>
             </div>
           </div>
           <Table
@@ -1057,9 +1194,18 @@ export default function ProfitDetailsView() {
                         customer_return_price: 'customer_return_price',
                         courier_return_count: 'courier_return_count',
                         customer_return_count: 'customer_return_count',
-                        drr: 'drr',
                         final_net_qty: 'total_final_net_qty',
                         final_net_sales: 'total_final_net_sales',
+                        actual_fees: 'total_actual_fees',
+                        fees_leaks: 'total_fees_leaks',
+                        actual_shipping_charges: 'total_actual_shipping',
+                        shipping_leaks: 'total_shipping_leaks',
+                        actual_mp_gst: 'total_actual_mp_gst',
+                        actual_tcs: 'total_actual_tcs',
+                        tcs_leaks: 'total_tcs_leaks',
+                        expected_settlement: 'total_expected_settlement',
+                        settlement_paid_in_bank: 'total_settlement_paid_in_bank',
+                        unsettled_not_paid: 'total_unsettled_not_paid',
                       };
 
                       const value = totals?.[keyMap[col.dataIndex]];

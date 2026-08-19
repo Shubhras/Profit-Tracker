@@ -11,7 +11,7 @@ class OrderSummary:
     def __init__(self, calculator):
         self.calculator = calculator
 
-    def execute(self, seller_sku=None):
+    def execute(self, seller_sku=None, style_id=None):
         """
         Entry point for Order Summary.
         """
@@ -30,6 +30,7 @@ class OrderSummary:
         return self.build_order_summary(
             orders=orders,
             seller_sku=seller_sku,
+            style_id=style_id,
             payment_map=payment_map,
             return_map=return_map,
         )
@@ -40,6 +41,7 @@ class OrderSummary:
         payment_map,
         return_map,
         seller_sku=None,
+        style_id=None,
     ):
         """
         Build one row per Myntra order.
@@ -64,6 +66,9 @@ class OrderSummary:
             # ==========================================
 
             if seller_sku is not None and order.seller_sku_code != seller_sku:
+                continue
+
+            if style_id is not None and str(order.style_id) != str(style_id):
                 continue
 
             # ==========================================

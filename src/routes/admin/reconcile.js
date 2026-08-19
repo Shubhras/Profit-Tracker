@@ -2,6 +2,8 @@ import React, { lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import SettlementDetails from '../../container/reconcile/SettlementDetails';
 import PaymentReconcileDetails from '../../container/reconcile/PaymentReconcileDetails';
+import ProfitViewSecondTable from '../../container/profit/ProfitViewSecondTable';
+import ProfitViewThirdTable from '../../container/profit/ProfitViewThirdTable';
 
 const PaymentReconcile = lazy(() => import('../../container/reconcile/PaymentReconcile'));
 const Overview = lazy(() => import('../../container/reconcile/OverView'));
@@ -33,6 +35,10 @@ function ReconcileRoutes() {
     <Routes>
       <Route path="payment-reconcile" element={<PaymentReconcile />} />
       <Route path="payment-overview" element={<Overview />} />
+      <Route path="second/:asin" element={<ProfitViewSecondTable />} />
+      <Route path="profitSecondtable/:asin" element={<ProfitViewSecondTable />} />
+      <Route path="third/:id" element={<ProfitViewThirdTable />} />
+      <Route path="profitThirdtable/:id" element={<ProfitViewThirdTable />} />
 
       <Route path="settlementdetails" element={<SettlementDetails />} />
       <Route path="paymentReconcileDetials" element={<PaymentReconcileDetails />} />

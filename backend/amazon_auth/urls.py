@@ -16,6 +16,7 @@ from .transations import *
 from .reconcile import *
 from . import exports
 from . import profit
+from . import payment_reconcyle
 
 urlpatterns = [
     path('dashboard-stats-old/', views.get_full_dashboard, name='dashboard-stats-old'),
@@ -87,6 +88,20 @@ urlpatterns = [
    
     path('profitability-monthwise/', profit.combined_profitability_monthwise, name='get_profitability_monthwise'),
     path('profitability-monthwise-old/', views.get_profitability_monthwise, name='get_profitability_monthwise_old'),
+
+    # Payment Reconciliation Overview
+    path('payment-reconcile/overview/', payment_reconcyle.combined_payment_reconcile_overview, name='payment_reconcile_overview'),
+    path('payment-reconcile/details/', payment_reconcyle.combined_payment_reconcile_overview, name='payment_reconcile_details'),
+    path('payment-reconcile/details/export/', exports.export_payment_reconcile_overview, name='export_payment_reconcile_overview'),
+    path('payment-reconcile/overview/export/', exports.export_payment_reconcile_overview, name='export_payment_reconcile_overview_alias'),
+    path('payment-reconcile/details/by-parent-asin/', payment_reconcyle.combined_payment_reconcile_by_parent_asin, name='payment_reconcile_details_by_parent_asin'),
+    path('payment-reconcile/details/by-parent-asin/export/', exports.export_payment_reconcile_by_parent_asin, name='export_payment_reconcile_by_parent_asin'),
+    path('payment-reconcile/details/by-parentproductid/', payment_reconcyle.combined_payment_reconcile_by_parentproductid, name='payment_reconcile_details_by_parentproductid'),
+    path('payment-reconcile/details/by-parentproductid/export/', exports.export_payment_reconcile_by_parentproductid, name='export_payment_reconcile_by_parentproductid'),
+    path('payment-reconcile/details-old/', payment_reconcyle.payment_reconcile_details_transactions_shipping, name='payment_reconcile_details_old'),
+
+
+
     path('reconcile-paymentsummary/', views.get_amazon_data_reconcile_paymentsummary, name='get_amazon_data_reconcile_paymentsummary'),
     path('bank/ransfer-summary/', views.get_bank_transfer_workflow, name='bank/ransfer-summary/'),
     path('outstanding-payments/', views.get_outstanding_payments, name='get_outstanding_payments'),

@@ -8814,7 +8814,8 @@ def sku_profit_report_transactions_shipping(request):
             # "total_ret_percent": f"{round((total_returns / total_qty * 100), 2) if total_qty else 0.0}%",
             
             "total_returns": total_return_count,
-            "total_ret_percent": f"{round((total_return_count / total_qty * 100), 2) if total_final_net_qty else 0.0}%",
+            "total_ret_percent": f"{round((total_return_count / total_qty * 100), 2) if total_qty else 0.0}%",
+            "totalreturnper": f"{round((total_return_count / total_qty * 100), 2) if total_qty else 0.0}%",
 
             "totalprofitmargin": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
 

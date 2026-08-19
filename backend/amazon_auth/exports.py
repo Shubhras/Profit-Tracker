@@ -29,6 +29,12 @@ from .reconcile import (
     AmazonOrderRelatedTransactionsAPIView,
     AmazonRefundTransactionsAPIView
 )
+from .payment_reconcyle import (
+    combined_payment_reconcile_overview,
+    combined_payment_reconcile_by_parent_asin,
+    combined_payment_reconcile_by_parentproductid
+)
+
 
 from .models import ExportedReport
 from .export_utils import generate_csv, generate_xlsx, generate_pdf
@@ -94,13 +100,14 @@ def get_data_from_view(view_func_or_class, request, override_params=None):
         if channel_list:
             filters["channel"] = {"IN": channel_list}
         
-        from_date_val = request.GET.get("fromDate") or request.GET.get("from_date") or request.GET.get("startDate")
+        from_date_val = request.GET.get("fromDate") or request.GET.get("from_date") or request.GET.get("startDate") or request.GET.get("start_date")
         if from_date_val:
             filters["fromDate"] = from_date_val
             
-        to_date_val = request.GET.get("toDate") or request.GET.get("to_date") or request.GET.get("endDate")
+        to_date_val = request.GET.get("toDate") or request.GET.get("to_date") or request.GET.get("endDate") or request.GET.get("end_date")
         if to_date_val:
             filters["toDate"] = to_date_val
+            filters["endDate"] = to_date_val
             
         search_val = request.GET.get("search") or request.GET.get("q") or request.GET.get("searchTerm")
         if search_val:
@@ -133,33 +140,56 @@ def get_data_from_view(view_func_or_class, request, override_params=None):
         except:
             return {}
 
-def generic_export_view(request, view_func_or_class, column_mapping, filename_base, response_format, override_params=None, list_key='results', totals_key='totals', formatter_func=None):
+def parse_export_date(val):
+    if not val:
+        return None
+    val_str = str(val).strip()
+    if not val_str or val_str.lower() in ('none', 'null', '', 'undefined'):
+        return None
+    if len(val_str) >= 10:
+        sub_str = val_str[:10]
+        try:
+            return datetime.datetime.strptime(sub_str, "%Y-%m-%d").date()
+        except Exception:
+            pass
+    for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%d-%m-%Y", "%d/%m/%Y"):
+        try:
+            return datetime.datetime.strptime(val_str, fmt).date()
+        except Exception:
+            pass
+    return None
+
+def generic_export_view(request, view_func_or_class, column_mapping, filename_base, response_format, override_params=None, list_key='results', totals_key='totals', formatter_func=None, report_type_name=None):
     from_date = None
     to_date = None
     
-    # Try to extract dates from GET/POST
-    date_source = {}
+    # Try to extract dates from GET/POST across filters dict, top-level data, and GET params
+    sources_to_check = []
     if request.method == 'POST':
         if hasattr(request, 'data') and isinstance(request.data, dict):
-            date_source = request.data.get("filters", {})
-    else:
-        date_source = request.GET
-        
-    for k in ['fromDate', 'from_date', 'start_date']:
-        if k in date_source:
-            try:
-                from_date = datetime.datetime.strptime(str(date_source[k]), "%Y-%m-%d").date()
-                break
-            except:
-                pass
-                
-    for k in ['toDate', 'to_date', 'end_date']:
-        if k in date_source:
-            try:
-                to_date = datetime.datetime.strptime(str(date_source[k]), "%Y-%m-%d").date()
-                break
-            except:
-                pass
+            sources_to_check.append(request.data)
+            filters_obj = request.data.get("filters")
+            if isinstance(filters_obj, dict):
+                sources_to_check.append(filters_obj)
+    if hasattr(request, 'GET') and request.GET:
+        sources_to_check.append(request.GET)
+
+    from_date_keys = ['fromDate', 'from_date', 'start_date', 'startDate', 'from']
+    to_date_keys = ['toDate', 'to_date', 'endDate', 'end_date', 'to']
+
+    for src in sources_to_check:
+        if not from_date:
+            for k in from_date_keys:
+                if k in src and src[k]:
+                    from_date = parse_export_date(src[k])
+                    if from_date:
+                        break
+        if not to_date:
+            for k in to_date_keys:
+                if k in src and src[k]:
+                    to_date = parse_export_date(src[k])
+                    if to_date:
+                        break
 
     user = getattr(request, 'user', None)
     if user and not getattr(user, 'is_authenticated', False):
@@ -169,7 +199,7 @@ def generic_export_view(request, view_func_or_class, column_mapping, filename_ba
     try:
         exported_report = ExportedReport.objects.create(
             user=user,
-            report_type=filename_base,
+            report_type=report_type_name if report_type_name else filename_base,
             file_name=f"{filename_base}.{response_format}",
             format=response_format,
             from_date=from_date,
@@ -217,9 +247,16 @@ def generic_export_view(request, view_func_or_class, column_mapping, filename_ba
         # Save file to ExportedReport instance
         filename_with_ext = f"{filename_base}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.{response_format}"
         if exported_report:
-            exported_report.file.save(filename_with_ext, ContentFile(file_data))
-            exported_report.status = "COMPLETED"
-            exported_report.save()
+            try:
+                exported_report.file.save(filename_with_ext, ContentFile(file_data))
+                exported_report.status = "COMPLETED"
+                exported_report.save()
+            except Exception as save_err:
+                import traceback
+                print(f"Warning: Could not save report file to disk media folder ({save_err}). Returning file directly.")
+                traceback.print_exc()
+                exported_report.status = "COMPLETED"
+                exported_report.save()
         
         # Return response with file download
         response = HttpResponse(file_data, content_type=content_type)
@@ -356,49 +393,164 @@ PARENT_COLUMNS = {
     **DETAILS_COLUMNS
 }
 
+def format_val_currency(val):
+    if val is None or val == '' or val == '-':
+        return '₹0.0'
+    if isinstance(val, (int, float)):
+        return f"₹{round(float(val), 2)}"
+    val_str = str(val).strip()
+    if val_str.startswith('₹') or val_str.startswith('-₹'):
+        return val_str
+    try:
+        fval = float(val_str.replace('₹', '').replace(',', ''))
+        return f"₹{round(fval, 2)}"
+    except (ValueError, TypeError):
+        return val_str
+
+def format_sku_report_export(data_list, totals_dict=None):
+    if not isinstance(data_list, list):
+        data_list = []
+        
+    formatted_list = []
+    tot_gross_q = 0
+    tot_final_net_q = 0
+    tot_ret_q = 0
+    tot_cour_ret = 0
+    tot_cust_ret = 0
+
+    for item in data_list:
+        if not isinstance(item, dict):
+            continue
+            
+        g_q = int(item.get('grossqty', 0) or 0)
+        f_net_q = int(item.get('final_net_qty') if item.get('final_net_qty') is not None else (item.get('qty', 0) or 0))
+        r_q = int(item.get('returnqty', 0) or 0)
+        cour_r = int(item.get('courier_return_count', 0) or 0)
+        cust_r = int(item.get('customer_return_count', 0) or 0)
+
+        tot_gross_q += g_q
+        tot_final_net_q += f_net_q
+        tot_ret_q += r_q
+        tot_cour_ret += cour_r
+        tot_cust_ret += cust_r
+
+        row = {}
+        row['order_id'] = item.get('order_id', '')
+        row['date'] = str(item.get('date', ''))
+        row['name'] = item.get('name', '')
+        row['channel'] = item.get('channel', 'Amazon-India')
+        
+        row['grossqty'] = g_q
+        row['final_net_qty'] = f_net_q
+        row['returnqty'] = r_q
+        row['courier_return_count'] = cour_r
+        row['customer_return_count'] = cust_r
+        
+        ret_perc = item.get('retpercent') if item.get('retpercent') is not None else item.get('returnPercent', 0)
+        if isinstance(ret_perc, (int, float)):
+            row['retpercent'] = f"{round(float(ret_perc), 2)}%"
+        else:
+            val = str(ret_perc or 0)
+            row['retpercent'] = val if val.endswith('%') else f"{val}%"
+            
+        row['promo_discount'] = format_val_currency(item.get('promo_discount'))
+        row['netsales'] = format_val_currency(item.get('grosssales') if item.get('grosssales') is not None else item.get('netsales'))
+        row['final_net_sales'] = format_val_currency(item.get('final_net_sales') or item.get('netsales'))
+        
+        row['mpfees'] = format_val_currency(item.get('mpfees') if item.get('mpfees') is not None else item.get('estimatefees'))
+        row['shippingfees'] = format_val_currency(item.get('shippingfees') or item.get('shipping'))
+        row['mp_gst'] = format_val_currency(item.get('mp_gst'))
+        row['tcs'] = format_val_currency(item.get('tcs'))
+        row['ads'] = format_val_currency(item.get('ads') or item.get('adSpend'))
+        row['taxable_value'] = format_val_currency(item.get('taxable_value') or item.get('taxableValue'))
+        row['gst_to_pay_amount'] = format_val_currency(item.get('gst_to_pay_amount'))
+        
+        gst_perc = item.get('gst_to_pay_perc', 0)
+        if isinstance(gst_perc, (int, float)):
+            row['gst_to_pay_perc'] = f"{round(float(gst_perc), 2)}%"
+        else:
+            val = str(gst_perc or 0)
+            row['gst_to_pay_perc'] = val if val.endswith('%') else f"{val}%"
+            
+        row['claim_amount'] = format_val_currency(item.get('claim_amount'))
+        row['exp_settlement'] = format_val_currency(item.get('exp_settlement') or item.get('settleAmount'))
+        row['stdcost'] = format_val_currency(item.get('stdcost') or item.get('std'))
+        row['profit'] = format_val_currency(item.get('profit'))
+        
+        prof_perc = item.get('grossprofitper') if item.get('grossprofitper') is not None else item.get('profitPercent', 0)
+        if isinstance(prof_perc, (int, float)):
+            row['grossprofitper'] = f"{round(float(prof_perc), 2)}%"
+        else:
+            val = str(prof_perc or 0)
+            row['grossprofitper'] = val if val.endswith('%') else f"{val}%"
+            
+        formatted_list.append(row)
+        
+    formatted_totals = None
+    if isinstance(totals_dict, dict):
+        formatted_totals = {
+            'order_id': 'Total',
+            'date': '',
+            'name': '',
+            'channel': '',
+            'grossqty': totals_dict.get('grossqty', tot_gross_q),
+            'final_net_qty': totals_dict.get('total_final_net_qty') if totals_dict.get('total_final_net_qty') is not None else totals_dict.get('final_net_qty', tot_final_net_q),
+            'returnqty': totals_dict.get('total_returns') if totals_dict.get('total_returns') is not None else (totals_dict.get('total_return_count') if totals_dict.get('total_return_count') is not None else totals_dict.get('returnqty', tot_ret_q)),
+            'courier_return_count': totals_dict.get('courier_return_count', tot_cour_ret),
+            'customer_return_count': totals_dict.get('customer_return_count', tot_cust_ret),
+            'retpercent': str(totals_dict.get('total_ret_percent') or totals_dict.get('totalreturnper') or totals_dict.get('retpercent') or '0%'),
+            'promo_discount': format_val_currency(totals_dict.get('total_promo_discount') or totals_dict.get('promo_discount')),
+            'netsales': format_val_currency(totals_dict.get('grosssales') if totals_dict.get('grosssales') is not None else totals_dict.get('netsales')),
+            'final_net_sales': format_val_currency(totals_dict.get('total_final_net_sales') or totals_dict.get('final_net_sales') or totals_dict.get('netsales')),
+            'mpfees': format_val_currency(totals_dict.get('estimatefees') if totals_dict.get('estimatefees') is not None else totals_dict.get('mpfees')),
+            'shippingfees': format_val_currency(totals_dict.get('shipping') or totals_dict.get('shippingfees')),
+            'mp_gst': format_val_currency(totals_dict.get('mp_gst')),
+            'tcs': format_val_currency(totals_dict.get('tcs')),
+            'ads': format_val_currency(totals_dict.get('adSpend') or totals_dict.get('ads')),
+            'taxable_value': format_val_currency(totals_dict.get('taxable_value')),
+            'gst_to_pay_amount': format_val_currency(totals_dict.get('gst_to_pay_amount')),
+            'gst_to_pay_perc': str(totals_dict.get('gst_to_pay_perc') or '0%'),
+            'claim_amount': format_val_currency(totals_dict.get('total_claim_amount') or totals_dict.get('claim_amount')),
+            'exp_settlement': format_val_currency(totals_dict.get('exp_settlement')),
+            'stdcost': format_val_currency(totals_dict.get('cost') or totals_dict.get('stdcost')),
+            'profit': format_val_currency(totals_dict.get('profit')),
+            'grossprofitper': f"{totals_dict.get('totalprofitmargin') if totals_dict.get('totalprofitmargin') is not None else (totals_dict.get('grossprofitper') or 0)}%" if not str(totals_dict.get('totalprofitmargin') or totals_dict.get('grossprofitper') or '').endswith('%') else str(totals_dict.get('totalprofitmargin') or totals_dict.get('grossprofitper'))
+        }
+        
+    return formatted_list, formatted_totals
+
+PARENT_COLUMNS = {
+    "child_sku": "Child SKU / Style Code",
+    **DETAILS_COLUMNS
+}
+
 SKU_REPORT_COLUMNS = {
     "order_id": "Order ID",
     "date": "Order Date",
     "name": "Title",
     "channel": "Channel",
     "grossqty": "Gross Qty",
-    "qty": "Net Qty",
-    "final_net_qty": "Final Net Qty",
-    "grosssales": "Gross Sales",
-    "netsales": "Net Sales",
-    "final_net_sales": "Final Net Sales",
+    "final_net_qty": "Net Qty",
+    "returnqty": "Return Qty",
+    "courier_return_count": "Courier Return Count",
+    "customer_return_count": "Customer Return Count",
+    "retpercent": "Return %",
+    "promo_discount": "Promo Discount",
+    "netsales": "Gross Sales",
+    "final_net_sales": "Net Sales",
+    "mpfees": "MP Fees",
+    "shippingfees": "Shipping Fees",
+    "mp_gst": "MP-GST",
+    "tcs": "TCS",
+    "ads": "Ad Spend",
     "taxable_value": "Taxable Value",
     "gst_to_pay_amount": "GST to Pay",
     "gst_to_pay_perc": "GST to Pay %",
-    "ads": "Ad Spend",
-    "mpfees": "MP Fees",
-    "mp_gst": "MP GST",
-    "estimatefees": "Estimated Fees",
-    "referral_fee": "Referral Fee",
-    "closing_fee": "Closing Fee",
-    "per_item_fee": "Per Item Fee",
-    "fba_fee": "FBA Fee",
-    "fba_pick_pack_fee": "FBA Pick & Pack Fee",
-    "fba_weight_handling_fee": "FBA Weight Handling Fee",
-    "tax_amount": "Tax Amount",
-    "shippingfees": "Shipping Fees",
-    "profit": "Profit",
-    "grossprofitper": "Profit %",
-    "returnqty": "Return Qty",
-    "retpercent": "Return %",
-    "tacos": "TACOS %",
-    "stdcost": "Product Cost",
-    "tcs": "TCS",
-    "exp_settlement": "Expected Settlement",
-    "promo_discount": "Promo Discount",
-    "return_amount": "Return Amount",
-    "courier_return_count": "Courier Return Qty",
-    "customer_return_count": "Customer Return Qty",
-    "courier_return_price": "Courier Return Price",
-    "customer_return_price": "Customer Return Price",
-    "claim_count": "Claim Qty",
     "claim_amount": "Claim Amount",
-    "replacement_return_count": "Replacement Return Qty"
+    "exp_settlement": "Expected Settlement",
+    "stdcost": "Product Cost",
+    "profit": "Profit",
+    "grossprofitper": "Profit %"
 }
 
 MONTHWISE_COLUMNS = {
@@ -514,12 +666,13 @@ def export_profitability_details(request):
             request,
             combined_profitability_details_transactions_shipping,
             DETAILS_COLUMNS,
-            "profitability_details",
+            "profit_asin_level",
             response_format,
             override_params=override_params,
             list_key="response",
             totals_key="totals",
-            formatter_func=format_details_export
+            formatter_func=format_details_export,
+            report_type_name="profit_asin_level"
         )
         print("DEBUG 4 - GENERIC EXPORT VIEW RETURNED", type(res), getattr(res, 'status_code', None))
         return res
@@ -542,12 +695,13 @@ def export_profitability_details_by_parent_asin(request):
         request,
         combined_profitability_parent_transactions_shipping,
         PARENT_COLUMNS,
-        "profitability_details_by_parent_asin",
+        "profit_sku_level",
         response_format,
         override_params=override_params,
         list_key="response",
         totals_key="totals",
-        formatter_func=format_details_export
+        formatter_func=format_details_export,
+        report_type_name="profit_sku_level"
     )
 
 @api_view(['GET', 'POST'])
@@ -563,11 +717,13 @@ def export_sku_profit_report(request):
         request,
         combined_sku_profit_report_transactions_shipping,
         SKU_REPORT_COLUMNS,
-        "sku_profit_report",
+        "profit_order_level_report",
         response_format,
         override_params=override_params,
         list_key="response",
-        totals_key="totals"
+        totals_key="totals",
+        formatter_func=format_sku_report_export,
+        report_type_name="profit_order_level_report"
     )
 
 @api_view(['GET', 'POST'])
@@ -685,11 +841,299 @@ def export_refund_transactions(request):
         totals_key=None
     )
 
+RECONCILE_DETAILS_COLUMNS = {
+    "channel": "Channel",
+    "asin": "Parent ASIN / Product",
+    "netqty": "Gross Qty",
+    "final_net_qty": "Net Qty",
+    "returnqty": "Return Qty",
+    "courier_return_count": "Courier Return Qty",
+    "customer_return_count": "Customer Return Qty",
+    "retpercent": "Return %",
+    "promo_discount": "Promo Discount",
+    "netsales": "Gross Sales",
+    "final_net_sales": "Net Sales",
+    "mpfees": "MP Fees",
+    "shippingfees": "Shipping Fees",
+    "mp_gst": "MP-GST",
+    "tcs": "TCS",
+    "actual_fees": "Actual MP Fees",
+    "fees_leaks": "Fee Leaks",
+    "actual_shipping_charges": "Actual Shipping",
+    "shipping_leaks": "Shipping Leaks",
+    "actual_mp_gst": "Actual MP-GST",
+    "actual_tcs": "Actual TCS",
+    "tcs_leaks": "TCS Leaks",
+    "settlement_paid_in_bank": "Bank Settled Amount",
+    "unsettled_not_paid": "Unsettled Amount",
+    "ads": "Ad Spend",
+    "taxable_value": "Taxable Value",
+    "gst_to_pay_amount": "GST to Pay",
+    "gst_to_pay_perc": "GST to Pay %",
+    "claim_amount": "Claim Amount",
+    "exp_settlement": "Expected Settlement",
+    "stdcost": "Product Cost",
+    "profit": "Profit",
+    "grossprofitper": "Profit %"
+}
+
+RECONCILE_PARENT_COLUMNS = {
+    "child_sku": "Child SKU / Style Code",
+    **RECONCILE_DETAILS_COLUMNS
+}
+
+RECONCILE_ORDER_COLUMNS = {
+    "order_id": "Order ID",
+    "date": "Order Date",
+    "name": "Title",
+    "channel": "Channel",
+    "grossqty": "Gross Qty",
+    "final_net_qty": "Net Qty",
+    "returnqty": "Return Qty",
+    "courier_return_count": "Courier Return Count",
+    "customer_return_count": "Customer Return Count",
+    "retpercent": "Return %",
+    "promo_discount": "Promo Discount",
+    "netsales": "Gross Sales",
+    "final_net_sales": "Net Sales",
+    "mpfees": "MP Fees",
+    "shippingfees": "Shipping Fees",
+    "mp_gst": "MP-GST",
+    "tcs": "TCS",
+    "actual_fees": "Actual MP Fees",
+    "fees_leaks": "Fee Leaks",
+    "actual_shipping_charges": "Actual Shipping",
+    "shipping_leaks": "Shipping Leaks",
+    "actual_mp_gst": "Actual MP-GST",
+    "actual_tcs": "Actual TCS",
+    "tcs_leaks": "TCS Leaks",
+    "settlement_paid_in_bank": "Bank Settled Amount",
+    "unsettled_not_paid": "Unsettled Amount",
+    "ads": "Ad Spend",
+    "taxable_value": "Taxable Value",
+    "gst_to_pay_amount": "GST to Pay",
+    "gst_to_pay_perc": "GST to Pay %",
+    "claim_amount": "Claim Amount",
+    "exp_settlement": "Expected Settlement",
+    "stdcost": "Product Cost",
+    "profit": "Profit",
+    "grossprofitper": "Profit %"
+}
+
+def format_reconcile_order_export(data_list, totals_dict=None):
+    formatted_list, formatted_totals = format_sku_report_export(data_list, totals_dict)
+    
+    if isinstance(data_list, list):
+        for idx, item in enumerate(data_list):
+            if idx < len(formatted_list) and isinstance(item, dict):
+                formatted_list[idx]['actual_fees'] = format_val_currency(item.get('actual_fees'))
+                formatted_list[idx]['fees_leaks'] = format_val_currency(item.get('fees_leaks'))
+                formatted_list[idx]['actual_shipping_charges'] = format_val_currency(item.get('actual_shipping_charges'))
+                formatted_list[idx]['shipping_leaks'] = format_val_currency(item.get('shipping_leaks'))
+                formatted_list[idx]['actual_mp_gst'] = format_val_currency(item.get('actual_mp_gst'))
+                formatted_list[idx]['actual_tcs'] = format_val_currency(item.get('actual_tcs'))
+                formatted_list[idx]['tcs_leaks'] = format_val_currency(item.get('tcs_leaks'))
+                formatted_list[idx]['settlement_paid_in_bank'] = format_val_currency(item.get('settlement_paid_in_bank'))
+                formatted_list[idx]['unsettled_not_paid'] = format_val_currency(item.get('unsettled_not_paid'))
+                
+    if isinstance(formatted_totals, dict) and isinstance(totals_dict, dict):
+        formatted_totals['actual_fees'] = format_val_currency(totals_dict.get('total_actual_fees') or totals_dict.get('actual_fees'))
+        formatted_totals['fees_leaks'] = format_val_currency(totals_dict.get('total_fees_leaks') or totals_dict.get('fees_leaks'))
+        formatted_totals['actual_shipping_charges'] = format_val_currency(totals_dict.get('total_actual_shipping') or totals_dict.get('actual_shipping_charges'))
+        formatted_totals['shipping_leaks'] = format_val_currency(totals_dict.get('total_shipping_leaks') or totals_dict.get('shipping_leaks'))
+        formatted_totals['actual_mp_gst'] = format_val_currency(totals_dict.get('total_actual_mp_gst') or totals_dict.get('actual_mp_gst'))
+        formatted_totals['actual_tcs'] = format_val_currency(totals_dict.get('total_actual_tcs') or totals_dict.get('actual_tcs'))
+        formatted_totals['tcs_leaks'] = format_val_currency(totals_dict.get('total_tcs_leaks') or totals_dict.get('tcs_leaks'))
+        formatted_totals['settlement_paid_in_bank'] = format_val_currency(totals_dict.get('total_settlement_paid_in_bank') or totals_dict.get('settlement_paid_in_bank'))
+        formatted_totals['unsettled_not_paid'] = format_val_currency(totals_dict.get('total_unsettled_not_paid') or totals_dict.get('unsettled_not_paid'))
+        
+    return formatted_list, formatted_totals
+
+def format_reconcile_details_export(data_list, totals_dict=None):
+    if not isinstance(data_list, list):
+        data_list = []
+        
+    formatted_list = []
+    for item in data_list:
+        if not isinstance(item, dict):
+            continue
+        
+        row = {}
+        row['channel'] = item.get('channel', '')
+        row['asin'] = item.get('asin') or item.get('view') or item.get('seller_sku') or item.get('child_sku') or ''
+        row['netqty'] = item.get('netQty') if 'netQty' in item else (item.get('netqty') if 'netqty' in item else item.get('qty', item.get('grossqty', 0)))
+        row['final_net_qty'] = item.get('final_net_qty') if item.get('final_net_qty') is not None else item.get('netqty', 0)
+        row['returnqty'] = item.get('returnqty', 0)
+        row['courier_return_count'] = item.get('courier_return_count', 0)
+        row['customer_return_count'] = item.get('customer_return_count', 0)
+        
+        ret_perc = item.get('retpercent') if item.get('retpercent') is not None else item.get('returnPercent', 0)
+        if isinstance(ret_perc, (int, float)):
+            row['retpercent'] = f"{ret_perc}%"
+        else:
+            val = str(ret_perc or 0)
+            row['retpercent'] = val if val.endswith('%') else f"{val}%"
+            
+        row['promo_discount'] = item.get('promo_discount', '₹0.0')
+        row['netsales'] = item.get('netsales') or item.get('grosssales', '₹0.0')
+        row['final_net_sales'] = item.get('final_net_sales', '₹0.0')
+        
+        row['mpfees'] = item.get('mpfees', '₹0.0')
+        row['shippingfees'] = item.get('shippingfees') or item.get('shipping', '₹0.0')
+        row['mp_gst'] = item.get('mp_gst', '₹0.0')
+        row['tcs'] = item.get('tcs', '₹0.0')
+
+        row['actual_fees'] = item.get('actual_fees', '₹0.0')
+        row['fees_leaks'] = item.get('fees_leaks', '₹0.0')
+        row['actual_shipping_charges'] = item.get('actual_shipping_charges', '₹0.0')
+        row['shipping_leaks'] = item.get('shipping_leaks', '₹0.0')
+        row['actual_mp_gst'] = item.get('actual_mp_gst', '₹0.0')
+        row['actual_tcs'] = item.get('actual_tcs', '₹0.0')
+        row['tcs_leaks'] = item.get('tcs_leaks', '₹0.0')
+        row['settlement_paid_in_bank'] = item.get('settlement_paid_in_bank', '₹0.0')
+        row['unsettled_not_paid'] = item.get('unsettled_not_paid', '₹0.0')
+
+        row['ads'] = item.get('ads') or item.get('adSpend', '₹0.0')
+        row['taxable_value'] = item.get('taxable_value') or item.get('taxableValue', '₹0.0')
+        row['gst_to_pay_amount'] = item.get('gst_to_pay_amount', '₹0.0')
+        
+        gst_perc = item.get('gst_to_pay_perc', 0)
+        if isinstance(gst_perc, (int, float)):
+            row['gst_to_pay_perc'] = f"{gst_perc}%"
+        else:
+            val = str(gst_perc or 0)
+            row['gst_to_pay_perc'] = val if val.endswith('%') else f"{val}%"
+            
+        row['claim_amount'] = item.get('claim_amount', '₹0.0')
+        row['exp_settlement'] = item.get('exp_settlement') or item.get('settleAmount', '₹0.0')
+        row['stdcost'] = item.get('stdcost', '₹0.0')
+        row['profit'] = item.get('profit', '₹0.0')
+        
+        prof_perc = item.get('grossprofitper') if item.get('grossprofitper') is not None else item.get('profitPercent', 0)
+        if isinstance(prof_perc, (int, float)):
+            row['grossprofitper'] = f"{prof_perc}%"
+        else:
+            val = str(prof_perc or 0)
+            row['grossprofitper'] = val if val.endswith('%') else f"{val}%"
+            
+        formatted_list.append(row)
+        
+    formatted_totals = None
+    if isinstance(totals_dict, dict):
+        formatted_totals = {
+            'channel': 'Total',
+            'asin': '',
+            'netqty': totals_dict.get('netqty') or totals_dict.get('qty', 0),
+            'final_net_qty': totals_dict.get('total_final_net_qty') or totals_dict.get('final_net_qty', 0),
+            'returnqty': totals_dict.get('totalreturn') or totals_dict.get('returnqty', 0),
+            'courier_return_count': totals_dict.get('courier_return_count', 0),
+            'customer_return_count': totals_dict.get('customer_return_count', 0),
+            'retpercent': totals_dict.get('totalreturnper') or totals_dict.get('retpercent', '0%'),
+            'promo_discount': totals_dict.get('total_promo_discount') or totals_dict.get('promo_discount', '₹0.0'),
+            'netsales': totals_dict.get('netsales') or totals_dict.get('grosssales', '₹0.0'),
+            'final_net_sales': totals_dict.get('total_final_net_sales') or totals_dict.get('final_net_sales', '₹0.0'),
+            'mpfees': totals_dict.get('mpfees', '₹0.0'),
+            'shippingfees': totals_dict.get('shippingfees') or totals_dict.get('shipping', '₹0.0'),
+            'mp_gst': totals_dict.get('mp_gst', '₹0.0'),
+            'tcs': totals_dict.get('tcs', '₹0.0'),
+            'actual_fees': totals_dict.get('total_actual_fees') or totals_dict.get('actual_fees', '₹0.0'),
+            'fees_leaks': totals_dict.get('total_fees_leaks') or totals_dict.get('fees_leaks', '₹0.0'),
+            'actual_shipping_charges': totals_dict.get('total_actual_shipping') or totals_dict.get('actual_shipping_charges', '₹0.0'),
+            'shipping_leaks': totals_dict.get('total_shipping_leaks') or totals_dict.get('shipping_leaks', '₹0.0'),
+            'actual_mp_gst': totals_dict.get('total_actual_mp_gst') or totals_dict.get('actual_mp_gst', '₹0.0'),
+            'actual_tcs': totals_dict.get('total_actual_tcs') or totals_dict.get('actual_tcs', '₹0.0'),
+            'tcs_leaks': totals_dict.get('total_tcs_leaks') or totals_dict.get('tcs_leaks', '₹0.0'),
+            'settlement_paid_in_bank': totals_dict.get('total_settlement_paid_in_bank') or totals_dict.get('settlement_paid_in_bank', '₹0.0'),
+            'unsettled_not_paid': totals_dict.get('total_unsettled_not_paid') or totals_dict.get('unsettled_not_paid', '₹0.0'),
+            'ads': totals_dict.get('ads', '₹0.0'),
+            'taxable_value': totals_dict.get('taxable_value', '₹0.0'),
+            'gst_to_pay_amount': totals_dict.get('gst_to_pay_amount', '₹0.0'),
+            'gst_to_pay_perc': totals_dict.get('gst_to_pay_perc', '0%'),
+            'claim_amount': totals_dict.get('total_claim_amount') or totals_dict.get('claim_amount', '₹0.0'),
+            'exp_settlement': totals_dict.get('exp_settlement', '₹0.0'),
+            'stdcost': totals_dict.get('stdcost', '₹0.0'),
+            'profit': totals_dict.get('profit', '₹0.0'),
+            'grossprofitper': f"{totals_dict.get('grossprofitper', 0)}%" if not str(totals_dict.get('grossprofitper', '')).endswith('%') else totals_dict.get('grossprofitper')
+        }
+        
+    return formatted_list, formatted_totals
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def export_payment_reconcile_overview(request):
+    response_format = (request.query_params.get("file_format") or request.query_params.get("export_format") or request.query_params.get("format") or "xlsx").lower()
+    override_params = {
+        "POST": {
+            "pagination": {"pageNo": 0, "pageSize": 100000}
+        }
+    }
+    return generic_export_view(
+        request,
+        combined_payment_reconcile_overview,
+        RECONCILE_DETAILS_COLUMNS,
+        "payment_reconcile_asin_level",
+        response_format,
+        override_params=override_params,
+        list_key="response",
+        totals_key="totals",
+        formatter_func=format_reconcile_details_export,
+        report_type_name="payment_reconcile_asin_level"
+    )
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def export_payment_reconcile_by_parent_asin(request):
+    response_format = (request.query_params.get("file_format") or request.query_params.get("export_format") or request.query_params.get("format") or "xlsx").lower()
+    override_params = {
+        "POST": {
+            "pagination": {"pageNo": 0, "pageSize": 100000}
+        }
+    }
+    return generic_export_view(
+        request,
+        combined_payment_reconcile_by_parent_asin,
+        RECONCILE_PARENT_COLUMNS,
+        "payment_reconcile_sku_level",
+        response_format,
+        override_params=override_params,
+        list_key="response",
+        totals_key="totals",
+        formatter_func=format_reconcile_details_export,
+        report_type_name="payment_reconcile_sku_level"
+    )
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def export_payment_reconcile_by_parentproductid(request):
+    response_format = (request.query_params.get("file_format") or request.query_params.get("export_format") or request.query_params.get("format") or "xlsx").lower()
+    override_params = {
+        "POST": {
+            "pagination": {"pageNo": 0, "pageSize": 100000}
+        }
+    }
+    return generic_export_view(
+        request,
+        combined_payment_reconcile_by_parentproductid,
+        RECONCILE_ORDER_COLUMNS,
+        "payment_reconcile_order_level",
+        response_format,
+        override_params=override_params,
+        list_key="response",
+        totals_key="totals",
+        formatter_func=format_reconcile_order_export,
+        report_type_name="payment_reconcile_order_level"
+    )
+
 # EXPORT HISTORY AND DOWNLOAD
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_export_history(request):
-    exports = ExportedReport.objects.filter(user=request.user).order_by("-created_at")
+    from django.db.models import Q
+    if request.user and request.user.is_authenticated:
+        exports = ExportedReport.objects.filter(Q(user=request.user) | Q(user__isnull=True)).order_by("-created_at")
+    else:
+        exports = ExportedReport.objects.filter(user__isnull=True).order_by("-created_at")
+        
     data = []
     for exp in exports:
         data.append({
@@ -700,24 +1144,31 @@ def list_export_history(request):
             "from_date": str(exp.from_date) if exp.from_date else None,
             "to_date": str(exp.to_date) if exp.to_date else None,
             "status": exp.status,
-            "created_at": exp.created_at.isoformat(),
-            "download_url": f"/exports/history/{exp.id}/download/"
+            "created_at": exp.created_at.isoformat() if exp.created_at else None,
+            "download_url": f"/api/amazon/exports/history/{exp.id}/download/"
         })
     return Response({"success": True, "results": data})
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def download_export_file(request, export_id):
+    from django.db.models import Q
     try:
-        exp = ExportedReport.objects.get(id=export_id, user=request.user)
+        if request.user and request.user.is_authenticated:
+            exp = ExportedReport.objects.get(Q(user=request.user) | Q(user__isnull=True), id=export_id)
+        else:
+            exp = ExportedReport.objects.get(user__isnull=True, id=export_id)
     except ExportedReport.DoesNotExist:
         raise Http404("Export not found")
         
     if exp.status != "COMPLETED" or not exp.file:
         return Response({"success": False, "message": "File not ready or failed to generate"}, status=status.HTTP_400_BAD_REQUEST)
         
-    file_content = exp.file.read()
-    
+    try:
+        file_content = exp.file.read()
+    except Exception as e:
+        return Response({"success": False, "message": f"File read error: {str(e)}"}, status=status.HTTP_404_NOT_FOUND)
+        
     if exp.format == 'csv':
         content_type = 'text/csv'
     elif exp.format == 'xlsx':
@@ -728,3 +1179,4 @@ def download_export_file(request, export_id):
     response = HttpResponse(file_content, content_type=content_type)
     response['Content-Disposition'] = f'attachment; filename="{exp.file_name}"'
     return response
+
