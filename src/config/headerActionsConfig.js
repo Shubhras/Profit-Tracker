@@ -1,5 +1,5 @@
 export const HEADER_ACTIONS = {
-  '/profit/profitMonthlyView': ['export', 'sku'],
+  // '/profit/profitMonthlyView': ['export', 'sku'],
   // '/profit/profitTableView/details': ['export'],
   // '/profit/profitTableView': ['orderprofit', 'export', 'lowest'],
   // '/profit/profitTableView/second/': ['orderprofit', 'export', 'lowest'],
