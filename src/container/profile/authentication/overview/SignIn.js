@@ -46,11 +46,6 @@ function SignIn() {
       dispatch(
         // login(values, (hasSubscription) => {
         login(values, (userData) => {
-          // if (!hasSubscription) {
-          //   sessionStorage.removeItem('selectedPlan');
-          //   navigate('/pricing');
-          //   return;
-          // }
           const isSuperAdmin = userData.is_superuser;
           const hasSubscription = userData.has_subscription;
 
