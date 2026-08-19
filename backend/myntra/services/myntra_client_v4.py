@@ -10,6 +10,25 @@ logger = logging.getLogger(__name__)
 
 class MyntraClientV4(MyntraClient):
 
+    def _log_call(self, endpoint, status="SUCCESS", response_time_ms=0):
+        try:
+            from admin_auth.models import log_api_call
+            user = self.connection.user if self.connection else None
+            acc_id = getattr(self.connection, 'vendor_id', '') if self.connection else ''
+            acc_name = getattr(self.connection, 'seller_name', '') if self.connection else ''
+            log_api_call(
+                user=user,
+                service_type='Myntra',
+                account_id=acc_id,
+                account_name=acc_name,
+                api_endpoint=endpoint,
+                call_count=1,
+                status=status,
+                response_time_ms=response_time_ms
+            )
+        except Exception:
+            pass
+
     def get_order_list(self, start_date, end_date, page=0, status_code=None):
         url = f"{self.api_base_url}/partner/v4/order/getOrderList"
         params = {
@@ -22,21 +41,26 @@ class MyntraClientV4(MyntraClient):
 
         try:
             response = requests.get(url, headers=self.headers(), params=params, timeout=15)
+            self._log_call("/partner/v4/order/getOrderList", status="SUCCESS" if response.status_code == 200 else f"HTTP_{response.status_code}")
             if response.status_code == 200:
                 return response.json()
             return {"error": f"HTTP {response.status_code}", "details": response.text}
         except Exception as e:
+            self._log_call("/partner/v4/order/getOrderList", status="FAILED")
             logger.error(f"Error fetching order list from Myntra: {e}")
             return {"error": "Request failed", "details": str(e)}
 
     def get_order_by_id(self, seller_order_id):
-        url = f"{self.api_base_url}/partner/v4/order/{seller_order_id}"
+        endpoint = f"/partner/v4/order/{seller_order_id}"
+        url = f"{self.api_base_url}{endpoint}"
         try:
             response = requests.get(url, headers=self.headers(), timeout=15)
+            self._log_call("/partner/v4/order/{seller_order_id}", status="SUCCESS" if response.status_code == 200 else f"HTTP_{response.status_code}")
             if response.status_code == 200:
                 return response.json()
             return {"error": f"HTTP {response.status_code}", "details": response.text}
         except Exception as e:
+            self._log_call("/partner/v4/order/{seller_order_id}", status="FAILED")
             logger.error(f"Error fetching order details from Myntra: {e}")
             return {"error": "Request failed", "details": str(e)}
 
@@ -53,10 +77,12 @@ class MyntraClientV4(MyntraClient):
 
         try:
             response = requests.post(url, headers=self.headers(), json=payload, timeout=15)
+            self._log_call("/partner/v4/returns/returnRecon", status="SUCCESS" if response.status_code == 200 else f"HTTP_{response.status_code}")
             if response.status_code == 200:
                 return response.json()
             return {"error": f"HTTP {response.status_code}", "details": response.text}
         except Exception as e:
+            self._log_call("/partner/v4/returns/returnRecon", status="FAILED")
             logger.error(f"Error fetching returns from Myntra: {e}")
             return {"error": "Request failed", "details": str(e)}
 
@@ -70,10 +96,12 @@ class MyntraClientV4(MyntraClient):
         }
         try:
             response = requests.get(url, headers=self.headers(), params=params, timeout=15)
+            self._log_call(f"/partner/v4/payments/history/{payment_method}", status="SUCCESS" if response.status_code == 200 else f"HTTP_{response.status_code}")
             if response.status_code == 200:
                 return response.json()
             return {"error": f"HTTP {response.status_code}", "details": response.text}
         except Exception as e:
+            self._log_call(f"/partner/v4/payments/history/{payment_method}", status="FAILED")
             logger.error(f"Error fetching payment history from Myntra: {e}")
             return {"error": "Request failed", "details": str(e)}
 
@@ -81,10 +109,12 @@ class MyntraClientV4(MyntraClient):
         url = f"{self.api_base_url}/partner/v4/returns/returnRecon"
         try:
             response = requests.post(url, headers=self.headers(), json={"id": return_id}, timeout=15)
+            self._log_call("/partner/v4/returns/returnRecon", status="SUCCESS" if response.status_code == 200 else f"HTTP_{response.status_code}")
             if response.status_code == 200:
                 return response.json()
             return {"error": f"HTTP {response.status_code}", "details": response.text}
         except Exception as e:
+            self._log_call("/partner/v4/returns/returnRecon", status="FAILED")
             logger.error(f"Error fetching return details from Myntra: {e}")
             return {"error": "Request failed", "details": str(e)}
 
@@ -107,6 +137,7 @@ class MyntraClientV4(MyntraClient):
             response = requests.post(
                 url, headers=self.headers(), json=payload, timeout=15
             )
+            self._log_call(f"/partner/v4/portal/report/{report_name}", status="SUCCESS" if response.status_code == 200 else f"HTTP_{response.status_code}")
 
             if response.status_code == 200:
                 return response.json()
@@ -114,5 +145,6 @@ class MyntraClientV4(MyntraClient):
             return {"error": f"HTTP {response.status_code}", "details": response.text}
 
         except Exception as e:
+            self._log_call(f"/partner/v4/portal/report/{report_name}", status="FAILED")
             logger.error(f"Error scheduling Myntra report: {e}")
             return {"error": "Request failed", "details": str(e)}

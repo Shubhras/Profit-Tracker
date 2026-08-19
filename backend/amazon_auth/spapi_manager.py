@@ -150,7 +150,28 @@ class SPAPIManager:
         authorization_header = f"{algorithm} Credential={self.aws_access_key}/{credential_scope}, SignedHeaders={signed_headers}, Signature={signature}"
         headers['Authorization'] = authorization_header
 
+        start_time = time.time()
         response = requests.request(method, url, params=params, headers=headers, data=data)
+        elapsed_ms = int((time.time() - start_time) * 1000)
+
+        try:
+            from admin_auth.models import log_api_call
+            u = self.user or (self.account.user if self.account else None)
+            acc_id = getattr(self.account, 'seller_id', None) or (str(self.account.id) if self.account else '')
+            acc_name = getattr(self.account, 'account_name', None) or getattr(self.account, 'seller_id', None) or 'Amazon Seller'
+            log_api_call(
+                user=u,
+                service_type='SP-API',
+                account_id=acc_id,
+                account_name=acc_name,
+                api_endpoint=path,
+                call_count=1,
+                status='SUCCESS' if response.status_code == 200 else f'HTTP_{response.status_code}',
+                response_time_ms=elapsed_ms
+            )
+        except Exception:
+            pass
+
         return response.json()
 
     def get_orders(self, **kwargs):
