@@ -51,18 +51,16 @@ function SignIn() {
           //   navigate('/pricing');
           //   return;
           // }
-
-          const hasSubscription = userData.has_subscription;
-
           const isSuperAdmin = userData.is_superuser;
-
-          if (!hasSubscription) {
-            navigate('/pricing');
-            return;
-          }
+          const hasSubscription = userData.has_subscription;
 
           if (isSuperAdmin) {
             navigate('/super-admin/dashboard');
+            return;
+          }
+
+          if (!hasSubscription) {
+            navigate('/pricing');
             return;
           }
 

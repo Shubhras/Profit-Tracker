@@ -1097,7 +1097,7 @@ export default function ProfitViewSecondTable() {
                     type="primary"
                     icon={<ExportOutlined />}
                     loading={exportLoading}
-                    className="bg-[#10b981] hover:bg-[#059669] border-none text-white font-medium px-4 h-[35px] rounded-lg flex items-center gap-1.5 shadow-sm"
+                    className="bg-[#10b981] hover:bg-[#059669] border-none text-white font-medium px-2 h-[30px] rounded-lg flex items-center gap-1.5 shadow-sm"
                   >
                     Export <DownOutlined style={{ fontSize: 10 }} />
                   </Button>
