@@ -157,6 +157,42 @@ export const getProfitDetails = (payload) => {
   };
 };
 
+export const getPaymentReconcileDetails = (payload) => {
+  return async (dispatch) => {
+    dispatch(profitBegin());
+
+    try {
+      const response = await DataService.post('/amazon/payment-reconcile/details/', payload);
+
+      if (response.data?.status === true || response.data?.status === 'success') {
+        dispatch(profitSuccess(response.data));
+      } else {
+        dispatch(profitErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(profitErr(err));
+    }
+  };
+};
+
+export const getPaymentReconcileDetailsByParentAsin = (payload) => {
+  return async (dispatch) => {
+    dispatch(profitabilityBegin());
+
+    try {
+      const response = await DataService.post('/amazon/payment-reconcile/details/by-parent-asin/', payload);
+
+      if (response.data?.status === true || response.data?.status === 'success') {
+        dispatch(profitabilitySuccess(response.data));
+      } else {
+        dispatch(profitabilityErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(profitabilityErr(err));
+    }
+  };
+};
+
 export const getProfitDetailsByParentId = (payload) => {
   return async (dispatch) => {
     dispatch(profitBegin());
@@ -170,6 +206,23 @@ export const getProfitDetailsByParentId = (payload) => {
       }
     } catch (err) {
       dispatch(profitErr(err));
+    }
+  };
+};
+
+export const getPaymentReconcileDetailsByParentProductId = (payload) => {
+  return async (dispatch) => {
+    dispatch(profitabilityBegin());
+    try {
+      const response = await DataService.post('/amazon/payment-reconcile/details/by-parentproductid/', payload);
+
+      if (response.data?.status === true || response.data?.status === 'success') {
+        dispatch(profitabilitySuccess(response.data));
+      } else {
+        dispatch(profitabilityErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(profitabilityErr(err));
     }
   };
 };

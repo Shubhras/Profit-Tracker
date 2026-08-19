@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { Table, Card, Modal, Checkbox, Tooltip, Button } from 'antd';
-import { RightOutlined, DownloadOutlined } from '@ant-design/icons';
+import { Table, Card, Modal, Checkbox, Tooltip, Button, Dropdown } from 'antd';
+import { RightOutlined, ExportOutlined, DownOutlined, FileExcelOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 // import ProfitFilterBar from './component/ProfitFilterBar';
@@ -110,17 +110,32 @@ export default function ProfitTableView() {
   //   );
   // }, [dispatch, dateRange]);
   const [exportLoading, setExportLoading] = React.useState(false);
-  const handleExport = async () => {
+  const handleExport = async (format = 'xlsx') => {
     try {
       setExportLoading(true);
       const payload = buildPayload();
-      await dispatch(exportProfitabilityDetails(payload, 'xlsx', '/amazon/profitability/details/export/'));
+      await dispatch(exportProfitabilityDetails(payload, format, '/amazon/profitability/details/export/'));
     } catch (error) {
       console.error('Export failed:', error);
     } finally {
       setExportLoading(false);
     }
   };
+
+  const exportMenuItems = [
+    {
+      key: 'xlsx',
+      label: 'Excel (.xlsx)',
+      icon: <FileExcelOutlined style={{ color: '#10b981' }} />,
+      onClick: () => handleExport('xlsx'),
+    },
+    {
+      key: 'csv',
+      label: 'CSV (.csv)',
+      icon: <FileTextOutlined style={{ color: '#3b82f6' }} />,
+      onClick: () => handleExport('csv'),
+    },
+  ];
 
   useEffect(() => {
     const payload = buildPayload();
@@ -564,14 +579,16 @@ export default function ProfitTableView() {
       <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-3 py-3 xl:px-[15px] pb-[10px] bg-transparent">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-[20px] font-semibold text-[#111827]">Sales Details</h1>
-          <Button
-            icon={<DownloadOutlined style={{ fontSize: 14 }} />}
-            loading={exportLoading}
-            onClick={handleExport}
-            className="flex items-center !h-[35px] !rounded-lg !border-[#e5e7eb] whitespace-nowrap"
-          >
-            <span className="text-[#4B5563] text-[13px]">Export</span>
-          </Button>
+          <Dropdown menu={{ items: exportMenuItems }} trigger={['click']} placement="bottomRight">
+            <Button
+              type="primary"
+              icon={<ExportOutlined />}
+              loading={exportLoading}
+              className="bg-[#10b981] hover:bg-[#059669] border-none text-white font-medium px-4 h-[35px] rounded-lg flex items-center gap-1.5 shadow-sm"
+            >
+              Export <DownOutlined style={{ fontSize: 10 }} />
+            </Button>
+          </Dropdown>
         </div>
         <Card bordered={false} className="sales-table-wrapper">
           {/* <ProfitFilterBar

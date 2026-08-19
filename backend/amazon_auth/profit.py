@@ -110,6 +110,26 @@ def _combine_totals(amazon_t, myntra_t, type="style"):
             "total_claim_count": get_sum("total_claim_count", is_currency=False),
             "total_claim_amount": format_currency(get_sum("total_claim_amount")),
             "total_replacement_return_count": get_sum("total_replacement_return_count", is_currency=False),
+            "total_actual_fees": format_currency(get_sum("actual_fees") or get_sum("total_actual_fees")),
+            "total_fees_leaks": format_currency(get_sum("fees_leaks") or get_sum("total_fees_leaks")),
+            "total_actual_shipping": format_currency(get_sum("actual_shipping_charges") or get_sum("total_actual_shipping")),
+            "total_shipping_leaks": format_currency(get_sum("shipping_leaks") or get_sum("total_shipping_leaks")),
+            "total_actual_mp_gst": format_currency(get_sum("actual_mp_gst") or get_sum("total_actual_mp_gst")),
+            "total_actual_tcs": format_currency(get_sum("actual_tcs") or get_sum("total_actual_tcs")),
+            "total_tcs_leaks": format_currency(get_sum("tcs_leaks") or get_sum("total_tcs_leaks")),
+            "total_expected_settlement": format_currency(get_sum("expected_settlement") or get_sum("total_expected_settlement") or get_sum("exp_settlement")),
+            "total_settlement_paid_in_bank": format_currency(get_sum("settlement_paid_in_bank") or get_sum("total_settlement_paid_in_bank")),
+            "total_unsettled_not_paid": format_currency(get_sum("unsettled_not_paid") or get_sum("total_unsettled_not_paid")),
+
+            "actual_fees": format_currency(get_sum("actual_fees") or get_sum("total_actual_fees")),
+            "fees_leaks": format_currency(get_sum("fees_leaks") or get_sum("total_fees_leaks")),
+            "actual_shipping_charges": format_currency(get_sum("actual_shipping_charges") or get_sum("total_actual_shipping")),
+            "shipping_leaks": format_currency(get_sum("shipping_leaks") or get_sum("total_shipping_leaks")),
+            "actual_mp_gst": format_currency(get_sum("actual_mp_gst") or get_sum("total_actual_mp_gst")),
+            "actual_tcs": format_currency(get_sum("actual_tcs") or get_sum("total_actual_tcs")),
+            "tcs_leaks": format_currency(get_sum("tcs_leaks") or get_sum("total_tcs_leaks")),
+            "settlement_paid_in_bank": format_currency(get_sum("settlement_paid_in_bank") or get_sum("total_settlement_paid_in_bank")),
+            "unsettled_not_paid": format_currency(get_sum("unsettled_not_paid") or get_sum("total_unsettled_not_paid")),
         })
         
     elif type == "order":
@@ -180,6 +200,17 @@ def _combine_totals(amazon_t, myntra_t, type="style"):
             "total_claim_count": get_sum("total_claim_count", is_currency=False),
             "total_claim_amount": format_currency(get_sum("total_claim_amount")),
             "total_replacement_return_count": get_sum("total_replacement_return_count", is_currency=False),
+
+            "actual_fees": format_currency(get_sum("actual_fees")),
+            "fees_leaks": format_currency(get_sum("fees_leaks")),
+            "actual_shipping_charges": format_currency(get_sum("actual_shipping_charges")),
+            "shipping_leaks": format_currency(get_sum("shipping_leaks")),
+            "actual_mp_gst": format_currency(get_sum("actual_mp_gst")),
+            "actual_tcs": format_currency(get_sum("actual_tcs")),
+            "tcs_leaks": format_currency(get_sum("tcs_leaks")),
+            "expected_settlement": format_currency(get_sum("expected_settlement") or get_sum("exp_settlement")),
+            "settlement_paid_in_bank": format_currency(get_sum("settlement_paid_in_bank")),
+            "unsettled_not_paid": format_currency(get_sum("unsettled_not_paid")),
         })
         
     return combined
@@ -303,6 +334,17 @@ class ProfitabilityItemDTO:
     order_id: str = ""
     date: str = ""
 
+    actual_fees: Any = "₹0.0"
+    fees_leaks: Any = "₹0.0"
+    actual_shipping_charges: Any = "₹0.0"
+    shipping_leaks: Any = "₹0.0"
+    actual_mp_gst: Any = "₹0.0"
+    actual_tcs: Any = "₹0.0"
+    tcs_leaks: Any = "₹0.0"
+    expected_settlement: Any = "₹0.0"
+    settlement_paid_in_bank: Any = "₹0.0"
+    unsettled_not_paid: Any = "₹0.0"
+
     def to_dict(self) -> dict:
         return asdict(self)
 
@@ -369,6 +411,17 @@ class ProfitabilityDTOAdapter:
         courier_return_price = _format_curr(row.get("courier_return_price"))
         customer_return_price = _format_curr(row.get("customer_return_price"))
 
+        actual_fees = _format_curr(row.get("actual_fees"))
+        fees_leaks = _format_curr(row.get("fees_leaks"))
+        actual_shipping_charges = _format_curr(row.get("actual_shipping_charges"))
+        shipping_leaks = _format_curr(row.get("shipping_leaks"))
+        actual_mp_gst = _format_curr(row.get("actual_mp_gst"))
+        actual_tcs = _format_curr(row.get("actual_tcs"))
+        tcs_leaks = _format_curr(row.get("tcs_leaks"))
+        expected_settlement = _format_curr(row.get("expected_settlement") if row.get("expected_settlement") is not None else row.get("exp_settlement"))
+        settlement_paid_in_bank = _format_curr(row.get("settlement_paid_in_bank"))
+        unsettled_not_paid = _format_curr(row.get("unsettled_not_paid"))
+
         return ProfitabilityItemDTO(
             asin=asin,
             parent_asin=parent_asin,
@@ -416,6 +469,16 @@ class ProfitabilityDTOAdapter:
             child_sku=child_sku,
             order_id=order_id,
             date=date,
+            actual_fees=actual_fees,
+            fees_leaks=fees_leaks,
+            actual_shipping_charges=actual_shipping_charges,
+            shipping_leaks=shipping_leaks,
+            actual_mp_gst=actual_mp_gst,
+            actual_tcs=actual_tcs,
+            tcs_leaks=tcs_leaks,
+            expected_settlement=expected_settlement,
+            settlement_paid_in_bank=settlement_paid_in_bank,
+            unsettled_not_paid=unsettled_not_paid,
         )
 
 
@@ -787,6 +850,7 @@ def get_myntra_dashboard_stats(user, from_date_str, to_date_str):
     # Aggregate values from style rows
     gross_sales = Decimal(0)
     net_sales = Decimal(0)
+    final_net_sales = Decimal(0)
     profit = Decimal(0)
     mp_fees = Decimal(0)
     shipping_fees = Decimal(0)
@@ -794,6 +858,7 @@ def get_myntra_dashboard_stats(user, from_date_str, to_date_str):
     
     gross_qty = 0
     net_qty = 0
+    final_net_qty = 0
     return_qty = 0
     courier_return_count = 0
     customer_return_count = 0
@@ -801,15 +866,21 @@ def get_myntra_dashboard_stats(user, from_date_str, to_date_str):
     claim_amount = Decimal(0)
     
     for r in myntra_raw_rows:
-        gross_sales += Decimal(str(r.get("gross_sales") or 0))
-        net_sales += Decimal(str(r.get("net_sales") or 0))
+        g_sales = Decimal(str(r.get("gross_sales") or 0))
+        n_sales = Decimal(str(r.get("net_sales") or 0))
+        gross_sales += g_sales
+        net_sales += g_sales
+        final_net_sales += n_sales
         profit += Decimal(str(r.get("profit") or 0))
         mp_fees += Decimal(str(r.get("mp_fees") or 0))
         shipping_fees += Decimal(str(r.get("shipping_fees") or 0))
         ads += Decimal(str(r.get("ads") or 0))
         
-        gross_qty += int(r.get("gross_qty") or 0)
-        net_qty += int(r.get("net_qty") or 0)
+        g_qty = int(r.get("gross_qty") or 0)
+        n_qty = int(r.get("net_qty") or 0)
+        gross_qty += g_qty
+        net_qty += g_qty
+        final_net_qty += n_qty
         return_qty += int(r.get("returnqty") or 0)
         courier_return_count += int(r.get("courier_return_count") or 0)
         customer_return_count += int(r.get("customer_return_count") or 0)
@@ -866,12 +937,14 @@ def get_myntra_dashboard_stats(user, from_date_str, to_date_str):
     return {
         "gross_sales": gross_sales,
         "net_sales": net_sales,
+        "final_net_sales": final_net_sales,
         "profit": profit,
         "mp_fees": mp_fees,
         "shipping_fees": shipping_fees,
         "ads": ads,
         "gross_qty": gross_qty,
         "net_qty": net_qty,
+        "final_net_qty": final_net_qty,
         "return_qty": return_qty,
         "courier_return_count": courier_return_count,
         "customer_return_count": customer_return_count,
@@ -887,6 +960,7 @@ def _combine_dashboard_stats(amazon_data, myntra_data):
     am_header = amazon_data.get("header_metrics", {})
     
     m_sales = myntra_data["net_sales"]
+    m_final_net_sales = myntra_data.get("final_net_sales", Decimal(0))
     m_profit = myntra_data["profit"]
     m_shipping = myntra_data["shipping_fees"]
     m_ads = -abs(myntra_data["ads"])  # keep ads negative as expense
@@ -905,7 +979,7 @@ def _combine_dashboard_stats(amazon_data, myntra_data):
     
     # Merged sales/profit
     combined_sales = am_sales + m_sales
-    combined_final_net_sales = am_final_net_sales + m_sales
+    combined_final_net_sales = am_final_net_sales + m_final_net_sales
     combined_profit = am_profit + m_profit
     combined_shipping = am_shipping + m_shipping
     combined_ads = am_ads + m_ads

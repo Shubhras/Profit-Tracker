@@ -7,14 +7,20 @@ import {
   ArrowLeftOutlined,
   SettingOutlined,
   CloseCircleOutlined,
+  ExportOutlined,
+  DownOutlined,
+  FileExcelOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-// import ProfitFilterBar from './component/ProfitFilterBar';
 import ProfitModal from './component/ProfitModal';
 import CalculationModal from './component/Calculations';
-import { getProfitDetailsByParentId } from '../../redux/dashboard/actionCreator';
-// import { PageHeader } from '../../components/page-headers/page-headers';
+import {
+  getProfitDetailsByParentId,
+  getPaymentReconcileDetailsByParentProductId,
+  exportProfitabilityDetails,
+} from '../../redux/dashboard/actionCreator';
 import amazon from '../../assets/icons/amazon.svg';
 import myntra from '../../assets/icons/myntraLogo.jpg';
 
@@ -24,7 +30,9 @@ export default function ProfitDetailsView() {
   const location = useLocation();
   const navigate = useNavigate();
   const sku = location.state?.sku || '';
-  // const [openSettings, setOpenSettings] = React.useState(false);
+
+  const isReconcile = location.state?.isReconcile || location.pathname.includes('/reconcile');
+
   const [detailModal, setDetailModal] = React.useState({
     open: false,
     record: null,
@@ -35,21 +43,7 @@ export default function ProfitDetailsView() {
     type: '',
     record: null,
   });
-  // const [selectedColumns, setSelectedColumns] = React.useState([
-  //   'netqty',
-  //   'returnqty',
-  //   'returnPercent',
-  //   'mp_gst',
-  //   'tcs',
-  //   'netsales',
-  //   'shipping',
-  //   'adSpend',
-  //   'gst',
-  //   'mpfees',
-  //   'std',
-  //   'profit',
-  //   'profitPercent',
-  // ]);
+
   const [showFilters, setShowFilters] = React.useState(false);
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -74,24 +68,20 @@ export default function ProfitDetailsView() {
   const [visibleColumns, setVisibleColumns] = React.useState([]);
   const [search, setSearch] = React.useState('');
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
+  const [exportLoading, setExportLoading] = React.useState(false);
 
   const channelLogoMap = {
     'Amazon-India': amazon,
     'Myntra-India': myntra,
   };
 
-  // const PageRoutes = [
-  //   { path: 'index', breadcrumbName: 'Profit' },
-  //   { path: '', breadcrumbName: 'Profit Details' },
-  // ];
-
   const apipayload = {
     filters: {
       ...(debouncedSearch.trim() && {
         search: debouncedSearch.trim(),
       }),
-
       fromDate: dateRange?.fromDate || null,
+      toDate: dateRange?.endDate || null,
       endDate: dateRange?.endDate || null,
       channel: {
         IN: globalChannel,
@@ -99,18 +89,40 @@ export default function ProfitDetailsView() {
       parentProductId: id,
       sku,
     },
-    //   "metric": {
-    //     "ctaaction": "(profit != 0)",
-    //     "expense": "withExpense",
-    //     "ads": "withAds"
-    //   },
     pagination: {
-      // pageNo: 0,
-      // pageSize: 25,
       pageNo: pagination.current - 1,
       pageSize: pagination.pageSize,
     },
   };
+
+  const handleExport = async (format = 'xlsx') => {
+    try {
+      setExportLoading(true);
+      const exportEndpoint = isReconcile
+        ? '/amazon/payment-reconcile/details/by-parentproductid/export/'
+        : '/amazon/profitability/details/by-parentproductid/export/';
+      await dispatch(exportProfitabilityDetails(apipayload, format, exportEndpoint));
+    } catch (error) {
+      console.error('Export failed:', error);
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const exportMenuItems = [
+    {
+      key: 'xlsx',
+      label: 'Excel (.xlsx)',
+      icon: <FileExcelOutlined style={{ color: '#10b981' }} />,
+      onClick: () => handleExport('xlsx'),
+    },
+    {
+      key: 'csv',
+      label: 'CSV (.csv)',
+      icon: <FileTextOutlined style={{ color: '#3b82f6' }} />,
+      onClick: () => handleExport('csv'),
+    },
+  ];
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -126,14 +138,18 @@ export default function ProfitDetailsView() {
 
   useEffect(() => {
     if (!id) return;
-    dispatch(getProfitDetailsByParentId(apipayload));
-  }, [id, dateRange, globalChannel, pagination, debouncedSearch]);
+    if (isReconcile) {
+      dispatch(getPaymentReconcileDetailsByParentProductId(apipayload));
+    } else {
+      dispatch(getProfitDetailsByParentId(apipayload));
+    }
+  }, [id, dateRange, globalChannel, pagination, debouncedSearch, isReconcile]);
 
   const dataSource =
     profitData?.response?.map((item, index) => ({
       key: index,
       channel: item.channel,
-      image: item.image,
+      image: item.image || item.image_url,
       view: item.order_id,
       redirecturl: item.redirecturl,
       netqty: item.qty || 0,
@@ -178,6 +194,15 @@ export default function ProfitDetailsView() {
       customer_return_count: item.customer_return_count || 0,
       final_net_qty: item.final_net_qty || 0,
       final_net_sales: item.final_net_sales || 0,
+      actual_fees: item.actual_fees || 0,
+      fees_leaks: item.fees_leaks || 0,
+      actual_shipping_charges: item.actual_shipping_charges || 0,
+      shipping_leaks: item.shipping_leaks || 0,
+      actual_mp_gst: item.actual_mp_gst || 0,
+      actual_tcs: item.actual_tcs || 0,
+      tcs_leaks: item.tcs_leaks || 0,
+      settlement_paid_in_bank: item.settlement_paid_in_bank || 0,
+      unsettled_not_paid: item.unsettled_not_paid || 0,
     })) || [];
 
   const columns = [
@@ -186,30 +211,27 @@ export default function ProfitDetailsView() {
       dataIndex: 'image',
       width: 60,
       fixed: 'left',
-      render: (value) => {
-        return (
-          <div className="relative group w-[32px] h-[32px]">
-            {value ? (
-              <img src={value} alt="product" className="w-full h-full object-cover rounded" />
-            ) : (
-              <div className="w-full h-full bg-gray-200 rounded" />
-            )}
-
-            {value && (
-              <button
-                type="button"
-                onClick={() => {
-                  setPreviewImage(value);
-                  setPreviewOpen(true);
-                }}
-                className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 rounded transition"
-              >
-                <EyeOutlined style={{ color: '#fff', fontSize: 16 }} />
-              </button>
-            )}
-          </div>
-        );
-      },
+      render: (value) => (
+        <div className="relative group w-[32px] h-[32px]">
+          {value ? (
+            <img src={value} alt="product" className="w-full h-full object-cover rounded" />
+          ) : (
+            <div className="w-full h-full bg-gray-200 rounded" />
+          )}
+          {value && (
+            <button
+              type="button"
+              onClick={() => {
+                setPreviewImage(value);
+                setPreviewOpen(true);
+              }}
+              className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 rounded transition"
+            >
+              <EyeOutlined style={{ color: '#fff', fontSize: 16 }} />
+            </button>
+          )}
+        </div>
+      ),
     },
     {
       title: '',
@@ -218,7 +240,6 @@ export default function ProfitDetailsView() {
       fixed: 'left',
       render: (value) => {
         const logo = channelLogoMap[value];
-
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {logo && <img src={logo} alt={value} style={{ width: 24, height: 24, objectFit: 'contain' }} />}
@@ -230,9 +251,9 @@ export default function ProfitDetailsView() {
       title: 'View',
       dataIndex: 'view',
       align: 'center',
-      width: 70,
+      width: 100,
       ellipsis: true,
-      sorter: (a, b) => a.view - b.view,
+      sorter: (a, b) => (a.view || '').localeCompare(b.view || ''),
       render: (v, record) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <button
@@ -243,7 +264,7 @@ export default function ProfitDetailsView() {
               }
             }}
             style={{
-              maxWidth: 80,
+              maxWidth: 90,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
@@ -280,23 +301,6 @@ export default function ProfitDetailsView() {
       ellipsis: true,
       sorter: (a, b) => a.returnqty - b.returnqty,
     },
-    // {
-    //   title: 'Courier Return Price',
-    //   dataIndex: 'courier_return_price',
-    //   align: 'center',
-    //   width: 70,
-    //   ellipsis: true,
-    //   sorter: (a, b) => a.courier_return_price - b.courier_return_price,
-    // },
-    // {
-    //   title: 'Customer Return Price',
-    //   dataIndex: 'customer_return_price',
-    //   align: 'center',
-    //   width: 70,
-    //   ellipsis: true,
-    //   sorter: (a, b) => a.customer_return_price - b.customer_return_price,
-    // },
-
     {
       title: 'Courier Return Count',
       dataIndex: 'courier_return_count',
@@ -399,7 +403,6 @@ export default function ProfitDetailsView() {
       ellipsis: true,
       sorter: (a, b) => a.mp_gst - b.mp_gst,
     },
-
     {
       title: 'TCS',
       dataIndex: 'tcs',
@@ -407,6 +410,87 @@ export default function ProfitDetailsView() {
       width: 70,
       sorter: (a, b) => a.tcs - b.tcs,
     },
+    ...(isReconcile
+      ? [
+          {
+            title: 'Actual MP Fees',
+            dataIndex: 'actual_fees',
+            align: 'center',
+            width: 90,
+            ellipsis: true,
+            sorter: (a, b) => (parseFloat(a.actual_fees) || 0) - (parseFloat(b.actual_fees) || 0),
+          },
+          {
+            title: 'Fee Leaks',
+            dataIndex: 'fees_leaks',
+            align: 'center',
+            width: 80,
+            ellipsis: true,
+            sorter: (a, b) => (parseFloat(a.fees_leaks) || 0) - (parseFloat(b.fees_leaks) || 0),
+            render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+          },
+          {
+            title: 'Actual Shipping',
+            dataIndex: 'actual_shipping_charges',
+            align: 'center',
+            width: 90,
+            ellipsis: true,
+            sorter: (a, b) =>
+              (parseFloat(a.actual_shipping_charges) || 0) - (parseFloat(b.actual_shipping_charges) || 0),
+          },
+          {
+            title: 'Shipping Leaks',
+            dataIndex: 'shipping_leaks',
+            align: 'center',
+            width: 80,
+            ellipsis: true,
+            sorter: (a, b) => (parseFloat(a.shipping_leaks) || 0) - (parseFloat(b.shipping_leaks) || 0),
+            render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+          },
+          {
+            title: 'Actual MP-GST',
+            dataIndex: 'actual_mp_gst',
+            align: 'center',
+            width: 80,
+            ellipsis: true,
+            sorter: (a, b) => (parseFloat(a.actual_mp_gst) || 0) - (parseFloat(b.actual_mp_gst) || 0),
+          },
+          {
+            title: 'Actual TCS',
+            dataIndex: 'actual_tcs',
+            align: 'center',
+            width: 80,
+            ellipsis: true,
+            sorter: (a, b) => (parseFloat(a.actual_tcs) || 0) - (parseFloat(b.actual_tcs) || 0),
+          },
+          {
+            title: 'TCS Leaks',
+            dataIndex: 'tcs_leaks',
+            align: 'center',
+            width: 80,
+            ellipsis: true,
+            sorter: (a, b) => (parseFloat(a.tcs_leaks) || 0) - (parseFloat(b.tcs_leaks) || 0),
+            render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+          },
+          {
+            title: 'Bank Settled Amount',
+            dataIndex: 'settlement_paid_in_bank',
+            align: 'center',
+            width: 100,
+            ellipsis: true,
+            sorter: (a, b) =>
+              (parseFloat(a.settlement_paid_in_bank) || 0) - (parseFloat(b.settlement_paid_in_bank) || 0),
+          },
+          {
+            title: 'Unsettled Amount',
+            dataIndex: 'unsettled_not_paid',
+            align: 'center',
+            width: 100,
+            ellipsis: true,
+            sorter: (a, b) => (parseFloat(a.unsettled_not_paid) || 0) - (parseFloat(b.unsettled_not_paid) || 0),
+          },
+        ]
+      : []),
     {
       title: 'Ad Spend',
       dataIndex: 'adSpend',
@@ -469,9 +553,7 @@ export default function ProfitDetailsView() {
       dataIndex: 'profit',
       align: 'center',
       width: 70,
-
       sorter: (a, b) => a.profit - b.profit,
-      // render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>{v}</span>,
       render: (v, record) => (
         <button
           type="button"
@@ -483,10 +565,6 @@ export default function ProfitDetailsView() {
             })
           }
           className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none"
-
-          // className={`font-medium underline cursor-pointer bg-transparent border-none ${
-          //   String(v).includes('-') ? 'text-red-500' : 'text-green-600'
-          // }`}
         >
           {v}
         </button>
@@ -501,55 +579,6 @@ export default function ProfitDetailsView() {
       sorter: (a, b) => a.profitPercent - b.profitPercent,
       render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>{v}%</span>,
     },
-    // {
-    //   title: 'Gross Qty',
-    //   dataIndex: 'grossqty',
-    //   align: 'center',
-    //   // render: (v) => v ?? 0,
-    //   render: (v, record) => (
-    //     <button
-    //       type="button"
-    //       className="cursor-pointer bg-transparent border-none"
-    //       onClick={() =>
-    //         setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
-    //       }
-    //     >
-    //       {v ?? 0}
-    //     </button>
-    //   ),
-    // },
-
-    // {
-    //   title: (
-    //     <button
-    //       type="button"
-    //       onClick={() => setOpenSettings(true)}
-    //       className="flex justify-center items-center w-full cursor-pointer text-black"
-    //     >
-    //       <SettingOutlined />
-    //     </button>
-    //   ),
-    //   key: 'action',
-    //   fixed: 'right',
-    //   width: 60,
-    //   render: (_, record) => (
-    //     <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-    //       <button
-    //         type="button"
-    //         onClick={() =>
-    //           setDetailModal({ open: true, record, type: 'qty', modalLabel: 'OrderId', modalValue: record.view })
-    //         }
-    //         style={{
-    //           border: '1px solid #ffc0cb',
-    //           background: '#ffe4e9',
-    //         }}
-    //         className="w-[30px] h-[30px] rounded-[4px] cursor-pointer flex-items-center  justify-center mx-auto"
-    //       >
-    //         <BarChartOutlined style={{ fontSize: 14, color: '#ff4d6d' }} />
-    //       </button>
-    //     </div>
-    //   ),
-    // },
   ];
 
   useEffect(() => {
@@ -557,13 +586,6 @@ export default function ProfitDetailsView() {
       setVisibleColumns(columns.map((col) => col.dataIndex || col.key || col.title));
     }
   }, [columns]);
-
-  // const columnOptions = columns
-  //   .filter((col) => col.dataIndex !== 'action')
-  //   .map((col) => ({
-  //     key: col.dataIndex || col.key || col.title,
-  //     label: typeof col.title === 'string' ? col.title : col.dataIndex || 'Column',
-  //   }));
 
   const columnOptions = columns
     .filter(
@@ -579,7 +601,6 @@ export default function ProfitDetailsView() {
     <div className="w-[260px] bg-white rounded-xl shadow-xl border border-[#e5e7eb]">
       <div className="flex items-center justify-between px-4 py-3 border-b">
         <span className="font-medium text-[14px]">Manage Columns</span>
-
         <button
           type="button"
           className="text-[#6366f1] text-[12px]"
@@ -593,7 +614,6 @@ export default function ProfitDetailsView() {
         {columnOptions.map((item) => (
           <div key={item.key} className="flex items-center justify-between px-4 py-2 hover:bg-[#f9fafb]">
             <span className="text-[13px]">{item.label}</span>
-
             <Checkbox
               checked={visibleColumns.includes(item.key)}
               onChange={(e) => {
@@ -642,7 +662,11 @@ export default function ProfitDetailsView() {
       accountCharges: filters.accountCharges,
     };
 
-    dispatch(getProfitDetailsByParentId(payload));
+    if (isReconcile) {
+      dispatch(getPaymentReconcileDetailsByParentProductId(payload));
+    } else {
+      dispatch(getProfitDetailsByParentId(payload));
+    }
     setShowFilters(false);
   };
 
@@ -692,9 +716,7 @@ export default function ProfitDetailsView() {
                     className="h-[35px] px-3 rounded-lg border border-[#e5e7eb] bg-white flex items-center gap-2 text-[12px] font-medium shadow-sm transition-all whitespace-nowrap"
                   >
                     <FilterOutlined style={{ fontSize: 14 }} />
-
                     <span>Filters</span>
-
                     <span className="min-w-[18px] h-[18px] rounded-full bg-[#22c55e] text-white text-[11px] font-semibold flex items-center justify-center px-1">
                       {
                         [
@@ -741,7 +763,6 @@ export default function ProfitDetailsView() {
                         >
                           Cancel
                         </button>
-
                         <Button
                           type="primary"
                           onClick={() => {
@@ -764,6 +785,16 @@ export default function ProfitDetailsView() {
                     <span className="text-[#4B5563] text-[13px]">Manage Columns</span>
                   </Button>
                 </Dropdown>
+                <Dropdown menu={{ items: exportMenuItems }} trigger={['click']} placement="bottomRight">
+                  <Button
+                    type="primary"
+                    icon={<ExportOutlined />}
+                    loading={exportLoading}
+                    className="bg-[#10b981] hover:bg-[#059669] border-none text-white font-medium px-4 h-[35px] rounded-lg flex items-center gap-1.5 shadow-sm"
+                  >
+                    Export <DownOutlined style={{ fontSize: 10 }} />
+                  </Button>
+                </Dropdown>
               </div>
             </div>
           </div>
@@ -776,7 +807,6 @@ export default function ProfitDetailsView() {
             tableLayout="fixed"
             locale={{ emptyText: 'No Data Found' }}
             pagination={{
-              // ...pagination,
               current: pagination.current,
               pageSize: pagination.pageSize,
               total: profitData?.pagination?.count || 0,
@@ -788,7 +818,7 @@ export default function ProfitDetailsView() {
               setPagination(pag);
             }}
             size="small"
-            scroll={{ x: 'true' }}
+            scroll={{ x: isReconcile ? 1800 : 'true' }}
             className="
     [&_.ant-table-thead>tr>th]:!text-[12px]
     [&_.ant-table-thead>tr>th]:!font-semibold
@@ -807,7 +837,6 @@ export default function ProfitDetailsView() {
                   .filter((col) => !['image', 'channel', 'view'].includes(col.dataIndex))
                   .map((col, index) => {
                     const keyMap = {
-                      // view: 'view',
                       netqty: 'total_netquantity',
                       returnqty: 'total_returns',
                       returnPercent: 'total_ret_percent',
@@ -845,6 +874,15 @@ export default function ProfitDetailsView() {
                       customer_return_count: 'customer_return_count',
                       final_net_qty: 'total_final_net_qty',
                       final_net_sales: 'total_final_net_sales',
+                      actual_fees: 'actual_fees',
+                      fees_leaks: 'fees_leaks',
+                      actual_shipping_charges: 'actual_shipping_charges',
+                      shipping_leaks: 'shipping_leaks',
+                      actual_mp_gst: 'actual_mp_gst',
+                      actual_tcs: 'actual_tcs',
+                      tcs_leaks: 'tcs_leaks',
+                      settlement_paid_in_bank: 'settlement_paid_in_bank',
+                      unsettled_not_paid: 'unsettled_not_paid',
                     };
 
                     const value = profitData?.totals?.[keyMap[col.dataIndex]];
@@ -862,7 +900,6 @@ export default function ProfitDetailsView() {
                             <div className="w-full h-full" />
                           ) : col.dataIndex === 'profitPercent' ? (
                             <span
-                              // className={`font-semibold ${
                               className={`text-[13px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis ${
                                 Number(value) > 0
                                   ? 'text-green-600'

@@ -8,7 +8,10 @@ import {
   ArrowLeftOutlined,
   SettingOutlined,
   CloseCircleOutlined,
-  DownloadOutlined,
+  ExportOutlined,
+  DownOutlined,
+  FileExcelOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -17,9 +20,11 @@ import CalculationModal from './component/Calculations';
 import ProfitModal from './component/ProfitModal';
 import amazon from '../../assets/icons/amazon.svg';
 import myntra from '../../assets/icons/myntraLogo.jpg';
-// import flipkart from "../../assets/icons/flipkart.png";
-import { getSecondDetials, exportProfitabilityDetails } from '../../redux/dashboard/actionCreator';
-// import { PageHeader } from '../../components/page-headers/page-headers';
+import {
+  getSecondDetials,
+  getPaymentReconcileDetailsByParentAsin,
+  exportProfitabilityDetails,
+} from '../../redux/dashboard/actionCreator';
 
 export default function ProfitViewSecondTable() {
   const { asin } = useParams();
@@ -115,14 +120,17 @@ export default function ProfitViewSecondTable() {
       },
     };
   };
+  const isReconcile = location.state?.isReconcile || location.pathname.includes('/reconcile');
+
   const [exportLoading, setExportLoading] = React.useState(false);
-  const handleExport = async () => {
+  const handleExport = async (format = 'xlsx') => {
     try {
       setExportLoading(true);
       const payload = buildPayload();
-      await dispatch(
-        exportProfitabilityDetails(payload, 'xlsx', '/amazon/profitability/details/by-parent-asin/export/'),
-      );
+      const exportEndpoint = isReconcile
+        ? '/amazon/payment-reconcile/details/by-parent-asin/export/'
+        : '/amazon/profitability/details/by-parent-asin/export/';
+      await dispatch(exportProfitabilityDetails(payload, format, exportEndpoint));
     } catch (error) {
       console.error('Export failed:', error);
     } finally {
@@ -130,9 +138,28 @@ export default function ProfitViewSecondTable() {
     }
   };
 
+  const exportMenuItems = [
+    {
+      key: 'xlsx',
+      label: 'Excel (.xlsx)',
+      icon: <FileExcelOutlined style={{ color: '#10b981' }} />,
+      onClick: () => handleExport('xlsx'),
+    },
+    {
+      key: 'csv',
+      label: 'CSV (.csv)',
+      icon: <FileTextOutlined style={{ color: '#3b82f6' }} />,
+      onClick: () => handleExport('csv'),
+    },
+  ];
+
   useEffect(() => {
-    dispatch(getSecondDetials(buildPayload()));
-  }, [dispatch, pagination, globalChannel, debouncedSearch]);
+    if (isReconcile) {
+      dispatch(getPaymentReconcileDetailsByParentAsin(buildPayload()));
+    } else {
+      dispatch(getSecondDetials(buildPayload()));
+    }
+  }, [dispatch, pagination, globalChannel, debouncedSearch, isReconcile, dateRange]);
 
   // const PageRoutes = [
   //   { path: 'index', breadcrumbName: 'Profit' },
@@ -208,6 +235,15 @@ export default function ProfitViewSecondTable() {
         customer_return_count: item.customer_return_count || 0,
         final_net_qty: item.final_net_qty || 0,
         final_net_sales: item.final_net_sales || 0,
+        actual_fees: item.actual_fees || 0,
+        fees_leaks: item.fees_leaks || 0,
+        actual_shipping_charges: item.actual_shipping_charges || 0,
+        shipping_leaks: item.shipping_leaks || 0,
+        actual_mp_gst: item.actual_mp_gst || 0,
+        actual_tcs: item.actual_tcs || 0,
+        tcs_leaks: item.tcs_leaks || 0,
+        settlement_paid_in_bank: item.settlement_paid_in_bank || 0,
+        unsettled_not_paid: item.unsettled_not_paid || 0,
 
         // settledamount: Number(item.profit_settled_amount) || 0,
       })) || [];
@@ -505,6 +541,88 @@ export default function ProfitViewSecondTable() {
       ellipsis: true,
       sorter: (a, b) => a.tcs - b.tcs,
     },
+    ...(isReconcile
+      ? [
+          {
+            title: 'Actual MP Fees',
+            dataIndex: 'actual_fees',
+            align: 'center',
+            width: 90,
+            ellipsis: true,
+            sorter: (a, b) => (parseFloat(a.actual_fees) || 0) - (parseFloat(b.actual_fees) || 0),
+          },
+          {
+            title: 'Fee Leaks',
+            dataIndex: 'fees_leaks',
+            align: 'center',
+            width: 80,
+            ellipsis: true,
+            sorter: (a, b) => (parseFloat(a.fees_leaks) || 0) - (parseFloat(b.fees_leaks) || 0),
+            render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+          },
+          {
+            title: 'Actual Shipping',
+            dataIndex: 'actual_shipping_charges',
+            align: 'center',
+            width: 90,
+            ellipsis: true,
+            sorter: (a, b) =>
+              (parseFloat(a.actual_shipping_charges) || 0) - (parseFloat(b.actual_shipping_charges) || 0),
+          },
+          {
+            title: 'Shipping Leaks',
+            dataIndex: 'shipping_leaks',
+            align: 'center',
+            width: 80,
+            ellipsis: true,
+            sorter: (a, b) => (parseFloat(a.shipping_leaks) || 0) - (parseFloat(b.shipping_leaks) || 0),
+            render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+          },
+          {
+            title: 'Actual MP-GST',
+            dataIndex: 'actual_mp_gst',
+            align: 'center',
+            width: 80,
+            ellipsis: true,
+            sorter: (a, b) => (parseFloat(a.actual_mp_gst) || 0) - (parseFloat(b.actual_mp_gst) || 0),
+          },
+          {
+            title: 'Actual TCS',
+            dataIndex: 'actual_tcs',
+            align: 'center',
+            width: 80,
+            ellipsis: true,
+            sorter: (a, b) => (parseFloat(a.actual_tcs) || 0) - (parseFloat(b.actual_tcs) || 0),
+          },
+          {
+            title: 'TCS Leaks',
+            dataIndex: 'tcs_leaks',
+            align: 'center',
+            width: 80,
+            ellipsis: true,
+            sorter: (a, b) => (parseFloat(a.tcs_leaks) || 0) - (parseFloat(b.tcs_leaks) || 0),
+            render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+          },
+          {
+            title: 'Bank Settled Amount',
+            dataIndex: 'settlement_paid_in_bank',
+            align: 'center',
+            width: 100,
+            ellipsis: true,
+            sorter: (a, b) =>
+              (parseFloat(a.settlement_paid_in_bank) || 0) - (parseFloat(b.settlement_paid_in_bank) || 0),
+          },
+          {
+            title: 'Unsettled Amount',
+            dataIndex: 'unsettled_not_paid',
+            align: 'center',
+            width: 100,
+            ellipsis: true,
+            sorter: (a, b) => (parseFloat(a.unsettled_not_paid) || 0) - (parseFloat(b.unsettled_not_paid) || 0),
+            render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+          },
+        ]
+      : []),
     {
       title: 'Ad Spend',
       dataIndex: 'adSpend',
@@ -666,6 +784,7 @@ export default function ProfitViewSecondTable() {
               navigate(`../third/${record.asin}`, {
                 state: {
                   sku: record.view,
+                  isReconcile,
                 },
               })
             }
@@ -842,16 +961,6 @@ export default function ProfitViewSecondTable() {
               </div>
 
               <div className="flex flex-wrap items-center gap-2 lg:w-full lg:justify-end md:w-full md:justify-between sm:w-full sm:justify-between">
-                {/* Export Button */}
-                <Button
-                  icon={<DownloadOutlined style={{ fontSize: 14 }} />}
-                  loading={exportLoading}
-                  onClick={handleExport}
-                  className="flex items-center !h-[35px] !rounded-lg !border-[#e5e7eb] whitespace-nowrap"
-                >
-                  <span className="text-[#4B5563] text-[13px]">Export</span>
-                </Button>
-
                 <div className="relative">
                   <button
                     type="button"
@@ -983,6 +1092,16 @@ export default function ProfitViewSecondTable() {
                     <span className="text-[#4B5563] text-[13px]">Manage Columns</span>
                   </Button>
                 </Dropdown>
+                <Dropdown menu={{ items: exportMenuItems }} trigger={['click']} placement="bottomRight">
+                  <Button
+                    type="primary"
+                    icon={<ExportOutlined />}
+                    loading={exportLoading}
+                    className="bg-[#10b981] hover:bg-[#059669] border-none text-white font-medium px-4 h-[35px] rounded-lg flex items-center gap-1.5 shadow-sm"
+                  >
+                    Export <DownOutlined style={{ fontSize: 10 }} />
+                  </Button>
+                </Dropdown>
               </div>
             </div>
           </div>
@@ -1037,10 +1156,19 @@ export default function ProfitViewSecondTable() {
                       gst_to_pay_amount: 'gst_to_pay_amount',
                       gst_to_pay_perc: 'gst_to_pay_perc',
                       settleAmount: 'exp_settlement',
-                      // grossprofit: 'grossprofit',
                       profit: 'profit',
                       profitPercent: 'grossprofitper',
                       mp_gst: 'mp_gst',
+
+                      actual_fees: 'actual_fees',
+                      fees_leaks: 'fees_leaks',
+                      actual_shipping_charges: 'actual_shipping_charges',
+                      shipping_leaks: 'shipping_leaks',
+                      actual_mp_gst: 'actual_mp_gst',
+                      actual_tcs: 'actual_tcs',
+                      tcs_leaks: 'tcs_leaks',
+                      settlement_paid_in_bank: 'settlement_paid_in_bank',
+                      unsettled_not_paid: 'unsettled_not_paid',
 
                       grossQty: 'grossqty',
                       netmrp: 'netmrp',
@@ -1061,10 +1189,11 @@ export default function ProfitViewSecondTable() {
                       courier_return_count: 'courier_return_count',
                       customer_return_count: 'customer_return_count',
                       final_net_qty: 'total_final_net_qty',
-                      final_net_sales: 'total_final_net_sales',
+                      final_net_sales: 'final_net_sales',
                     };
 
-                    const value = totals[keyMap[col.dataIndex]];
+                    const totalKey = keyMap[col.dataIndex] || col.dataIndex;
+                    const value = totals[totalKey];
 
                     return (
                       <Table.Summary.Cell key={col.key || index} index={index + 3} fixed={col.fixed} align="center">

@@ -112,6 +112,39 @@ def generate_xlsx(data_list, headers, keys, totals_dict=None) -> bytes:
 def generate_pdf(data_list, headers, keys, filename, totals_dict=None) -> bytes:
     buffer = io.BytesIO()
     
+    font_name = 'Helvetica'
+    font_name_bold = 'Helvetica-Bold'
+    font_registered = False
+
+    try:
+        import os
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+        
+        possible_fonts = [
+            ('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'),
+            ('/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf', '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf'),
+            ('/usr/share/fonts/truetype/freefont/FreeSans.ttf', '/usr/share/fonts/truetype/freefont/FreeSansBold.ttf')
+        ]
+        
+        for regular_path, bold_path in possible_fonts:
+            if os.path.exists(regular_path) and os.path.exists(bold_path):
+                pdfmetrics.registerFont(TTFont('UnicodeFont', regular_path))
+                pdfmetrics.registerFont(TTFont('UnicodeFont-Bold', bold_path))
+                font_name = 'UnicodeFont'
+                font_name_bold = 'UnicodeFont-Bold'
+                font_registered = True
+                break
+    except Exception:
+        font_registered = False
+
+    def clean_text(text):
+        if text is None:
+            return ""
+        text_str = str(text)
+        text_str = text_str.replace('₹', 'Rs. ').replace('\u20b9', 'Rs. ')
+        return text_str
+
     doc = SimpleDocTemplate(
         buffer,
         pagesize=landscape(A4),
@@ -126,7 +159,7 @@ def generate_pdf(data_list, headers, keys, filename, totals_dict=None) -> bytes:
     title_style = ParagraphStyle(
         'DocTitle',
         parent=styles['Heading1'],
-        fontName='Helvetica-Bold',
+        fontName=font_name_bold,
         fontSize=12,
         leading=14,
         textColor=colors.HexColor('#1F4E78'),
@@ -136,7 +169,7 @@ def generate_pdf(data_list, headers, keys, filename, totals_dict=None) -> bytes:
     
     header_style = ParagraphStyle(
         'TableHeader',
-        fontName='Helvetica-Bold',
+        fontName=font_name_bold,
         fontSize=5.5,
         leading=6.5,
         textColor=colors.white,
@@ -145,7 +178,7 @@ def generate_pdf(data_list, headers, keys, filename, totals_dict=None) -> bytes:
     
     cell_style = ParagraphStyle(
         'TableCell',
-        fontName='Helvetica',
+        fontName=font_name,
         fontSize=5,
         leading=6,
         textColor=colors.black,
@@ -154,7 +187,7 @@ def generate_pdf(data_list, headers, keys, filename, totals_dict=None) -> bytes:
     
     totals_style = ParagraphStyle(
         'TableTotals',
-        fontName='Helvetica-Bold',
+        fontName=font_name_bold,
         fontSize=5,
         leading=6,
         textColor=colors.black,
@@ -162,11 +195,11 @@ def generate_pdf(data_list, headers, keys, filename, totals_dict=None) -> bytes:
     )
     
     elements = []
-    elements.append(Paragraph(filename.replace('_', ' ').title(), title_style))
+    elements.append(Paragraph(clean_text(filename.replace('_', ' ').title()), title_style))
     elements.append(Spacer(1, 8))
     
     table_data = []
-    header_row = [Paragraph(str(h), header_style) for h in headers]
+    header_row = [Paragraph(clean_text(h), header_style) for h in headers]
     table_data.append(header_row)
     
     for row in data_list:
@@ -177,7 +210,7 @@ def generate_pdf(data_list, headers, keys, filename, totals_dict=None) -> bytes:
                 val = str(val)
             elif val is None:
                 val = ''
-            data_row.append(Paragraph(str(val), cell_style))
+            data_row.append(Paragraph(clean_text(val), cell_style))
         table_data.append(data_row)
         
     if totals_dict:
@@ -187,7 +220,7 @@ def generate_pdf(data_list, headers, keys, filename, totals_dict=None) -> bytes:
                 totals_row.append(Paragraph("Total", totals_style))
             else:
                 val = totals_dict.get(k, '')
-                totals_row.append(Paragraph(str(val), totals_style))
+                totals_row.append(Paragraph(clean_text(val), totals_style))
         table_data.append(totals_row)
         
     col_count = len(keys)
@@ -221,3 +254,4 @@ def generate_pdf(data_list, headers, keys, filename, totals_dict=None) -> bytes:
     pdf = buffer.getvalue()
     buffer.close()
     return pdf
+
