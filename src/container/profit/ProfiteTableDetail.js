@@ -7,7 +7,6 @@ import {
   EyeOutlined,
   SettingOutlined,
   CloseCircleOutlined,
-  DownloadOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -16,7 +15,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import CalculationModal from './component/Calculations';
 import amazon from '../../assets/icons/amazon.svg';
 import myntra from '../../assets/icons/myntraLogo.jpg';
-import { getProfitDetails, exportProfitabilityDetails } from '../../redux/dashboard/actionCreator';
+import { getProfitDetails } from '../../redux/dashboard/actionCreator';
 // import { PageHeader } from '../../components/page-headers/page-headers';
 
 export default function ProfitDetailsView() {
@@ -48,7 +47,6 @@ export default function ProfitDetailsView() {
   const [visibleColumns, setVisibleColumns] = React.useState([]);
   const [search, setSearch] = React.useState('');
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
-  const [exportLoading, setExportLoading] = React.useState(false);
 
   // const [columnSearch, setColumnSearch] = React.useState('');
 
@@ -128,65 +126,6 @@ export default function ProfitDetailsView() {
       dispatch(getProfitDetails(buildPayload()));
     }
   }, [dateRange, decodedChannel, pagination, debouncedSearch]);
-
-  // const handleExport = async () => {
-  //   setExportLoading(true);
-  //   try {
-  //     const payload = buildPayload();
-  //     await dispatch(exportProfitabilityDetails(payload));
-  //   } catch (err) {
-  //     console.error(err);
-  //   } finally {
-  //     setExportLoading(false);
-  //   }
-  // };
-
-  const handleExport = async (format = 'xlsx') => {
-    setExportLoading(true);
-
-    try {
-      const payload = buildPayload();
-
-      await dispatch(exportProfitabilityDetails(payload, format));
-    } catch (err) {
-      console.error('Export error:', err);
-    } finally {
-      setExportLoading(false);
-    }
-  };
-  const exportMenu = {
-    items: [
-      {
-        key: 'xlsx',
-        label: 'Excel',
-      },
-      {
-        key: 'csv',
-        label: 'CSV',
-      },
-      {
-        key: 'pdf',
-        label: 'PDF',
-      },
-    ],
-    onClick: ({ key }) => {
-      handleExport(key);
-    },
-  };
-
-  useEffect(() => {
-    const handleHeaderAction = (event) => {
-      if (event.detail === 'export') {
-        handleExport();
-      }
-    };
-
-    window.addEventListener('headerAction', handleHeaderAction);
-
-    return () => {
-      window.removeEventListener('headerAction', handleHeaderAction);
-    };
-  }, [dateRange, globalChannel, debouncedSearch, channels]);
 
   // const PageRoutes = [
   //   { path: 'index', breadcrumbName: 'Profit' },
@@ -914,17 +853,6 @@ export default function ProfitDetailsView() {
 
             {/* Right Actions */}
             <div className="flex items-center gap-2 flex-wrap lg:w-full lg:justify-end md:w-full md:justify-between sm:w-full sm:justify-between">
-              {/* Export Button */}
-              <Dropdown menu={exportMenu} trigger={['click']} placement="bottomRight">
-                <Button
-                  icon={<DownloadOutlined style={{ fontSize: 14 }} />}
-                  loading={exportLoading}
-                  className="flex items-center !h-[35px] !rounded-lg !border-[#e5e7eb] whitespace-nowrap"
-                >
-                  <span className="text-[#4B5563] text-[13px]">Export</span>
-                </Button>
-              </Dropdown>
-
               {/* Filter Button */}
               <div className="relative">
                 <button
