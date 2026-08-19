@@ -219,7 +219,7 @@ const ThemeLayout = (WrappedComponent) => {
                   {/* <Link className="flex items-center gap-2 cursor-pointer group" to="/admin/profit/summary">
                     <img src="/WhatsApp-Image-2026-04-23.jpeg" alt="Logo" className="h-10 w-auto object-contain" />
                   </Link> */}
-                  <Link className="flex items-center gap-2 cursor-pointer group" to="/admin/profit/summary">
+                  <Link className="flex items-center gap-2 cursor-pointer group" to="/">
                     {/* Desktop Logo */}
                     <img
                       src="/WhatsApp-Image-2026-04-23.jpeg"
