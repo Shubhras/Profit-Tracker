@@ -5,7 +5,6 @@ import { Button } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
 
 // import { ArrowRightOutlined, PlayCircleOutlined } from '@ant-design/icons';
-import dashboardPreview from '../../../../assets/images/home/banner3.png';
 
 function HeroSection() {
   const navigate = useNavigate();
@@ -138,7 +137,7 @@ function HeroSection() {
 
               {/* Dashboard Image */}
               <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200/50 p-2 overflow-hidden">
-                <img src={dashboardPreview} alt="Profit Tracker Dashboard" className="w-full h-auto rounded-xl" />
+                <img src="/home/banner3.png" alt="Profit Tracker Dashboard" className="w-full h-auto rounded-xl" />
               </div>
 
               {/* Floating Stats Cards */}

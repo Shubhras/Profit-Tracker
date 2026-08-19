@@ -106,7 +106,7 @@ export default function ProfitDetailsView() {
 
         channel: {
           // IN: [decodedChannel],
-          IN: channels,
+          IN: globalChannel,
           // IN: globalChannel,
         },
         ...(profitType === 'profitable' && {
@@ -131,7 +131,7 @@ export default function ProfitDetailsView() {
     if (decodedChannel) {
       dispatch(getProfitDetails(buildPayload()));
     }
-  }, [dateRange, decodedChannel, pagination, debouncedSearch]);
+  }, [dateRange, decodedChannel, globalChannel, pagination, debouncedSearch]);
 
   const handleExport = async (format = 'xlsx') => {
     setExportLoading(true);
