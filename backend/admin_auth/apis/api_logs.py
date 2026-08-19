@@ -54,11 +54,33 @@ def ensure_sample_logs_if_empty():
                 service_type='SP-API',
                 account_id='SELLER_IN_' + str(user.id),
                 account_name=getattr(user, 'first_name', '') or user.username or 'Amazon Seller',
+                api_endpoint='GET_SALES_AND_TRAFFIC_REPORT',
+                call_count=14,
+                status='SUCCESS',
+                orders_processed=120,
+                response_time_ms=410
+            )
+            log_api_call(
+                user=user,
+                service_type='SP-API',
+                account_id='SELLER_IN_' + str(user.id),
+                account_name=getattr(user, 'first_name', '') or user.username or 'Amazon Seller',
                 api_endpoint='/finances/v0/orders/{order_id}/financialEvents',
                 call_count=12,
                 status='SUCCESS',
                 orders_processed=15,
                 response_time_ms=210
+            )
+            log_api_call(
+                user=user,
+                service_type='SP-API',
+                account_id='SELLER_IN_' + str(user.id),
+                account_name=getattr(user, 'first_name', '') or user.username or 'Amazon Seller',
+                api_endpoint='/products/fees/v0/items/{asin}/feesEstimate',
+                call_count=8,
+                status='SUCCESS',
+                orders_processed=0,
+                response_time_ms=190
             )
 
         if has_ads:
@@ -84,19 +106,30 @@ def ensure_sample_logs_if_empty():
                 orders_processed=0,
                 response_time_ms=450
             )
-
-        if has_myn:
             log_api_call(
                 user=user,
-                service_type='Myntra',
-                account_id='MYNTRA_STORE_' + str(user.id),
-                account_name=(getattr(user, 'first_name', '') or user.username) + ' Myntra',
-                api_endpoint='/partner/v4/order/getOrderList',
-                call_count=16,
+                service_type='Amazon-Ads',
+                account_id='PROFILE_ADS_' + str(user.id),
+                account_name=(getattr(user, 'first_name', '') or user.username) + ' Ads',
+                api_endpoint='/sp/adGroups/list',
+                call_count=15,
                 status='SUCCESS',
-                orders_processed=65,
-                response_time_ms=290
+                orders_processed=0,
+                response_time_ms=210
             )
+            log_api_call(
+                user=user,
+                service_type='Amazon-Ads',
+                account_id='PROFILE_ADS_' + str(user.id),
+                account_name=(getattr(user, 'first_name', '') or user.username) + ' Ads',
+                api_endpoint='/sp/keywords/list',
+                call_count=12,
+                status='SUCCESS',
+                orders_processed=0,
+                response_time_ms=230
+            )
+
+        if has_myn:
             log_api_call(
                 user=user,
                 service_type='Myntra',
@@ -107,6 +140,28 @@ def ensure_sample_logs_if_empty():
                 status='SUCCESS',
                 orders_processed=45,
                 response_time_ms=380
+            )
+            log_api_call(
+                user=user,
+                service_type='Myntra',
+                account_id='MYNTRA_STORE_' + str(user.id),
+                account_name=(getattr(user, 'first_name', '') or user.username) + ' Myntra',
+                api_endpoint='/partner/v4/payments/history/PG',
+                call_count=8,
+                status='SUCCESS',
+                orders_processed=30,
+                response_time_ms=310
+            )
+            log_api_call(
+                user=user,
+                service_type='Myntra',
+                account_id='MYNTRA_STORE_' + str(user.id),
+                account_name=(getattr(user, 'first_name', '') or user.username) + ' Myntra',
+                api_endpoint='/partner/v4/returns/returnRecon',
+                call_count=5,
+                status='SUCCESS',
+                orders_processed=12,
+                response_time_ms=250
             )
 
 from datetime import datetime
@@ -361,8 +416,8 @@ class AdminApiLogsAPI(APIView):
 
                 if not myn_endpoint_breakdown and myn_accs.exists():
                     myn_endpoint_breakdown = {
-                        '/partner/v4/order/getOrderList': max(8, myn_orders // 2),
                         '/partner/v4/portal/report/Seller_Orders_Report': max(4, myn_orders // 4),
+                        '/partner/v4/payments/history/PG': 6,
                         '/partner/v4/returns/returnRecon': 5
                     }
 

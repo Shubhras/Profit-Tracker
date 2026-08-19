@@ -43,3 +43,14 @@ scratch/
 
 # Myntra documentation
 myntra_doc/
+
+# -------------------------
+# Exported Reports & Files
+# -------------------------
+exports/
+*/exports/
+media/exports/
+media/exported_reports/
+*.xlsx
+*.xls
+*.csv

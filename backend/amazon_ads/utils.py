@@ -327,6 +327,7 @@ def ads_api_request(
 
     url = f"{base_url}{endpoint}"
 
+    start_time = time.time()
     response = requests.request(
         method=method,
         url=url,
@@ -335,6 +336,22 @@ def ads_api_request(
         json=payload,
         timeout=60
     )
+    elapsed_ms = int((time.time() - start_time) * 1000)
+
+    try:
+        from admin_auth.models import log_api_call
+        log_api_call(
+            user=account.user if account else None,
+            service_type='Amazon-Ads',
+            account_id=str(getattr(account, 'profile_id', '')),
+            account_name=getattr(account, 'profile_name', None) or str(getattr(account, 'profile_id', 'Amazon Ads')),
+            api_endpoint=endpoint,
+            call_count=1,
+            status='SUCCESS' if response.status_code in [200, 201, 202] else f'HTTP_{response.status_code}',
+            response_time_ms=elapsed_ms
+        )
+    except Exception:
+        pass
 
     return response
 
@@ -358,8 +375,6 @@ def ads_matrix_api_request(
         "Authorization": f"Bearer {access_token}",
         "Amazon-Advertising-API-ClientId":
         settings.AMAZON_ADS_CLIENT_ID,
-        # "Amazon-Advertising-API-Scope":
-        # account.profile_id,
         "Amazon-Advertising-API-Scope": str(account.profile_id),
         "Content-Type": content_type,
         "Accept": accept_type
@@ -371,18 +386,30 @@ def ads_matrix_api_request(
 
     print(f"URL: {url}")
 
+    start_time = time.time()
     response = session.request(
-
         method=method,
-
         url=url,
-
         headers=headers,
-
         json=payload,
-
         timeout=120
     )
+    elapsed_ms = int((time.time() - start_time) * 1000)
+
+    try:
+        from admin_auth.models import log_api_call
+        log_api_call(
+            user=account.user if account else None,
+            service_type='Amazon-Ads',
+            account_id=str(getattr(account, 'profile_id', '')),
+            account_name=getattr(account, 'profile_name', None) or str(getattr(account, 'profile_id', 'Amazon Ads')),
+            api_endpoint=endpoint,
+            call_count=1,
+            status='SUCCESS' if response.status_code in [200, 201, 202] else f'HTTP_{response.status_code}',
+            response_time_ms=elapsed_ms
+        )
+    except Exception:
+        pass
 
     return response
 

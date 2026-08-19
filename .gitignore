@@ -94,3 +94,15 @@ pytest_cache/
 # -------------------------
 # build/
 backend/profit_tracker_pg/postgres_data.sql
+
+# -------------------------
+# Exported Reports & Files
+# -------------------------
+exports/
+*/exports/
+media/exports/
+media/exported_reports/
+*.xlsx
+*.xls
+*.csv
+
