@@ -116,4 +116,6 @@ class UserSubscription(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.user.email} - {self.plan.plan_name}"
+        email = getattr(self.user, 'email', str(self.user)) if self.user else "No User"
+        plan_name = self.plan.plan_name if self.plan else "No Plan"
+        return f"{email} - {plan_name}"
