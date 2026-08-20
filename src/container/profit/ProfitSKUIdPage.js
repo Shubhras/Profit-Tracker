@@ -15,8 +15,6 @@ import { useDispatch, useSelector } from 'react-redux';
 // import ProfitFilterBar from './component/ProfitFilterBar';
 // import ProfitModal from './component/ProfitModal'
 import CalculationModal from './component/Calculations';
-import amazon from '../../assets/icons/amazon.svg';
-// import flipkart from "../../assets/icons/flipkart.png";
 import { getProfitSKUId, exportProfitabilityDetails } from '../../redux/dashboard/actionCreator';
 // import { PageHeader } from '../../components/page-headers/page-headers';
 
@@ -51,8 +49,7 @@ export default function ProfitSKUIdPage() {
   // const [columnSearch, setColumnSearch] = React.useState('');
 
   const channelLogoMap = {
-    'Amazon-India': amazon,
-    // 'Flipkart-India': flipkart,
+    'Amazon-India': '/icons/amazon.svg',
   };
   const [pagination, setPagination] = React.useState({
     current: 1,

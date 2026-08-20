@@ -1,27 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  Table,
-  Button,
-  Modal,
-  Form,
-  Input,
-  Select,
-  Spin,
-  Empty,
-  message,
-  Popconfirm,
-  Checkbox,
-  Tag,
-  Descriptions,
-} from 'antd';
+import { Table, Button, Modal, Form, Input, Spin, Empty, message, Popconfirm, Checkbox, Tag, Descriptions } from 'antd';
 import { UilTrashAlt, UilLock, UilEye, UilEdit, UilSignin } from '@iconscout/react-unicons';
 import { getSubUsers, addUser, deleteSubUser, updateSubUser } from '../../redux/Settings/actionCreator';
 import { subUserLogin } from '../../redux/authentication/actionCreator';
 import { DataService } from '../../config/dataService/dataService';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
-const { Option } = Select;
+// const { Option } = Select;
 
 export default function UserManagement() {
   const PageRoutes = [

@@ -158,8 +158,15 @@ function Password() {
                 name="new_password"
                 label={<span className="text-gray-700 font-medium">New Password</span>}
                 rules={[
-                  { required: true, message: 'Please enter a new password' },
-                  { min: 6, message: 'Password must be at least 6 characters' },
+                  {
+                    required: true,
+                    message: 'Please enter a new password',
+                  },
+                  {
+                    pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$/,
+                    message:
+                      'Password must be at least 12 characters and include uppercase, lowercase, number, and special character.',
+                  },
                 ]}
                 className="mb-2"
               >
@@ -175,8 +182,11 @@ function Password() {
                   Password Requirements:
                 </h4>
                 <ul className="text-sm text-gray-500 space-y-1 list-disc pl-4">
-                  <li>Minimum 6 characters long</li>
-                  <li>Use a mix of letters, numbers, and symbols</li>
+                  <li>Minimum 12 characters long</li>
+                  <li>At least one uppercase letter</li>
+                  <li>At least one lowercase letter</li>
+                  <li>At least one number</li>
+                  <li>At least one special character</li>
                 </ul>
               </div>
 

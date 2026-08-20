@@ -102,7 +102,7 @@ const {
 } = actions;
 
 const settingsReducer = (state = initialState, action) => {
-  const { type, data, err, id } = action;
+  const { type, data, err } = action;
   switch (type) {
     case OVERVIEW_SETTING_BEGIN:
       return {
