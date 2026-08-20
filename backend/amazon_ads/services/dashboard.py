@@ -25,7 +25,8 @@ class AdsDashboardStatsAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        user = request.user
+        from user_auth.models import get_effective_user
+        user = get_effective_user(request.user)
 
         # ---------------------------------------------------------------------
         # 1. PARSE DATE RANGE

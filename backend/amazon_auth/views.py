@@ -13,6 +13,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .spapi_manager import SPAPIManager
 from .models import *
+from user_auth.models import get_effective_user
 from dotenv import load_dotenv
 from rest_framework.response import Response
 from decimal import Decimal
@@ -2094,7 +2095,7 @@ def get_profit_card(request):
     """
     Focused API for the main Profit summary card: Profit, Margin, ROI.
     """
-    user = request.user
+    user = get_effective_user(request.user)
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
 
@@ -2134,7 +2135,7 @@ def get_product_analytics(request):
     """
     Groups data by SKU for the product-level profit table.
     """
-    user = request.user
+    user = get_effective_user(request.user)
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
 
@@ -2192,7 +2193,7 @@ def get_product_analytics(request):
 def get_full_dashboard(request):
 
     print(f"DEBUG: get_full_dashboard called for user {request.user}")
-    user = request.user
+    user = get_effective_user(request.user)
 
     # ---------------- INPUT ----------------
     data_source_raw = request.data if request.method == 'POST' else request.GET
@@ -5652,7 +5653,7 @@ def amazon_profitability_parent(request):
 @permission_classes([IsAuthenticated])
 def amazon_profitability_parent_transactions_shipping(request):
 
-    user = request.user
+    user = get_effective_user(request.user)
     data = request.data
 
     filters = data.get("filters", {})
@@ -7677,7 +7678,7 @@ def sku_profit_report(request):
 @permission_classes([IsAuthenticated])
 def sku_profit_report_transactions_shipping(request):
 
-    user = request.user
+    user = get_effective_user(request.user)
     data = request.data
 
     # ---------------- GET ASIN ----------------
@@ -8947,7 +8948,7 @@ def get_catalog_details(request):
 @permission_classes([IsAuthenticated])
 def amazon_profitability_details_transactions_shipping(request):
 
-    user = request.user
+    user = get_effective_user(request.user)
     data_source_raw = request.data if request.method == 'POST' else request.GET
     
     data_source = {}

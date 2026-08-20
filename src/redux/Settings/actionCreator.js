@@ -33,9 +33,18 @@ const {
   userinfoBegin,
   userinfoSuccess,
   userinfoErr,
+
   adduserBegin,
   adduserSuccess,
   adduserErr,
+
+  getSubUsersBegin,
+  getSubUsersSuccess,
+  getSubUsersErr,
+
+  deleteSubUserBegin,
+  deleteSubUserSuccess,
+  deleteSubUserErr,
 
   exportproductconfigurationBegin,
   exportproductconfigurationSuccess,
@@ -197,20 +206,85 @@ export const getUserInfo = (payload) => {
   };
 };
 
+export const getSubUsers = () => {
+  return async (dispatch) => {
+    dispatch(getSubUsersBegin());
+
+    try {
+      const response = await DataService.get('/user/sub-users/list/');
+
+      if (response.data && response.data.status) {
+        dispatch(getSubUsersSuccess(response.data));
+      } else {
+        dispatch(getSubUsersErr(response.data?.message || 'Failed to fetch sub-users'));
+      }
+      return response.data;
+    } catch (err) {
+      dispatch(getSubUsersErr(err.response?.data?.message || err.message));
+      throw err;
+    }
+  };
+};
+
 export const addUser = (payload) => {
   return async (dispatch) => {
     dispatch(adduserBegin());
 
     try {
-      const response = await mockService(payload);
+      const response = await DataService.post('/user/sub-users/create/', payload);
 
       if (response.data?.status === 'success' || response.data?.status === true) {
         dispatch(adduserSuccess(response.data));
+        dispatch(getSubUsers());
       } else {
-        dispatch(adduserErr('Something went wrong'));
+        dispatch(adduserErr(response.data?.message || 'Something went wrong'));
       }
+      return response.data;
     } catch (err) {
-      dispatch(adduserErr(err.message));
+      dispatch(adduserErr(err.response?.data?.message || err.message));
+      throw err;
+    }
+  };
+};
+
+export const updateSubUser = (id, payload) => {
+  return async (dispatch) => {
+    dispatch(adduserBegin());
+
+    try {
+      const response = await DataService.put(`/user/sub-users/update/${id}/`, payload);
+
+      if (response.data?.status === 'success' || response.data?.status === true) {
+        dispatch(adduserSuccess(response.data));
+        dispatch(getSubUsers());
+      } else {
+        dispatch(adduserErr(response.data?.message || 'Failed to update sub-user'));
+      }
+      return response.data;
+    } catch (err) {
+      dispatch(adduserErr(err.response?.data?.message || err.message));
+      throw err;
+    }
+  };
+};
+
+export const deleteSubUser = (id) => {
+  return async (dispatch) => {
+    dispatch(deleteSubUserBegin());
+
+    try {
+      const response = await DataService.delete(`/user/sub-users/delete/${id}/`);
+
+      if (response.data && response.data.status) {
+        dispatch(deleteSubUserSuccess(id));
+        dispatch(getSubUsers());
+      } else {
+        dispatch(deleteSubUserErr(response.data?.message || 'Failed to delete sub-user'));
+      }
+      return response.data;
+    } catch (err) {
+      dispatch(deleteSubUserErr(err.response?.data?.message || err.message));
+      throw err;
     }
   };
 };
@@ -250,27 +324,24 @@ export const exportProductConfiguration = () => {
       console.log('Export Response:', response.data);
 
       if (response.data.status && response.data.download_url) {
-        // Direct download/open
         window.open(response.data.download_url, '_blank');
-
         dispatch(exportproductconfigurationSuccess(response.data));
       } else {
         throw new Error('Download URL not found');
       }
     } catch (err) {
       console.log(err);
-
       dispatch(exportproductconfigurationErr(err.message));
     }
   };
 };
+
 export const uploadProductConfiguration = (file) => {
   return async (dispatch) => {
     dispatch(uploadproductconfigurationBegin());
 
     try {
       const formData = new FormData();
-
       formData.append('file', file);
 
       const response = await DataService.post('/amazon/upload-amazon-listing-excel/', formData, {

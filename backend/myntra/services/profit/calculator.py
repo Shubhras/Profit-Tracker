@@ -36,7 +36,8 @@ class MyntraProfitCalculator:
     """
 
     def __init__(self, user, filters):
-        self.user = user
+        from user_auth.models import get_effective_user
+        self.user = get_effective_user(user)
         self.filters = filters or {}
 
     # =====================================================

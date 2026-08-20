@@ -3,6 +3,7 @@ from rest_framework import serializers
 from user_auth.models import *
 from subscription.models import UserSubscription
 
+import re
 import requests
 from django.conf import settings
 
@@ -79,6 +80,14 @@ class UserRegisterSerializer(serializers.Serializer):
 
     # ✅ new field — frontend sends the captcha token here
     captcha_token = serializers.CharField(write_only=True)
+
+    def validate_password(self, value):
+        pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$'
+        if not re.match(pattern, value):
+            raise serializers.ValidationError(
+                "Password must be at least 12 characters and include uppercase, lowercase, number, and special character."
+            )
+        return value
 
     def validate_captcha_token(self, value):
         response = requests.post(
@@ -400,6 +409,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
+    is_client_user = serializers.SerializerMethodField()
+    is_sub_user = serializers.SerializerMethodField()
+    role = serializers.SerializerMethodField()
+
     subscription = serializers.SerializerMethodField()
     unread_notification_count = serializers.SerializerMethodField()
 
@@ -420,9 +433,25 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "pin_code",
             "accepted_terms",
 
+            "is_client_user",
+            "is_sub_user",
+            "role",
+
             "subscription",
             "unread_notification_count",
         ]
+
+    def get_is_sub_user(self, obj):
+        return SubUser.objects.filter(user=obj).exists()
+
+    def get_is_client_user(self, obj):
+        return not self.get_is_sub_user(obj) and not obj.is_superuser
+
+    def get_role(self, obj):
+        sub = SubUser.objects.filter(user=obj).first()
+        if sub:
+            return sub.role
+        return "Superadmin" if obj.is_superuser else "Client"
 
     def get_unread_notification_count(self, obj):
         return UserNotification.objects.filter(
@@ -431,6 +460,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
         ).count()
 
     def get_subscription(self, obj):
+        subuser = SubUser.objects.filter(user=obj).first()
+        target_user = subuser.parent if subuser else obj
 
         subscription = (
             UserSubscription.objects
@@ -440,7 +471,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
                 "plan__submodules__module"
             )
             .filter(
-                user=obj,
+                user=target_user,
                 status="active",
                 is_paid=True
             )
@@ -450,6 +481,53 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
         if not subscription:
             return None
+
+        if subuser:
+            user_perms = UserModulePermission.objects.filter(user=obj, can_view=True)
+            allowed_mod_ids = set(user_perms.values_list("module_id", flat=True))
+            allowed_submod_ids = set(user_perms.filter(submodule__isnull=False).values_list("submodule_id", flat=True))
+            module_level_mod_ids = set(user_perms.filter(submodule__isnull=True).values_list("module_id", flat=True))
+
+            modules_data = [
+                {
+                    "module_id": module.id,
+                    "module_name": module.name,
+                    "slug": getattr(module, "slug", None),
+                }
+                for module in subscription.plan.modules.all()
+                if module.id in allowed_mod_ids
+            ]
+
+            submodules_data = []
+            for submodule in subscription.plan.submodules.all():
+                mod_id = submodule.module.id if submodule.module else None
+                if submodule.id in allowed_submod_ids or (mod_id and mod_id in module_level_mod_ids):
+                    submodules_data.append({
+                        "submodule_id": submodule.id,
+                        "submodule_name": submodule.name,
+                        "slug": getattr(submodule, "slug", None),
+                        "module_id": mod_id,
+                        "module_name": submodule.module.name if submodule.module else None,
+                    })
+        else:
+            modules_data = [
+                {
+                    "module_id": module.id,
+                    "module_name": module.name,
+                    "slug": getattr(module, "slug", None),
+                }
+                for module in subscription.plan.modules.all()
+            ]
+            submodules_data = [
+                {
+                    "submodule_id": submodule.id,
+                    "submodule_name": submodule.name,
+                    "slug": getattr(submodule, "slug", None),
+                    "module_id": submodule.module.id if submodule.module else None,
+                    "module_name": submodule.module.name if submodule.module else None,
+                }
+                for submodule in subscription.plan.submodules.all()
+            ]
 
         return {
             "subscription_id": subscription.id,
@@ -463,25 +541,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "start_date": subscription.start_date,
             "end_date": subscription.end_date,
 
-            "modules": [
-                {
-                    "module_id": module.id,
-                    "module_name": module.name,
-                    "slug": getattr(module, "slug", None),
-                }
-                for module in subscription.plan.modules.all()
-            ],
-
-            "submodules": [
-                {
-                    "submodule_id": submodule.id,
-                    "submodule_name": submodule.name,
-                    "slug": getattr(submodule, "slug", None),
-                    "module_id": submodule.module.id if submodule.module else None,
-                    "module_name": submodule.module.name if submodule.module else None,
-                }
-                for submodule in subscription.plan.submodules.all()
-            ]
+            "modules": modules_data,
+            "submodules": submodules_data
         }
 
 class ModuleSimpleSerializer(serializers.ModelSerializer):
@@ -855,6 +916,7 @@ class SubUserSerializer(serializers.ModelSerializer):
             "email",
             "name",
             "mobile_number",
+            "role",
             "permissions",
             "created_at",
             "updated_at",

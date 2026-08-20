@@ -13,7 +13,8 @@ from django.contrib.auth.models import User
 
 class SPAPIManager:
     def __init__(self, user=None, account=None):
-        self.user = user
+        from user_auth.models import get_effective_user
+        self.user = get_effective_user(user)
         self.account = account
         
         # Default/Global credentials from ENV

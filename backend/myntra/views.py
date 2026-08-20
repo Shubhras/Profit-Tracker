@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import MyntraConnection, MyntraOrder
+from user_auth.models import get_effective_user
 from .services.csv_parser import safe_float
 from .services.myntra_client import MyntraClient
 from myntra.services.initial_sync_service import MyntraInitialSyncService
@@ -69,7 +70,7 @@ class SyncMyntraOrders(APIView):
 
         connection = None
         if getattr(request, "user", None) is not None and request.user.is_authenticated:
-            connection = MyntraConnection.objects.filter(user=request.user).first()
+            connection = MyntraConnection.objects.filter(user=get_effective_user(request.user)).first()
 
         basic_token = None
         access_token = None
@@ -313,7 +314,7 @@ class MyntraConnectionView(APIView):
     # =====================================================
 
     def get(self, request):
-        connection = MyntraConnection.objects.filter(user=request.user).first()
+        connection = MyntraConnection.objects.filter(user=get_effective_user(request.user)).first()
 
         if not connection:
             return Response(
@@ -356,7 +357,7 @@ class MyntraConnectionView(APIView):
     # =====================================================
 
     def delete(self, request):
-        MyntraConnection.objects.filter(user=request.user).delete()
+        MyntraConnection.objects.filter(user=get_effective_user(request.user)).delete()
 
         return Response(
             {
@@ -399,7 +400,7 @@ class MyntraConnectionView(APIView):
         # GET / CREATE CONNECTION
         # =================================================
 
-        connection, created = MyntraConnection.objects.get_or_create(user=request.user)
+        connection, created = MyntraConnection.objects.get_or_create(user=get_effective_user(request.user))
 
         # =================================================
         # DETECT CREDENTIAL CHANGE
@@ -530,7 +531,7 @@ class MyntraOrdersList(APIView):
 
         qs = MyntraOrder.objects.all()
         if getattr(request, "user", None) is not None and request.user.is_authenticated:
-            qs = qs.filter(user=request.user)
+            qs = qs.filter(user=get_effective_user(request.user))
 
         orders = qs.values()
 
@@ -547,7 +548,7 @@ class MyntraDashboard(APIView):
 
         qs = MyntraOrder.objects.all()
         if getattr(request, "user", None) is not None and request.user.is_authenticated:
-            qs = qs.filter(user=request.user)
+            qs = qs.filter(user=get_effective_user(request.user))
 
         total_orders = qs.count()
 

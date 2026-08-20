@@ -134,7 +134,12 @@ urlpatterns = [
     path("admin/tickets/<int:pk>/update/", AdminSupportTicketUpdateAPIView.as_view(), name="admin-ticket-update"),
 
     # Sub-users
+    path("sub-users/create/", SubUserCreateAPIView.as_view(), name="sub-user-create"),
+    path("sub-users/list/", SubUserListAPIView.as_view(), name="sub-user-list"),
+    path("sub-users/get/<int:pk>/", SubUserDetailAPIView.as_view(), name="sub-user-get"),
+    path("sub-users/update/<int:pk>/", SubUserUpdateAPIView.as_view(), name="sub-user-update"),
+    path("sub-users/delete/<int:pk>/", SubUserDeleteAPIView.as_view(), name="sub-user-delete"),
+    path("sub-users/<int:pk>/login/", SubUserLoginAPIView.as_view(), name="sub-user-login"),
     path("sub-users/", SubUserListCreateAPIView.as_view(), name="sub-user-list-create"),
     path("sub-users/<int:pk>/", SubUserDetailUpdateDeleteAPIView.as_view(), name="sub-user-detail"),
-
 ]

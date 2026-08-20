@@ -221,10 +221,56 @@ const getProfile = () => {
   };
 };
 
+const subUserLogin = (subUserId, callback) => {
+  return async (dispatch) => {
+    dispatch(loginBegin());
+
+    try {
+      const response = await DataService.post(`/user/sub-users/${subUserId}/login/`);
+
+      if (response.data.status === true) {
+        const userData = response.data.data;
+
+        // Store tokens
+        Cookies.set('access_token', userData.access);
+        Cookies.set('refresh_token', userData.refresh);
+        Cookies.set('logedIn', 'true');
+        Cookies.set('userEmail', userData.email);
+
+        const hasSubscription = userData.has_subscription === true;
+        Cookies.set('hasSubscription', hasSubscription ? 'true' : 'false');
+        Cookies.set('isSuperAdmin', userData.is_superuser ? 'true' : 'false');
+
+        dispatch(loginSuccess(true));
+        dispatch(actions.setUserProfile(userData));
+        dispatch(actions.setHasSubscription(hasSubscription));
+
+        if (callback) callback(userData);
+      } else {
+        dispatch(loginErr(response.data.message || 'Sub-user login failed'));
+      }
+    } catch (err) {
+      console.log('Sub-User Login Failed:', err.response?.data);
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Failed to login as sub-user';
+      dispatch(loginErr(errorMessage));
+    }
+  };
+};
+
 const setUserProfile = (data) => {
   return (dispatch) => {
     dispatch(actions.setUserProfile(data));
   };
 };
 
-export { login, logOut, register, forgotPassword, resetPassword, changePassword, getProfile, setUserProfile };
+export {
+  login,
+  subUserLogin,
+  logOut,
+  register,
+  forgotPassword,
+  resetPassword,
+  changePassword,
+  getProfile,
+  setUserProfile,
+};

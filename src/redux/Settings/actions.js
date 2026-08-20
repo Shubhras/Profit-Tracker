@@ -35,14 +35,20 @@ const actions = {
   ADD_USER_SUCCESS: 'ADD_USER_SUCCESS',
   ADD_USER_ERR: 'ADD_USER_ERR',
 
+  GET_SUB_USERS_BEGIN: 'GET_SUB_USERS_BEGIN',
+  GET_SUB_USERS_SUCCESS: 'GET_SUB_USERS_SUCCESS',
+  GET_SUB_USERS_ERR: 'GET_SUB_USERS_ERR',
+
+  DELETE_SUB_USER_BEGIN: 'DELETE_SUB_USER_BEGIN',
+  DELETE_SUB_USER_SUCCESS: 'DELETE_SUB_USER_SUCCESS',
+  DELETE_SUB_USER_ERR: 'DELETE_SUB_USER_ERR',
+
   EXPORT_PRODUCT_CONFIGURATION_BEGIN: 'EXPORT_PRODUCT_CONFIGURATION_BEGIN',
   EXPORT_PRODUCT_CONFIGURATION_SUCCESS: 'EXPORT_PRODUCT_CONFIGURATION_SUCCESS',
   EXPORT_PRODUCT_CONFIGURATION_ERR: 'EXPORT_PRODUCT_CONFIGURATION_ERR',
 
   UPLOAD_PRODUCT_CONFIGURATION_BEGIN: 'UPLOAD_PRODUCT_CONFIGURATION_BEGIN',
-
   UPLOAD_PRODUCT_CONFIGURATION_SUCCESS: 'UPLOAD_PRODUCT_CONFIGURATION_SUCCESS',
-
   UPLOAD_PRODUCT_CONFIGURATION_ERR: 'UPLOAD_PRODUCT_CONFIGURATION_ERR',
 
   overviewsettingBegin: () => {
@@ -184,6 +190,7 @@ const actions = {
       err,
     };
   },
+
   userinfoBegin: () => {
     return {
       type: actions.USER_INFO_BEGIN,
@@ -223,6 +230,47 @@ const actions = {
       err,
     };
   },
+
+  getSubUsersBegin: () => {
+    return {
+      type: actions.GET_SUB_USERS_BEGIN,
+    };
+  },
+
+  getSubUsersSuccess: (data) => {
+    return {
+      type: actions.GET_SUB_USERS_SUCCESS,
+      data,
+    };
+  },
+
+  getSubUsersErr: (err) => {
+    return {
+      type: actions.GET_SUB_USERS_ERR,
+      err,
+    };
+  },
+
+  deleteSubUserBegin: () => {
+    return {
+      type: actions.DELETE_SUB_USER_BEGIN,
+    };
+  },
+
+  deleteSubUserSuccess: (id) => {
+    return {
+      type: actions.DELETE_SUB_USER_SUCCESS,
+      id,
+    };
+  },
+
+  deleteSubUserErr: (err) => {
+    return {
+      type: actions.DELETE_SUB_USER_ERR,
+      err,
+    };
+  },
+
   exportproductconfigurationBegin: () => {
     return {
       type: actions.EXPORT_PRODUCT_CONFIGURATION_BEGIN,

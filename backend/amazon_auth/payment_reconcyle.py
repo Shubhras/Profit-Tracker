@@ -12,6 +12,7 @@ from amazon_auth.models import (
     FinancialEvent, AmazonTransaction, AmazonTransactionRelatedIdentifier,
     AmazonTransactionBreakdown, ProductMapping
 )
+from user_auth.models import get_effective_user
 from amazon_ads.models import ProductAdMetric
 from amazon_auth.utils import normalize_sku, filter_ads_by_local_range, extract_fees_and_tcs_per_asin
 from amazon_auth.profit import (
@@ -58,7 +59,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
     - settlement_paid_in_bank
     - unsettled_not_paid
     """
-    user = request.user
+    user = get_effective_user(request.user)
     data_source_raw = request.data if hasattr(request, 'data') and request.data else (request.GET if hasattr(request, 'GET') else {})
 
     data_source = {}
@@ -1006,7 +1007,7 @@ def combined_payment_reconcile_overview(request):
     Multi-Channel Combined Payment Reconciliation Overview API.
     Calls base Amazon Payment Reconciliation API & combines Myntra data with DTO adapters.
     """
-    user = request.user
+    user = get_effective_user(request.user)
     data = request.data or {}
 
     filters = data.get("filters", {})
@@ -1141,7 +1142,7 @@ def combined_payment_reconcile_by_parent_asin(request):
     Multi-Channel Combined Payment Reconciliation by Parent ASIN API.
     Calls base Amazon Payment Reconciliation Parent API & combines Myntra SKU data with DTO adapters.
     """
-    user = request.user
+    user = get_effective_user(request.user)
     data = request.data or {}
 
     filters = data.get("filters", {})
@@ -1397,7 +1398,7 @@ def combined_payment_reconcile_by_parentproductid(request):
     Multi-Channel Combined Payment Reconciliation by Order / Parent Product ID API.
     Calls base Amazon Payment Reconciliation Order API & combines Myntra Order data with DTO adapters.
     """
-    user = request.user
+    user = get_effective_user(request.user)
     data = request.data or {}
 
     filters = data.get("filters", {})

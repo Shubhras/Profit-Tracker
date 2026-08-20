@@ -1439,11 +1439,16 @@ def extract_amazon_errors(error_items):
     return parsed_errors
 
 def get_primary_amazon_account(user):
+    from user_auth.models import get_effective_user
+    user = get_effective_user(user)
 
-    account = AmazonAdsAccount.objects.get(
+    account = AmazonAdsAccount.objects.filter(
         user=user,
         is_primary=True
-    )
+    ).first()
+
+    if not account:
+        account = AmazonAdsAccount.objects.filter(user=user).first()
 
     if not account:
         raise Exception(

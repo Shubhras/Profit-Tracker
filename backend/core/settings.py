@@ -264,3 +264,20 @@ LOGGING = {
         "level": "INFO",
     },
 }
+
+# Email Configuration
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = os.getenv("EMAIL_HOST") or os.getenv("MAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT") or os.getenv("MAIL_PORT", 587))
+
+_mail_enc = (os.getenv("MAIL_ENCRYPTION") or "").lower()
+if _mail_enc == "ssl" or EMAIL_PORT == 465:
+    EMAIL_USE_SSL = True
+    EMAIL_USE_TLS = False
+else:
+    EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() in ("true", "1")
+    EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() in ("true", "1")
+
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER") or os.getenv("MAIL_USERNAME", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD") or os.getenv("MAIL_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL") or os.getenv("MAIL_FROM_ADDRESS", EMAIL_HOST_USER or "noreply@trackmyprofit.com")

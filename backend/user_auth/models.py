@@ -480,8 +480,25 @@ class SubUser(models.Model):
     )
     name = models.CharField(max_length=100)
     mobile_number = models.CharField(max_length=50)
+    role = models.CharField(max_length=50, default="Staff", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.name} (Sub-user of {self.parent.email})"
+
+
+def get_effective_user(user):
+    """
+    Returns the parent account owner if the given user is a sub-user,
+    otherwise returns the user itself.
+    """
+    if not user or not user.is_authenticated:
+        return user
+    try:
+        subuser = SubUser.objects.filter(user=user).select_related("parent").first()
+        if subuser and subuser.parent:
+            return subuser.parent
+    except Exception:
+        pass
+    return user

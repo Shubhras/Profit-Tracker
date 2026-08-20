@@ -22,6 +22,7 @@ from myntra.services.sync.payment_sync import PaymentSyncService
 from myntra.services.sync.return_sync import ReturnSyncService
 
 from .models import MyntraConnection, MyntraOrder, MyntraReturn, MyntraPaymentTransaction
+from user_auth.models import get_effective_user
 from .services.myntra_client_v4 import MyntraClientV4
 
 logger = logging.getLogger(__name__)
@@ -58,7 +59,7 @@ class SyncMyntraDetailsView(APIView):
 
     def post(self, request):
         # 1. Retrieve the connection
-        connection = MyntraConnection.objects.filter(user=request.user).first()
+        connection = MyntraConnection.objects.filter(user=get_effective_user(request.user)).first()
         if not connection:
             return Response(
                 {"status": "ERROR", "message": "Myntra connection not configured for this user."},
@@ -302,7 +303,7 @@ class ScheduleReportAPIView(APIView):
     def post(self, request):
 
         connection = MyntraConnection.objects.filter(
-            user=request.user
+            user=get_effective_user(request.user)
         ).first()
 
         if not connection:
@@ -329,7 +330,7 @@ class FetchReportAPIView(APIView):
     def post(self, request):
 
         connection = MyntraConnection.objects.filter(
-            user=request.user
+            user=get_effective_user(request.user)
         ).first()
 
         if not connection:
@@ -359,7 +360,7 @@ class DownloadReportAPIView(APIView):
     def post(self, request):
 
         connection = MyntraConnection.objects.filter(
-            user=request.user
+            user=get_effective_user(request.user)
         ).first()
 
         if not connection:
@@ -472,9 +473,9 @@ class UploadMyntraOrderReportAPIView(APIView):
         # ------------------------------------------
 
         try:
-            connection = MyntraConnection.objects.get(
-                user=request.user
-            )
+            connection = MyntraConnection.objects.filter(
+                user=get_effective_user(request.user)
+            ).first()
 
         except MyntraConnection.objects:
             return Response(
@@ -556,9 +557,9 @@ class UploadMyntraReturnReportAPIView(APIView):
         # ------------------------------------------
 
         try:
-            connection = MyntraConnection.objects.get(
-                user=request.user
-            )
+            connection = MyntraConnection.objects.filter(
+                user=get_effective_user(request.user)
+            ).first()
 
         except MyntraConnection.object:
             return Response(
@@ -636,7 +637,7 @@ class UploadMyntraPaymentReportAPIView(APIView):
             )
 
         connection = MyntraConnection.objects.filter(
-            user=request.user
+            user=get_effective_user(request.user)
         ).first()
 
         if not connection:

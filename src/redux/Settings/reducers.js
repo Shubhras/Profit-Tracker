@@ -32,9 +32,17 @@ const initialState = {
   userinfoData: [],
   userinfoLoading: false,
   userinfoError: null,
+
   adduserData: [],
   adduserLoading: false,
   adduserError: null,
+
+  subUsersData: [],
+  subUsersLoading: false,
+  subUsersError: null,
+
+  deleteUserLoading: false,
+  deleteUserError: null,
 
   exportLoading: false,
 
@@ -80,13 +88,21 @@ const {
   ADD_USER_SUCCESS,
   ADD_USER_ERR,
 
+  GET_SUB_USERS_BEGIN,
+  GET_SUB_USERS_SUCCESS,
+  GET_SUB_USERS_ERR,
+
+  DELETE_SUB_USER_BEGIN,
+  DELETE_SUB_USER_SUCCESS,
+  DELETE_SUB_USER_ERR,
+
   UPLOAD_PRODUCT_CONFIGURATION_BEGIN,
   UPLOAD_PRODUCT_CONFIGURATION_SUCCESS,
   UPLOAD_PRODUCT_CONFIGURATION_ERR,
 } = actions;
 
 const settingsReducer = (state = initialState, action) => {
-  const { type, data, err } = action;
+  const { type, data, err, id } = action;
   switch (type) {
     case OVERVIEW_SETTING_BEGIN:
       return {
@@ -252,6 +268,7 @@ const settingsReducer = (state = initialState, action) => {
       return {
         ...state,
         adduserLoading: true,
+        adduserError: null,
       };
 
     case ADD_USER_SUCCESS:
@@ -266,6 +283,47 @@ const settingsReducer = (state = initialState, action) => {
         ...state,
         adduserError: err,
         adduserLoading: false,
+      };
+
+    case GET_SUB_USERS_BEGIN:
+      return {
+        ...state,
+        subUsersLoading: true,
+        subUsersError: null,
+      };
+
+    case GET_SUB_USERS_SUCCESS:
+      return {
+        ...state,
+        subUsersData: data,
+        subUsersLoading: false,
+      };
+
+    case GET_SUB_USERS_ERR:
+      return {
+        ...state,
+        subUsersError: err,
+        subUsersLoading: false,
+      };
+
+    case DELETE_SUB_USER_BEGIN:
+      return {
+        ...state,
+        deleteUserLoading: true,
+        deleteUserError: null,
+      };
+
+    case DELETE_SUB_USER_SUCCESS:
+      return {
+        ...state,
+        deleteUserLoading: false,
+      };
+
+    case DELETE_SUB_USER_ERR:
+      return {
+        ...state,
+        deleteUserError: err,
+        deleteUserLoading: false,
       };
 
     case actions.EXPORT_PRODUCT_CONFIGURATION_BEGIN:
@@ -311,8 +369,6 @@ const settingsReducer = (state = initialState, action) => {
     default:
       return state;
   }
-  // default:
-  //   return state;
 };
 
 export default settingsReducer;

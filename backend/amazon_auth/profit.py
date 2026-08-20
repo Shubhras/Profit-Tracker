@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from calendar import monthrange
 from django.utils import timezone
 from rest_framework.test import APIRequestFactory, force_authenticate
+from user_auth.models import get_effective_user
 
 from .views import (
     amazon_profitability_details_transactions_shipping,
@@ -485,7 +486,7 @@ class ProfitabilityDTOAdapter:
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def combined_profitability_details_transactions_shipping(request):
-    user = request.user
+    user = get_effective_user(request.user)
     data = request.data or {}
     
     filters = data.get("filters", {})
@@ -594,7 +595,7 @@ def combined_profitability_details_transactions_shipping(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def combined_profitability_parent_transactions_shipping(request):
-    user = request.user
+    user = get_effective_user(request.user)
     data = request.data or {}
     
     filters = data.get("filters", {})
@@ -709,7 +710,7 @@ def combined_profitability_parent_transactions_shipping(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def combined_sku_profit_report_transactions_shipping(request):
-    user = request.user
+    user = get_effective_user(request.user)
     data = request.data or {}
     
     filters = data.get("filters", {})
@@ -1183,7 +1184,7 @@ def _combine_dashboard_stats(amazon_data, myntra_data):
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def combined_get_full_dashboard(request):
-    user = request.user
+    user = get_effective_user(request.user)
     
     data_source_raw = request.data if request.method == 'POST' else request.GET
     data_source = {}
@@ -1518,7 +1519,7 @@ def combined_profitability_monthwise(request):
         }
 
         month_req = factory.post('/api/amazon/profitability/details/', {'filters': m_filters}, format='json')
-        force_authenticate(month_req, user=request.user)
+        force_authenticate(month_req, user=get_effective_user(request.user))
 
         res = combined_profitability_details_transactions_shipping(month_req)
         detail_rows = res.data.get('response', []) if res.status_code == 200 and isinstance(res.data, dict) else []
