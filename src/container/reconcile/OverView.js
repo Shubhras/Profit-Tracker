@@ -35,7 +35,7 @@ export default function ProfitDetailsView() {
   const { dateRange, profitData, loading, channel: globalChannel } = useSelector((state) => state.dashboard);
   const totals = profitData?.totals || {};
   const profitType = location.state?.profitType || 'all';
-  const channels = location.state?.channels?.length > 0 ? location.state.channels : globalChannel || [];
+  // const channels = location.state?.channels?.length > 0 ? location.state.channels : globalChannel || [];
   // const [openSettings, setOpenSettings] = React.useState(false);
   // const [detailModal, setDetailModal] = React.useState({
   //   open: false,
@@ -111,8 +111,8 @@ export default function ProfitDetailsView() {
 
         channel: {
           // IN: [decodedChannel],
-          IN: channels,
-          // IN: globalChannel,
+          // IN: channels,
+          IN: globalChannel,
         },
         ...(profitType === 'profitable' && {
           profit: { GT: 0 },
@@ -162,7 +162,7 @@ export default function ProfitDetailsView() {
 
   useEffect(() => {
     dispatch(getPaymentReconcileDetails(buildPayload()));
-  }, [dateRange, decodedChannel, pagination, debouncedSearch]);
+  }, [dateRange, decodedChannel, globalChannel, pagination, debouncedSearch]);
 
   // const PageRoutes = [
   //   { path: 'index', breadcrumbName: 'Profit' },
