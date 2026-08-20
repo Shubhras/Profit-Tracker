@@ -11,22 +11,6 @@ import {
   ArrowRightOutlined,
   CheckCircleFilled,
 } from '@ant-design/icons';
-import flipkartLogo from '../../../../assets/icons/flipkart.png';
-import myntraLogo from '../../../../assets/icons/myntra.png';
-import meeshoLogo from '../../../../assets/icons/meesho.png';
-import ajioLogo from '../../../../assets/icons/ajio.png';
-import nykaaLogo from '../../../../assets/icons/nykaa.png';
-
-import shopifyLogo from '../../../../assets/icons/shopify.png';
-import wooLogo from '../../../../assets/icons/woo.png';
-import magentoLogo from '../../../../assets/icons/magento.png';
-
-import blinkitLogo from '../../../../assets/icons/blinkit.png';
-import zeptoLogo from '../../../../assets/icons/zepto.png';
-import swiggyLogo from '../../../../assets/icons/swiggy.png';
-
-import tallyLogo from '../../../../assets/icons/tally.png';
-import zohoLogo from '../../../../assets/icons/zoho.png';
 
 const categories = [
   {
@@ -34,11 +18,11 @@ const categories = [
     name: 'Marketplaces',
     icon: <ShopOutlined />,
     platforms: [
-      { name: 'Flipkart', logo: flipkartLogo, status: 'coming' },
-      { name: 'Myntra', logo: myntraLogo, status: 'coming' },
-      { name: 'Meesho', logo: meeshoLogo, status: 'coming' },
-      { name: 'Ajio', logo: ajioLogo, status: 'coming' },
-      { name: 'Nykaa', logo: nykaaLogo, status: 'coming' },
+      { name: 'Flipkart', logo: '/icons/flipkart.png', status: 'coming' },
+      { name: 'Myntra', logo: '/icons/myntra.png', status: 'coming' },
+      { name: 'Meesho', logo: '/icons/meesho.png', status: 'coming' },
+      { name: 'Ajio', logo: '/icons/ajio.png', status: 'coming' },
+      { name: 'Nykaa', logo: '/icons/nykaa.png', status: 'coming' },
     ],
   },
   {
@@ -46,9 +30,9 @@ const categories = [
     name: 'D2C Platforms',
     icon: <AppstoreOutlined />,
     platforms: [
-      { name: 'Shopify', logo: shopifyLogo, status: 'coming' },
-      { name: 'WooCommerce', logo: wooLogo, status: 'coming' },
-      { name: 'Magento', logo: magentoLogo, status: 'coming' },
+      { name: 'Shopify', logo: '/icons/shopify.png', status: 'coming' },
+      { name: 'WooCommerce', logo: '/icons/woo.png', status: 'coming' },
+      { name: 'Magento', logo: '/icons/magento.png', status: 'coming' },
     ],
   },
   {
@@ -56,9 +40,9 @@ const categories = [
     name: 'Quick Commerce',
     icon: <ThunderboltOutlined />,
     platforms: [
-      { name: 'Blinkit', logo: blinkitLogo, status: 'coming' },
-      { name: 'Zepto', logo: zeptoLogo, status: 'coming' },
-      { name: 'Swiggy Instamart', logo: swiggyLogo, status: 'coming' },
+      { name: 'Blinkit', logo: '/icons/blinkit.png', status: 'coming' },
+      { name: 'Zepto', logo: '/icons/zepto.png', status: 'coming' },
+      { name: 'Swiggy Instamart', logo: '/icons/swiggy.png', status: 'coming' },
     ],
   },
   {
@@ -66,8 +50,8 @@ const categories = [
     name: 'Accounting',
     icon: <BankOutlined />,
     platforms: [
-      { name: 'Tally', logo: tallyLogo, status: 'coming' },
-      { name: 'Zoho Books', logo: zohoLogo, status: 'coming' },
+      { name: 'Tally', logo: '/icons/tally.png', status: 'coming' },
+      { name: 'Zoho Books', logo: '/icons/zoho.png', status: 'coming' },
     ],
   },
 ];

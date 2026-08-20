@@ -18,8 +18,6 @@ import { useDispatch, useSelector } from 'react-redux';
 // import ProfitFilterBar from './component/ProfitFilterBar';
 import CalculationModal from './component/Calculations';
 import ProfitModal from './component/ProfitModal';
-import amazon from '../../assets/icons/amazon.svg';
-import myntra from '../../assets/icons/myntraLogo.jpg';
 import {
   getSecondDetials,
   getPaymentReconcileDetailsByParentAsin,
@@ -54,9 +52,10 @@ export default function ProfitViewSecondTable() {
   const [search, setSearch] = React.useState('');
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
   const channelLogoMap = {
-    'Amazon-India': amazon,
-    // 'Flipkart-India': flipkart,
-    'Myntra-India': myntra,
+    // 'Amazon-India': amazon,
+    // 'Myntra-India': myntra,
+    'Amazon-India': '/icons/amazon.svg',
+    'Myntra-India': '/icons/myntraLogo.jpg',
   };
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -315,13 +314,31 @@ export default function ProfitViewSecondTable() {
       dataIndex: 'channel',
       width: 50,
       fixed: 'left',
+      // render: (value) => {
+      //   const logo = channelLogoMap[value];
+
+      //   return (
+      //     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      //       {logo && <img src={logo} alt={value} style={{ width: 24, height: 24, objectFit: 'contain' }} />}
+      //     </div>
+      //   );
+      // },
       render: (value) => {
         const logo = channelLogoMap[value];
 
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {logo && <img src={logo} alt={value} style={{ width: 24, height: 24, objectFit: 'contain' }} />}
-            {/* <span>{value}</span> */}
+            {logo && (
+              <img
+                src={logo}
+                alt={value}
+                style={{
+                  width: 24,
+                  height: 24,
+                  objectFit: 'contain',
+                }}
+              />
+            )}
           </div>
         );
       },

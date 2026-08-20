@@ -207,6 +207,15 @@ const AuthInfo = React.memo(() => {
 
   const isSuperAdmin = profile?.is_superuser;
 
+  const HIDE_FILTER_DROPDOWN = [
+    '/profit/profitTableView/second/',
+    '/profit/profitTableView/third/',
+    'reconcile/second/',
+    'reconcile/third/',
+  ];
+
+  const hideFilterDropdown = HIDE_FILTER_DROPDOWN.some((route) => location.pathname.includes(route));
+
   // const HIDE_SEARCH = [
   //   '/settings/product-setting/overview',
   //   '/profit/profitMonthlyView',
@@ -893,7 +902,7 @@ const AuthInfo = React.memo(() => {
             </div>
           )}
         </div> */}
-        <FilterDropdown />
+        {!hideFilterDropdown && <FilterDropdown />}
       </div>
       {/* <Message />
       <Notification />

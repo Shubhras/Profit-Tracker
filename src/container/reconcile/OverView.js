@@ -17,8 +17,6 @@ import { useDispatch, useSelector } from 'react-redux';
 // import ProfitFilterBar from './component/ProfitFilterBar';
 // import ProfitModal from './component/ProfitModal'
 import CalculationModal from '../profit/component/Calculations';
-import amazon from '../../assets/icons/amazon.svg';
-import myntra from '../../assets/icons/myntraLogo.jpg';
 // import flipkart from "../../assets/icons/flipkart.png";
 import {
   getProfitDetails,
@@ -37,7 +35,7 @@ export default function ProfitDetailsView() {
   const { dateRange, profitData, loading, channel: globalChannel } = useSelector((state) => state.dashboard);
   const totals = profitData?.totals || {};
   const profitType = location.state?.profitType || 'all';
-  const channels = location.state?.channels?.length > 0 ? location.state.channels : globalChannel || [];
+  // const channels = location.state?.channels?.length > 0 ? location.state.channels : globalChannel || [];
   // const [openSettings, setOpenSettings] = React.useState(false);
   // const [detailModal, setDetailModal] = React.useState({
   //   open: false,
@@ -61,10 +59,12 @@ export default function ProfitDetailsView() {
   // const [columnSearch, setColumnSearch] = React.useState('');
 
   const channelLogoMap = {
-    'Amazon-India': amazon,
-    'Myntra-India': myntra,
-    Myntra: myntra,
-    // 'Flipkart-India': flipkart,
+    // 'Amazon-India': amazon,
+    // 'Myntra-India': myntra,
+    // Myntra: myntra,
+    'Amazon-India': '/icons/amazon.svg',
+    'Myntra-India': '/icons/myntraLogo.jpg',
+    Myntra: '/icons/myntraLogo.jpg',
   };
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -111,8 +111,8 @@ export default function ProfitDetailsView() {
 
         channel: {
           // IN: [decodedChannel],
-          IN: channels,
-          // IN: globalChannel,
+          // IN: channels,
+          IN: globalChannel,
         },
         ...(profitType === 'profitable' && {
           profit: { GT: 0 },
@@ -162,7 +162,7 @@ export default function ProfitDetailsView() {
 
   useEffect(() => {
     dispatch(getPaymentReconcileDetails(buildPayload()));
-  }, [dateRange, decodedChannel, pagination, debouncedSearch]);
+  }, [dateRange, decodedChannel, globalChannel, pagination, debouncedSearch]);
 
   // const PageRoutes = [
   //   { path: 'index', breadcrumbName: 'Profit' },
@@ -321,17 +321,33 @@ export default function ProfitDetailsView() {
       dataIndex: 'channel',
       width: 70,
       fixed: 'left',
-      render: (value) => {
-        // if (record.key === 'total') {
-        //   return <span>Total</span>;
-        // }
+      // render: (value) => {
+      //   const logo = channelLogoMap[value] || (value && value.toLowerCase().includes('myntra') ? myntra : null);
 
-        const logo = channelLogoMap[value] || (value && value.toLowerCase().includes('myntra') ? myntra : null);
+      //   return (
+      //     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      //       {logo && <img src={logo} alt={value} style={{ width: 24, height: 24, objectFit: 'contain' }} />}
+      //       {/* <span>{value}</span> */}
+      //     </div>
+      //   );
+      // },
+      render: (value) => {
+        const logo =
+          channelLogoMap[value] || (value && value.toLowerCase().includes('myntra') ? '/icons/myntraLogo.jpg' : null);
 
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {logo && <img src={logo} alt={value} style={{ width: 24, height: 24, objectFit: 'contain' }} />}
-            {/* <span>{value}</span> */}
+            {logo && (
+              <img
+                src={logo}
+                alt={value}
+                style={{
+                  width: 24,
+                  height: 24,
+                  objectFit: 'contain',
+                }}
+              />
+            )}
           </div>
         );
       },

@@ -32,6 +32,14 @@ function Navbar() {
   // Get auth state from Redux
   const isLoggedIn = useSelector((state) => state.auth.login);
   const profile = useSelector((state) => state.auth.profile);
+  console.log('Navbar profile:', profile);
+  const getDashboardRoute = () => {
+    if (profile?.is_superuser) {
+      return '/super-admin/dashboard';
+    }
+
+    return '/admin/profit/summary';
+  };
 
   // Get email from cookie (fallback to profile)
   const userEmail = Cookies.get('userEmail') || profile?.email || '';
@@ -177,7 +185,8 @@ function Navbar() {
                       </div>
                       {/* Only show Dashboard link if user has subscription */}
                       <Link
-                        to="/admin/profit/summary"
+                        // to="/admin/profit/summary"
+                        to={getDashboardRoute()}
                         onClick={() => setUserDropdownOpen(false)}
                         className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
                       >
