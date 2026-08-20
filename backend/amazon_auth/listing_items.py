@@ -2,7 +2,9 @@
 
 from django.db import transaction
 
-from amazon_auth.models import AmazonListingItem
+from amazon_auth.models import AmazonListingItem, ExportedReport
+from user_auth.models import get_effective_user
+from django.core.files.base import ContentFile
 from amazon_auth.spapi_manager import SPAPIManager
 
 
@@ -260,6 +262,420 @@ class AmazonListingItemsView(APIView):
                 "status": False,
                 "message": str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ChannelProductConfigItemsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            user = get_effective_user(request.user)
+            data = request.data or {}
+
+            search = data.get("search", "")
+            channels_input = data.get("channels") or data.get("channel") or []
+            if isinstance(channels_input, str):
+                channels_input = [channels_input]
+
+            channels_normalized = [str(c).lower().strip() for c in channels_input if c]
+
+            include_all = (
+                not channels_normalized or
+                "select all" in channels_normalized or
+                "all" in channels_normalized
+            )
+
+            include_amazon = include_all or any("amazon" in c for c in channels_normalized)
+            include_myntra = include_all or any("myntra" in c for c in channels_normalized)
+
+            pagination = data.get("pagination", {})
+            page_no = int(pagination.get("page", 1))
+            page_size = int(pagination.get("page_size", 10))
+
+            items_list = []
+
+            # 1. Fetch Amazon Listing Items
+            if include_amazon:
+                amazon_qs = AmazonListingItem.objects.filter(user=user).order_by("-last_updated_date")
+                if search:
+                    amazon_qs = amazon_qs.filter(
+                        Q(sku__icontains=search) |
+                        Q(asin__icontains=search) |
+                        Q(item_name__icontains=search)
+                    )
+
+                for item in amazon_qs:
+                    items_list.append({
+                        "id": f"amazon_{item.id}",
+                        "key": f"amazon_{item.id}",
+                        "channel": "Amazon-India",
+                        "asin": item.asin or "-",
+                        "sku": item.sku or "-",
+                        "item_name": item.item_name or "-",
+                        "image_url": item.image_url or "",
+                        "standard_cost": float(item.standard_cost or 0),
+                        "gst_rate": float(item.gst_rate or 0),
+                        "tcs": float(item.tcs or 0),
+                        "status": item.status[0] if isinstance(item.status, list) and item.status else str(item.status or "-"),
+                        "step_level": item.step_level or "-",
+                        "region": item.region or "-",
+                        "shiping_estimate": item.shiping_estimate or 0,
+                        "attributes": item.attributes or {}
+                    })
+
+            # 2. Fetch Myntra Listing Items
+            if include_myntra:
+                try:
+                    from myntra.models import MyntraListing
+                    myntra_qs = MyntraListing.objects.filter(myntra_connection__user=user).order_by("-updated_at")
+                    if search:
+                        myntra_qs = myntra_qs.filter(
+                            Q(seller_sku_code__icontains=search) |
+                            Q(sku_code__icontains=search) |
+                            Q(sku_id__icontains=search) |
+                            Q(style_id__icontains=search) |
+                            Q(style_name__icontains=search) |
+                            Q(brand__icontains=search)
+                        )
+
+                    for item in myntra_qs:
+                        raw = item.raw_data if isinstance(item.raw_data, dict) else {}
+                        img_url = (
+                            item.image_url or
+                            raw.get("image_url") or
+                            raw.get("imageUrl") or
+                            raw.get("style_image") or
+                            raw.get("styleImage") or
+                            raw.get("default_image_url") or
+                            raw.get("defaultImageUrl") or
+                            raw.get("image") or
+                            raw.get("style_image_url") or
+                            raw.get("styleImageUrl") or
+                            ""
+                        )
+                        if not img_url and isinstance(raw.get("images"), list) and len(raw["images"]) > 0:
+                            img_url = str(raw["images"][0])
+                        items_list.append({
+                            "id": f"myntra_{item.id}",
+                            "key": f"myntra_{item.id}",
+                            "channel": "Myntra",
+                            "asin": item.style_id or item.sku_id or "-",
+                            "sku": item.seller_sku_code or item.sku_code or "-",
+                            "item_name": item.style_name or item.brand or "-",
+                            "image_url": img_url,
+                            "standard_cost": float(item.standard_cost or 0),
+                            "gst_rate": float(item.gst_rate or 0),
+                            "tcs": float(item.tcs or 0),
+                            "status": item.listing_status or ("BUYABLE" if item.is_active else "INACTIVE"),
+                            "step_level": 0,
+                            "region": "-",
+                            "shiping_estimate": 0,
+                            "attributes": raw
+                        })
+                except Exception as myntra_err:
+                    print(f"Error fetching Myntra listings: {myntra_err}")
+
+            total_count = len(items_list)
+            start = (page_no - 1) * page_size
+            end = start + page_size
+            paginated_items = items_list[start:end]
+
+            return Response({
+                "status": True,
+                "statusCode": 200,
+                "message": "Channel product configuration items fetched successfully",
+                "totalCount": total_count,
+                "pageNo": page_no,
+                "pageSize": page_size,
+                "totalPages": (total_count + page_size - 1) // page_size if page_size else 1,
+                "data": paginated_items
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                "status": False,
+                "message": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def upload_channel_product_config_excel(request):
+    try:
+        user = get_effective_user(request.user)
+        uploaded_file = request.FILES.get("file")
+
+        if not uploaded_file:
+            return Response(
+                {"status": False, "success": False, "message": "No file uploaded"},
+                status=400
+            )
+
+        try:
+            wb = load_workbook(uploaded_file, data_only=True)
+            sheet = wb.active
+        except Exception as err:
+            return Response(
+                {"status": False, "success": False, "message": f"Invalid Excel file: {err}"},
+                status=400
+            )
+
+        headers = [str(cell.value or '').strip() for cell in sheet[1]]
+        has_image_col = any(h.lower() in ["image", "image url", "image_url"] for h in headers)
+
+        def get_cell(row, possible_names):
+            for name in possible_names:
+                for idx, h in enumerate(headers):
+                    if h.lower() == name.lower():
+                        val = row[idx].value
+                        return val
+            return None
+
+        updated_count = 0
+        skipped_count = 0
+
+        with transaction.atomic():
+            for row in sheet.iter_rows(min_row=2):
+                if not any(cell.value for cell in row):
+                    continue
+
+                try:
+                    channel = get_cell(row, ["Channel", "channel"])
+                    asin = get_cell(row, ["ASIN", "asin", "ASIN / ID", "Style ID", "sku_id"])
+                    sku = get_cell(row, ["SKU", "sku", "Seller SKU", "seller_sku_code"])
+
+                    if not sku and not asin:
+                        skipped_count += 1
+                        continue
+
+                    channel_str = str(channel).strip().lower() if channel else ""
+
+                    product_cost = get_cell(row, ["Product Cost", "standard_cost", "Cost Price", "Cost"])
+                    gst_rate = get_cell(row, ["GST Rate%", "GST Rate", "gst_rate", "GST%"])
+                    tcs = get_cell(row, ["TCS", "tcs"])
+                    image_url = get_cell(row, ["Image", "Image URL", "image_url"])
+
+                    matched = False
+
+                    # Amazon listing update
+                    if not channel_str or "amazon" in channel_str:
+                        amazon_items = AmazonListingItem.objects.filter(user=user)
+                        if sku and asin:
+                            exact_qs = amazon_items.filter(sku=sku, asin=asin)
+                            if exact_qs.exists():
+                                amazon_items = exact_qs
+                            else:
+                                amazon_items = amazon_items.filter(sku=sku)
+                        elif sku:
+                            amazon_items = amazon_items.filter(sku=sku)
+                        elif asin:
+                            amazon_items = amazon_items.filter(asin=asin)
+                        else:
+                            amazon_items = AmazonListingItem.objects.none()
+
+                        for a_item in amazon_items:
+                            if product_cost is not None and str(product_cost).strip() != "":
+                                a_item.standard_cost = float(product_cost or 0)
+                            if gst_rate is not None and str(gst_rate).strip() != "":
+                                a_item.gst_rate = float(gst_rate or 0)
+                            if tcs is not None and str(tcs).strip() != "":
+                                a_item.tcs = float(tcs or 0)
+                            if has_image_col:
+                                img_val = str(image_url).strip() if image_url and str(image_url).strip() not in ("None", "nan") else ""
+                                a_item.image_url = img_val
+                            a_item.save()
+                            matched = True
+
+                    # Myntra listing update
+                    if not channel_str or "myntra" in channel_str:
+                        try:
+                            from myntra.models import MyntraListing
+                            myntra_items = MyntraListing.objects.filter(myntra_connection__user=user)
+                            if sku:
+                                sku_qs = myntra_items.filter(Q(seller_sku_code=sku) | Q(sku_code=sku))
+                                if asin:
+                                    exact_qs = sku_qs.filter(Q(sku_id=asin) | Q(style_id=asin))
+                                    if exact_qs.exists():
+                                        myntra_items = exact_qs
+                                    else:
+                                        myntra_items = sku_qs
+                                else:
+                                    myntra_items = sku_qs
+                            elif asin:
+                                myntra_items = myntra_items.filter(Q(sku_id=asin) | Q(style_id=asin))
+                            else:
+                                myntra_items = MyntraListing.objects.none()
+
+                            for m_item in myntra_items:
+                                if product_cost is not None and str(product_cost).strip() != "":
+                                    m_item.standard_cost = float(product_cost or 0)
+                                if gst_rate is not None and str(gst_rate).strip() != "":
+                                    m_item.gst_rate = float(gst_rate or 0)
+                                if tcs is not None and str(tcs).strip() != "":
+                                    m_item.tcs = float(tcs or 0)
+                                if has_image_col:
+                                    img_val = str(image_url).strip() if image_url and str(image_url).strip() not in ("None", "nan") else ""
+                                    m_item.image_url = img_val
+                                m_item.save()
+                                matched = True
+                        except Exception as m_err:
+                            print(f"Myntra update error: {m_err}")
+
+                    if matched:
+                        updated_count += 1
+                    else:
+                        skipped_count += 1
+
+                except Exception as row_err:
+                    skipped_count += 1
+
+        return Response({
+            "status": True,
+            "success": True,
+            "message": f"Successfully updated {updated_count} items across channels",
+            "updated_count": updated_count,
+            "skipped_count": skipped_count
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response(
+            {"status": False, "success": False, "message": str(e)},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def export_channel_product_config_excel(request):
+    user = get_effective_user(request.user)
+
+    channels_param = request.GET.get("channels") or request.GET.get("channel") or ""
+    search_param = request.GET.get("search") or ""
+    channels_list = [c.strip().lower() for c in channels_param.split(",") if c.strip()]
+
+    include_all = (
+        not channels_list or
+        "select all" in channels_list or
+        "all" in channels_list
+    )
+
+    include_amazon = include_all or any("amazon" in c for c in channels_list)
+    include_myntra = include_all or any("myntra" in c for c in channels_list)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Product Configuration"
+
+    headers = [
+        "Channel",
+        "Image",
+        "ASIN",
+        "SKU",
+        "Product Cost",
+        "GST Rate%",
+        "TCS",
+    ]
+
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num, value=header)
+        cell.font = Font(bold=True)
+
+    row_num = 2
+
+    if include_amazon:
+        amazon_qs = AmazonListingItem.objects.filter(user=user).order_by("-last_updated_date")
+        if search_param:
+            amazon_qs = amazon_qs.filter(
+                Q(sku__icontains=search_param) |
+                Q(asin__icontains=search_param) |
+                Q(item_name__icontains=search_param)
+            )
+        for item in amazon_qs:
+            row_data = [
+                "Amazon-India",
+                str(item.image_url or ""),
+                str(item.asin or ""),
+                str(item.sku or ""),
+                float(item.standard_cost or 0),
+                float(item.gst_rate or 0),
+                float(item.tcs or 0),
+            ]
+            for col_num, val in enumerate(row_data, 1):
+                ws.cell(row=row_num, column=col_num, value=val)
+            row_num += 1
+
+    if include_myntra:
+        try:
+            from myntra.models import MyntraListing
+            myntra_qs = MyntraListing.objects.filter(myntra_connection__user=user).order_by("-updated_at")
+            if search_param:
+                myntra_qs = myntra_qs.filter(
+                    Q(seller_sku_code__icontains=search_param) |
+                    Q(sku_code__icontains=search_param) |
+                    Q(sku_id__icontains=search_param) |
+                    Q(style_id__icontains=search_param) |
+                    Q(style_name__icontains=search_param) |
+                    Q(brand__icontains=search_param)
+                )
+            for item in myntra_qs:
+                row_data = [
+                    "Myntra",
+                    str(item.image_url or ""),
+                    str(item.style_id or item.sku_id or ""),
+                    str(item.seller_sku_code or item.sku_code or ""),
+                    float(item.standard_cost or 0),
+                    float(item.gst_rate or 0),
+                    float(item.tcs or 0),
+                ]
+                for col_num, val in enumerate(row_data, 1):
+                    ws.cell(row=row_num, column=col_num, value=val)
+                row_num += 1
+        except Exception as myntra_err:
+            print(f"Export Myntra error: {myntra_err}")
+
+    for column_cells in ws.columns:
+        max_len = 0
+        column_letter = get_column_letter(column_cells[0].column)
+        for cell in column_cells:
+            try:
+                if cell.value:
+                    max_len = max(max_len, len(str(cell.value)))
+            except:
+                pass
+        ws.column_dimensions[column_letter].width = min(max_len + 5, 50)
+
+    buffer = BytesIO()
+    wb.save(buffer)
+    file_bytes = buffer.getvalue()
+
+    filename = f"channel_product_config_{uuid.uuid4().hex[:8]}.xlsx"
+
+    try:
+        exported_report = ExportedReport.objects.create(
+            user=user if user and getattr(user, 'is_authenticated', False) else None,
+            report_type="product_configuration",
+            file_name=filename,
+            format="xlsx",
+            status="COMPLETED"
+        )
+        exported_report.file.save(filename, ContentFile(file_bytes))
+        exported_report.save()
+
+        file_url = request.build_absolute_uri(exported_report.file.url)
+    except Exception as exp_err:
+        print(f"Error saving ExportedReport: {exp_err}")
+        export_dir = os.path.join(settings.MEDIA_ROOT, "exports")
+        os.makedirs(export_dir, exist_ok=True)
+        file_path = os.path.join(export_dir, filename)
+        with open(file_path, "wb") as f:
+            f.write(file_bytes)
+        file_url = request.build_absolute_uri(settings.MEDIA_URL) + f"exports/{filename}"
+
+    return JsonResponse({
+        "status": True,
+        "message": "Excel exported successfully",
+        "download_url": file_url
+    })
         
 
 @api_view(["GET"])
@@ -648,7 +1064,7 @@ def full_export_amazon_listing_excel(request):
 @permission_classes([IsAuthenticated])
 def export_amazon_listing_excel(request):
 
-    user = request.user
+    user = get_effective_user(request.user)
 
     amazon_account_id = request.GET.get("amazon_account_id")
     sku = request.GET.get("sku")
@@ -697,36 +1113,15 @@ def export_amazon_listing_excel(request):
     ws.title = "Amazon Listing Items"
 
     # ============================================================
-    # HEADERS
+    # HEADERS (Matching Dashboard Table)
     # ============================================================
 
     headers = [
-
-        "SKU",
+        "Image",
         "ASIN",
-
-        "Item Weight",
-        "Item Weight Unit",
-
-        "Package Weight",
-        "Package Weight Unit",
-
-        "Item Length",
-        "Item Width",
-        "Item Height",
-        "Item Dimension Unit",
-
-        "Package Length",
-        "Package Width",
-        "Package Height",
-        "Package Dimension Unit",
-
-        "Shipping Estimate",
-        "Region",
-        "Step Level",
-
+        "SKU",
         "Product Cost",
-        "GST Rate",
+        "GST Rate%",
         "TCS",
     ]
 
@@ -735,13 +1130,11 @@ def export_amazon_listing_excel(request):
     # ============================================================
 
     for col_num, header in enumerate(headers, 1):
-
         cell = ws.cell(
             row=1,
             column=col_num,
             value=header
         )
-
         cell.font = Font(bold=True)
 
     # ============================================================
@@ -749,175 +1142,17 @@ def export_amazon_listing_excel(request):
     # ============================================================
 
     for row_num, item in enumerate(queryset, start=2):
-
         try:
-
-            attributes = item.attributes or {}
-
-            # ----------------------------------------------------
-            # ITEM DIMENSIONS
-            # ----------------------------------------------------
-
-            item_dimensions = attributes.get(
-                "item_dimensions",
-                []
-            )
-
-            item_length = ""
-            item_width = ""
-            item_height = ""
-            item_dimension_unit = ""
-
-            if item_dimensions and isinstance(item_dimensions, list):
-
-                dimension_data = item_dimensions[0] or {}
-
-                item_length = (
-                    dimension_data.get("length", {})
-                    .get("value", "")
-                )
-
-                item_width = (
-                    dimension_data.get("width", {})
-                    .get("value", "")
-                )
-
-                item_height = (
-                    dimension_data.get("height", {})
-                    .get("value", "")
-                )
-
-                item_dimension_unit = (
-                    dimension_data.get("length", {})
-                    .get("unit", "")
-                )
-
-            # ----------------------------------------------------
-            # PACKAGE DIMENSIONS
-            # ----------------------------------------------------
-
-            package_dimensions = attributes.get(
-                "item_package_dimensions",
-                []
-            )
-
-            pkg_length = ""
-            pkg_width = ""
-            pkg_height = ""
-            pkg_dimension_unit = ""
-
-            if package_dimensions and isinstance(package_dimensions, list):
-
-                pkg_data = package_dimensions[0] or {}
-
-                pkg_length = (
-                    pkg_data.get("length", {})
-                    .get("value", "")
-                )
-
-                pkg_width = (
-                    pkg_data.get("width", {})
-                    .get("value", "")
-                )
-
-                pkg_height = (
-                    pkg_data.get("height", {})
-                    .get("value", "")
-                )
-
-                pkg_dimension_unit = (
-                    pkg_data.get("length", {})
-                    .get("unit", "")
-                )
-
-            # ----------------------------------------------------
-            # ITEM WEIGHT
-            # ----------------------------------------------------
-
-            item_weight = attributes.get(
-                "item_weight",
-                []
-            )
-
-            weight_value = ""
-            weight_unit = ""
-
-            if item_weight and isinstance(item_weight, list):
-
-                weight_data = item_weight[0] or {}
-
-                weight_value = weight_data.get(
-                    "value",
-                    ""
-                )
-
-                weight_unit = weight_data.get(
-                    "unit",
-                    ""
-                )
-
-            # ----------------------------------------------------
-            # PACKAGE WEIGHT
-            # ----------------------------------------------------
-
-            item_package_weight = attributes.get(
-                "item_package_weight",
-                []
-            )
-
-            package_weight_value = ""
-            package_weight_unit = ""
-
-            if item_package_weight and isinstance(item_package_weight, list):
-
-                package_data = item_package_weight[0] or {}
-
-                package_weight_value = package_data.get(
-                    "value",
-                    ""
-                )
-
-                package_weight_unit = package_data.get(
-                    "unit",
-                    ""
-                )
-
-            # ----------------------------------------------------
-            # ROW DATA
-            # ----------------------------------------------------
-
             row_data = [
-
-                str(item.sku or ""),
+                str(item.image_url or ""),
                 str(item.asin or ""),
-
-                weight_value,
-                weight_unit,
-
-                package_weight_value,
-                package_weight_unit,
-
-                item_length,
-                item_width,
-                item_height,
-                item_dimension_unit,
-
-                pkg_length,
-                pkg_width,
-                pkg_height,
-                pkg_dimension_unit,
-
-                float(item.shiping_estimate or 0),
-                str(item.region or ""),
-                str(item.step_level or ""),
-
+                str(item.sku or ""),
                 float(item.standard_cost or 0),
                 float(item.gst_rate or 0),
                 float(item.tcs or 0),
             ]
 
             for col_num, value in enumerate(row_data, 1):
-
                 ws.cell(
                     row=row_num,
                     column=col_num,
@@ -925,26 +1160,19 @@ def export_amazon_listing_excel(request):
                 )
 
         except Exception as e:
-
-            print(
-                f"Excel export error for SKU "
-                f"{item.sku}: {e}"
-            )
+            print(f"Excel export error for SKU {item.sku}: {e}")
 
     # ============================================================
     # AUTO WIDTH
     # ============================================================
 
     for column_cells in ws.columns:
-
         max_length = 0
-
         column_letter = get_column_letter(
             column_cells[0].column
         )
 
         for cell in column_cells:
-
             try:
                 if cell.value:
                     max_length = max(
@@ -964,49 +1192,44 @@ def export_amazon_listing_excel(request):
         ].width = adjusted_width
 
     # ============================================================
-    # CREATE EXPORT FOLDER
+    # SAVE TO IN-MEMORY BUFFER & CREATING EXPORTED REPORT RECORD
     # ============================================================
 
-    export_dir = os.path.join(
-        settings.MEDIA_ROOT,
-        "exports"
-    )
+    buffer = BytesIO()
+    wb.save(buffer)
+    file_bytes = buffer.getvalue()
 
-    os.makedirs(
-        export_dir,
-        exist_ok=True
-    )
+    filename = f"amazon_listing_{uuid.uuid4().hex[:8]}.xlsx"
 
-    # ============================================================
-    # FILE NAME
-    # ============================================================
-
-    file_name = (
-        f"amazon_listing_"
-        f"{uuid.uuid4().hex}.xlsx"
-    )
-
-    file_path = os.path.join(
-        export_dir,
-        file_name
-    )
-
-    # ============================================================
-    # SAVE FILE
-    # ============================================================
-
-    wb.save(file_path)
-
-    # ============================================================
-    # FILE URL
-    # ============================================================
-
-    file_url = (
-        request.build_absolute_uri(
-            settings.MEDIA_URL
+    try:
+        exported_report = ExportedReport.objects.create(
+            user=user if user and getattr(user, 'is_authenticated', False) else None,
+            report_type="product_configuration",
+            file_name=filename,
+            format="xlsx",
+            status="COMPLETED"
         )
-        + f"exports/{file_name}"
-    )
+        exported_report.file.save(filename, ContentFile(file_bytes))
+        exported_report.save()
+
+        file_url = request.build_absolute_uri(exported_report.file.url)
+    except Exception as exp_err:
+        print(f"Error creating ExportedReport: {exp_err}")
+        export_dir = os.path.join(
+            settings.MEDIA_ROOT,
+            "exports"
+        )
+        os.makedirs(
+            export_dir,
+            exist_ok=True
+        )
+        file_path = os.path.join(
+            export_dir,
+            filename
+        )
+        with open(file_path, "wb") as f:
+            f.write(file_bytes)
+        file_url = request.build_absolute_uri(settings.MEDIA_URL) + f"exports/{filename}"
 
     # ============================================================
     # RESPONSE
@@ -1308,7 +1531,7 @@ def upload_amazon_listing_excel(request):
                     step_level = get_cell(row, "Step Level")
 
                     product_cost = get_cell(row, "Product Cost")
-                    gst_rate = get_cell(row, "GST Rate")
+                    gst_rate = get_cell(row, "GST Rate%") if get_cell(row, "GST Rate%") is not None else get_cell(row, "GST Rate")
                     tcs = get_cell(row, "TCS")
 
                     # =================================================

@@ -1,57 +1,78 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Table, Button, Tooltip, Modal, message } from 'antd';
-import { UploadOutlined, ExportOutlined } from '@ant-design/icons';
+import { Table, Button, Tooltip, Modal, message, Input } from 'antd';
+import { UploadOutlined, ExportOutlined, SearchOutlined } from '@ant-design/icons';
 // import { EditOutlined } from '@ant-design/icons';
 import { PageHeader } from '../../../../components/page-headers/page-headers';
 import amazon from '../../../../assets/icons/amazon.svg';
+import myntra from '../../../../assets/icons/myntra.png';
 import { exportProductConfiguration, uploadProductConfiguration } from '../../../../redux/Settings/actionCreator';
 // import flipkart from '../../../../assets/icons/flipkart.svg';
 
-export default function ProductConfigTab({ pagination, setPagination }) {
+export default function ProductConfigTab({ pagination, setPagination, search, onSearch }) {
   const { productconfigData, productconfigLoading, exportLoading, uploadLoading } = useSelector(
     (state) => state.settings,
   );
+  const { channel: globalChannel } = useSelector((state) => state.dashboard);
 
   const [isFieldModalOpen, setIsFieldModalOpen] = useState(false);
   const dispatch = useDispatch();
   const [selectedFile, setSelectedFile] = useState(null);
-  // const PageRoutes = [
-  //   {
-  //     path: 'index',
-  //     breadcrumbName: 'Settings',
-  //   },
-  //   {
-  //     path: '',
-  //     breadcrumbName: 'Product Settings',
-  //   },
-  //   {
-  //     path: '',
-  //     breadcrumbName: 'Product Configuration',
-  //   },
-  // ];
 
   const columns = [
-    // {
-    //   title: '',
-    //   dataIndex: 'icon',
-    //   width: 60,
-    //   fixed: 'left',
-    //   render: (v) => <img src={v} alt="channel" className="w-6 h-6 object-contain mx-auto" />,
-    // },
+    {
+      title: 'Channel',
+      dataIndex: 'channel',
+      width: 80,
+      align: 'center',
+      fixed: 'left',
+      render: (c) => {
+        const channelName = c || 'Amazon-India';
+        const isMyntra = channelName.toLowerCase().includes('myntra');
+        const icon = isMyntra ? myntra : amazon;
+        return (
+          <Tooltip title={channelName}>
+            <img
+              src={icon}
+              alt={channelName}
+              className={isMyntra ? 'w-8 h-8 object-contain mx-auto' : 'w-6 h-6 object-contain mx-auto'}
+            />
+          </Tooltip>
+        );
+      },
+    },
     {
       title: 'Image',
       dataIndex: 'image',
       width: 90,
       align: 'center',
       fixed: 'left',
-      render: (img) => <img src={img} alt="product" className="w-12 h-12 object-cover rounded-md" />,
+      render: (img) =>
+        img ? (
+          <img src={img} alt="product" className="w-12 h-12 object-cover rounded-md mx-auto" />
+        ) : (
+          <span className="text-gray-400">-</span>
+        ),
     },
     {
-      title: 'ASIN',
+      title: 'ASIN / ID',
       dataIndex: 'productId',
       align: 'center',
-      render: (v) => <span className="text-[#2563eb] font-medium">{v}</span>,
+      render: (v, record) => {
+        if (!v || v === '-') return <span className="text-gray-400">-</span>;
+        const isMyntra = record.channel?.toLowerCase().includes('myntra');
+        const href = isMyntra ? `https://www.myntra.com/${v}` : `https://www.amazon.in/dp/${v}`;
+        return (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#2563eb] font-medium hover:underline"
+          >
+            {v}
+          </a>
+        );
+      },
     },
     {
       title: 'SKU',
@@ -64,76 +85,6 @@ export default function ProductConfigTab({ pagination, setPagination }) {
         </Tooltip>
       ),
     },
-    // {
-    //   title: 'Status',
-    //   dataIndex: 'status',
-    //   align: 'center',
-    //   render: (status) => <Tag color={status === 'BUYABLE' ? 'green' : 'red'}>{status || '-'}</Tag>,
-    // },
-    // {
-    //   title: 'Name',
-    //   dataIndex: 'name',
-    //   align: 'center',
-    //   render: (text) => (
-    //     <Tooltip title={text} color="black" overlayInnerStyle={{ color: '#fff' }}>
-    //       <span className="truncate cursor-pointer block max-w-[250px]">{text}</span>
-    //     </Tooltip>
-    //   ),
-    // },
-    // {
-    //   title: 'Fulfillment Channel Code',
-    //   dataIndex: 'fulfilments',
-    //   align: 'center',
-    //   render: (fulfilments) => {
-    //     const channel = fulfilments?.[0]?.fulfillmentChannelCode;
-
-    //     const isFBM = channel === 'DEFAULT';
-
-    //     return (
-    //       <span
-    //         className={`px-3 py-1 rounded-full text-[12px] font-medium ${
-    //           isFBM ? 'bg-[#dbeafe] text-[#2563eb]' : 'bg-[#dcfce7] text-[#16a34a]'
-    //         }`}
-    //       >
-    //         {isFBM ? 'FBM' : 'FBA'}
-    //       </span>
-    //     );
-    //   },
-    // },
-    // {
-    //   title: 'Item Weight',
-    //   dataIndex: 'itemWeight',
-    //   align: 'center',
-    // },
-    // {
-    //   title: 'Item Pkg Weight',
-    //   dataIndex: 'itempkgWeight',
-    //   align: 'center',
-    // },
-    // {
-    //   title: 'Pkg Length',
-    //   dataIndex: 'pkgLength',
-    //   align: 'center',
-    // },
-
-    // {
-    //   title: 'Pkg Width',
-    //   dataIndex: 'pkgWidth',
-    //   align: 'center',
-    // },
-
-    // {
-    //   title: 'Pkg Height',
-    //   dataIndex: 'pkgHeight',
-    //   align: 'center',
-    // },
-
-    // {
-    //   title: 'Step Level',
-    //   dataIndex: 'stateLevel',
-    //   align: 'center',
-    // },
-
     {
       title: 'Product Cost',
       dataIndex: 'productcost',
@@ -153,106 +104,54 @@ export default function ProductConfigTab({ pagination, setPagination }) {
 
   const data =
     productconfigData?.data?.map((item) => ({
-      key: item.id,
+      key: item.id || item.key,
 
       icon: amazon,
 
-      // channel: 'Amazon',
+      channel: item.channel || 'Amazon-India',
 
-      productId: item.asin || '-',
+      productId: item.asin || item.productId || item.style_id || item.sku_id || '-',
 
-      sku: item.sku || '-',
+      sku: item.sku || item.seller_sku || item.seller_sku_code || '-',
 
-      status: item.status?.[0] || '-',
+      status: item.status?.[0] || item.status || '-',
 
-      name: item.item_name || '-',
+      name: item.item_name || item.style_name || item.name || '-',
 
-      image: item.image_url || '',
-      productcost: item.standard_cost || 0,
-      gstrate: item.gst_rate || 0,
-      tcs: item.tcs || 0,
+      image: item.image_url || item.image || '',
+      productcost: item.standard_cost ?? item.productcost ?? 0,
+      gstrate: item.gst_rate ?? item.gstrate ?? 0,
+      tcs: item.tcs ?? 0,
       stateLevel: item.step_level || 0,
       shippinCharge: item.shiping_estimate || 0,
       region: item.region || '-',
-
-      itemWeight: item.attributes?.item_weight?.[0]
-        ? `${item.attributes.item_weight[0].value} ${item.attributes.item_weight[0].unit}`
-        : '-',
-
-      // fulfilments: item.attributes?.fulfillment_availability?.[0]
-      //   ? `${item.attributes.fulfillment_availability[0].fulfillment_channel_code}`
-      //   : '-',
-      fulfilments: item.fulfillment_availability || '-',
-
-      itempkgWeight: item.attributes?.item_package_weight?.[0]
-        ? `${item.attributes.item_package_weight[0].value} ${item.attributes.item_package_weight[0].unit}`
-        : '-',
-
-      length: item.attributes?.item_dimensions?.[0]?.length
-        ? `${item.attributes.item_dimensions[0].length.value} ${item.attributes.item_dimensions[0].length.unit}`
-        : '-',
-
-      width: item.attributes?.item_dimensions?.[0]?.width
-        ? `${item.attributes.item_dimensions[0].width.value} ${item.attributes.item_dimensions[0].width.unit}`
-        : '-',
-
-      height: item.attributes?.item_dimensions?.[0]?.height
-        ? `${item.attributes.item_dimensions[0].height.value} ${item.attributes.item_dimensions[0].height.unit}`
-        : '-',
-
-      pkgLength: item.attributes?.item_package_dimensions?.[0]?.length
-        ? `${item.attributes.item_package_dimensions[0].length.value} ${item.attributes.item_package_dimensions[0].length.unit}`
-        : '-',
-
-      pkgWidth: item.attributes?.item_package_dimensions?.[0]?.width
-        ? `${item.attributes.item_package_dimensions[0].width.value} ${item.attributes.item_package_dimensions[0].width.unit}`
-        : '-',
-
-      pkgHeight: item.attributes?.item_package_dimensions?.[0]?.height
-        ? `${item.attributes.item_package_dimensions[0].height.value} ${item.attributes.item_package_dimensions[0].height.unit}`
-        : '-',
     })) || [];
   return (
     <>
-      <PageHeader
-        // routes={PageRoutes}
-        // title="Product Configuration"
-        className="flex  justify-between items-center px-8 xl:px-[15px] pt-2 pb-2 sm:pb-[30px] bg-transparent sm:flex-col"
-      />
+      <PageHeader className="flex justify-between items-center px-8 xl:px-[15px] pt-2 pb-2 sm:pb-[30px] bg-transparent sm:flex-col" />
       <main className="min-h-[715px] px-5 xl:px-[15px] pb-[30px]">
-        {/* Tabs */}
-        {/* <Tabs
-          defaultActiveKey="1"
-          items={[
-            {
-              key: '1',
-              label: 'Product Configuration',
-              children: null,
-            },
-            {
-              key: '2',
-              label: 'Inventory Master Configuration',
-              children: null,
-            },
-            {
-              key: '3',
-              label: 'Pincode',
-              children: null,
-            },
-          ]}
-        /> */}
-
         {/* Top Bar */}
-        <div className="flex justify-end items-center mb-4">
-          {/* <span className="text-gray-500 text-sm">Double-click a cell to edit</span> */}
-
+        <div className="flex justify-between items-center mb-4 gap-4 flex-wrap">
+          <div className="flex items-center gap-2 max-w-[360px] w-full">
+            <Input.Search
+              placeholder="Search by ASIN / ID, SKU"
+              allowClear
+              enterButton={
+                <Button type="primary" icon={<SearchOutlined />}>
+                  Search
+                </Button>
+              }
+              onSearch={onSearch}
+              className="w-full"
+            />
+          </div>
           <div className="flex gap-2">
             <Button
               type="primary"
               icon={<ExportOutlined className="!text-[16px] !font-bold" />}
               className="!h-[35px] !rounded-l !border-[#dbe1e8] !text-white !font-semibold !flex !items-center !justify-center"
               loading={exportLoading}
-              onClick={() => dispatch(exportProductConfiguration())}
+              onClick={() => dispatch(exportProductConfiguration(globalChannel, search))}
             >
               Export
             </Button>

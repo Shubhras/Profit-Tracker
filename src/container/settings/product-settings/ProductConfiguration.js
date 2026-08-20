@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { Tabs, Spin, Modal, Button } from 'antd';
+import { useDispatch, useSelector } from 'react-redux';
+import { Tabs, Spin, Modal, Button, message } from 'antd';
 import ProductConfigTab from './ProductConfigurationTabs/ProductConfigTab';
 // import InventoryMastertab from './ProductConfigurationTabs/InventoryMastertab';
 // import PincodeTab from './ProductConfigurationTabs/PincodeTab';
-import { getProductConfiguration } from '../../../redux/Settings/actionCreator';
-import { exportProfitData } from '../../../redux/dashboard/actionCreator';
+import {
+  getProductConfiguration,
+  exportProductConfiguration,
+  uploadProductConfiguration,
+} from '../../../redux/Settings/actionCreator';
 import { PageHeader } from '../../../components/page-headers/page-headers';
 
 export default function ProductConfiguration() {
@@ -15,42 +18,28 @@ export default function ProductConfiguration() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [exportModal, setExportModal] = useState(false);
   const [uploadModal, setUploadModal] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const dispatch = useDispatch();
-  // const getPayloadByTab = (tab) => {
-  //   switch (tab) {
-  //     case 'product':
-  //       return {
-  //         type: 'inventorysettings',
-  //         method: 'get',
-  //       };
+  const { channel: globalChannel } = useSelector((state) => state.dashboard);
 
-  //     case 'inventory':
-  //       return {
-  //         type: 'inventorysettigstable',
-  //         method: 'get',
-  //         filters: {},
-  //         pagination: {
-  //           pageNo: 0,
-  //           pageSize: 25,
-  //         },
-  //       };
-
-  //     default:
-  //       return {};
-  //   }
-  // };
-
+  const [search, setSearch] = useState('');
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
   });
 
+  const handleSearch = (value) => {
+    setSearch(value || '');
+    setPagination((prev) => ({ ...prev, current: 1 }));
+  };
+
   useEffect(() => {
     setLoading(true);
     if (activeTab === 'product') {
       const payload = {
-        search: '',
+        search,
+        channels: globalChannel,
         marketplace_id: '',
         product_type: '',
       };
@@ -63,7 +52,7 @@ export default function ProductConfiguration() {
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [activeTab, dispatch, pagination]);
+  }, [activeTab, dispatch, pagination, globalChannel, search]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -95,16 +84,17 @@ export default function ProductConfiguration() {
     { path: '', breadcrumbName: 'Product Configuration' },
   ];
 
-  useEffect(() => {
-    setLoading(true);
-    const timer = setTimeout(() => setLoading(false), 300);
-    return () => clearTimeout(timer);
-  }, [activeTab]);
-
   const renderTabContent = () => {
     switch (activeTab) {
       case 'product':
-        return <ProductConfigTab pagination={pagination} setPagination={setPagination} />;
+        return (
+          <ProductConfigTab
+            pagination={pagination}
+            setPagination={setPagination}
+            search={search}
+            onSearch={handleSearch}
+          />
+        );
       // case 'inventory':
       //   return <InventoryMastertab />;
       // case 'pincode':
@@ -114,47 +104,35 @@ export default function ProductConfiguration() {
     }
   };
   const handleExport = () => {
-    const fileInput = document.getElementById('fileInput');
-
-    if (fileInput) {
-      fileInput.value = '';
-    }
-    dispatch(
-      exportProfitData({
-        params: {
-          filters: {
-            channel: {
-              IN: ['Amazon-India', 'Flipkart', 'Jiomart', 'Meesho', 'Myntra', 'Snapdeal'],
-            },
-          },
-
-          dataOption: 'channel,sku',
-
-          columns: [
-            'productid',
-            'account',
-            'displaysku',
-            'status',
-            'name',
-            'parentproductid',
-            'mrp',
-            'costperunit',
-            'costperunittax',
-            'storagemaster',
-            'inventorymastersku',
-            'packagedimensionsnew',
-            'categoryids',
-          ],
-        },
-
-        reportType: 'Prod Config Selected',
-
-        email: 'bhavnaaprostore@gmail.com',
-      }),
-    );
-
+    dispatch(exportProductConfiguration(globalChannel));
     setExportModal(false);
   };
+
+  const handleUploadSubmit = async () => {
+    if (!selectedFile) return;
+    setUploading(true);
+    try {
+      const res = await dispatch(uploadProductConfiguration(selectedFile));
+      if (res?.status || res?.success) {
+        message.success(res?.message || 'File uploaded successfully');
+        setUploadModal(false);
+        setSelectedFile(null);
+        dispatch(
+          getProductConfiguration(pagination.current, pagination.pageSize, {
+            search: '',
+            channels: globalChannel,
+          }),
+        );
+      } else {
+        message.error(res?.message || 'Upload failed');
+      }
+    } catch (err) {
+      message.error(err.message || 'Upload error');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <>
       <PageHeader
@@ -220,7 +198,7 @@ export default function ProductConfiguration() {
         <div className="flex justify-between">
           <Button onClick={() => setUploadModal(false)}>Cancel</Button>
 
-          <Button type="primary" disabled={!selectedFile}>
+          <Button type="primary" disabled={!selectedFile} loading={uploading} onClick={handleUploadSubmit}>
             Submit
           </Button>
         </div>

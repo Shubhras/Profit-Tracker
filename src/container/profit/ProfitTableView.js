@@ -37,7 +37,7 @@ export default function ProfitTableView() {
 
   const [visibleColumns, setVisibleColumns] = React.useState([
     'view',
-    // 'qty',
+    'grossqty',
     'netQty',
     'returnqty',
     'returnPercent',
@@ -283,12 +283,12 @@ export default function ProfitTableView() {
       ),
     },
     {
-      title: 'Qty',
-      dataIndex: 'qty',
+      title: 'Gross Qty',
+      dataIndex: 'grossqty',
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.qty - b.qty,
+      sorter: (a, b) => a.grossqty - b.grossqty,
     },
     {
       title: 'Net Qty',
@@ -430,7 +430,7 @@ export default function ProfitTableView() {
     {
       key: 'action',
       fixed: 'right',
-      width: 60,
+      width: 40,
       render: (_, record) => (
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
           <button
@@ -440,15 +440,9 @@ export default function ProfitTableView() {
                 state: { channels: [record.channel], type: 'single' },
               })
             }
-            // onClick={() => navigate(`../profittabledetails/${record.channel}`)}
-            // style={{
-            //   border: '1px solid #d9d9d9',
-            //   background: 'rgb(202, 221, 254)',
-            // }}
-            className="w-[28px] h-[28px] rounded-full border border-[#dbe1e8]
-  flex items-center justify-center cursor-pointer hover:text-black transition-all duration-200 mx-auto"
+            className="w-[22px] h-[22px] rounded-full border border-[#dbe1e8] flex items-center justify-center cursor-pointer hover:text-black transition-all duration-200 mx-auto"
           >
-            <RightOutlined style={{ fontSize: 12 }} />
+            <RightOutlined style={{ fontSize: 10 }} />
           </button>
           {/* <button
             type="button"
@@ -629,7 +623,12 @@ export default function ProfitTableView() {
   "
             summary={() => (
               <Table.Summary.Row className="font-semibold bg-gray-50">
-                <Table.Summary.Cell index={0} fixed="left" className="font-bold text-[13px] text-[#111827]">
+                <Table.Summary.Cell
+                  index={0}
+                  fixed="left"
+                  align="center"
+                  className="font-bold text-[13px] text-[#111827] text-center"
+                >
                   Total
                 </Table.Summary.Cell>
 

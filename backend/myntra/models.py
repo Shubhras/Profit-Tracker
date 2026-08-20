@@ -315,6 +315,11 @@ class MyntraListing(models.Model):
         null=True,
     )
 
+    standard_cost = models.FloatField(default=0)
+    gst_rate = models.FloatField(default=0)
+    tcs = models.FloatField(default=0)
+    image_url = models.URLField(null=True, blank=True)
+
     is_active = models.BooleanField(default=False)
 
     listing_status = models.CharField(max_length=20, blank=True, null=True)

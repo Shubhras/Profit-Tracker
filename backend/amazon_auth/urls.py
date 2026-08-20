@@ -140,6 +140,12 @@ urlpatterns = [
     path("export-amazon-listing-excel/",export_amazon_listing_excel,name="export_amazon_listing_excel"),
 
     path("upload-amazon-listing-excel/",upload_amazon_listing_excel,name="upload_amazon_listing_excel",),
+
+    path("channel-product-config-items/", ChannelProductConfigItemsView.as_view(), name="channel-product-config-items"),
+
+    path("export-channel-product-config-excel/", export_channel_product_config_excel, name="export_channel_product_config_excel"),
+
+    path("upload-channel-product-config-excel/", upload_channel_product_config_excel, name="upload_channel_product_config_excel"),
     
     path(
         "estimated-fees/list/",

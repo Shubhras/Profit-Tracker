@@ -301,7 +301,7 @@ export const getProductConfiguration = (page = 1, pageSize = 10, payload = {}) =
           page_size: pageSize,
         },
       };
-      const response = await DataService.post(`/amazon/amazon-listing-items/`, finalPayload);
+      const response = await DataService.post(`/amazon/channel-product-config-items/`, finalPayload);
 
       if (response.data.status === true) {
         dispatch(productconfigSuccess(response.data));
@@ -314,12 +314,19 @@ export const getProductConfiguration = (page = 1, pageSize = 10, payload = {}) =
   };
 };
 
-export const exportProductConfiguration = () => {
+export const exportProductConfiguration = (channels = [], search = '') => {
   return async (dispatch) => {
     dispatch(exportproductconfigurationBegin());
 
     try {
-      const response = await DataService.get('/amazon/export-amazon-listing-excel/');
+      const channelQuery = Array.isArray(channels) ? channels.join(',') : channels || '';
+      const params = new URLSearchParams();
+      if (channelQuery) params.append('channels', channelQuery);
+      if (search) params.append('search', search);
+
+      const queryString = params.toString();
+      const url = `/amazon/export-channel-product-config-excel/${queryString ? `?${queryString}` : ''}`;
+      const response = await DataService.get(url);
 
       console.log('Export Response:', response.data);
 
@@ -344,7 +351,7 @@ export const uploadProductConfiguration = (file) => {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await DataService.post('/amazon/upload-amazon-listing-excel/', formData, {
+      const response = await DataService.post('/amazon/upload-channel-product-config-excel/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
