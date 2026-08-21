@@ -211,6 +211,9 @@ const getProfile = () => {
     try {
       dispatch(actions.profileLoading(true));
       const response = await DataService.get('/user/profile/');
+      console.log('PROFILE API RESPONSE:', response.data);
+      console.log('PROFILE DATA:', response.data.data);
+      console.log('IS SUPERUSER:', response.data.data?.is_superuser);
       if (response.data.status === true) {
         dispatch(actions.setUserProfile(response.data.data));
       }

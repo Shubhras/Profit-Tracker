@@ -1,277 +1,236 @@
-import React, { lazy, Suspense, useState } from 'react';
-import { Row, Col, Skeleton, Modal, Checkbox, Button } from 'antd';
-import { SettingOutlined } from '@ant-design/icons';
-import { PageHeader } from '../../components/page-headers/page-headers';
-import { Cards } from '../../components/cards/frame/cards-frame';
-
-const OverviewDataList = lazy(() => import('../dashboard/overview/demoTwo/OverviewDataList'));
+import React, { useState } from 'react';
+import { Modal, Checkbox } from 'antd';
+import {
+  ArrowRightOutlined,
+  DollarOutlined,
+  HomeOutlined,
+  TruckOutlined,
+  LineChartOutlined,
+  RiseOutlined,
+  FallOutlined,
+  // LineChartOutlined,
+  // FallOutlined,
+  // WarningOutlined,
+  // UndoOutlined,
+  // CloseCircleOutlined,
+  // PercentageOutlined,
+  // TagsOutlined,
+  // ShoppingOutlined,
+  // StopOutlined,
+  // SoundOutlined,
+} from '@ant-design/icons';
 
 function ActionsRequired() {
-  const PageRoutes = [
-    {
-      path: '',
-      breadcrumbName: 'Actions Required',
-    },
-  ];
-  const [openCustomize, setOpenCustomize] = useState(false);
   const CARD_CONFIG = [
+    {
+      key: 'increaseAds',
+      label: 'Increase Ad Spend',
+      description: 'Total number of parent SKUs with positive profit.',
+      value: '₹39,968',
+      secondaryLabel: 'Parent ID',
+      secondaryValue: '5',
+      bg: 'bg-white',
+      iconBg: 'bg-[#E8F8EE]',
+      iconColor: 'text-[#16A34A]',
+      valueColor: 'text-[#16A34A]',
+      icon: <LineChartOutlined />,
+    },
     {
       key: 'paymentLeaks',
       label: 'Payment Leaks',
-      bg: 'bg-[#ECFDF5]',
-      titleColor: 'text-[#059669]',
-      rows: [
-        ['Potential Savings', '₹163'],
-        ['Orders #', '8'],
-      ],
-    },
-    {
-      key: 'increaseAds',
-      label: 'Opportunity to increase Ads',
-      bg: 'bg-[#ECFDF5]',
-      titleColor: 'text-[#059669]',
-      rows: [
-        ['Potential Opportunity', '₹39,968'],
-        ['Parent ID', '5'],
-      ],
-    },
-    {
-      key: 'warehouseShipping',
-      label: 'New warehouse opportunity to reduce shipping costs',
-      bg: 'bg-[#ECFDF5]',
-      titleColor: 'text-[#059669]',
-      rows: [
-        ['Potential Savings', '-'],
-        ['SKU #', '0'],
-      ],
-    },
-    {
-      key: 'delayedPayments',
-      label: 'Delayed Payments',
-      bg: 'bg-[#ECFDF5]',
-      titleColor: 'text-[#059669]',
-      rows: [
-        ['Unlock Cash', '₹1,37,965'],
-        ['Orders #', '1260'],
-      ],
-    },
-    {
-      key: 'delayedCashback',
-      label: 'Delayed Cashback',
-      bg: 'bg-[#ECFDF5]',
-      titleColor: 'text-[#059669]',
-      rows: [
-        ['Unlock Cash', '₹15'],
-        ['Orders #', '1'],
-      ],
-    },
-    {
-      key: 'shippingOverages',
-      label: 'Shipping Cost overages',
+      description: 'Total amount to recover for payments not matching with estimated.',
+      value: '₹163',
+      secondaryLabel: 'Orders #',
+      secondaryValue: '8',
       bg: 'bg-[#EFF6FF]',
-      titleColor: 'text-[#2563EB]',
-      rows: [
-        ['Potential Savings', '₹3,157'],
-        ['Orders # / SKU', '677 / 55'],
-      ],
+      iconBg: 'bg-[#E8F1FF]',
+      iconColor: 'text-[#2563EB]',
+      valueColor: 'text-[#2563EB]',
+      icon: <DollarOutlined />,
     },
+
     {
-      key: 'adSpendIssues',
-      label: 'Ad Spend issues',
-      bg: 'bg-[#EFF6FF]',
-      titleColor: 'text-[#2563EB]',
-      rows: [
-        ['Potential Savings', '₹50,365'],
-        ['Parent ID', '24'],
-      ],
-    },
-    {
-      key: 'lossMakingIncrease',
-      label: 'Loss Making - Increase Price',
+      key: 'returnimpact',
+      label: 'Return Impact',
+      description: 'Total number of return MP fees',
+      value: '32',
+      secondaryLabel: 'SKU #',
+      secondaryValue: '0',
       bg: 'bg-[#FFF7ED]',
-      titleColor: 'text-[#EA580C]',
-      rows: [
-        ['Potential Impact', '₹467'],
-        ['SKU #', '7'],
-      ],
+      iconBg: 'bg-[#FFF0DF]',
+      iconColor: 'text-[#EA580C]',
+      valueColor: 'text-[#EA580C]',
+      icon: <HomeOutlined />,
     },
+
     {
-      key: 'customerReturn',
-      label: 'Customer Return problems',
-      bg: 'bg-[#FFF7ED]',
-      titleColor: 'text-[#EA580C]',
-      rows: [
-        ['Potential Impact', '-'],
-        ['SKU #', '0'],
-      ],
-    },
-    {
-      key: 'courierReturn',
-      label: 'Courier Return problems',
-      bg: 'bg-[#FFF7ED]',
-      titleColor: 'text-[#EA580C]',
-      rows: [
-        ['Potential Impact', '₹913'],
-        ['SKU #', '1'],
-      ],
-    },
-    {
-      key: 'cancellationIssues',
-      label: 'Cancellation issues',
-      bg: 'bg-[#FFF7ED]',
-      titleColor: 'text-[#EA580C]',
-      rows: [
-        ['Potential Impact', '-'],
-        ['SKU #', '0'],
-      ],
-    },
-    {
-      key: 'replacementOrder',
-      label: 'Replacement order %',
-      bg: 'bg-[#FFF7ED]',
-      titleColor: 'text-[#EA580C]',
-      rows: [
-        ['Potential Impact', '-'],
-        ['SKU #', '0'],
-      ],
-    },
-    {
-      key: 'negativeReviews',
-      label: 'Negative Reviews',
-      bg: 'bg-[#FFF7ED]',
-      titleColor: 'text-[#EA580C]',
-      rows: [
-        ['Potential Impact', '-'],
-        ['SKU #', '0'],
-      ],
-    },
-    {
-      key: 'priceDecrease',
-      label: 'Price Recommendations - Decrease Price',
-      bg: 'bg-[#EFF6FF]',
-      titleColor: 'text-[#2563EB]',
-      rows: [
-        ['Potential Savings', '-'],
-        ['SKU #', '0'],
-      ],
-    },
-    {
-      key: 'priceIncrease',
-      label: 'Price Recommendations - Increase Price',
-      bg: 'bg-[#EFF6FF]',
-      titleColor: 'text-[#2563EB]',
-      rows: [
-        ['Potential Savings', '-'],
-        ['SKU #', '0'],
-      ],
-    },
-    {
-      key: 'priceCompliance',
-      label: 'Price Compliance Cards breached',
+      key: 'roi',
+      label: 'High ROI Products',
+      description: 'Total number of SKUs with high ROI',
+      value: '₹1,37,965',
+      secondaryLabel: 'Orders #',
+      secondaryValue: '1260',
       bg: 'bg-[#ECFDF5]',
-      titleColor: 'text-[#059669]',
-      rows: [
-        ['Potential Savings', '-'],
-        ['SKU #', '0'],
-      ],
+      iconBg: 'bg-[#E6F8EF]',
+      iconColor: 'text-[#16A34A]',
+      valueColor: 'text-[#16A34A]',
+      icon: <RiseOutlined />,
     },
+
     {
-      key: 'discountCompliance',
-      label: 'Discount Compliance Cards breached',
-      bg: 'bg-[#ECFDF5]',
-      titleColor: 'text-[#059669]',
-      rows: [
-        ['Potential Savings', '-'],
-        ['SKU #', '0'],
-      ],
+      key: 'lowroi',
+      label: 'Low ROI Products',
+      description: 'Total number of products with low ROI',
+      value: '₹15',
+      secondaryLabel: 'Orders #',
+      secondaryValue: '1',
+      bg: 'bg-[#EFF6FF]',
+      iconBg: 'bg-[#E8F1FF]',
+      iconColor: 'text-[#2563EB]',
+      valueColor: 'text-[#2563EB]',
+      icon: <FallOutlined />,
     },
+
     {
-      key: 'outOfStockAdSpend',
-      label: 'Out of stock - Ad Spend',
-      bg: 'bg-[#ECFDF5]',
-      titleColor: 'text-[#059669]',
-      rows: [
-        ['Potential Savings', '₹4,256'],
-        ['SKU #', '18'],
-      ],
+      key: 'decreaseAdSpend',
+      label: 'Decrease Ad Spend',
+      description: 'Total number of parent SKUs with negative profit.',
+      value: '₹3,157',
+      secondaryLabel: 'Orders # / SKU',
+      secondaryValue: '677 / 55',
+      bg: 'bg-[#EFF6FF]',
+      iconBg: 'bg-[#E8F1FF]',
+      iconColor: 'text-[#2563EB]',
+      valueColor: 'text-[#2563EB]',
+      icon: <TruckOutlined />,
     },
   ];
 
-  // store visible card keys
-  const [visibleCards, setVisibleCards] = useState(CARD_CONFIG.map((c) => c.key));
+  const [openCustomize, setOpenCustomize] = useState(false);
+
+  const [visibleCards, setVisibleCards] = useState(CARD_CONFIG.map((card) => card.key));
+
   return (
     <>
-      <PageHeader
-        routes={PageRoutes}
-        title="Actions Required"
-        className="flex  justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 sm:pb-[30px] bg-transparent sm:flex-col"
-      />
+      <main className="min-h-[715px] flex-1 bg-[#F8F9FB] px-8 xl:px-[15px] pb-[40px]">
+        {/* ================= PAGE HEADER ================= */}
 
-      <main className="min-h-[715px] lg:min-h-[580px] flex-1 px-8 xl:px-[15px] pb-[30px] bg-transparent">
-        <Row justify="center">
-          <Col xs={24}>
-            <Suspense
-              fallback={
-                <Cards headless>
-                  <Skeleton active />
-                </Cards>
-              }
+        <div className="pt-5 mb-6">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="w-[34px] h-[34px] rounded-[8px] bg-[#E8F8EE] flex items-center justify-center mt-[1px]">
+                <LineChartOutlined className="text-[20px] text-[#16A34A]" />
+              </div>
+
+              <div>
+                <h1 className="text-[20px] leading-[28px] font-semibold text-[#1F2937] m-0">Growth Opportunities</h1>
+
+                <p className="text-[12px] text-[#667085] mb-0">
+                  Key opportunities and areas to focus on to grow your profits and improve performance.
+                </p>
+              </div>
+            </div>
+
+            {/* CUSTOMIZE BUTTON */}
+
+            {/* <Button
+              onClick={() => setOpenCustomize(true)}
+              className="!h-[34px] !px-3 !rounded-[7px] !border-[#D9DEE7] !text-[11px] flex items-center gap-2"
             >
-              <OverviewDataList />
-            </Suspense>
-          </Col>
-        </Row>
-        <Row justify="end">
-          <Button onClick={() => setOpenCustomize(true)}>
-            <span className="flex items-center gap-2">
               <SettingOutlined />
               Customize Cards
-            </span>
-          </Button>
-        </Row>
-        <Row gutter={[16, 16]} className="mt-[25px]">
-          {CARD_CONFIG.filter((card) => visibleCards.includes(card.key)).map((card) => (
-            <Col key={card.key} xxl={8} xl={8} md={12} xs={24}>
-              <div className={`${card.bg} rounded-xl p-4`}>
-                <h3 className={`text-sm font-semibold mb-3 ${card.titleColor}`}>{card.label}</h3>
+            </Button> */}
+          </div>
+        </div>
 
-                {card.rows.map((row, i) => (
-                  <div key={i} className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">{row[0]}</span>
-                    <span className="font-semibold text-gray-900">{row[1]}</span>
+        {/* ================= CARDS ================= */}
+
+        <div className="grid grid-cols-3 gap-5 2xl:grid-cols-3 xl:grid-cols-3 lg:grid-cols-2 md:grid-cols-1">
+          {CARD_CONFIG.filter((card) => visibleCards.includes(card.key)).map((card) => (
+            <div
+              key={card.key}
+              className={`group ${card.bg} bg-white border border-[#E5E7EB] rounded-[10px] overflow-hidden shadow-[0_1px_3px_rgba(16,24,40,0.04)] hover:shadow-[0_4px_14px_rgba(16,24,40,0.08)] transition-shadow duration-200`}
+            >
+              {/* ================= CARD CONTENT ================= */}
+
+              <div className="px-4 pt-5 pb-4 min-h-[145px]">
+                <div className="flex items-start gap-4">
+                  {/* ================= ICON ================= */}
+
+                  <div
+                    className={`w-[56px] h-[56px] shrink-0 rounded-[12px] ${card.iconBg} ${card.iconColor} flex items-center justify-center text-[25px]`}
+                  >
+                    {card.icon}
                   </div>
-                ))}
+
+                  {/* ================= RIGHT CONTENT ================= */}
+
+                  <div className="flex-1 min-w-0">
+                    {/* TITLE */}
+
+                    <h3 className="text-[16px] font-semibold text-[#1F2937] leading-[17px] mb-[2px]">{card.label}</h3>
+
+                    {/* DESCRIPTION */}
+
+                    <p className="text-[13px] leading-[15px] text-[#667085] mt-2">{card.description}</p>
+
+                    {/* VALUE */}
+
+                    <div className={`text-[24px] leading-[28px] font-semibold ${card.valueColor} mt-[11px]`}>
+                      {card.value}
+                    </div>
+                  </div>
+                </div>
               </div>
-            </Col>
+
+              {/* ================= CARD FOOTER ================= */}
+
+              <div className="border-t border-[#E5E7EB] px-5 h-[43px] flex items-center">
+                <button
+                  type="button"
+                  className="flex items-center gap-2 text-[12px] font-semibold text-[#149A73] hover:text-[#087A5A] hover:underline transition-colors"
+                >
+                  View Details
+                  <ArrowRightOutlined className="text-[10px]" />
+                </button>
+              </div>
+            </div>
           ))}
-        </Row>
+        </div>
       </main>
+
+      {/* ================= CUSTOMIZE MODAL ================= */}
+
       <Modal
         title="Customize Your Cards"
         open={openCustomize}
         onCancel={() => setOpenCustomize(false)}
         footer={null}
         width={720}
+        centered
       >
-        {/* Select All */}
+        {/* SELECT ALL */}
+
         <div className="mb-4">
           <Checkbox
             checked={visibleCards.length === CARD_CONFIG.length}
             indeterminate={visibleCards.length > 0 && visibleCards.length < CARD_CONFIG.length}
-            onChange={(e) => setVisibleCards(e.target.checked ? CARD_CONFIG.map((c) => c.key) : [])}
+            onChange={(e) => setVisibleCards(e.target.checked ? CARD_CONFIG.map((card) => card.key) : [])}
           >
             Select All
           </Checkbox>
         </div>
 
+        {/* CARD SELECTION */}
+
         <div className="grid grid-cols-2 gap-3">
           {CARD_CONFIG.map((card) => (
-            <div key={card.key} className="bg-gray-50 rounded-md px-3 py-2">
+            <div key={card.key} className="bg-gray-50 border border-gray-100 rounded-md px-3 py-2">
               <Checkbox
                 checked={visibleCards.includes(card.key)}
                 onChange={(e) => {
                   setVisibleCards((prev) =>
-                    e.target.checked ? [...prev, card.key] : prev.filter((k) => k !== card.key),
+                    e.target.checked ? [...prev, card.key] : prev.filter((key) => key !== card.key),
                   );
                 }}
               >

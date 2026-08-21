@@ -1,26 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Table, Button, Modal, Form, Input, Spin, Empty, message, Popconfirm, Checkbox, Tag, Descriptions } from 'antd';
-import { UilTrashAlt, UilLock, UilEye, UilEdit, UilSignin } from '@iconscout/react-unicons';
+import {
+  Table,
+  Button,
+  Modal,
+  Form,
+  Input,
+  Spin,
+  Empty,
+  message,
+  Popconfirm,
+  Checkbox,
+  Tag,
+  Descriptions,
+  Select,
+} from 'antd';
+import { UilTrashAlt, UilLock, UilEye, UilEdit, UilSearch, UilUserPlus } from '@iconscout/react-unicons';
 import { getSubUsers, addUser, deleteSubUser, updateSubUser } from '../../redux/Settings/actionCreator';
-import { subUserLogin } from '../../redux/authentication/actionCreator';
+// import { subUserLogin } from '../../redux/authentication/actionCreator';
 import { DataService } from '../../config/dataService/dataService';
-import { PageHeader } from '../../components/page-headers/page-headers';
+// import { PageHeader } from '../../components/page-headers/page-headers';
 
 // const { Option } = Select;
 
 export default function UserManagement() {
-  const PageRoutes = [
-    { path: 'index', breadcrumbName: 'Settings' },
-    { path: '', breadcrumbName: 'User Settings' },
-    { path: '', breadcrumbName: 'User Management' },
-  ];
+  // const PageRoutes = [
+  //   { path: 'index', breadcrumbName: 'Settings' },
+  //   { path: '', breadcrumbName: 'User Settings' },
+  //   { path: '', breadcrumbName: 'User Management' },
+  // ];
 
   const dispatch = useDispatch();
   const { subUsersData, subUsersLoading, adduserLoading } = useSelector((state) => state.settings);
 
   const [users, setUsers] = useState([]);
   const [open, setOpen] = useState(false);
+
+  const [searchText, setSearchText] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+
   const [form] = Form.useForm();
 
   // Permission Modal State
@@ -68,7 +87,7 @@ export default function UserManagement() {
         name: u.name,
         email: u.email,
         mobile: u.mobile_number,
-        status: 'Active',
+        status: u.status || 'Active',
         role: u.role || 'Staff',
         rawUser: u,
       }));
@@ -333,16 +352,16 @@ export default function UserManagement() {
   };
 
   // Login as Sub-User
-  const handleLoginAsSubUser = (record) => {
-    dispatch(
-      subUserLogin(record.id, () => {
-        message.success(`Logged in as sub-user ${record.name} successfully! Redirecting...`);
-        setTimeout(() => {
-          window.location.href = '/admin';
-        }, 800);
-      }),
-    );
-  };
+  // const handleLoginAsSubUser = (record) => {
+  //   dispatch(
+  //     subUserLogin(record.id, () => {
+  //       message.success(`Logged in as sub-user ${record.name} successfully! Redirecting...`);
+  //       setTimeout(() => {
+  //         window.location.href = '/admin';
+  //       }, 800);
+  //     }),
+  //   );
+  // };
 
   // Delete Sub-User via Redux actionCreator
   const handleDeleteUser = async (id) => {
@@ -425,7 +444,7 @@ export default function UserManagement() {
           />
 
           {/* Login as Sub-User Icon */}
-          <Popconfirm
+          {/* <Popconfirm
             title={`Are you sure you want to login as ${record.name}?`}
             onConfirm={() => handleLoginAsSubUser(record)}
             okText="Yes, Login"
@@ -437,7 +456,7 @@ export default function UserManagement() {
               title="Login as Sub-User"
               icon={<UilSignin className="w-4 h-4 text-emerald-600" />}
             />
-          </Popconfirm>
+          </Popconfirm> */}
 
           {/* Delete Icon */}
           <Popconfirm
@@ -452,6 +471,27 @@ export default function UserManagement() {
       ),
     },
   ];
+
+  const filteredUsers = users.filter((user) => {
+    const search = searchText.toLowerCase().trim();
+
+    const matchesSearch =
+      !search || user.name?.toLowerCase().includes(search) || user.email?.toLowerCase().includes(search);
+
+    const matchesRole = roleFilter === 'all' || user.role?.toLowerCase() === roleFilter.toLowerCase();
+
+    const matchesStatus = statusFilter === 'all' || user.status?.toLowerCase() === statusFilter.toLowerCase();
+
+    return matchesSearch && matchesRole && matchesStatus;
+  });
+
+  const totalUsers = users.length;
+
+  const activeUsers = users.filter((user) => user.status?.toLowerCase() === 'active').length;
+
+  const pendingUsers = users.filter((user) => user.status?.toLowerCase() === 'pending').length;
+
+  const ownerUsers = users.filter((user) => user.role?.toLowerCase() === 'owner').length;
 
   /* ================= PERMISSIONS TABLE COLUMNS ================= */
 
@@ -531,30 +571,190 @@ export default function UserManagement() {
 
   return (
     <>
-      <PageHeader
-        routes={PageRoutes}
-        title="User Management"
-        className="flex justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 bg-transparent"
-      />
+      <main className="min-h-[715px] flex-1 bg-[#f4f5f7] px-6 xl:px-[15px] pb-[20px]">
+        {/* ================= BREADCRUMB ================= */}
 
-      <main className="min-h-[715px] flex-1 px-8 xl:px-[15px] pb-[30px]">
-        <div className="bg-white dark:bg-white10 rounded-[10px] p-[20px]">
-          {/* HEADER ACTION */}
-          <div className="flex justify-end mb-4">
-            <Button type="primary" onClick={() => setOpen(true)}>
-              Add New User
-            </Button>
+        <div className="pt-5 mb-1">
+          <div className="flex items-center gap-1 text-[13px]">
+            <span className="text-[#666D92]">Settings</span>
+            <span className="text-gray-400">›</span>
+            <span className="text-[#666D92]">User Settings</span>
+            <span className="text-gray-400">›</span>
+            <span className="text-dark font-medium">User Management</span>
+          </div>
+        </div>
+
+        {/* ================= TITLE ================= */}
+
+        <div className="flex items-start justify-between gap-4 mb-2">
+          <div>
+            <h1 className="text-[25px] leading-[28px] font-semibold text-dark mb-1">User Management</h1>
+
+            <p className="text-[13px] text-[#666D92] max-w-[430px] leading-[18px]">
+              Control who can access Artisan Roots&apos; dashboard, and what each person can see or change.
+            </p>
           </div>
 
-          {/* TABLE */}
+          <Button
+            type="primary"
+            onClick={() => setOpen(true)}
+            className="!bg-primary !border-primary !rounded-[7px] !h-[30px] !px-2 text-[14px] flex items-center gap-2"
+          >
+            <UilUserPlus className="w-[15px] h-[15px]" />
+            Add new user
+          </Button>
+        </div>
+
+        {/* ================= STAT CARDS ================= */}
+
+        <div className="grid grid-cols-4 gap-3 mb-5 lg:grid-cols-2 md:grid-cols-1">
+          {/* TOTAL USERS */}
+          <div className="bg-white border border-[#dfe3e8] rounded-[9px] px-4 py-3 h-[61px]">
+            <div className="text-[19px] font-semibold text-dark leading-[20px]">{totalUsers}</div>
+
+            <div className="text-[13px] text-light mt-1">Total users</div>
+          </div>
+
+          {/* ACTIVE */}
+          <div className="bg-white border border-[#dfe3e8] rounded-[9px] px-4 py-3 h-[61px]">
+            <div className="text-[19px] font-semibold text-success leading-[20px]">{activeUsers}</div>
+
+            <div className="text-[13px] text-light mt-1">Active</div>
+          </div>
+
+          {/* PENDING */}
+          <div className="bg-white border border-[#dfe3e8] rounded-[9px] px-4 py-3 h-[61px]">
+            <div className="text-[19px] font-semibold text-warning leading-[20px]">{pendingUsers}</div>
+
+            <div className="text-[13px] text-light mt-1">Invite pending</div>
+          </div>
+
+          {/* OWNER */}
+          <div className="bg-white border border-[#dfe3e8] rounded-[9px] px-4 py-3 h-[61px]">
+            <div className="text-[19px] font-semibold text-dark leading-[20px]">{ownerUsers}</div>
+
+            <div className="text-[13px] text-light mt-1">Owner</div>
+          </div>
+        </div>
+
+        {/* ================= SEARCH + FILTER ================= */}
+
+        <div className="flex items-center gap-2 mb-3 md:flex-col md:items-stretch">
+          {/* SEARCH */}
+          <div className="relative flex-1">
+            <UilSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-[13px] h-[13px] text-[#8b95a5] z-10" />
+
+            <Input
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder="Search by name or email"
+              className="
+        !h-[34px]
+        !pl-9
+        !pr-3
+        !rounded-[7px]
+        !border-[#dfe3e8]
+        !bg-white
+        !text-[11px]
+        !text-[#404040]
+        placeholder:!text-[#7b8494]
+        hover:!border-[#cfd5dd]
+        focus:!border-[#cfd5dd]
+        focus:!shadow-none
+      "
+            />
+          </div>
+
+          {/* ROLE FILTER */}
+          <Select
+            value={roleFilter}
+            onChange={setRoleFilter}
+            className="
+      !w-[110px]
+      !h-[34px]
+      [&_.ant-select-selector]:!h-[30px]
+      [&_.ant-select-selector]:!rounded-[7px]
+      [&_.ant-select-selector]:!border-[#dfe3e8]
+      [&_.ant-select-selector]:!bg-white
+      [&_.ant-select-selector]:!shadow-none
+      [&_.ant-select-selection-item]:!text-[11px]
+      [&_.ant-select-selection-item]:!leading-[28px]
+      [&_.ant-select-selection-placeholder]:!text-[11px]
+      [&_.ant-select-selection-placeholder]:!leading-[28px]
+    "
+            options={[
+              {
+                value: 'all',
+                label: 'All roles',
+              },
+              {
+                value: 'owner',
+                label: 'Owner',
+              },
+              {
+                value: 'admin',
+                label: 'Admin',
+              },
+              {
+                value: 'staff',
+                label: 'Staff',
+              },
+            ]}
+          />
+
+          {/* STATUS FILTER */}
+          <Select
+            value={statusFilter}
+            onChange={setStatusFilter}
+            className="
+      !w-[120px]
+      !h-[34px]
+      [&_.ant-select-selector]:!h-[30px]
+      [&_.ant-select-selector]:!rounded-[7px]
+      [&_.ant-select-selector]:!border-[#dfe3e8]
+      [&_.ant-select-selector]:!bg-white
+      [&_.ant-select-selector]:!shadow-none
+      [&_.ant-select-selection-item]:!text-[11px]
+      [&_.ant-select-selection-item]:!leading-[28px]
+      [&_.ant-select-selection-placeholder]:!text-[11px]
+      [&_.ant-select-selection-placeholder]:!leading-[28px]
+    "
+            options={[
+              {
+                value: 'all',
+                label: 'All status',
+              },
+              {
+                value: 'active',
+                label: 'Active',
+              },
+              {
+                value: 'pending',
+                label: 'Pending',
+              },
+            ]}
+          />
+        </div>
+
+        {/* ================= EXISTING USER TABLE ================= */}
+
+        <div className="bg-white border border-[#dfe3e8] rounded-[9px] overflow-hidden">
           <Spin spinning={subUsersLoading}>
             <Table
               columns={columns}
-              dataSource={users}
+              dataSource={filteredUsers}
               pagination={false}
+              rowKey="id"
               locale={{
                 emptyText: <Empty description="No users found" className="py-10" />,
               }}
+              className="
+    [&_.ant-table-thead>tr>th]:!text-[12px]
+    [&_.ant-table-thead>tr>th]:!font-semibold
+    [&_.ant-table-tbody>tr>td]:!text-[12px]
+    [&_.ant-table-cell]:!px-2
+    [&_.ant-table-cell]:!py-[6px]
+  "
             />
           </Spin>
         </div>

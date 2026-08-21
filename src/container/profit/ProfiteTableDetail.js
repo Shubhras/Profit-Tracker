@@ -3,7 +3,6 @@ import { Table, Card, Modal, Checkbox, Tooltip, Dropdown, Button } from 'antd';
 import {
   RightOutlined,
   SearchOutlined,
-  FilterOutlined,
   EyeOutlined,
   SettingOutlined,
   CloseCircleOutlined,
@@ -47,7 +46,6 @@ export default function ProfitDetailsView() {
 
   const [previewImage, setPreviewImage] = React.useState('');
   const [previewOpen, setPreviewOpen] = React.useState(false);
-  const [showFilters, setShowFilters] = React.useState(false);
   const [visibleColumns, setVisibleColumns] = React.useState([]);
   const [search, setSearch] = React.useState('');
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
@@ -78,25 +76,6 @@ export default function ProfitDetailsView() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const [filters, setFilters] = React.useState({
-    channel: '',
-    sku: '',
-    productId: '',
-    parentId: '',
-    mkt: '',
-    ads: 'with',
-    gst: 'with',
-    estimate: 'with',
-    expenses: 'with',
-    accountCharges: 'with',
-  });
-  const getMetricFromFilters = () => {
-    return {
-      ads: filters.ads === 'with' ? 'withAds' : 'withoutAds',
-      gst: filters.gst === 'with' ? 'withGst' : 'withoutGst',
-      expense: filters.expenses === 'with' ? 'withExpense' : 'withoutExpense',
-    };
-  };
   const buildPayload = () => {
     return {
       filters: {
@@ -120,7 +99,6 @@ export default function ProfitDetailsView() {
         fromDate: dateRange?.fromDate || null,
         toDate: dateRange?.endDate || null,
       },
-      metric: getMetricFromFilters(),
       pagination: {
         pageNo: pagination.current - 1,
         pageSize: pagination.pageSize,
@@ -858,11 +836,6 @@ export default function ProfitDetailsView() {
   });
   const tableWidth = filteredColumns.reduce((total, col) => total + (col.width || 120), 0);
 
-  const handleApply = () => {
-    dispatch(getProfitDetails(buildPayload()));
-    setShowFilters(false);
-  };
-
   return (
     <>
       {/* <PageHeader
@@ -877,15 +850,6 @@ export default function ProfitDetailsView() {
         </div> */}
 
         <Card bordered={false}>
-          {/* <ProfitFilterBar
-            filters={filters}
-            setFilters={setFiltersss}
-            handleApply={handleApply}
-            handleClear={handleClear}
-            showFilters={showFilters}
-            setShowFilters={setShowFilters}
-          /> */}
-
           <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
             {/* Search */}
             <div className="relative w-[220px] lg:w-full md:w-full sm:w-full">
@@ -914,136 +878,6 @@ export default function ProfitDetailsView() {
 
             {/* Right Actions */}
             <div className="flex items-center gap-2 flex-wrap lg:w-full lg:justify-end md:w-full md:justify-between sm:w-full sm:justify-between">
-              {/* Filter Button */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowFilters(!showFilters)}
-                  // className="h-[35px] px-2 rounded-lg border border-[#e5e7eb] bg-white flex items-center gap-2 text-[12px] font-medium shadow-sm"
-                  className="h-[35px] px-3 rounded-lg border border-[#e5e7eb] bg-white flex items-center gap-2 text-[12px] font-medium shadow-sm whitespace-nowrap"
-                >
-                  <span className="flex items-center">
-                    <FilterOutlined style={{ fontSize: 14 }} />
-                  </span>
-                  <span>Filters</span>
-
-                  <span className="w-5 h-5 rounded-full bg-[#22c55e] text-white text-[11px] font-semibold inline-flex items-center justify-center leading-none shrink-0">
-                    {
-                      [
-                        filters.ads === 'with',
-                        filters.gst === 'with',
-                        filters.expenses === 'with',
-                        filters.accountCharges === 'with',
-                        filters.estimate === 'with',
-                      ].filter(Boolean).length
-                    }
-                  </span>
-                </button>
-
-                {/* Dropdown */}
-                {showFilters && (
-                  <div className="absolute right-0 top-[50px] w-[260px] bg-white border border-[#ebecef] rounded-2xl shadow-xl p-4 z-50">
-                    <div className="space-y-4">
-                      {/* Ads */}
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <Checkbox
-                          checked={filters.ads === 'with'}
-                          onChange={(e) =>
-                            setFilters({
-                              ...filters,
-                              ads: e.target.checked ? 'with' : 'without',
-                            })
-                          }
-                        />
-
-                        <span className="text-[13px] font-medium text-[#374151]">With Ads</span>
-                      </label>
-
-                      {/* GST */}
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <Checkbox
-                          checked={filters.gst === 'with'}
-                          onChange={(e) =>
-                            setFilters({
-                              ...filters,
-                              gst: e.target.checked ? 'with' : 'without',
-                            })
-                          }
-                        />
-
-                        <span className="text-[13px] font-medium text-[#374151]">With GST</span>
-                      </label>
-
-                      {/* Expense */}
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <Checkbox
-                          checked={filters.expenses === 'with'}
-                          onChange={(e) =>
-                            setFilters({
-                              ...filters,
-                              expenses: e.target.checked ? 'with' : 'without',
-                            })
-                          }
-                        />
-
-                        <span className="text-[13px] font-medium text-[#374151]">With Expense</span>
-                      </label>
-
-                      {/* Estimate */}
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <Checkbox
-                          checked={filters.estimate === 'with'}
-                          onChange={(e) =>
-                            setFilters({
-                              ...filters,
-                              estimate: e.target.checked ? 'with' : 'without',
-                            })
-                          }
-                        />
-
-                        <span className="text-[13px] font-medium text-[#374151]">With Estimate</span>
-                      </label>
-
-                      {/* Account Charges */}
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <Checkbox
-                          checked={filters.accountCharges === 'with'}
-                          onChange={(e) =>
-                            setFilters({
-                              ...filters,
-                              accountCharges: e.target.checked ? 'with' : 'without',
-                            })
-                          }
-                        />
-
-                        <span className="text-[13px] font-medium text-[#374151]">With Account Charges</span>
-                      </label>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="flex items-center gap-2 mt-5">
-                      <button
-                        type="button"
-                        onClick={() => setShowFilters(false)}
-                        className="flex-1 h-[38px] rounded-xl border border-[#e5e7eb] text-[13px] font-medium hover:bg-gray-50"
-                      >
-                        Cancel
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          handleApply();
-                          setShowFilters(false);
-                        }}
-                        className="flex-1 h-[38px] rounded-xl bg-[#1677ff] text-white text-[13px] font-medium"
-                      >
-                        Apply
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
               <Dropdown trigger={['click']} dropdownRender={() => manageColumnsDropdown} placement="bottomRight">
                 <Button
                   icon={<SettingOutlined style={{ fontSize: 14 }} />}

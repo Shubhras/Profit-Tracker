@@ -641,15 +641,6 @@ export default function ProfitDetailsView() {
       ellipsis: true,
       sorter: (a, b) => a.settleAmount - b.settleAmount,
     },
-    {
-      title: 'Product Cost',
-      dataIndex: 'stdcost',
-      align: 'center',
-      // width: 70,
-      width: getDynamicWidth('stdcost', 70),
-      ellipsis: true,
-      sorter: (a, b) => a.stdcost - b.stdcost,
-    },
 
     // {
     //   title: 'Gross Profit',
@@ -666,66 +657,7 @@ export default function ProfitDetailsView() {
     //     </button>
     //   ),
     // },
-    {
-      title: 'Profit',
-      dataIndex: 'profit',
-      align: 'center',
-      // width: 100,
-      width: getDynamicWidth('profit', 70),
-      ellipsis: true,
-      sorter: (a, b) => a.profit - b.profit,
-      // render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>₹{v}</span>,
-      render: (v, record) => (
-        <button
-          type="button"
-          onClick={() =>
-            setCalculationModal({
-              open: true,
-              type: 'profit',
-              record,
-            })
-          }
-          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none"
-        >
-          {v}
-        </button>
-      ),
-    },
-    {
-      title: 'Profit %',
-      dataIndex: 'profitPercent',
-      align: 'center',
-      // width: 70,
-      width: getDynamicWidth('profitPercent', 70),
-      ellipsis: true,
-      sorter: (a, b) => a.profitPercent - b.profitPercent,
-      // render: (v) => {
-      //   const value = Math.round(v || 0);
 
-      //   return (
-      //     <button type="button" className="cursor-pointer bg-transparent border-none">
-      //       <span
-      //         style={{
-      //           color: value < 0 ? 'red' : 'green',
-      //         }}
-      //       >
-      //         {value}%
-      //       </span>
-      //     </button>
-      //   );
-      // },
-      render: (v) => (
-        <button type="button" className="cursor-pointer bg-transparent border-none">
-          <span
-            style={{
-              color: Number(v) < 0 ? 'red' : 'green',
-            }}
-          >
-            {v ?? 0}%
-          </span>
-        </button>
-      ),
-    },
     {
       title: 'Actual MP Fees',
       dataIndex: 'actual_fees',
