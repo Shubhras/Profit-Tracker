@@ -212,6 +212,12 @@ class SubscriptionPlan(models.Model):
         blank=True,
         related_name="subscription_plans"
     )
+    
+    # NEW
+    initial_sync_duration = models.PositiveIntegerField(
+        default=30,
+        help_text="Number of historical days included in this subscription plan."
+    )
 
     status = models.CharField(
         max_length=10,

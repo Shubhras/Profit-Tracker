@@ -1,36 +1,36 @@
-from .models import *
-import secrets
-from django.shortcuts import redirect
-from rest_framework.permissions import IsAuthenticated, AllowAny
-import requests
-from .utils import *
-from django.conf import settings
-from django.core.cache import cache
 import gzip
 import json
-from django.db.models import Q
-from django.db.models import Sum
-from django.db.models import Avg
-from .serializers import *
-from rest_framework.views import APIView
-from user_auth.models import User 
-from amazon_auth.models import AmazonAccount , AmazonListingItem
-from rest_framework import status
-from django.db.models import (
-    Q,
-    Sum,
-    Count,
-    F,
-    Avg,
-    FloatField,
-    ExpressionWrapper,
-    OuterRef,
-    Subquery
-)
+import secrets
+
+import requests
+from django.conf import settings
+from django.core.cache import cache
 from django.core.paginator import Paginator
+from django.db.models import (
+    Avg,
+    Count,
+    ExpressionWrapper,
+    F,
+    FloatField,
+    OuterRef,
+    Q,
+    Subquery,
+    Sum,
+)
 from django.db.models.functions import Coalesce
+from django.shortcuts import redirect
+from rest_framework import status
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.views import APIView
 
+from amazon_ads.services.sync.initial_ads_sync import run_initial_ads_sync
+from amazon_auth.models import AmazonAccount, AmazonListingItem
+from subscription.models import UserSubscription
+from user_auth.models import User
 
+from .models import *
+from .serializers import *
+from .utils import *
 
 AMAZON_ADS_REDIRECT_URI="https://trackmyprofit.com/api/amazon/callback/advertise"
 
@@ -225,6 +225,42 @@ class AmazonAdsCallbackView(APIView):
                     }
                 )
             )
+
+            if created:
+                account.initial_sync_required = True
+                account.initial_sync_completed = False
+                account.is_primary = True
+
+                account.save(
+                    update_fields=[
+                        "initial_sync_required",
+                        "initial_sync_completed",
+                        "is_primary"
+                    ]
+                )
+                subscription = (
+                    UserSubscription.objects.filter(
+                        user=user,
+                        status="active",
+                        is_paid=True,
+                    )
+                    .select_related("plan")
+                    .first()
+                )
+
+                if not subscription or not subscription.plan:
+                    return Response(
+                        {"status": False, "message": "No active subscription found"},
+                        status=403,
+                    )
+
+                days = subscription.plan.initial_sync_duration
+
+                try:
+                    run_initial_ads_sync(account=account, days=days) # This should be used in celery
+
+                except Exception as e:
+                    print(f"INITIAL ADS SYNC FAILED: {account.profile_id} - {e}")
 
             saved_profiles.append({
                 "profile_id":
@@ -3009,18 +3045,12 @@ class CampaignNegativeTargetListView(APIView):
 # views.py
 
 from django.db.models import Q
-
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from rest_framework.response import Response
-
-from rest_framework.permissions import IsAuthenticated
-
 from amazon_ads.models import AdsNegativeKeyword
-
-from amazon_ads.serializers import (
-    AdsNegativeKeywordSerializer
-)
+from amazon_ads.serializers import AdsNegativeKeywordSerializer
 
 
 class NegativeKeywordListAPIView(APIView):

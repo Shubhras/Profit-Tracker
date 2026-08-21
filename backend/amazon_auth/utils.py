@@ -1,20 +1,23 @@
 import json
-from decimal import Decimal
-
-from openpyxl import Workbook
-from django.apps import apps
 import time
-import pandas as pd
-from .models import * 
+
 # amazon_auth/date_utils.py (or wherever shared helpers live)
 from datetime import datetime, timedelta
+from decimal import Decimal
 from zoneinfo import ZoneInfo
+
+import pandas as pd
+from django.apps import apps
+from openpyxl import Workbook
+
+from .models import *
 
 IST = ZoneInfo("Asia/Kolkata")
 UTC = ZoneInfo("UTC")
 
 #  IMPORTANT: change app name here
-from amazon_auth.models import Order  
+from amazon_auth.models import Order
+
 
 # ---------------------------
 # HELPER: RAW DATA PARSER
@@ -66,13 +69,28 @@ def extract_financials(raw_data):
 # def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
 def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_date_ist=None, to_date_ist=None):
     
-    from django.db.models import Sum, Max, Avg, Q, Subquery, OuterRef, Case, When, F, DecimalField
-    from amazon_auth.models import (
-        OrderItem, AmazonEstimatedFee, AmazonListingItem,
-        AmazonTransaction, AmazonTransactionRelatedIdentifier,
-        AmazonTransactionBreakdown,
+    from django.db.models import (
+        Avg,
+        Case,
+        DecimalField,
+        F,
+        Max,
+        OuterRef,
+        Q,
+        Subquery,
+        Sum,
+        When,
     )
+
     from amazon_ads.models import ProductAdMetric
+    from amazon_auth.models import (
+        AmazonEstimatedFee,
+        AmazonListingItem,
+        AmazonTransaction,
+        AmazonTransactionBreakdown,
+        AmazonTransactionRelatedIdentifier,
+        OrderItem,
+    )
     
     order_filter = Q(order__user=user)
     if start_date:
@@ -285,72 +303,158 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
         for k, v in fee_data.items():
             estimated_fee_map[p_asin][k] += v
 
-    # ---------------- TRANSACTION SHIPPING FEES — MFN POSTAGE FEE ONLY ----------------  
-    
-    matching_order_ids = [row['order__amazon_order_id'] for row in asin_orders]
+    # ---------------- TRANSACTION SHIPPING FEES ----------------
+
+    matching_order_ids = [row["order__amazon_order_id"] for row in asin_orders]
+
     tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
-        identifier_name="ORDER_ID",
-        identifier_value__in=matching_order_ids
+        identifier_name="ORDER_ID", identifier_value__in=matching_order_ids
     ).values("transaction_id", "identifier_value")
 
     tx_to_order = {
-        row["transaction_id"]: row["identifier_value"]
-        for row in tx_identifiers
+        row["transaction_id"]: row["identifier_value"] for row in tx_identifiers
     }
 
-    tx_shipping_map = {}
+    # ------------------------------------------------------------
+    # SHIPPING STATUS PRIORITY
+    # ------------------------------------------------------------
+    #
+    # Same financial event can appear as:
+    #
+    # DEFERRED
+    # DEFERRED_RELEASED
+    # RELEASED
+    #
+    # We use only the highest-priority lifecycle state.
+    #
+    # DEFERRED > DEFERRED_RELEASED > RELEASED
+    # ------------------------------------------------------------
+
+    STATUS_PRIORITY = {
+        "DEFERRED": 3,
+        "DEFERRED_RELEASED": 2,
+        "RELEASED": 1,
+    }
+
+    tx_shipping_candidates = {}
 
     # ------------------------------------------------------------
     # MFN SHIPPING
     # ------------------------------------------------------------
+
     mfn_postage_txns = AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
         transaction_type="ServiceFee",
-        transaction_status="DEFERRED",
+        transaction_status__in=[
+            "DEFERRED",
+            "DEFERRED_RELEASED",
+            "RELEASED",
+        ],
         description__icontains="MfnPostageFee",
-    ).values("id", "total_amount")
+    ).values(
+        "id",
+        "total_amount",
+        "transaction_status",
+    )
 
     for txn in mfn_postage_txns:
         order_id = tx_to_order.get(txn["id"])
+
         if not order_id:
             continue
 
-        tx_shipping_map[order_id] = (
-            tx_shipping_map.get(order_id, 0.0)
-            + float(txn["total_amount"] or 0)
-        )
+        status = txn["transaction_status"]
+
+        priority = STATUS_PRIORITY.get(status, 0)
+
+        amount = float(txn["total_amount"] or 0)
+
+        current = tx_shipping_candidates.get(order_id)
+
+        # New / higher-priority lifecycle
+        if current is None or priority > current["priority"]:
+            tx_shipping_candidates[order_id] = {
+                "priority": priority,
+                "amount": amount,
+                "status": status,
+            }
+
+        # Same lifecycle → accumulate
+        elif priority == current["priority"]:
+            current["amount"] += amount
 
     # ------------------------------------------------------------
     # AFN / FBA SHIPPING
-    # Shipment (DEFERRED)
-    # Shipping + FBAWeightBasedFee
+    #
+    # Shipment
+    #     ↓
+    # FBAWeightBasedFee
     # ------------------------------------------------------------
 
-    afn_tx_ids = AmazonTransaction.objects.filter(
+    afn_txns = AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
         transaction_type="Shipment",
-        transaction_status="DEFERRED",
-    ).values_list("id", flat=True)
+        transaction_status__in=[
+            "DEFERRED",
+            "DEFERRED_RELEASED",
+            "RELEASED",
+        ],
+    ).values(
+        "id",
+        "transaction_status",
+    )
+
+    afn_tx_status = {txn["id"]: txn["transaction_status"] for txn in afn_txns}
 
     afn_breakdowns = (
         AmazonTransactionBreakdown.objects.filter(
-            transaction_id__in=afn_tx_ids,
-            breakdown_type__in=["FBAWeightBasedFee"],
+            transaction_id__in=afn_tx_status.keys(),
+            breakdown_type="FBAWeightBasedFee",
         )
         .values("transaction_id")
         .annotate(total=Sum("amount"))
     )
 
     for bd in afn_breakdowns:
-        order_id = tx_to_order.get(bd["transaction_id"])
+        transaction_id = bd["transaction_id"]
+
+        order_id = tx_to_order.get(transaction_id)
+
         if not order_id:
             continue
 
-        tx_shipping_map[order_id] = (
-            tx_shipping_map.get(order_id, 0.0)
-            + float(bd["total"] or 0)
-        )
-    print("tx_shipping_map",tx_shipping_map)
+        status = afn_tx_status.get(transaction_id)
+
+        if not status:
+            continue
+
+        priority = STATUS_PRIORITY.get(status, 0)
+
+        amount = float(bd["total"] or 0)
+
+        current = tx_shipping_candidates.get(order_id)
+
+        # New / higher-priority lifecycle
+        if current is None or priority > current["priority"]:
+            tx_shipping_candidates[order_id] = {
+                "priority": priority,
+                "amount": amount,
+                "status": status,
+            }
+
+        # Same lifecycle → accumulate
+        elif priority == current["priority"]:
+            current["amount"] += amount
+
+    # ------------------------------------------------------------
+    # FINAL SHIPPING MAP
+    # ------------------------------------------------------------
+
+    tx_shipping_map = {
+        order_id: data["amount"] for order_id, data in tx_shipping_candidates.items()
+    }
+
+    print("tx_shipping_map", tx_shipping_map)
     
     
     # ============================================================
@@ -1531,6 +1635,7 @@ def format_currency(value):
 
 
 from decimal import Decimal
+
 
 def extract_fees_and_tcs_per_asin(raw_list, sku_asin_map=None):
     asin_map = {}

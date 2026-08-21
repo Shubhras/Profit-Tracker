@@ -29,6 +29,9 @@ class AmazonAccount(models.Model):
     refresh_token_encrypted = models.TextField()
 
     amazon_refresh_token = models.TextField(blank=True, null=True)
+
+    # Actual Amazon Store name
+    store_name = models.CharField(max_length=255, null=True, blank=True)
     
     # Regional Info
     region = models.CharField(max_length=10, default='NA') # NA, EU, FE
@@ -40,6 +43,8 @@ class AmazonAccount(models.Model):
     ads_cookie = models.TextField(null=True, blank=True)
     csrf_token = models.CharField(max_length=500, null=True, blank=True)
     csrf_data = models.TextField(null=True, blank=True) 
+    initial_sync_required = models.BooleanField(default=False)
+    initial_sync_completed = models.BooleanField(default=False)
 
     def set_refresh_token(self, token):
         self.refresh_token_encrypted = encrypt_token(token)
