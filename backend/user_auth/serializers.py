@@ -6,8 +6,8 @@ from subscription.models import UserSubscription
 import re
 import requests
 from django.conf import settings
-
-
+from myntra.models import MyntraConnection
+from amazon_auth.models import AmazonAccount
 # class UserRegisterSerializer(serializers.Serializer):
 #     name = serializers.CharField()
 #     business_name = serializers.CharField()
@@ -216,182 +216,7 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
         ]
         
 
-# class UserProfileSerializer(serializers.ModelSerializer):
-#     # ✅ Include profile fields inside user response
-#     name = serializers.CharField(source="profile.name", read_only=True)
-#     business_name = serializers.CharField(source="profile.business_name", read_only=True)
-#     mobile_number = serializers.CharField(source="profile.mobile_number", read_only=True)
-#     #gst_number = serializers.CharField(source="profile.gst_number", read_only=True)
 
-#     address = serializers.CharField(source="profile.address", read_only=True)
-#     city = serializers.CharField(source="profile.city", read_only=True)
-#     state = serializers.CharField(source="profile.state", read_only=True)
-#     pin_code = serializers.CharField(source="profile.pin_code", read_only=True)
-
-#     accepted_terms = serializers.BooleanField(source="profile.accepted_terms", read_only=True)
-
-#     class Meta:
-#         model = User
-#         fields = [
-#             "id",
-#             "username",
-#             "email",
-
-#             "name",
-#             "business_name",
-#             "mobile_number",
-#             #"gst_number",
-#             "address",
-#             "city",
-#             "state",
-#             "pin_code",
-#             "accepted_terms",
-#         ]
-        
-
-# class UserProfileSerializer(serializers.ModelSerializer):
-#     # Profile fields
-#     name = serializers.CharField(source="profile.name", read_only=True)
-#     business_name = serializers.CharField(source="profile.business_name", read_only=True)
-#     mobile_number = serializers.CharField(source="profile.mobile_number", read_only=True)
-
-#     address = serializers.CharField(source="profile.address", read_only=True)
-#     city = serializers.CharField(source="profile.city", read_only=True)
-#     state = serializers.CharField(source="profile.state", read_only=True)
-#     pin_code = serializers.CharField(source="profile.pin_code", read_only=True)
-
-#     accepted_terms = serializers.BooleanField(
-#         source="profile.accepted_terms",
-#         read_only=True
-#     )
-
-#     subscription = serializers.SerializerMethodField()
-
-#     class Meta:
-#         model = User
-#         fields = [
-#             "id",
-#             "username",
-#             "email",
-
-#             "name",
-#             "business_name",
-#             "mobile_number",
-
-#             "address",
-#             "city",
-#             "state",
-#             "pin_code",
-#             "accepted_terms",
-
-#             "subscription"
-#         ]
-
-#     def get_subscription(self, obj):
-
-#         subscription = (
-#             UserSubscription.objects
-#             .filter(
-#                 user=obj,
-#                 status="active",
-#                 is_paid=True
-#             )
-#             .select_related("plan")
-#             .order_by("-created_at")
-#             .first()
-#         )
-
-#         if not subscription:
-#             return None
-
-#         return {
-#             "subscription_id": subscription.id,
-#             "plan_id": subscription.plan.id if subscription.plan else None,
-#             "plan_name": subscription.plan.plan_name if subscription.plan else None,
-#             "billing_cycle": subscription.billing_cycle,
-#             "amount": subscription.amount,
-#             "status": subscription.status,
-#             "is_paid": subscription.is_paid,
-#             "start_date": subscription.start_date,
-#             "end_date": subscription.end_date,
-#         }
-
-
-# class UserProfileSerializer(serializers.ModelSerializer):
-#     # Profile fields
-#     name = serializers.CharField(source="profile.name", read_only=True)
-#     business_name = serializers.CharField(source="profile.business_name", read_only=True)
-#     mobile_number = serializers.CharField(source="profile.mobile_number", read_only=True)
-
-#     address = serializers.CharField(source="profile.address", read_only=True)
-#     city = serializers.CharField(source="profile.city", read_only=True)
-#     state = serializers.CharField(source="profile.state", read_only=True)
-#     pin_code = serializers.CharField(source="profile.pin_code", read_only=True)
-
-#     accepted_terms = serializers.BooleanField(
-#         source="profile.accepted_terms",
-#         read_only=True
-#     )
-
-#     subscription = serializers.SerializerMethodField()
-#     unread_notification_count = serializers.SerializerMethodField()
-    
-
-#     class Meta:
-#         model = User
-#         fields = [
-#             "id",
-#             "username",
-#             "email",
-
-#             "name",
-#             "business_name",
-#             "mobile_number",
-
-#             "address",
-#             "city",
-#             "state",
-#             "pin_code",
-#             "accepted_terms",
-
-#             "subscription",
-#             "unread_notification_count",
-#         ]
-
-#     def get_unread_notification_count(self, obj):
-#         return UserNotification.objects.filter(
-#             user=obj,
-#             is_read=False
-#         ).count()
-
-#     def get_subscription(self, obj):
-
-#         subscription = (
-#             UserSubscription.objects
-#             .filter(
-#                 user=obj,
-#                 status="active",
-#                 is_paid=True
-#             )
-#             .select_related("plan")
-#             .order_by("-created_at")
-#             .first()
-#         )
-
-#         if not subscription:
-#             return None
-
-#         return {
-#             "subscription_id": subscription.id,
-#             "plan_id": subscription.plan.id if subscription.plan else None,
-#             "plan_name": subscription.plan.plan_name if subscription.plan else None,
-#             "billing_cycle": subscription.billing_cycle,
-#             "amount": subscription.amount,
-#             "status": subscription.status,
-#             "is_paid": subscription.is_paid,
-#             "start_date": subscription.start_date,
-#             "end_date": subscription.end_date,
-#         }
           
 class UserProfileSerializer(serializers.ModelSerializer):
     # Profile fields
@@ -412,6 +237,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
     is_client_user = serializers.SerializerMethodField()
     is_sub_user = serializers.SerializerMethodField()
     role = serializers.SerializerMethodField()
+
+    connected_channels = serializers.SerializerMethodField() 
 
     subscription = serializers.SerializerMethodField()
     unread_notification_count = serializers.SerializerMethodField()
@@ -439,6 +266,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
             "subscription",
             "unread_notification_count",
+            "connected_channels",
         ]
 
     def get_is_sub_user(self, obj):
@@ -458,6 +286,19 @@ class UserProfileSerializer(serializers.ModelSerializer):
             user=obj,
             is_read=False
         ).count()
+
+    def get_connected_channels(self, obj):
+        subuser = SubUser.objects.filter(user=obj).first()
+        target_user = subuser.parent if subuser else obj
+        channels = []
+        if AmazonAccount.objects.filter(user=target_user).exists():
+            channels.append("Amazon-India")
+        if MyntraConnection.objects.filter(user=target_user).exists():
+            channels.append("Myntra")
+        # Fallback default if no seller account is linked yet
+        if not channels:
+            channels = ["Amazon-India"]
+        return channels    
 
     def get_subscription(self, obj):
         subuser = SubUser.objects.filter(user=obj).first()
