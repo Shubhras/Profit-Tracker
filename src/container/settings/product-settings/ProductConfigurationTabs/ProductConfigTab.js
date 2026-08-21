@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Table, Button, Tooltip, Modal, message, Input } from 'antd';
-import { UploadOutlined, ExportOutlined, SearchOutlined } from '@ant-design/icons';
+import { UploadOutlined, ExportOutlined } from '@ant-design/icons';
 // import { EditOutlined } from '@ant-design/icons';
 import { PageHeader } from '../../../../components/page-headers/page-headers';
 import amazon from '../../../../assets/icons/amazon.svg';
@@ -133,23 +133,18 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
         {/* Top Bar */}
         <div className="flex justify-between items-center mb-4 gap-4 flex-wrap">
           <div className="flex items-center gap-2 max-w-[360px] w-full">
-            <Input.Search
+            <Input
               placeholder="Search by ASIN / ID, SKU"
               allowClear
-              enterButton={
-                <Button type="primary" icon={<SearchOutlined />}>
-                  Search
-                </Button>
-              }
-              onSearch={onSearch}
-              className="w-full"
-            />
+              onChange={(e) => onSearch(e.target.value)}
+              className="w-full !h-[32px]"
+            />{' '}
           </div>
           <div className="flex gap-2">
             <Button
               type="primary"
               icon={<ExportOutlined className="!text-[16px] !font-bold" />}
-              className="!h-[35px] !rounded-l !border-[#dbe1e8] !text-white !font-semibold !flex !items-center !justify-center"
+              className="!h-[32px] !rounded-l !border-[#dbe1e8] !text-white !font-semibold !flex !items-center !justify-center"
               loading={exportLoading}
               onClick={() => dispatch(exportProductConfiguration(globalChannel, search))}
             >
@@ -158,7 +153,7 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
             <Button
               type="primary"
               icon={<UploadOutlined className="!text-[16px] !font-bold" />}
-              className="!h-[35px] !rounded-l !border-[#dbe1e8] !text-white !font-semibold !flex !items-center !justify-center"
+              className="!h-[32px] !rounded-l !border-[#dbe1e8] !text-white !font-semibold !flex !items-center !justify-center"
               onClick={() => setIsFieldModalOpen(true)}
             >
               Upload

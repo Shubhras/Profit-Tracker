@@ -103,6 +103,7 @@ INSTALLED_APPS = [
     'amazon_ads',
     'django_crontab',
     'myntra',
+    'blinkit',
 ]
 
 AUTH_PASSWORD_VALIDATORS = [

@@ -490,7 +490,7 @@ class MyntraConnectionView(APIView):
         
         if created:
             try:
-                MyntraInitialSyncService(connection).run()
+                MyntraInitialSyncService(connection).run()  # Need to add this into celery
         
             except Exception as exc:
                 return Response(

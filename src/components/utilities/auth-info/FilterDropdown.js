@@ -11,10 +11,12 @@ function FilterDropdown() {
   // const selected = globalChannel || [];
   const dispatch = useDispatch();
   const globalChannel = useSelector((state) => state.dashboard.channel);
+  const profile = useSelector((state) => state.auth.profile);
+  const connectedChannels = profile?.connected_channels || [];
   const [tempSelected, setTempSelected] = useState([]);
 
-  const options = ['Select All', 'Amazon-India', 'FlipKart', 'Jiomart', 'Meesho', 'Myntra', 'Snapdeal'];
-  const allOptions = options.filter((item) => item !== 'Select All');
+  const options = ['Select All', ...connectedChannels];
+  const allOptions = connectedChannels;
   // const handleCheckbox = (value) => {
   //   if (value === 'Select All') {
   //     if (selected.length === allOptions.length) {
@@ -52,17 +54,17 @@ function FilterDropdown() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
   useEffect(() => {
-    if (!globalChannel || globalChannel.length === 0) {
-      setTempSelected(allOptions);
-      dispatch(actions.setChannel(allOptions));
+    if (connectedChannels.length > 0 && (!globalChannel || globalChannel.length === 0)) {
+      setTempSelected(connectedChannels);
+      dispatch(actions.setChannel(connectedChannels));
     }
-  }, []);
+  }, [connectedChannels, globalChannel, dispatch]);
+
   useEffect(() => {
     if (globalChannel && globalChannel.length > 0) {
       setTempSelected(globalChannel);
     }
   }, [globalChannel]);
-
   return (
     <div className="relative" ref={dropdownRef}>
       <button

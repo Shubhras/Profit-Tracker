@@ -297,7 +297,7 @@ function UsersList() {
 
   return (
     <>
-      <div className="p-3 px-2 min-h-screen">
+      <div className="p-4 min-h-screen">
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
           {/* Header */}
           <div className="flex items-center justify-between px-3 py-3">
