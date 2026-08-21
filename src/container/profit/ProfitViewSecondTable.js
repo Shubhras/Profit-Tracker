@@ -3,7 +3,6 @@ import { Table, Card, Modal, Checkbox, Tooltip, Button, Dropdown } from 'antd';
 import {
   RightOutlined,
   EyeOutlined,
-  FilterOutlined,
   SearchOutlined,
   ArrowLeftOutlined,
   SettingOutlined,
@@ -47,7 +46,6 @@ export default function ProfitViewSecondTable() {
   });
   const [previewImage, setPreviewImage] = React.useState('');
   const [previewOpen, setPreviewOpen] = React.useState(false);
-  const [showFilters, setShowFilters] = React.useState(false);
   const [visibleColumns, setVisibleColumns] = React.useState([]);
   const [search, setSearch] = React.useState('');
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
@@ -74,18 +72,6 @@ export default function ProfitViewSecondTable() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const [filters, setFilters] = React.useState({
-    channel: '',
-    sku: '',
-    productId: '',
-    parentId: '',
-    mkt: '',
-    ads: 'with',
-    gst: 'with',
-    estimate: 'with',
-    expenses: 'with',
-    accountCharges: 'with',
-  });
   //   const getMetricFromFilters = () => {
   //     return {
   //       ads: filters.ads === 'with' ? 'withAds' : 'withoutAds',
@@ -703,14 +689,18 @@ export default function ProfitViewSecondTable() {
       ellipsis: true,
       sorter: (a, b) => a.settleAmount - b.settleAmount,
     },
-    {
-      title: 'Product Cost',
-      dataIndex: 'stdcost',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => a.stdcost - b.stdcost,
-    },
+    ...(isReconcile
+      ? []
+      : [
+          {
+            title: 'Product Cost',
+            dataIndex: 'stdcost',
+            align: 'center',
+            width: 70,
+            ellipsis: true,
+            sorter: (a, b) => (parseFloat(a.stdcost) || 0) - (parseFloat(b.stdcost) || 0),
+          },
+        ]),
 
     // {
     //   title: 'Gross Profit',
@@ -727,51 +717,60 @@ export default function ProfitViewSecondTable() {
     //     </button>
     //   ),
     // },
-    {
-      title: 'Profit',
-      dataIndex: 'profit',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => a.profit - b.profit,
-      // render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>₹{v}</span>,
-      render: (v, record) => (
-        <button
-          type="button"
-          onClick={() =>
-            setCalculationModal({
-              open: true,
-              type: 'profit',
-              record,
-            })
-          }
-          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none"
+    ...(isReconcile
+      ? []
+      : [
+          {
+            title: 'Profit',
+            dataIndex: 'profit',
+            align: 'center',
+            width: 70,
+            ellipsis: true,
+            sorter: (a, b) => a.profit - b.profit,
+            // render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>₹{v}</span>,
+            render: (v, record) => (
+              <button
+                type="button"
+                onClick={() =>
+                  setCalculationModal({
+                    open: true,
+                    type: 'profit',
+                    record,
+                  })
+                }
+                className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none"
 
-          // className={`font-medium underline cursor-pointer bg-transparent border-none ${
-          //   String(v).includes('-') ? 'text-red-500' : 'text-green-600'
-          // }`}
-        >
-          {v}
-        </button>
-      ),
-    },
-    {
-      title: 'Profit %',
-      dataIndex: 'profitPercent',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => a.profitPercent - b.profitPercent,
-      render: (value) => (
-        <span
-          className={`font-semibold ${
-            Number(value) > 0 ? 'text-green-600' : Number(value) < 0 ? 'text-red-600' : 'text-gray-600'
-          }`}
-        >
-          {Number(value || 0).toFixed(2)}%
-        </span>
-      ),
-    },
+                // className={`font-medium underline cursor-pointer bg-transparent border-none ${
+                //   String(v).includes('-') ? 'text-red-500' : 'text-green-600'
+                // }`}
+              >
+                {v}
+              </button>
+            ),
+          },
+        ]),
+
+    ...(isReconcile
+      ? []
+      : [
+          {
+            title: 'Profit %',
+            dataIndex: 'profitPercent',
+            align: 'center',
+            width: 70,
+            ellipsis: true,
+            sorter: (a, b) => a.profitPercent - b.profitPercent,
+            render: (value) => (
+              <span
+                className={`font-semibold ${
+                  Number(value) > 0 ? 'text-green-600' : Number(value) < 0 ? 'text-red-600' : 'text-gray-600'
+                }`}
+              >
+                {Number(value || 0).toFixed(2)}%
+              </span>
+            ),
+          },
+        ]),
 
     // {
     //   title: 'Settled amount',
@@ -934,11 +933,6 @@ export default function ProfitViewSecondTable() {
     return visibleColumns.includes(key);
   });
 
-  const handleApply = () => {
-    dispatch(getSecondDetials(buildPayload()));
-    setShowFilters(false);
-  };
-
   return (
     <>
       <main className="min-h-[600px] px-3 pb-[10px] py-3">
@@ -978,129 +972,6 @@ export default function ProfitViewSecondTable() {
               </div>
 
               <div className="flex flex-wrap items-center gap-2 lg:w-full lg:justify-end md:w-full md:justify-between sm:w-full sm:justify-between">
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowFilters(!showFilters)}
-                    className="h-[35px] px-3 rounded-lg border border-[#e5e7eb] bg-white flex items-center gap-2 text-[12px] font-medium shadow-sm transition-all whitespace-nowrap"
-                  >
-                    <span className="flex items-center">
-                      <FilterOutlined style={{ fontSize: 14 }} />
-                    </span>
-
-                    <span>Filters</span>
-
-                    {/* Selected Count */}
-                    <span className=" min-w-[16px] h-[16px] rounded-full bg-[#22c55e] text-white text-[12px] font-semiboldflex items-center justify-center   px-1   ">
-                      {
-                        [
-                          filters.ads === 'with',
-                          filters.gst === 'with',
-                          filters.expenses === 'with',
-                          filters.accountCharges === 'with',
-                          filters.estimate === 'with',
-                        ].filter(Boolean).length
-                      }
-                    </span>
-                  </button>
-
-                  {/* Dropdown */}
-                  {showFilters && (
-                    <div className="  absolute right-0 top-[50px]  w-[260px]  bg-white border border-[#ebecef] rounded-2x shadow-xl p-4 z-50  ">
-                      <div className="space-y-4">
-                        {/* With Ads */}
-                        <label className="flex items-center gap-3 cursor-pointer">
-                          <Checkbox
-                            checked={filters.ads === 'with'}
-                            onChange={(e) =>
-                              setFilters({
-                                ...filters,
-                                ads: e.target.checked ? 'with' : 'without',
-                              })
-                            }
-                          />
-                          <span className="text-[13px] font-medium text-[#374151]">With Ads</span>
-                        </label>
-
-                        {/* With GST */}
-                        <label className="flex items-center gap-3 cursor-pointer">
-                          <Checkbox
-                            checked={filters.gst === 'with'}
-                            onChange={(e) =>
-                              setFilters({
-                                ...filters,
-                                gst: e.target.checked ? 'with' : 'without',
-                              })
-                            }
-                          />
-                          <span className="text-[13px] font-medium text-[#374151]">With GST</span>
-                        </label>
-
-                        {/* With Expense */}
-                        <label className="flex items-center gap-3 cursor-pointer">
-                          <Checkbox
-                            checked={filters.expenses === 'with'}
-                            onChange={(e) =>
-                              setFilters({
-                                ...filters,
-                                expenses: e.target.checked ? 'with' : 'without',
-                              })
-                            }
-                          />
-                          <span className="text-[13px] font-medium text-[#374151]">With Expense</span>
-                        </label>
-
-                        {/* With Estimate */}
-                        <label className="flex items-center gap-3 cursor-pointer">
-                          <Checkbox
-                            checked={filters.estimate === 'with'}
-                            onChange={(e) =>
-                              setFilters({
-                                ...filters,
-                                estimate: e.target.checked ? 'with' : 'without',
-                              })
-                            }
-                          />
-                          <span className="text-[13px] font-medium text-[#374151]">With Estimate</span>
-                        </label>
-
-                        {/* With Account Charges */}
-                        <label className="flex items-center gap-3 cursor-pointer">
-                          <Checkbox
-                            checked={filters.accountCharges === 'with'}
-                            onChange={(e) =>
-                              setFilters({
-                                ...filters,
-                                accountCharges: e.target.checked ? 'with' : 'without',
-                              })
-                            }
-                          />
-                          <span className="text-[13px] font-medium text-[#374151]">With Account Charges</span>
-                        </label>
-                      </div>
-                      <div className="flex items-center gap-2 mt-5">
-                        <button
-                          type="button"
-                          onClick={() => setShowFilters(false)}
-                          className="  flex-1 h-[38px]  rounded-xl border border-[#e5e7eb] text-[13px] font-medium hover:bg-gray-50"
-                        >
-                          Cancel
-                        </button>
-
-                        <Button
-                          type="primary"
-                          onClick={() => {
-                            handleApply();
-                            setShowFilters(false);
-                          }}
-                          className=" flex-1 h-[38px] rounded-lg text-white text-[13px] font-medium"
-                        >
-                          Apply
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
                 <Dropdown trigger={['click']} dropdownRender={() => manageColumnsDropdown} placement="bottomRight">
                   <Button
                     icon={<SettingOutlined style={{ fontSize: 14 }} />}
@@ -1206,7 +1077,7 @@ export default function ProfitViewSecondTable() {
                       courier_return_count: 'courier_return_count',
                       customer_return_count: 'customer_return_count',
                       final_net_qty: 'total_final_net_qty',
-                      final_net_sales: 'final_net_sales',
+                      final_net_sales: 'total_final_net_sales',
                     };
 
                     const totalKey = keyMap[col.dataIndex] || col.dataIndex;

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Tabs, Spin, Modal, Button, message } from 'antd';
+import { Spin, Modal, Button, message } from 'antd';
 import ProductConfigTab from './ProductConfigurationTabs/ProductConfigTab';
 // import InventoryMastertab from './ProductConfigurationTabs/InventoryMastertab';
 // import PincodeTab from './ProductConfigurationTabs/PincodeTab';
@@ -12,7 +12,6 @@ import {
 import { PageHeader } from '../../../components/page-headers/page-headers';
 
 export default function ProductConfiguration() {
-  const [activeTab, setActiveTab] = useState('product');
   const [loading, setLoading] = useState(false);
   const [stdCostModal, setStdCostModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -24,35 +23,43 @@ export default function ProductConfiguration() {
   const { channel: globalChannel } = useSelector((state) => state.dashboard);
 
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
   });
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPagination((prev) => ({ ...prev, current: 1 }));
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
   const handleSearch = (value) => {
     setSearch(value || '');
-    setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
   useEffect(() => {
     setLoading(true);
-    if (activeTab === 'product') {
-      const payload = {
-        search,
-        channels: globalChannel,
-        marketplace_id: '',
-        product_type: '',
-      };
 
-      dispatch(getProductConfiguration(pagination.current, pagination.pageSize, payload));
-    }
+    const payload = {
+      search: debouncedSearch,
+      channels: globalChannel,
+      marketplace_id: '',
+      product_type: '',
+    };
+
+    dispatch(getProductConfiguration(pagination.current, pagination.pageSize, payload));
 
     const timer = setTimeout(() => {
       setLoading(false);
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [activeTab, dispatch, pagination, globalChannel, search]);
+  }, [dispatch, pagination, globalChannel, debouncedSearch]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -74,35 +81,12 @@ export default function ProductConfiguration() {
       window.removeEventListener('headerAction', handler);
     };
   }, []);
-  useEffect(() => {
-    window.dispatchEvent(new CustomEvent('tabChange', { detail: activeTab }));
-  }, [activeTab]);
 
   const PageRoutes = [
     { path: 'index', breadcrumbName: 'Settings' },
-    { path: '', breadcrumbName: 'Product Settings' },
     { path: '', breadcrumbName: 'Product Configuration' },
   ];
 
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'product':
-        return (
-          <ProductConfigTab
-            pagination={pagination}
-            setPagination={setPagination}
-            search={search}
-            onSearch={handleSearch}
-          />
-        );
-      // case 'inventory':
-      //   return <InventoryMastertab />;
-      // case 'pincode':
-      //   return <PincodeTab />;
-      default:
-        return null;
-    }
-  };
   const handleExport = () => {
     dispatch(exportProductConfiguration(globalChannel));
     setExportModal(false);
@@ -138,24 +122,19 @@ export default function ProductConfiguration() {
       <PageHeader
         routes={PageRoutes}
         title="Product Configuration"
-        className="flex justify-between items-center px-8 pt-2 pb-6 bg-transparent"
+        className="flex justify-between items-center px-5 pt-2 pb-3 bg-transparent"
       />
 
-      <main className="min-h-[715px] px-8 pb-[30px]">
-        <Tabs
-          activeKey={activeTab}
-          onChange={setActiveTab}
-          className="bg-white rounded-lg"
-          tabBarGutter={24}
-          items={[
-            { key: 'product', label: 'Product Configuration' },
-            // { key: 'inventory', label: 'Inventory Master Configuration' },
-            // { key: 'pincode', label: 'Pincode' },
-          ]}
-        />
-
+      <main className="min-h-[715px] px-5 pb-[30px]">
         <div className="mt-3 bg-white rounded-lg">
-          <Spin spinning={loading}>{renderTabContent()}</Spin>
+          <Spin spinning={loading}>
+            <ProductConfigTab
+              pagination={pagination}
+              setPagination={setPagination}
+              search={search}
+              onSearch={handleSearch}
+            />
+          </Spin>
         </div>
       </main>
 
