@@ -17,7 +17,8 @@ from amazon_ads.models import ProductAdMetric
 from amazon_auth.utils import normalize_sku, filter_ads_by_local_range, extract_fees_and_tcs_per_asin
 from amazon_auth.profit import (
     ProfitabilityDTOAdapter, _combine_totals, _call_view_for_all_results,
-    get_undecorated_view, format_currency, parse_currency_to_decimal
+    get_undecorated_view, format_currency, parse_currency_to_decimal,
+    enrich_dto_image_urls, enrich_row_image_urls
 )
 from amazon_auth.views import sku_profit_report_transactions_shipping
 
@@ -982,6 +983,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         "unsettled_not_paid": format_currency(total_unsettled_not_paid),
     }
 
+    results = enrich_row_image_urls(results, user=request.user)
     results.sort(key=lambda item: float(str(item.get("grosssales", 0)).replace('₹', '').replace(',', '') or 0), reverse=True)
 
     total_count = len(results)
@@ -1097,6 +1099,7 @@ def combined_payment_reconcile_overview(request):
     else:
         dto_rows = amazon_dtos + myntra_dtos
 
+    dto_rows = enrich_dto_image_urls(dto_rows, user)
     dto_rows.sort(key=lambda item: float(str(item.grosssales).replace('₹', '').replace(',', '') or 0), reverse=True)
 
     combined_totals = _combine_totals(amazon_totals, myntra_totals, type="style")
@@ -1201,7 +1204,7 @@ def combined_payment_reconcile_by_parent_asin(request):
         calculator = MyntraProfitCalculator(user=user, filters=myntra_filters)
         summary = SKUSummary(calculator)
 
-        style_id = parent_ids[0] if parent_ids else None
+        style_id = str(parent_ids[0]) if parent_ids else None
         if style_id:
             myntra_raw_rows = summary.execute(style_id=style_id)
         else:
@@ -1232,6 +1235,7 @@ def combined_payment_reconcile_by_parent_asin(request):
     else:
         dto_rows = amazon_dtos + myntra_dtos
 
+    dto_rows = enrich_dto_image_urls(dto_rows, user)
     dto_rows.sort(key=lambda item: float(str(item.grosssales).replace('₹', '').replace(',', '') or 0), reverse=True)
 
     combined_totals = _combine_totals(amazon_totals, myntra_totals, type="sku")
@@ -1489,6 +1493,7 @@ def combined_payment_reconcile_by_parentproductid(request):
     else:
         dto_rows = amazon_dtos + myntra_dtos
 
+    dto_rows = enrich_dto_image_urls(dto_rows, user)
     dto_rows.sort(key=lambda item: float(str(item.grosssales).replace('₹', '').replace(',', '') or 0), reverse=True)
 
     combined_totals = _combine_totals(amazon_totals, myntra_totals, type="order")

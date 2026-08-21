@@ -2,6 +2,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from decimal import Decimal
+from django.db.models import Q
 from django.http import JsonResponse
 from datetime import datetime, timedelta
 from calendar import monthrange
@@ -483,6 +484,272 @@ class ProfitabilityDTOAdapter:
         )
 
 
+def enrich_dto_image_urls(dto_rows, user=None):
+    if not dto_rows:
+        return dto_rows
+
+    missing_dtos = [
+        item for item in dto_rows
+        if not getattr(item, "image_url", None)
+        or str(getattr(item, "image_url", "")).strip() in ("", "None", "nan", "-")
+    ]
+    if not missing_dtos:
+        return dto_rows
+
+    skus = set()
+    asins = set()
+    parent_asins = set()
+
+    for item in missing_dtos:
+        sku = getattr(item, "child_sku", None) or getattr(item, "seller_sku", None)
+        asin = getattr(item, "asin", None)
+        parent_asin = getattr(item, "parent_asin", None)
+
+        if sku and str(sku).strip() not in ("", "-"):
+            skus.add(str(sku).strip())
+        if asin and str(asin).strip() not in ("", "-"):
+            asins.add(str(asin).strip())
+        if parent_asin and str(parent_asin).strip() not in ("", "-"):
+            parent_asins.add(str(parent_asin).strip())
+
+    image_map = {}
+
+    try:
+        from myntra.models import MyntraListing
+        my_qs = MyntraListing.objects.filter(image_url__isnull=False).exclude(image_url="")
+        if user:
+            my_qs = my_qs.filter(myntra_connection__user=user)
+        for ml in my_qs.values("style_id", "seller_sku_code", "image_url"):
+            img = ml["image_url"]
+            if img:
+                if ml.get("seller_sku_code"):
+                    image_map[str(ml["seller_sku_code"])] = img
+                if ml.get("style_id"):
+                    image_map[str(ml["style_id"])] = img
+    except Exception:
+        pass
+
+    try:
+        from amazon_auth.models import AmazonListingItem
+        ali_qs = AmazonListingItem.objects.filter(image_url__isnull=False).exclude(image_url="")
+        if user:
+            ali_qs = ali_qs.filter(user=user)
+        query = Q()
+        if skus:
+            query |= Q(sku__in=skus)
+        if asins:
+            query |= Q(asin__in=asins)
+        if query:
+            for ali in ali_qs.filter(query).values("sku", "asin", "image_url"):
+                img = ali["image_url"]
+                if img:
+                    if ali.get("sku"):
+                        image_map.setdefault(str(ali["sku"]), img)
+                    if ali.get("asin"):
+                        image_map.setdefault(str(ali["asin"]), img)
+    except Exception:
+        pass
+
+    try:
+        from amazon_auth.models import ProductMapping
+        pm_qs = ProductMapping.objects.filter(image_url__isnull=False).exclude(image_url="")
+        if user:
+            pm_qs = pm_qs.filter(account__user=user)
+        query = Q()
+        if skus:
+            query |= Q(seller_sku__in=skus)
+        if asins:
+            query |= Q(asin__in=asins)
+        if parent_asins:
+            query |= Q(parent_asin__in=parent_asins)
+        if query:
+            for pm in pm_qs.filter(query).values("seller_sku", "asin", "parent_asin", "image_url"):
+                img = pm["image_url"]
+                if img:
+                    if pm.get("seller_sku"):
+                        image_map.setdefault(str(pm["seller_sku"]), img)
+                    if pm.get("asin"):
+                        image_map.setdefault(str(pm["asin"]), img)
+                    if pm.get("parent_asin"):
+                        image_map.setdefault(str(pm["parent_asin"]), img)
+    except Exception:
+        pass
+
+    try:
+        from amazon_auth.models import OrderItem
+        oi_qs = OrderItem.objects.filter(image_url__isnull=False).exclude(image_url="")
+        if user:
+            oi_qs = oi_qs.filter(order__user=user)
+        query = Q()
+        if skus:
+            query |= Q(seller_sku__in=skus)
+        if asins:
+            query |= Q(asin__in=asins)
+        if parent_asins:
+            query |= Q(parent_asin__in=parent_asins)
+        if query:
+            for oi in oi_qs.filter(query).values("seller_sku", "asin", "parent_asin", "image_url"):
+                img = oi["image_url"]
+                if img:
+                    if oi.get("seller_sku"):
+                        image_map.setdefault(str(oi["seller_sku"]), img)
+                    if oi.get("asin"):
+                        image_map.setdefault(str(oi["asin"]), img)
+                    if oi.get("parent_asin"):
+                        image_map.setdefault(str(oi["parent_asin"]), img)
+    except Exception:
+        pass
+
+    for item in missing_dtos:
+        sku = str(getattr(item, "child_sku", "") or getattr(item, "seller_sku", "") or "")
+        asin = str(getattr(item, "asin", "") or "")
+        parent_asin = str(getattr(item, "parent_asin", "") or "")
+
+        img = (
+            image_map.get(sku) or
+            image_map.get(asin) or
+            image_map.get(parent_asin) or
+            ""
+        )
+        if img:
+            item.image_url = img
+
+    return dto_rows
+
+
+def enrich_row_image_urls(rows, user=None):
+    if not rows:
+        return rows
+
+    missing_rows = [
+        r for r in rows
+        if isinstance(r, dict) and (not r.get("image_url") and not r.get("image") or str(r.get("image_url") or r.get("image")).strip() in ("", "None", "nan", "-"))
+    ]
+    if not missing_rows:
+        return rows
+
+    skus = set()
+    asins = set()
+    parent_asins = set()
+
+    for r in missing_rows:
+        sku = r.get("child_sku") or r.get("seller_sku") or r.get("sku")
+        asin = r.get("asin")
+        parent_asin = r.get("parent_asin") or r.get("parentproductid")
+
+        if sku and str(sku).strip() not in ("", "-"):
+            skus.add(str(sku).strip())
+        if asin and str(asin).strip() not in ("", "-"):
+            asins.add(str(asin).strip())
+        if parent_asin and str(parent_asin).strip() not in ("", "-"):
+            parent_asins.add(str(parent_asin).strip())
+
+    image_map = {}
+
+    try:
+        from myntra.models import MyntraListing
+        my_qs = MyntraListing.objects.filter(image_url__isnull=False).exclude(image_url="")
+        if user:
+            my_qs = my_qs.filter(myntra_connection__user=user)
+        for ml in my_qs.values("style_id", "seller_sku_code", "image_url"):
+            img = ml["image_url"]
+            if img:
+                if ml.get("seller_sku_code"):
+                    image_map[str(ml["seller_sku_code"])] = img
+                if ml.get("style_id"):
+                    image_map[str(ml["style_id"])] = img
+    except Exception:
+        pass
+
+    try:
+        from amazon_auth.models import AmazonListingItem
+        ali_qs = AmazonListingItem.objects.filter(image_url__isnull=False).exclude(image_url="")
+        if user:
+            ali_qs = ali_qs.filter(user=user)
+        query = Q()
+        if skus:
+            query |= Q(sku__in=skus)
+        if asins:
+            query |= Q(asin__in=asins)
+        if query:
+            for ali in ali_qs.filter(query).values("sku", "asin", "image_url"):
+                img = ali["image_url"]
+                if img:
+                    if ali.get("sku"):
+                        image_map.setdefault(str(ali["sku"]), img)
+                    if ali.get("asin"):
+                        image_map.setdefault(str(ali["asin"]), img)
+    except Exception:
+        pass
+
+    try:
+        from amazon_auth.models import ProductMapping
+        pm_qs = ProductMapping.objects.filter(image_url__isnull=False).exclude(image_url="")
+        if user:
+            pm_qs = pm_qs.filter(account__user=user)
+        query = Q()
+        if skus:
+            query |= Q(seller_sku__in=skus)
+        if asins:
+            query |= Q(asin__in=asins)
+        if parent_asins:
+            query |= Q(parent_asin__in=parent_asins)
+        if query:
+            for pm in pm_qs.filter(query).values("seller_sku", "asin", "parent_asin", "image_url"):
+                img = pm["image_url"]
+                if img:
+                    if pm.get("seller_sku"):
+                        image_map.setdefault(str(pm["seller_sku"]), img)
+                    if pm.get("asin"):
+                        image_map.setdefault(str(pm["asin"]), img)
+                    if pm.get("parent_asin"):
+                        image_map.setdefault(str(pm["parent_asin"]), img)
+    except Exception:
+        pass
+
+    try:
+        from amazon_auth.models import OrderItem
+        oi_qs = OrderItem.objects.filter(image_url__isnull=False).exclude(image_url="")
+        if user:
+            oi_qs = oi_qs.filter(order__user=user)
+        query = Q()
+        if skus:
+            query |= Q(seller_sku__in=skus)
+        if asins:
+            query |= Q(asin__in=asins)
+        if parent_asins:
+            query |= Q(parent_asin__in=parent_asins)
+        if query:
+            for oi in oi_qs.filter(query).values("seller_sku", "asin", "parent_asin", "image_url"):
+                img = oi["image_url"]
+                if img:
+                    if oi.get("seller_sku"):
+                        image_map.setdefault(str(oi["seller_sku"]), img)
+                    if oi.get("asin"):
+                        image_map.setdefault(str(oi["asin"]), img)
+                    if oi.get("parent_asin"):
+                        image_map.setdefault(str(oi["parent_asin"]), img)
+    except Exception:
+        pass
+
+    for r in missing_rows:
+        sku = str(r.get("child_sku") or r.get("seller_sku") or r.get("sku") or "")
+        asin = str(r.get("asin") or "")
+        parent_asin = str(r.get("parent_asin") or r.get("parentproductid") or "")
+
+        img = (
+            image_map.get(sku) or
+            image_map.get(asin) or
+            image_map.get(parent_asin) or
+            ""
+        )
+        if img:
+            r["image_url"] = img
+            r["image"] = img
+
+    return rows
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def combined_profitability_details_transactions_shipping(request):
@@ -510,7 +777,10 @@ def combined_profitability_details_transactions_shipping(request):
     
     if has_amazon and not has_myntra:
         undecorated = get_undecorated_view(amazon_profitability_details_transactions_shipping)
-        return undecorated(request)
+        res = undecorated(request)
+        if res.status_code == 200 and isinstance(res.data, dict) and "response" in res.data:
+            res.data["response"] = enrich_row_image_urls(res.data["response"], user)
+        return res
         
     amazon_rows = []
     myntra_rows = []
@@ -572,6 +842,7 @@ def combined_profitability_details_transactions_shipping(request):
     else:
         dto_rows = amazon_dtos + myntra_dtos
 
+    dto_rows = enrich_dto_image_urls(dto_rows, user)
     dto_rows.sort(key=lambda item: item.grosssales, reverse=True)
     
     combined_totals = _combine_totals(amazon_totals, myntra_totals, type="style")
@@ -620,7 +891,10 @@ def combined_profitability_parent_transactions_shipping(request):
     
     if has_amazon and not has_myntra:
         undecorated = get_undecorated_view(amazon_profitability_parent_transactions_shipping)
-        return undecorated(request)
+        res = undecorated(request)
+        if res.status_code == 200 and isinstance(res.data, dict) and "response" in res.data:
+            res.data["response"] = enrich_row_image_urls(res.data["response"], user)
+        return res
         
     amazon_rows = []
     myntra_rows = []
@@ -656,7 +930,7 @@ def combined_profitability_parent_transactions_shipping(request):
         calculator = MyntraProfitCalculator(user=user, filters=myntra_filters)
         summary = SKUSummary(calculator)
         
-        style_id = parent_ids[0] if parent_ids else None
+        style_id = str(parent_ids[0]) if parent_ids else None
         if style_id:
             myntra_raw_rows = summary.execute(style_id=style_id)
         else:
@@ -687,6 +961,7 @@ def combined_profitability_parent_transactions_shipping(request):
     else:
         dto_rows = amazon_dtos + myntra_dtos
 
+    dto_rows = enrich_dto_image_urls(dto_rows, user)
     dto_rows.sort(key=lambda item: item.grosssales, reverse=True)
     
     combined_totals = _combine_totals(amazon_totals, myntra_totals, type="sku")
@@ -736,7 +1011,10 @@ def combined_sku_profit_report_transactions_shipping(request):
     
     if has_amazon and not has_myntra:
         undecorated = get_undecorated_view(sku_profit_report_transactions_shipping)
-        return undecorated(request)
+        res = undecorated(request)
+        if res.status_code == 200 and isinstance(res.data, dict) and "response" in res.data:
+            res.data["response"] = enrich_row_image_urls(res.data["response"], user)
+        return res
         
     amazon_rows = []
     myntra_rows = []
@@ -802,6 +1080,7 @@ def combined_sku_profit_report_transactions_shipping(request):
     else:
         dto_rows = amazon_dtos + myntra_dtos
 
+    dto_rows = enrich_dto_image_urls(dto_rows, user)
     dto_rows.sort(key=lambda item: item.grosssales, reverse=True)
     
     combined_totals = _combine_totals(amazon_totals, myntra_totals, type="order")
