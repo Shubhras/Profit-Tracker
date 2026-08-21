@@ -151,11 +151,16 @@ class OrderSummary:
 
             gross_sales = self.calculator.calculate_gross_sales([order]) or Decimal(0)
 
-            promo_discount = self.calculator.calculate_promo_discount(
-                [order]
-            ) or Decimal(0)
+            if is_return:
+                promo_discount = Decimal(0)
+            else:
+                promo_discount = self.calculator.calculate_promo_discount(
+                    [order]
+                ) or Decimal(0)
 
-            # Current Profit business definition:
+            # ==========================================
+            # NET SALES
+            # ==========================================
             #
             # Successful order -> Gross Sales
             # Returned order   -> 0
@@ -247,7 +252,7 @@ class OrderSummary:
             ) or Decimal(0)
 
             # ==========================================
-            # Claims
+            # CLAIMS
             # ==========================================
 
             claim_amount = self.calculator.calculate_claims(order_payments) or Decimal(

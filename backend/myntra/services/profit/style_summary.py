@@ -126,12 +126,11 @@ class StyleSummary:
 
             net_sales = Decimal(0)
 
-            promo_discount = self.calculator.calculate_promo_discount(
-                style_orders
-            ) or Decimal(0)
+            promo_discount = Decimal(0)
 
             # ==========================================
-            # ORDER RETURN / NET SALES AGGREGATION
+            # ORDER RETURN / NET SALES / PROMO
+            # AGGREGATION
             # ==========================================
 
             for order in style_orders:
@@ -145,7 +144,7 @@ class StyleSummary:
                 return_qty += order_return_qty
 
                 # --------------------------------------
-                # ORDER NET SALES
+                # ORDER SALES
                 # --------------------------------------
 
                 order_gross_sales = self.calculator.calculate_gross_sales(
@@ -158,6 +157,10 @@ class StyleSummary:
                 # Customer Return / RTO contributes 0.
                 if order_return_qty == 0:
                     net_sales += order_gross_sales
+
+                    promo_discount += self.calculator.calculate_promo_discount(
+                        [order]
+                    ) or Decimal(0)
 
                 # --------------------------------------
                 # RETURN CLASSIFICATION
@@ -194,7 +197,6 @@ class StyleSummary:
                 return_percentage = (
                     Decimal(str(return_qty)) / Decimal(str(gross_qty)) * Decimal(100)
                 )
-
             else:
                 return_percentage = Decimal(0)
 
@@ -288,7 +290,7 @@ class StyleSummary:
             ) or Decimal(0)
 
             # ==========================================
-            # Claims
+            # CLAIMS
             # ==========================================
 
             claim_amount = self.calculator.calculate_claims(style_payments) or Decimal(
@@ -391,9 +393,16 @@ class StyleSummary:
                     order_gross_sales if order_return_qty == 0 else Decimal(0)
                 )
 
-                order_promo_discount = self.calculator.calculate_promo_discount(
-                    [order]
-                ) or Decimal(0)
+                # --------------------------------------
+                # ORDER PROMOTION DISCOUNT
+                # --------------------------------------
+
+                if order_return_qty > 0:
+                    order_promo_discount = Decimal(0)
+                else:
+                    order_promo_discount = self.calculator.calculate_promo_discount(
+                        [order]
+                    ) or Decimal(0)
 
                 # --------------------------------------
                 # ORDER MARKETPLACE FEES
@@ -550,8 +559,8 @@ class StyleSummary:
                     "mp_fees": mp_fees,
                     "commission": commission,
                     "fixed_fee": fixed_fee,
-                    "pick_and_pack_fee": (pick_and_pack_fee),
-                    "payment_gateway_fee": (payment_gateway_fee),
+                    "pick_and_pack_fee": pick_and_pack_fee,
+                    "payment_gateway_fee": payment_gateway_fee,
                     # ----------------------------------
                     # SHIPPING
                     # ----------------------------------
@@ -567,8 +576,8 @@ class StyleSummary:
                     "tcs": tcs,
                     "tds": tds,
                     "taxable_value": taxable_value,
-                    "gst_to_pay_amount": (gst_to_pay_amount),
-                    "gst_to_pay_perc": (gst_to_pay_perc),
+                    "gst_to_pay_amount": gst_to_pay_amount,
+                    "gst_to_pay_perc": gst_to_pay_perc,
                     # ----------------------------------
                     # ADS
                     # ----------------------------------
@@ -580,7 +589,7 @@ class StyleSummary:
                     # ----------------------------------
                     # EXPECTED SETTLEMENT
                     # ----------------------------------
-                    "expected_settlement": (expected_settlement),
+                    "expected_settlement": expected_settlement,
                     # ----------------------------------
                     # PRODUCT COST
                     # ----------------------------------

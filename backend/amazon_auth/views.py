@@ -11,6 +11,9 @@ from django.db.models.functions import TruncDate, TruncMonth
 from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
+
+from amazon_auth.services.initial_amazon_sync import run_initial_amazon_sync
+from subscription.models import UserSubscription
 from .spapi_manager import SPAPIManager
 from .models import *
 from user_auth.models import get_effective_user
@@ -162,6 +165,33 @@ def amazon_callback(request):
     account.set_refresh_token(refresh_token)
     account.amazon_refresh_token = refresh_token
     account.save()
+
+    if created:
+        subscription = (
+            UserSubscription.objects.filter(
+                user=user,
+                status="active",
+                is_paid=True,
+            )
+            .select_related("plan")
+            .first()
+        )
+
+        if not subscription or not subscription.plan:
+            return JsonResponse(
+                {"status": False, "message": "No active subscription found"}, status=403
+            )
+
+        days = subscription.plan.initial_sync_duration
+
+        try:
+            run_initial_amazon_sync(  # This needs to be added in celery
+                account=account,
+                days=days,
+            )
+
+        except Exception as e:
+            print(f"INITIAL AMAZON SYNC FAILED: {account.seller_central_id} - {e}")
 
     return JsonResponse({
         "status": "success",
@@ -6062,58 +6092,161 @@ def amazon_profitability_parent_transactions_shipping(request):
         for row in tx_identifiers
     }
 
-    tx_shipping_map = {}
+    # ============================================================
+    # SHIPPING STATUS PRIORITY
+    #
+    # Amazon can have the same financial event in multiple states:
+    #
+    # DEFERRED
+    # DEFERRED_RELEASED
+    # RELEASED
+    #
+    # We must not add DEFERRED + DEFERRED_RELEASED + RELEASED together.
+    #
+    # DEFERRED is preferred because it represents the
+    # deferred transaction
+    # ============================================================
 
-    # ------------------------------------------------------------
+    STATUS_PRIORITY = {
+        "DEFERRED": 3,
+        "DEFERRED_RELEASED": 2,
+        "RELEASED": 1,
+    }
+
+    # ============================================================
     # MFN SHIPPING
     # ------------------------------------------------------------
     mfn_postage_txns = AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
         transaction_type="ServiceFee",
-        transaction_status="DEFERRED",
+        transaction_status__in=[
+            "DEFERRED",
+            "DEFERRED_RELEASED",
+            "RELEASED",
+        ],
         description__icontains="MfnPostageFee",
-    ).values("id", "total_amount")
+    ).values(
+        "id",
+        "total_amount",
+        "transaction_status",
+    )
+
+    # First group MFN amounts by:
+    # order -> status
+
+    mfn_by_order_status = {}
 
     for txn in mfn_postage_txns:
         order_id = tx_to_order.get(txn["id"])
         if not order_id:
             continue
 
-        tx_shipping_map[order_id] = (
-            tx_shipping_map.get(order_id, Decimal("0"))
-            + Decimal(str(txn["total_amount"] or 0))
+        status = txn["transaction_status"]
+
+        amount = Decimal(str(txn["total_amount"] or 0))
+
+        key = (order_id, status)
+
+        mfn_by_order_status[key] = mfn_by_order_status.get(key, Decimal("0")) + amount
+
+    # Now select only the highest-priority status per order
+    
+    tx_shipping_map = {}
+    
+    for order_id in matching_order_ids:
+    
+        status_amounts = {
+            status: amount
+            for (oid, status), amount in mfn_by_order_status.items()
+            if oid == order_id
+        }
+    
+        if not status_amounts:
+            continue
+    
+        best_status = max(
+            status_amounts,
+            key=lambda status: STATUS_PRIORITY.get(status, 0)
         )
+    
+        tx_shipping_map[order_id] = status_amounts[best_status]
 
-    # ------------------------------------------------------------
+    # ============================================================
     # AFN / FBA SHIPPING
-    # Shipment (DEFERRED)
-    # Shipping + FBAWeightBasedFee
-    # ------------------------------------------------------------
+    #
+    # Shipment
+    #     ↓
+    # FBAWeightBasedFee
+    # ============================================================
 
-    afn_tx_ids = AmazonTransaction.objects.filter(
+    afn_txns = AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
         transaction_type="Shipment",
-        transaction_status="DEFERRED",
-    ).values_list("id", flat=True)
+        transaction_status__in=[
+            "DEFERRED",
+            "DEFERRED_RELEASED",
+            "RELEASED",
+        ],
+    ).values(
+        "id",
+        "transaction_status",
+    )
+
+    afn_tx_status = {txn["id"]: txn["transaction_status"] for txn in afn_txns}
 
     afn_breakdowns = (
         AmazonTransactionBreakdown.objects.filter(
-            transaction_id__in=afn_tx_ids,
-            breakdown_type__in=["FBAWeightBasedFee"],
+            transaction_id__in=afn_tx_status.keys(),
+            breakdown_type="FBAWeightBasedFee",
         )
         .values("transaction_id")
         .annotate(total=Sum("amount"))
     )
 
+    # Group FBA shipping by:
+    # order -> status
+
+    afn_by_order_status = {}
+
     for bd in afn_breakdowns:
-        order_id = tx_to_order.get(bd["transaction_id"])
+        transaction_id = bd["transaction_id"]
+
+        order_id = tx_to_order.get(transaction_id)
+
         if not order_id:
             continue
 
-        tx_shipping_map[order_id] = (
-            tx_shipping_map.get(order_id, Decimal("0"))
-            + Decimal(str(bd["total"] or 0))
+        status = afn_tx_status.get(transaction_id)
+
+        if not status:
+            continue
+
+        amount = Decimal(str(bd["total"] or 0))
+
+        key = (order_id, status)
+
+        afn_by_order_status[key] = afn_by_order_status.get(key, Decimal("0")) + amount
+
+    # Select highest-priority status per order
+    
+    for order_id in matching_order_ids:
+    
+        status_amounts = {
+            status: amount
+            for (oid, status), amount in afn_by_order_status.items()
+            if oid == order_id
+        }
+    
+        if not status_amounts:
+            continue
+    
+        best_status = max(
+            status_amounts,
+            key=lambda status: STATUS_PRIORITY.get(status, 0)
         )
+    
+        # FBA shipping takes precedence for FBA orders
+        tx_shipping_map[order_id] = status_amounts[best_status]
         
     
     # ============================================================
@@ -8092,58 +8225,108 @@ def sku_profit_report_transactions_shipping(request):
         for row in tx_identifiers
     }
 
-    tx_shipping_map = {}
+    tx_shipping_candidates = {}
 
-    # ------------------------------------------------------------
+    STATUS_PRIORITY = {
+        "DEFERRED": 3,
+        "DEFERRED_RELEASED": 2,
+        "RELEASED": 1,
+    }
+
+    # ============================================================
     # MFN SHIPPING
-    # ------------------------------------------------------------
+    # ============================================================
+
     mfn_postage_txns = AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
         transaction_type="ServiceFee",
-        transaction_status="DEFERRED",
+        transaction_status__in=[
+            "DEFERRED",
+            "DEFERRED_RELEASED",
+            "RELEASED",
+        ],
         description__icontains="MfnPostageFee",
-    ).values("id", "total_amount")
+    ).values(
+        "id",
+        "total_amount",
+        "transaction_status",
+    )
 
     for txn in mfn_postage_txns:
         order_id = tx_to_order.get(txn["id"])
+
         if not order_id:
             continue
 
-        tx_shipping_map[order_id] = (
-            tx_shipping_map.get(order_id, 0.0)
-            + float(txn["total_amount"] or 0)
-        )
+        status = txn["transaction_status"]
 
-    # ------------------------------------------------------------
+        priority = STATUS_PRIORITY.get(status, 0)
+
+        current = tx_shipping_candidates.get(order_id)
+
+        if current is None or priority > current["priority"]:
+            tx_shipping_candidates[order_id] = {
+                "priority": priority,
+                "amount": float(txn["total_amount"] or 0),
+                "status": status,
+            }
+
+    # ============================================================
     # AFN / FBA SHIPPING
-    # Shipment (DEFERRED)
-    # Shipping + FBAWeightBasedFee
-    # ------------------------------------------------------------
+    # ============================================================
 
-    afn_tx_ids = AmazonTransaction.objects.filter(
+    afn_txns = AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
         transaction_type="Shipment",
-        transaction_status="DEFERRED",
-    ).values_list("id", flat=True)
+        transaction_status__in=[
+            "DEFERRED",
+            "DEFERRED_RELEASED",
+            "RELEASED",
+        ],
+    ).values(
+        "id",
+        "transaction_status",
+    )
+
+    afn_tx_status = {txn["id"]: txn["transaction_status"] for txn in afn_txns}
 
     afn_breakdowns = (
         AmazonTransactionBreakdown.objects.filter(
-            transaction_id__in=afn_tx_ids,
-            breakdown_type__in=["FBAWeightBasedFee"],
+            transaction_id__in=afn_tx_status.keys(),
+            breakdown_type="FBAWeightBasedFee",
         )
         .values("transaction_id")
         .annotate(total=Sum("amount"))
     )
 
     for bd in afn_breakdowns:
-        order_id = tx_to_order.get(bd["transaction_id"])
+        transaction_id = bd["transaction_id"]
+
+        order_id = tx_to_order.get(transaction_id)
+
         if not order_id:
             continue
 
-        tx_shipping_map[order_id] = (
-            tx_shipping_map.get(order_id, 0.0)
-            + float(bd["total"] or 0)
-        )
+        status = afn_tx_status.get(transaction_id)
+
+        priority = STATUS_PRIORITY.get(status, 0)
+
+        current = tx_shipping_candidates.get(order_id)
+
+        if current is None or priority > current["priority"]:
+            tx_shipping_candidates[order_id] = {
+                "priority": priority,
+                "amount": float(bd["total"] or 0),
+                "status": status,
+            }
+
+    # ============================================================
+    # FINAL SHIPPING MAP
+    # ============================================================
+
+    tx_shipping_map = {
+        order_id: data["amount"] for order_id, data in tx_shipping_candidates.items()
+    }
 
     # print(tx_shipping_map)
    
@@ -8782,6 +8965,7 @@ def sku_profit_report_transactions_shipping(request):
         total_tcs += round(tcs, 2)
         total_cost += cost
         total_new_charge += new_charge
+        print("estimated_fees", estimated_fees)
         total_estimatefees += estimated_fees
         total_mp_gst += round(mp_gst, 2)
         total_taxable_value += round(taxable_value, 2)
@@ -9312,6 +9496,30 @@ def amazon_profitability_details_transactions_shipping(request):
         for row in tx_identifiers
     }
 
+    # ============================================================
+    # SHIPPING STATUS PRIORITY
+    #
+    # Prefer the released version of the deferred transaction.
+    #
+    # DEFERRED > DEFERRED_RELEASED > RELEASED
+    #
+    # IMPORTANT:
+    # We select ONE lifecycle state per order so that:
+    #
+    # DEFERRED_RELEASED + RELEASED
+    #
+    # does not get counted twice.
+    # ============================================================
+
+    STATUS_PRIORITY = {
+        "DEFERRED": 3,
+        "DEFERRED_RELEASED": 2,
+        "RELEASED": 1,
+    }
+
+    def get_best_shipping_status(statuses):
+        return max(statuses, key=lambda status: STATUS_PRIORITY.get(status, 0))
+
     tx_shipping_map = {}
 
     # ------------------------------------------------------------
@@ -9320,51 +9528,102 @@ def amazon_profitability_details_transactions_shipping(request):
     mfn_postage_txns = AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
         transaction_type="ServiceFee",
-        transaction_status="DEFERRED",
+        transaction_status__in=[
+            "DEFERRED",
+            "DEFERRED_RELEASED",
+            "RELEASED",
+        ],
         description__icontains="MfnPostageFee",
-    ).values("id", "total_amount")
+    ).values(
+        "id",
+        "total_amount",
+        "transaction_status",
+    )
+
+    # order_id -> status -> amount
+    mfn_by_order_status = {}
 
     for txn in mfn_postage_txns:
         order_id = tx_to_order.get(txn["id"])
         if not order_id:
             continue
 
-        tx_shipping_map[order_id] = (
-            tx_shipping_map.get(order_id, 0.0)
-            + float(txn["total_amount"] or 0)
+        status = txn["transaction_status"]
+
+        amount = float(txn["total_amount"] or 0)
+
+        mfn_by_order_status.setdefault(order_id, {})
+
+        mfn_by_order_status[order_id][status] = (
+            mfn_by_order_status[order_id].get(status, 0.0) + amount
         )
 
-    # ------------------------------------------------------------
+    for order_id, status_amounts in mfn_by_order_status.items():
+        best_status = get_best_shipping_status(status_amounts.keys())
+
+        tx_shipping_map[order_id] = status_amounts[best_status]
+
+    # ============================================================
     # AFN / FBA SHIPPING
-    # Shipment (DEFERRED)
-    # Shipping + FBAWeightBasedFee
-    # ------------------------------------------------------------
+    #
+    # Shipment
+    #    ->
+    # FBAWeightBasedFee
+    #
+    # Again, select only the best transaction lifecycle status.
+    # ============================================================
 
     afn_tx_ids = AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
         transaction_type="Shipment",
-        transaction_status="DEFERRED",
-    ).values_list("id", flat=True)
+        transaction_status__in=[
+            "DEFERRED",
+            "DEFERRED_RELEASED",
+            "RELEASED",
+        ],
+    ).values("id", "transaction_status")
+
+    afn_status_map = {txn["id"]: txn["transaction_status"] for txn in afn_tx_ids}
 
     afn_breakdowns = (
         AmazonTransactionBreakdown.objects.filter(
-            transaction_id__in=afn_tx_ids,
-            breakdown_type__in=["FBAWeightBasedFee"],
+            transaction_id__in=afn_status_map.keys(),
+            breakdown_type="FBAWeightBasedFee",
         )
         .values("transaction_id")
         .annotate(total=Sum("amount"))
     )
 
+    # order_id -> status -> amount
+    afn_by_order_status = {}
+
     for bd in afn_breakdowns:
-        order_id = tx_to_order.get(bd["transaction_id"])
+        transaction_id = bd["transaction_id"]
+
+        order_id = tx_to_order.get(transaction_id)
+
         if not order_id:
             continue
 
-        tx_shipping_map[order_id] = (
-            tx_shipping_map.get(order_id, 0.0)
-            + float(bd["total"] or 0)
+        status = afn_status_map.get(transaction_id)
+
+        if not status:
+            continue
+
+        amount = float(bd["total"] or 0)
+
+        afn_by_order_status.setdefault(order_id, {})
+
+        afn_by_order_status[order_id][status] = (
+            afn_by_order_status[order_id].get(status, 0.0) + amount
         )
-    print("tx_shipping_map",tx_shipping_map)
+
+    for order_id, status_amounts in afn_by_order_status.items():
+        best_status = get_best_shipping_status(status_amounts.keys())
+
+        tx_shipping_map[order_id] = status_amounts[best_status]
+
+    print("tx_shipping_map", tx_shipping_map)
     
     
     # ============================================================
