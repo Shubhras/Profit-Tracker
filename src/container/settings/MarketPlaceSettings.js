@@ -4,23 +4,6 @@ import { Switch, Button, Spin } from 'antd';
 import { getChannels } from '../../redux/Settings/actionCreator';
 import { PageHeader } from '../../components/page-headers/page-headers';
 
-// Import Local Icons
-import amazonIcon from '../../assets/icons/amazon.svg';
-import amazonAds from '../../assets/icons/amazonAds.png';
-import flipkartIcon from '../../assets/icons/flipkart.png';
-import meeshoIcon from '../../assets/icons/meesho.png';
-import myntraIcon from '../../assets/icons/myntra.png';
-import ajioIcon from '../../assets/icons/ajio.png';
-import nykaaIcon from '../../assets/icons/nykaa.png';
-import shopifyIcon from '../../assets/icons/shopify.png';
-import wooIcon from '../../assets/icons/woo.png';
-import magentoIcon from '../../assets/icons/magento.png';
-import blinkitIcon from '../../assets/icons/blinkit.png';
-import zeptoIcon from '../../assets/icons/zepto.png';
-import swiggyIcon from '../../assets/icons/swiggy.png';
-import tallyIcon from '../../assets/icons/tally.png';
-import zohoIcon from '../../assets/icons/zoho.png';
-
 export default function MarketPlaceSettings() {
   const dispatch = useDispatch();
   useEffect(() => {
@@ -81,21 +64,21 @@ export default function MarketPlaceSettings() {
   };
 
   const iconMap = {
-    amazon: amazonIcon,
-    amazon_ads: amazonAds,
-    flipkart: flipkartIcon,
-    myntra: myntraIcon,
-    meesho: meeshoIcon,
-    ajio: ajioIcon,
-    nykaa: nykaaIcon,
-    shopify: shopifyIcon,
-    woocommerce: wooIcon,
-    magento: magentoIcon,
-    blinkit: blinkitIcon,
-    zepto: zeptoIcon,
-    swiggy: swiggyIcon,
-    tally: tallyIcon,
-    zoho: zohoIcon,
+    amazon: '/icons/amazon.svg',
+    amazon_ads: '/icons/amazonAds.png',
+    flipkart: '/icons/flipkart.png',
+    meesho: '/icons/meesho.png',
+    myntra: '/icons/myntra.png',
+    ajio: '/icons/ajio.png',
+    nykaa: '/icons/nykaa.png',
+    shopify: '/icons/shopify.png',
+    woocommerce: '/icons/woo.png',
+    magento: '/icons/magento.png',
+    blinkit: '/icons/blinkit.png',
+    zepto: '/icons/zepto.png',
+    swiggy: '/icons/swiggy.png',
+    tally: '/icons/tally.png',
+    zoho: '/icons/zoho.png',
   };
 
   return (
@@ -131,15 +114,9 @@ export default function MarketPlaceSettings() {
                   {/* Logo Area */}
                   <div className="w-20 h-20 mb-4 relative flex items-center justify-center p-2">
                     <img
-                      src={iconMap[market.id] || `https://logo.clearbit.com/${market.domain}`}
+                      src={iconMap[market.id]}
                       alt={market.name}
-                      className="max-w-full max-h-full object-contain filter grayscale-0 group-hover:scale-110 transition-all duration-300"
-                      onError={(e) => {
-                        if (!market.img) {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }
-                      }}
+                      className="max-w-full max-h-full object-contain group-hover:scale-110 transition-all duration-300"
                     />
                     {/* Fallback Initial */}
                     <div className="hidden absolute inset-0 bg-gray-50 rounded-xl items-center justify-center text-2xl font-bold text-gray-400">

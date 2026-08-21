@@ -219,7 +219,7 @@ function MyService() {
     },
   ];
   return (
-    <div className="mt-3 mb-3 space-y-2 px-2">
+    <div className="mb-3 space-y-2 px-4">
       {/* HEADER */}
 
       <div className="shadow-regular px-2 py-2">
