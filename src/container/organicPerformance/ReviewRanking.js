@@ -251,7 +251,7 @@ const searchData = [
 
 function ReviewRanking() {
   return (
-    <div className="space-y-2 mt-3 mb-3 px-3">
+    <div className="space-y-2 mt-3 mb-3 px-4">
       {/* HEADER */}
 
       <div className="flex items-start justify-between mb-2 flex-wrap gap-3">

@@ -407,6 +407,7 @@ function Campaigns() {
       dataIndex: 'dailyBudget',
       align: 'center',
       width: 80,
+      sorter: (a, b) => a.dailyBudget - b.dailyBudget,
 
       render: (_, record) => {
         const budgetText = `₹${Number(record?.dailyBudget || 0).toFixed(2)} / ${record?.budgetType}`;

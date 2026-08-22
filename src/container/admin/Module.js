@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Modal, Select, message, Input, Tag, Spin } from 'antd';
-import { PlusOutlined, EyeOutlined, FormOutlined, DeleteOutlined, AppstoreOutlined } from '@ant-design/icons';
+import { PlusOutlined, EyeOutlined, DeleteOutlined, AppstoreOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   createModules,
@@ -144,16 +144,16 @@ function Module() {
     }
   };
 
-  const handleEdit = (item) => {
-    setIsEdit(true);
-    setSelectedModuleId(item.id);
+  // const handleEdit = (item) => {
+  //   setIsEdit(true);
+  //   setSelectedModuleId(item.id);
 
-    setModuleName(item.name);
-    setDescription(item.description);
-    setIsActive(item.status);
+  //   setModuleName(item.name);
+  //   setDescription(item.description);
+  //   setIsActive(item.status);
 
-    setCreateModal(true);
-  };
+  //   setCreateModal(true);
+  // };
 
   const handleDeleteModule = () => {
     dispatch(
@@ -302,15 +302,6 @@ function Module() {
                           className="h-12 rounded-none flex items-center"
                         >
                           View
-                        </Button>
-
-                        <Button
-                          type="text"
-                          icon={<FormOutlined />}
-                          className="h-12 rounded-none border-x flex items-center"
-                          onClick={() => handleEdit(item)}
-                        >
-                          Edit
                         </Button>
 
                         <Button

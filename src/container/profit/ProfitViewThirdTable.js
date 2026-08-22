@@ -366,14 +366,14 @@ export default function ProfitDetailsView() {
       ),
     },
 
-    {
-      title: 'MP-GST',
-      dataIndex: 'mp_gst',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => a.mp_gst - b.mp_gst,
-    },
+    // {
+    //   title: 'MP-GST',
+    //   dataIndex: 'mp_gst',
+    //   align: 'center',
+    //   width: 70,
+    //   ellipsis: true,
+    //   sorter: (a, b) => a.mp_gst - b.mp_gst,
+    // },
 
     ...(isReconcile
       ? [

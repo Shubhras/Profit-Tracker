@@ -41,7 +41,7 @@ function ActionsRequired() {
       key: 'increaseAds',
       label: 'Increase Ad Spend',
       description: 'Total number of parent SKUs with positive profit.',
-      value: actionRequiredData?.data?.increase_ad_spend?.count ?? 0,
+      value: `${actionRequiredData?.data?.increase_ad_spend?.count ?? 0} SKU`,
       path: '/admin/profit/profitTableView/sku-profit',
       profitType: 'profitable',
       bg: 'bg-white',

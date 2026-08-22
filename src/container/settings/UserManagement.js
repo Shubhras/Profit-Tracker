@@ -634,7 +634,7 @@ export default function UserManagement() {
 
   return (
     <>
-      <main className="min-h-[715px] flex-1 bg-[#f4f5f7] px-6 xl:px-[15px] pb-[20px]">
+      <main className="min-h-[715px] flex-1 bg-[#F8FAFC] px-6 xl:px-[15px] pb-[20px]">
         {/* ================= BREADCRUMB ================= */}
 
         <div className="pt-5 mb-2">

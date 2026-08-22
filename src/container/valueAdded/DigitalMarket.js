@@ -12,21 +12,14 @@ import {
   LineChartOutlined,
 } from '@ant-design/icons';
 
-import Google from '../../assets/icons/googleADS.png';
-import Meta from '../../assets/icons/metaAds.jpg';
-import Youtube from '../../assets/icons/youtube.jpg';
-import Linkdin from '../../assets/icons/linkdin.jpg';
-import Insta from '../../assets/icons/insta.jpeg';
-import Twitter from '../../assets/icons/twitter.jpg';
-
 function DigitalMarket() {
   const marketplaces = [
-    { name: 'Google', icon: Google },
-    { name: 'Meta', icon: Meta },
-    { name: 'Youtube', icon: Youtube },
-    { name: 'Linkdin', icon: Linkdin },
-    { name: 'Insta', icon: Insta },
-    { name: 'Twitter', icon: Twitter },
+    { name: 'Google', icon: '/icons/googleADS.png' },
+    { name: 'Meta', icon: '/icons/metaAds.jpg' },
+    { name: 'Youtube', icon: '/icons/youtube.jpg' },
+    { name: 'Linkdin', icon: '/icons/linkdin.jpg' },
+    { name: 'Insta', icon: '/icons/insta.jpeg' },
+    { name: 'Twitter', icon: '/icons/twitter.jpg' },
   ];
 
   return (
@@ -268,42 +261,6 @@ function DigitalMarket() {
                   <span>{item}</span>
                 </div>
               ))}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-10 border border-normal shadow-regular p-4">
-            <h3 className="text-[15px] font-semibold mb-4">Your Service Summary</h3>
-
-            <div className="space-y-3 text-[12px]">
-              <div className="flex justify-between">
-                <span>Active Services</span>
-                <span className="font-semibold">3</span>
-              </div>
-
-              <div className="flex justify-between">
-                <span>Pending Requests</span>
-                <span className="font-semibold">1</span>
-              </div>
-
-              <div className="flex justify-between">
-                <span>Completed This Month</span>
-                <span className="font-semibold">12</span>
-              </div>
-
-              <div className="border-t border-normal pt-3">
-                <div className="flex justify-between">
-                  <span>Monthly Investment</span>
-                  <span className="font-semibold text-[#16a34a]">₹ 60,000</span>
-                </div>
-              </div>
-
-              <Button
-                type="primary"
-                block
-                className="bg-[#16a34a] border-[#16a34a] h-[32px] px-2 text-[11px] font-semibold"
-              >
-                Manage My Services
-              </Button>
             </div>
           </div>
         </div>

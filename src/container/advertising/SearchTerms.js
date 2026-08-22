@@ -17,16 +17,13 @@ import {
 } from '@ant-design/icons';
 
 import { useDispatch, useSelector } from 'react-redux';
-import { getSearchTerms, getCampaignsRulesList } from '../../redux/advertising/actionCreator';
+import { getSearchTerms } from '../../redux/advertising/actionCreator';
 
 function SearchTerms() {
   const dispatch = useDispatch();
 
   const [searchText, setSearchText] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-
-  const [campaigns, setCampaigns] = useState([]);
-  const [selectedCampaign, setSelectedCampaign] = useState('');
 
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -42,7 +39,6 @@ function SearchTerms() {
       getSearchTerms({
         filters: {
           search: debouncedSearch,
-          campaign_id: selectedCampaign,
         },
         pagination: {
           pageNo: pagination.current,
@@ -50,7 +46,7 @@ function SearchTerms() {
         },
       }),
     );
-  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch, selectedCampaign]);
+  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -63,17 +59,17 @@ function SearchTerms() {
   const summaryCards = searchTerms?.dashboard?.summary_cards || {};
   const performanceKey = searchTerms?.dashboard?.top_performing_terms || [];
 
-  const fetchCampaigns = async () => {
-    const response = await dispatch(getCampaignsRulesList());
+  // const fetchCampaigns = async () => {
+  //   const response = await dispatch(getCampaignsRulesList());
 
-    if (response?.status) {
-      setCampaigns(response.data || []);
-    }
-  };
+  //   if (response?.status) {
+  //     setCampaigns(response.data || []);
+  //   }
+  // };
 
-  useEffect(() => {
-    fetchCampaigns();
-  }, []);
+  // useEffect(() => {
+  //   fetchCampaigns();
+  // }, []);
 
   const dataSource =
     searchTerms?.data?.map((item) => ({
@@ -351,19 +347,6 @@ function SearchTerms() {
 
           <SearchOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[12px]" />
         </div>
-        <select
-          value={selectedCampaign}
-          onChange={(e) => setSelectedCampaign(e.target.value)}
-          className="h-[30px] w-[170px] px-2 pr-4 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none cursor-pointer truncate"
-        >
-          <option value="">All Campaigns</option>
-
-          {campaigns.map((item) => (
-            <option key={item.campaign_id} value={item.campaign_id}>
-              {item.name}
-            </option>
-          ))}
-        </select>
 
         {/* <select className="h-[30px] px-2 rounded-lg border border-[#dbe1e8] bg-white text-[12px] outline-none">
           <option>Broad Match, Phrase Match, Exact Match</option>

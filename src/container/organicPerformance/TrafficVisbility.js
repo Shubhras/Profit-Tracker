@@ -241,7 +241,7 @@ function TrafficVisibility() {
   ];
 
   return (
-    <div className="space-y-2 mt-3 mb-3 px-3">
+    <div className="space-y-2 mt-3 mb-3 px-4">
       {/* HEADER */}
 
       <div className="flex items-start justify-between gap-3 lg:flex-col">

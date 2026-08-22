@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Skeleton, Alert, Card, Button, Tag, Typography } from 'antd';
+import { Skeleton, Alert, Card, Button, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,7 +9,7 @@ import PropTypes from 'prop-types';
 import { getSubscriptionList } from '../../../../redux/admin/actionCreator';
 import { selectPlan } from '../../../../redux/subscription/actionCreator';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 // Skeleton Card Component for loading state
 function PricingCardSkeleton() {
@@ -52,32 +52,36 @@ const cardVariants = {
   }),
 };
 
-function PricingCard({ plan, index, onSelect, selectedPlanId, setSelectedPlanId }) {
-  const [selectedType, setSelectedType] = useState('monthly');
+function PricingCard({ plan, index, onSelect, selectedPlanId, setSelectedPlanId, selectedType }) {
   const gradient = cardGradients[index % cardGradients.length];
-  // const [selectedPlanId, setSelectedPlanId] = useState(null);
   const isSelected = selectedPlanId === plan.id;
 
   const accentColors = {
-    gray: { badge: 'default', button: '#6b7280', tag: 'bg-gray-100 text-gray-700' },
+    gray: {
+      badge: 'default',
+      button: '#6b7280',
+      tag: 'bg-gray-100 text-gray-700',
+    },
     emerald: {
       badge: 'success',
-      button: 'linear-gradient(135deg, #10b981 0%, #14b8a6 100%)',
+      button: '#0FA878',
       tag: 'bg-emerald-100 text-emerald-700',
     },
     purple: {
       badge: 'purple',
-      button: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)',
+      button: '#6366f1',
       tag: 'bg-purple-100 text-purple-700',
     },
     amber: {
       badge: 'warning',
-      button: 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)',
+      button: '#f59e0b',
       tag: 'bg-amber-100 text-amber-700',
     },
   };
 
   const colors = accentColors[gradient.accent];
+
+  const currentPrice = selectedType === 'monthly' ? plan.monthly_price : plan.annual_price;
 
   return (
     <motion.div
@@ -86,126 +90,97 @@ function PricingCard({ plan, index, onSelect, selectedPlanId, setSelectedPlanId 
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true }}
-      whileHover={{ y: -8, transition: { duration: 0.3 } }}
+      whileHover={{
+        y: -5,
+        transition: { duration: 0.25 },
+      }}
       className="h-full"
     >
       <Card
         onClick={() => {
           setSelectedPlanId(plan.id);
-          setSelectedType('monthly');
         }}
-        className={`h-full border-0 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden relative ${
-          isSelected ? 'ring-2 ring-emerald-500 ring-offset-4' : ''
-        }`}
+        className={`
+          h-full
+          overflow-visible
+          relative
+          transition-all
+          duration-300
+          bg-white
+          rounded-[20px]
+          ${
+            isSelected
+              ? 'border-2 border-[#48BFA0] shadow-[0_8px_25px_rgba(16,185,129,0.12)]'
+              : 'border border-[#E5E7EB] shadow-[0_4px_18px_rgba(16,24,40,0.06)]'
+          }
+        `}
         bodyStyle={{
-          padding: '32px',
+          padding: '26px',
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
         }}
-        style={{ background: 'linear-gradient(135deg, var(--tw-gradient-stops))' }}
       >
-        {isSelected && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute -top-0 left-1/2 -translate-x-1/2"
-          >
-            <Tag color="success" className="px-4 py-1 text-xs font-bold rounded-b-lg rounded-t-none border-0">
-              MOST POPULAR
-            </Tag>
-          </motion.div>
+        {/* =====================================================
+            MOST PROFITABLE BADGE
+        ====================================================== */}
+
+        {plan.plan_name?.toLowerCase() === 'starter plan' && (
+          <div className="absolute -top-[15px] right-[20px] z-20">
+            <div
+              className="
+        px-4
+        h-[25px]
+        flex
+        items-center
+        justify-center
+        rounded-full
+        bg-[#0FA878]
+        text-white
+        text-[11px]
+        font-bold
+        whitespace-nowrap
+        shadow-[0_4px_10px_rgba(15,168,120,0.22)]
+      "
+            >
+              Most profitable
+            </div>
+          </div>
         )}
 
-        <div className="flex items-center gap-2 mb-2">
-          <motion.div
-            whileHover={{ rotate: [0, -10, 10, 0] }}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center ${colors.tag}`}
-          >
-            {gradient.icon}
-          </motion.div>
-          <Tag className={`px-3 py-1 rounded-full text-sm font-semibold border-0 ${colors.tag}`}>{plan.badge.text}</Tag>
+        {/* =====================================================
+            PLAN NAME + DESCRIPTION
+        ====================================================== */}
+
+        <div className="pt-3">
+          <h2 className="text-[22px] font-bold text-[#18233F] tracking-[-0.4px]">{plan.plan_name}</h2>
+
+          <p className="mt-2 min-h-[42px] text-[13px] leading-[20px] text-[#667085]">{plan.subtitle}</p>
         </div>
 
-        {/* Price */}
-        <div className="mb-6">
-          <Title level={2} className="!mb-3 !text-3xl !font-bold !text-gray-900">
-            {plan.title}
-          </Title>
+        {/* =====================================================
+            PRICE
+        ====================================================== */}
 
-          <Text className="text-gray-600 text-base mt-1 block">{plan.subtitle}</Text>
+        <div className="mt-5">
+          <div className="flex items-end gap-1">
+            <span className="text-[36px] leading-[42px] font-bold tracking-[-1px] text-[#101828]">
+              ₹{Math.trunc(Number(currentPrice || 0)).toLocaleString('en-IN')}
+            </span>
 
-          <div className="mt-5 grid grid-cols-2 gap-4">
-            {[
-              {
-                key: 'monthly',
-                label: 'Monthly',
-                price: plan.monthly_price,
-              },
-              {
-                key: 'annual',
-                label: 'Annual',
-                price: plan.annual_price,
-                badge: 'Best Value',
-              },
-            ].map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedType(item.key);
-                }}
-                className={`relative rounded-2xl border p-4 transition-all duration-300 text-left overflow-hidden
-${
-  selectedType === item.key
-    ? 'border-emerald-500 bg-gradient-to-br from-emerald-50 via-white to-emerald-100 scale-[1.02]'
-    : 'border-gray-300 bg-white hover:border-emerald-300 hover:shadow-lg'
-}`}
-              >
-                {item.badge && (
-                  <span className="absolute -top-2 right-3 bg-orange-500 text-white text-[10px] px-2 py-1 rounded-full">
-                    {item.badge}
-                  </span>
-                )}
-
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-gray-800">{item.label}</h4>
-
-                  <div
-                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center
-          ${selectedType === item.key ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300'}`}
-                  >
-                    {selectedType === item.key && <div className="w-2 h-2 rounded-full bg-white" />}
-                  </div>
-                </div>
-
-                <p className="text-2xl font-bold mt-3 text-gray-900">₹{Math.trunc(Number(item.price || 0))}</p>
-
-                <p className="text-sm text-gray-500">/ {item.key === 'monthly' ? 'month' : 'year'}</p>
-              </button>
-            ))}
+            <span className="text-[13px] text-[#98A2B3] pb-[5px]">/{selectedType === 'monthly' ? 'mo' : 'yr'}</span>
           </div>
+
+          {/* Billing text */}
+          <p className="mt-1 text-[13px] font-semibold leading-[17px] text-[#98A2B3] min-h-[34px]">
+            {selectedType === 'monthly'
+              ? 'billed monthly · Flexible billing'
+              : `billed annually · Save ${Math.round(Number(plan.discount_percentage || 0))}%`}
+          </p>
         </div>
 
-        {/* Features */}
-        {/* <div className="flex-grow mb-6">
-          <ul className="space-y-3">
-            {plan.features.map((feature, i) => (
-              <motion.li
-                key={i}
-                initial={{ opacity: 0, x: -10 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3 + i * 0.05 }}
-                className="flex items-center gap-3"
-              >
-                <CheckCircleFilled className="text-emerald-500 text-lg flex-shrink-0" />
-                <Text className="text-gray-700 text-sm">{feature}</Text>
-              </motion.li>
-            ))}
-          </ul>
-        </div> */}
+        {/* ======= EXISTING FEATURES — DO NOT CHANGE=============== */}
+
         <div className="flex-grow mb-6">
           <h4 className="text-[15px] font-semibold text-gray-900 mb-3">Features</h4>
 
@@ -220,6 +195,7 @@ ${
                 className="flex items-center gap-3"
               >
                 <CheckCircleFilled className="text-emerald-500 text-lg flex-shrink-0" />
+
                 <Text className="text-gray-700 text-sm">{feature}</Text>
               </motion.li>
             ))}
@@ -240,6 +216,7 @@ ${
                     className="flex items-center gap-3"
                   >
                     <CheckCircleFilled className="text-emerald-500 text-lg flex-shrink-0" />
+
                     <Text className="text-gray-700 text-sm">{term}</Text>
                   </motion.li>
                 ))}
@@ -248,13 +225,13 @@ ${
           )}
         </div>
 
-        {/* CTA Button */}
+        {/* ===== EXISTING CTA — FUNCTIONALITY ======= */}
+
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
           <Button
             type={isSelected ? 'primary' : 'default'}
             size="large"
             block
-            // onClick={() => onSelect(plan)}
             onClick={() =>
               onSelect({
                 ...plan,
@@ -262,12 +239,24 @@ ${
                 selectedPrice: selectedType === 'monthly' ? plan.monthly_price : plan.annual_price,
               })
             }
-            className={`h-12 rounded-xl font-semibold text-base ${
+            className={`
+              h-12
+              rounded-xl
+              font-semibold
+              text-base
+              ${
+                isSelected
+                  ? 'bg-[#0FA878] border-0 shadow-lg shadow-emerald-500/20'
+                  : 'border-2 border-gray-200 hover:border-[#0FA878] hover:text-[#0FA878]'
+              }
+            `}
+            style={
               isSelected
-                ? 'bg-gradient-to-r from-emerald-500 to-teal-600 border-0 shadow-lg shadow-emerald-500/30'
-                : 'border-2 border-gray-200 hover:border-emerald-500 hover:text-emerald-600'
-            }`}
-            style={isSelected ? { background: colors.button } : {}}
+                ? {
+                    background: colors.button,
+                  }
+                : {}
+            }
           >
             {plan.button.text}
           </Button>
@@ -302,6 +291,7 @@ function PricingCards() {
   const navigate = useNavigate();
   const isLoggedIn = useSelector((state) => state.auth.login);
   const [selectedPlanId, setSelectedPlanId] = useState(null);
+  const [selectedType, setSelectedType] = useState('annual');
 
   // const [pricingPlans, setPricingPlans] = useState([]);
   // const [loading, setLoading] = useState(true);
@@ -343,6 +333,7 @@ function PricingCards() {
     price: '₹',
 
     perMonth: plan.subscription_type === 'monthly' ? 'Month' : 'Year',
+    discount_percentage: plan.discount_percentage,
 
     features: plan.features || [],
     terms_and_conditions: plan.terms_and_conditions || [],
@@ -418,6 +409,67 @@ function PricingCards() {
         min-lg:grid-cols-4
       "
       > */}
+      {/* Monthly / Annual Toggle */}
+      <div className="flex justify-center items-center mb-10">
+        <div className="flex items-center gap-3">
+          <span
+            className={`text-[14px] font-medium ${selectedType === 'monthly' ? 'text-[#18233F]' : 'text-[#98A2B3]'}`}
+          >
+            Monthly
+          </span>
+
+          <button
+            type="button"
+            aria-label={`Switch billing period to ${selectedType === 'monthly' ? 'annual' : 'monthly'}`}
+            onClick={() => setSelectedType(selectedType === 'monthly' ? 'annual' : 'monthly')}
+            className="
+        relative
+        w-[54px]
+        h-[29px]
+        rounded-full
+        border
+        border-[#6FC9B0]
+        bg-[#F1FAF7]
+      "
+          >
+            <span
+              className={`
+          absolute
+          top-[3px]
+          w-[21px]
+          h-[21px]
+          rounded-full
+          bg-[#0FA878]
+          transition-all
+          duration-200
+          ${selectedType === 'annual' ? 'right-[3px]' : 'left-[3px]'}
+        `}
+            />
+          </button>
+
+          <span
+            className={`text-[14px] font-medium ${selectedType === 'annual' ? 'text-[#18233F]' : 'text-[#98A2B3]'}`}
+          >
+            Annual
+          </span>
+
+          <span
+            className="
+        px-2.5
+        py-1
+        rounded-full
+        bg-[#FFF4D6]
+        border
+        border-[#F2DFA9]
+        text-[#B68A1B]
+        text-[11px]
+        font-semibold
+      "
+          >
+            Save 17%
+          </span>
+        </div>
+      </div>
       <div
         className="
     grid gap-6
@@ -442,6 +494,7 @@ function PricingCards() {
               onSelect={handlePlanSelect}
               selectedPlanId={selectedPlanId}
               setSelectedPlanId={setSelectedPlanId}
+              selectedType={selectedType}
             />
           ))}
         </AnimatePresence>

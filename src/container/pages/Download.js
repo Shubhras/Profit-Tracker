@@ -217,10 +217,10 @@ export default function Download() {
       <PageHeader
         routes={PageRoutes}
         title="Download"
-        className="flex justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 sm:pb-[30px] bg-transparent sm:flex-col"
+        className="flex justify-between items-center px-4 xl:px-[15px] pt-2 pb-3 sm:pb-[30px] bg-transparent sm:flex-col"
       />
 
-      <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-8 xl:px-[15px] pb-[30px] bg-transparent">
+      <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-4 xl:px-[15px] pb-[30px] bg-transparent">
         <Spin spinning={loading} size="large">
           <div className="bg-white dark:bg-white10 rounded-[10px] p-[20px] shadow-sm">
             {/* Refresh Button */}

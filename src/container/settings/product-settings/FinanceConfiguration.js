@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Modal, Input, Button, message } from 'antd';
+import { Modal, Button, message } from 'antd';
 import {
-  UploadOutlined,
   CloseOutlined,
   ExclamationCircleOutlined,
   QuestionCircleOutlined,
@@ -12,17 +11,12 @@ import {
   CheckCircleOutlined,
   SyncOutlined,
   CloseCircleOutlined,
+  ShopOutlined,
+  DownOutlined,
 } from '@ant-design/icons';
 import { PageHeader } from '../../../components/page-headers/page-headers';
 
 export default function FinanceConfiguration() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [percentage, setPercentage] = useState('');
-  const currentValue = 12;
-
-  const [savedPercentage, setSavedPercentage] = useState(null);
-
-  const [uploadModal, setUploadModal] = useState(false);
   const [recalculateModal, setRecalculateModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [deleteModal, setDeleteModal] = useState(false);
@@ -38,10 +32,6 @@ export default function FinanceConfiguration() {
    */
   useEffect(() => {
     const handler = (e) => {
-      if (e.detail === 'upload') {
-        setUploadModal(true);
-      }
-
       if (e.detail === 'recalculate') {
         setRecalculateModal(true);
       }
@@ -115,29 +105,6 @@ export default function FinanceConfiguration() {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  };
-
-  /*
-   * Save percentage configuration
-   */
-  const handleSavePercentage = () => {
-    if (!percentage) {
-      message.warning('Please enter a percentage.');
-      return;
-    }
-
-    const value = Number(percentage);
-
-    if (value < 0 || value > 100) {
-      message.warning('Percentage must be between 0 and 100.');
-      return;
-    }
-
-    setSavedPercentage(value);
-    setIsModalOpen(false);
-    setPercentage('');
-
-    message.success('Configuration updated successfully.');
   };
 
   const recentUploads = [
@@ -228,121 +195,90 @@ export default function FinanceConfiguration() {
 
             <div className="grid grid-cols-[180px_190px_1fr] gap-5 items-start">
               <div>
-                <label className="block text-[12px] font-medium text-[#374151] mb-[6px]">Min. Claim %</label>
+                <label className="block text-[12px] font-medium text-[#374151] mb-[6px]">Select Marketplace</label>
 
-                <div
-                  className="
-          h-[34px]
-          w-full
-          border
-          border-[#D9DDE3]
-          rounded-[5px]
-          bg-white
-          flex
-          items-center
-          overflow-hidden
-          transition-all
-          hover:border-[#35B77B]
-          focus-within:border-[#35B77B]
-        "
-                >
-                  <Input
-                    type="number"
-                    min={0}
-                    max={100}
-                    placeholder="Enter percentage"
-                    value={savedPercentage !== null ? savedPercentage : percentage}
-                    onChange={(e) => {
-                      setSavedPercentage(null);
-                      setPercentage(e.target.value);
-                    }}
-                    bordered={false}
-                    className="
-            !h-full
-            !px-2.5
-            !text-[11px]
-            !shadow-none
-            flex-1
-          "
-                  />
-
-                  <div
-                    className="
-            h-full
-            px-2.5
-            bg-[#F8FAFB]
-            border-l
-            border-[#E5E7EB]
-            flex
-            items-center
-            justify-center
-            text-[10px]
-            text-[#6B7280]
-          "
-                  >
-                    %
+                <div className="relative">
+                  {/* Marketplace Icon */}
+                  <div className="absolute left-2.5 top-1/2 -translate-y-1/2 z-10 w-[20px] h-[20px] rounded-[4px] bg-[#EAFBF4] flex items-center justify-center pointer-events-none">
+                    <ShopOutlined className="text-[11px] text-[#35B77B]" />
                   </div>
-                </div>
 
-                <div className="mt-[5px] flex items-center justify-between">
-                  <span className="text-[9px] text-[#9CA3AF]">Current: {currentValue}%</span>
-
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(true)}
+                  <select
+                    defaultValue=""
                     className="
-            text-[9px]
-            text-[#1683D8]
-            font-medium
-            hover:underline
-          "
+        h-[34px]
+        w-full
+        appearance-none
+        border
+        border-[#D9DDE3]
+        rounded-[5px]
+        bg-white
+        pl-[37px]
+        pr-[30px]
+        text-[10px]
+        text-[#4B5563]
+        outline-none
+        cursor-pointer
+        transition-all
+        hover:border-[#35B77B]
+        focus:border-[#35B77B]
+      "
                   >
-                    Change
-                  </button>
+                    <option value="" disabled>
+                      Select Marketplace
+                    </option>
+                    <option value="amazon">Amazon</option>
+                    <option value="flipkart">Flipkart</option>
+                    <option value="myntra">Myntra</option>
+                    <option value="meesho">Meesho</option>
+                  </select>
+
+                  {/* Dropdown Arrow */}
+                  <DownOutlined className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] text-[#374151] pointer-events-none" />
                 </div>
               </div>
 
-              {/* =====================================================
-        REPORT TYPE / CONFIGURATION
-        Kept as compact information field so existing
-        finance configuration functionality remains intact.
-    ====================================================== */}
               <div>
-                <label className="block text-[12px] font-medium text-[#374151] mb-[6px]">Configuration Type</label>
+                <label className="block text-[12px] font-medium text-[#374151] mb-[6px]">Select Report Type</label>
 
-                <div
-                  className="
-          h-[34px]
-          w-full
-          border
-          border-[#D9DDE3]
-          rounded-[5px]
-          bg-white
-          flex
-          items-center
-          px-2.5
-        "
-                >
-                  <div
-                    className="
-            w-[20px]
-            h-[20px]
-            rounded-[4px]
-            bg-[#F1EAFE]
-            flex
-            items-center
-            justify-center
-            mr-2
-          "
-                  >
+                <div className="relative">
+                  {/* Report Icon */}
+                  <div className="absolute left-2.5 top-1/2 -translate-y-1/2 z-10 w-[20px] h-[20px] rounded-[4px] bg-[#F1EAFE] flex items-center justify-center pointer-events-none">
                     <FileTextOutlined className="text-[11px] text-[#8B5CF6]" />
                   </div>
 
-                  <span className="text-[10px] text-[#4B5563] truncate">Finance Configuration</span>
-                </div>
+                  <select
+                    defaultValue=""
+                    className="
+        h-[34px]
+        w-full
+        appearance-none
+        border
+        border-[#D9DDE3]
+        rounded-[5px]
+        bg-white
+        pl-[37px]
+        pr-[30px]
+        text-[10px]
+        text-[#4B5563]
+        outline-none
+        cursor-pointer
+        transition-all
+        hover:border-[#8B5CF6]
+        focus:border-[#8B5CF6]
+      "
+                  >
+                    <option value="" disabled>
+                      Select Report Type
+                    </option>
+                    <option value="finance">Finance Report</option>
+                    <option value="sales">Sales Report</option>
+                    <option value="inventory">Inventory Report</option>
+                    <option value="orders">Orders Report</option>
+                  </select>
 
-                <div className="mt-[5px]">
-                  <span className="text-[9px] text-[#9CA3AF]">Supported finance report</span>
+                  {/* Dropdown Arrow */}
+                  <DownOutlined className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] text-[#374151] pointer-events-none" />
                 </div>
               </div>
 
@@ -621,106 +557,6 @@ export default function FinanceConfiguration() {
           </div>
         </div>
       </section>
-
-      <Modal
-        title="Change Configuration Settings"
-        open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
-        onOk={handleSavePercentage}
-        okText="Submit"
-      >
-        <div className="flex flex-col gap-3">
-          <label className="text-sm">Min. Claim % to consider as Unsellable in profit</label>
-
-          <div className="flex items-center gap-3">
-            <div className="flex items-center border rounded-md overflow-hidden">
-              <Input
-                type="number"
-                min={0}
-                max={100}
-                placeholder="Enter percentage"
-                value={percentage}
-                onChange={(e) => setPercentage(e.target.value)}
-                className="px-3 py-1 outline-none w-[160px]"
-              />
-
-              <div className="bg-gray-100 text-black px-2 py-1 text-sm">%</div>
-            </div>
-
-            <span className="text-gray-500 text-sm">Current: {currentValue}%</span>
-          </div>
-        </div>
-      </Modal>
-      <Modal
-        open={uploadModal}
-        onCancel={() => setUploadModal(false)}
-        footer={null}
-        centered
-        width={500}
-        closeIcon={
-          <CloseOutlined
-            style={{
-              fontSize: '16px',
-              color: '#6b7280',
-            }}
-          />
-        }
-      >
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="text-[16px] font-semibold">File Upload</h3>
-
-          <a href="#" className="text-blue-600 text-sm underline" onClick={(e) => e.preventDefault()}>
-            Upload Sample File
-          </a>
-        </div>
-
-        <input
-          type="file"
-          id="expenseFileInput"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-
-            if (file) {
-              console.log(file);
-              setSelectedFile(file);
-            }
-          }}
-        />
-
-        <Button
-          type="primary"
-          onClick={() => document.getElementById('expenseFileInput')?.click()}
-          className="mb-3 flex items-center gap-2 text-white border-none font-semibold"
-        >
-          <UploadOutlined
-            style={{
-              color: '#fff',
-              fontSize: '16px',
-            }}
-          />
-          Expense Upload
-        </Button>
-
-        <p className="text-blue-600 text-sm italic mb-4">
-          Once you have updated all settings, click the “Recalculate Expense” button to apply changes older than last
-          month. Otherwise, the updates will be applied automatically the next morning.
-        </p>
-
-        <div className="flex justify-end gap-2">
-          <Button onClick={() => setUploadModal(false)}>Cancel</Button>
-
-          <Button
-            type="primary"
-            onClick={() => {
-              setUploadModal(false);
-              message.success('File submitted successfully.');
-            }}
-          >
-            Submit
-          </Button>
-        </div>
-      </Modal>
 
       {/* =========================================================
           RECALCULATE MODAL

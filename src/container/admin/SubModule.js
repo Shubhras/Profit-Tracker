@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Tag, Button, Modal, Input, Select, Switch, message } from 'antd';
-import { PlusOutlined, FormOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -44,18 +44,18 @@ function SubModule() {
       label: item.name,
     })) || [];
 
-  const handleEdit = (record) => {
-    setIsEdit(true);
-    setSelectedId(record.id);
+  // const handleEdit = (record) => {
+  //   setIsEdit(true);
+  //   setSelectedId(record.id);
 
-    setModuleId(record.module);
+  //   setModuleId(record.module);
 
-    setSubModuleName(record.name);
-    setDescription(record.description);
-    setIsActive(record.status);
+  //   setSubModuleName(record.name);
+  //   setDescription(record.description);
+  //   setIsActive(record.status);
 
-    setCreateModal(true);
-  };
+  //   setCreateModal(true);
+  // };
 
   const handleDelete = (record) => {
     setSelectedSubModule(record);
@@ -138,11 +138,11 @@ function SubModule() {
       width: 120,
       render: (_, record) => (
         <div className="flex items-center justify-center gap-1">
-          <Button
+          {/* <Button
             type="text"
             icon={<FormOutlined className="text-blue-600 text-[16px]" />}
             onClick={() => handleEdit(record)}
-          />
+          /> */}
 
           <Button
             type="text"

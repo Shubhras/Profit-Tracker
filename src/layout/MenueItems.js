@@ -385,7 +385,7 @@ function MenuItems({ toggleCollapsed }) {
           hasSubmodule('payment-reconcile-overview') &&
             getItem(
               <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-overview`}>
-                Overview
+                Reconcile
               </NavLink>,
               'payment-overview',
             ),
@@ -675,7 +675,7 @@ function MenuItems({ toggleCollapsed }) {
               <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/trafficVisibility`}>
                 Traffic & Visibility
               </NavLink>,
-              'traffic-visibility',
+              'trafficVisibility',
             ),
 
           hasSubmodule('sales-drivers') &&
@@ -683,7 +683,7 @@ function MenuItems({ toggleCollapsed }) {
               <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/salesDrivers`}>
                 Sales Drivers
               </NavLink>,
-              'sales-drivers',
+              'salesDrivers',
             ),
 
           hasSubmodule('keyword-performance') &&
@@ -691,7 +691,7 @@ function MenuItems({ toggleCollapsed }) {
               <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/Keyperformance`}>
                 Keyword Performance
               </NavLink>,
-              'keyperformance',
+              'Keyperformance',
             ),
 
           hasSubmodule('product-ranking') &&
@@ -699,7 +699,7 @@ function MenuItems({ toggleCollapsed }) {
               <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/productranking`}>
                 Product Ranking
               </NavLink>,
-              'product-ranking',
+              'productranking',
             ),
 
           hasSubmodule('reviews-ratings') &&
@@ -707,7 +707,7 @@ function MenuItems({ toggleCollapsed }) {
               <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/reviewRating`}>
                 Reviews & Ratings
               </NavLink>,
-              'Reviews-Rating',
+              'reviewRating',
             ),
 
           hasSubmodule('inventory-impact') &&
@@ -784,7 +784,7 @@ function MenuItems({ toggleCollapsed }) {
               <NavLink onClick={toggleCollapsed} to={`${path}/operations/dailyOperations`}>
                 Daily Operations
               </NavLink>,
-              'dailyoperations',
+              'dailyOperations',
             ),
 
           hasSubmodule('order-processing') &&
@@ -816,7 +816,7 @@ function MenuItems({ toggleCollapsed }) {
               <NavLink onClick={toggleCollapsed} to={`${path}/operations/logsHistory`}>
                 Logs & History
               </NavLink>,
-              'logshistory',
+              'logsHistory',
             ),
 
           hasSubmodule('settings') &&
@@ -873,14 +873,6 @@ function MenuItems({ toggleCollapsed }) {
         'valueadded',
         !topMenu && <UilLayersAlt />,
         [
-          hasSubmodule('overview') &&
-            getItem(
-              <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/overview`}>
-                Overview
-              </NavLink>,
-              'overview',
-            ),
-
           hasSubmodule('account-management') &&
             getItem(
               <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/accountmanage`}>
@@ -903,14 +895,6 @@ function MenuItems({ toggleCollapsed }) {
                 Quick Commerce
               </NavLink>,
               'QuickCommerce',
-            ),
-
-          hasSubmodule('my-services') &&
-            getItem(
-              <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/myservices`}>
-                My Services
-              </NavLink>,
-              'myservices',
             ),
         ].filter(Boolean),
       ),
