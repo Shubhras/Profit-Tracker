@@ -41,7 +41,11 @@ function ActionsRequired() {
       key: 'increaseAds',
       label: 'Increase Ad Spend',
       description: 'Total number of parent SKUs with positive profit.',
-      value: `${actionRequiredData?.data?.increase_ad_spend?.count ?? 0} SKU`,
+      value: (
+        <>
+          {actionRequiredData?.data?.increase_ad_spend?.count ?? 0} <span className="text-[12px]">SKU</span>
+        </>
+      ),
       path: '/admin/profit/profitTableView/sku-profit',
       profitType: 'profitable',
       bg: 'bg-white',
@@ -81,7 +85,12 @@ function ActionsRequired() {
       key: 'roi',
       label: 'High ROI Products',
       description: 'Total number of SKUs with high ROI.',
-      value: actionRequiredData?.data?.high_roi_products?.count ?? 0,
+      value: (
+        <>
+          {actionRequiredData?.data?.high_roi_products?.count ?? 0}{' '}
+          <span className="text-[12px] font-normal text-[#16A34A]">SKU</span>
+        </>
+      ),
       path: '/admin/advertising/AdProducts',
       roiType: 'high',
       bg: 'bg-[#ECFDF5]',
@@ -94,7 +103,7 @@ function ActionsRequired() {
     {
       key: 'lowroi',
       label: 'Low ROI Products',
-      description: 'Total number of products with low ROI.',
+      description: 'Total number of SKUs with low ROI.',
       value: actionRequiredData?.data?.low_roi_products?.count ?? 0,
       path: '/admin/advertising/AdProducts',
       roiType: 'low',
@@ -109,7 +118,12 @@ function ActionsRequired() {
       key: 'decreaseAdSpend',
       label: 'Decrease Ad Spend',
       description: 'Total number of parent SKUs with negative profit.',
-      value: actionRequiredData?.data?.decrease_ad_spend?.count ?? 0,
+      value: (
+        <>
+          {actionRequiredData?.data?.decrease_ad_spend?.count ?? 0}{' '}
+          <span className="text-[12px] font-normal text-[#2563EB]">SKU</span>
+        </>
+      ),
       path: '/admin/profit/profitTableView/sku-profit',
       profitType: 'losing',
       bg: 'bg-[#EFF6FF]',
