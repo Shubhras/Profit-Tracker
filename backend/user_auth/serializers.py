@@ -747,6 +747,8 @@ class SubUserPermissionInputSerializer(serializers.Serializer):
 class SubUserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source="user.email", read_only=True)
     username = serializers.CharField(source="user.username", read_only=True)
+    is_active = serializers.BooleanField(source="user.is_active", read_only=True)
+    status = serializers.SerializerMethodField()
     permissions = serializers.SerializerMethodField()
 
     class Meta:
@@ -758,10 +760,15 @@ class SubUserSerializer(serializers.ModelSerializer):
             "name",
             "mobile_number",
             "role",
+            "status",
+            "is_active",
             "permissions",
             "created_at",
             "updated_at",
         ]
+
+    def get_status(self, obj):
+        return "Active" if obj.user and obj.user.is_active else "Pending"
 
     def get_permissions(self, obj):
         permissions = UserModulePermission.objects.filter(user=obj.user)

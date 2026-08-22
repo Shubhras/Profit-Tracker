@@ -402,9 +402,8 @@ export default function UserManagement() {
       key: 'status',
       render: (status) => (
         <span
-          className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
-            status === 'Active' ? 'bg-success-transparent text-success' : 'bg-danger-transparent text-danger'
-          }`}
+          className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${status === 'Active' ? 'bg-success-transparent text-success' : 'bg-danger-transparent text-danger'
+            }`}
         >
           {status}
         </span>

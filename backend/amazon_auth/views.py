@@ -13,6 +13,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from amazon_auth.services.initial_amazon_sync import run_initial_amazon_sync
+from amazon_auth.tasks import task_run_initial_amazon_sync
 from subscription.models import UserSubscription
 from .spapi_manager import SPAPIManager
 from .models import *
@@ -185,13 +186,13 @@ def amazon_callback(request):
         days = subscription.plan.initial_sync_duration
 
         try:
-            run_initial_amazon_sync(  # This needs to be added in celery
-                account=account,
+            task_run_initial_amazon_sync.delay(
+                account_id=account.id,
                 days=days,
             )
 
         except Exception as e:
-            print(f"INITIAL AMAZON SYNC FAILED: {account.seller_central_id} - {e}")
+            print(f"FAILED TO DISPATCH CELERY INITIAL AMAZON SYNC: {account.seller_central_id} - {e}")
 
     return JsonResponse({
         "status": "success",

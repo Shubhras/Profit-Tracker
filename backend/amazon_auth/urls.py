@@ -17,10 +17,12 @@ from .reconcile import *
 from . import exports
 from . import profit
 from . import payment_reconcyle
+from .growth_opportunities import GrowthOpportunitiesAPIView
 
 urlpatterns = [
     path('dashboard-stats-old/', views.get_full_dashboard, name='dashboard-stats-old'),
     path('dashboard-stats/', profit.combined_get_full_dashboard, name='dashboard-stats'),
+    path('growth-opportunities/', GrowthOpportunitiesAPIView.as_view(), name='growth-opportunities'),
     path('pivot-stats/', views.get_pivot_dashboard, name='pivot-stats'),
     path('', views.home, name='home'),
     path('connect/', views.amazon_connect, name='amazon_connect'),

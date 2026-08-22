@@ -24,6 +24,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 
 from amazon_ads.services.sync.initial_ads_sync import run_initial_ads_sync
+from amazon_ads.tasks import task_run_initial_ads_sync
 from amazon_auth.models import AmazonAccount, AmazonListingItem
 from subscription.models import UserSubscription
 from user_auth.models import User
@@ -257,10 +258,10 @@ class AmazonAdsCallbackView(APIView):
                 days = subscription.plan.initial_sync_duration
 
                 try:
-                    run_initial_ads_sync(account=account, days=days) # This should be used in celery
+                    task_run_initial_ads_sync.delay(account_id=account.id, days=days)
 
                 except Exception as e:
-                    print(f"INITIAL ADS SYNC FAILED: {account.profile_id} - {e}")
+                    print(f"FAILED TO DISPATCH CELERY INITIAL ADS SYNC: {account.profile_id} - {e}")
 
             saved_profiles.append({
                 "profile_id":
