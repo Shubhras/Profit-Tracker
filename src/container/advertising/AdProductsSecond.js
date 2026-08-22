@@ -213,7 +213,7 @@ function AdProductsDetails() {
       align: 'center',
       width: '70',
       ellipsis: true,
-      sorter: (a, b) => a.startDate - b.startDate,
+      sorter: (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
     },
 
     {

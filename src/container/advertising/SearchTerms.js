@@ -193,6 +193,7 @@ function SearchTerms() {
       dataIndex: 'orders',
       align: 'center',
       width: 70,
+      sorter: (a, b) => a.orders - b.orders,
       render: (v) => <span className="text-[11px]">{v}</span>,
     },
 
