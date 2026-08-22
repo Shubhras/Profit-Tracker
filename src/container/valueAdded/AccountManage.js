@@ -11,25 +11,16 @@ import {
   LineChartOutlined,
 } from '@ant-design/icons';
 
-import Amazon from '../../assets/icons/amazon.svg';
-import Flipkart from '../../assets/icons/flipkart.png';
-import Myntra from '../../assets/icons/myntra.png';
-import Meesho from '../../assets/icons/meesho.png';
-import Ajio from '../../assets/icons/ajio.png';
-import Purplle from '../../assets/icons/nykaa.png';
-import Blinkit from '../../assets/icons/blinkit.png';
-import Walmart from '../../assets/icons/walmartimages.png';
-
 function AccountManage() {
   const marketplaces = [
-    { name: 'Amazon', icon: Amazon },
-    { name: 'Flipkart', icon: Flipkart },
-    { name: 'Myntra', icon: Myntra },
-    { name: 'Meesho', icon: Meesho },
-    { name: 'AJIO', icon: Ajio },
-    { name: 'Purplle', icon: Purplle },
-    { name: 'Blinkit', icon: Blinkit },
-    { name: 'Walmart', icon: Walmart },
+    { name: 'Amazon', icon: '/icons/amazon.svg' },
+    { name: 'Flipkart', icon: '/icons/flipkart.png' },
+    { name: 'Myntra', icon: '/icons/myntra.png' },
+    { name: 'Meesho', icon: '/icons/meesho.png' },
+    { name: 'AJIO', icon: '/icons/ajio.png' },
+    { name: 'Purplle', icon: '/icons/nykaa.png' },
+    { name: 'Blinkit', icon: '/icons/blinkit.png' },
+    { name: 'Walmart', icon: '/icons/walmartimages.png' },
   ];
 
   return (

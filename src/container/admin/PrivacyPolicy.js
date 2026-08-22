@@ -123,7 +123,7 @@ function PrivacyPolicy() {
 
   return (
     <>
-      <div className="p-3 px-2 bg-[#f8f9fb] min-h-screen">
+      <div className="p-4 bg-[#f8f9fb] min-h-screen">
         <div className="bg-white rounded-lg border overflow-hidden">
           <div className="flex md:flex-col min-h-[600px]">
             {/* Sidebar */}
