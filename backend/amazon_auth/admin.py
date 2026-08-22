@@ -29,7 +29,7 @@ class OrderItemAdmin(admin.ModelAdmin):
 
 @admin.register(AmazonAccount)
 class AmazonAccountAdmin(admin.ModelAdmin):
-    list_display = ('id','user', 'seller_central_id', 'region', 'marketplace_id', 'created_at')
+    list_display = ('id','user', 'store_name', 'seller_central_id', 'region', 'marketplace_id', 'created_at')
     search_fields = ('user__username', 'seller_central_id')
 
 @admin.register(Order)

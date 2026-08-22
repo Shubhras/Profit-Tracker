@@ -175,6 +175,12 @@ class SPAPIManager:
 
         return response.json()
 
+    def get_marketplace_participations(self):
+
+        path = "/sellers/v1/marketplaceParticipations"
+
+        return self.request("GET", path)
+
     def get_orders(self, **kwargs):
         """
         Returns orders that are created or updated during the specified time period.
@@ -560,4 +566,40 @@ class SPAPIManager:
         return self.request("GET", path, params=params)
 
    
-  
+    # def list_financial_events_by_order_id(self, amazon_order_id):
+    #     path = f"/finances/v0/orders/{amazon_order_id}/financialEvents"
+    
+    #     params = {
+    #         "AmazonOrderId": amazon_order_id
+    #     }
+    
+    #     return self.request("GET", path, params=params)
+    
+    # def list_transactions(self, posted_after, posted_before=None, next_token=None):
+    #     access_token = self.get_access_token()
+    
+    #     endpoint = f"https://sellingpartnerapi-{self.account.region.lower()}.amazon.com"
+    
+    #     url = f"{endpoint}/finances/2024-06-19/transactions"
+    
+    #     headers = {"x-amz-access-token": access_token, "accept": "application/json"}
+    
+    #     params = {
+    #         "postedAfter": posted_after,
+    #         "marketplaceId": self.account.marketplace_id,
+    #     }
+    
+    #     if posted_before:
+    #         params["postedBefore"] = posted_before
+    
+    #     if next_token:
+    #         params["nextToken"] = next_token
+    
+    #     response = requests.get(url, headers=headers, params=params, timeout=60)
+        
+    #     if response.status_code != 200:
+    #         raise Exception(
+    #             f"Amazon API Error {response.status_code}: {response.text}"
+    #         )
+        
+    #     return response.json()

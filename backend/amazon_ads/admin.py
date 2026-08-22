@@ -141,7 +141,7 @@ class AdsKeywordAdmin(admin.ModelAdmin):
         "state",
         "created_at",
     )
-    search_fields = ("keyword_text", "keyword_id","amazon_account")
+    search_fields = ("keyword_text", "keyword_id", "amazon_account__profile_id")
     list_filter = ("match_type", "state", "created_at")
     readonly_fields = ("created_at",)
     ordering = ("-created_at",)
@@ -177,7 +177,7 @@ class AdsProductAdAdmin(admin.ModelAdmin):
         "state",
         "created_at",
     )
-    search_fields = ("asin", "sku", "ad_id","campaign")
+    search_fields = ("asin", "sku", "ad_id", "campaign__name", "campaign__campaign_id")
     list_filter = ("state", "created_at","campaign")
     readonly_fields = ("created_at",)
     ordering = ("-created_at",)    

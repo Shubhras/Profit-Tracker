@@ -55,10 +55,10 @@ export default function ProfitDetailsView() {
   const [exportLoading, setExportLoading] = React.useState(false);
 
   const channelLogoMap = {
-    // 'Amazon-India': amazon,
-    // 'Myntra-India': myntra,
     'Amazon-India': '/icons/amazon.svg',
+    'Amazon': '/icons/amazon.svg',
     'Myntra-India': '/icons/myntraLogo.jpg',
+    'Myntra': '/icons/myntraLogo.jpg',
   };
 
   const apipayload = {
@@ -225,7 +225,13 @@ export default function ProfitDetailsView() {
       width: 60,
       fixed: 'left',
       render: (value) => {
-        const logo = channelLogoMap[value];
+        const logo =
+          channelLogoMap[value] ||
+          (value && value.toLowerCase().includes('myntra')
+            ? '/icons/myntraLogo.jpg'
+            : value && value.toLowerCase().includes('amazon')
+            ? '/icons/amazon.svg'
+            : null);
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {logo && <img src={logo} alt={value} style={{ width: 24, height: 24, objectFit: 'contain' }} />}

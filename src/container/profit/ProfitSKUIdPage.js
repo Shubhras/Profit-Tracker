@@ -48,6 +48,9 @@ export default function ProfitSKUIdPage() {
 
   const channelLogoMap = {
     'Amazon-India': '/icons/amazon.svg',
+    'Amazon': '/icons/amazon.svg',
+    'Myntra-India': '/icons/myntraLogo.jpg',
+    'Myntra': '/icons/myntraLogo.jpg',
   };
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -75,7 +78,7 @@ export default function ProfitSKUIdPage() {
       toDate: dateRange?.endDate,
 
       channel: {
-        IN: channels,
+        IN: globalChannel?.length > 0 ? globalChannel : channels,
       },
 
       profit_filter: profitType === 'profitable' ? 'GT_0' : profitType === 'losing' ? 'LT_0' : undefined,
@@ -121,7 +124,7 @@ export default function ProfitSKUIdPage() {
     if (decodedChannel) {
       dispatch(getProfitSKUId(buildPayload()));
     }
-  }, [dateRange, decodedChannel, debouncedSearch]);
+  }, [dateRange, decodedChannel, debouncedSearch, globalChannel, channels]);
 
   // const PageRoutes = [
   //   { path: 'index', breadcrumbName: 'Profit' },
@@ -250,7 +253,13 @@ export default function ProfitSKUIdPage() {
         //   return <span>Total</span>;
         // }
 
-        const logo = channelLogoMap[value];
+        const logo =
+          channelLogoMap[value] ||
+          (value && value.toLowerCase().includes('myntra')
+            ? '/icons/myntraLogo.jpg'
+            : value && value.toLowerCase().includes('amazon')
+              ? '/icons/amazon.svg'
+              : null);
 
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -725,13 +734,12 @@ export default function ProfitSKUIdPage() {
                           ) : (
                             <span
                               // className={`text-[13px] font-semibold ${
-                              className={`text-[13px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis ${
-                                Number(value) > 0 && ['profitPercent'].includes(col.dataIndex)
-                                  ? 'text-green-600'
-                                  : Number(value) < 0
+                              className={`text-[13px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis ${Number(value) > 0 && ['profitPercent'].includes(col.dataIndex)
+                                ? 'text-green-600'
+                                : Number(value) < 0
                                   ? 'text-red-600'
                                   : 'text-[#111827]'
-                              }`}
+                                }`}
                             >
                               {value ?? 0}
                               {isPercent ? '%' : ''}

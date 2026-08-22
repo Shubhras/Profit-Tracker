@@ -34,6 +34,9 @@ class AmazonAdsAccount(models.Model):
     
     updated_at = models.DateTimeField(auto_now=True)
 
+    initial_sync_required = models.BooleanField(default=False)
+    initial_sync_completed = models.BooleanField(default=False)
+
     def __str__(self):
         return str(self.profile_id)
 

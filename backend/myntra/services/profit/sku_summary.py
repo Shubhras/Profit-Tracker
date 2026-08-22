@@ -126,9 +126,7 @@ class SKUSummary:
 
             net_sales = Decimal(0)
 
-            promo_discount = self.calculator.calculate_promo_discount(
-                sku_orders
-            ) or Decimal(0)
+            promo_discount = Decimal(0)
 
             # ==========================================
             # ORDER-LEVEL RETURN AGGREGATION
@@ -152,10 +150,20 @@ class SKUSummary:
                     [order]
                 ) or Decimal(0)
 
-                # Returned orders contribute zero
-                # Net Sales.
+                # --------------------------------------
+                # NORMAL ORDER
+                # --------------------------------------
+
                 if order_return_qty == 0:
                     net_sales += order_gross_sales
+
+                    # ----------------------------------
+                    # PROMOTION
+                    # ----------------------------------I
+
+                    promo_discount += self.calculator.calculate_promo_discount(
+                        [order]
+                    ) or Decimal(0)
 
                 # --------------------------------------
                 # RETURN TYPES
@@ -192,7 +200,6 @@ class SKUSummary:
                 return_percentage = (
                     Decimal(str(return_qty)) / Decimal(str(gross_qty)) * Decimal(100)
                 )
-
             else:
                 return_percentage = Decimal(0)
 
@@ -281,7 +288,7 @@ class SKUSummary:
             ) or Decimal(0)
 
             # ==========================================
-            # Claims
+            # CLAIMS
             # ==========================================
 
             claim_amount = self.calculator.calculate_claims(sku_payments) or Decimal(0)
@@ -350,6 +357,10 @@ class SKUSummary:
                     elif category == "CUSTOMER_RETURN":
                         order_customer_return_count += qty
 
+                # --------------------------------------
+                # PURE COURIER RETURN / RTO
+                # --------------------------------------
+
                 is_order_courier_return = (
                     order_courier_return_count > 0 and order_customer_return_count == 0
                 )
@@ -373,9 +384,16 @@ class SKUSummary:
                     order_gross_sales if order_return_qty == 0 else Decimal(0)
                 )
 
-                order_promo_discount = self.calculator.calculate_promo_discount(
-                    [order]
-                ) or Decimal(0)
+                # --------------------------------------
+                # ORDER PROMOTION
+                # --------------------------------------
+
+                if order_return_qty > 0:
+                    order_promo_discount = Decimal(0)
+                else:
+                    order_promo_discount = self.calculator.calculate_promo_discount(
+                        [order]
+                    ) or Decimal(0)
 
                 # --------------------------------------
                 # ORDER FEES
@@ -454,16 +472,6 @@ class SKUSummary:
             # ==========================================
             # PROFIT %
             # ==========================================
-            #
-            # Normal SKU:
-            #     Profit / Net Sales
-            #
-            # SKU with only returned sales:
-            #     Profit / Gross Sales
-            #
-            # This also allows customer-return losses
-            # to appear as negative percentages.
-            # ==========================================
 
             profit_percentage = self.calculator.calculate_profit_percentage(
                 profit=profit,
@@ -520,8 +528,8 @@ class SKUSummary:
                     "mp_fees": mp_fees,
                     "commission": commission,
                     "fixed_fee": fixed_fee,
-                    "pick_and_pack_fee": (pick_and_pack_fee),
-                    "payment_gateway_fee": (payment_gateway_fee),
+                    "pick_and_pack_fee": pick_and_pack_fee,
+                    "payment_gateway_fee": payment_gateway_fee,
                     # ----------------------------------
                     # SHIPPING
                     # ----------------------------------

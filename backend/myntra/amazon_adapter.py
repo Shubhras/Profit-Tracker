@@ -47,15 +47,39 @@ class MyntraAmazonProfitAdapter:
 
     # =========================================================
     # STYLE -> AMAZON PARENT ASIN SHAPE
+    @classmethod
+    def _get_image_map(cls):
+        try:
+            from myntra.models import MyntraListing
+            listings = MyntraListing.objects.filter(image_url__isnull=False).exclude(image_url="")
+            style_map = {}
+            sku_map = {}
+            for l in listings.values("style_id", "seller_sku_code", "image_url"):
+                img = l["image_url"]
+                if img:
+                    if l.get("style_id") and str(l["style_id"]) not in style_map:
+                        style_map[str(l["style_id"])] = img
+                    if l.get("seller_sku_code") and str(l["seller_sku_code"]) not in sku_map:
+                        sku_map[str(l["seller_sku_code"])] = img
+            return style_map, sku_map
+        except Exception:
+            return {}, {}
+
+    # =========================================================
+    # STYLE -> AMAZON PARENT ASIN SHAPE
     # =========================================================
 
     @classmethod
-    def style_row(cls, row):
+    def style_row(cls, row, image_maps=None):
         style_id = str(row.get("style_id") or "")
 
         gross_qty = cls._number(row.get("gross_qty"))
         net_qty = cls._number(row.get("net_qty"))
         return_qty = cls._number(row.get("returnqty"))
+
+        image_url = row.get("image_url")
+        if not image_url and image_maps and isinstance(image_maps, tuple) and len(image_maps) == 2:
+            image_url = image_maps[0].get(style_id)
 
         return {
             # -------------------------------------------------
@@ -69,10 +93,10 @@ class MyntraAmazonProfitAdapter:
             "id": style_id,
             "name": row.get("style_name") or "",
             "brand": row.get("brand") or "",
-            # Myntra image support can be added later.
-            "image_url": None,
+            "image_url": image_url or None,
             "channel": cls.CHANNEL,
             "channel1": cls.CHANNEL,
+
             # Don't invent a Myntra product URL here.
             "redirecturl": f"https://myntra.com/{style_id}",
             # -------------------------------------------------
@@ -194,7 +218,7 @@ class MyntraAmazonProfitAdapter:
     # =========================================================
 
     @classmethod
-    def sku_row(cls, row):
+    def sku_row(cls, row, image_maps=None):
         seller_sku = str(row.get("seller_sku") or row.get("seller_sku_code") or "")
 
         style_id = str(row.get("style_id") or "")
@@ -202,6 +226,10 @@ class MyntraAmazonProfitAdapter:
         gross_qty = cls._number(row.get("gross_qty"))
         net_qty = cls._number(row.get("net_qty"))
         return_qty = cls._number(row.get("returnqty"))
+
+        image_url = row.get("image_url")
+        if not image_url and image_maps and isinstance(image_maps, tuple) and len(image_maps) == 2:
+            image_url = image_maps[1].get(seller_sku) or image_maps[0].get(style_id)
 
         return {
             # ==========================================
@@ -216,7 +244,7 @@ class MyntraAmazonProfitAdapter:
             "id": seller_sku,
             "name": row.get("style_name") or "",
             "brand": row.get("brand") or "",
-            "image_url": None,
+            "image_url": image_url or None,
             "channel": cls.CHANNEL,
             "channel1": cls.CHANNEL,
             "redirecturl": f"https://myntra.com/{style_id}",
@@ -325,7 +353,7 @@ class MyntraAmazonProfitAdapter:
     # ORDER -> AMAZON ORDER ID SHAPE
     # =========================================================
     @classmethod
-    def order_row(cls, row):
+    def order_row(cls, row, image_maps=None):
         order_id = str(row.get("order_line_id") or row.get("order_id") or "")
 
         seller_sku = str(row.get("seller_sku") or row.get("seller_sku_code") or "")
@@ -335,6 +363,10 @@ class MyntraAmazonProfitAdapter:
         gross_qty = cls._number(row.get("gross_qty"))
         net_qty = cls._number(row.get("net_qty"))
         return_qty = cls._number(row.get("returnqty"))
+
+        image_url = row.get("image_url")
+        if not image_url and image_maps and isinstance(image_maps, tuple) and len(image_maps) == 2:
+            image_url = image_maps[1].get(seller_sku) or image_maps[0].get(style_id)
 
         return {
             # ==========================================
@@ -350,10 +382,11 @@ class MyntraAmazonProfitAdapter:
             "parent_asin": style_id,
             "name": row.get("style_name") or "",
             "brand": row.get("brand") or "",
-            "image_url": None,
+            "image_url": image_url or None,
             "channel": cls.CHANNEL,
             "channel1": cls.CHANNEL,
             "redirecturl": f"https://myntra.com/{style_id}",
+
             # ==========================================
             # QUANTITY
             # ==========================================
@@ -668,6 +701,7 @@ class MyntraAmazonProfitAdapter:
         end = start + page_size
 
         page_rows = rows[start:end]
+        image_maps = cls._get_image_map()
 
         return {
             "status": True,
@@ -681,7 +715,7 @@ class MyntraAmazonProfitAdapter:
             # totals are calculated across the complete filtered
             # result, not only the current page.
             "totals": cls.style_totals(rows),
-            "response": [cls.style_row(row) for row in page_rows],
+            "response": [cls.style_row(row, image_maps=image_maps) for row in page_rows],
         }
 
     @classmethod
@@ -709,6 +743,7 @@ class MyntraAmazonProfitAdapter:
         end = start + page_size
 
         page_rows = rows[start:end]
+        image_maps = cls._get_image_map()
 
         return {
             "status": True,
@@ -721,7 +756,7 @@ class MyntraAmazonProfitAdapter:
             # Same totals function works because
             # SKU summary uses the same financial field names.
             "totals": cls.style_totals(rows),
-            "response": [cls.sku_row(row) for row in page_rows],
+            "response": [cls.sku_row(row, image_maps=image_maps) for row in page_rows],
         }
 
     @classmethod
@@ -760,6 +795,7 @@ class MyntraAmazonProfitAdapter:
         end = start + page_size
 
         page_rows = rows[start:end]
+        image_maps = cls._get_image_map()
 
         return {
             "status": True,
@@ -770,7 +806,7 @@ class MyntraAmazonProfitAdapter:
                 "count": total_count,
             },
             "totals": cls.order_totals(rows),
-            "response": [cls.order_row(row) for row in page_rows],
+            "response": [cls.order_row(row, image_maps=image_maps) for row in page_rows],
         }
 
 

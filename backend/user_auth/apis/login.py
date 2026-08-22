@@ -8,8 +8,31 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from subscription.models import UserSubscription
 from user_auth.models import SubUser, UserModulePermission
 
+try:
+    from amazon_auth.models import AmazonAccount
+except ImportError:
+    AmazonAccount = None
+
+try:
+    from myntra.models import MyntraConnection
+except ImportError:
+    MyntraConnection = None
+
 
 class UserLoginAPI(APIView):
+    def get_connected_channels(self, obj):
+        subuser = SubUser.objects.filter(user=obj).first()
+        target_user = subuser.parent if subuser else obj
+        channels = []
+        if AmazonAccount and AmazonAccount.objects.filter(user=target_user).exists():
+            channels.append("Amazon-India")
+        if MyntraConnection and MyntraConnection.objects.filter(user=target_user).exists():
+            channels.append("Myntra")
+        # Fallback default if no seller account is linked yet
+        if not channels:
+            channels = ["Amazon-India"]
+        return channels
+
     def post(self, request):
         email = request.data.get("email")
         password = request.data.get("password")
@@ -146,6 +169,9 @@ class UserLoginAPI(APIView):
                 "is_client_user": is_client_user,
                 "is_sub_user": is_sub_user,
                 "role": user_role,
+
+                # Connected channels
+                "connected_channels": self.get_connected_channels(user),
 
                 # Subscription details
                 "has_subscription": has_subscription,

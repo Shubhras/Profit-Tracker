@@ -275,8 +275,14 @@ class SubUserListAPIView(APIView):
     def get(self, request):
         try:
             search_query = request.query_params.get("search") or request.query_params.get("q")
-            queryset = SubUser.objects.filter(parent=request.user)
+            base_queryset = SubUser.objects.filter(parent=request.user)
 
+            total_users = base_queryset.count()
+            active_users = base_queryset.filter(user__is_active=True).count()
+            pending_users = base_queryset.filter(user__is_active=False).count()
+            owner_users = 1
+
+            queryset = base_queryset
             if search_query:
                 queryset = queryset.filter(
                     models.Q(name__icontains=search_query) | 
@@ -286,10 +292,23 @@ class SubUserListAPIView(APIView):
 
             queryset = queryset.order_by("-created_at")
             serializer = SubUserSerializer(queryset, many=True)
+
+            summary = {
+                "total_users": total_users,
+                "active_users": active_users,
+                "pending_users": pending_users,
+                "owner_users": owner_users,
+            }
+
             return Response({
                 "statusCode": 200,
                 "status": True,
                 "message": "Sub-users fetched successfully.",
+                "summary": summary,
+                "total_users": total_users,
+                "active_users": active_users,
+                "pending_users": pending_users,
+                "owner_users": owner_users,
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
         except Exception as e:

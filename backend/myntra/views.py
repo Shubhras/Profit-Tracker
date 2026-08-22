@@ -15,6 +15,7 @@ from user_auth.models import get_effective_user
 from .services.csv_parser import safe_float
 from .services.myntra_client import MyntraClient
 from myntra.services.initial_sync_service import MyntraInitialSyncService
+from myntra.tasks import task_run_initial_myntra_sync
 
 
 # ✅ 1️⃣ FULL AUTO SYNC (MAIN API)
@@ -490,17 +491,10 @@ class MyntraConnectionView(APIView):
         
         if created:
             try:
-                MyntraInitialSyncService(connection).run()
+                task_run_initial_myntra_sync.delay(connection_id=connection.id)
         
             except Exception as exc:
-                return Response(
-                    {
-                        "status": "FAILED",
-                        "connected": True,
-                        "error": f"Initial sync failed: {str(exc)}",
-                    },
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
+                print(f"FAILED TO DISPATCH CELERY INITIAL MYNTRA SYNC: {connection.id} - {exc}")
 
         # =================================================
         # RESPONSE

@@ -15,6 +15,7 @@ from .module_submodule import *
 from .notification import *
 from .support_ticket import *
 from .sub_user import *
+from amazon_auth.growth_opportunities import GrowthOpportunitiesAPIView
 
 
 from admin_auth.apis.api_logs import AdminApiLogsAPI
@@ -23,6 +24,7 @@ urlpatterns = [
     path('register/', UserRegisterAPI.as_view()),
     path('login/', UserLoginAPI.as_view()),
     path('profile/', UserProfileAPI.as_view()),
+    # path('growth-opportunities/', GrowthOpportunitiesAPIView.as_view(), name='user-growth-opportunities'),
     path("update-profile/", UserUpdateProfileAPI.as_view()),
     path('change-password/', UserChangePasswordAPI.as_view()),
     path('forgot-password/', UserForgotPasswordAPI.as_view()),

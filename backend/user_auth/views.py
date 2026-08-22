@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from amazon_ads.models import AmazonAdsAccount
 from amazon_auth.models import AmazonAccount
+from blinkit.models import BlinkitAccount
 from myntra.models import MyntraConnection
 
 
@@ -16,6 +17,7 @@ class ConnectedMarketplacesView(APIView):
         amazon_count = AmazonAccount.objects.filter(user=user).count()
         amazon_ads_count = AmazonAdsAccount.objects.filter(user=user, is_primary=True).count()
         myntra_count = MyntraConnection.objects.filter(user=user).count()
+        blinkit_count = BlinkitAccount.objects.filter(user=user).count()
 
         #  Default marketplaces list
         marketplaces = [
@@ -55,6 +57,12 @@ class ConnectedMarketplacesView(APIView):
                     marketplace["status"] = "connected"
                     marketplace["connectedCount"] = myntra_count
 
+        for marketplace in marketplaces:
+            if marketplace["id"] == "blinkit":
+                if blinkit_count > 0:
+                    marketplace["status"] = "connected"
+                    marketplace["connectedCount"] = blinkit_count
+                    
         return Response({
             "status": "success",
             "data": marketplaces

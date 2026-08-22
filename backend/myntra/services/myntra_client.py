@@ -443,3 +443,40 @@ class MyntraClient:
         response = requests.get(url, timeout=30)
         response.raise_for_status()
         return response.content
+
+    def search_catalog_products(
+        self,
+        query=None,
+        seller_approval_status="APR",
+        start=0,
+        cursor_mark="*",
+    ):
+        """
+        Fetch product catalog details including imageCollection from Myntra API.
+        URL format: /partner/catalog/v2/product/search/nofilter
+        """
+        url = f"{self.base_url}/partner/catalog/v2/product/search/nofilter"
+
+        params = {
+            "start": start,
+            "cursorMark": cursor_mark,
+        }
+
+        if query:
+            params["q"] = query
+
+        if seller_approval_status:
+            params["sellerApprovalStatus"] = seller_approval_status
+
+        try:
+            response = requests.get(
+                url,
+                headers=self.headers(),
+                params=params,
+                timeout=15,
+            )
+            return response.json()
+        except Exception as e:
+            logger.error(f"Myntra catalog search failed: {str(e)}")
+            return {"error": str(e)}
+
