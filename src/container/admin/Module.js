@@ -214,7 +214,7 @@ function Module() {
           </div>
         </div>
       </div> */}
-      <div className="min-h-screen p-3 px-2">
+      <div className="min-h-screen p-4">
         <div className="flex gap-5 items-start">
           <div className="flex-1 bg-white rounded-2xl border border-[#e5e7eb] p-6">
             {/* Header */}

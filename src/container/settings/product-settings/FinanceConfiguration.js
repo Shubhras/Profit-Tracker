@@ -7,6 +7,11 @@ import {
   QuestionCircleOutlined,
   FileTextOutlined,
   CloudUploadOutlined,
+  EyeOutlined,
+  DownloadOutlined,
+  CheckCircleOutlined,
+  SyncOutlined,
+  CloseCircleOutlined,
 } from '@ant-design/icons';
 import { PageHeader } from '../../../components/page-headers/page-headers';
 
@@ -135,11 +140,43 @@ export default function FinanceConfiguration() {
     message.success('Configuration updated successfully.');
   };
 
+  const recentUploads = [
+    {
+      reportName: 'Transaction Report',
+      reportType: 'Transaction Report',
+      fileName: 'blinkit_txn_20Aug.csv',
+      uploadedOn: '20 Aug 2026, 11:30 AM',
+      status: 'Processed',
+      records: '12,542',
+    },
+    {
+      reportName: 'Ads Report',
+      reportType: 'Ads Report',
+      fileName: 'blinkit_ads_20Aug.xlsx',
+      uploadedOn: '20 Aug 2026, 10:15 AM',
+      status: 'Processed',
+      records: '8,765',
+    },
+    {
+      reportName: 'Settlement Report',
+      reportType: 'Settlement Report',
+      fileName: 'blinkit_settlement_19Aug.xlsx',
+      uploadedOn: '19 Aug 2026, 06:45 AM',
+      status: 'Processing',
+      records: '—',
+    },
+    {
+      reportName: 'Fee Report',
+      reportType: 'Fee Report',
+      fileName: 'blinkit_fee_18Aug.xlsx',
+      uploadedOn: '18 Aug 2026, 09:20 AM',
+      status: 'Failed',
+      records: '—',
+    },
+  ];
+
   return (
     <>
-      {/* =========================================================
-          PAGE HEADER
-      ========================================================== */}
       <div className="px-5 xl:px-[15px] pt-2 pb-5">
         <div className="flex items-start justify-between gap-6 lg:flex-col">
           {/* LEFT SIDE */}
@@ -152,60 +189,26 @@ export default function FinanceConfiguration() {
             </p>
           </div>
 
-          {/* =====================================================
-              HOW IT WORKS CARD
-          ====================================================== */}
           <div
-            className="
-              w-[410px]
-              min-h-[92px]
-              bg-white
-              border border-[#E8EAED]
-              rounded-[8px]
-              px-4
-              py-3
-              flex
-              items-start
-              gap-3
-              shadow-[0_1px_3px_rgba(0,0,0,0.04)]
-              lg:w-full
+            className="w-[500px] min-h-[92px] bg-white border border-[#E8EAED] rounded-[8px] px-4 py-3 flex items-start gap-3 shadow-[0_1px_3px_rgba(0,0,0,0.04)] lg:w-full
             "
           >
             {/* ICON */}
-            <div
-              className="
-                w-[38px]
-                h-[38px]
-                rounded-full
-                bg-[#ECFDF5]
-                flex
-                items-center
-                justify-center
-                shrink-0
-              "
-            >
+            <div className="w-[38px] h-[38px] rounded-full bg-[#ECFDF5] flex items-center justify-center shrink-0">
               <QuestionCircleOutlined className="text-[19px] text-[#22C55E]" />
             </div>
 
             {/* CONTENT */}
             <div>
-              <h3 className="text-[13px] font-semibold text-[#1F2937] mb-[3px]">How it works?</h3>
+              <h3 className="text-[15px] font-semibold text-[#1F2937] mb-[3px]">How it works?</h3>
 
-              <p className="text-[12px] text-[#6B7280] leading-[18px] mb-[2px]">
+              <p className="text-[13px] text-[#6B7280] leading-[18px] mb-2">
                 Update your finance settings → We apply the configuration → It appears in your profit calculations.
               </p>
 
               <button
                 type="button"
-                className="
-                  text-[12px]
-                  text-[#1683D8]
-                  font-medium
-                  flex
-                  items-center
-                  gap-1
-                  hover:text-[#0F6FB8]
-                "
+                className="text-[12px] text-[#1683D8] font-medium flex items-center gap-1 hover:text-[#0F6FB8]"
               >
                 View Guide
                 <span className="text-[14px]">→</span>
@@ -215,19 +218,8 @@ export default function FinanceConfiguration() {
         </div>
       </div>
 
-      {/* =========================================================
-          MAIN CONTENT
-      ========================================================== */}
       <main className="px-5 xl:px-[15px] pb-[30px]">
-        <div
-          className="
-            bg-white
-            border border-[#E8EAED]
-            rounded-[8px]
-            shadow-[0_1px_3px_rgba(0,0,0,0.03)]
-            overflow-hidden
-          "
-        >
+        <div className="bg-white border border-[#E8EAED] rounded-[8px] shadow-[0_1px_3px_rgba(0,0,0,0.03)] overflow-hidden">
           <div className="px-4 pt-4 pb-4">
             {/* ================= SECTION TITLE ================= */}
             <div className="mb-4">
@@ -236,7 +228,7 @@ export default function FinanceConfiguration() {
 
             <div className="grid grid-cols-[180px_190px_1fr] gap-5 items-start">
               <div>
-                <label className="block text-[10px] font-medium text-[#374151] mb-[6px]">Min. Claim %</label>
+                <label className="block text-[12px] font-medium text-[#374151] mb-[6px]">Min. Claim %</label>
 
                 <div
                   className="
@@ -316,7 +308,7 @@ export default function FinanceConfiguration() {
         finance configuration functionality remains intact.
     ====================================================== */}
               <div>
-                <label className="block text-[10px] font-medium text-[#374151] mb-[6px]">Configuration Type</label>
+                <label className="block text-[12px] font-medium text-[#374151] mb-[6px]">Configuration Type</label>
 
                 <div
                   className="
@@ -354,95 +346,54 @@ export default function FinanceConfiguration() {
                 </div>
               </div>
 
-              {/* =====================================================
-        UPLOAD FILE
-    ====================================================== */}
               <div>
-                <label className="block text-[10px] font-medium text-[#374151] mb-[6px]">Upload File</label>
+                <label className="block text-[12px] font-medium text-[#374151] mb-[6px]">Upload File</label>
 
                 <div
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={handleDrop}
-                  className="
-          h-[114px]
-          w-full
-          border
-          border-[#D9DDE3]
-          rounded-[5px]
-          bg-white
-          flex
-          flex-col
-          items-center
-          justify-center
-          text-center
-          transition-all
-          hover:border-[#35B77B]
-        "
+                  className="h-[114px] w-full border border-[#D9DDE3] rounded-[5px] bg-white flex items-center justify-center gap-3 transition-all hover:border-[#35B77B]"
                 >
-                  {/* UPLOAD ICON */}
-                  <div className="mb-[3px]">
-                    <CloudUploadOutlined className="text-[28px] text-[#35B77B]" />
+                  {/* UPLOAD ICON - LEFT */}
+                  <div className="shrink-0">
+                    <CloudUploadOutlined className="text-[40px] text-[#35B77B]" />
                   </div>
 
-                  {/* DRAG TEXT */}
-                  <p className="text-[10px] text-[#6B7280] mb-[2px]">Drag & drop your file here</p>
+                  {/* CONTENT - RIGHT */}
+                  <div className="flex flex-col items-center justify-center text-center">
+                    {/* DRAG TEXT */}
+                    <p className="text-[12px] text-[#6B7280] mb-[3px]">Drag & drop your file here</p>
 
-                  <p className="text-[9px] text-[#9CA3AF] mb-[5px]">or</p>
+                    <p className="text-[11px] text-[#9CA3AF] mb-[4px]">or</p>
 
-                  {/* FILE INPUT */}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".csv,.xlsx,.xls"
-                    className="hidden"
-                    onChange={(e) => handleFileSelect(e.target.files?.[0])}
-                  />
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".csv,.xlsx,.xls"
+                      className="hidden"
+                      onChange={(e) => handleFileSelect(e.target.files?.[0])}
+                    />
 
-                  {/* BROWSE BUTTON */}
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="
-            h-[27px]
-            px-3.5
-            border
-            border-[#35B77B]
-            rounded-[4px]
-            bg-white
-            text-[#35B77B]
-            text-[10px]
-            font-semibold
-            hover:bg-[#ECFDF5]
-            transition-all
-          "
-                  >
-                    Browse File
-                  </button>
+                    {/* BROWSE BUTTON */}
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="h-[27px] px-5 border border-[#35B77B] rounded-[4px] bg-white text-[#35B77B] text-[11px] font-semibold hover:bg-[#ECFDF5] transition-all"
+                    >
+                      Browse File
+                    </button>
 
-                  {/* FILE INFO */}
-                  <p className="text-[8px] text-[#9CA3AF] mt-[5px]">
-                    Supports .csv, .xlsx, .xls
-                    <span className="mx-1">|</span>
-                    Max file size 25MB
-                  </p>
+                    {/* FILE INFO */}
+                    <p className="text-[11px] text-[#9CA3AF] mt-[5px]">
+                      Supports .csv, .xlsx, .xls
+                      <span className="mx-1">|</span>
+                      Max file size 25MB
+                    </p>
+                  </div>
                 </div>
 
-                {/* SELECTED FILE */}
                 {selectedFile && (
-                  <div
-                    className="
-            mt-1.5
-            px-2.5
-            py-1.5
-            rounded-[4px]
-            bg-[#F0FDF4]
-            border
-            border-[#BBF7D0]
-            flex
-            items-center
-            justify-between
-          "
-                  >
+                  <div className="mt-1.5 px-2.5 py-1.5 rounded-[4px] bg-[#F0FDF4] border border-[#BBF7D0] flex items-center justify-between">
                     <div className="flex items-center gap-1.5 min-w-0">
                       <FileTextOutlined className="text-[11px] text-[#22C55E]" />
 
@@ -458,11 +409,7 @@ export default function FinanceConfiguration() {
                           fileInputRef.current.value = '';
                         }
                       }}
-                      className="
-              text-[#9CA3AF]
-              hover:text-[#EF4444]
-              transition-colors
-            "
+                      className="text-[#9CA3AF] hover:text-[#EF4444] transition-colors"
                     >
                       <CloseOutlined className="text-[9px]" />
                     </button>
@@ -471,36 +418,16 @@ export default function FinanceConfiguration() {
               </div>
             </div>
 
-            {/* =========================================================
-      BOTTOM INFO + ACTION
-  ========================================================= */}
-            <div
-              className="
-      mt-3
-      pt-3
-      border-t
-      border-[#F0F1F3]
-      flex
-      items-center
-      justify-between
-      gap-4
-    "
-            >
+            <div className="mt-3 pt-3 border-t border-[#F0F1F3] flex items-center justify-between gap-4">
               {/* INFO */}
               <div className="flex items-center gap-1.5 min-w-0">
-                <ExclamationCircleOutlined className="text-[12px] text-[#6B7280]" />
+                <ExclamationCircleOutlined className="text-[14px] text-[#6B7280]" />
 
-                <span className="text-[9px] text-[#4B5563]">Make sure your file is in the correct format.</span>
+                <span className="text-[12px] text-[#4B5563]">Make sure your file is in the correct format.</span>
 
                 <button
                   type="button"
-                  className="
-          text-[9px]
-          text-[#1683D8]
-          font-medium
-          hover:underline
-          whitespace-nowrap
-        "
+                  className="text-[12px] text-[#1683D8] font-medium hover:underline whitespace-nowrap"
                 >
                   View format guide
                 </button>
@@ -510,24 +437,8 @@ export default function FinanceConfiguration() {
               <button
                 type="button"
                 onClick={handleUpload}
-                className="
-        h-[31px]
-        px-4
-        rounded-[5px]
-        bg-[#16A36A]
-        hover:bg-[#128A59]
-        text-white
-        text-[10px]
-        font-semibold
-        flex
-        items-center
-        gap-1.5
-        shadow-[0_2px_5px_rgba(22,163,106,0.18)]
-        transition-all
-        whitespace-nowrap
-      "
+                className="h-[31px] px-4 rounded-[5px] bg-[#16A36A] hover:bg-[#128A59] text-white text-[11px] font-semibold flex items-center gap-1.5 shadow-[0_2px_5px_rgba(22,163,106,0.18)] transition-all whitespace-nowrap"
               >
-                <UploadOutlined className="text-[11px]" />
                 Upload & Process
               </button>
             </div>
@@ -536,8 +447,181 @@ export default function FinanceConfiguration() {
       </main>
 
       {/* =========================================================
-          CHANGE CONFIGURATION MODAL
-      ========================================================== */}
+    RECENT UPLOADS
+========================================================= */}
+      <section className="px-5 xl:px-[15px] pb-[30px]">
+        <div className="bg-white border border-[#E8EAED] rounded-[8px] shadow-[0_1px_3px_rgba(0,0,0,0.03)] overflow-hidden">
+          {/* SECTION HEADER */}
+          <div className="px-4 pt-4 pb-3 flex items-center justify-between">
+            <h3 className="text-[15px] font-semibold text-[#1F2937] mb-0">2. Recent Uploads</h3>
+
+            <button
+              type="button"
+              className="text-[11px] text-[#1683D8] font-medium flex items-center gap-1 hover:text-[#0F6FB8] transition-colors"
+            >
+              View All Uploads
+              <span className="text-[14px] leading-none">→</span>
+            </button>
+          </div>
+
+          {/* TABLE WRAPPER */}
+          <div className="px-4 pb-4 overflow-x-auto">
+            <div className="min-w-[1000px] border border-[#EEF0F2] rounded-[6px] overflow-hidden">
+              {/* TABLE HEADER */}
+              <div className="grid grid-cols-[1.2fr_1fr_1.2fr_1.35fr_1.3fr_.9fr_.75fr_.65fr] bg-[#F8FAFC] border-b border-[#E8EAED]">
+                <div className="px-3 py-2.5 text-[11px] font-semibold text-[#374151]">Report Name</div>
+
+                <div className="px-3 py-2.5 text-[11px] font-semibold text-[#374151]">Marketplace</div>
+
+                <div className="px-3 py-2.5 text-[11px] font-semibold text-[#374151]">Report Type</div>
+
+                <div className="px-3 py-2.5 text-[11px] font-semibold text-[#374151]">File Name</div>
+
+                <div className="px-3 py-2.5 text-[11px] font-semibold text-[#374151]">Uploaded On</div>
+
+                <div className="px-3 py-2.5 text-[11px] font-semibold text-[#374151]">Status</div>
+
+                <div className="px-3 py-2.5 text-[11px] font-semibold text-[#374151]">Records</div>
+
+                <div className="px-3 py-2.5 text-[11px] font-semibold text-[#374151]">Actions</div>
+              </div>
+
+              {/* TABLE ROWS */}
+              {recentUploads.map((item, index) => (
+                <div
+                  key={`${item.fileName}-${index}`}
+                  className="grid grid-cols-[1.2fr_1fr_1.2fr_1.35fr_1.3fr_.9fr_.75fr_.65fr] min-h-[45px] items-center border-b border-[#F0F1F3] last:border-b-0 hover:bg-[#FAFCFB] transition-colors"
+                >
+                  {/* REPORT NAME */}
+                  <div className="px-3 flex items-center gap-2 min-w-0">
+                    <div
+                      className={`
+                  w-[25px] h-[25px] rounded-[5px]
+                  flex items-center justify-center shrink-0
+                  ${
+                    item.reportName === 'Transaction Report'
+                      ? 'bg-[#E8F8F1]'
+                      : item.reportName === 'Ads Report'
+                      ? 'bg-[#F1EAFE]'
+                      : item.reportName === 'Settlement Report'
+                      ? 'bg-[#FFF7D6]'
+                      : 'bg-[#FEEBEC]'
+                  }
+                `}
+                    >
+                      <FileTextOutlined
+                        className={`
+                    text-[12px]
+                    ${
+                      item.reportName === 'Transaction Report'
+                        ? 'text-[#35B77B]'
+                        : item.reportName === 'Ads Report'
+                        ? 'text-[#8B5CF6]'
+                        : item.reportName === 'Settlement Report'
+                        ? 'text-[#EAB308]'
+                        : 'text-[#EF4444]'
+                    }
+                  `}
+                      />
+                    </div>
+
+                    <span className="text-[11px] text-[#374151] font-medium truncate">{item.reportName}</span>
+                  </div>
+
+                  {/* MARKETPLACE */}
+                  <div className="px-3 flex items-center gap-1.5">
+                    <div className="w-[18px] h-[18px] rounded-[3px] bg-[#FFF7D6] flex items-center justify-center overflow-hidden">
+                      <img src="/icons/blinkit.png" alt="Blinkit" className="w-full h-full object-contain" />
+                    </div>
+
+                    <span className="text-[11px] text-[#4B5563]">Blinkit</span>
+                  </div>
+
+                  {/* REPORT TYPE */}
+                  <div className="px-3 min-w-0">
+                    <span className="text-[11px] text-[#4B5563] truncate block">{item.reportType}</span>
+                  </div>
+
+                  {/* FILE NAME */}
+                  <div className="px-3 min-w-0">
+                    <span className="text-[11px] text-[#4B5563] truncate block">{item.fileName}</span>
+                  </div>
+
+                  {/* UPLOADED ON */}
+                  <div className="px-3 min-w-0">
+                    <span className="text-[11px] text-[#4B5563] whitespace-nowrap">{item.uploadedOn}</span>
+                  </div>
+
+                  {/* STATUS */}
+                  <div className="px-3">
+                    {item.status === 'Processed' && (
+                      <span className="inline-flex items-center gap-1 h-[21px] px-2 rounded-[4px] border border-[#A7E8CB] bg-[#ECFDF5] text-[#159669] text-[8px] font-medium whitespace-nowrap">
+                        <CheckCircleOutlined className="text-[9px]" />
+                        Processed
+                      </span>
+                    )}
+
+                    {item.status === 'Processing' && (
+                      <span className="inline-flex items-center gap-1 h-[21px] px-2 rounded-[4px] border border-[#A9CFF7] bg-[#EFF6FF] text-[#287BC5] text-[8px] font-medium whitespace-nowrap">
+                        <SyncOutlined spin className="text-[9px]" />
+                        Processing
+                      </span>
+                    )}
+
+                    {item.status === 'Failed' && (
+                      <span className="inline-flex items-center gap-1 h-[21px] px-2 rounded-[4px] border border-[#F5B5B5] bg-[#FEF2F2] text-[#E54848] text-[8px] font-medium whitespace-nowrap">
+                        <CloseCircleOutlined className="text-[9px]" />
+                        Failed
+                      </span>
+                    )}
+                  </div>
+
+                  {/* RECORDS */}
+                  <div className="px-3">
+                    <span className="text-[11px] text-[#4B5563]">{item.records}</span>
+                  </div>
+
+                  {/* ACTIONS */}
+                  <div className="px-3 flex items-center gap-3">
+                    {item.status === 'Processed' && (
+                      <>
+                        <button
+                          type="button"
+                          title="View"
+                          className="text-[#64748B] hover:text-[#1683D8] transition-colors"
+                        >
+                          <EyeOutlined className="text-[12px]" />
+                        </button>
+
+                        <button
+                          type="button"
+                          title="Download"
+                          className="text-[#64748B] hover:text-[#1683D8] transition-colors"
+                        >
+                          <DownloadOutlined className="text-[12px]" />
+                        </button>
+                      </>
+                    )}
+
+                    {item.status === 'Processing' && <span className="text-[11px] text-[#9CA3AF]">—</span>}
+
+                    {item.status === 'Failed' && (
+                      <button
+                        type="button"
+                        title="View Error"
+                        className="text-[#64748B] hover:text-[#E54848] transition-colors"
+                      >
+                        <EyeOutlined className="text-[12px]" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       <Modal
         title="Change Configuration Settings"
         open={isModalOpen}
@@ -567,10 +651,6 @@ export default function FinanceConfiguration() {
           </div>
         </div>
       </Modal>
-
-      {/* =========================================================
-          UPLOAD MODAL
-      ========================================================== */}
       <Modal
         open={uploadModal}
         onCancel={() => setUploadModal(false)}

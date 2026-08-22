@@ -19,7 +19,7 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
   const channelLogoMap = {
     'Amazon-India': '/icons/amazon.svg',
     'Myntra-India': '/icons/myntraLogo.jpg',
-    'Myntra': '/icons/myntraLogo.jpg',
+    Myntra: '/icons/myntraLogo.jpg',
   };
 
   const [isFieldModalOpen, setIsFieldModalOpen] = useState(false);

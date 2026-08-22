@@ -56,9 +56,9 @@ export default function ProfitDetailsView() {
 
   const channelLogoMap = {
     'Amazon-India': '/icons/amazon.svg',
-    'Amazon': '/icons/amazon.svg',
+    Amazon: '/icons/amazon.svg',
     'Myntra-India': '/icons/myntraLogo.jpg',
-    'Myntra': '/icons/myntraLogo.jpg',
+    Myntra: '/icons/myntraLogo.jpg',
   };
 
   const apipayload = {
