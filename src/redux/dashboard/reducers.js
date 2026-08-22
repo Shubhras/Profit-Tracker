@@ -50,6 +50,10 @@ const {
   PROFIT_SKU_ID_BEGIN,
   PROFIT_SKU_ID_SUCCESS,
   PROFIT_SKU_ID_ERR,
+
+  ACTION_REQUIRED_BEGIN,
+  ACTION_REQUIRED_SUCCESS,
+  ACTION_REQUIRED_ERR,
 } = actions;
 
 const initialState = {
@@ -64,6 +68,7 @@ const initialState = {
   getsupportTickets: [],
   getTicketsDetails: [],
   getProfitSkuData: [],
+  getActionRequired: [],
   error: null,
   dateRange: null,
   search: '',
@@ -333,6 +338,27 @@ const dashboardReducer = (state = initialState, action) => {
       };
 
     case PROFIT_SKU_ID_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case ACTION_REQUIRED_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case ACTION_REQUIRED_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        getActionRequired: action.data,
+      };
+
+    case ACTION_REQUIRED_ERR:
       return {
         ...state,
         loading: false,

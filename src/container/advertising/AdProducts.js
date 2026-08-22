@@ -383,7 +383,7 @@ function AdProducts() {
 
   return (
     <>
-      <div className="p-2">
+      <div className="px-4 py-1">
         <div className="mt-3 mb-3 rounded-2xl border border-[#e5e7eb] bg-white shadow-sm overflow-hidden">
           {/* Header */}
           {/* Header */}

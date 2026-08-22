@@ -3,7 +3,6 @@ import { Table, Card, Modal, Checkbox, Tooltip, Dropdown, Button } from 'antd';
 import {
   RightOutlined,
   SearchOutlined,
-  FilterOutlined,
   EyeOutlined,
   SettingOutlined,
   CloseCircleOutlined,
@@ -18,11 +17,7 @@ import { useDispatch, useSelector } from 'react-redux';
 // import ProfitModal from './component/ProfitModal'
 import CalculationModal from '../profit/component/Calculations';
 // import flipkart from "../../assets/icons/flipkart.png";
-import {
-  getProfitDetails,
-  getPaymentReconcileDetails,
-  exportProfitabilityDetails,
-} from '../../redux/dashboard/actionCreator';
+import { getPaymentReconcileDetails, exportProfitabilityDetails } from '../../redux/dashboard/actionCreator';
 
 // import { PageHeader } from '../../components/page-headers/page-headers';
 
@@ -51,7 +46,6 @@ export default function ProfitDetailsView() {
 
   const [previewImage, setPreviewImage] = React.useState('');
   const [previewOpen, setPreviewOpen] = React.useState(false);
-  const [showFilters, setShowFilters] = React.useState(false);
   const [visibleColumns, setVisibleColumns] = React.useState([]);
   const [search, setSearch] = React.useState('');
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
@@ -83,25 +77,6 @@ export default function ProfitDetailsView() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const [filters, setFilters] = React.useState({
-    channel: '',
-    sku: '',
-    productId: '',
-    parentId: '',
-    mkt: '',
-    ads: 'with',
-    gst: 'with',
-    estimate: 'with',
-    expenses: 'with',
-    accountCharges: 'with',
-  });
-  const getMetricFromFilters = () => {
-    return {
-      ads: filters.ads === 'with' ? 'withAds' : 'withoutAds',
-      gst: filters.gst === 'with' ? 'withGst' : 'withoutGst',
-      expense: filters.expenses === 'with' ? 'withExpense' : 'withoutExpense',
-    };
-  };
   const buildPayload = () => {
     return {
       filters: {
@@ -125,7 +100,6 @@ export default function ProfitDetailsView() {
         fromDate: dateRange?.fromDate || null,
         toDate: dateRange?.endDate || null,
       },
-      metric: getMetricFromFilters(),
       pagination: {
         pageNo: pagination.current - 1,
         pageSize: pagination.pageSize,
@@ -529,6 +503,23 @@ export default function ProfitDetailsView() {
       ),
     },
     {
+      title: 'Actual MP Fees',
+      dataIndex: 'actual_fees',
+      align: 'center',
+      width: getDynamicWidth('actual_fees', 90),
+      ellipsis: true,
+      sorter: (a, b) => (parseFloat(a.actual_fees) || 0) - (parseFloat(b.actual_fees) || 0),
+    },
+    {
+      title: 'Fee Leaks',
+      dataIndex: 'fees_leaks',
+      align: 'center',
+      width: getDynamicWidth('fees_leaks', 80),
+      ellipsis: true,
+      sorter: (a, b) => (parseFloat(a.fees_leaks) || 0) - (parseFloat(b.fees_leaks) || 0),
+      render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+    },
+    {
       title: 'Shipping',
       dataIndex: 'shipping',
       align: 'center',
@@ -553,6 +544,23 @@ export default function ProfitDetailsView() {
       ),
     },
     {
+      title: 'Actual Shipping',
+      dataIndex: 'actual_shipping_charges',
+      align: 'center',
+      width: getDynamicWidth('actual_shipping_charges', 90),
+      ellipsis: true,
+      sorter: (a, b) => (parseFloat(a.actual_shipping_charges) || 0) - (parseFloat(b.actual_shipping_charges) || 0),
+    },
+    {
+      title: 'Shipping Leaks',
+      dataIndex: 'shipping_leaks',
+      align: 'center',
+      width: getDynamicWidth('shipping_leaks', 80),
+      ellipsis: true,
+      sorter: (a, b) => (parseFloat(a.shipping_leaks) || 0) - (parseFloat(b.shipping_leaks) || 0),
+      render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+    },
+    {
       title: 'MP-GST',
       dataIndex: 'mp_gst',
       align: 'center',
@@ -560,6 +568,14 @@ export default function ProfitDetailsView() {
       width: getDynamicWidth('mp_gst', 70),
       ellipsis: true,
       sorter: (a, b) => a.mp_gst - b.mp_gst,
+    },
+    {
+      title: 'Actual MP-GST',
+      dataIndex: 'actual_mp_gst',
+      align: 'center',
+      width: getDynamicWidth('actual_mp_gst', 80),
+      ellipsis: true,
+      sorter: (a, b) => (parseFloat(a.actual_mp_gst) || 0) - (parseFloat(b.actual_mp_gst) || 0),
     },
 
     {
@@ -571,18 +587,50 @@ export default function ProfitDetailsView() {
       ellipsis: true,
       sorter: (a, b) => a.tcs - b.tcs,
     },
-    // {
-    //   title: 'Net asp',
-    //   dataIndex: 'netasp',
-    //   align: 'center',
-    //   sorter: (a, b) => a.netasp - b.netasp,
-    // },
-    // {
-    //   title: 'Net discount',
-    //   dataIndex: 'net_discount',
-    //   align: 'center',
-    //   sorter: (a, b) => a.net_discount - b.net_discount,
-    // },
+    {
+      title: 'Actual TCS',
+      dataIndex: 'actual_tcs',
+      align: 'center',
+      width: getDynamicWidth('actual_tcs', 80),
+      ellipsis: true,
+      sorter: (a, b) => (parseFloat(a.actual_tcs) || 0) - (parseFloat(b.actual_tcs) || 0),
+    },
+    {
+      title: 'TCS Leaks',
+      dataIndex: 'tcs_leaks',
+      align: 'center',
+      width: getDynamicWidth('tcs_leaks', 80),
+      ellipsis: true,
+      sorter: (a, b) => (parseFloat(a.tcs_leaks) || 0) - (parseFloat(b.tcs_leaks) || 0),
+      render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+    },
+    {
+      title: 'Expected Settlement',
+      dataIndex: 'settleAmount',
+      align: 'center',
+      // width: 70,
+      width: getDynamicWidth('settleAmount', 70),
+      ellipsis: true,
+      sorter: (a, b) => a.settleAmount - b.settleAmount,
+    },
+
+    {
+      title: 'Bank Settled Amount',
+      dataIndex: 'settlement_paid_in_bank',
+      align: 'center',
+      width: getDynamicWidth('settlement_paid_in_bank', 100),
+      ellipsis: true,
+      sorter: (a, b) => (parseFloat(a.settlement_paid_in_bank) || 0) - (parseFloat(b.settlement_paid_in_bank) || 0),
+    },
+    {
+      title: 'Unsettled Amount',
+      dataIndex: 'unsettled_not_paid',
+      align: 'center',
+      width: getDynamicWidth('unsettled_not_paid', 100),
+      ellipsis: true,
+      sorter: (a, b) => (parseFloat(a.unsettled_not_paid) || 0) - (parseFloat(b.unsettled_not_paid) || 0),
+      render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+    },
 
     {
       title: 'Ad Spend',
@@ -632,15 +680,6 @@ export default function ProfitDetailsView() {
       ellipsis: true,
       sorter: (a, b) => a.claim_amount - b.claim_amount,
     },
-    {
-      title: 'Expected Settlement',
-      dataIndex: 'settleAmount',
-      align: 'center',
-      // width: 70,
-      width: getDynamicWidth('settleAmount', 70),
-      ellipsis: true,
-      sorter: (a, b) => a.settleAmount - b.settleAmount,
-    },
 
     // {
     //   title: 'Gross Profit',
@@ -657,83 +696,6 @@ export default function ProfitDetailsView() {
     //     </button>
     //   ),
     // },
-
-    {
-      title: 'Actual MP Fees',
-      dataIndex: 'actual_fees',
-      align: 'center',
-      width: getDynamicWidth('actual_fees', 90),
-      ellipsis: true,
-      sorter: (a, b) => (parseFloat(a.actual_fees) || 0) - (parseFloat(b.actual_fees) || 0),
-    },
-    {
-      title: 'Fee Leaks',
-      dataIndex: 'fees_leaks',
-      align: 'center',
-      width: getDynamicWidth('fees_leaks', 80),
-      ellipsis: true,
-      sorter: (a, b) => (parseFloat(a.fees_leaks) || 0) - (parseFloat(b.fees_leaks) || 0),
-      render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
-    },
-    {
-      title: 'Actual Shipping',
-      dataIndex: 'actual_shipping_charges',
-      align: 'center',
-      width: getDynamicWidth('actual_shipping_charges', 90),
-      ellipsis: true,
-      sorter: (a, b) => (parseFloat(a.actual_shipping_charges) || 0) - (parseFloat(b.actual_shipping_charges) || 0),
-    },
-    {
-      title: 'Shipping Leaks',
-      dataIndex: 'shipping_leaks',
-      align: 'center',
-      width: getDynamicWidth('shipping_leaks', 80),
-      ellipsis: true,
-      sorter: (a, b) => (parseFloat(a.shipping_leaks) || 0) - (parseFloat(b.shipping_leaks) || 0),
-      render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
-    },
-    {
-      title: 'Actual MP-GST',
-      dataIndex: 'actual_mp_gst',
-      align: 'center',
-      width: getDynamicWidth('actual_mp_gst', 80),
-      ellipsis: true,
-      sorter: (a, b) => (parseFloat(a.actual_mp_gst) || 0) - (parseFloat(b.actual_mp_gst) || 0),
-    },
-    {
-      title: 'Actual TCS',
-      dataIndex: 'actual_tcs',
-      align: 'center',
-      width: getDynamicWidth('actual_tcs', 80),
-      ellipsis: true,
-      sorter: (a, b) => (parseFloat(a.actual_tcs) || 0) - (parseFloat(b.actual_tcs) || 0),
-    },
-    {
-      title: 'TCS Leaks',
-      dataIndex: 'tcs_leaks',
-      align: 'center',
-      width: getDynamicWidth('tcs_leaks', 80),
-      ellipsis: true,
-      sorter: (a, b) => (parseFloat(a.tcs_leaks) || 0) - (parseFloat(b.tcs_leaks) || 0),
-      render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
-    },
-    {
-      title: 'Bank Settled Amount',
-      dataIndex: 'settlement_paid_in_bank',
-      align: 'center',
-      width: getDynamicWidth('settlement_paid_in_bank', 100),
-      ellipsis: true,
-      sorter: (a, b) => (parseFloat(a.settlement_paid_in_bank) || 0) - (parseFloat(b.settlement_paid_in_bank) || 0),
-    },
-    {
-      title: 'Unsettled Amount',
-      dataIndex: 'unsettled_not_paid',
-      align: 'center',
-      width: getDynamicWidth('unsettled_not_paid', 100),
-      ellipsis: true,
-      sorter: (a, b) => (parseFloat(a.unsettled_not_paid) || 0) - (parseFloat(b.unsettled_not_paid) || 0),
-      render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
-    },
     {
       key: 'action',
       fixed: 'right',
@@ -870,11 +832,6 @@ export default function ProfitDetailsView() {
   });
   const tableWidth = filteredColumns.reduce((total, col) => total + (col.width || 120), 0);
 
-  const handleApply = () => {
-    dispatch(getProfitDetails(buildPayload()));
-    setShowFilters(false);
-  };
-
   return (
     <>
       {/* <PageHeader
@@ -889,15 +846,6 @@ export default function ProfitDetailsView() {
         </div> */}
 
         <Card bordered={false}>
-          {/* <ProfitFilterBar
-            filters={filters}
-            setFilters={setFilters}
-            handleApply={handleApply}
-            handleClear={handleClear}
-            showFilters={showFilters}
-            setShowFilters={setShowFilters}
-          /> */}
-
           <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
             {/* Search */}
             <div className="relative w-[220px] lg:w-full md:w-full sm:w-full">
@@ -926,136 +874,6 @@ export default function ProfitDetailsView() {
 
             {/* Right Actions */}
             <div className="flex items-center gap-2 flex-wrap lg:w-full lg:justify-end md:w-full md:justify-between sm:w-full sm:justify-between">
-              {/* Filter Button */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowFilters(!showFilters)}
-                  // className="h-[35px] px-2 rounded-lg border border-[#e5e7eb] bg-white flex items-center gap-2 text-[12px] font-medium shadow-sm"
-                  className="h-[35px] px-3 rounded-lg border border-[#e5e7eb] bg-white flex items-center gap-2 text-[12px] font-medium shadow-sm whitespace-nowrap"
-                >
-                  <span className="flex items-center">
-                    <FilterOutlined style={{ fontSize: 14 }} />
-                  </span>
-                  <span>Filters</span>
-
-                  <span className="w-5 h-5 rounded-full bg-[#22c55e] text-white text-[11px] font-semibold inline-flex items-center justify-center leading-none shrink-0">
-                    {
-                      [
-                        filters.ads === 'with',
-                        filters.gst === 'with',
-                        filters.expenses === 'with',
-                        filters.accountCharges === 'with',
-                        filters.estimate === 'with',
-                      ].filter(Boolean).length
-                    }
-                  </span>
-                </button>
-
-                {/* Dropdown */}
-                {showFilters && (
-                  <div className="absolute right-0 top-[50px] w-[260px] bg-white border border-[#ebecef] rounded-2xl shadow-xl p-4 z-50">
-                    <div className="space-y-4">
-                      {/* Ads */}
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <Checkbox
-                          checked={filters.ads === 'with'}
-                          onChange={(e) =>
-                            setFilters({
-                              ...filters,
-                              ads: e.target.checked ? 'with' : 'without',
-                            })
-                          }
-                        />
-
-                        <span className="text-[13px] font-medium text-[#374151]">With Ads</span>
-                      </label>
-
-                      {/* GST */}
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <Checkbox
-                          checked={filters.gst === 'with'}
-                          onChange={(e) =>
-                            setFilters({
-                              ...filters,
-                              gst: e.target.checked ? 'with' : 'without',
-                            })
-                          }
-                        />
-
-                        <span className="text-[13px] font-medium text-[#374151]">With GST</span>
-                      </label>
-
-                      {/* Expense */}
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <Checkbox
-                          checked={filters.expenses === 'with'}
-                          onChange={(e) =>
-                            setFilters({
-                              ...filters,
-                              expenses: e.target.checked ? 'with' : 'without',
-                            })
-                          }
-                        />
-
-                        <span className="text-[13px] font-medium text-[#374151]">With Expense</span>
-                      </label>
-
-                      {/* Estimate */}
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <Checkbox
-                          checked={filters.estimate === 'with'}
-                          onChange={(e) =>
-                            setFilters({
-                              ...filters,
-                              estimate: e.target.checked ? 'with' : 'without',
-                            })
-                          }
-                        />
-
-                        <span className="text-[13px] font-medium text-[#374151]">With Estimate</span>
-                      </label>
-
-                      {/* Account Charges */}
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <Checkbox
-                          checked={filters.accountCharges === 'with'}
-                          onChange={(e) =>
-                            setFilters({
-                              ...filters,
-                              accountCharges: e.target.checked ? 'with' : 'without',
-                            })
-                          }
-                        />
-
-                        <span className="text-[13px] font-medium text-[#374151]">With Account Charges</span>
-                      </label>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="flex items-center gap-2 mt-5">
-                      <button
-                        type="button"
-                        onClick={() => setShowFilters(false)}
-                        className="flex-1 h-[38px] rounded-xl border border-[#e5e7eb] text-[13px] font-medium hover:bg-gray-50"
-                      >
-                        Cancel
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          handleApply();
-                          setShowFilters(false);
-                        }}
-                        className="flex-1 h-[38px] rounded-xl bg-[#1677ff] text-white text-[13px] font-medium"
-                      >
-                        Apply
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
               <Dropdown trigger={['click']} dropdownRender={() => manageColumnsDropdown} placement="bottomRight">
                 <Button
                   icon={<SettingOutlined style={{ fontSize: 14 }} />}

@@ -30,7 +30,7 @@ function DigitalMarket() {
   ];
 
   return (
-    <div className="mt-3 mb-3 space-y-3 px-2">
+    <div className="mb-3 space-y-3 px-4">
       {/* HEADER */}
       <div className="shadow-regular px-2 py-2">
         <div className="flex items-start justify-between gap-3 lg:flex-col lg:items-start">

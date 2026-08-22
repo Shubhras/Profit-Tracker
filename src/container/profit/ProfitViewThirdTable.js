@@ -359,6 +359,38 @@ export default function ProfitDetailsView() {
         </button>
       ),
     },
+
+    {
+      title: 'MP-GST',
+      dataIndex: 'mp_gst',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.mp_gst - b.mp_gst,
+    },
+
+    ...(isReconcile
+      ? [
+          {
+            title: 'Actual MP Fees',
+            dataIndex: 'actual_fees',
+            align: 'center',
+            width: 90,
+            ellipsis: true,
+            sorter: (a, b) => (parseFloat(a.actual_fees) || 0) - (parseFloat(b.actual_fees) || 0),
+          },
+          {
+            title: 'Fee Leaks',
+            dataIndex: 'fees_leaks',
+            align: 'center',
+            width: 80,
+            ellipsis: true,
+            sorter: (a, b) => (parseFloat(a.fees_leaks) || 0) - (parseFloat(b.fees_leaks) || 0),
+            render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+          },
+        ]
+      : []),
+
     {
       title: 'Shipping',
       dataIndex: 'shipping',
@@ -381,40 +413,9 @@ export default function ProfitDetailsView() {
         </button>
       ),
     },
-    {
-      title: 'MP-GST',
-      dataIndex: 'mp_gst',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => a.mp_gst - b.mp_gst,
-    },
-    {
-      title: 'TCS',
-      dataIndex: 'tcs',
-      align: 'center',
-      width: 70,
-      sorter: (a, b) => a.tcs - b.tcs,
-    },
+
     ...(isReconcile
       ? [
-          {
-            title: 'Actual MP Fees',
-            dataIndex: 'actual_fees',
-            align: 'center',
-            width: 90,
-            ellipsis: true,
-            sorter: (a, b) => (parseFloat(a.actual_fees) || 0) - (parseFloat(b.actual_fees) || 0),
-          },
-          {
-            title: 'Fee Leaks',
-            dataIndex: 'fees_leaks',
-            align: 'center',
-            width: 80,
-            ellipsis: true,
-            sorter: (a, b) => (parseFloat(a.fees_leaks) || 0) - (parseFloat(b.fees_leaks) || 0),
-            render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
-          },
           {
             title: 'Actual Shipping',
             dataIndex: 'actual_shipping_charges',
@@ -433,6 +434,20 @@ export default function ProfitDetailsView() {
             sorter: (a, b) => (parseFloat(a.shipping_leaks) || 0) - (parseFloat(b.shipping_leaks) || 0),
             render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
           },
+        ]
+      : []),
+
+    {
+      title: 'MP-GST',
+      dataIndex: 'mp_gst',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.mp_gst - b.mp_gst,
+    },
+
+    ...(isReconcile
+      ? [
           {
             title: 'Actual MP-GST',
             dataIndex: 'actual_mp_gst',
@@ -441,6 +456,19 @@ export default function ProfitDetailsView() {
             ellipsis: true,
             sorter: (a, b) => (parseFloat(a.actual_mp_gst) || 0) - (parseFloat(b.actual_mp_gst) || 0),
           },
+        ]
+      : []),
+
+    {
+      title: 'TCS',
+      dataIndex: 'tcs',
+      align: 'center',
+      width: 70,
+      sorter: (a, b) => a.tcs - b.tcs,
+    },
+
+    ...(isReconcile
+      ? [
           {
             title: 'Actual TCS',
             dataIndex: 'actual_tcs',
@@ -458,6 +486,20 @@ export default function ProfitDetailsView() {
             sorter: (a, b) => (parseFloat(a.tcs_leaks) || 0) - (parseFloat(b.tcs_leaks) || 0),
             render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
           },
+        ]
+      : []),
+
+    {
+      title: 'Expected Settlement',
+      dataIndex: 'settleAmount',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.settleAmount - b.settleAmount,
+    },
+
+    ...(isReconcile
+      ? [
           {
             title: 'Bank Settled Amount',
             dataIndex: 'settlement_paid_in_bank',
@@ -517,14 +559,6 @@ export default function ProfitDetailsView() {
       width: 70,
       ellipsis: true,
       sorter: (a, b) => a.claim_amount - b.claim_amount,
-    },
-    {
-      title: 'Expected Settlement',
-      dataIndex: 'settleAmount',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => a.settleAmount - b.settleAmount,
     },
     {
       title: 'Product Cost',
@@ -624,6 +658,7 @@ export default function ProfitDetailsView() {
       col.fixed === 'right' ||
       col.dataIndex === 'image' ||
       col.dataIndex === 'channel' ||
+      col.dataIndex === 'view' ||
       col.key === 'action'
     ) {
       return true;

@@ -2,18 +2,19 @@ import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Table, Button, Tooltip, Modal, message, Input } from 'antd';
 import { UploadOutlined, ExportOutlined } from '@ant-design/icons';
-// import { EditOutlined } from '@ant-design/icons';
 import { PageHeader } from '../../../../components/page-headers/page-headers';
-import amazon from '../../../../assets/icons/amazon.svg';
-import myntra from '../../../../assets/icons/myntra.png';
 import { exportProductConfiguration, uploadProductConfiguration } from '../../../../redux/Settings/actionCreator';
-// import flipkart from '../../../../assets/icons/flipkart.svg';
 
 export default function ProductConfigTab({ pagination, setPagination, search, onSearch }) {
   const { productconfigData, productconfigLoading, exportLoading, uploadLoading } = useSelector(
     (state) => state.settings,
   );
   const { channel: globalChannel } = useSelector((state) => state.dashboard);
+
+  const channelLogoMap = {
+    'Amazon-India': '/icons/amazon.svg',
+    'Myntra-India': '/icons/myntraLogo.jpg',
+  };
 
   const [isFieldModalOpen, setIsFieldModalOpen] = useState(false);
   const dispatch = useDispatch();
@@ -26,17 +27,18 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
       width: 80,
       align: 'center',
       fixed: 'left',
-      render: (c) => {
-        const channelName = c || 'Amazon-India';
-        const isMyntra = channelName.toLowerCase().includes('myntra');
-        const icon = isMyntra ? myntra : amazon;
+      render: (value) => {
+        const logo = channelLogoMap[value];
+
         return (
-          <Tooltip title={channelName}>
-            <img
-              src={icon}
-              alt={channelName}
-              className={isMyntra ? 'w-8 h-8 object-contain mx-auto' : 'w-6 h-6 object-contain mx-auto'}
-            />
+          <Tooltip title={value}>
+            <div className="flex items-center justify-center w-full">
+              {logo ? (
+                <img src={logo} alt={value} className="w-6 h-6 object-contain" />
+              ) : (
+                <span className="text-gray-400">-</span>
+              )}
+            </div>
           </Tooltip>
         );
       },
@@ -55,7 +57,7 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
         ),
     },
     {
-      title: 'ASIN / ID',
+      title: 'Product ID',
       dataIndex: 'productId',
       align: 'center',
       render: (v, record) => {
@@ -106,9 +108,9 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
     productconfigData?.data?.map((item) => ({
       key: item.id || item.key,
 
-      icon: amazon,
+      // icon: amazon,
 
-      channel: item.channel || 'Amazon-India',
+      channel: item.channel || '-',
 
       productId: item.asin || item.productId || item.style_id || item.sku_id || '-',
 
@@ -137,14 +139,14 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
               placeholder="Search by ASIN / ID, SKU"
               allowClear
               onChange={(e) => onSearch(e.target.value)}
-              className="w-full !h-[32px]"
+              className="w-full !h-[30px]"
             />{' '}
           </div>
           <div className="flex gap-2">
             <Button
               type="primary"
               icon={<ExportOutlined className="!text-[16px] !font-bold" />}
-              className="!h-[32px] !rounded-l !border-[#dbe1e8] !text-white !font-semibold !flex !items-center !justify-center"
+              className="!h-[30px] !rounded-l !border-[#dbe1e8] !text-white !font-semibold !flex !items-center !justify-center"
               loading={exportLoading}
               onClick={() => dispatch(exportProductConfiguration(globalChannel, search))}
             >
@@ -153,7 +155,7 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
             <Button
               type="primary"
               icon={<UploadOutlined className="!text-[16px] !font-bold" />}
-              className="!h-[32px] !rounded-l !border-[#dbe1e8] !text-white !font-semibold !flex !items-center !justify-center"
+              className="!h-[30px] !rounded-l !border-[#dbe1e8] !text-white !font-semibold !flex !items-center !justify-center"
               onClick={() => setIsFieldModalOpen(true)}
             >
               Upload
@@ -170,7 +172,6 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
           size="small"
           bordered
           scroll={{ x: 'max-content' }}
-          className="bg-white rounded-lg shadow-sm"
           pagination={{
             total: productconfigData?.totalCount || 0,
             current: pagination.current,
@@ -185,6 +186,13 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
               pageSize: pag.pageSize,
             });
           }}
+          className="
+    [&_.ant-table-thead>tr>th]:!text-[12px]
+    [&_.ant-table-thead>tr>th]:!font-semibold
+    [&_.ant-table-tbody>tr>td]:!text-[12px]
+    [&_.ant-table-cell]:!px-4
+    [&_.ant-table-cell]:!py-[7px]
+  "
         />
       </main>
       <Modal

@@ -51,6 +51,9 @@ const actions = {
   PROFIT_SKU_ID_SUCCESS: 'PROFIT_SKU_ID_SUCCESS',
   PROFIT_SKU_ID_ERR: 'PROFIT_SKU_ID_ERR',
 
+  ACTION_REQUIRED_BEGIN: 'ACTION_REQUIRED_BEGIN',
+  ACTION_REQUIRED_SUCCESS: 'ACTION_REQUIRED_SUCCESS',
+  ACTION_REQUIRED_ERR: 'ACTION_REQUIRED_ERR',
   dashboardBegin: () => ({
     type: actions.DASHBOARD_BEGIN,
   }),
@@ -79,6 +82,10 @@ const actions = {
   profitSKUIdBegin: () => ({ type: actions.PROFIT_SKU_ID_BEGIN }),
   profitSKUIdSuccess: (data) => ({ type: actions.PROFIT_SKU_ID_SUCCESS, data }),
   profitSKUIdErr: (err) => ({ type: actions.PROFIT_SKU_ID_ERR, err }),
+
+  actionRequiredBegin: () => ({ type: actions.ACTION_REQUIRED_BEGIN }),
+  actionRequiredSuccess: (data) => ({ type: actions.ACTION_REQUIRED_SUCCESS, data }),
+  actionRequiredErr: (err) => ({ type: actions.ACTION_REQUIRED_ERR, err }),
 
   monthwiseProfitBegin: () => ({
     type: actions.MONTHWISE_PROFIT_BEGIN,
