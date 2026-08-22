@@ -146,7 +146,7 @@ function Notifications() {
   };
   return (
     <>
-      <div className="p-3">
+      <div className="p-4">
         {/* Header */}
         <div className="flex lg:flex-col lg:items-start lg:gap-3 items-center justify-between mb-4">
           <div>
