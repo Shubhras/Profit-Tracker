@@ -3,8 +3,9 @@ from rest_framework.permissions import IsAuthenticated,IsAdminUser
 from rest_framework.response import Response
 from amazon_auth.models import AmazonAccount
 from .serializers import *
-from .models import Module ,SubModule
+from .models import Module, SubModule, UserModulePermission
 from rest_framework import status
+from django.db import models
 
 
 class CreateModuleAPIView(APIView):
@@ -209,6 +210,9 @@ class DeleteModuleAPIView(APIView):
             module.is_active = False
             module.save()
 
+            # Find all related child submodules
+            child_submodules = list(SubModule.objects.filter(module=module))
+
             # Soft delete related submodules
             SubModule.objects.filter(
                 module=module
@@ -216,10 +220,21 @@ class DeleteModuleAPIView(APIView):
                 is_active=False
             )
 
+            # Remove module and child submodules from all subscription plans
+            module.subscription_plans.clear()
+            for submod in child_submodules:
+                submod.subscription_plans.clear()
+
+            # Delete module and submodule permissions for all users and sub-users
+            submod_ids = [s.id for s in child_submodules]
+            UserModulePermission.objects.filter(
+                models.Q(module=module) | models.Q(submodule_id__in=submod_ids)
+            ).delete()
+
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "Module and related submodules deleted successfully."
+                "message": "Module, related submodules, subscription plan links, and user permissions deleted successfully."
             }, status=status.HTTP_200_OK)
 
         except Module.DoesNotExist:
@@ -413,13 +428,20 @@ class DeleteSubModuleAPIView(APIView):
 
             submodule = SubModule.objects.get(pk=pk)
 
+            # Soft delete submodule
             submodule.is_active = False
             submodule.save()
+
+            # Remove submodule from all subscription plans
+            submodule.subscription_plans.clear()
+
+            # Delete submodule permissions for all users and sub-users
+            UserModulePermission.objects.filter(submodule=submodule).delete()
 
             return Response({
                 "statusCode": 200,
                 "status": True,
-                "message": "SubModule deleted successfully."
+                "message": "SubModule, subscription plan links, and user permissions deleted successfully."
             }, status=status.HTTP_200_OK)
 
         except SubModule.DoesNotExist:

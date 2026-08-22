@@ -57,6 +57,7 @@ import {
   UilUserCheck,
   UilLayerGroup,
   UilAnalysis,
+  UilBill,
 } from '@iconscout/react-unicons';
 import { Menu } from 'antd';
 import React from 'react';
@@ -1130,6 +1131,14 @@ function MenuItems({ toggleCollapsed }) {
       </NavLink>,
       'api-logs',
       !topMenu && <UilAnalysis />,
+    ),
+
+    getItem(
+      <NavLink onClick={toggleCollapsed} to="/super-admin/payment-transactions">
+        {t('Payment Transactions')}
+      </NavLink>,
+      'payment-transactions',
+      !topMenu && <UilBill />,
     ),
   ];
 
