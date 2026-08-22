@@ -14,6 +14,7 @@ from .views import (
     amazon_profitability_details_transactions_shipping,
     amazon_profitability_parent_transactions_shipping,
     sku_profit_report_transactions_shipping,
+    sku_profitability_list_filtered,
     get_full_dashboard,
 )
 from .utils import format_currency
@@ -26,6 +27,36 @@ def parse_currency_to_decimal(val):
         return Decimal(val_str)
     except:
         return Decimal(0)
+
+
+def _extract_channels_and_flags(data, filters=None):
+    channels = []
+    if isinstance(filters, dict):
+        if isinstance(filters.get("channel"), dict):
+            channels = filters.get("channel", {}).get("IN", [])
+        elif isinstance(filters.get("channels"), dict):
+            channels = filters.get("channels", {}).get("IN", [])
+        elif isinstance(filters.get("channel"), list):
+            channels = filters.get("channel")
+        elif isinstance(filters.get("channels"), list):
+            channels = filters.get("channels")
+
+    if not channels and isinstance(data, dict):
+        raw_ch = data.get("channels") or data.get("channel")
+        if isinstance(raw_ch, list):
+            channels = raw_ch
+        elif isinstance(raw_ch, str):
+            channels = [raw_ch]
+
+    if isinstance(channels, str):
+        channels = [channels]
+
+    channels = [str(c) for c in channels if c]
+
+    has_myntra = any('myntra' in str(c).lower() for c in channels)
+    has_amazon = any('amazon' in str(c).lower() for c in channels) or len(channels) == 0
+
+    return channels, has_amazon, has_myntra
 
 
 def _combine_totals(amazon_t, myntra_t, type="style"):
@@ -770,10 +801,7 @@ def combined_profitability_details_transactions_shipping(request):
     from_date_str = filters.get('fromDate') or filters.get('start_date') or filters.get('from_date') or filters.get('startDate')
     to_date_str = filters.get('toDate') or filters.get('end_date') or filters.get('to_date') or filters.get('endDate')
     
-    channels = filters.get("channel", {}).get("IN", []) if isinstance(filters.get("channel"), dict) else []
-    
-    has_myntra = "Myntra" in channels
-    has_amazon = "Amazon-India" in channels or len(channels) == 0
+    channels, has_amazon, has_myntra = _extract_channels_and_flags(data, filters)
     
     if has_amazon and not has_myntra:
         undecorated = get_undecorated_view(amazon_profitability_details_transactions_shipping)
@@ -843,7 +871,7 @@ def combined_profitability_details_transactions_shipping(request):
         dto_rows = amazon_dtos + myntra_dtos
 
     dto_rows = enrich_dto_image_urls(dto_rows, user)
-    dto_rows.sort(key=lambda item: item.grosssales, reverse=True)
+    dto_rows.sort(key=lambda item: parse_currency_to_decimal(item.grosssales), reverse=True)
     
     combined_totals = _combine_totals(amazon_totals, myntra_totals, type="style")
     total_count = len(dto_rows)
@@ -884,10 +912,7 @@ def combined_profitability_parent_transactions_shipping(request):
     to_date_str = filters.get('toDate')
     parent_ids = filters.get("parentproductid", {}).get("IN", [])
     
-    channels = filters.get("channel", {}).get("IN", []) if isinstance(filters.get("channel"), dict) else []
-    
-    has_myntra = "Myntra" in channels
-    has_amazon = "Amazon-India" in channels or len(channels) == 0
+    channels, has_amazon, has_myntra = _extract_channels_and_flags(data, filters)
     
     if has_amazon and not has_myntra:
         undecorated = get_undecorated_view(amazon_profitability_parent_transactions_shipping)
@@ -962,7 +987,7 @@ def combined_profitability_parent_transactions_shipping(request):
         dto_rows = amazon_dtos + myntra_dtos
 
     dto_rows = enrich_dto_image_urls(dto_rows, user)
-    dto_rows.sort(key=lambda item: item.grosssales, reverse=True)
+    dto_rows.sort(key=lambda item: parse_currency_to_decimal(item.grosssales), reverse=True)
     
     combined_totals = _combine_totals(amazon_totals, myntra_totals, type="sku")
     total_count = len(dto_rows)
@@ -1004,10 +1029,7 @@ def combined_sku_profit_report_transactions_shipping(request):
     sku = data.get("sku") or filters.get("sku")
     parent_product_id = data.get("parentProductId") or filters.get("parentProductId") or filters.get("parent_product_id") or data.get("asin") or filters.get("asin") or filters.get("parent_asin")
     
-    channels = filters.get("channel", {}).get("IN", []) if isinstance(filters.get("channel"), dict) else []
-    
-    has_myntra = "Myntra" in channels
-    has_amazon = "Amazon-India" in channels or len(channels) == 0
+    channels, has_amazon, has_myntra = _extract_channels_and_flags(data, filters)
     
     if has_amazon and not has_myntra:
         undecorated = get_undecorated_view(sku_profit_report_transactions_shipping)
@@ -1081,7 +1103,7 @@ def combined_sku_profit_report_transactions_shipping(request):
         dto_rows = amazon_dtos + myntra_dtos
 
     dto_rows = enrich_dto_image_urls(dto_rows, user)
-    dto_rows.sort(key=lambda item: item.grosssales, reverse=True)
+    dto_rows.sort(key=lambda item: parse_currency_to_decimal(item.grosssales), reverse=True)
     
     combined_totals = _combine_totals(amazon_totals, myntra_totals, type="order")
     total_count = len(dto_rows)
@@ -1476,10 +1498,12 @@ def combined_get_full_dashboard(request):
     if not data_source:
         try:
             import json
-            body_data = json.loads(request._request.body)
-            if isinstance(body_data, dict):
-                data_source.update(body_data)
-        except:
+            raw_body = getattr(request, '_body', None) or getattr(getattr(request, '_request', None), '_body', None)
+            if raw_body:
+                body_data = json.loads(raw_body)
+                if isinstance(body_data, dict):
+                    data_source.update(body_data)
+        except Exception:
             pass
             
     search_data = {}
@@ -1499,10 +1523,7 @@ def combined_get_full_dashboard(request):
     from_date_str = find_key(['fromDate'])
     to_date_str = find_key(['toDate'])
     
-    channels = search_data.get("channel", {}).get("IN", []) if isinstance(search_data.get("channel"), dict) else []
-    
-    has_myntra = "Myntra" in channels
-    has_amazon = "Amazon-India" in channels or len(channels) == 0
+    channels, has_amazon, has_myntra = _extract_channels_and_flags(data_source, search_data.get('filters'))
     
     if has_amazon and not has_myntra:
         undecorated = get_undecorated_view(get_full_dashboard)
@@ -1867,5 +1888,149 @@ def combined_profitability_monthwise(request):
         "message_code": "E1",
         "response": response_list
     })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def combined_sku_profitability_list_filtered(request):
+    user = get_effective_user(request.user)
+    data = request.data or {}
+
+    filters = data.get("filters", {})
+    pagination = data.get("pagination", {})
+    page_no = int(pagination.get("pageNo", 0))
+    page_size = int(pagination.get("pageSize", 25))
+
+    search_term = filters.get("search") or filters.get("searchTerm") or filters.get("q") or filters.get("sku")
+    if isinstance(search_term, list) and search_term:
+        search_term = search_term[0]
+    if search_term:
+        search_term = str(search_term).strip()
+
+    from_date_str = filters.get('fromDate') or filters.get('start_date') or filters.get('from_date') or filters.get('startDate')
+    to_date_str = filters.get('toDate') or filters.get('end_date') or filters.get('to_date') or filters.get('endDate')
+
+    channels, has_amazon, has_myntra = _extract_channels_and_flags(data, filters)
+    profit_filter = filters.get("profit_filter") or data.get("profit_filter")
+
+    if has_amazon and not has_myntra:
+        undecorated = get_undecorated_view(sku_profitability_list_filtered)
+        res = undecorated(request)
+        if res.status_code == 200 and isinstance(res.data, dict) and "response" in res.data:
+            res.data["response"] = enrich_row_image_urls(res.data["response"], user)
+            rows = res.data["response"]
+            if profit_filter:
+                pf_upper = str(profit_filter).upper().strip()
+                if pf_upper in ("GT_0", "PROFITABLE", "PROFIT", "POSITIVE"):
+                    rows = [r for r in rows if parse_currency_to_decimal(r.get("profit")) > 0]
+                elif pf_upper in ("LT_0", "UNPROFITABLE", "LOSS", "NEGATIVE"):
+                    rows = [r for r in rows if parse_currency_to_decimal(r.get("profit")) < 0]
+                elif pf_upper in ("EQ_0", "ZERO"):
+                    rows = [r for r in rows if parse_currency_to_decimal(r.get("profit")) == 0]
+            rows.sort(key=lambda r: parse_currency_to_decimal(r.get("grosssales") or r.get("gross_sales")), reverse=True)
+            res.data["pagination"]["count"] = len(rows)
+            res.data["response"] = rows[page_no * page_size : (page_no + 1) * page_size]
+        return res
+
+    amazon_rows = []
+    myntra_rows = []
+    amazon_totals = {}
+    myntra_totals = {}
+
+    if has_amazon:
+        amazon_res = _call_view_for_all_results(sku_profitability_list_filtered, request)
+        if amazon_res.status_code == 200 and isinstance(amazon_res.data, dict):
+            amazon_rows = amazon_res.data.get("response", [])
+            amazon_totals = amazon_res.data.get("totals", {})
+
+    if has_myntra:
+        from myntra.services.profit.calculator import MyntraProfitCalculator
+        from myntra.services.profit.sku_summary import SKUSummary
+        from myntra.amazon_adapter import MyntraAmazonProfitAdapter
+
+        from_date_local = None
+        to_date_local = None
+        try:
+            if from_date_str:
+                from_date_local = datetime.strptime(str(from_date_str).split('T')[0], "%Y-%m-%d").date()
+            if to_date_str:
+                to_date_local = datetime.strptime(str(to_date_str).split('T')[0], "%Y-%m-%d").date()
+        except:
+            pass
+
+        myntra_filters = {
+            "fromDate": from_date_local,
+            "toDate": to_date_local,
+        }
+
+        calculator = MyntraProfitCalculator(user=user, filters=myntra_filters)
+        summary = SKUSummary(calculator)
+        myntra_raw_rows = summary.execute()
+
+        if search_term:
+            search_term_lower = search_term.lower()
+            myntra_raw_rows = [
+                r for r in myntra_raw_rows
+                if search_term_lower in str(r.get("seller_sku") or r.get("seller_sku_code") or "").lower()
+                or search_term_lower in str(r.get("style_name") or "").lower()
+                or search_term_lower in str(r.get("brand") or "").lower()
+            ]
+
+        if profit_filter:
+            pf_upper = str(profit_filter).upper().strip()
+            if pf_upper in ("GT_0", "PROFITABLE", "PROFIT", "POSITIVE"):
+                myntra_raw_rows = [r for r in myntra_raw_rows if parse_currency_to_decimal(r.get("profit")) > 0]
+            elif pf_upper in ("LT_0", "UNPROFITABLE", "LOSS", "NEGATIVE"):
+                myntra_raw_rows = [r for r in myntra_raw_rows if parse_currency_to_decimal(r.get("profit")) < 0]
+            elif pf_upper in ("EQ_0", "ZERO"):
+                myntra_raw_rows = [r for r in myntra_raw_rows if parse_currency_to_decimal(r.get("profit")) == 0]
+
+        myntra_adapted = MyntraAmazonProfitAdapter.sku_response(
+            rows=myntra_raw_rows,
+            page_no=0,
+            page_size=1000000
+        )
+        myntra_rows = myntra_adapted.get("response", [])
+        myntra_totals = myntra_adapted.get("totals", {})
+
+    amazon_dtos = [ProfitabilityDTOAdapter.from_row(r, default_channel="Amazon-India") for r in amazon_rows]
+    myntra_dtos = [ProfitabilityDTOAdapter.from_row(r, default_channel="Myntra") for r in myntra_rows]
+
+    if has_myntra and not has_amazon:
+        dto_rows = myntra_dtos
+    else:
+        dto_rows = amazon_dtos + myntra_dtos
+
+    # Filter by profit_filter if provided
+    if profit_filter:
+        pf_upper = str(profit_filter).upper().strip()
+        if pf_upper in ("GT_0", "PROFITABLE", "PROFIT", "POSITIVE"):
+            dto_rows = [item for item in dto_rows if parse_currency_to_decimal(item.profit) > 0]
+        elif pf_upper in ("LT_0", "UNPROFITABLE", "LOSS", "NEGATIVE"):
+            dto_rows = [item for item in dto_rows if parse_currency_to_decimal(item.profit) < 0]
+        elif pf_upper in ("EQ_0", "ZERO"):
+            dto_rows = [item for item in dto_rows if parse_currency_to_decimal(item.profit) == 0]
+
+    dto_rows = enrich_dto_image_urls(dto_rows, user)
+    dto_rows.sort(key=lambda item: parse_currency_to_decimal(item.grosssales), reverse=True)
+
+    combined_totals = _combine_totals(amazon_totals, myntra_totals, type="sku")
+    total_count = len(dto_rows)
+    paginated_dtos = dto_rows[page_no * page_size : (page_no + 1) * page_size]
+    paginated_rows = [dto.to_dict() for dto in paginated_dtos]
+
+    return Response({
+        "status": True,
+        "message": "Success",
+        "pagination": {
+            "pageNo": page_no,
+            "pageSize": page_size,
+            "count": total_count,
+        },
+        "totals": combined_totals,
+        "response": paginated_rows
+    })
+
+
 
 

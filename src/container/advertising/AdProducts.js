@@ -2,12 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { Button, Table, Tooltip, Tag, Dropdown, Checkbox, Switch } from 'antd';
 import { SettingOutlined, SearchOutlined, RightOutlined, ExportOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { getAdProducts } from '../../redux/advertising/actionCreator';
 
 function AdProducts() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+  const roiType = location.state?.roiType;
+
   const [searchText, setSearchText] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
@@ -30,9 +33,10 @@ function AdProducts() {
       getAdProducts(pagination.current, pagination.pageSize, {
         search: debouncedSearch,
         state: stateFilter,
+        ...(roiType && { roi_type: roiType }),
       }),
     );
-  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch, stateFilter]);
+  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch, stateFilter, roiType]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

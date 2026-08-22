@@ -42,6 +42,8 @@ function ActionsRequired() {
       label: 'Increase Ad Spend',
       description: 'Total number of parent SKUs with positive profit.',
       value: actionRequiredData?.data?.increase_ad_spend?.count ?? 0,
+      path: '/admin/profit/profitTableView/sku-profit',
+      profitType: 'profitable',
       bg: 'bg-white',
       iconBg: 'bg-[#E8F8EE]',
       iconColor: 'text-[#16A34A]',
@@ -54,6 +56,7 @@ function ActionsRequired() {
       label: 'Payment Leaks',
       description: 'Total amount to recover for payments not matching with estimated.',
       value: actionRequiredData?.data?.payment_leaks?.formatted_amount || '₹0',
+      path: '/admin/reconcile/payment-reconcile',
       bg: 'bg-[#EFF6FF]',
       iconBg: 'bg-[#E8F1FF]',
       iconColor: 'text-[#2563EB]',
@@ -66,6 +69,7 @@ function ActionsRequired() {
       label: 'Return Impact',
       description: 'Total number of returns.',
       value: actionRequiredData?.data?.return_impact?.count ?? 0,
+      path: '/admin/profit/returnfees',
       bg: 'bg-[#FFF7ED]',
       iconBg: 'bg-[#FFF0DF]',
       iconColor: 'text-[#EA580C]',
@@ -78,6 +82,8 @@ function ActionsRequired() {
       label: 'High ROI Products',
       description: 'Total number of SKUs with high ROI.',
       value: actionRequiredData?.data?.high_roi_products?.count ?? 0,
+      path: '/admin/advertising/AdProducts',
+      roiType: 'high',
       bg: 'bg-[#ECFDF5]',
       iconBg: 'bg-[#E6F8EF]',
       iconColor: 'text-[#16A34A]',
@@ -90,6 +96,8 @@ function ActionsRequired() {
       label: 'Low ROI Products',
       description: 'Total number of products with low ROI.',
       value: actionRequiredData?.data?.low_roi_products?.count ?? 0,
+      path: '/admin/advertising/AdProducts',
+      roiType: 'low',
       bg: 'bg-[#EFF6FF]',
       iconBg: 'bg-[#E8F1FF]',
       iconColor: 'text-[#2563EB]',
@@ -102,6 +110,8 @@ function ActionsRequired() {
       label: 'Decrease Ad Spend',
       description: 'Total number of parent SKUs with negative profit.',
       value: actionRequiredData?.data?.decrease_ad_spend?.count ?? 0,
+      path: '/admin/profit/profitTableView/sku-profit',
+      profitType: 'losing',
       bg: 'bg-[#EFF6FF]',
       iconBg: 'bg-[#E8F1FF]',
       iconColor: 'text-[#2563EB]',
@@ -179,7 +189,19 @@ function ActionsRequired() {
                 <div className="border-t border-[#E5E7EB] px-5 h-[43px] flex items-center">
                   <button
                     type="button"
-                    className="flex items-center gap-2 text-[12px] font-semibold text-[#149A73] hover:text-[#087A5A] hover:underline transition-colors"
+                    onClick={() => {
+                      if (card.path) {
+                        navigate(card.path, {
+                          state: {
+                            channels: globalChannel,
+                            type: 'all',
+                            profitType: card.profitType || 'all',
+                            roiType: card.roiType,
+                          },
+                        });
+                      }
+                    }}
+                    className="flex items-center gap-2 text-[12px] font-semibold text-[#149A73] hover:text-[#087A5A] hover:underline transition-colors cursor-pointer"
                   >
                     View Details
                     <ArrowRightOutlined className="text-[10px]" />

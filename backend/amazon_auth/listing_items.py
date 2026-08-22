@@ -315,6 +315,7 @@ class ChannelProductConfigItemsView(APIView):
                         "image_url": item.image_url or "",
                         "standard_cost": float(item.standard_cost or 0),
                         "gst_rate": float(item.gst_rate or 0),
+                        "tds": float(getattr(item, 'tds', 0) or 0),
                         "tcs": float(item.tcs or 0),
                         "status": item.status[0] if isinstance(item.status, list) and item.status else str(item.status or "-"),
                         "step_level": item.step_level or "-",
@@ -365,6 +366,7 @@ class ChannelProductConfigItemsView(APIView):
                             "image_url": img_url,
                             "standard_cost": float(item.standard_cost or 0),
                             "gst_rate": float(item.gst_rate or 0),
+                            "tds": float(getattr(item, 'tds', 0) or 0),
                             "tcs": float(item.tcs or 0),
                             "status": item.listing_status or ("BUYABLE" if item.is_active else "INACTIVE"),
                             "step_level": 0,
@@ -396,6 +398,115 @@ class ChannelProductConfigItemsView(APIView):
                 "status": False,
                 "message": str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST", "PUT"])
+@permission_classes([IsAuthenticated])
+def update_channel_product_config_item(request):
+    try:
+        user = get_effective_user(request.user)
+        data = request.data or {}
+
+        item_id = data.get("id") or data.get("item_id") or data.get("key")
+        if not item_id:
+            return Response(
+                {"status": False, "message": "Item ID is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        standard_cost = data.get("standard_cost", data.get("productcost"))
+        gst_rate = data.get("gst_rate", data.get("gstrate"))
+        tds = data.get("tds")
+        tcs = data.get("tcs")
+        image_url = data.get("image_url", data.get("image"))
+
+        item_str = str(item_id)
+        updated = False
+
+        if item_str.startswith("amazon_"):
+            real_id = item_str.replace("amazon_", "")
+            a_item = AmazonListingItem.objects.filter(id=real_id, user=user).first()
+            if not a_item:
+                return Response({"status": False, "message": "Amazon listing item not found"}, status=404)
+
+            if standard_cost is not None:
+                a_item.standard_cost = float(standard_cost or 0)
+            if gst_rate is not None:
+                a_item.gst_rate = float(gst_rate or 0)
+            if tds is not None:
+                a_item.tds = float(tds or 0)
+            if tcs is not None:
+                a_item.tcs = float(tcs or 0)
+            if image_url is not None and str(image_url).strip() != "":
+                a_item.image_url = str(image_url).strip()
+
+            a_item.save()
+            updated = True
+
+        elif item_str.startswith("myntra_"):
+            real_id = item_str.replace("myntra_", "")
+            from myntra.models import MyntraListing
+            m_item = MyntraListing.objects.filter(id=real_id, myntra_connection__user=user).first()
+            if not m_item:
+                return Response({"status": False, "message": "Myntra listing item not found"}, status=404)
+
+            if standard_cost is not None:
+                m_item.standard_cost = float(standard_cost or 0)
+            if gst_rate is not None:
+                m_item.gst_rate = float(gst_rate or 0)
+            if tds is not None:
+                m_item.tds = float(tds or 0)
+            if tcs is not None:
+                m_item.tcs = float(tcs or 0)
+            if image_url is not None and str(image_url).strip() != "":
+                m_item.image_url = str(image_url).strip()
+
+            m_item.save()
+            updated = True
+        else:
+            a_item = AmazonListingItem.objects.filter(id=item_id, user=user).first()
+            if a_item:
+                if standard_cost is not None:
+                    a_item.standard_cost = float(standard_cost or 0)
+                if gst_rate is not None:
+                    a_item.gst_rate = float(gst_rate or 0)
+                if tds is not None:
+                    a_item.tds = float(tds or 0)
+                if tcs is not None:
+                    a_item.tcs = float(tcs or 0)
+                if image_url is not None and str(image_url).strip() != "":
+                    a_item.image_url = str(image_url).strip()
+                a_item.save()
+                updated = True
+            else:
+                from myntra.models import MyntraListing
+                m_item = MyntraListing.objects.filter(id=item_id, myntra_connection__user=user).first()
+                if m_item:
+                    if standard_cost is not None:
+                        m_item.standard_cost = float(standard_cost or 0)
+                    if gst_rate is not None:
+                        m_item.gst_rate = float(gst_rate or 0)
+                    if tds is not None:
+                        m_item.tds = float(tds or 0)
+                    if tcs is not None:
+                        m_item.tcs = float(tcs or 0)
+                    if image_url is not None and str(image_url).strip() != "":
+                        m_item.image_url = str(image_url).strip()
+                    m_item.save()
+                    updated = True
+                else:
+                    return Response({"status": False, "message": "Listing item not found"}, status=404)
+
+        return Response({
+            "status": True,
+            "message": "Listing item updated successfully"
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response({
+            "status": False,
+            "message": str(e)
+        }, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
@@ -441,7 +552,7 @@ def upload_channel_product_config_excel(request):
 
                 try:
                     channel = get_cell(row, ["Channel", "channel"])
-                    asin = get_cell(row, ["ASIN", "asin", "ASIN / ID", "Style ID", "sku_id"])
+                    asin = get_cell(row, ["Product ID", "ASIN", "asin", "ASIN / ID", "Style ID", "sku_id", "product_id"])
                     sku = get_cell(row, ["SKU", "sku", "Seller SKU", "seller_sku_code"])
 
                     if not sku and not asin:
@@ -450,9 +561,10 @@ def upload_channel_product_config_excel(request):
 
                     channel_str = str(channel).strip().lower() if channel else ""
 
-                    product_cost = get_cell(row, ["Product Cost", "standard_cost", "Cost Price", "Cost"])
-                    gst_rate = get_cell(row, ["GST Rate%", "GST Rate", "gst_rate", "GST%"])
-                    tcs = get_cell(row, ["TCS", "tcs"])
+                    product_cost = get_cell(row, ["Product Cost (₹)", "Product Cost", "standard_cost", "Cost Price", "Cost"])
+                    gst_rate = get_cell(row, ["GST Rate (%)", "GST Rate%", "GST Rate", "gst_rate", "GST%"])
+                    tds = get_cell(row, ["TDS (%)", "TDS%", "TDS", "tds", "TDS Rate"])
+                    tcs = get_cell(row, ["TCS (%)", "TCS%", "TCS", "tcs"])
                     image_url = get_cell(row, ["Image", "Image URL", "image_url"])
 
                     matched = False
@@ -478,6 +590,8 @@ def upload_channel_product_config_excel(request):
                                 a_item.standard_cost = float(product_cost or 0)
                             if gst_rate is not None and str(gst_rate).strip() != "":
                                 a_item.gst_rate = float(gst_rate or 0)
+                            if tds is not None and str(tds).strip() != "":
+                                a_item.tds = float(tds or 0)
                             if tcs is not None and str(tcs).strip() != "":
                                 a_item.tcs = float(tcs or 0)
                             if has_image_col:
@@ -511,6 +625,8 @@ def upload_channel_product_config_excel(request):
                                     m_item.standard_cost = float(product_cost or 0)
                                 if gst_rate is not None and str(gst_rate).strip() != "":
                                     m_item.gst_rate = float(gst_rate or 0)
+                                if tds is not None and str(tds).strip() != "":
+                                    m_item.tds = float(tds or 0)
                                 if tcs is not None and str(tcs).strip() != "":
                                     m_item.tcs = float(tcs or 0)
                                 if has_image_col:
@@ -569,11 +685,12 @@ def export_channel_product_config_excel(request):
     headers = [
         "Channel",
         "Image",
-        "ASIN",
+        "Product ID",
         "SKU",
-        "Product Cost",
-        "GST Rate%",
-        "TCS",
+        "Product Cost (₹)",
+        "GST Rate (%)",
+        "TDS (%)",
+        "TCS (%)",
     ]
 
     for col_num, header in enumerate(headers, 1):
@@ -598,6 +715,7 @@ def export_channel_product_config_excel(request):
                 str(item.sku or ""),
                 float(item.standard_cost or 0),
                 float(item.gst_rate or 0),
+                float(getattr(item, 'tds', 0) or 0),
                 float(item.tcs or 0),
             ]
             for col_num, val in enumerate(row_data, 1):
@@ -625,6 +743,7 @@ def export_channel_product_config_excel(request):
                     str(item.seller_sku_code or item.sku_code or ""),
                     float(item.standard_cost or 0),
                     float(item.gst_rate or 0),
+                    float(getattr(item, 'tds', 0) or 0),
                     float(item.tcs or 0),
                 ]
                 for col_num, val in enumerate(row_data, 1):

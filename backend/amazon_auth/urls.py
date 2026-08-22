@@ -84,8 +84,9 @@ urlpatterns = [
     path('profitability/ads-spend/by-parent-asin/', views.get_parent_asin_ad_spend, name='get_parent_asin_ad_spend'),
     
     # filter by profit and loss 
-    path('profitability/list/by-sku/filtered/', views.sku_profitability_list_filtered, name='sku_profitability_list_filtered'),
-    # path('profitability/details/by-parentproductid/', views.sku_profit_report, name='profi_tability_details_by_parentproductid'),
+    path('profitability/list/by-sku/filtered/', profit.combined_sku_profitability_list_filtered, name='sku_profitability_list_filtered'),
+    path('profitability/list/by-sku/filtered-old/', views.sku_profitability_list_filtered, name='sku_profitability_list_filtered_old'),
+    path('profitability/list/by-sku/filtered/combined/', profit.combined_sku_profitability_list_filtered, name='combined_sku_profitability_list_filtered'),
     
    
     path('profitability-monthwise/', profit.combined_profitability_monthwise, name='get_profitability_monthwise'),
@@ -148,6 +149,8 @@ urlpatterns = [
     path("export-channel-product-config-excel/", export_channel_product_config_excel, name="export_channel_product_config_excel"),
 
     path("upload-channel-product-config-excel/", upload_channel_product_config_excel, name="upload_channel_product_config_excel"),
+
+    path("update-channel-product-config-item/", update_channel_product_config_item, name="update_channel_product_config_item"),
     
     path(
         "estimated-fees/list/",

@@ -1238,13 +1238,6 @@ class ProductSKUReportView(APIView):
             "state"
 
         ).annotate(
-        # queryset = queryset.values(
-
-        #     "sku",
-        #     "asin"
-
-        # ).annotate(
-
             item_name=Subquery(
                 listing_queryset.values("item_name")[:1]
             ),
@@ -1278,7 +1271,21 @@ class ProductSKUReportView(APIView):
                 "productadmetric__orders"
             )
 
-        ).order_by(
+        )
+
+        roi_type = data.get("roi_type") or data.get("roi_filter")
+        if roi_type:
+            roi_str = str(roi_type).lower().strip()
+            if roi_str in ("high", "high_roi", "high_roi_products", "gt_2", "gte_2"):
+                queryset = queryset.filter(
+                    Q(cost__gt=0, sales__gte=F("cost") * 2.0) | Q(cost=0, sales__gt=0) | Q(cost__isnull=True, sales__gt=0)
+                )
+            elif roi_str in ("low", "low_roi", "low_roi_products", "lt_2"):
+                queryset = queryset.filter(
+                    cost__gt=0, sales__lt=F("cost") * 2.0
+                )
+
+        queryset = queryset.order_by(
             ordering
         )
 

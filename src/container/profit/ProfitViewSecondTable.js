@@ -50,10 +50,10 @@ export default function ProfitViewSecondTable() {
   const [search, setSearch] = React.useState('');
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
   const channelLogoMap = {
-    // 'Amazon-India': amazon,
-    // 'Myntra-India': myntra,
     'Amazon-India': '/icons/amazon.svg',
+    'Amazon': '/icons/amazon.svg',
     'Myntra-India': '/icons/myntraLogo.jpg',
+    'Myntra': '/icons/myntraLogo.jpg',
   };
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -86,9 +86,7 @@ export default function ProfitViewSecondTable() {
           search: debouncedSearch.trim(),
         }),
         channel: {
-          // IN: [decodedChannel],
-          IN: channels,
-          // IN: globalChannel,
+          IN: globalChannel?.length > 0 ? globalChannel : channels,
         },
 
         parentproductid: {
@@ -310,7 +308,13 @@ export default function ProfitViewSecondTable() {
       //   );
       // },
       render: (value) => {
-        const logo = channelLogoMap[value];
+        const logo =
+          channelLogoMap[value] ||
+          (value && value.toLowerCase().includes('myntra')
+            ? '/icons/myntraLogo.jpg'
+            : value && value.toLowerCase().includes('amazon')
+            ? '/icons/amazon.svg'
+            : null);
 
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

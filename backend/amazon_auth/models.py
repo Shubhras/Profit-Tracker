@@ -783,6 +783,7 @@ class AmazonListingItem(models.Model):
 
     standard_cost = models.FloatField(default=0)
     gst_rate = models.FloatField(default=0)
+    tds = models.FloatField(default=0)
     tcs = models.FloatField(default=0)
     region = models.TextField(null=True, blank=True)
     shiping_estimate = models.FloatField(default=0)

@@ -427,7 +427,6 @@ export default function UserManagement() {
         </span>
       ),
     },
-
     {
       title: 'Actions',
       key: 'actions',
@@ -590,8 +589,6 @@ export default function UserManagement() {
           <div className="flex items-center gap-1 text-[13px]">
             <span className="text-[#666D92]">Settings</span>
             <span className="text-gray-400">›</span>
-            <span className="text-[#666D92]">User Settings</span>
-            <span className="text-gray-400">›</span>
             <span className="text-dark font-medium">User Management</span>
           </div>
         </div>
@@ -619,7 +616,7 @@ export default function UserManagement() {
 
         {/* ================= STAT CARDS ================= */}
 
-        <div className="grid grid-cols-4 gap-3 mb-5 lg:grid-cols-2 md:grid-cols-1">
+        <div className="grid grid-cols-3 gap-3 mb-5 lg:grid-cols-2 md:grid-cols-1">
           {/* TOTAL USERS */}
           <div className="bg-white border border-[#dfe3e8] rounded-[9px] px-4 py-3 h-[70px]">
             <div className="text-[20px] font-semibold text-dark leading-[20px]">{totalUsers}</div>
@@ -639,13 +636,6 @@ export default function UserManagement() {
             <div className="text-[20px] font-semibold text-warning leading-[20px]">{pendingUsers}</div>
 
             <div className="text-[13px] text-light mt-2">Invite pending</div>
-          </div>
-
-          {/* OWNER */}
-          <div className="bg-white border border-[#dfe3e8] rounded-[9px] px-4 py-3 h-[70px]">
-            <div className="text-[20px] font-semibold text-dark leading-[20px]">{ownerUsers}</div>
-
-            <div className="text-[13px] text-light mt-2">Owner</div>
           </div>
         </div>
 

@@ -1,4 +1,5 @@
 import logging
+import json
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -23,11 +24,11 @@ def _parse_num_safe(val):
 class GrowthOpportunitiesAPIView(APIView):
     """
     Backend API for Growth Opportunities / Growth Insights Dashboard.
-    Provides calculated counts and metrics for:
+    Provides cross-platform (Amazon & Myntra) calculated counts and metrics for:
     1. Increase Ad Spend (Positive Profit SKUs count & amount)
     2. Decrease Ad Spend (Negative Profit SKUs count & amount)
     3. Payment Leaks (Total difference to recover)
-    4. Return Impact (Total return count)
+    4. Return Impact (Total number of returns)
     5. High ROI Products (SKUs / Ad groups with high ROI)
     6. Low ROI Products (SKUs / Ad groups with low ROI)
     7. No Sales with Ad Spend (SKUs with ad spend but 0 sales)
@@ -41,8 +42,21 @@ class GrowthOpportunitiesAPIView(APIView):
         try:
             user = get_effective_user(request.user)
 
-            # Pass the underlying HTTP request object to combined view functions
-            req_to_pass = getattr(request, '_request', request)
+            data = request.data or {}
+            filters = data.get("filters", {})
+            if not isinstance(filters, dict):
+                filters = {}
+
+            # Extract channel filters
+            channels = []
+            if isinstance(filters.get("channel"), dict):
+                channels = filters.get("channel").get("IN", [])
+            if not channels:
+                raw_ch = filters.get("channel") or filters.get("channels") or data.get("channels") or data.get("channel")
+                if isinstance(raw_ch, list):
+                    channels = raw_ch
+                elif isinstance(raw_ch, str):
+                    channels = [raw_ch]
 
             pos_profit_count = 0
             pos_profit_amount = 0.0
@@ -50,52 +64,82 @@ class GrowthOpportunitiesAPIView(APIView):
             neg_profit_amount = 0.0
             total_return_count = 0
 
-            # ---------------------------------------------------------
-            # 1 & 2: Profit SKU Metrics & Return Impact
-            # ---------------------------------------------------------
-            try:
-                from amazon_auth.profit import combined_profitability_details_transactions_shipping
-                prof_res = combined_profitability_details_transactions_shipping(req_to_pass)
-                if prof_res.status_code == 200 and isinstance(prof_res.data, dict):
-                    rows = prof_res.data.get("response", [])
-                    for r in rows:
-                        profit = _parse_num_safe(r.get("profit"))
-                        if profit > 0:
-                            pos_profit_count += 1
-                            pos_profit_amount += profit
-                        elif profit < 0:
-                            neg_profit_count += 1
-                            neg_profit_amount += profit
+            data_bytes = json.dumps(data).encode('utf-8')
+            req_to_pass = getattr(request, '_request', request)
+            req_to_pass._body = data_bytes
+            req_to_pass.data = data
+            if hasattr(request, '_request') and request._request != req_to_pass:
+                request._request._body = data_bytes
+                request._request.data = data
 
-                        ret_qty = _parse_num_safe(r.get("returnqty"))
-                        if ret_qty > 0:
-                            total_return_count += int(ret_qty)
-            except Exception as e:
-                logger.error(f"Error calculating profitability details in GrowthOpportunitiesAPIView: {str(e)}")
-
-            # Fallback from combined_get_full_dashboard if counts are 0
+            # ---------------------------------------------------------
+            # Step A: Fetch metrics directly from combined_get_full_dashboard
+            # ---------------------------------------------------------
             try:
                 from amazon_auth.profit import combined_get_full_dashboard
                 dash_res = combined_get_full_dashboard(req_to_pass)
+                dash_data = {}
                 if hasattr(dash_res, 'content'):
-                    import json
                     dash_data = json.loads(dash_res.content.decode('utf-8'))
-                    header = dash_data.get("header_metrics", {})
-                    if total_return_count == 0:
-                        total_return_count = header.get("total_return_count", 0)
+                elif hasattr(dash_res, 'data') and isinstance(dash_res.data, dict):
+                    dash_data = dash_res.data
 
-                    top_orders = dash_data.get("top_orders", {})
-                    if pos_profit_count == 0 and top_orders.get("profitable", {}).get("total_count"):
-                        pos_profit_count = top_orders["profitable"]["total_count"]
-                        pos_profit_amount = _parse_num_safe(top_orders["profitable"].get("total_amount"))
-                    if neg_profit_count == 0 and top_orders.get("losing", {}).get("total_count"):
-                        neg_profit_count = top_orders["losing"]["total_count"]
-                        neg_profit_amount = _parse_num_safe(top_orders["losing"].get("total_amount"))
+                header = dash_data.get("header_metrics", {})
+                total_return_count = int(_parse_num_safe(header.get("total_return_count", 0)))
+
+                top_orders = dash_data.get("top_orders", {})
+                if top_orders.get("profitable"):
+                    pos_profit_count = int(_parse_num_safe(top_orders["profitable"].get("total_count", 0)))
+                    pos_profit_amount = _parse_num_safe(top_orders["profitable"].get("total_amount", 0))
+
+                if top_orders.get("losing"):
+                    neg_profit_count = int(_parse_num_safe(top_orders["losing"].get("total_count", 0)))
+                    neg_profit_amount = _parse_num_safe(top_orders["losing"].get("total_amount", 0))
             except Exception as e:
-                logger.error(f"Error fetching dashboard stats fallback: {str(e)}")
+                logger.error(f"Error fetching combined dashboard stats in GrowthOpportunitiesAPIView: {str(e)}")
 
             # ---------------------------------------------------------
-            # 3: Payment Leaks Total Difference
+            # Step B: Also calculate from combined SKU profitability list if larger
+            # ---------------------------------------------------------
+            try:
+                from amazon_auth.profit import combined_sku_profitability_list_filtered
+                sku_res = combined_sku_profitability_list_filtered(req_to_pass)
+                if sku_res.status_code == 200 and isinstance(sku_res.data, dict):
+                    rows = sku_res.data.get("response", [])
+                    sku_pos_count = 0
+                    sku_pos_amount = 0.0
+                    sku_neg_count = 0
+                    sku_neg_amount = 0.0
+                    sku_returns = 0
+
+                    for r in rows:
+                        profit = _parse_num_safe(r.get("profit"))
+                        if profit > 0:
+                            sku_pos_count += 1
+                            sku_pos_amount += profit
+                        elif profit < 0:
+                            sku_neg_count += 1
+                            sku_neg_amount += profit
+
+                        ret_qty = _parse_num_safe(r.get("returnqty"))
+                        if ret_qty > 0:
+                            sku_returns += int(ret_qty)
+
+                    if pos_profit_count == 0 and sku_pos_count > 0:
+                        pos_profit_count = sku_pos_count
+                        pos_profit_amount = sku_pos_amount
+
+                    if neg_profit_count == 0 and sku_neg_count > 0:
+                        neg_profit_count = sku_neg_count
+                        neg_profit_amount = sku_neg_amount
+
+                    if total_return_count == 0 and sku_returns > 0:
+                        total_return_count = sku_returns
+            except Exception as e:
+                logger.error(f"Error calculating SKU profitability in GrowthOpportunitiesAPIView: {str(e)}")
+
+            # ---------------------------------------------------------
+            # Step C: Payment Leaks Total Difference
             # ---------------------------------------------------------
             payment_leaks_amount = 0.0
             try:
@@ -113,37 +157,36 @@ class GrowthOpportunitiesAPIView(APIView):
                 logger.error(f"Error fetching payment reconcile details in GrowthOpportunitiesAPIView: {str(e)}")
 
             # ---------------------------------------------------------
-            # 4, 5, 6: High ROI, Low ROI & No Sales with Ad Spend
+            # Step D: High ROI, Low ROI & No Sales with Ad Spend (SKU Level)
             # ---------------------------------------------------------
             high_roi_count = 0
             low_roi_count = 0
             no_sales_ad_spend_count = 0
 
             try:
-                from amazon_ads.models import AdsAdGroup
-                from django.db.models import Sum
+                from amazon_ads.models import AdsProductAd
+                from django.db.models import Sum, Q, FloatField, F
+                from django.db.models.functions import Coalesce, Cast
 
-                ad_groups = AdsAdGroup.objects.filter(
-                    amazon_account__user=user
-                ).annotate(
-                    total_cost=Sum("campaign__campaignmetric__cost"),
-                    total_sales=Sum("campaign__campaignmetric__sales")
+                sku_ads_qs = AdsProductAd.objects.filter(
+                    amazon_account__user=user,
+                    amazon_account__is_primary=True
+                ).values("sku", "asin", "state").annotate(
+                    cost=Coalesce(Cast(Sum("productadmetric__cost"), FloatField()), 0.0),
+                    sales=Coalesce(Cast(Sum("productadmetric__sales"), FloatField()), 0.0)
                 )
 
-                for ag in ad_groups:
-                    c = ag.total_cost or 0.0
-                    s = ag.total_sales or 0.0
+                high_roi_count = sku_ads_qs.filter(
+                    Q(cost__gt=0, sales__gte=F("cost") * 2.0) | Q(cost=0, sales__gt=0) | Q(cost__isnull=True, sales__gt=0)
+                ).count()
 
-                    if c > 0 and s == 0:
-                        no_sales_ad_spend_count += 1
-                    elif c > 0:
-                        roas = s / c
-                        if roas >= 2.0:
-                            high_roi_count += 1
-                        else:
-                            low_roi_count += 1
-                    elif s > 0:
-                        high_roi_count += 1
+                low_roi_count = sku_ads_qs.filter(
+                    cost__gt=0, sales__lt=F("cost") * 2.0
+                ).count()
+
+                no_sales_ad_spend_count = sku_ads_qs.filter(
+                    cost__gt=0, sales=0
+                ).count()
 
             except Exception as e:
                 logger.error(f"Error fetching Amazon Ads metrics in GrowthOpportunitiesAPIView: {str(e)}")
@@ -175,7 +218,7 @@ class GrowthOpportunitiesAPIView(APIView):
                     },
                     "return_impact": {
                         "title": "Return Impact",
-                        "description": "Total number of return MP fees.",
+                        "description": "Total number of returns.",
                         "count": total_return_count
                     },
                     "high_roi_products": {

@@ -54,10 +54,10 @@ export default function ProfitDetailsView() {
   // const [columnSearch, setColumnSearch] = React.useState('');
 
   const channelLogoMap = {
-    // 'Amazon-India': amazon,
-    // 'Myntra-India': myntra,
     'Amazon-India': '/icons/amazon.svg',
+    'Amazon': '/icons/amazon.svg',
     'Myntra-India': '/icons/myntraLogo.jpg',
+    'Myntra': '/icons/myntraLogo.jpg',
   };
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -289,23 +289,18 @@ export default function ProfitDetailsView() {
       dataIndex: 'channel',
       width: 70,
       fixed: 'left',
-      //   render: (value) => {
-
-      //     const logo = channelLogoMap[value];
-
-      //     return (
-      //       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      //         {logo && <img src={logo} alt={value} style={{ width: 24, height: 24, objectFit: 'contain' }} />}
-      //       </div>
-      //     );
-      //   },
-      // },
       render: (value, record) => {
         if (record.key === 'total') {
           return <span>Total</span>;
         }
 
-        const logo = channelLogoMap[value];
+        const logo =
+          channelLogoMap[value] ||
+          (value && value.toLowerCase().includes('myntra')
+            ? '/icons/myntraLogo.jpg'
+            : value && value.toLowerCase().includes('amazon')
+            ? '/icons/amazon.svg'
+            : null);
 
         return (
           <div className="flex items-center justify-center w-full">

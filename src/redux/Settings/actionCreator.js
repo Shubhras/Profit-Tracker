@@ -370,3 +370,14 @@ export const uploadProductConfiguration = (file) => {
     }
   };
 };
+
+export const updateProductConfiguration = (payload) => {
+  return async () => {
+    try {
+      const response = await DataService.post('/amazon/update-channel-product-config-item/', payload);
+      return response.data;
+    } catch (err) {
+      throw err;
+    }
+  };
+};

@@ -2227,7 +2227,7 @@ def get_full_dashboard(request):
     user = get_effective_user(request.user)
 
     # ---------------- INPUT ----------------
-    data_source_raw = request.data if request.method == 'POST' else request.GET
+    data_source_raw = getattr(request, 'data', None) or (request.POST if request.method == 'POST' else request.GET)
     data_source = {}
 
     if data_source_raw:
@@ -2239,10 +2239,12 @@ def get_full_dashboard(request):
     if not data_source:
         try:
             import json
-            body_data = json.loads(request._request.body)
-            if isinstance(body_data, dict):
-                data_source.update(body_data)
-        except:
+            raw_body = getattr(request, '_body', None) or getattr(getattr(request, '_request', None), '_body', None)
+            if raw_body:
+                body_data = json.loads(raw_body)
+                if isinstance(body_data, dict):
+                    data_source.update(body_data)
+        except Exception:
             pass
 
     search_data = {}
@@ -2733,10 +2735,11 @@ def get_pivot_dashboard(request):
     user = request.user
     
     # Debug: Print incoming data
-    print(f"DEBUG Pivot Request: {request.data if request.method == 'POST' else request.GET}")
+    req_data_val = getattr(request, 'data', None) if request.method == 'POST' else request.GET
+    print(f"DEBUG Pivot Request: {req_data_val}")
 
     # 1. EXTRACT PARAMS (Robust logic)
-    data_source_raw = request.data if request.method == 'POST' else request.GET
+    data_source_raw = getattr(request, 'data', None) or (request.POST if request.method == 'POST' else request.GET)
     
     data_source = {}
     if data_source_raw:
@@ -2749,10 +2752,13 @@ def get_pivot_dashboard(request):
     if not data_source:
         try:
             import json
-            body_data = json.loads(request._request.body)
-            if isinstance(body_data, dict):
-                data_source.update(body_data)
-        except: pass
+            raw_body = getattr(request, '_body', None) or getattr(getattr(request, '_request', None), '_body', None)
+            if raw_body:
+                body_data = json.loads(raw_body)
+                if isinstance(body_data, dict):
+                    data_source.update(body_data)
+        except Exception:
+            pass
         
     search_data = {}
     search_data.update(data_source)
@@ -2970,9 +2976,8 @@ def get_amazon_data_profi_tability(request):
     # ============================================================
 
     data_source_raw = (
-        request.data
-        if request.method == 'POST'
-        else request.GET
+        getattr(request, 'data', None)
+        or (request.POST if request.method == 'POST' else request.GET)
     )
 
     data_source = {}
@@ -2990,12 +2995,12 @@ def get_amazon_data_profi_tability(request):
         try:
             import json
 
-            body_data = json.loads(
-                request._request.body
-            )
+            raw_body = getattr(request, '_body', None) or getattr(getattr(request, '_request', None), '_body', None)
+            if raw_body:
+                body_data = json.loads(raw_body)
 
-            if isinstance(body_data, dict):
-                data_source.update(body_data)
+                if isinstance(body_data, dict):
+                    data_source.update(body_data)
 
         except Exception:
             pass
@@ -9134,7 +9139,7 @@ def get_catalog_details(request):
 def amazon_profitability_details_transactions_shipping(request):
 
     user = get_effective_user(request.user)
-    data_source_raw = request.data if request.method == 'POST' else request.GET
+    data_source_raw = getattr(request, 'data', None) or (request.POST if request.method == 'POST' else request.GET)
     
     data_source = {}
     if data_source_raw:
@@ -9147,10 +9152,12 @@ def amazon_profitability_details_transactions_shipping(request):
     if not data_source:
         try:
             import json
-            body_data = json.loads(request._request.body)
-            if isinstance(body_data, dict):
-                data_source.update(body_data)
-        except: pass
+            raw_body = getattr(request, '_body', None) or getattr(getattr(request, '_request', None), '_body', None)
+            if raw_body:
+                body_data = json.loads(raw_body)
+                if isinstance(body_data, dict):
+                    data_source.update(body_data)
+        except Exception: pass
 
     search_data = {}
     search_data.update(data_source)
@@ -11025,7 +11032,7 @@ def sku_profitability_list_filtered(request):
 @permission_classes([IsAuthenticated])
 def get_parent_asin_ad_spend(request):
     user = request.user
-    data_source_raw = request.data if request.method == 'POST' else request.GET
+    data_source_raw = getattr(request, 'data', None) or (request.POST if request.method == 'POST' else request.GET)
     
     data_source = {}
     if data_source_raw:
@@ -11037,10 +11044,12 @@ def get_parent_asin_ad_spend(request):
     if not data_source:
         try:
             import json
-            body_data = json.loads(request._request.body)
-            if isinstance(body_data, dict):
-                data_source.update(body_data)
-        except: pass
+            raw_body = getattr(request, '_body', None) or getattr(getattr(request, '_request', None), '_body', None)
+            if raw_body:
+                body_data = json.loads(raw_body)
+                if isinstance(body_data, dict):
+                    data_source.update(body_data)
+        except Exception: pass
 
     search_data = {}
     search_data.update(data_source)
