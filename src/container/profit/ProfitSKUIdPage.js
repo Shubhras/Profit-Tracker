@@ -48,9 +48,9 @@ export default function ProfitSKUIdPage() {
 
   const channelLogoMap = {
     'Amazon-India': '/icons/amazon.svg',
-    'Amazon': '/icons/amazon.svg',
+    Amazon: '/icons/amazon.svg',
     'Myntra-India': '/icons/myntraLogo.jpg',
-    'Myntra': '/icons/myntraLogo.jpg',
+    Myntra: '/icons/myntraLogo.jpg',
   };
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -258,8 +258,8 @@ export default function ProfitSKUIdPage() {
           (value && value.toLowerCase().includes('myntra')
             ? '/icons/myntraLogo.jpg'
             : value && value.toLowerCase().includes('amazon')
-              ? '/icons/amazon.svg'
-              : null);
+            ? '/icons/amazon.svg'
+            : null);
 
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -734,12 +734,13 @@ export default function ProfitSKUIdPage() {
                           ) : (
                             <span
                               // className={`text-[13px] font-semibold ${
-                              className={`text-[13px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis ${Number(value) > 0 && ['profitPercent'].includes(col.dataIndex)
-                                ? 'text-green-600'
-                                : Number(value) < 0
+                              className={`text-[13px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis ${
+                                Number(value) > 0 && ['profitPercent'].includes(col.dataIndex)
+                                  ? 'text-green-600'
+                                  : Number(value) < 0
                                   ? 'text-red-600'
                                   : 'text-[#111827]'
-                                }`}
+                              }`}
                             >
                               {value ?? 0}
                               {isPercent ? '%' : ''}

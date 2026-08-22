@@ -106,6 +106,7 @@ export default function UserManagement() {
         mobile: u.mobile_number,
         status: u.status || 'Active',
         role: u.role || 'Staff',
+        created_at: u.created_at,
         rawUser: u,
       }));
 
@@ -402,7 +403,33 @@ export default function UserManagement() {
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
-      render: (text) => <span className="font-medium">{text}</span>,
+      render: (text, record) => {
+        const name = text || 'User';
+
+        const initials = name
+          .trim()
+          .split(' ')
+          .filter(Boolean)
+          .slice(0, 2)
+          .map((word) => word.charAt(0).toUpperCase())
+          .join('');
+
+        return (
+          <div className="flex items-center gap-2.5">
+            {/* AVATAR */}
+            <div className="w-[30px] h-[30px] rounded-full bg-[#28477A] flex items-center justify-center shrink-0">
+              <span className="text-[11px] font-semibold text-white">{initials}</span>
+            </div>
+
+            {/* NAME + ROLE */}
+            <div className="min-w-0">
+              <div className="text-[13px] font-semibold text-[#1F2937] leading-[15px] truncate">{name}</div>
+
+              <div className="text-[11px] text-[#9CA3AF]">{record.role}</div>
+            </div>
+          </div>
+        );
+      },
     },
     {
       title: 'Email',
@@ -420,12 +447,38 @@ export default function UserManagement() {
       key: 'status',
       render: (status) => (
         <span
-          className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${status === 'Active' ? 'bg-success-transparent text-success' : 'bg-danger-transparent text-danger'
-            }`}
+          className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
+            status === 'Active' ? 'bg-success-transparent text-success' : 'bg-danger-transparent text-danger'
+          }`}
         >
           {status}
         </span>
       ),
+    },
+    {
+      title: 'Created At',
+      dataIndex: 'created_at',
+      key: 'created_at',
+      render: (createdAt) => {
+        if (!createdAt) return '—';
+
+        const date = new Date(createdAt);
+
+        return (
+          <span className="text-[12px] text-gray-600">
+            {date.toLocaleDateString('en-IN', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+            })}{' '}
+            {date.toLocaleTimeString('en-IN', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true,
+            })}
+          </span>
+        );
+      },
     },
     {
       title: 'Actions',
@@ -502,7 +555,6 @@ export default function UserManagement() {
   const totalUsers = userSummary.total_users;
   const activeUsers = userSummary.active_users;
   const pendingUsers = userSummary.pending_users;
-  const ownerUsers = userSummary.owner_users;
 
   /* ================= PERMISSIONS TABLE COLUMNS ================= */
 

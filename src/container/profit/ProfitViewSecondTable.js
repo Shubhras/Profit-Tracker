@@ -51,9 +51,9 @@ export default function ProfitViewSecondTable() {
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
   const channelLogoMap = {
     'Amazon-India': '/icons/amazon.svg',
-    'Amazon': '/icons/amazon.svg',
+    Amazon: '/icons/amazon.svg',
     'Myntra-India': '/icons/myntraLogo.jpg',
-    'Myntra': '/icons/myntraLogo.jpg',
+    Myntra: '/icons/myntraLogo.jpg',
   };
   const [pagination, setPagination] = React.useState({
     current: 1,
