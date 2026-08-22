@@ -150,6 +150,7 @@ function AdProductsThird() {
       align: 'center',
       width: '70',
       ellipsis: true,
+      sorter: (a, b) => a.defaultBid - b.defaultBid,
       render: (v) => <span className="font-medium text-[#2563eb]">₹{v}</span>,
     },
 

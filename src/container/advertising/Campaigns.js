@@ -407,6 +407,7 @@ function Campaigns() {
       dataIndex: 'dailyBudget',
       align: 'center',
       width: 80,
+      sorter: (a, b) => a.dailyBudget - b.dailyBudget,
 
       render: (_, record) => {
         const budgetText = `₹${Number(record?.dailyBudget || 0).toFixed(2)} / ${record?.budgetType}`;
@@ -796,7 +797,7 @@ function Campaigns() {
 
   return (
     <>
-      <div className="p-2">
+      <div className="p-2 px-4">
         <div className="mt-3 mb-3 rounded-2xl border border-[#e5e7eb] bg-white shadow-sm overflow-hidden">
           {/* Header */}
           <div className="border-b border-[#edf0f2] px-3 py-2">

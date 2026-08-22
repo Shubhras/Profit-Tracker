@@ -9,12 +9,14 @@ import ScrollToTopButton from './components/ScrollToTopButton';
 import ShiftToAISection from './components/ShiftToAISection';
 import TestimonialsSection from './components/TestimonialsSection';
 import FeatureDashboard from './components/FeatureDashboard';
+import NewImage from './components/NewImage';
 
 function Home() {
   return (
     <>
       <Navbar />
       <HeroSection />
+      <NewImage />
       <Marque />
       <ShiftToAISection />
       <FinanceEngineSection />

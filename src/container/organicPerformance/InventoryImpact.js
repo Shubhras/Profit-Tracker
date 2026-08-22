@@ -13,18 +13,10 @@ import {
   EyeOutlined,
 } from '@ant-design/icons';
 
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  PieChart,
-  Pie,
-  Cell,
-  CartesianGrid,
-} from 'recharts';
+// import {
+//   ResponsiveContainer,
+//   LineChart,
+// } from 'recharts';
 
 const stats = [
   {
@@ -68,78 +60,6 @@ const stats = [
     growth: '+9.12%',
     icon: <SyncOutlined spin={false} />, // Refresh/Turnover
     bg: 'bg-blue-50',
-  },
-];
-const inventoryTrend = [
-  { day: 'May 01', value: 9 },
-  { day: 'May 03', value: 9 },
-  { day: 'May 05', value: 10.2 },
-  { day: 'May 07', value: 8.1 },
-  { day: 'May 09', value: 9.1 },
-  { day: 'May 11', value: 9.8 },
-  { day: 'May 13', value: 10.4 },
-  { day: 'May 15', value: 11.1 },
-  { day: 'May 17', value: 8.9 },
-  { day: 'May 19', value: 10.0 },
-  { day: 'May 21', value: 10.3 },
-  { day: 'May 23', value: 9.5 },
-  { day: 'May 25', value: 10.2 },
-  { day: 'May 27', value: 8.8 },
-  { day: 'May 29', value: 10.4 },
-  { day: 'May 31', value: 11.8 },
-];
-
-const inventoryHealthData = [
-  {
-    name: 'In Stock',
-    value: 171,
-    percent: '69.80%',
-    color: '#22c55e',
-  },
-  {
-    name: 'Low Stock',
-    value: 32,
-    percent: '13.06%',
-    color: '#f97316',
-  },
-  {
-    name: 'Out of Stock',
-    value: 14,
-    percent: '5.71%',
-    color: '#ef4444',
-  },
-  {
-    name: 'At Risk',
-    value: 28,
-    percent: '11.43%',
-    color: '#8b5cf6',
-  },
-];
-
-const inventoryInsights = [
-  {
-    title: '32 SKUs are low on stock',
-    desc: 'These SKUs may run out of stock soon.',
-    color: 'bg-orange-100 text-orange-600',
-    icon: '⚠',
-  },
-  {
-    title: '14 SKUs are out of stock',
-    desc: 'Restock to avoid revenue loss.',
-    color: 'bg-red-100 text-red-600',
-    icon: '📦',
-  },
-  {
-    title: '28 SKUs are at risk',
-    desc: 'High sales velocity compared to available stock.',
-    color: 'bg-purple-100 text-purple-600',
-    icon: '!',
-  },
-  {
-    title: 'Inventory value increased by 12.35%',
-    desc: 'Total inventory value is up by ₹1,36,420.',
-    color: 'bg-green-100 text-green-600',
-    icon: '↗',
   },
 ];
 
@@ -317,7 +237,7 @@ const searchData = [
 
 function InventoryImpact() {
   return (
-    <div className="space-y-2 mt-3 mb-3 px-2">
+    <div className="space-y-2 mt-3 mb-3 px-4">
       {/* HEADER */}
 
       <div className="flex items-start justify-between mb-2 flex-wrap gap-3">
@@ -357,108 +277,6 @@ function InventoryImpact() {
       </div>
 
       {/* CHART SECTION */}
-
-      <div className="grid grid-cols-12 gap-3 lg:grid-cols-1">
-        {/* INVENTORY VALUE TREND */}
-
-        <div className="col-span-5 lg:col-span-1 bg-white border border-[#edf0f2] rounded-xl p-3">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-[15px] font-semibold text-[#111827]">Inventory Value Trend</h3>
-
-            <select className="text-[11px] border border-[#e5e7eb] rounded-md px-2 py-1">
-              <option>Daily</option>
-            </select>
-          </div>
-
-          <div className="h-[220px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={inventoryTrend}>
-                <CartesianGrid stroke="#f1f5f9" vertical={false} />
-
-                <XAxis dataKey="day" fontSize={10} tickLine={false} axisLine={false} />
-
-                <YAxis fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v}L`} />
-
-                <Tooltip />
-
-                <Line type="monotone" dataKey="value" stroke="#22c55e" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* INVENTORY HEALTH */}
-
-        <div className="col-span-4 lg:col-span-1 bg-white border border-[#edf0f2] rounded-xl p-3">
-          <h3 className="text-[15px] font-semibold text-[#111827] mb-3">Inventory Health</h3>
-
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <ResponsiveContainer width={150} height={150}>
-                <PieChart>
-                  <Pie data={inventoryHealthData} dataKey="value" innerRadius={45} outerRadius={70}>
-                    {inventoryHealthData.map((item, index) => (
-                      <Cell key={index} fill={item.color} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <div className="text-[24px] font-bold text-[#111827]">245</div>
-
-                <div className="text-[11px] text-[#6b7280]">Total SKUs</div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              {inventoryHealthData.map((item) => (
-                <div key={item.name} className="text-[11px]">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-
-                    <span>{item.name}</span>
-                  </div>
-
-                  <div className="ml-4 text-[#6b7280]">
-                    {item.value} ({item.percent})
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* INVENTORY INSIGHTS */}
-
-        <div className="col-span-3 lg:col-span-1 bg-white border border-[#edf0f2] rounded-xl p-3">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[15px] font-semibold text-[#111827]">Inventory Insights</h3>
-
-            <button type="button" className="text-[10px] text-[#2563eb] font-medium">
-              View All Insights
-            </button>
-          </div>
-
-          <div className="space-y-2">
-            {inventoryInsights.map((item, index) => (
-              <div key={index} className="flex gap-3">
-                <div
-                  className={`w-7 h-7 rounded-md flex items-center justify-center text-[12px] font-semibold ${item.color}`}
-                >
-                  {item.icon}
-                </div>
-
-                <div>
-                  <div className="text-[12px] font-semibold text-[#111827]">{item.title}</div>
-
-                  <div className="text-[11px] text-[#6b7280] mt-1">{item.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
 
       <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">

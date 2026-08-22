@@ -12,21 +12,14 @@ import {
   NotificationOutlined,
 } from '@ant-design/icons';
 
-import Blinkit from '../../assets/icons/blinkit.png';
-import Zeepto from '../../assets/icons/zepto.png';
-import Swiggy from '../../assets/icons/swiggy.png';
-import Bigbasket from '../../assets/icons/bigbasket.png';
-import Dunzo from '../../assets/icons/dunzo.png';
-import SwiggyInsta from '../../assets/icons/swiggyinstamart.png';
-
 function QuickCommerce() {
   const marketplaces = [
-    { name: 'Blinkit', icon: Blinkit },
-    { name: 'Zepto', icon: Zeepto },
-    { name: 'Swiggy', icon: Swiggy },
-    { name: 'Bigbasket', icon: Bigbasket },
-    { name: 'Dunzo', icon: Dunzo },
-    { name: 'SwiggyInsta', icon: SwiggyInsta },
+    { name: 'Blinkit', icon: '/icons/blinkit.png' },
+    { name: 'Zepto', icon: '/icons/zepto.png' },
+    { name: 'Swiggy', icon: '/icons/swiggy.png' },
+    { name: 'Bigbasket', icon: '/icons/bigbasket.png' },
+    { name: 'Dunzo', icon: '/icons/dunzo.png' },
+    { name: 'SwiggyInsta', icon: '/icons/swiggyinstamart.png' },
   ];
 
   return (
@@ -266,41 +259,6 @@ function QuickCommerce() {
                   <span>{item}</span>
                 </div>
               ))}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-10 border border-normal shadow-regular p-4">
-            <h3 className="text-[15px] font-semibold mb-4">Your Service Summary</h3>
-
-            <div className="space-y-3 text-[12px]">
-              <div className="flex justify-between">
-                <span>Active Services</span>
-                <span className="font-semibold">3</span>
-              </div>
-
-              <div className="flex justify-between">
-                <span>Pending Requests</span>
-                <span className="font-semibold">1</span>
-              </div>
-
-              <div className="flex justify-between">
-                <span>Completed This Month</span>
-                <span className="font-semibold">12</span>
-              </div>
-
-              <div className="border-t border-normal pt-3">
-                <div className="flex justify-between">
-                  <span>Monthly Investment</span>
-                  <span className="font-semibold text-[#16a34a]">₹ 60,000</span>
-                </div>
-              </div>
-
-              <Button
-                block
-                className="bg-[#16a34a] border-[#16a34a] text-white h-[32px] px-2 text-[11px] font-semibold"
-              >
-                Manage My Services
-              </Button>
             </div>
           </div>
         </div>

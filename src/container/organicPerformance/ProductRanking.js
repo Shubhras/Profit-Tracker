@@ -3,7 +3,6 @@ import { Button, Table, Tooltip, Tag } from 'antd';
 import {
   FilterOutlined,
   ExportOutlined,
-  SearchOutlined,
   TrophyOutlined,
   InboxOutlined,
   RiseOutlined,
@@ -96,7 +95,7 @@ function ProductRanking() {
     },
 
     {
-      title: 'Sales Rank',
+      title: 'Product Category Rank',
       dataIndex: 'saleRank',
       align: 'center',
       width: 70,
@@ -111,7 +110,7 @@ function ProductRanking() {
     },
 
     {
-      title: 'Display Group Rank',
+      title: 'Master Category Rank',
       dataIndex: 'dispalyGroupRank',
       align: 'center',
       width: 70,
@@ -120,7 +119,7 @@ function ProductRanking() {
     },
 
     {
-      title: 'Sales Rank Category',
+      title: 'Product Category',
       dataIndex: 'saleRankCategry',
       align: 'center',
       width: 70,
@@ -142,7 +141,7 @@ function ProductRanking() {
       ),
     },
     {
-      title: 'Group Rank Title',
+      title: 'Group Category Rank',
       dataIndex: 'groupRankTitle',
       align: 'center',
       width: 70,
@@ -162,7 +161,7 @@ function ProductRanking() {
     },
 
     {
-      title: 'In Top 100 (Sales Rank)',
+      title: 'In Top 100 (Product Category Rank)',
       value: '28',
       change: '12%',
       trend: 'up',
@@ -171,7 +170,7 @@ function ProductRanking() {
     },
 
     {
-      title: 'Avg. Sales Rank',
+      title: 'Avg. Product Category Rank',
       value: '856',
       change: '8%',
       trend: 'down',
@@ -180,7 +179,7 @@ function ProductRanking() {
     },
 
     {
-      title: 'Avg. Display Group Rank',
+      title: 'Avg. Master Category Rank',
       value: '45,362',
       change: '5%',
       trend: 'down',
@@ -208,7 +207,7 @@ function ProductRanking() {
   ];
 
   return (
-    <div className="p-3 px-3 bg-[#f8fafc] min-h-screen">
+    <div className="p-3 px-4 bg-[#f8fafc] min-h-screen">
       {/* HEADER */}
 
       <div className="flex items-start justify-between mb-2 flex-wrap gap-3">
@@ -266,40 +265,6 @@ function ProductRanking() {
             </div>
           </div>
         ))}
-      </div>
-
-      {/* FILTERS */}
-
-      <div className="bg-white border border-[#edf0f2] rounded-xl p-3 mb-2">
-        <div className="grid grid-cols-5 xl:grid-cols-2 md:grid-cols-1 gap-3">
-          <select className="h-[35px] border rounded-lg px-3 text-[12px]">
-            <option>All Product Groups</option>
-          </select>
-
-          <select className="h-[35px] border rounded-lg px-3 text-[12px]">
-            <option>All Categories</option>
-          </select>
-
-          <select className="h-[35px] border rounded-lg px-3 text-[12px]">
-            <option>All Brands</option>
-          </select>
-
-          <input
-            type="text"
-            value="01/05/2026 - 31/05/2026"
-            readOnly
-            className="h-[35px] border rounded-lg px-3 text-[12px]"
-          />
-
-          <div className="relative">
-            <input
-              placeholder="Search by product name or ASIN..."
-              className="w-full h-[35px] border rounded-lg pl-10 pr-3 text-[12px]"
-            />
-
-            <SearchOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
-          </div>
-        </div>
       </div>
 
       {/* TABLE CARD */}

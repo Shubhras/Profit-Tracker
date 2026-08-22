@@ -138,7 +138,7 @@ function MarketplaceIntegrations() {
   ];
 
   return (
-    <div className="bg-[#f8fafc] min-h-screen px-3 py-3">
+    <div className="bg-[#f8fafc] min-h-screen px-5 py-3">
       {/* Header */}
       <div className="flex justify-between items-center mb-3">
         <div>

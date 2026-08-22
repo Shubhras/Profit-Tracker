@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Table, Input, Tag, Switch, Modal, Button, Select, Tooltip } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { EyeOutlined, SearchOutlined, LockOutlined, DeleteOutlined } from '@ant-design/icons';
+import { EyeOutlined, SearchOutlined, DeleteOutlined } from '@ant-design/icons';
 import { getUsersList } from '../../redux/admin/actionCreator';
 
 function UsersList() {
@@ -214,11 +214,11 @@ function UsersList() {
               });
             }}
           />
-          <Button
+          {/* <Button
             type="text"
             icon={<LockOutlined className="text-orange-500 text-[16px]" />}
-            // onClick={() => handlePermissionModal(record)}
-          />
+            onClick={() => handlePermissionModal(record)}
+          /> */}
 
           <Button
             type="text"
