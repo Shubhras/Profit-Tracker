@@ -14,6 +14,7 @@ import Notification from '../../container/admin/Notifications';
 import SubModule from '../../container/admin/SubModule';
 import AdminUsers from '../../container/admin/AdminUsers';
 import ApiCallLogs from '../../container/admin/ApiCallLogs';
+import PaymentTransactions from '../../container/admin/PaymentTransactions';
 import withAdminLayout from '../../layout/withAdminLayout';
 import AddSubscription from '../../container/admin/AddSubscription';
 
@@ -35,6 +36,7 @@ function SuperAdminRoutes() {
       <Route path="submodule" element={<SubModule />} />
       <Route path="admin-users" element={<AdminUsers />} />
       <Route path="api-logs" element={<ApiCallLogs />} />
+      <Route path="payment-transactions" element={<PaymentTransactions />} />
 
       <Route path="privacy-policy" element={<PrivacyPolicy />} />
       <Route path="marketplaceIntegration" element={<MarketplaceIntegration />} />

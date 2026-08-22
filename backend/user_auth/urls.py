@@ -7,6 +7,8 @@ from user_auth.apis.forgot_password import UserForgotPasswordAPI
 from user_auth.apis.reset_password import UserResetPasswordAPI,RefreshTokenAPI
 from user_auth.apis.update_profile import UserUpdateProfileAPI
 from user_auth.apis.admin_user_update import AdminUserDetailUpdateAPIView
+from user_auth.apis.admin_marketplace_integrations import AdminMarketplaceIntegrationsAPIView
+from user_auth.apis.admin_payment_transactions import AdminPaymentTransactionsAPIView
 from .views import *
 from .subscription import *
 from .privacy_policy import *
@@ -34,6 +36,8 @@ urlpatterns = [
     
     path('admin/dashboard/', AdminDashboardAPI.as_view(), name='admin-dashboard'),
     path('admin/api-logs/', AdminApiLogsAPI.as_view(), name='admin-api-logs'),
+    path('admin/marketplace-integrations/', AdminMarketplaceIntegrationsAPIView.as_view(), name='admin-marketplace-integrations'),
+    path('admin/payment-transactions/', AdminPaymentTransactionsAPIView.as_view(), name='admin-payment-transactions'),
     
     path(
         "admin/user-list/",

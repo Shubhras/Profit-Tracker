@@ -6,8 +6,10 @@ import {
   PhoneOutlined,
   ArrowLeftOutlined,
   FormOutlined,
-  AppstoreOutlined,
   EnvironmentOutlined,
+  CreditCardOutlined,
+  TeamOutlined,
+  ApiOutlined,
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -91,20 +93,19 @@ function ViewUser() {
 
   return (
     <>
-      <div className="bg-[#f5f7fb] min-h-screen p-3">
+      <div className="bg-[#f5f7fb] min-h-screen p-3 px-5">
         {/* Header */}
         <div className="flex items-center gap-3 mb-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="w-10 h-10 rounded-xl border border-gray-200 bg-white shadow hover:bg-gray-100 transition"
+            className="w-10 h-10 rounded-xl border border-gray-200 bg-white shadow hover:bg-gray-100 transition flex items-center justify-center"
           >
             <ArrowLeftOutlined />
           </button>
 
           <div>
             <h2 className="text-[20px] font-bold text-gray-800 mb-0">User Details</h2>
-            {/* <p className="text-[13px] mb-0">View complete information about the user.</p> */}
           </div>
         </div>
 
@@ -152,7 +153,8 @@ function ViewUser() {
 
         {/* Information Grid */}
 
-        <div className="grid grid-cols-1 min-lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Personal Information */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
             <div className="flex items-center gap-2">
               <UserOutlined className="text-blue-500 text-lg" />
@@ -160,7 +162,7 @@ function ViewUser() {
             </div>
             <div className="mx-1 my-3 border-t border-gray-200 mt-2" />
 
-            <div className="grid grid-cols-2 gap-x-10 gap-y-3">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-3">
               <div>
                 <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400 mb-0">Full Name</p>
                 <p className="text-[15px] text-black">{user?.name || '-'}</p>
@@ -186,33 +188,6 @@ function ViewUser() {
             </div>
           </div>
 
-          {/* Business */}
-          {/* <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
-          <h3 className="text-lg font-semibold mb-5">Business Information</h3>
-
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400 mb-0">Business Name</p>
-              <p className="text-[15px] text-black">{user?.business_name || '-'}</p>
-            </div>
-
-            <div>
-              <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400 mb-0">City</p>
-              <p className="text-[15px] text-black">{user?.city || '-'}</p>
-            </div>
-
-            <div>
-              <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400 mb-0">State</p>
-              <p className="text-[15px] text-black">{user?.state || '-'}</p>
-            </div>
-
-            <div>
-              <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400 mb-0">Pin Code</p>
-              <p className="text-[15px] text-black">{user?.pin_code || '-'}</p>
-            </div>
-          </div>
-        </div> */}
-
           {/* Address */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
             <div className="flex items-center gap-2">
@@ -222,88 +197,164 @@ function ViewUser() {
             <div className="mx-1 my-3 border-t border-gray-200 mt-2" />
             <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400 mb-1">Complete Address</p>
 
-            <p className="text-[15px] text-black">{user?.address || '-'}</p>
+            <p className="text-[15px] text-black mb-3">{user?.address || '-'}</p>
 
-            <div className="grid grid-cols-3 gap-4">
-              <div className="bg-gray-50 rounded-xl p-3">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-gray-50 rounded-xl p-2">
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-400 mb-1">City</p>
-                <p className="text-[15px] text-black">{user?.city || '-'}</p>
+                <p className="text-[14px] text-black">{user?.city || '-'}</p>
               </div>
 
-              <div className="bg-gray-50 rounded-xl p-3">
+              <div className="bg-gray-50 rounded-xl p-2">
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-400 mb-1">State</p>
-                <p className="text-[15px] text-black">{user?.state || '-'}</p>
+                <p className="text-[14px] text-black">{user?.state || '-'}</p>
               </div>
 
-              <div className="bg-gray-50 rounded-xl p-3">
+              <div className="bg-gray-50 rounded-xl p-2">
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-400 mb-1">Pin Code</p>
-                <p className="text-[15px] text-black">{user?.pin_code || '-'}</p>
+                <p className="text-[14px] text-black">{user?.pin_code || '-'}</p>
               </div>
             </div>
           </div>
 
-          {/* Account Information (4th Box) */}
-          {/* <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
-          <h3 className="text-lg font-semibold mb-5">Account Information</h3>
-
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400 mb-0">User ID</p>
-              <p className="text-[15px] text-black">{user?.id || '-'}</p>
+          {/* Active Subscription */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3">
+            <div className="flex items-center gap-2">
+              <CreditCardOutlined className="text-blue-500 text-lg" />
+              <h3 className="text-lg font-semibold mb-0">Active Subscription</h3>
             </div>
+            <div className="mx-1 my-3 border-t border-gray-200 mt-2" />
 
-            <div>
-              <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400 mb-0">Status</p>
+            {user?.subscription ? (
+              <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400 mb-0">Plan Name</p>
+                  <p className="text-[15px] font-semibold text-black">{user.subscription.plan_name || '-'}</p>
+                </div>
 
-              <Tag color={user?.is_active ? 'green' : 'red'}>{user?.is_active ? 'Active' : 'Inactive'}</Tag>
-            </div>
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400 mb-0">Status</p>
+                  <Tag
+                    color={user.subscription.status === 'active' ? 'green' : 'orange'}
+                    className="rounded-l px-3 py-[2px] font-medium capitalize"
+                  >
+                    {user.subscription.status || '-'}
+                  </Tag>
+                </div>
 
-            <div>
-              <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400 mb-0">Email</p>
-              <p className="text-[15px] text-black">{user?.email || '-'}</p>
-            </div>
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400 mb-0">Billing Cycle</p>
+                  <p className="text-[15px] text-black capitalize">{user.subscription.billing_cycle || '-'}</p>
+                </div>
 
-            <div>
-              <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400 mb-0">Phone</p>
-              <p className="text-[15px] text-black">{user?.mobile_number || '-'}</p>
-            </div>
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400 mb-0">Amount</p>
+                  <p className="text-[15px] text-black">₹{user.subscription.amount ?? '-'}</p>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400 mb-0">Start Date</p>
+                  <p className="text-[14px] text-gray-700">
+                    {user.subscription.start_date ? new Date(user.subscription.start_date).toLocaleDateString() : '-'}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-gray-400 mb-0">End Date</p>
+                  <p className="text-[14px] text-gray-700">
+                    {user.subscription.end_date ? new Date(user.subscription.end_date).toLocaleDateString() : '-'}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex justify-center items-center py-8 text-gray-400 font-medium">
+                No Active Subscription
+              </div>
+            )}
           </div>
-        </div> */}
         </div>
 
-        {/* Permissions */}
-
+        {/* Sub Users Section */}
         <div className="p-3 rounded-2xl shadow-md mt-4 bg-white">
           <div className="flex items-center gap-2">
-            <AppstoreOutlined className="text-blue-500 text-lg" />
-            <h3 className="text-lg font-semibold mb-0">Module Permissions</h3>
+            <TeamOutlined className="text-blue-500 text-lg" />
+            <h3 className="text-lg font-semibold mb-0">Sub-Users</h3>
           </div>
           <div className="mx-1 my-3 border-t border-gray-200 mt-2" />
-          {user?.permissions?.length ? (
-            <div className="grid grid-cols-1 min-md:grid-cols-2 min-lg:grid-cols-3 gap-4">
-              {user.permissions.map((permission) => (
-                <div
-                  key={permission.id}
-                  className="border rounded-2xl p-4 bg-gradient-to-r from-blue-50 to-white hover:shadow-md transition"
-                >
-                  <h4 className="font-semibold text-lg">{permission.module_name}</h4>
 
-                  <p className="text-gray-500 mb-3">{permission.submodule_name}</p>
-
-                  <div className="flex flex-wrap gap-2">
-                    {permission.can_view && <Tag color="blue">View</Tag>}
-
-                    {permission.can_create && <Tag color="green">Create</Tag>}
-
-                    {permission.can_update && <Tag color="orange">Update</Tag>}
-
-                    {permission.can_delete && <Tag color="red">Delete</Tag>}
-                  </div>
-                </div>
-              ))}
+          {user?.sub_users?.length ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50 text-gray-500 text-xs font-semibold uppercase">
+                    <th className="p-3">Name</th>
+                    <th className="p-3">Email</th>
+                    <th className="p-3">Mobile</th>
+                    <th className="p-3">Created Date</th>
+                    <th className="p-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {user.sub_users.map((subUser) => (
+                    <tr key={subUser.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="p-3 font-medium text-gray-800">{subUser.name || '-'}</td>
+                      <td className="p-3 text-gray-600">{subUser.email || '-'}</td>
+                      <td className="p-3 text-gray-600">{subUser.mobile_number || '-'}</td>
+                      <td className="p-3 text-gray-600">
+                        {subUser.created_at ? new Date(subUser.created_at).toLocaleDateString() : '-'}
+                      </td>
+                      <td className="p-3">
+                        <Tag color={subUser.is_active ? 'green' : 'red'}>
+                          {subUser.is_active ? 'Active' : 'Inactive'}
+                        </Tag>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : (
-            <div className="flex justify-center items-center py-10 text-gray-400">No Permissions Assigned</div>
+            <div className="flex justify-center items-center py-6 text-gray-400">No Sub-Users Found</div>
+          )}
+        </div>
+
+        {/* Connected Channels Section */}
+        <div className="p-3 rounded-2xl shadow-md mt-4 bg-white">
+          <div className="flex items-center gap-2">
+            <ApiOutlined className="text-blue-500 text-lg" />
+            <h3 className="text-lg font-semibold mb-0">Connected Channels</h3>
+          </div>
+          <div className="mx-1 my-3 border-t border-gray-200 mt-2" />
+
+          {user?.connected_channels?.length ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50 text-gray-500 text-xs font-semibold uppercase">
+                    <th className="p-3">Channel</th>
+                    <th className="p-3">Account / Store ID</th>
+                    <th className="p-3">Connected Date</th>
+                    <th className="p-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {user.connected_channels.map((ch, idx) => (
+                    <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="p-3 font-semibold text-gray-800">{ch.channel}</td>
+                      <td className="p-3 text-gray-600 font-mono text-xs">{ch.identifier || '-'}</td>
+                      <td className="p-3 text-gray-600">
+                        {ch.connected_at ? new Date(ch.connected_at).toLocaleDateString() : '-'}
+                      </td>
+                      <td className="p-3">
+                        <Tag color={ch.status === 'Connected' ? 'green' : 'red'}>{ch.status}</Tag>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="flex justify-center items-center py-6 text-gray-400">No Connected Channels Found</div>
           )}
         </div>
       </div>

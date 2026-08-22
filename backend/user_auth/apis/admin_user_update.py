@@ -6,12 +6,118 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework import status
 
 from subscription.utils.custom_response import success_response, error_response
-from user_auth.models import UserProfile, UserModulePermission, Module, SubModule
+from subscription.models import UserSubscription
+from user_auth.models import UserProfile, UserModulePermission, Module, SubModule, SubUser
 from user_auth.serializers import (
     UserProfileUpdateSerializer,
     SubUserPermissionInputSerializer,
-    UserModulePermissionSerializer
+    UserModulePermissionSerializer,
+    SubUserSerializer
 )
+
+
+def get_user_subscription_data(user):
+    active_subscription = (
+        UserSubscription.objects
+        .filter(
+            user=user,
+            status="active",
+            is_paid=True
+        )
+        .select_related("plan")
+        .order_by("-created_at")
+        .first()
+    )
+
+    if not active_subscription:
+        active_subscription = (
+            UserSubscription.objects
+            .filter(user=user)
+            .select_related("plan")
+            .order_by("-created_at")
+            .first()
+        )
+
+    if not active_subscription:
+        return None
+
+    return {
+        "subscription_id": active_subscription.id,
+        "plan_id": active_subscription.plan.id if active_subscription.plan else None,
+        "plan_name": active_subscription.plan.plan_name if active_subscription.plan else None,
+        "billing_cycle": active_subscription.billing_cycle,
+        "amount": active_subscription.amount,
+        "status": active_subscription.status,
+        "is_paid": active_subscription.is_paid,
+        "start_date": active_subscription.start_date,
+        "end_date": active_subscription.end_date,
+        "razorpay_subscription_id": active_subscription.razorpay_subscription_id,
+        "razorpay_payment_id": active_subscription.razorpay_payment_id,
+    }
+
+
+def get_user_sub_users_data(user):
+    sub_users = SubUser.objects.filter(parent=user).order_by("-created_at")
+    return SubUserSerializer(sub_users, many=True).data
+
+
+def get_user_connected_channels(user):
+    channels = []
+
+    try:
+        from amazon_auth.models import AmazonAccount
+        amz_accounts = AmazonAccount.objects.filter(user=user)
+        for acc in amz_accounts:
+            channels.append({
+                "channel": "Amazon",
+                "identifier": acc.seller_central_id or acc.store_name or f"Seller #{acc.id}",
+                "status": "Connected" if (acc.refresh_token_encrypted or acc.amazon_refresh_token) else "Disconnected",
+                "connected_at": acc.created_at
+            })
+    except (ImportError, Exception):
+        pass
+
+    try:
+        from amazon_ads.models import AmazonAdsAccount
+        ads_accounts = AmazonAdsAccount.objects.filter(user=user,is_primary=True)
+        for acc in ads_accounts:
+            channels.append({
+                "channel": "Amazon Ads",
+                "identifier": str(acc.profile_id or f"Profile #{acc.id}"),
+                "status": "Connected" if (acc.access_token or acc.refresh_token) else "Disconnected",
+                "connected_at": acc.created_at
+            })
+    except (ImportError, Exception):
+        pass
+
+    try:
+        from myntra.models import MyntraConnection
+        myntra_connections = MyntraConnection.objects.filter(user=user)
+        for conn in myntra_connections:
+            channels.append({
+                "channel": "Myntra",
+                "identifier": conn.merchant_id or f"Merchant #{conn.id}",
+                "status": "Connected" if (conn.access_token or conn.secret_key) else "Disconnected",
+                "connected_at": conn.created_at
+            })
+    except (ImportError, Exception):
+        pass
+
+    try:
+        from blinkit.models import BlinkitAccount
+        blinkit_accounts = BlinkitAccount.objects.filter(user=user)
+        for acc in blinkit_accounts:
+            channels.append({
+                "channel": "Blinkit",
+                "identifier": getattr(acc, "store_name", None) or f"Account #{acc.id}",
+                "status": "Connected",
+                "connected_at": getattr(acc, "created_at", None)
+            })
+    except (ImportError, Exception):
+        pass
+
+    return channels
+
 
 class AdminUserDetailUpdateAPIView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -45,6 +151,9 @@ class AdminUserDetailUpdateAPIView(APIView):
             "city": profile.city if profile else "",
             "state": profile.state if profile else "",
             "pin_code": profile.pin_code if profile else "",
+            "subscription": get_user_subscription_data(user),
+            "sub_users": get_user_sub_users_data(user),
+            "connected_channels": get_user_connected_channels(user),
             "permissions": permissions_serializer.data
         }
 
@@ -159,6 +268,9 @@ class AdminUserDetailUpdateAPIView(APIView):
                 "city": profile.city,
                 "state": profile.state,
                 "pin_code": profile.pin_code,
+                "subscription": get_user_subscription_data(user),
+                "sub_users": get_user_sub_users_data(user),
+                "connected_channels": get_user_connected_channels(user),
                 "permissions": updated_permissions_serializer.data
             }
 
@@ -169,3 +281,4 @@ class AdminUserDetailUpdateAPIView(APIView):
 
         except Exception as e:
             return error_response(f"Failed to update user details: {str(e)}", 500)
+

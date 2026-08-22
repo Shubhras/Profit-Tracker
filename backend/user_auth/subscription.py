@@ -293,6 +293,9 @@ class AdminDashboardAPI(APIView):
 
             all_users = UserProfile.objects.select_related(
                 "user"
+            ).filter(
+                user__subuser_profile__isnull=True,
+                user__is_superuser=False
             )
 
             total_users = all_users.count()
@@ -535,6 +538,9 @@ class UserListAPIView(APIView):
 
             queryset = UserProfile.objects.select_related(
                 "user"
+            ).filter(
+                user__subuser_profile__isnull=True,
+                user__is_superuser=False
             ).order_by("-created_at")
 
             # ==========================================
