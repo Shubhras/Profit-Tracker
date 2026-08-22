@@ -48,6 +48,10 @@ const {
   profitSKUIdBegin,
   profitSKUIdSuccess,
   profitSKUIdErr,
+
+  actionRequiredBegin,
+  actionRequiredSuccess,
+  actionRequiredErr,
 } = actions;
 
 const mockService = async (payload) => {
@@ -441,6 +445,24 @@ export const getProfitSKUId = (payload) => {
       }
     } catch (err) {
       dispatch(profitSKUIdErr(err));
+    }
+  };
+};
+
+export const getActionRequired = (payload) => {
+  return async (dispatch) => {
+    dispatch(actionRequiredBegin());
+
+    try {
+      const response = await DataService.post('/amazon/growth-opportunities/', payload);
+
+      if (response.data?.status === true || response.data?.status === 'success') {
+        dispatch(actionRequiredSuccess(response.data));
+      } else {
+        dispatch(actionRequiredErr('Something went wrong'));
+      }
+    } catch (err) {
+      dispatch(actionRequiredErr(err));
     }
   };
 };

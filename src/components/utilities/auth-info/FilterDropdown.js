@@ -15,7 +15,7 @@ function FilterDropdown() {
   const connectedChannels = profile?.connected_channels || [];
   const [tempSelected, setTempSelected] = useState([]);
 
-  const options = ['Select All', ...connectedChannels];
+  const options = connectedChannels.length > 0 ? ['Select All', ...connectedChannels] : [];
   const allOptions = connectedChannels;
   // const handleCheckbox = (value) => {
   //   if (value === 'Select All') {
@@ -79,34 +79,47 @@ function FilterDropdown() {
 
       {open && (
         <div className="absolute left-0 w-48 bg-white shadow-lg rounded-lg p-3 z-50">
-          {options.map((item) => (
-            <div
-              key={item}
-              className="flex items-center gap-2 px-2 py-3 leading-none rounded cursor-pointer hover:bg-blue-50"
-            >
-              <Checkbox
-                // checked={item === 'Select All' ? selected.length === allOptions.length : selected.includes(item)}
-                checked={
-                  item === 'Select All' ? tempSelected.length === allOptions.length : tempSelected.includes(item)
-                }
-                onChange={() => handleCheckbox(item)}
-                className="!m-0"
-              />{' '}
-              <span className="text-sm flex items-center">{item}</span>
-            </div>
-          ))}
+          {connectedChannels.length === 0 ? (
+            <div className="px-2 py-4 text-sm text-gray-500 text-center">No channel connected</div>
+          ) : (
+            options.map((item) => (
+              <label
+                key={item}
+                className="flex items-center gap-2 px-2 py-3 leading-none rounded cursor-pointer hover:bg-blue-50 w-full"
+              >
+                <Checkbox
+                  checked={
+                    item === 'Select All' ? tempSelected.length === allOptions.length : tempSelected.includes(item)
+                  }
+                  onChange={() => handleCheckbox(item)}
+                  className="!m-0"
+                />
+
+                <span className="text-sm flex items-center cursor-pointer flex-1">{item}</span>
+              </label>
+            ))
+          )}
 
           <div className="border-t my-2" />
 
           <div className="flex justify-center">
             <button
               type="button"
+              disabled={connectedChannels.length === 0}
               onClick={() => {
                 dispatch(actions.setChannel(tempSelected));
                 setOpen(false);
               }}
-              className="text-white text-sm px-4 py-1.5 rounded-md"
-              style={{ background: 'linear-gradient(135deg, rgb(16, 185, 129) 0%, rgb(15, 118, 110) 100%)' }}
+              className={`text-white text-sm px-4 py-1.5 rounded-md ${
+                connectedChannels.length === 0 ? 'bg-gray-300 cursor-not-allowed' : 'cursor-pointer'
+              }`}
+              style={
+                connectedChannels.length > 0
+                  ? {
+                      background: 'linear-gradient(135deg, rgb(16, 185, 129) 0%, rgb(15, 118, 110) 100%)',
+                    }
+                  : undefined
+              }
             >
               Apply
             </button>

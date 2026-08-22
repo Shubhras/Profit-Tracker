@@ -91,7 +91,7 @@ function Overview() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f5f7fb] p-3 lg:p-4 md:p-3 sm:p-2 px-3">
+    <div className="min-h-screen bg-[#f5f7fb] p-3 lg:p-4 md:p-3 sm:p-2 px-4">
       {' '}
       {/* Header */}
       <div className="mb-2 flex items-start justify-between md:flex-col md:gap-3 px-2">

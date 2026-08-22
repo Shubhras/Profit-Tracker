@@ -37,7 +37,6 @@ export default function UserManagement() {
   const [open, setOpen] = useState(false);
 
   const [searchText, setSearchText] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
 
   const [form] = Form.useForm();
@@ -54,6 +53,13 @@ export default function UserManagement() {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [viewUser, setViewUser] = useState(null);
 
+  const [userSummary, setUserSummary] = useState({
+    total_users: 0,
+    active_users: 0,
+    pending_users: 0,
+    owner_users: 0,
+  });
+
   // Edit User Modal State
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -69,10 +75,21 @@ export default function UserManagement() {
   useEffect(() => {
     if (subUsersData) {
       let listData = [];
+
       if (Array.isArray(subUsersData)) {
         listData = subUsersData;
       } else if (Array.isArray(subUsersData.data)) {
         listData = subUsersData.data;
+
+        // API summary
+        if (subUsersData.summary) {
+          setUserSummary({
+            total_users: subUsersData.summary.total_users || 0,
+            active_users: subUsersData.summary.active_users || 0,
+            pending_users: subUsersData.summary.pending_users || 0,
+            owner_users: subUsersData.summary.owner_users || 0,
+          });
+        }
       } else if (subUsersData.results) {
         if (Array.isArray(subUsersData.results)) {
           listData = subUsersData.results;
@@ -91,6 +108,7 @@ export default function UserManagement() {
         role: u.role || 'Staff',
         rawUser: u,
       }));
+
       setUsers(formatted);
     }
   }, [subUsersData]);
@@ -478,20 +496,15 @@ export default function UserManagement() {
     const matchesSearch =
       !search || user.name?.toLowerCase().includes(search) || user.email?.toLowerCase().includes(search);
 
-    const matchesRole = roleFilter === 'all' || user.role?.toLowerCase() === roleFilter.toLowerCase();
-
     const matchesStatus = statusFilter === 'all' || user.status?.toLowerCase() === statusFilter.toLowerCase();
 
-    return matchesSearch && matchesRole && matchesStatus;
+    return matchesSearch && matchesStatus;
   });
 
-  const totalUsers = users.length;
-
-  const activeUsers = users.filter((user) => user.status?.toLowerCase() === 'active').length;
-
-  const pendingUsers = users.filter((user) => user.status?.toLowerCase() === 'pending').length;
-
-  const ownerUsers = users.filter((user) => user.role?.toLowerCase() === 'owner').length;
+  const totalUsers = userSummary.total_users;
+  const activeUsers = userSummary.active_users;
+  const pendingUsers = userSummary.pending_users;
+  const ownerUsers = userSummary.owner_users;
 
   /* ================= PERMISSIONS TABLE COLUMNS ================= */
 
@@ -574,7 +587,7 @@ export default function UserManagement() {
       <main className="min-h-[715px] flex-1 bg-[#f4f5f7] px-6 xl:px-[15px] pb-[20px]">
         {/* ================= BREADCRUMB ================= */}
 
-        <div className="pt-5 mb-1">
+        <div className="pt-5 mb-2">
           <div className="flex items-center gap-1 text-[13px]">
             <span className="text-[#666D92]">Settings</span>
             <span className="text-gray-400">›</span>
@@ -588,7 +601,7 @@ export default function UserManagement() {
 
         <div className="flex items-start justify-between gap-4 mb-2">
           <div>
-            <h1 className="text-[25px] leading-[28px] font-semibold text-dark mb-1">User Management</h1>
+            <h1 className="text-[25px] leading-[28px] font-semibold text-dark mb-2">User Management</h1>
 
             <p className="text-[13px] text-[#666D92] max-w-[430px] leading-[18px]">
               Control who can access Artisan Roots&apos; dashboard, and what each person can see or change.
@@ -609,31 +622,31 @@ export default function UserManagement() {
 
         <div className="grid grid-cols-4 gap-3 mb-5 lg:grid-cols-2 md:grid-cols-1">
           {/* TOTAL USERS */}
-          <div className="bg-white border border-[#dfe3e8] rounded-[9px] px-4 py-3 h-[61px]">
-            <div className="text-[19px] font-semibold text-dark leading-[20px]">{totalUsers}</div>
+          <div className="bg-white border border-[#dfe3e8] rounded-[9px] px-4 py-3 h-[70px]">
+            <div className="text-[20px] font-semibold text-dark leading-[20px]">{totalUsers}</div>
 
-            <div className="text-[13px] text-light mt-1">Total users</div>
+            <div className="text-[13px] text-light mt-2">Total users</div>
           </div>
 
           {/* ACTIVE */}
-          <div className="bg-white border border-[#dfe3e8] rounded-[9px] px-4 py-3 h-[61px]">
-            <div className="text-[19px] font-semibold text-success leading-[20px]">{activeUsers}</div>
+          <div className="bg-white border border-[#dfe3e8] rounded-[9px] px-4 py-3 h-[70px]">
+            <div className="text-[20px] font-semibold text-success leading-[20px]">{activeUsers}</div>
 
-            <div className="text-[13px] text-light mt-1">Active</div>
+            <div className="text-[13px] text-light mt-2">Active</div>
           </div>
 
           {/* PENDING */}
-          <div className="bg-white border border-[#dfe3e8] rounded-[9px] px-4 py-3 h-[61px]">
-            <div className="text-[19px] font-semibold text-warning leading-[20px]">{pendingUsers}</div>
+          <div className="bg-white border border-[#dfe3e8] rounded-[9px] px-4 py-3 h-[70px]">
+            <div className="text-[20px] font-semibold text-warning leading-[20px]">{pendingUsers}</div>
 
-            <div className="text-[13px] text-light mt-1">Invite pending</div>
+            <div className="text-[13px] text-light mt-2">Invite pending</div>
           </div>
 
           {/* OWNER */}
-          <div className="bg-white border border-[#dfe3e8] rounded-[9px] px-4 py-3 h-[61px]">
-            <div className="text-[19px] font-semibold text-dark leading-[20px]">{ownerUsers}</div>
+          <div className="bg-white border border-[#dfe3e8] rounded-[9px] px-4 py-3 h-[70px]">
+            <div className="text-[20px] font-semibold text-dark leading-[20px]">{ownerUsers}</div>
 
-            <div className="text-[13px] text-light mt-1">Owner</div>
+            <div className="text-[13px] text-light mt-2">Owner</div>
           </div>
         </div>
 
@@ -641,7 +654,7 @@ export default function UserManagement() {
 
         <div className="flex items-center gap-2 mb-3 md:flex-col md:items-stretch">
           {/* SEARCH */}
-          <div className="relative flex-1">
+          <div className="relative w-[260px]">
             <UilSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-[13px] h-[13px] text-[#8b95a5] z-10" />
 
             <Input
@@ -665,58 +678,21 @@ export default function UserManagement() {
             />
           </div>
 
-          {/* ROLE FILTER */}
-          <Select
-            value={roleFilter}
-            onChange={setRoleFilter}
-            className="
-      !w-[110px]
-      !h-[34px]
-      [&_.ant-select-selector]:!h-[30px]
-      [&_.ant-select-selector]:!rounded-[7px]
-      [&_.ant-select-selector]:!border-[#dfe3e8]
-      [&_.ant-select-selector]:!bg-white
-      [&_.ant-select-selector]:!shadow-none
-      [&_.ant-select-selection-item]:!text-[11px]
-      [&_.ant-select-selection-item]:!leading-[28px]
-      [&_.ant-select-selection-placeholder]:!text-[11px]
-      [&_.ant-select-selection-placeholder]:!leading-[28px]
-    "
-            options={[
-              {
-                value: 'all',
-                label: 'All roles',
-              },
-              {
-                value: 'owner',
-                label: 'Owner',
-              },
-              {
-                value: 'admin',
-                label: 'Admin',
-              },
-              {
-                value: 'staff',
-                label: 'Staff',
-              },
-            ]}
-          />
-
           {/* STATUS FILTER */}
           <Select
             value={statusFilter}
             onChange={setStatusFilter}
             className="
       !w-[120px]
-      !h-[34px]
-      [&_.ant-select-selector]:!h-[30px]
+      !h-[35px]
+      [&_.ant-select-selector]:!h-[34px]
       [&_.ant-select-selector]:!rounded-[7px]
       [&_.ant-select-selector]:!border-[#dfe3e8]
       [&_.ant-select-selector]:!bg-white
       [&_.ant-select-selector]:!shadow-none
       [&_.ant-select-selection-item]:!text-[11px]
       [&_.ant-select-selection-item]:!leading-[28px]
-      [&_.ant-select-selection-placeholder]:!text-[11px]
+      [&_.ant-select-selection-placeholder]:!text-[12px]
       [&_.ant-select-selection-placeholder]:!leading-[28px]
     "
             options={[
@@ -735,7 +711,6 @@ export default function UserManagement() {
             ]}
           />
         </div>
-
         {/* ================= EXISTING USER TABLE ================= */}
 
         <div className="bg-white border border-[#dfe3e8] rounded-[9px] overflow-hidden">
@@ -745,6 +720,8 @@ export default function UserManagement() {
               dataSource={filteredUsers}
               pagination={false}
               rowKey="id"
+              size="small"
+              bordered
               locale={{
                 emptyText: <Empty description="No users found" className="py-10" />,
               }}
@@ -752,8 +729,8 @@ export default function UserManagement() {
     [&_.ant-table-thead>tr>th]:!text-[12px]
     [&_.ant-table-thead>tr>th]:!font-semibold
     [&_.ant-table-tbody>tr>td]:!text-[12px]
-    [&_.ant-table-cell]:!px-2
-    [&_.ant-table-cell]:!py-[6px]
+    [&_.ant-table-cell]:!px-4
+    [&_.ant-table-cell]:!py-[7px]
   "
             />
           </Spin>

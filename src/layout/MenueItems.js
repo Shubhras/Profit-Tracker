@@ -177,9 +177,10 @@ function MenuItems({ toggleCollapsed }) {
     hasModule('action-required') &&
       getItem(
         <NavLink onClick={toggleCollapsed} to={`${path}/pages/actionsrequired`}>
-          {t('actionsRequired')}
+          {/* {t('actionsRequired')} */}
+          Growth Opportunities
         </NavLink>,
-        'actionsRequired',
+        'actionsrequired',
         !topMenu && <UilBookOpen />,
       ),
 
@@ -402,7 +403,7 @@ function MenuItems({ toggleCollapsed }) {
               <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/ordersettlement`}>
                 Order & Settlement
               </NavLink>,
-              'order-settlements',
+              'ordersettlement',
             ),
 
           // hasSubmodule('marketplace-payments') &&
@@ -426,7 +427,7 @@ function MenuItems({ toggleCollapsed }) {
               <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/allLeaks`}>
                 All Leaks
               </NavLink>,
-              'payment-leaks',
+              'allLeaks',
             ),
 
           // hasSubmodule('reimbursement-planning') &&
@@ -540,7 +541,7 @@ function MenuItems({ toggleCollapsed }) {
               <NavLink onClick={toggleCollapsed} to={`${path}/advertising/AdProducts`}>
                 Ad Products
               </NavLink>,
-              'adproducts',
+              'AdProducts',
             ),
 
           hasSubmodule('ad-groups') &&
@@ -877,7 +878,7 @@ function MenuItems({ toggleCollapsed }) {
               <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/overview`}>
                 Overview
               </NavLink>,
-              'valueadded-overview',
+              'overview',
             ),
 
           hasSubmodule('account-management') &&
@@ -901,7 +902,7 @@ function MenuItems({ toggleCollapsed }) {
               <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/QuickCommerce`}>
                 Quick Commerce
               </NavLink>,
-              'quickcommerce',
+              'QuickCommerce',
             ),
 
           hasSubmodule('my-services') &&
@@ -1004,7 +1005,7 @@ function MenuItems({ toggleCollapsed }) {
               <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/product-configuration`}>
                 Product Configuration
               </NavLink>,
-              'productConfiguration',
+              'product-configuration',
             ),
 
           hasSubmodule('finance-configuration') &&
@@ -1012,7 +1013,7 @@ function MenuItems({ toggleCollapsed }) {
               <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/finance-configuration`}>
                 Finance Configuration
               </NavLink>,
-              'financeConfiguration',
+              'finance-configuration',
             ),
 
           hasSubmodule('marketplace-settings') &&
@@ -1020,7 +1021,7 @@ function MenuItems({ toggleCollapsed }) {
               <NavLink onClick={toggleCollapsed} to={`${path}/settings/user-setting/marketplace-settings`}>
                 Marketplace Settings
               </NavLink>,
-              'marketPlaceSettings',
+              'marketplace-settings',
             ),
 
           hasSubmodule('user-management') &&
@@ -1028,7 +1029,7 @@ function MenuItems({ toggleCollapsed }) {
               <NavLink onClick={toggleCollapsed} to={`${path}/settings/user-setting/user-management`}>
                 User Management
               </NavLink>,
-              'userManagement',
+              'user-management',
             ),
         ].filter(Boolean),
       ),
@@ -1132,13 +1133,39 @@ function MenuItems({ toggleCollapsed }) {
     ),
   ];
 
+  // const selectedKey = React.useMemo(() => {
+  //   if (location.pathname === '/admin/profit/profitTableView/details') {
+  //     return 'skuwiseprofit';
+  //   }
+
+  //   return mainPathSplit.length === 1 ? 'home' : mainPathSplit.length === 2 ? mainPathSplit[1] : mainPathSplit[2];
+  // }, [location.pathname]);
+
   const selectedKey = React.useMemo(() => {
-    if (location.pathname === '/admin/profit/profitTableView/details') {
+    const { pathname } = location;
+
+    // ✅ SKU Wise Profit - exact route
+    if (pathname === '/admin/profit/profitTableView/details') {
       return 'skuwiseprofit';
     }
 
-    return mainPathSplit.length === 1 ? 'home' : mainPathSplit.length === 2 ? mainPathSplit[1] : mainPathSplit[2];
-  }, [location.pathname]);
+    // ✅ Profit Table View - exact route
+    if (pathname === '/admin/profit/profitTableView') {
+      return 'profitTableView';
+    }
+
+    // ✅ Profit Monthly View
+    if (pathname === '/admin/profit/profitMonthlyView') {
+      return 'profitMonthlyView';
+    }
+
+    // ✅ All other routes
+    return mainPathSplit.length === 1
+      ? 'home'
+      : mainPathSplit.length === 2
+      ? mainPathSplit[1]
+      : mainPathSplit[mainPathSplit.length - 1];
+  }, [location.pathname, mainPathSplit]);
 
   const isSuperAdmin = Cookies.get('isSuperAdmin') === 'true';
 

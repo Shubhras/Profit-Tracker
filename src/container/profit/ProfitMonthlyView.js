@@ -1,33 +1,13 @@
 import React, { useEffect } from 'react';
-import { Button, Modal, Checkbox, Card, Spin } from 'antd';
+import { Modal, Checkbox, Card, Spin } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  CheckOutlined,
-  CloseOutlined,
-  SettingOutlined,
-  CaretDownOutlined,
-  CaretUpOutlined,
-  PlusOutlined,
-  MinusOutlined,
-} from '@ant-design/icons';
+import { SettingOutlined, PlusOutlined, MinusOutlined } from '@ant-design/icons';
 import { PageHeader } from '../../components/page-headers/page-headers';
 import { getProfitMonthwise, exportProfitData } from '../../redux/dashboard/actionCreator';
 
 export default function ProfitMonthlyView() {
   const dispatch = useDispatch();
-  const [showFilters, setShowFilters] = React.useState(false);
   const [expandedRows, setExpandedRows] = React.useState({});
-  const [filters, setFilters] = React.useState({
-    SKU: '',
-    ProductId: '',
-    gst: 'with',
-  });
-  const handleGstChange = (value) => {
-    setFilters((prev) => ({
-      ...prev,
-      gst: value,
-    }));
-  };
   const [openSettings, setOpenSettings] = React.useState(false);
 
   const { monthwiseProfitData, dateRange, channel: globalChannel, loading } = useSelector((state) => state.dashboard);
@@ -72,7 +52,6 @@ export default function ProfitMonthlyView() {
         toDate: dateRange?.endDate || null,
         // SKU: filters.SKU,
         // ProductId: filters.ProductId,
-        gst: filters.gst,
       },
     };
 
@@ -137,41 +116,7 @@ export default function ProfitMonthlyView() {
     { label: 'Profit Margin', key: 'profitmargin' },
   ];
   const [visibleRows, setVisibleRows] = React.useState(rows.map((r) => r.key));
-  const handleChange = (key, value) => {
-    setFilters((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
 
-  const handleApply = () => {
-    dispatch(
-      getProfitMonthwise({
-        fromDate: dateRange?.fromDate || null,
-        toDate: dateRange?.endDate || null,
-        ...filters,
-      }),
-    );
-    setShowFilters(false);
-  };
-
-  const handleClear = () => {
-    const reset = {
-      SKU: '',
-      ProductId: '',
-      gst: 'with',
-    };
-
-    setFilters(reset);
-
-    dispatch(
-      getProfitMonthwise({
-        fromDate: dateRange?.fromDate || null,
-        toDate: dateRange?.endDate || null,
-        ...reset,
-      }),
-    );
-  };
   const toggleRow = (key) => {
     setExpandedRows((prev) => ({
       ...prev,
@@ -187,120 +132,6 @@ export default function ProfitMonthlyView() {
       />
       <main className="min-h-[715px] lg:min-h-[580p x] flex-1 h-auto px-4 xl:px-[15px] pb-[30px] bg-transparent">
         <Card className="bg-white rounded-md border overflow-x-auto">
-          <div className="mb-4 p-3 border border-gray-200 rounded-xl bg-gray-50">
-            <div role="button" tabIndex={0} className="flex items-center gap-4 cursor-pointer">
-              <span className="text-sm font-medium text-gray-700">Filters :</span>
-
-              <div className="flex items-center gap-2">
-                {(filters.SKU || filters.ProductId) && <span className="text-sm text-gray-500">Filters Applied</span>}
-
-                {filters.gst && (
-                  <span className="flex items-center gap-1 px-2 py-1 text-xs rounded-full">
-                    <span
-                      className={`w-2 h-2 rounded-full ${filters.gst === 'with' ? 'bg-green-500' : 'bg-red-500'}`}
-                    />
-                    GST: {filters.gst === 'with' ? 'With' : 'Without'}
-                  </span>
-                )}
-              </div>
-
-              <div className="ml-auto flex gap-4">
-                <Button
-                  // type="primary"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleClear();
-                  }}
-                  className="flex items-center gap-1"
-                  // className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 bg-white hover:bg-gray-100"
-                >
-                  Clear
-                  <CloseOutlined />
-                </Button>
-
-                <Button
-                  type="primary"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleApply();
-                  }}
-                  className="flex items-center gap-1"
-                  // className="flex items-center gap-2 px-4 py-1.5 text-sm bg-green-600 text-white hover:bg-blue-700"
-                >
-                  Apply
-                  <CheckOutlined />
-                </Button>
-                <Button
-                  type="text"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowFilters((prev) => !prev);
-                  }}
-                  className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition"
-                >
-                  {showFilters ? (
-                    <CaretUpOutlined className="text-[#0B3A6E] text-xs leading-none" />
-                  ) : (
-                    <CaretDownOutlined className="text-[#0B3A6E] text-xs leading-none" />
-                  )}
-                </Button>
-              </div>
-            </div>
-            {showFilters && (
-              <>
-                <div className="flex gap-4 overflow-x-auto whitespace-nowrap mt-2">
-                  <div className="min-w-[200px]">
-                    <label className="text-s text-gray-600 mb-1 block">SKU:</label>
-                    <input
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                      placeholder="SKU"
-                      onChange={(e) => handleChange('SKU', e.target.value)}
-                    />
-                  </div>
-
-                  <div className="min-w-[200px]">
-                    <label className="text-s text-gray-600 mb-1 block">ProductId:</label>
-                    <input
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                      placeholder="ProductId"
-                      onChange={(e) => handleChange('ProductId', e.target.value)}
-                    />
-                  </div>
-                  <div className="min-w-[200px]">
-                    <label className="text-s text-gray-600 mb-1 block">ParentId:</label>
-                    <input
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                      placeholder="ParentId"
-                      onChange={(e) => handleChange('ParentId', e.target.value)}
-                    />
-                  </div>
-                  <div className="min-w-[200px]">
-                    <label className="text-s text-gray-600 mb-1 block">MKT category:</label>
-                    <input
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                      placeholder="MKT category"
-                      onChange={(e) => handleChange('Mktcategory', e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 mt-3 border-t pt-3">
-                  <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={filters.gst === 'with'} onChange={() => handleGstChange('with')} />
-                    With GST
-                  </label>
-
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={filters.gst === 'without'}
-                      onChange={() => handleGstChange('without')}
-                    />
-                    Without GST
-                  </label>
-                </div>
-              </>
-            )}
-          </div>
           <Spin spinning={loading} size="large">
             <div
               className="grid border-b bg-gray-50 font-semibold"
