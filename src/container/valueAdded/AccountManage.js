@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import {
   InfoCircleOutlined,
   UserOutlined,
@@ -12,6 +13,7 @@ import {
 } from '@ant-design/icons';
 
 function AccountManage() {
+  const navigate = useNavigate();
   const marketplaces = [
     { name: 'Amazon', icon: '/icons/amazon.svg' },
     { name: 'Flipkart', icon: '/icons/flipkart.png' },
@@ -114,6 +116,7 @@ function AccountManage() {
 
                     <Button
                       type="primary"
+                      onClick={() => navigate('/admin/pages/support')}
                       className="bg-[#16a34a] border-[#16a34a] h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
                     >
                       Choose Basic Plan
@@ -176,6 +179,7 @@ function AccountManage() {
 
                     <Button
                       type="primary"
+                      onClick={() => navigate('/admin/pages/support')}
                       className="bg-[#16a34a] border-[#16a34a] h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
                     >
                       Choose Pro Plan
@@ -233,6 +237,7 @@ function AccountManage() {
 
                     <Button
                       type="primary"
+                      onClick={() => navigate('/admin/pages/support')}
                       className="bg-[#16a34a] border-[#16a34a] h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
                     >
                       Choose Premium Plan

@@ -109,7 +109,7 @@ export default function ProfitDetailsView() {
     if (decodedChannel) {
       dispatch(getProfitDetails(buildPayload()));
     }
-  }, [dateRange, decodedChannel, globalChannel, pagination, debouncedSearch]);
+  }, [dateRange, decodedChannel, globalChannel, pagination.current, pagination.pageSize, debouncedSearch]);
 
   const handleExport = async (format = 'xlsx') => {
     setExportLoading(true);
@@ -249,6 +249,14 @@ export default function ProfitDetailsView() {
     const text = String(value);
 
     return Math.max(defaultWidth, text.length * 10 + 30);
+  };
+
+  const parseAmount = (value) => {
+    if (value === null || value === undefined || value === '') return 0;
+
+    const cleaned = String(value).replace(/[₹,\s]/g, '');
+
+    return Number(cleaned) || 0;
   };
 
   const columns = [
@@ -428,7 +436,7 @@ export default function ProfitDetailsView() {
       // width: 70,
       width: getDynamicWidth('promo_discount', 70),
       ellipsis: true,
-      sorter: (a, b) => a.promo_discount - b.promo_discount,
+      sorter: (a, b) => parseAmount(a.promo_discount) - parseAmount(b.promo_discount),
     },
     {
       title: 'Gross Sales',
@@ -437,7 +445,7 @@ export default function ProfitDetailsView() {
       // width: 70,
       width: getDynamicWidth('netsales', 70),
       ellipsis: true,
-      sorter: (a, b) => a.netsales - b.netsales,
+      sorter: (a, b) => parseAmount(a.netsales) - parseAmount(b.netsales),
     },
     {
       title: 'Net Sales',
@@ -446,7 +454,7 @@ export default function ProfitDetailsView() {
       // width: 70,
       width: getDynamicWidth('final_net_sales', 70),
       ellipsis: true,
-      sorter: (a, b) => a.final_net_sales - b.final_net_sales,
+      sorter: (a, b) => parseAmount(a.final_net_sales) - parseAmount(b.final_net_sales),
     },
     // {
     //   title: 'TCS-IGST',
@@ -472,7 +480,7 @@ export default function ProfitDetailsView() {
       // width: 70,
       width: getDynamicWidth('mpfees', 70),
       ellipsis: true,
-      sorter: (a, b) => a.mpfees - b.mpfees,
+      sorter: (a, b) => parseAmount(a.mpfees) - parseAmount(b.mpfees),
       render: (v, record) => (
         <button
           type="button"
@@ -496,7 +504,7 @@ export default function ProfitDetailsView() {
       // width: 70,
       width: getDynamicWidth('shipping', 70),
       ellipsis: true,
-      sorter: (a, b) => a.shipping - b.shipping,
+      sorter: (a, b) => parseAmount(a.shipping) - parseAmount(b.shipping),
       render: (v, record) => (
         <button
           type="button"
@@ -520,7 +528,7 @@ export default function ProfitDetailsView() {
       // width: 70,
       width: getDynamicWidth('mp_gst', 70),
       ellipsis: true,
-      sorter: (a, b) => a.mp_gst - b.mp_gst,
+      sorter: (a, b) => parseAmount(a.mp_gst) - parseAmount(b.mp_gst),
     },
 
     {
@@ -530,7 +538,7 @@ export default function ProfitDetailsView() {
       // width: 100,
       width: getDynamicWidth('tcs', 70),
       ellipsis: true,
-      sorter: (a, b) => a.tcs - b.tcs,
+      sorter: (a, b) => parseAmount(a.tcs) - parseAmount(b.tcs),
     },
     // {
     //   title: 'Net asp',
@@ -552,7 +560,7 @@ export default function ProfitDetailsView() {
       // width: 70,
       width: getDynamicWidth('adSpend', 70),
       ellipsis: true,
-      sorter: (a, b) => a.adSpend - b.adSpend,
+      sorter: (a, b) => parseAmount(a.adSpend) - parseAmount(b.adSpend),
     },
 
     {
@@ -562,7 +570,7 @@ export default function ProfitDetailsView() {
       // width: 70,
       width: getDynamicWidth('taxableValue', 70),
       ellipsis: true,
-      sorter: (a, b) => a.taxableValue - b.taxableValue,
+      sorter: (a, b) => parseAmount(a.taxableValue) - parseAmount(b.taxableValue),
     },
 
     {
@@ -572,7 +580,7 @@ export default function ProfitDetailsView() {
       // width: 70,
       width: getDynamicWidth('gst_to_pay_amount', 70),
       ellipsis: true,
-      sorter: (a, b) => a.gst_to_pay_amount - b.gst_to_pay_amount,
+      sorter: (a, b) => parseAmount(a.gst_to_pay_amount) - parseAmount(b.gst_to_pay_amount),
     },
     {
       title: 'GST to Pay %',
@@ -581,7 +589,7 @@ export default function ProfitDetailsView() {
       // width: 70,
       width: getDynamicWidth('gst_to_pay_perc', 70),
       ellipsis: true,
-      sorter: (a, b) => a.gst_to_pay_perc - b.gst_to_pay_perc,
+      sorter: (a, b) => parseAmount(a.gst_to_pay_perc) - parseAmount(b.gst_to_pay_perc),
       render: (v) => <span>{v}%</span>,
     },
     {
@@ -591,7 +599,7 @@ export default function ProfitDetailsView() {
       // width: 70,
       width: getDynamicWidth('claim_amount', 70),
       ellipsis: true,
-      sorter: (a, b) => a.claim_amount - b.claim_amount,
+      sorter: (a, b) => parseAmount(a.claim_amount) - parseAmount(b.claim_amount),
     },
     {
       title: 'Expected Settlement',
@@ -600,7 +608,7 @@ export default function ProfitDetailsView() {
       // width: 70,
       width: getDynamicWidth('settleAmount', 70),
       ellipsis: true,
-      sorter: (a, b) => a.settleAmount - b.settleAmount,
+      sorter: (a, b) => parseAmount(a.settleAmount) - parseAmount(b.settleAmount),
     },
     {
       title: 'Product Cost',
@@ -609,7 +617,7 @@ export default function ProfitDetailsView() {
       // width: 70,
       width: getDynamicWidth('stdcost', 70),
       ellipsis: true,
-      sorter: (a, b) => a.stdcost - b.stdcost,
+      sorter: (a, b) => parseAmount(a.stdcost) - parseAmount(b.stdcost),
     },
 
     // {
@@ -634,7 +642,7 @@ export default function ProfitDetailsView() {
       // width: 100,
       width: getDynamicWidth('profit', 70),
       ellipsis: true,
-      sorter: (a, b) => a.profit - b.profit,
+      sorter: (a, b) => parseAmount(a.profit) - parseAmount(b.profit),
       // render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>₹{v}</span>,
       render: (v, record) => (
         <button
@@ -659,7 +667,7 @@ export default function ProfitDetailsView() {
       // width: 70,
       width: getDynamicWidth('profitPercent', 70),
       ellipsis: true,
-      sorter: (a, b) => a.profitPercent - b.profitPercent,
+      sorter: (a, b) => parseAmount(a.profitPercent) - parseAmount(b.profitPercent),
       // render: (v) => {
       //   const value = Math.round(v || 0);
 
@@ -909,8 +917,14 @@ export default function ProfitDetailsView() {
               pageSizeOptions: ['10', '20', '50', '100'],
               showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
             }}
-            onChange={(pag) => {
-              setPagination(pag);
+            onChange={(pag, filters, sorter, extra) => {
+              if (extra.action === 'paginate') {
+                setPagination((prev) => ({
+                  ...prev,
+                  current: pag.current,
+                  pageSize: pag.pageSize,
+                }));
+              }
             }}
             size="small"
             // scroll={{ x: 'true' }}

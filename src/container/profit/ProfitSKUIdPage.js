@@ -124,7 +124,7 @@ export default function ProfitSKUIdPage() {
     if (decodedChannel) {
       dispatch(getProfitSKUId(buildPayload()));
     }
-  }, [dateRange, decodedChannel, debouncedSearch, globalChannel, channels]);
+  }, [dateRange, decodedChannel, pagination.current, pagination.pageSize, debouncedSearch, globalChannel, channels]);
 
   // const PageRoutes = [
   //   { path: 'index', breadcrumbName: 'Profit' },
@@ -209,6 +209,14 @@ export default function ProfitSKUIdPage() {
 
     return rows;
   }, [getProfitSkuData]);
+
+  const parseAmount = (value) => {
+    if (value === null || value === undefined || value === '') return 0;
+
+    const cleaned = String(value).replace(/[₹,\s]/g, '');
+
+    return Number(cleaned) || 0;
+  };
 
   const columns = [
     {
@@ -363,7 +371,7 @@ export default function ProfitSKUIdPage() {
       // width: 70,
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.promo_discount - b.promo_discount,
+      sorter: (a, b) => parseAmount(a.promo_discount) - parseAmount(b.promo_discount),
     },
     {
       title: 'Gross Sales',
@@ -372,7 +380,7 @@ export default function ProfitSKUIdPage() {
       // width: 70,
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.netsales - b.netsales,
+      sorter: (a, b) => parseAmount(a.netsales) - parseAmount(b.netsales),
     },
     {
       title: 'Net Sales',
@@ -380,7 +388,7 @@ export default function ProfitSKUIdPage() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.netsales - b.netsales,
+      sorter: (a, b) => parseAmount(a.netsales) - parseAmount(b.netsales),
     },
     // {
     //   title: 'TCS-IGST',
@@ -405,7 +413,7 @@ export default function ProfitSKUIdPage() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.mpfees - b.mpfees,
+      sorter: (a, b) => parseAmount(a.mpfees) - parseAmount(b.mpfees),
       render: (v, record) => (
         <button
           type="button"
@@ -428,7 +436,7 @@ export default function ProfitSKUIdPage() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.shipping - b.shipping,
+      sorter: (a, b) => parseAmount(a.shipping) - parseAmount(b.shipping),
       render: (v, record) => (
         <button
           type="button"
@@ -451,7 +459,7 @@ export default function ProfitSKUIdPage() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.mp_gst - b.mp_gst,
+      sorter: (a, b) => parseAmount(a.mp_gst) - parseAmount(b.mp_gst),
     },
 
     {
@@ -460,7 +468,7 @@ export default function ProfitSKUIdPage() {
       align: 'center',
       width: 100,
       ellipsis: true,
-      sorter: (a, b) => a.tcs - b.tcs,
+      sorter: (a, b) => parseAmount(a.tcs) - parseAmount(b.tcs),
     },
     // {
     //   title: 'Net asp',
@@ -481,7 +489,7 @@ export default function ProfitSKUIdPage() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.adSpend - b.adSpend,
+      sorter: (a, b) => parseAmount(a.adSpend) - parseAmount(b.adSpend),
     },
 
     {
@@ -490,7 +498,7 @@ export default function ProfitSKUIdPage() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.taxableValue - b.taxableValue,
+      sorter: (a, b) => parseAmount(a.taxableValue) - parseAmount(b.taxableValue),
     },
 
     {
@@ -499,7 +507,7 @@ export default function ProfitSKUIdPage() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.gst_to_pay_amount - b.gst_to_pay_amount,
+      sorter: (a, b) => parseAmount(a.gst_to_pay_amount) - parseAmount(b.gst_to_pay_amount),
     },
     {
       title: 'GST to Pay %',
@@ -507,7 +515,7 @@ export default function ProfitSKUIdPage() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.gst_to_pay_perc - b.gst_to_pay_perc,
+      sorter: (a, b) => parseAmount(a.gst_to_pay_perc) - parseAmount(b.gst_to_pay_perc),
       render: (v) => <span>{v}%</span>,
     },
     {
@@ -516,7 +524,7 @@ export default function ProfitSKUIdPage() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.settleAmount - b.settleAmount,
+      sorter: (a, b) => parseAmount(a.settleAmount) - parseAmount(b.settleAmount),
     },
     {
       title: 'Product Cost',
@@ -524,7 +532,7 @@ export default function ProfitSKUIdPage() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.stdcost - b.stdcost,
+      sorter: (a, b) => parseAmount(a.stdcost) - parseAmount(b.stdcost),
     },
 
     // {
@@ -548,7 +556,7 @@ export default function ProfitSKUIdPage() {
       align: 'center',
       width: 100,
       ellipsis: true,
-      sorter: (a, b) => a.profit - b.profit,
+      sorter: (a, b) => parseAmount(a.profit) - parseAmount(b.profit),
       // render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>₹{v}</span>,
       render: (v, record) => (
         <button
@@ -572,7 +580,7 @@ export default function ProfitSKUIdPage() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.profitPercent - b.profitPercent,
+      sorter: (a, b) => parseAmount(a.profitPercent) - parseAmount(b.profitPercent),
       render: (v) => {
         const value = Math.round(v || 0);
 
@@ -658,21 +666,13 @@ export default function ProfitSKUIdPage() {
               pageSizeOptions: ['10', '20', '50', '100'],
               showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
             }}
-            onChange={(pag) => {
-              setPagination({
-                current: pag.current,
-                pageSize: pag.pageSize,
-              });
-
-              dispatch(
-                getProfitSKUId({
-                  ...buildPayload(),
-                  pagination: {
-                    pageNo: pag.current - 1,
-                    pageSize: pag.pageSize,
-                  },
-                }),
-              );
+            onChange={(pag, filters, sorter, extra) => {
+              if (extra.action === 'paginate') {
+                setPagination({
+                  current: pag.current,
+                  pageSize: pag.pageSize,
+                });
+              }
             }}
             size="small"
             scroll={{ x: 1800 }}

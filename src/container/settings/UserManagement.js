@@ -435,16 +435,19 @@ export default function UserManagement() {
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
+      sorter: (a, b) => a.email - b.email,
     },
     {
       title: 'Mobile',
       dataIndex: 'mobile',
       key: 'mobile',
+      sorter: (a, b) => a.mobile - b.actual_fees,
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
+      sorter: (a, b) => a.status - b.status,
       render: (status) => (
         <span
           className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
@@ -459,6 +462,7 @@ export default function UserManagement() {
       title: 'Created At',
       dataIndex: 'created_at',
       key: 'created_at',
+      sorter: (a, b) => new Date(a.created_at) - new Date(b.created_at),
       render: (createdAt) => {
         if (!createdAt) return '—';
 
