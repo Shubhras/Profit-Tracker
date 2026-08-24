@@ -1,9 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Button, Table, Tooltip, Tag } from 'antd';
-import { FilterOutlined, ExportOutlined, SearchOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { Button, Table, Tooltip, Tag, Dropdown, message } from 'antd';
+import {
+  ExportOutlined,
+  SearchOutlined,
+  ArrowLeftOutlined,
+  DownOutlined,
+  FileExcelOutlined,
+  FileTextOutlined,
+} from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { getProductsAds } from '../../redux/advertising/actionCreator';
+import { getProductsAds, exportAdGroupByCampaign } from '../../redux/advertising/actionCreator';
 
 function AdProductsThird() {
   const dispatch = useDispatch();
@@ -11,6 +18,7 @@ function AdProductsThird() {
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [exportLoading, setExportLoading] = useState(false);
 
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -23,6 +31,42 @@ function AdProductsThird() {
     loading: state.advertising.loading,
     productsAds: state.advertising.productsAds,
   }));
+
+  const handleExport = async (format = 'xlsx') => {
+    setExportLoading(true);
+    try {
+      const payload = {
+        campaign_id: id,
+        search: debouncedSearch,
+      };
+      const res = await dispatch(exportAdGroupByCampaign(payload, format));
+      if (res?.status) {
+        message.success('Export report generated successfully!');
+      } else {
+        message.error(res?.message || 'Failed to export product groups');
+      }
+    } catch (err) {
+      console.error(err);
+      message.error('Failed to export product groups');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const exportMenuItems = [
+    {
+      key: 'xlsx',
+      label: 'Excel (.xlsx)',
+      icon: <FileExcelOutlined style={{ color: '#10b981' }} />,
+      onClick: () => handleExport('xlsx'),
+    },
+    {
+      key: 'csv',
+      label: 'CSV (.csv)',
+      icon: <FileTextOutlined style={{ color: '#3b82f6' }} />,
+      onClick: () => handleExport('csv'),
+    },
+  ];
 
   useEffect(() => {
     const payload = {
@@ -296,22 +340,16 @@ function AdProductsThird() {
 
               {/* RIGHT SIDE BUTTONS */}
               <div className="flex items-center gap-3">
-                {/* FILTER */}
-                <Button
-                  icon={<FilterOutlined />}
-                  className="!h-[30px] text-[13px] !px-5 !rounded-xl border border-[#dbe1e8] bg-white !text-[#111827] !font-medium !flex !items-center !justify-center"
-                >
-                  Filters
-                </Button>
-
-                {/* EXPORT */}
-                <Button
-                  type="primary"
-                  icon={<ExportOutlined />}
-                  className="!h-[30px] text-[13px] !px-5 !rounded-xl !font-medium !flex !items-center !justify-center "
-                >
-                  Export
-                </Button>
+                <Dropdown menu={{ items: exportMenuItems }} placement="bottomRight" trigger={['click']}>
+                  <Button
+                    type="primary"
+                    loading={exportLoading}
+                    icon={<ExportOutlined />}
+                    className="!h-[30px] text-[13px] !px-3 !rounded-xl !bg-[#2563eb] !border-[#2563eb] !font-semibold !flex !items-center !justify-center gap-1 cursor-pointer"
+                  >
+                    Export <DownOutlined className="text-[10px]" />
+                  </Button>
+                </Dropdown>
               </div>
             </div>
           </div>

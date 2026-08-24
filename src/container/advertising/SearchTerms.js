@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Table, Tooltip } from 'antd';
+import { Button, Table, Tooltip, Dropdown, Modal, message } from 'antd';
 
 import {
   SearchOutlined,
   DownloadOutlined,
   PlusOutlined,
-  // MoreOutlined,
+  ExportOutlined,
+  DownOutlined,
+  FileExcelOutlined,
+  FileTextOutlined,
   RightOutlined,
   StopOutlined,
   DollarOutlined,
@@ -17,13 +20,14 @@ import {
 } from '@ant-design/icons';
 
 import { useDispatch, useSelector } from 'react-redux';
-import { getSearchTerms } from '../../redux/advertising/actionCreator';
+import { getSearchTerms, exportSearchTerms } from '../../redux/advertising/actionCreator';
 
 function SearchTerms() {
   const dispatch = useDispatch();
 
   const [searchText, setSearchText] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [exportLoading, setExportLoading] = useState(false);
 
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -33,12 +37,58 @@ function SearchTerms() {
   const [selectedRowKeys, setSelectedRowKeys] = React.useState([]);
 
   const { searchTerms, loading } = useSelector((state) => state.advertising);
+  const { dateRange } = useSelector((state) => state.dashboard);
+
+  const handleExport = async (format = 'xlsx') => {
+    setExportLoading(true);
+    try {
+      const payload = {
+        filters: {
+          search: debouncedSearch,
+          ...(dateRange?.fromDate && { from_date: dateRange.fromDate, start_date: dateRange.fromDate }),
+          ...(dateRange?.endDate && { to_date: dateRange.endDate, end_date: dateRange.endDate }),
+        },
+        pagination: {
+          pageNo: 1,
+          pageSize: 10,
+        },
+      };
+      const res = await dispatch(exportSearchTerms(payload, format));
+      if (res?.status) {
+        message.success('Export report generated successfully!');
+      } else {
+        message.error(res?.message || 'Failed to export search terms');
+      }
+    } catch (err) {
+      console.error(err);
+      message.error('Failed to export search terms');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const exportMenuItems = [
+    {
+      key: 'xlsx',
+      label: 'Excel (.xlsx)',
+      icon: <FileExcelOutlined style={{ color: '#10b981' }} />,
+      onClick: () => handleExport('xlsx'),
+    },
+    {
+      key: 'csv',
+      label: 'CSV (.csv)',
+      icon: <FileTextOutlined style={{ color: '#3b82f6' }} />,
+      onClick: () => handleExport('csv'),
+    },
+  ];
 
   useEffect(() => {
     dispatch(
       getSearchTerms({
         filters: {
           search: debouncedSearch,
+          ...(dateRange?.fromDate && { from_date: dateRange.fromDate, start_date: dateRange.fromDate }),
+          ...(dateRange?.endDate && { to_date: dateRange.endDate, end_date: dateRange.endDate }),
         },
         pagination: {
           pageNo: pagination.current,
@@ -46,7 +96,7 @@ function SearchTerms() {
         },
       }),
     );
-  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch]);
+  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch, dateRange]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -56,8 +106,90 @@ function SearchTerms() {
     return () => clearTimeout(timer);
   }, [searchText]);
 
+  const [isTopTermsModalOpen, setIsTopTermsModalOpen] = useState(false);
+
   const summaryCards = searchTerms?.dashboard?.summary_cards || {};
   const performanceKey = searchTerms?.dashboard?.top_performing_terms || [];
+  /*
+  const matchTypeDist = searchTerms?.dashboard?.match_type_distribution || {};
+  const totalMatchTerms = matchTypeDist?.total_terms || 0;
+  const distributionData = matchTypeDist?.data || [];
+
+  const getMatchColor = (matchType) => {
+    const type = String(matchType || '').toUpperCase();
+    if (type.includes('EXACT')) return '#d97706';
+    if (type.includes('PHRASE')) return '#2563eb';
+    if (type.includes('BROAD')) return '#0f766e';
+    if (type.includes('TARGETING_EXPRESSION_PREDEFINED')) return '#64748b';
+    if (type.includes('TARGETING_EXPRESSION')) return '#8b5cf6';
+    return '#94a3b8';
+  };
+
+  const formatMatchTypeName = (matchType) => {
+    if (!matchType) return 'Unknown';
+    const type = String(matchType).toUpperCase();
+    if (type === 'EXACT') return 'Exact Match';
+    if (type === 'PHRASE') return 'Phrase Match';
+    if (type === 'BROAD') return 'Broad Match';
+    if (type.includes('TARGETING_EXPRESSION_PREDEFINED')) return 'Auto / Predefined';
+    if (type.includes('TARGETING_EXPRESSION')) return 'Targeting Expression';
+    return matchType
+      .replace(/_/g, ' ')
+      .toLowerCase()
+      .replace(/\b\w/g, (l) => l.toUpperCase());
+  };
+
+  let cumulativePct = 0;
+  const gradientStops = distributionData.map((item) => {
+    const start = cumulativePct;
+    cumulativePct += item.percentage || 0;
+    return `${getMatchColor(item.match_type)} ${start}% ${cumulativePct}%`;
+  });
+  const conicBg = gradientStops.length > 0 ? `conic-gradient(${gradientStops.join(', ')})` : '#e5e7eb';
+  */
+
+  const topTermsColumns = [
+    {
+      title: '#',
+      dataIndex: 'rank',
+      width: 50,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: 'Search Term',
+      dataIndex: 'search_term',
+      render: (v) => <span className="font-semibold text-[#111827]">{v}</span>,
+    },
+    {
+      title: 'Orders',
+      dataIndex: 'orders',
+      align: 'center',
+      width: 100,
+      render: (v) => Number(v || 0).toLocaleString(),
+    },
+    {
+      title: 'Sales',
+      dataIndex: 'sales',
+      align: 'center',
+      width: 130,
+      render: (v) => <span className="font-semibold text-[#16a34a]">₹{Number(v || 0).toLocaleString()}</span>,
+    },
+    {
+      title: 'ACOS',
+      dataIndex: 'acos',
+      align: 'center',
+      width: 100,
+      render: (v) => (v != null ? `${Number(v).toFixed(2)}%` : '-'),
+    },
+    {
+      title: 'ROAS',
+      dataIndex: 'roas',
+      align: 'center',
+      width: 100,
+      render: (v) => (v != null ? Number(v).toFixed(2) : '-'),
+    },
+  ];
 
   // const fetchCampaigns = async () => {
   //   const response = await dispatch(getCampaignsRulesList());
@@ -302,10 +434,16 @@ function SearchTerms() {
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Button className="!h-[30px] !rounded-lg !border-[#dbe1e8] !text-[11px] whitespace-nowrap">
-            <DownloadOutlined />
-            Search Term Report
-          </Button>
+          <Dropdown menu={{ items: exportMenuItems }} placement="bottomRight" trigger={['click']}>
+            <Button
+              type="primary"
+              icon={<ExportOutlined />}
+              loading={exportLoading}
+              className="!h-[30px] text-[13px] !rounded-xl !bg-[#2563eb] !font-semibold !flex !items-center !justify-center"
+            >
+              Export <DownOutlined className="text-[10px] ml-1" />
+            </Button>
+          </Dropdown>
 
           <Button
             type="primary"
@@ -404,24 +542,20 @@ function SearchTerms() {
         <div className="space-y-2">
           {/* MATCH DISTRIBUTION */}
 
-          <div className="bg-white rounded-xl border border-[#e5e7eb] p-3">
+          {/* <div className="bg-white rounded-xl border border-[#e5e7eb] p-3">
             <h2 className="text-[15px] font-semibold text-[#111827] mb-3">Match Type Distribution</h2>
 
             <div className="relative w-[120px] h-[120px] mx-auto">
               <div
                 className="w-full h-full rounded-full"
                 style={{
-                  background: `conic-gradient(
-          #0f766e 0% 59%,
-          #2563eb 59% 89%,
-          #d97706 89% 100%
-        )`,
+                  background: conicBg,
                 }}
               />
 
               <div className="absolute inset-[14px] bg-white rounded-full flex items-center justify-center">
                 <div className="text-center">
-                  <h2 className="text-[18px] font-bold text-[#111827]">1,256</h2>
+                  <h2 className="text-[18px] font-bold text-[#111827]">{Number(totalMatchTerms).toLocaleString()}</h2>
 
                   <p className="text-[10px] text-[#6b7280]">Total Terms</p>
                 </div>
@@ -429,45 +563,40 @@ function SearchTerms() {
             </div>
 
             <div className="mt-4 space-y-2">
-              <div className="flex items-center justify-between text-[11px]">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-[#0f766e]" />
-                  Broad Match
-                </div>
+              {distributionData.length > 0 ? (
+                distributionData.map((item) => (
+                  <div key={item.match_type} className="flex items-center justify-between text-[11px] gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <div
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: getMatchColor(item.match_type) }}
+                      />
+                      <span className="truncate text-[#374151]" title={formatMatchTypeName(item.match_type)}>
+                        {formatMatchTypeName(item.match_type)}
+                      </span>
+                    </div>
 
-                <span className="font-medium text-[#111827]">742 (59%)</span>
-              </div>
-
-              <div className="flex items-center justify-between text-[11px]">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-[#2563eb]" />
-                  Phrase Match
-                </div>
-
-                <span className="font-medium text-[#111827]">372 (30%)</span>
-              </div>
-
-              <div className="flex items-center justify-between text-[11px]">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-[#d97706]" />
-                  Exact Match
-                </div>
-
-                <span className="font-medium text-[#111827]">142 (11%)</span>
-              </div>
+                    <span className="font-medium text-[#111827] shrink-0 whitespace-nowrap">
+                      {Number(item.count || 0).toLocaleString()} ({item.percentage || 0}%)
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-[12px] text-[#9ca3af] text-center my-2">No match distribution data</p>
+              )}
             </div>
-          </div>
+          </div> */}
 
           {/* TOP TERMS */}
 
           <div className="bg-white rounded-xl border border-[#e5e7eb] p-3">
             <h2 className="text-[15px] font-semibold text-[#111827] mb-2">Top Performing Terms</h2>
 
-            {performanceKey.map((item, index) => (
+            {performanceKey.slice(0, 5).map((item, index, arr) => (
               <div
-                key={item.search_term}
+                key={item.search_term + index}
                 className={`flex items-center justify-between py-1 ${
-                  index !== performanceKey.length - 1 ? 'border-b border-[#f1f5f9]' : ''
+                  index !== arr.length - 1 ? 'border-b border-[#f1f5f9]' : ''
                 }`}
               >
                 <div>
@@ -482,7 +611,12 @@ function SearchTerms() {
               </div>
             ))}
 
-            <Button className="w-full !h-[34px] !rounded-lg !text-[11px] mt-0">View All</Button>
+            <Button
+              onClick={() => setIsTopTermsModalOpen(true)}
+              className="w-full !h-[34px] !rounded-lg !text-[11px] mt-2 cursor-pointer"
+            >
+              View All
+            </Button>
           </div>
 
           {/* QUICK ACTIONS */}
@@ -535,28 +669,49 @@ function SearchTerms() {
 
               {/* DOWNLOAD */}
 
-              <button
-                type="button"
-                className="w-full flex items-center justify-between p-2 rounded-xl bg-[#eff6ff] border border-[#bfdbfe]"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-[#dbeafe] flex items-center justify-center">
-                    <DownloadOutlined className="text-[#2563eb] text-[13px]" />
+              <Dropdown menu={{ items: exportMenuItems }} placement="bottomRight" trigger={['click']}>
+                <button
+                  type="button"
+                  className="w-full flex items-center justify-between p-2 rounded-xl bg-[#eff6ff] border border-[#bfdbfe] cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-[#dbeafe] flex items-center justify-center">
+                      <DownloadOutlined className="text-[#2563eb] text-[13px]" />
+                    </div>
+
+                    <div className="text-left">
+                      <h3 className="text-[11px] font-semibold text-[#111827]">Download Report</h3>
+
+                      <p className="text-[10px] text-[#6b7280]">Export search data</p>
+                    </div>
                   </div>
 
-                  <div className="text-left">
-                    <h3 className="text-[11px] font-semibold text-[#111827]">Download Report</h3>
-
-                    <p className="text-[10px] text-[#6b7280]">Export search data</p>
-                  </div>
-                </div>
-
-                <RightOutlined className="text-[11px] text-[#94a3b8]" />
-              </button>
+                  <RightOutlined className="text-[11px] text-[#94a3b8]" />
+                </button>
+              </Dropdown>
             </div>
           </div>
         </div>
       </div>
+
+      <Modal
+        title="Top Performing Search Terms"
+        open={isTopTermsModalOpen}
+        onCancel={() => setIsTopTermsModalOpen(false)}
+        footer={[
+          <Button key="close" type="primary" onClick={() => setIsTopTermsModalOpen(false)}>
+            Close
+          </Button>,
+        ]}
+        width={750}
+      >
+        <Table
+          columns={topTermsColumns}
+          dataSource={performanceKey.map((item, index) => ({ ...item, key: index }))}
+          pagination={{ pageSize: 10 }}
+          size="small"
+        />
+      </Modal>
     </div>
   );
 }

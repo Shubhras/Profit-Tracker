@@ -14,6 +14,8 @@ from amazon_ads.services.negative_targets import *
 from amazon_ads.services.portfolio import *
 from amazon_ads.services.dashboard import AdsDashboardStatsAPIView
 
+from amazon_auth.exports import export_amazon_ads_campaigns, export_amazon_ads_ad_groups, export_amazon_ads_search_terms, export_amazon_ads_ad_products, export_amazon_ads_keywords, export_amazon_ads_campaign_by_sku, export_amazon_ads_adgroup_by_campaign
+
 urlpatterns = [
 
     path("ads/dashboard-stats/", AdsDashboardStatsAPIView.as_view(), name="ads-dashboard-stats"),
@@ -24,22 +26,36 @@ urlpatterns = [
     path("syncCampaigns/details/",SyncCampaignsView.as_view()),
     path("syncCampaignMetricsView/details/",SyncCampaignMetricsView.as_view()),
     path("campaigns/list/",CampaignListView.as_view()),
+    path("campaigns/export/", export_amazon_ads_campaigns, name="export_amazon_ads_campaigns"),
+    path("campaigns/list/export/", export_amazon_ads_campaigns, name="export_amazon_ads_campaigns_alias"),
     path("ad-groups/list/",AdsAdGroupListView.as_view()),
+    path("ad-groups/export/", export_amazon_ads_ad_groups, name="export_amazon_ads_ad_groups"),
+    path("ad-groups/list/export/", export_amazon_ads_ad_groups, name="export_amazon_ads_ad_groups_alias"),
 
     path("keywords/list/",AdsKeywordListView.as_view()),
+    path("keywords/export/", export_amazon_ads_keywords, name="export_amazon_ads_keywords"),
+    path("keywords/list/export/", export_amazon_ads_keywords, name="export_amazon_ads_keywords_alias"),
     path("keywords-update/",UpdateSPKeywordView.as_view()),
     # path("product-ads/list/",AdsProductAdListView.as_view()),
 
     path("product-ads/list/",ProductSKUReportView.as_view()),              
+    path("product-ads/export/", export_amazon_ads_ad_products, name="export_amazon_ads_ad_products"),
+    path("product-ads/list/export/", export_amazon_ads_ad_products, name="export_amazon_ads_ad_products_alias"),
 
     path("camping-by-sku/list/",CampaignBySKUView.as_view()),
+    path("camping-by-sku/export/", export_amazon_ads_campaign_by_sku, name="export_amazon_ads_campaign_by_sku"),
+    path("camping-by-sku/list/export/", export_amazon_ads_campaign_by_sku, name="export_amazon_ads_campaign_by_sku_alias"),
 
     path("adgroup-by-camping/",AdGroupByCampaignView.as_view()),
+    path("adgroup-by-camping/export/", export_amazon_ads_adgroup_by_campaign, name="export_amazon_ads_adgroup_by_campaign"),
+    path("adgroup-by-camping/list/export/", export_amazon_ads_adgroup_by_campaign, name="export_amazon_ads_adgroup_by_campaign_alias"),
     path("adgroup-update/",UpdateSPAdGroupView.as_view()),
 
     path("get-query-ads/",QueryAdsView.as_view()),
 
     path("search-term-metrics/",SearchTermMetricListView.as_view(),name="search-term-metrics"),
+    path("search-term-metrics/export/", export_amazon_ads_search_terms, name="export_amazon_ads_search_terms"),
+    path("search-term-metrics/list/export/", export_amazon_ads_search_terms, name="export_amazon_ads_search_terms_alias"),
 
     path("budget-rule-list/",AdsBudgetRuleListAPIView.as_view(),name="budget-rule-list"),
 

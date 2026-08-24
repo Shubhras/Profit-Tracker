@@ -1,9 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Table, Tag, Tooltip, Modal, Switch } from 'antd';
-import { ArrowLeftOutlined, ExportOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons';
+import { Button, Table, Tag, Tooltip, Modal, Switch, Dropdown, message } from 'antd';
+import {
+  ArrowLeftOutlined,
+  ExportOutlined,
+  RightOutlined,
+  SearchOutlined,
+  DownOutlined,
+  FileExcelOutlined,
+  FileTextOutlined,
+} from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getAdsGroup } from '../../redux/advertising/actionCreator';
+import { getAdsGroup, exportAdGroups } from '../../redux/advertising/actionCreator';
 
 function CampaignDetails() {
   const { id } = useParams();
@@ -13,7 +21,7 @@ function CampaignDetails() {
   const [selectedBid, setSelectedBid] = useState(null);
   const [searchText, setSearchText] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  // const [selectedRecord, setSelectedRecord] = useState(null);
+  const [exportLoading, setExportLoading] = useState(false);
 
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -21,19 +29,56 @@ function CampaignDetails() {
   });
 
   const { adsGroupData, loading } = useSelector((state) => state.advertising);
+  const { dateRange } = useSelector((state) => state.dashboard);
+
+  const handleExport = async (format = 'xlsx') => {
+    setExportLoading(true);
+    try {
+      const payload = {
+        campaign_id: id,
+        search: debouncedSearch,
+        ...(dateRange?.fromDate && { start_date: dateRange.fromDate, startDate: dateRange.fromDate }),
+        ...(dateRange?.endDate && { end_date: dateRange.endDate, endDate: dateRange.endDate }),
+      };
+      const res = await dispatch(exportAdGroups(payload, format));
+      if (res?.status) {
+        message.success('Export report generated successfully!');
+      } else {
+        message.error(res?.message || 'Failed to export ad groups');
+      }
+    } catch (err) {
+      console.error(err);
+      message.error('Failed to export ad groups');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const exportMenuItems = [
+    {
+      key: 'xlsx',
+      label: 'Excel (.xlsx)',
+      icon: <FileExcelOutlined style={{ color: '#10b981' }} />,
+      onClick: () => handleExport('xlsx'),
+    },
+    {
+      key: 'csv',
+      label: 'CSV (.csv)',
+      icon: <FileTextOutlined style={{ color: '#3b82f6' }} />,
+      onClick: () => handleExport('csv'),
+    },
+  ];
 
   useEffect(() => {
     dispatch(
       getAdsGroup(pagination.current, pagination.pageSize, {
-        // search: 'auto',
-        // state: 'ENABLED',
         campaign_id: id,
         search: debouncedSearch,
-        // ordering: '-created_at',
+        start_date: dateRange?.fromDate,
+        end_date: dateRange?.endDate,
       }),
     );
-    // }, [dispatch, pagination, id]);
-  }, [dispatch, pagination.current, pagination.pageSize, id, debouncedSearch]);
+  }, [dispatch, pagination.current, pagination.pageSize, id, debouncedSearch, dateRange]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -341,13 +386,16 @@ function CampaignDetails() {
                   Filters
                 </Button> */}
 
-                <Button
-                  type="primary"
-                  icon={<ExportOutlined />}
-                  className="!h-[30px] text-[13px] !rounded-xl !bg-[#2563eb] !font-medium !flex !items-center !justify-center"
-                >
-                  Export
-                </Button>
+                <Dropdown menu={{ items: exportMenuItems }} placement="bottomRight" trigger={['click']}>
+                  <Button
+                    type="primary"
+                    icon={<ExportOutlined />}
+                    loading={exportLoading}
+                    className="!h-[30px] text-[13px] !rounded-xl !bg-[#2563eb] !font-semibold !flex !items-center !justify-center"
+                  >
+                    Export <DownOutlined className="text-[10px] ml-1" />
+                  </Button>
+                </Dropdown>
               </div>
             </div>
           </div>

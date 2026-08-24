@@ -1,9 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Tooltip } from 'antd';
-import { ArrowLeftOutlined, SearchOutlined } from '@ant-design/icons';
+import { Table, Tooltip, Button, Dropdown, message } from 'antd';
+import {
+  ArrowLeftOutlined,
+  SearchOutlined,
+  ExportOutlined,
+  DownOutlined,
+  FileExcelOutlined,
+  FileTextOutlined,
+} from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { getSearchTerms } from '../../redux/advertising/actionCreator';
+import { getSearchTerms, exportSearchTerms } from '../../redux/advertising/actionCreator';
 
 function CampaignSecondDetails() {
   const { id } = useParams();
@@ -13,6 +20,7 @@ function CampaignSecondDetails() {
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [exportLoading, setExportLoading] = useState(false);
 
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -20,6 +28,51 @@ function CampaignSecondDetails() {
   });
 
   const { searchTerms, loading } = useSelector((state) => state.advertising);
+  const { dateRange } = useSelector((state) => state.dashboard);
+
+  const handleExport = async (format = 'xlsx') => {
+    setExportLoading(true);
+    try {
+      const payload = {
+        filters: {
+          campaign_id: Number(id),
+          search: debouncedSearch,
+          ...(dateRange?.fromDate && { from_date: dateRange.fromDate, start_date: dateRange.fromDate }),
+          ...(dateRange?.endDate && { to_date: dateRange.endDate, end_date: dateRange.endDate }),
+        },
+        pagination: {
+          pageNo: 1,
+          pageSize: 10,
+        },
+      };
+      const res = await dispatch(exportSearchTerms(payload, format));
+      if (res?.status) {
+        message.success('Export report generated successfully!');
+      } else {
+        message.error(res?.message || 'Failed to export search terms');
+      }
+    } catch (err) {
+      console.error(err);
+      message.error('Failed to export search terms');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const exportMenuItems = [
+    {
+      key: 'xlsx',
+      label: 'Excel (.xlsx)',
+      icon: <FileExcelOutlined style={{ color: '#10b981' }} />,
+      onClick: () => handleExport('xlsx'),
+    },
+    {
+      key: 'csv',
+      label: 'CSV (.csv)',
+      icon: <FileTextOutlined style={{ color: '#3b82f6' }} />,
+      onClick: () => handleExport('csv'),
+    },
+  ];
 
   useEffect(() => {
     dispatch(
@@ -27,6 +80,8 @@ function CampaignSecondDetails() {
         filters: {
           campaign_id: Number(id),
           search: debouncedSearch,
+          ...(dateRange?.fromDate && { from_date: dateRange.fromDate }),
+          ...(dateRange?.endDate && { to_date: dateRange.endDate }),
         },
         pagination: {
           pageNo: pagination.current,
@@ -34,8 +89,7 @@ function CampaignSecondDetails() {
         },
       }),
     );
-    // }, [dispatch, pagination, id]);
-  }, [dispatch, pagination.current, pagination.pageSize, id, debouncedSearch]);
+  }, [dispatch, pagination.current, pagination.pageSize, id, debouncedSearch, dateRange]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -144,48 +198,55 @@ function CampaignSecondDetails() {
     <>
       <div className="p-2">
         <div className="mt-3 mb-3 rounded-2xl border border-[#e5e7eb] bg-white shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between border-b border-[#edf0f2]">
-            <div className="border-b border-[#edf0f2] px-3 py-2">
-              {/* Top Row */}
-              <div className="flex items-center gap-4">
-                <button
-                  type="button"
-                  onClick={() => navigate(-1)}
-                  className="w-[30px] h-[30px] rounded-xl border border-[#dbe1e8]
-      bg-white flex items-center justify-center hover:bg-[#f8fafc]
-      transition-all duration-200 shadow-sm"
-                >
-                  <ArrowLeftOutlined className="text-[#374151]" />
-                </button>
+          <div className="border-b border-[#edf0f2] px-4 py-3">
+            {/* Top Row */}
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="w-[30px] h-[30px] rounded-xl border border-[#dbe1e8] bg-white flex items-center justify-center hover:bg-[#f8fafc] transition-all duration-200 shadow-sm"
+              >
+                <ArrowLeftOutlined className="text-[#374151]" />
+              </button>
 
-                <div className="flex flex-col">
-                  <h1 className="text-[17px] font-semibold text-[#111827] leading-[30px] mb-0">Ad Products Details</h1>
+              <div className="flex flex-col">
+                <h1 className="text-[17px] font-semibold text-[#111827] leading-[30px] mb-0">Ad Products Details</h1>
 
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[13px] text-[#6b7280] font-medium">Ad Group Name:</span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[13px] text-[#6b7280] font-medium">Ad Group Name:</span>
 
-                    <div className="min-w-[120px] h-[20px] px-2 rounded-full bg-[#eff6ff] border border-[#bfdbfe] text-[#2563eb] text-[12px] font-semibold flex items-center justify-center">
-                      {adGroupName || 'Campaign Details'}
-                    </div>
+                  <div className="min-w-[120px] h-[20px] px-2 rounded-full bg-[#eff6ff] border border-[#bfdbfe] text-[#2563eb] text-[12px] font-semibold flex items-center justify-center">
+                    {adGroupName || 'Campaign Details'}
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Bottom Row */}
-              <div className="mt-5 flex items-center justify-between mb-2">
-                {/* Search */}
-                <div className="relative w-[260px]">
-                  <input
-                    type="text"
-                    value={searchText}
-                    onChange={(e) => setSearchText(e.target.value)}
-                    placeholder="Search ad groups..."
-                    className="w-full h-[30px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm focus:border-[#2563eb]"
-                  />
+            {/* Bottom Row */}
+            <div className="mt-5 flex items-center justify-between gap-3">
+              {/* Search */}
+              <div className="relative w-[260px]">
+                <input
+                  type="text"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  placeholder="Search ad groups..."
+                  className="w-full h-[30px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm focus:border-[#2563eb]"
+                />
 
-                  <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
-                </div>
+                <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
               </div>
+
+              <Dropdown menu={{ items: exportMenuItems }} placement="bottomRight" trigger={['click']}>
+                <Button
+                  type="primary"
+                  icon={<ExportOutlined />}
+                  loading={exportLoading}
+                  className="!h-[30px] text-[13px] !rounded-xl !bg-[#2563eb] !font-semibold !flex !items-center !justify-center"
+                >
+                  Export <DownOutlined className="text-[10px] ml-1" />
+                </Button>
+              </Dropdown>
             </div>
           </div>
 

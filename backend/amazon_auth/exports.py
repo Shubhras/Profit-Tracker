@@ -103,15 +103,35 @@ def get_data_from_view(view_func_or_class, request, override_params=None):
         from_date_val = request.GET.get("fromDate") or request.GET.get("from_date") or request.GET.get("startDate") or request.GET.get("start_date")
         if from_date_val:
             filters["fromDate"] = from_date_val
+            filters["start_date"] = from_date_val
+            post_data["start_date"] = from_date_val
             
         to_date_val = request.GET.get("toDate") or request.GET.get("to_date") or request.GET.get("endDate") or request.GET.get("end_date")
         if to_date_val:
             filters["toDate"] = to_date_val
             filters["endDate"] = to_date_val
+            filters["end_date"] = to_date_val
+            post_data["end_date"] = to_date_val
             
+        targeting_type_val = request.GET.get("targeting_type") or request.GET.get("targetingType")
+        if targeting_type_val:
+            filters["targeting_type"] = targeting_type_val
+            post_data["targeting_type"] = targeting_type_val
+
+        state_val = request.GET.get("state")
+        if state_val:
+            filters["state"] = state_val
+            post_data["state"] = state_val
+
+        campaign_id_val = request.GET.get("campaign_id") or request.GET.get("campaignId")
+        if campaign_id_val:
+            filters["campaign_id"] = campaign_id_val
+            post_data["campaign_id"] = campaign_id_val
+
         search_val = request.GET.get("search") or request.GET.get("q") or request.GET.get("searchTerm")
         if search_val:
             filters["search"] = search_val
+            post_data["search"] = search_val
 
         if override_params and 'POST' in override_params:
             post_data.update(override_params['POST'])
@@ -120,6 +140,7 @@ def get_data_from_view(view_func_or_class, request, override_params=None):
         django_req._body = json.dumps(post_data).encode('utf-8')
         django_req.META['CONTENT_TYPE'] = 'application/json'
 
+    django_req.user = getattr(request, 'user', None)
     from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
     drf_req = Request(django_req, parsers=[JSONParser(), FormParser(), MultiPartParser()])
     drf_req.user = getattr(request, 'user', None)
@@ -127,7 +148,7 @@ def get_data_from_view(view_func_or_class, request, override_params=None):
     
     if hasattr(view_func_or_class, 'as_view'):
         view_func = view_func_or_class.as_view()
-        response = view_func(drf_req)
+        response = view_func(django_req)
     else:
         target_func = get_undecorated_view(view_func_or_class)
         response = target_func(drf_req)
@@ -1134,8 +1155,55 @@ def list_export_history(request):
     else:
         exports = ExportedReport.objects.filter(user__isnull=True).order_by("-created_at")
         
+    # Search by report_type / file_name
+    search = request.GET.get('search') or request.GET.get('report_type')
+    if search:
+        search = search.strip()
+        exports = exports.filter(
+            Q(report_type__icontains=search) | Q(file_name__icontains=search)
+        )
+
+    # Date range filter for created_at
+    from_date = request.GET.get('from_date') or request.GET.get('start_date') or request.GET.get('date_from')
+    to_date = request.GET.get('to_date') or request.GET.get('end_date') or request.GET.get('date_to')
+
+    if from_date:
+        try:
+            d_from = str(from_date).split('T')[0].strip()
+            if d_from:
+                exports = exports.filter(created_at__date__gte=d_from)
+        except Exception:
+            pass
+
+    if to_date:
+        try:
+            d_to = str(to_date).split('T')[0].strip()
+            if d_to:
+                exports = exports.filter(created_at__date__lte=d_to)
+        except Exception:
+            pass
+
+    # Pagination (Backend only)
+    total_count = exports.count()
+
+    try:
+        page = max(int(request.GET.get('page', 1)), 1)
+    except (ValueError, TypeError):
+        page = 1
+
+    try:
+        page_size = max(int(request.GET.get('page_size', 10)), 1)
+    except (ValueError, TypeError):
+        page_size = 10
+
+    total_pages = (total_count + page_size - 1) // page_size if total_count > 0 else 1
+
+    start = (page - 1) * page_size
+    end = start + page_size
+    paginated_exports = exports[start:end]
+
     data = []
-    for exp in exports:
+    for exp in paginated_exports:
         data.append({
             "id": exp.id,
             "report_type": exp.report_type,
@@ -1147,7 +1215,15 @@ def list_export_history(request):
             "created_at": exp.created_at.isoformat() if exp.created_at else None,
             "download_url": f"/api/amazon/exports/history/{exp.id}/download/"
         })
-    return Response({"success": True, "results": data})
+
+    return Response({
+        "success": True,
+        "count": total_count,
+        "total_pages": total_pages,
+        "current_page": page,
+        "page_size": page_size,
+        "results": data
+    })
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -1179,4 +1255,717 @@ def download_export_file(request, export_id):
     response = HttpResponse(file_content, content_type=content_type)
     response['Content-Disposition'] = f'attachment; filename="{exp.file_name}"'
     return response
+
+
+@api_view(['DELETE', 'POST'])
+@permission_classes([IsAuthenticated])
+def delete_export_file(request, export_id=None):
+    from django.db.models import Q
+    ids_to_delete = []
+    if export_id:
+        ids_to_delete.append(export_id)
+
+    req_ids = request.data.get('ids') or request.data.get('export_ids')
+    if req_ids and isinstance(req_ids, list):
+        ids_to_delete.extend(req_ids)
+
+    if not ids_to_delete:
+        return Response({"success": False, "message": "No export ID provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+    if request.user and request.user.is_authenticated:
+        exports = ExportedReport.objects.filter(Q(user=request.user) | Q(user__isnull=True), id__in=ids_to_delete)
+    else:
+        exports = ExportedReport.objects.filter(user__isnull=True, id__in=ids_to_delete)
+
+    deleted_count = 0
+    for exp in exports:
+        try:
+            if exp.file:
+                exp.file.delete(save=False)
+            exp.delete()
+            deleted_count += 1
+        except Exception:
+            pass
+
+    if deleted_count > 0:
+        return Response({"success": True, "message": f"Successfully deleted {deleted_count} report(s)"})
+    else:
+        return Response({"success": False, "message": "No reports found or failed to delete"}, status=status.HTTP_404_NOT_FOUND)
+
+
+CAMPAIGN_COLUMNS = {
+    "name": "Campaign Name",
+    "state": "State",
+    "targeting_type": "Targeting Type",
+    "daily_budget": "Daily Budget",
+    "budget_type": "Budget Type",
+    "bidding_strategy": "Bidding Strategy",
+    "marketplace_budget_allocation": "Marketplace Budget Allocation",
+    "start_date": "Start Date",
+    "end_date": "End Date",
+    "country_code": "Country Code",
+    "currency_code": "Currency Code",
+    "impressions": "Impressions",
+    "clicks": "Clicks",
+    "cost": "Cost",
+    "sales": "Sales",
+    "orders": "Orders",
+    "units": "Units",
+    "acos": "ACOS",
+    "roas": "ROAS",
+}
+
+
+def format_campaigns_export(data_list, totals_dict=None):
+    if not isinstance(data_list, list):
+        data_list = []
+
+    formatted = []
+    for item in data_list:
+        if not isinstance(item, dict):
+            continue
+
+        metrics = item.get("metrics") or {}
+        if not isinstance(metrics, dict):
+            metrics = {}
+
+        formatted.append({
+            "name": item.get("name", ""),
+            "state": item.get("state", ""),
+            "targeting_type": item.get("targeting_type", ""),
+            "daily_budget": item.get("daily_budget", 0),
+            "budget_type": item.get("budget_type", ""),
+            "bidding_strategy": item.get("bidding_strategy", ""),
+            "marketplace_budget_allocation": item.get("marketplace_budget_allocation", ""),
+            "start_date": item.get("start_date", ""),
+            "end_date": item.get("end_date", ""),
+            "country_code": item.get("country_code", ""),
+            "currency_code": item.get("currency_code", ""),
+            "impressions": metrics.get("impressions", 0),
+            "clicks": metrics.get("clicks", 0),
+            "cost": metrics.get("cost", 0),
+            "sales": metrics.get("sales", 0),
+            "orders": metrics.get("orders", 0),
+            "units": metrics.get("units", 0),
+            "acos": metrics.get("acos", 0),
+            "roas": metrics.get("roas", 0),
+        })
+
+    return formatted, None
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def export_amazon_ads_campaigns(request):
+    from amazon_ads.views import CampaignListView
+
+    response_format = (
+        request.query_params.get("file_format")
+        or request.query_params.get("export_format")
+        or request.query_params.get("format")
+        or "xlsx"
+    ).lower()
+
+    override_params = {
+        "POST": {
+            "page": 1,
+            "page_size": 100000
+        },
+        "GET": {
+            "page": 1,
+            "page_size": 100000
+        }
+    }
+
+    return generic_export_view(
+        request,
+        CampaignListView,
+        CAMPAIGN_COLUMNS,
+        "ads_campaings",
+        response_format,
+        override_params=override_params,
+        list_key="results",
+        totals_key=None,
+        formatter_func=format_campaigns_export,
+        report_type_name="ads_campaings"
+    )
+
+
+AD_GROUP_COLUMNS = {
+    "state": "State",
+    "ad_group_id": "Ad Group ID",
+    "name": "Name",
+    "campaign_name": "Campaign Name",
+    "default_bid": "Default Bid",
+    "country_code": "Country Code",
+    "currency_code": "Currency Code",
+    "impressions": "Impressions",
+    "clicks": "Clicks",
+    "cost": "Cost",
+    "sales": "Sales",
+    "orders": "Orders",
+    "units": "Units",
+    "acos": "ACOS",
+    "roas": "ROAS",
+}
+
+
+def format_ad_groups_export(data_list, totals_dict=None):
+    if not isinstance(data_list, list):
+        data_list = []
+
+    formatted = []
+    for item in data_list:
+        if not isinstance(item, dict):
+            continue
+
+        metrics = item.get("metrics") or {}
+        if not isinstance(metrics, dict):
+            metrics = {}
+
+        formatted.append({
+            "state": item.get("state", ""),
+            "ad_group_id": str(item.get("ad_group_id", "")),
+            "name": item.get("name", ""),
+            "campaign_name": item.get("campaign_name", ""),
+            "default_bid": item.get("default_bid", 0),
+            "country_code": item.get("country_code", ""),
+            "currency_code": item.get("currency_code", ""),
+            "impressions": metrics.get("impressions", 0),
+            "clicks": metrics.get("clicks", 0),
+            "cost": metrics.get("cost", 0),
+            "sales": metrics.get("sales", 0),
+            "orders": metrics.get("orders", 0),
+            "units": metrics.get("units", 0),
+            "acos": metrics.get("acos", 0),
+            "roas": metrics.get("roas", 0),
+        })
+
+    return formatted, None
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def export_amazon_ads_ad_groups(request):
+    from amazon_ads.views import AdsAdGroupListView
+
+    response_format = (
+        request.query_params.get("file_format")
+        or request.query_params.get("export_format")
+        or request.query_params.get("format")
+        or "xlsx"
+    ).lower()
+
+    override_params = {
+        "POST": {
+            "page": 1,
+            "page_size": 100000
+        },
+        "GET": {
+            "page": 1,
+            "page_size": 100000
+        }
+    }
+
+    return generic_export_view(
+        request,
+        AdsAdGroupListView,
+        AD_GROUP_COLUMNS,
+        "ads_ad_groups",
+        response_format,
+        override_params=override_params,
+        list_key="results",
+        totals_key=None,
+        formatter_func=format_ad_groups_export,
+        report_type_name="ads_ad_groups"
+    )
+
+
+# ==============================================================================
+# AMAZON ADS SEARCH TERMS EXPORT
+# ==============================================================================
+
+SEARCH_TERM_COLUMNS = {
+    "campaign_name": "Campaign Name",
+    "search_term": "Search Term",
+    "match_type": "Match Type",
+    "report_date": "Report Date",
+    "clicks": "Clicks",
+    "cost": "Cost",
+    "sales": "Sales",
+    "orders": "Orders",
+    "acos": "ACOS",
+    "roas": "ROAS",
+}
+
+
+def format_search_terms_export(data_list, totals_dict=None):
+    if not isinstance(data_list, list):
+        data_list = []
+
+    formatted = []
+    for item in data_list:
+        if not isinstance(item, dict):
+            continue
+
+        formatted.append({
+            "campaign_name": item.get("campaign_name", ""),
+            "search_term": item.get("search_term", ""),
+            "match_type": item.get("match_type", ""),
+            "report_date": item.get("report_date", ""),
+            "clicks": item.get("clicks", 0),
+            "cost": item.get("cost", 0),
+            "sales": item.get("sales", 0),
+            "orders": item.get("orders", 0),
+            "acos": item.get("acos", 0),
+            "roas": item.get("roas", 0),
+        })
+
+    return formatted, None
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def export_amazon_ads_search_terms(request):
+    from amazon_ads.views import SearchTermMetricListView
+
+    response_format = (
+        request.query_params.get("file_format")
+        or request.query_params.get("export_format")
+        or request.query_params.get("format")
+        or "xlsx"
+    ).lower()
+
+    override_params = {
+        "POST": {
+            "page": 1,
+            "page_size": 100000,
+            "pagination": {
+                "pageNo": 1,
+                "pageSize": 100000
+            }
+        },
+        "GET": {
+            "page": 1,
+            "page_size": 100000
+        }
+    }
+
+    return generic_export_view(
+        request,
+        SearchTermMetricListView,
+        SEARCH_TERM_COLUMNS,
+        "ads_search_terms",
+        response_format,
+        override_params=override_params,
+        list_key="data",
+        totals_key=None,
+        formatter_func=format_search_terms_export,
+        report_type_name="ads_search_terms"
+    )
+
+
+# ==============================================================================
+# AMAZON ADS AD PRODUCTS EXPORT
+# ==============================================================================
+
+AD_PRODUCT_COLUMNS = {
+    "sku": "SKU",
+    "asin": "ASIN",
+    "state": "State",
+    "total_ads": "Total Ads",
+    "impressions": "Impressions",
+    "clicks": "Clicks",
+    "cost": "Cost (₹)",
+    "sales": "Sales (₹)",
+    "orders": "Orders",
+    "units": "Units",
+    "acos": "ACOS (%)",
+    "roas": "ROAS",
+}
+
+
+def format_ad_products_export(data_list, totals_dict=None):
+    if not isinstance(data_list, list):
+        data_list = []
+
+    formatted = []
+    for item in data_list:
+        if not isinstance(item, dict):
+            continue
+
+        metrics = item.get("metrics") or {}
+
+        formatted.append({
+            "sku": item.get("sku", ""),
+            "asin": item.get("asin", ""),
+            "state": item.get("state", ""),
+            "total_ads": item.get("total_ads", 0),
+            "impressions": item.get("impressions", 0),
+            "clicks": item.get("clicks", 0),
+            "cost": item.get("cost", 0),
+            "sales": item.get("sales", 0),
+            "orders": item.get("orders", 0),
+            "units": metrics.get("units", 0),
+            "acos": metrics.get("acos", 0),
+            "roas": metrics.get("roas", 0),
+        })
+
+    return formatted, None
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def export_amazon_ads_ad_products(request):
+    from amazon_ads.views import ProductSKUReportView
+
+    response_format = (
+        request.query_params.get("file_format")
+        or request.query_params.get("export_format")
+        or request.query_params.get("format")
+        or "xlsx"
+    ).lower()
+
+    override_params = {
+        "POST": {
+            "page": 1,
+            "page_size": 100000,
+            "pagination": {
+                "page": 1,
+                "page_size": 100000
+            }
+        },
+        "GET": {
+            "page": 1,
+            "page_size": 100000
+        }
+    }
+
+    return generic_export_view(
+        request,
+        ProductSKUReportView,
+        AD_PRODUCT_COLUMNS,
+        "ads_ad_products",
+        response_format,
+        override_params=override_params,
+        list_key="results",
+        totals_key=None,
+        formatter_func=format_ad_products_export,
+        report_type_name="ads_ad_products"
+    )
+
+
+# ==============================================================================
+# AMAZON ADS KEYWORDS EXPORT
+# ==============================================================================
+
+KEYWORD_COLUMNS = {
+    "keyword_id": "Keyword ID",
+    "keyword_text": "Keyword Text",
+    "match_type": "Match Type",
+    "state": "State",
+    "bid": "Bid (₹)",
+    "campaign_name": "Campaign Name",
+    "ad_group_name": "Ad Group Name",
+    "created_at": "Created At",
+}
+
+
+def format_keywords_export(data_list, totals_dict=None):
+    if not isinstance(data_list, list):
+        data_list = []
+
+    formatted = []
+    for item in data_list:
+        if not isinstance(item, dict):
+            continue
+
+        formatted.append({
+            "keyword_id": item.get("keyword_id", ""),
+            "keyword_text": item.get("keyword_text", ""),
+            "match_type": item.get("match_type", ""),
+            "state": item.get("state", ""),
+            "bid": item.get("bid", 0),
+            "campaign_name": item.get("campaign_name", ""),
+            "ad_group_name": item.get("ad_group_name", ""),
+            "created_at": item.get("created_at", ""),
+        })
+
+    return formatted, totals_dict
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def export_amazon_ads_keywords(request):
+    from amazon_ads.views import AdsKeywordListView
+
+    response_format = (
+        request.query_params.get("file_format")
+        or request.query_params.get("export_format")
+        or request.query_params.get("format")
+        or "xlsx"
+    ).lower()
+
+    override_params = {
+        "POST": {
+            "page": 1,
+            "page_size": 100000,
+            "pagination": {
+                "page": 1,
+                "page_size": 100000
+            }
+        },
+        "GET": {
+            "page": 1,
+            "page_size": 100000
+        }
+    }
+
+    return generic_export_view(
+        request,
+        AdsKeywordListView,
+        KEYWORD_COLUMNS,
+        "ads_keywords",
+        response_format,
+        override_params=override_params,
+        list_key="results",
+        totals_key="summary",
+        formatter_func=format_keywords_export,
+        report_type_name="ads_keywords"
+    )
+
+
+CAMPAIGN_BY_SKU_COLUMNS = {
+    "state": "State",
+    "campaign_id": "Campaign ID",
+    "name": "Campaign Name",
+    "targeting_type": "Targeting Type",
+    "daily_budget": "Daily Budget",
+    "bidding_strategy": "Bidding Strategy",
+    "start_date": "Start Date",
+    "total_ads": "Total Ads",
+    "impressions": "Impressions",
+    "clicks": "Clicks",
+    "cost": "Cost",
+    "sales": "Sales",
+    "orders": "Orders",
+    "units": "Units",
+    "acos": "ACOS (%)",
+    "roas": "ROAS",
+}
+
+
+def format_campaign_by_sku_export(results, totals_dict=None):
+    formatted = []
+    for item in results:
+        formatted.append({
+            "state": item.get("state", ""),
+            "campaign_id": item.get("campaign_id", ""),
+            "name": item.get("name", ""),
+            "targeting_type": item.get("targeting_type", ""),
+            "daily_budget": item.get("daily_budget", 0),
+            "bidding_strategy": item.get("bidding_strategy", ""),
+            "start_date": item.get("start_date", ""),
+            "total_ads": item.get("total_ads", 0),
+            "impressions": item.get("impressions", 0),
+            "clicks": item.get("clicks", 0),
+            "cost": item.get("cost", 0),
+            "sales": item.get("sales", 0),
+            "orders": item.get("orders", 0),
+            "units": item.get("units", 0),
+            "acos": item.get("acos", 0),
+            "roas": item.get("roas", 0),
+        })
+    return formatted, None
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def export_amazon_ads_campaign_by_sku(request):
+    from amazon_ads.views import CampaignBySKUView
+
+    response_format = (
+        request.query_params.get("file_format")
+        or request.query_params.get("export_format")
+        or request.query_params.get("format")
+        or "xlsx"
+    ).lower()
+
+    override_params = {
+        "POST": {
+            "page": 1,
+            "page_size": 100000,
+            "pagination": {
+                "page": 1,
+                "page_size": 100000
+            }
+        },
+        "GET": {
+            "page": 1,
+            "page_size": 100000
+        }
+    }
+
+    return generic_export_view(
+        request,
+        CampaignBySKUView,
+        CAMPAIGN_BY_SKU_COLUMNS,
+        "ads_campaign_by_sku",
+        response_format,
+        override_params=override_params,
+        list_key="results",
+        formatter_func=format_campaign_by_sku_export,
+        report_type_name="ads_campaign_by_sku"
+    )
+
+
+ADGROUP_BY_CAMPAIGN_COLUMNS = {
+    "ad_group_id": "Ad Group ID",
+    "campaign_id": "Campaign ID",
+    "campaign_name": "Campaign Name",
+    "name": "Ad Group Name",
+    "state": "State",
+    "default_bid": "Default Bid",
+    "total_ads": "Total Ads",
+    "impressions": "Impressions",
+    "clicks": "Clicks",
+    "cost": "Cost",
+    "sales": "Sales",
+    "orders": "Orders",
+    "units": "Units",
+    "acos": "ACOS (%)",
+    "roas": "ROAS",
+}
+
+
+def format_adgroup_by_campaign_export(results, totals_dict=None):
+    formatted = []
+    for item in results:
+        formatted.append({
+            "ad_group_id": item.get("ad_group_id", ""),
+            "campaign_id": item.get("campaign_id", ""),
+            "campaign_name": item.get("campaign_name", ""),
+            "name": item.get("name", ""),
+            "state": item.get("state", ""),
+            "default_bid": item.get("default_bid", 0),
+            "total_ads": item.get("total_ads", 0),
+            "impressions": item.get("impressions", 0),
+            "clicks": item.get("clicks", 0),
+            "cost": item.get("cost", 0),
+            "sales": item.get("sales", 0),
+            "orders": item.get("orders", 0),
+            "units": item.get("units", 0),
+            "acos": item.get("acos", 0),
+            "roas": item.get("roas", 0),
+        })
+    return formatted, None
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def export_amazon_ads_adgroup_by_campaign(request):
+    from amazon_ads.views import AdGroupByCampaignView
+
+    response_format = (
+        request.query_params.get("file_format")
+        or request.query_params.get("export_format")
+        or request.query_params.get("format")
+        or "xlsx"
+    ).lower()
+
+    override_params = {
+        "POST": {
+            "page": 1,
+            "page_size": 100000,
+            "pagination": {
+                "page": 1,
+                "page_size": 100000
+            }
+        },
+        "GET": {
+            "page": 1,
+            "page_size": 100000
+        }
+    }
+
+    return generic_export_view(
+        request,
+        AdGroupByCampaignView,
+        ADGROUP_BY_CAMPAIGN_COLUMNS,
+        "ads_adgroup_by_campaign",
+        response_format,
+        override_params=override_params,
+        list_key="results",
+        formatter_func=format_adgroup_by_campaign_export,
+        report_type_name="ads_adgroup_by_campaign"
+    )
+
+
+CATALOG_DETAILS_COLUMNS = {
+    "asin": "ASIN",
+    "brand": "Brand",
+    "item_name": "Product Name",
+    "sales_rank": "Product Category Rank",
+    "display_group_rank": "Master Category Rank",
+    "sales_rank_category": "Product Category",
+    "display_group_rank_title": "Group Category Rank",
+}
+
+
+def format_catalog_details_export(results, totals_dict=None):
+    formatted = []
+    for item in results:
+        formatted.append({
+            "asin": item.get("asin", ""),
+            "brand": item.get("brand", ""),
+            "item_name": item.get("item_name", ""),
+            "sales_rank": item.get("sales_rank", 0),
+            "display_group_rank": item.get("display_group_rank", 0),
+            "sales_rank_category": item.get("sales_rank_category", ""),
+            "display_group_rank_title": item.get("display_group_rank_title", ""),
+        })
+    return formatted, None
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def export_amazon_catalog_details(request):
+    from amazon_auth.catelog_details import AmazonCatalogDetailsAPIView
+
+    response_format = (
+        request.query_params.get("file_format")
+        or request.query_params.get("export_format")
+        or request.query_params.get("format")
+        or "xlsx"
+    ).lower()
+
+    override_params = {
+        "POST": {
+            "page": 1,
+            "page_size": 100000,
+        },
+        "GET": {
+            "page": 1,
+            "page_size": 100000
+        }
+    }
+
+    return generic_export_view(
+        request,
+        AmazonCatalogDetailsAPIView,
+        CATALOG_DETAILS_COLUMNS,
+        "catalog_list_details",
+        response_format,
+        override_params=override_params,
+        list_key="data",
+        formatter_func=format_catalog_details_export,
+        report_type_name="catalog_list_details"
+    )
+
+
+
+
+
+
+
 

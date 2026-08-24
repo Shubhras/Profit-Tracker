@@ -1,6 +1,7 @@
 # services/catalog_sync.py
 
 from django.db import transaction
+from django.db.models import Avg, Q
 from amazon_auth.models import AmazonCatalogDetails
 from .models import OrderItem
 
@@ -315,15 +316,22 @@ class AmazonCatalogDetailsAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    def post(self, request):
+        return self.get(request)
+
     def get(self, request):
 
         user = request.user
+        data = request.data if isinstance(request.data, dict) and request.data else request.GET
 
-        asin = request.GET.get("asin")
-        parent_asin = request.GET.get("parent_asin")
-        brand = request.GET.get("brand")
-        marketplace_id = request.GET.get("marketplace_id")
-        search = request.GET.get("search")
+        asin = request.GET.get("asin") or data.get("asin")
+        parent_asin = request.GET.get("parent_asin") or data.get("parent_asin")
+        brand = request.GET.get("brand") or data.get("brand")
+        marketplace_id = request.GET.get("marketplace_id") or data.get("marketplace_id")
+        search = request.GET.get("search") or data.get("search")
+
+        page = request.GET.get("page") or data.get("page")
+        page_size = request.GET.get("page_size") or data.get("page_size")
 
         queryset = (
             AmazonCatalogDetails.objects
@@ -355,18 +363,56 @@ class AmazonCatalogDetailsAPIView(APIView):
 
         if search:
             queryset = queryset.filter(
-                item_name__icontains=search
+                Q(item_name__icontains=search) |
+                Q(asin__icontains=search) |
+                Q(brand__icontains=search)
             )
 
+        total_count = queryset.count()
+
+        # SUMMARY METRICS
+        in_top_100 = queryset.filter(sales_rank__gte=1, sales_rank__lte=100).count()
+
+        avg_p_rank = queryset.filter(sales_rank__gt=0).aggregate(Avg("sales_rank"))["sales_rank__avg"]
+        avg_product_category_rank = round(avg_p_rank) if avg_p_rank is not None else 0
+
+        avg_m_rank = queryset.filter(display_group_rank__gt=0).aggregate(Avg("display_group_rank"))["display_group_rank__avg"]
+        avg_master_category_rank = round(avg_m_rank) if avg_m_rank is not None else 0
+
+        products_improved = queryset.filter(sales_rank__gt=0, sales_rank__lte=1000).count()
+        products_declined = queryset.filter(sales_rank__gt=1000).count()
+
+        summary = {
+            "total_products_tracked": total_count,
+            "in_top_100": in_top_100,
+            "avg_product_category_rank": avg_product_category_rank,
+            "avg_master_category_rank": avg_master_category_rank,
+            "products_improved": products_improved,
+            "products_declined": products_declined,
+        }
+
+        # PAGINATION
+        paginated_queryset = queryset
+        if page is not None and page_size is not None:
+            try:
+                page_num = max(int(page), 1)
+                size_num = max(int(page_size), 1)
+                start = (page_num - 1) * size_num
+                end = start + size_num
+                paginated_queryset = queryset[start:end]
+            except (ValueError, TypeError):
+                pass
+
         serializer = AmazonCatalogDetailsSerializer(
-            queryset,
+            paginated_queryset,
             many=True
         )
 
         return Response(
             {
                 "status": "success",
-                "count": queryset.count(),
+                "count": total_count,
+                "summary": summary,
                 "data": serializer.data
             },
             status=status.HTTP_200_OK

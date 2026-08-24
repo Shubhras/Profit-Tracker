@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Skeleton, Empty, Spin, Tag, message } from 'antd';
+import { Table, Button, Skeleton, Empty, Spin, Tag, message, Modal } from 'antd';
 import {
-  ReloadOutlined,
   DownloadOutlined,
   FileExcelOutlined,
   FilePdfOutlined,
   FileTextOutlined,
+  SearchOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons';
+import { useSelector } from 'react-redux';
 import { PageHeader } from '../../components/page-headers/page-headers';
 import { DataService } from '../../config/dataService/dataService';
 
@@ -14,10 +16,16 @@ export default function Download() {
   const [loading, setLoading] = useState(false);
   const [reports, setReports] = useState([]);
   const [downloadingIds, setDownloadingIds] = useState({});
+  const [deletingIds, setDeletingIds] = useState({});
+  const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [totalCount, setTotalCount] = useState(0);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
   });
+
+  const { dateRange } = useSelector((state) => state.dashboard);
 
   const PageRoutes = [
     {
@@ -26,14 +34,35 @@ export default function Download() {
     },
   ];
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchText);
+      setPagination((prev) => ({ ...prev, current: 1 }));
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchText]);
+
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      const response = await DataService.get('amazon/exports/history/');
+      let url = `amazon/exports/history/?page=${pagination.current}&page_size=${pagination.pageSize}`;
+      if (debouncedSearch) {
+        url += `&search=${encodeURIComponent(debouncedSearch)}`;
+      }
+      if (dateRange?.fromDate) {
+        url += `&from_date=${dateRange.fromDate}`;
+      }
+      if (dateRange?.endDate || dateRange?.toDate) {
+        url += `&to_date=${dateRange.endDate || dateRange.toDate}`;
+      }
+      const response = await DataService.get(url);
       if (response.data && response.data.results) {
         setReports(response.data.results);
+        setTotalCount(response.data.count || response.data.results.length);
       } else {
         setReports([]);
+        setTotalCount(0);
       }
     } catch (err) {
       console.error('Error fetching export history:', err);
@@ -45,7 +74,7 @@ export default function Download() {
 
   useEffect(() => {
     fetchHistory();
-  }, []);
+  }, [pagination.current, pagination.pageSize, debouncedSearch, dateRange]);
 
   const handleDownload = async (record) => {
     setDownloadingIds((prev) => ({ ...prev, [record.id]: true }));
@@ -83,6 +112,37 @@ export default function Download() {
     } finally {
       setDownloadingIds((prev) => ({ ...prev, [record.id]: false }));
     }
+  };
+
+  const handleDelete = async (record) => {
+    setDeletingIds((prev) => ({ ...prev, [record.id]: true }));
+    try {
+      const response = await DataService.delete(`amazon/exports/history/${record.id}/delete/`);
+      if (response.data && response.data.success) {
+        message.success('Report deleted successfully');
+        fetchHistory();
+      } else {
+        message.error(response.data?.message || 'Failed to delete report');
+      }
+    } catch (err) {
+      console.error('Delete failed:', err);
+      message.error(err.response?.data?.message || 'Failed to delete report');
+    } finally {
+      setDeletingIds((prev) => ({ ...prev, [record.id]: false }));
+    }
+  };
+
+  const confirmDelete = (record) => {
+    Modal.confirm({
+      title: 'Delete Report',
+      content: 'Are you sure you want to delete this report?',
+      okText: 'Yes',
+      okType: 'danger',
+      cancelText: 'No',
+      onOk() {
+        return handleDelete(record);
+      },
+    });
   };
 
   const formatReportType = (typeStr) => {
@@ -193,22 +253,32 @@ export default function Download() {
       key: 'action',
       align: 'center',
       render: (_, record) => (
-        <Button
-          onClick={() => handleDownload(record)}
-          loading={!!downloadingIds[record.id]}
-          disabled={record.status !== 'COMPLETED'}
-          className="bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 rounded-md inline-flex items-center gap-1 border-none shadow-none text-[12px] font-medium px-3 h-[30px]"
-        >
-          Download
-          <DownloadOutlined />
-        </Button>
+        <div className="flex items-center justify-center gap-2">
+          <Button
+            onClick={() => handleDownload(record)}
+            loading={!!downloadingIds[record.id]}
+            disabled={record.status !== 'COMPLETED'}
+            className="bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 rounded-md inline-flex items-center gap-1 border-none shadow-none text-[12px] font-medium px-3 h-[30px]"
+          >
+            Download
+            <DownloadOutlined />
+          </Button>
+
+          <Button
+            danger
+            loading={!!deletingIds[record.id]}
+            onClick={() => confirmDelete(record)}
+            className="bg-red-50 text-red-600 hover:bg-red-100 rounded-md inline-flex items-center justify-center border-none shadow-none text-[12px] h-[30px] w-[30px] !px-0"
+            icon={<DeleteOutlined />}
+          />
+        </div>
       ),
     },
   ];
 
   const dataSource = reports.map((item, idx) => ({
     key: item.id || idx,
-    sno: idx + 1,
+    sno: (pagination.current - 1) * pagination.pageSize + idx + 1,
     ...item,
   }));
 
@@ -223,10 +293,23 @@ export default function Download() {
       <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-4 xl:px-[15px] pb-[30px] bg-transparent">
         <Spin spinning={loading} size="large">
           <div className="bg-white dark:bg-white10 rounded-[10px] p-[20px] shadow-sm">
-            {/* Refresh Button */}
-            <div className="flex justify-between items-center mb-3">
+            {/* Header Controls */}
+            <div className="flex justify-between items-center mb-3 flex-wrap gap-3">
               <span className="text-[14px] font-semibold text-gray-700">Export History & Generated Reports</span>
-              <Button shape="circle" icon={<ReloadOutlined />} onClick={fetchHistory} loading={loading} />
+
+              <div className="flex items-center gap-3">
+                {/* Search Bar */}
+                <div className="relative w-[260px]">
+                  <input
+                    type="text"
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    placeholder="Search by report type, file..."
+                    className="w-full h-[30px] rounded-xl border bg-white pl-9 pr-3 text-[13px] text-[#111827] outline-none shadow-sm transition-all duration-200 focus:border-[#dbe1e8]"
+                  />
+                  <SearchOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[14px]" />
+                </div>
+              </div>
             </div>
 
             {/* Table / Skeleton */}
@@ -239,12 +322,18 @@ export default function Download() {
                   dataSource={dataSource}
                   scroll={{ x: 900 }}
                   pagination={{
-                    ...pagination,
+                    current: pagination.current,
+                    pageSize: pagination.pageSize,
+                    total: totalCount,
                     showSizeChanger: true,
                     pageSizeOptions: ['10', '20', '50', '100'],
+                    showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
                   }}
                   onChange={(pag) => {
-                    setPagination(pag);
+                    setPagination({
+                      current: pag.current,
+                      pageSize: pag.pageSize,
+                    });
                   }}
                   size="small"
                   locale={{
