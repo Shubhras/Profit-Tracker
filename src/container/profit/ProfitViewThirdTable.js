@@ -129,7 +129,7 @@ export default function ProfitDetailsView() {
     } else {
       dispatch(getProfitDetailsByParentId(apipayload));
     }
-  }, [id, dateRange, globalChannel, pagination, debouncedSearch, isReconcile]);
+  }, [id, dateRange, globalChannel, pagination.current, pagination.pageSize, debouncedSearch, isReconcile]);
 
   const dataSource =
     profitData?.response?.map((item, index) => ({
@@ -190,6 +190,14 @@ export default function ProfitDetailsView() {
       settlement_paid_in_bank: item.settlement_paid_in_bank || 0,
       unsettled_not_paid: item.unsettled_not_paid || 0,
     })) || [];
+
+  const parseAmount = (value) => {
+    if (value === null || value === undefined || value === '') return 0;
+
+    const cleaned = String(value).replace(/[₹,\s]/g, '');
+
+    return Number(cleaned) || 0;
+  };
 
   const columns = [
     {
@@ -324,7 +332,7 @@ export default function ProfitDetailsView() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.promo_discount - b.promo_discount,
+      sorter: (a, b) => parseAmount(a.promo_discount) - parseAmount(b.promo_discount),
     },
     {
       title: 'Gross Sales',
@@ -332,7 +340,7 @@ export default function ProfitDetailsView() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.netsales - b.netsales,
+      sorter: (a, b) => parseAmount(a.netsales) - parseAmount(b.netsales),
     },
     {
       title: 'Net Sales',
@@ -340,7 +348,7 @@ export default function ProfitDetailsView() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.final_net_sales - b.final_net_sales,
+      sorter: (a, b) => parseAmount(a.final_net_sales) - parseAmount(b.final_net_sales),
     },
     {
       title: 'MP fees',
@@ -348,7 +356,7 @@ export default function ProfitDetailsView() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.mpfees - b.mpfees,
+      sorter: (a, b) => parseAmount(a.mpfees) - parseAmount(b.mpfees),
       render: (v, record) => (
         <button
           type="button"
@@ -383,7 +391,7 @@ export default function ProfitDetailsView() {
             align: 'center',
             width: 90,
             ellipsis: true,
-            sorter: (a, b) => (parseFloat(a.actual_fees) || 0) - (parseFloat(b.actual_fees) || 0),
+            sorter: (a, b) => parseAmount(a.actual_fees) - parseAmount(b.actual_fees),
           },
           {
             title: 'Fee Leaks',
@@ -391,7 +399,7 @@ export default function ProfitDetailsView() {
             align: 'center',
             width: 80,
             ellipsis: true,
-            sorter: (a, b) => (parseFloat(a.fees_leaks) || 0) - (parseFloat(b.fees_leaks) || 0),
+            sorter: (a, b) => parseAmount(a.fees_leaks) - parseAmount(b.fees_leaks),
             render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
           },
         ]
@@ -402,7 +410,7 @@ export default function ProfitDetailsView() {
       dataIndex: 'shipping',
       align: 'center',
       width: 70,
-      sorter: (a, b) => a.shipping - b.shipping,
+      sorter: (a, b) => parseAmount(a.shipping) - parseAmount(b.shipping),
       render: (v, record) => (
         <button
           type="button"
@@ -428,8 +436,7 @@ export default function ProfitDetailsView() {
             align: 'center',
             width: 90,
             ellipsis: true,
-            sorter: (a, b) =>
-              (parseFloat(a.actual_shipping_charges) || 0) - (parseFloat(b.actual_shipping_charges) || 0),
+            sorter: (a, b) => parseAmount(a.actual_shipping_charges) - parseAmount(b.actual_shipping_charges),
           },
           {
             title: 'Shipping Leaks',
@@ -449,7 +456,7 @@ export default function ProfitDetailsView() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.mp_gst - b.mp_gst,
+      sorter: (a, b) => parseAmount(a.mp_gst) - parseAmount(b.mp_gst),
     },
 
     ...(isReconcile
@@ -460,7 +467,7 @@ export default function ProfitDetailsView() {
             align: 'center',
             width: 80,
             ellipsis: true,
-            sorter: (a, b) => (parseFloat(a.actual_mp_gst) || 0) - (parseFloat(b.actual_mp_gst) || 0),
+            sorter: (a, b) => parseAmount(a.actual_mp_gst) - parseAmount(b.actual_mp_gst),
           },
         ]
       : []),
@@ -470,7 +477,7 @@ export default function ProfitDetailsView() {
       dataIndex: 'tcs',
       align: 'center',
       width: 70,
-      sorter: (a, b) => a.tcs - b.tcs,
+      sorter: (a, b) => parseAmount(a.tcs) - parseAmount(b.tcs),
     },
 
     ...(isReconcile
@@ -481,7 +488,7 @@ export default function ProfitDetailsView() {
             align: 'center',
             width: 80,
             ellipsis: true,
-            sorter: (a, b) => (parseFloat(a.actual_tcs) || 0) - (parseFloat(b.actual_tcs) || 0),
+            sorter: (a, b) => parseAmount(a.actual_tcs) - parseAmount(b.actual_tcs),
           },
           {
             title: 'TCS Leaks',
@@ -489,7 +496,7 @@ export default function ProfitDetailsView() {
             align: 'center',
             width: 80,
             ellipsis: true,
-            sorter: (a, b) => (parseFloat(a.tcs_leaks) || 0) - (parseFloat(b.tcs_leaks) || 0),
+            sorter: (a, b) => parseAmount(a.tcs_leaks) - parseAmount(b.tcs_leaks),
             render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
           },
         ]
@@ -501,7 +508,7 @@ export default function ProfitDetailsView() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.settleAmount - b.settleAmount,
+      sorter: (a, b) => parseAmount(a.settleAmount) - parseAmount(b.settleAmount),
     },
 
     ...(isReconcile
@@ -512,8 +519,7 @@ export default function ProfitDetailsView() {
             align: 'center',
             width: 100,
             ellipsis: true,
-            sorter: (a, b) =>
-              (parseFloat(a.settlement_paid_in_bank) || 0) - (parseFloat(b.settlement_paid_in_bank) || 0),
+            sorter: (a, b) => parseAmount(a.settlement_paid_in_bank) - parseAmount(b.settlement_paid_in_bank),
           },
           {
             title: 'Unsettled Amount',
@@ -521,7 +527,7 @@ export default function ProfitDetailsView() {
             align: 'center',
             width: 100,
             ellipsis: true,
-            sorter: (a, b) => (parseFloat(a.unsettled_not_paid) || 0) - (parseFloat(b.unsettled_not_paid) || 0),
+            sorter: (a, b) => parseAmount(a.unsettled_not_paid) - parseAmount(b.unsettled_not_paid),
           },
         ]
       : []),
@@ -531,7 +537,7 @@ export default function ProfitDetailsView() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.adSpend - b.adSpend,
+      sorter: (a, b) => parseAmount(a.adSpend) - parseAmount(b.adSpend),
     },
     {
       title: 'Taxable Value',
@@ -539,7 +545,7 @@ export default function ProfitDetailsView() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.taxableValue - b.taxableValue,
+      sorter: (a, b) => parseAmount(a.taxableValue) - parseAmount(b.taxableValue),
     },
     {
       title: 'GST to Pay',
@@ -547,7 +553,7 @@ export default function ProfitDetailsView() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.gst_to_pay_amount - b.gst_to_pay_amount,
+      sorter: (a, b) => parseAmount(a.gst_to_pay_amount) - parseAmount(b.gst_to_pay_amount),
     },
     {
       title: 'GST to Pay %',
@@ -555,7 +561,7 @@ export default function ProfitDetailsView() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.gst_to_pay_perc - b.gst_to_pay_perc,
+      sorter: (a, b) => parseAmount(a.gst_to_pay_perc) - parseAmount(b.gst_to_pay_perc),
       render: (v) => <span>{v}%</span>,
     },
     {
@@ -564,7 +570,7 @@ export default function ProfitDetailsView() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.claim_amount - b.claim_amount,
+      sorter: (a, b) => parseAmount(a.claim_amount) - parseAmount(b.claim_amount),
     },
     {
       title: 'Product Cost',
@@ -572,14 +578,14 @@ export default function ProfitDetailsView() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.std - b.std,
+      sorter: (a, b) => parseAmount(a.std) - parseAmount(b.std),
     },
     {
       title: 'Profit',
       dataIndex: 'profit',
       align: 'center',
       width: 70,
-      sorter: (a, b) => a.profit - b.profit,
+      sorter: (a, b) => parseAmount(a.profit) - parseAmount(b.profit),
       render: (v, record) => (
         <button
           type="button"
@@ -602,7 +608,7 @@ export default function ProfitDetailsView() {
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.profitPercent - b.profitPercent,
+      sorter: (a, b) => parseAmount(a.profitPercent) - parseAmount(b.profitPercent),
       render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>{v}%</span>,
     },
   ];
@@ -750,7 +756,10 @@ export default function ProfitDetailsView() {
               showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
             }}
             onChange={(pag) => {
-              setPagination(pag);
+              setPagination({
+                current: pag.current,
+                pageSize: pag.pageSize,
+              });
             }}
             size="small"
             scroll={{ x: isReconcile ? 1800 : 'true' }}

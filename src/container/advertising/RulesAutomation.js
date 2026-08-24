@@ -66,7 +66,7 @@ function RulesAutomation() {
 
   useEffect(() => {
     dispatch(getRules(pagination.current, pagination.pageSize));
-  }, [dispatch, pagination]);
+  }, [dispatch, pagination.current, pagination.pageSize]);
 
   const fetchCampaigns = async () => {
     const response = await dispatch(getCampaignsRulesList());

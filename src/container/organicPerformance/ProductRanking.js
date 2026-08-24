@@ -30,7 +30,7 @@ function ProductRanking() {
 
   useEffect(() => {
     dispatch(getProductRanking(pagination.current, pagination.pageSize, {}));
-  }, [dispatch, pagination]);
+  }, [dispatch, pagination.current, pagination.pageSize]);
 
   const dataSource =
     productRankingData?.data?.map((item) => ({
@@ -66,6 +66,7 @@ function ProductRanking() {
       dataIndex: 'asin',
       align: 'center',
       width: 70,
+      sorter: (a, b) => a.asin - b.asin,
       render: (v) => <span className="font-semibold text-[#2563eb] text-[11px]">{v || '-'}</span>,
     },
 
@@ -74,6 +75,7 @@ function ProductRanking() {
       dataIndex: 'brand',
       align: 'center',
       width: 70,
+      sorter: (a, b) => a.brand - b.brand,
       render: (v) => <span className="font-medium text-[#111827] text-[11px]">{v || '-'}</span>,
     },
 
@@ -82,6 +84,7 @@ function ProductRanking() {
       dataIndex: 'itemName',
       align: 'center',
       width: 70,
+      sorter: (a, b) => a.itemName - b.itemName,
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span
@@ -115,6 +118,7 @@ function ProductRanking() {
       align: 'center',
       width: 70,
       ellipsis: true,
+      sorter: (a, b) => a.dispalyGroupRank - b.dispalyGroupRank,
       render: (v) => <Tag className="!px-3 !py-[3px] !rounded-full text-[11px]">{v || '-'}</Tag>,
     },
 

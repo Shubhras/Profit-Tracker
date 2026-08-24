@@ -247,7 +247,7 @@ function OrderSettlement() {
       key: 'totalAmount',
       align: 'center',
       width: 70,
-      sorter: (a, b) => a.defaultBid - b.totalAmount,
+      sorter: (a, b) => a.totalAmount - b.totalAmount,
       render: (amount) => {
         const value = Number(amount || 0);
 

@@ -123,6 +123,7 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
       title: 'Product ID',
       dataIndex: 'productId',
       align: 'center',
+      sorter: (a, b) => a.productId - b.productId,
       render: (v, record) => {
         if (!v || v === '-') return <span className="text-gray-400">-</span>;
         const isMyntra = record.channel?.toLowerCase().includes('myntra');
@@ -144,6 +145,7 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
       dataIndex: 'sku',
       width: 150,
       align: 'center',
+      sorter: (a, b) => a.sku - b.sku,
       render: (text) => (
         <Tooltip title={text} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span className="truncate block cursor-pointer max-w-[130px] mx-auto">{text}</span>
@@ -154,22 +156,26 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
       title: 'Product Cost (₹)',
       dataIndex: 'productcost',
       align: 'center',
+      sorter: (a, b) => a.productcost - b.productcost,
     },
     {
       title: 'GST Rate (%)',
       dataIndex: 'gstrate',
       align: 'center',
+      sorter: (a, b) => a.gstrate - b.gstrate,
     },
     {
       title: 'TDS (%)',
       dataIndex: 'tds',
       align: 'center',
+      sorter: (a, b) => a.tds - b.tds,
       render: (val) => (val !== undefined && val !== null && val !== '' && val !== '-' ? val : 0),
     },
     {
       title: 'TCS (%)',
       dataIndex: 'tcs',
       align: 'center',
+      sorter: (a, b) => a.tcs - b.tcs,
     },
     {
       title: 'Actions',
@@ -266,11 +272,13 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
             pageSizeOptions: ['10', '20', '50', '100'],
             showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
           }}
-          onChange={(pag) => {
-            setPagination({
-              current: pag.current,
-              pageSize: pag.pageSize,
-            });
+          onChange={(pag, filters, sorter, extra) => {
+            if (extra.action === 'paginate') {
+              setPagination({
+                current: pag.current,
+                pageSize: pag.pageSize,
+              });
+            }
           }}
           className="
     [&_.ant-table-thead>tr>th]:!text-[12px]

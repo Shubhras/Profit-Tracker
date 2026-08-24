@@ -246,7 +246,7 @@ function PricingCard({ plan, index, onSelect, selectedPlanId, setSelectedPlanId,
               text-base
               ${
                 isSelected
-                  ? 'bg-[#0FA878] border-0 shadow-lg shadow-emerald-500/20'
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-600 border-0 shadow-lg shadow-emerald-500/20'
                   : 'border-2 border-gray-200 hover:border-[#0FA878] hover:text-[#0FA878]'
               }
             `}
@@ -367,9 +367,7 @@ function PricingCards() {
     grid gap-6
     grid-cols-1
     min-md:grid-cols-2
-    min-lg:grid-cols-3
-    max-w-7xl
-    mx-auto
+    min-lg:grid-cols-4
   "
         >
           {[1, 2, 3, 4].map((item) => (
@@ -399,7 +397,7 @@ function PricingCards() {
 
   // Success state - render pricing cards
   return (
-    <main className="px-[3%] pt-10 min-lg:pt-20 pb-10 min-lg:pb-20 max-w-7xl mx-auto">
+    <main className="px-[3%] pt-10 min-lg:pt-10 pb-10 min-lg:pb-20">
       {/* Pricing Cards Grid */}
       {/* <div
         className="
@@ -413,7 +411,7 @@ function PricingCards() {
       <div className="flex justify-center items-center mb-10">
         <div className="flex items-center gap-3">
           <span
-            className={`text-[14px] font-medium ${selectedType === 'monthly' ? 'text-[#18233F]' : 'text-[#98A2B3]'}`}
+            className={`text-[15px] font-medium ${selectedType === 'monthly' ? 'text-[#18233F]' : 'text-[#98A2B3]'}`}
           >
             Monthly
           </span>
@@ -448,7 +446,7 @@ function PricingCards() {
           </button>
 
           <span
-            className={`text-[14px] font-medium ${selectedType === 'annual' ? 'text-[#18233F]' : 'text-[#98A2B3]'}`}
+            className={`text-[15px] font-medium ${selectedType === 'annual' ? 'text-[#18233F]' : 'text-[#98A2B3]'}`}
           >
             Annual
           </span>
@@ -475,10 +473,7 @@ function PricingCards() {
     grid gap-6
     grid-cols-1
     min-md:grid-cols-2
-    min-lg:grid-cols-3
-
-    max-w-7xl
-    mx-auto
+    min-lg:grid-cols-4
   "
       >
         <AnimatePresence>
