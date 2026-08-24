@@ -60,7 +60,7 @@ function ActionsRequired() {
       label: 'Payment Leaks',
       description: 'Total amount to recover for payments not matching with estimated.',
       value: actionRequiredData?.data?.payment_leaks?.formatted_amount || '₹0',
-      path: '/admin/reconcile/payment-reconcile',
+      path: '/admin/reconcile/allLeaks',
       bg: 'bg-[#EFF6FF]',
       iconBg: 'bg-[#E8F1FF]',
       iconColor: 'text-[#2563EB]',
@@ -104,7 +104,13 @@ function ActionsRequired() {
       key: 'lowroi',
       label: 'Low ROI Products',
       description: 'Total number of SKUs with low ROI.',
-      value: actionRequiredData?.data?.low_roi_products?.count ?? 0,
+      // value: actionRequiredData?.data?.low_roi_products?.count ?? 0,
+      value: (
+        <>
+          {actionRequiredData?.data?.low_roi_products?.count ?? 0}{' '}
+          <span className="text-[12px] font-normal text-[#16A34A]">SKU</span>
+        </>
+      ),
       path: '/admin/advertising/AdProducts',
       roiType: 'low',
       bg: 'bg-[#EFF6FF]',

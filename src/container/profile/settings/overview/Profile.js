@@ -1,149 +1,7 @@
-// import React, { useState } from 'react';
-// import { Row, Col, Form, Input, Select } from 'antd';
-// import { Button } from '../../../../components/buttons/buttons';
-// import Heading from '../../../../components/heading/heading';
-// import { Tag } from '../../../../components/tags/tags';
-// import { GlobalUtilityStyle } from '../../../styled';
-
-// const { Option } = Select;
-// function Profile() {
-//   const [form] = Form.useForm();
-
-//   const [state, setState] = useState({
-//     tags: ['UI/UX', 'Branding', 'Product Design', 'Web Design'],
-//     values: null,
-//   });
-
-//   const handleSubmit = (values) => {
-//     setState({ ...state, values: { ...values, tags: state.tags } });
-//   };
-
-//   const handleCancel = (e) => {
-//     e.preventDefault();
-//     form.resetFields();
-//   };
-
-//   const checked = (checke) => {
-//     setState({ tags: checke });
-//   };
-
-//   return (
-//     <div className="bg-white dark:bg-white10 m-0 p-0 mb-[25px] rounded-10 relative">
-//       <div className="py-[18px] px-[25px] text-dark dark:text-white87 font-medium text-[17px] border-regular dark:border-white10 border-b">
-//         <Heading as="h4" className="mb-0 text-lg font-medium">
-//           Edit Profile
-//         </Heading>
-//         <span className="mb-0.5 text-light dark:text-white60 text-13 font-normal">
-//           Set Up Your Personal Information
-//         </span>
-//       </div>
-//       <div className="p-[25px]">
-//         <GlobalUtilityStyle>
-//           <Row justify="center">
-//             <Col xxl={12} lg={16} xs={24}>
-//               <Form className="pt-2.5 pb-[30px]" name="editProfile" onFinish={handleSubmit}>
-//                 <Form.Item
-//                   name="name"
-//                   initialValue="Duran Clayton"
-//                   label="Name"
-//                   className="mb-4 form-label-w-full form-label-text-start dark:text-white-60"
-//                 >
-//                   <Input />
-//                 </Form.Item>
-//                 <Form.Item
-//                   name="phone"
-//                   initialValue="0096644553"
-//                   label="Phone Number"
-//                   className="mb-4 form-label-w-full form-label-text-start"
-//                 >
-//                   <Input />
-//                 </Form.Item>
-//                 <Form.Item
-//                   name="country"
-//                   initialValue=""
-//                   label="Country"
-//                   className="mb-4 form-label-w-full form-label-text-start"
-//                 >
-//                   <Select style={{ width: '100%' }}>
-//                     <Option value="">Please Select</Option>
-//                     <Option value="bangladesh">Bangladesh</Option>
-//                     <Option value="india">India</Option>
-//                     <Option value="pakistan">Pakistan</Option>
-//                   </Select>
-//                 </Form.Item>
-//                 <Form.Item
-//                   name="city"
-//                   initialValue=""
-//                   label="City"
-//                   className="mb-4 form-label-w-full form-label-text-start"
-//                 >
-//                   <Select style={{ width: '100%' }}>
-//                     <Option value="">Please Select</Option>
-//                     <Option value="dhaka">Dhaka</Option>
-//                     <Option value="mymensingh">Mymensingh</Option>
-//                     <Option value="khulna">Khulna</Option>
-//                   </Select>
-//                 </Form.Item>
-//                 <Form.Item
-//                   name="company"
-//                   initialValue="Example"
-//                   label="Company Name"
-//                   className="mb-4 form-label-w-full form-label-text-start"
-//                 >
-//                   <Input />
-//                 </Form.Item>
-//                 <Form.Item
-//                   name="website"
-//                   initialValue="www.example.com"
-//                   label="Website"
-//                   className="mb-4 form-label-w-full form-label-text-start"
-//                 >
-//                   <Input />
-//                 </Form.Item>
-//                 <Form.Item
-//                   name="userBio"
-//                   initialValue="Nam malesuada dolor tellus pretium amet was hendrerit facilisi id vitae enim sed ornare there suspendisse sed orci neque ac sed aliquet risus faucibus in pretium molestee."
-//                   label="User Bio"
-//                   className="mb-4 form-label-w-full form-label-text-start"
-//                 >
-//                   <Input.TextArea rows={3} />
-//                 </Form.Item>
-//                 <Form.Item name="skills" label="Skills" className="mb-4 form-label-w-full form-label-text-start">
-//                   <div className="p-3 border border-gray-200 dark:border-white10 rounded-md [&>div>div>span>.ant-tag]:inline-flex [&>div>div>span>.ant-tag]:items-center">
-//                     <Tag className="bg-primary" animate onChange={checked} data={state.tags} />
-//                   </div>
-//                 </Form.Item>
-//                 <div className="mt-11">
-//                   <Button size="default" htmlType="submit" type="primary" className="h-11 px-[20px] font-semibold">
-//                     Update Profile
-//                   </Button>
-//                   &nbsp; &nbsp;
-//                   <Button
-//                     size="default"
-//                     onClick={handleCancel}
-//                     type="light"
-//                     className="h-11 px-[20px] bg-regularBG dark:bg-white10 text-body dark:text-white87 font-semibold border-regular dark:border-white10"
-//                   >
-//                     Cancel
-//                   </Button>
-//                 </div>
-//               </Form>
-//             </Col>
-//           </Row>
-//         </GlobalUtilityStyle>
-//       </div>
-//     </div>
-//   );
-// }
-
-// export default Profile;
-
 import React, { useEffect, useState } from 'react';
 import { Button, Form, Input, Spin, message } from 'antd';
 import { useDispatch } from 'react-redux';
-// import UilUser from '@iconscout/react-unicons/icons/uil-user';
-// import UilMapMarker from '@iconscout/react-unicons/icons/uil-map-marker'
-// import UilBill from '@iconscout/react-unicons/icons/uil-bill';
+import UilUser from '@iconscout/react-unicons/icons/uil-user';
 import { setUserProfile } from '../../../../redux/authentication/actionCreator';
 import { DataService } from '../../../../config/dataService/dataService';
 
@@ -151,28 +9,31 @@ function Profile() {
   const [form] = Form.useForm();
   const dispatch = useDispatch();
 
-  // Loading states
   const [fetchLoading, setFetchLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [displayName, setDisplayName] = useState('');
 
-  // Fetch Profile API
   const fetchProfile = async () => {
     try {
       setFetchLoading(true);
       const response = await DataService.get('/user/profile/');
 
       if (response.data.status === true) {
-        dispatch(setUserProfile(response.data.data));
+        const { data } = response.data;
+
+        dispatch(setUserProfile(data));
+        setDisplayName(data.name || '');
+
         form.setFieldsValue({
-          name: response.data.data.name,
-          business_name: response.data.data.business_name,
-          email: response.data.data.email,
-          mobile_number: response.data.data.mobile_number,
-          gst_number: response.data.data.gst_number,
-          address: response.data.data.address,
-          city: response.data.data.city,
-          state: response.data.data.state,
-          pin_code: response.data.data.pin_code,
+          name: data.name,
+          business_name: data.business_name,
+          email: data.email,
+          mobile_number: data.mobile_number,
+          gst_number: data.gst_number,
+          address: data.address,
+          city: data.city,
+          state: data.state,
+          pin_code: data.pin_code,
         });
       }
     } catch (error) {
@@ -183,12 +44,10 @@ function Profile() {
     }
   };
 
-  // Call API on Page Load
   useEffect(() => {
     fetchProfile();
   }, []);
 
-  // Update Profile Submit
   const handleSubmit = async (values) => {
     try {
       setUpdateLoading(true);
@@ -197,6 +56,7 @@ function Profile() {
       if (response.data.status === true) {
         message.success('Profile updated successfully!');
         dispatch(setUserProfile(response.data.data));
+        setDisplayName(values.name || displayName);
       } else {
         message.error(response.data.message || 'Failed to update profile');
       }
@@ -208,59 +68,84 @@ function Profile() {
     }
   };
 
-  return (
-    <div className="w-full rounded-2xl overflow-hidden mx-auto">
-      <div className="h-1 w-full bg-gradient-to-r from-emerald-500 to-teal-500" />
-      <div className="bg-white dark:bg-[#202531] shadow-sm border border-slate-200 dark:border-white/5 p-4">
-        <div className="mb-8 pb-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">General Settings</h2>
-            <p className="text-slate-500 dark:text-slate-400 text-sm">Update your personal and business details.</p>
-          </div>
-        </div>
+  const initials = displayName
+    ? displayName
+        .split(' ')
+        .map((w) => w[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase()
+    : '';
 
+  return (
+    <div className="w-full rounded-lg overflow-hidden mx-auto bg-white dark:bg-[#202531] border border-slate-100 dark:border-white/5 shadow-sm">
+      {/* Header */}
+      <div className="flex items-center gap-4 px-4 pt-4 pb-4 border-b border-slate-100 dark:border-white/5">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0">
+          {initials ? (
+            <span className="text-white text-[15px] font-semibold">{initials}</span>
+          ) : (
+            <UilUser className="w-5 h-5 text-white" />
+          )}
+        </div>
+        <div>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-0.5">General Settings</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-[13px] mb-0">
+            Update your personal and business details.
+          </p>
+        </div>
+      </div>
+
+      <div className="p-4">
         <Spin spinning={fetchLoading}>
           <Form form={form} layout="vertical" onFinish={handleSubmit} requiredMark={false}>
             {/* Personal Information */}
-            <div className="mb-10">
-              <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-6">
+            <div className="mb-9">
+              <h3 className="text-[12px] font-bold text-slate-500 dark:text-white60 uppercase tracking-wider mb-5 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 Personal Information
               </h3>
-              <div className="grid grid-cols-1 min-md:grid-cols-2 gap-x-4 gap-y-2">
+              <div className="grid grid-cols-1 min-md:grid-cols-2 gap-x-4 gap-y-1">
                 <Form.Item
-                  label={<span className="font-medium text-slate-700 dark:text-slate-300">Full Name</span>}
+                  label={<span className="font-medium text-[13px] text-slate-700 dark:text-slate-300">Full Name</span>}
                   name="name"
                   rules={[{ required: true, message: 'Required' }]}
                 >
                   <Input
-                    className="h-11 rounded-lg border-slate-300 focus:border-primary focus:shadow-none hover:border-slate-400"
+                    className="h-10 text-[13px] rounded-lg border-slate-300 focus:border-emerald-500 focus:shadow-none hover:border-slate-400"
                     placeholder="John Doe"
                   />
                 </Form.Item>
 
                 <Form.Item
-                  label={<span className="font-medium text-slate-700 dark:text-slate-300">Email Address</span>}
+                  label={
+                    <span className="font-medium text-[13px] text-slate-700 dark:text-slate-300">Email Address</span>
+                  }
                   name="email"
                 >
-                  <Input disabled className="h-11 rounded-lg border-slate-200 bg-slate-50 text-slate-500" />
+                  <Input disabled className="h-10 text-[13px] rounded-lg border-slate-200 bg-slate-50 text-slate-500" />
                 </Form.Item>
 
                 <Form.Item
-                  label={<span className="font-medium text-slate-700 dark:text-slate-300">Phone Number</span>}
+                  label={
+                    <span className="font-medium text-[13px] text-slate-700 dark:text-slate-300">Phone Number</span>
+                  }
                   name="mobile_number"
                 >
                   <Input
-                    className="h-11 rounded-lg border-slate-300 focus:border-primary focus:shadow-none hover:border-slate-400"
+                    className="h-10 text-[13px] rounded-lg border-slate-300 focus:border-emerald-500 focus:shadow-none hover:border-slate-400"
                     placeholder="+1 234 567 890"
                   />
                 </Form.Item>
 
                 <Form.Item
-                  label={<span className="font-medium text-slate-700 dark:text-slate-300">Business Name</span>}
+                  label={
+                    <span className="font-medium text-[13px] text-slate-700 dark:text-slate-300">Business Name</span>
+                  }
                   name="business_name"
                 >
                   <Input
-                    className="h-11 rounded-lg border-slate-300 focus:border-primary focus:shadow-none hover:border-slate-400"
+                    className="h-10 rounded-lg text-[13px] border-slate-300 focus:border-emerald-500 focus:shadow-none hover:border-slate-400"
                     placeholder="Business Ltd."
                   />
                 </Form.Item>
@@ -269,58 +154,61 @@ function Profile() {
 
             {/* Address Information */}
             <div className="mb-8">
-              <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-6">
+              <h3 className="text-[12px] font-bold text-slate-500 dark:text-white60 uppercase tracking-wider mb-5 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 Address Details
               </h3>
-              <div className="grid grid-cols-1 min-md:grid-cols-2 gap-x-4 gap-y-2">
+              <div className="grid grid-cols-1 min-md:grid-cols-2 gap-x-4 gap-y-1">
                 <div className="col-span-1 min-md:col-span-2">
                   <Form.Item
-                    label={<span className="font-medium text-slate-700 dark:text-slate-300">Street Address</span>}
+                    label={
+                      <span className="font-medium text-[13px] text-slate-700 dark:text-slate-300">Street Address</span>
+                    }
                     name="address"
                   >
                     <Input
-                      className="h-11 rounded-lg border-slate-300 focus:border-primary focus:shadow-none hover:border-slate-400"
+                      className="h-10 rounded-lg text-[13px] border-slate-300 focus:border-emerald-500 focus:shadow-none hover:border-slate-400"
                       placeholder="123 Main St"
                     />
                   </Form.Item>
                 </div>
 
                 <Form.Item
-                  label={<span className="font-medium text-slate-700 dark:text-slate-300">City</span>}
+                  label={<span className="font-medium text-[13px] text-slate-700 dark:text-slate-300">City</span>}
                   name="city"
                 >
                   <Input
-                    className="h-11 rounded-lg border-slate-300 focus:border-primary focus:shadow-none hover:border-slate-400"
+                    className="h-10 rounded-lg text-[13px] border-slate-300 focus:border-emerald-500 focus:shadow-none hover:border-slate-400"
                     placeholder="New York"
                   />
                 </Form.Item>
 
                 <Form.Item
-                  label={<span className="font-medium text-slate-700 dark:text-slate-300">State</span>}
+                  label={<span className="font-medium text-[13px] text-slate-700 dark:text-slate-300">State</span>}
                   name="state"
                 >
                   <Input
-                    className="h-11 rounded-lg border-slate-300 focus:border-primary focus:shadow-none hover:border-slate-400"
+                    className="h-10 rounded-lg text-[13px] border-slate-300 focus:border-emerald-500 focus:shadow-none hover:border-slate-400"
                     placeholder="NY"
                   />
                 </Form.Item>
 
                 <Form.Item
-                  label={<span className="font-medium text-slate-700 dark:text-slate-300">Zip Code</span>}
+                  label={<span className="font-medium text-[13px] text-slate-700 dark:text-slate-300">Zip Code</span>}
                   name="pin_code"
                 >
                   <Input
-                    className="h-11 rounded-lg border-slate-300 focus:border-primary focus:shadow-none hover:border-slate-400"
+                    className="h-10 rounded-lg text-[13px] border-slate-300 focus:border-emerald-500 focus:shadow-none hover:border-slate-400"
                     placeholder="10001"
                   />
                 </Form.Item>
 
                 <Form.Item
-                  label={<span className="font-medium text-slate-700 dark:text-slate-300">GST Number</span>}
+                  label={<span className="font-medium text-[13px] text-slate-700 dark:text-slate-300">GST Number</span>}
                   name="gst_number"
                 >
                   <Input
-                    className="h-11 rounded-lg border-slate-300 focus:border-primary focus:shadow-none hover:border-slate-400"
+                    className="h-10 rounded-lg text-[13px] border-slate-300 focus:border-emerald-500 focus:shadow-none hover:border-slate-400"
                     placeholder="Tax ID"
                   />
                 </Form.Item>
@@ -328,10 +216,10 @@ function Profile() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col-reverse min-sm:flex-row gap-3 pt-4">
+            <div className="flex flex-col-reverse min-sm:flex-row gap-3 pt-4 border-t border-slate-100 dark:border-white/5">
               <Button
                 size="large"
-                className="w-full rounded-xl h-12 border-gray-200 text-gray-600 hover:text-gray-800 hover:border-gray-300 hover:bg-gray-50 font-medium"
+                className="w-full rounded-xl h-10 border-gray-200 text-gray-600 hover:text-gray-800 hover:border-gray-300 hover:bg-gray-50 font-medium"
                 onClick={() => form.resetFields()}
               >
                 Cancel
@@ -341,7 +229,7 @@ function Profile() {
                 htmlType="submit"
                 loading={updateLoading}
                 disabled={fetchLoading}
-                className="w-full rounded-xl h-12 bg-gradient-to-r from-emerald-500 to-teal-600 border-0 shadow-lg shadow-emerald-500/30 font-semibold"
+                className="w-full rounded-xl h-10 bg-gradient-to-r from-emerald-500 to-teal-600 border-0 shadow-emerald-500/30 font-semibold"
               >
                 Save Changes
               </Button>

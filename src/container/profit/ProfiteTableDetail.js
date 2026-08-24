@@ -794,24 +794,47 @@ export default function ProfitDetailsView() {
       label: typeof col.title === 'string' ? col.title : col.dataIndex || col.key,
     }));
 
+  const allColumnKeys = columnOptions.map((item) => item.key);
+
+  const allSelected = allColumnKeys.length > 0 && allColumnKeys.every((key) => visibleColumns.includes(key));
+
+  const someSelected = allColumnKeys.some((key) => visibleColumns.includes(key)) && !allSelected;
+
   const manageColumnsDropdown = (
     <div className="w-[260px] bg-white rounded-xl shadow-xl border border-[#e5e7eb]">
+      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b">
         <span className="font-medium text-[14px]">Manage Columns</span>
 
-        <button
-          type="button"
-          className="text-[#6366f1] text-[12px]"
-          onClick={() => setVisibleColumns(columnOptions.map((item) => item.key))}
-        >
+        <button type="button" className="text-[#6366f1] text-[12px]" onClick={() => setVisibleColumns(allColumnKeys)}>
           Restore
         </button>
       </div>
 
+      {/* Select All */}
+      <div className="flex items-center justify-between px-4 py-3 border-b bg-[#f9fafb]">
+        <span className="text-[13px] font-medium text-[#374151]">Select All</span>
+
+        <Checkbox
+          checked={allSelected}
+          indeterminate={someSelected}
+          onChange={(e) => {
+            if (e.target.checked) {
+              // Select all
+              setVisibleColumns(allColumnKeys);
+            } else {
+              // Unselect all
+              setVisibleColumns([]);
+            }
+          }}
+        />
+      </div>
+
+      {/* Individual Columns */}
       <div className="max-h-[350px] overflow-y-auto">
         {columnOptions.map((item) => (
           <div key={item.key} className="flex items-center justify-between px-4 py-2 hover:bg-[#f9fafb]">
-            <span className="text-[13px]">{item.label}</span>
+            <span className="text-[13px] text-[#374151]">{item.label}</span>
 
             <Checkbox
               checked={visibleColumns.includes(item.key)}

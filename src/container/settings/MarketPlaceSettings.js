@@ -176,7 +176,7 @@ export default function MarketPlaceSettings() {
                         key={market.id}
                         market={market}
                         iconMap={iconMap}
-                        onManage={handleConnect}
+                        // onManage={handleConnect}
                       />
                     ))}
                   </div>
@@ -283,7 +283,7 @@ export default function MarketPlaceSettings() {
                         key={market.id}
                         market={market}
                         iconMap={iconMap}
-                        onManage={handleConnect}
+                        // onManage={handleConnect}
                       />
                     ))}
                   </div>
@@ -333,7 +333,7 @@ export default function MarketPlaceSettings() {
    CONNECTED MARKETPLACE CARD
 ================================================================ */
 
-function ConnectedMarketplaceCard({ market, iconMap, onManage }) {
+function ConnectedMarketplaceCard({ market, iconMap }) {
   return (
     <div
       className="
@@ -395,7 +395,7 @@ function ConnectedMarketplaceCard({ market, iconMap, onManage }) {
         <span className="text-[11px] text-[#667085]">Connected on</span>
 
         <span className="text-[11px] font-medium text-[#475467]">
-          {market.connectedDate || market.connected_on || '12 Aug 2025'}
+          {market.connectedDate || market.connected_on || '-'}
         </span>
       </div>
 
@@ -404,22 +404,10 @@ function ConnectedMarketplaceCard({ market, iconMap, onManage }) {
       <div className="mt-auto pt-2.5">
         <button
           type="button"
-          onClick={() => onManage(market)}
-          className="
-        w-full
-        h-[25px]
-        rounded-[5px]
-        border
-        border-[#15956D]
-        bg-white
-        text-[#087A5A]
-        text-[11px]
-        font-semibold
-        hover:bg-[#EAF8F3]
-        transition-colors
-      "
+          // onClick={() => onManage(market)}
+          className="w-full h-[25px] rounded-[5px] border border-[#15956D] bg-white text-[#087A5A] text-[11px] font-semibold transition-colors"
         >
-          Manage
+          Connected
         </button>
       </div>
     </div>

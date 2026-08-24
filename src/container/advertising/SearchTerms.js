@@ -3,14 +3,10 @@ import { Button, Table, Tooltip, Dropdown, Modal, message } from 'antd';
 
 import {
   SearchOutlined,
-  DownloadOutlined,
-  PlusOutlined,
   ExportOutlined,
   DownOutlined,
   FileExcelOutlined,
   FileTextOutlined,
-  RightOutlined,
-  StopOutlined,
   DollarOutlined,
   EyeOutlined,
   AimOutlined,
@@ -444,14 +440,6 @@ function SearchTerms() {
               Export <DownOutlined className="text-[10px] ml-1" />
             </Button>
           </Dropdown>
-
-          <Button
-            type="primary"
-            className="flex items-center justify-center gap-0 h-[30px] px-2 rounded-xl text-white font-semibold text-[12px] transition-all w-full min-sm:w-auto"
-          >
-            <PlusOutlined />
-            Add as Keyword
-          </Button>
         </div>
       </div>
 
@@ -500,7 +488,7 @@ function SearchTerms() {
       <div className="grid grid-cols-[1fr_300px] xl:grid-cols-1 gap-3">
         {/* TABLE */}
 
-        <div className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
+        <div className="bg-white p-3 rounded-xl border border-[#e5e7eb] overflow-hidden">
           <Table
             // className="[&_.ant-table-thead>tr>th]:text-[11px] [&_.ant-table-thead>tr>th]:font-medium"
             columns={columns}
@@ -617,79 +605,6 @@ function SearchTerms() {
             >
               View All
             </Button>
-          </div>
-
-          {/* QUICK ACTIONS */}
-
-          <div className="bg-white rounded-xl border border-[#e5e7eb] p-3">
-            <h2 className="text-[15px] font-semibold text-[#111827] mb-2">Quick Actions</h2>
-
-            <div className="space-y-2">
-              {/* ADD KEYWORD */}
-
-              <button
-                type="button"
-                className="w-full flex items-center justify-between p-2 rounded-xl bg-[#f0fdf4] border border-[#bbf7d0]"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-[#dcfce7] flex items-center justify-center">
-                    <PlusOutlined className="text-[#16a34a] text-[13px]" />
-                  </div>
-
-                  <div className="text-left">
-                    <h3 className="text-[11px] font-semibold text-[#111827]">Add as Keyword</h3>
-
-                    <p className="text-[10px] text-[#6b7280]">Add selected terms</p>
-                  </div>
-                </div>
-
-                <RightOutlined className="text-[11px] text-[#94a3b8]" />
-              </button>
-
-              {/* NEGATIVE */}
-
-              <button
-                type="button"
-                className="w-full flex items-center justify-between p-2 rounded-xl bg-[#fef2f2] border border-[#fecaca]"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-[#fee2e2] flex items-center justify-center">
-                    <StopOutlined className="text-[#ef4444] text-[13px]" />
-                  </div>
-
-                  <div className="text-left">
-                    <h3 className="text-[11px] font-semibold text-[#111827]">Add as Negative</h3>
-
-                    <p className="text-[10px] text-[#6b7280]">Block irrelevant terms</p>
-                  </div>
-                </div>
-
-                <RightOutlined className="text-[11px] text-[#94a3b8]" />
-              </button>
-
-              {/* DOWNLOAD */}
-
-              <Dropdown menu={{ items: exportMenuItems }} placement="bottomRight" trigger={['click']}>
-                <button
-                  type="button"
-                  className="w-full flex items-center justify-between p-2 rounded-xl bg-[#eff6ff] border border-[#bfdbfe] cursor-pointer"
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-[#dbeafe] flex items-center justify-center">
-                      <DownloadOutlined className="text-[#2563eb] text-[13px]" />
-                    </div>
-
-                    <div className="text-left">
-                      <h3 className="text-[11px] font-semibold text-[#111827]">Download Report</h3>
-
-                      <p className="text-[10px] text-[#6b7280]">Export search data</p>
-                    </div>
-                  </div>
-
-                  <RightOutlined className="text-[11px] text-[#94a3b8]" />
-                </button>
-              </Dropdown>
-            </div>
           </div>
         </div>
       </div>
