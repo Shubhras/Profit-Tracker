@@ -743,3 +743,273 @@ export const getAdvertisingOverview = (params) => {
     }
   };
 };
+
+export const exportCampaigns = (payload = {}, format = 'xlsx') => {
+  return async () => {
+    try {
+      const response = await DataService.post(`/amazon-ads/campaigns/export/?file_format=${format}`, payload, {
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([response.data], {
+        type: response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+
+      let filename = `ads_campaings.${format}`;
+      const contentDisposition = response.headers['content-disposition'];
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?([^"]+)"?/);
+        const [, matchedFilename] = match || [];
+        if (matchedFilename) {
+          filename = matchedFilename;
+        }
+      }
+
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      return { status: true, filename };
+    } catch (err) {
+      console.error('Export campaigns error:', err);
+      return { status: false, message: err.message };
+    }
+  };
+};
+
+export const exportAdGroups = (payload = {}, format = 'xlsx') => {
+  return async () => {
+    try {
+      const response = await DataService.post(`/amazon-ads/ad-groups/export/?file_format=${format}`, payload, {
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([response.data], {
+        type: response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+
+      let filename = `ads_ad_groups.${format}`;
+      const contentDisposition = response.headers['content-disposition'];
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?([^"]+)"?/);
+        const [, matchedFilename] = match || [];
+        if (matchedFilename) {
+          filename = matchedFilename;
+        }
+      }
+
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      return { status: true, filename };
+    } catch (err) {
+      console.error('Export ad groups error:', err);
+      return { status: false, message: err.message };
+    }
+  };
+};
+
+export const exportSearchTerms = (payload = {}, format = 'xlsx') => {
+  return async () => {
+    try {
+      const response = await DataService.post(
+        `/amazon-ads/search-term-metrics/export/?file_format=${format}`,
+        payload,
+        {
+          responseType: 'blob',
+        },
+      );
+
+      const blob = new Blob([response.data], {
+        type: response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+
+      let filename = `ads_search_terms.${format}`;
+      const contentDisposition = response.headers['content-disposition'];
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?([^"]+)"?/);
+        const [, matchedFilename] = match || [];
+        if (matchedFilename) {
+          filename = matchedFilename;
+        }
+      }
+
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      return { status: true, filename };
+    } catch (err) {
+      console.error('Export search terms error:', err);
+      return { status: false, message: err.message };
+    }
+  };
+};
+
+export const exportAdProducts = (payload = {}, format = 'xlsx') => {
+  return async () => {
+    try {
+      const response = await DataService.post(`/amazon-ads/product-ads/export/?file_format=${format}`, payload, {
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([response.data], {
+        type: response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+
+      let filename = `ads_ad_products.${format}`;
+      const contentDisposition = response.headers['content-disposition'];
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?([^"]+)"?/);
+        const [, matchedFilename] = match || [];
+        if (matchedFilename) {
+          filename = matchedFilename;
+        }
+      }
+
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      return { status: true, filename };
+    } catch (err) {
+      console.error('Export ad products error:', err);
+      return { status: false, message: err.message };
+    }
+  };
+};
+
+export const exportKeywords = (payload = {}, format = 'xlsx') => {
+  return async () => {
+    try {
+      const response = await DataService.post(`/amazon-ads/keywords/export/?file_format=${format}`, payload, {
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([response.data], {
+        type: response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+
+      let filename = `ads_keywords.${format}`;
+      const contentDisposition = response.headers['content-disposition'];
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?([^"]+)"?/);
+        const [, matchedFilename] = match || [];
+        if (matchedFilename) {
+          filename = matchedFilename;
+        }
+      }
+
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      return { status: true, filename };
+    } catch (err) {
+      console.error('Export keywords error:', err);
+      return { status: false, message: err.message };
+    }
+  };
+};
+
+export const exportCampaignBySKU = (payload = {}, format = 'xlsx') => {
+  return async () => {
+    try {
+      const response = await DataService.post(`/amazon-ads/camping-by-sku/export/?file_format=${format}`, payload, {
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([response.data], {
+        type: response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+
+      let filename = `ads_campaign_by_sku.${format}`;
+      const contentDisposition = response.headers['content-disposition'];
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?([^"]+)"?/);
+        const [, matchedFilename] = match || [];
+        if (matchedFilename) {
+          filename = matchedFilename;
+        }
+      }
+
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      return { status: true, filename };
+    } catch (err) {
+      console.error('Export campaign by SKU error:', err);
+      return { status: false, message: err.message };
+    }
+  };
+};
+
+export const exportAdGroupByCampaign = (payload = {}, format = 'xlsx') => {
+  return async () => {
+    try {
+      const response = await DataService.post(`/amazon-ads/adgroup-by-camping/export/?file_format=${format}`, payload, {
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([response.data], {
+        type: response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+
+      let filename = `ads_adgroup_by_campaign.${format}`;
+      const contentDisposition = response.headers['content-disposition'];
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?([^"]+)"?/);
+        const [, matchedFilename] = match || [];
+        if (matchedFilename) {
+          filename = matchedFilename;
+        }
+      }
+
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      return { status: true, filename };
+    } catch (err) {
+      console.error('Export adgroup by campaign error:', err);
+      return { status: false, message: err.message };
+    }
+  };
+};

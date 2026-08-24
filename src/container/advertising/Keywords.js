@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Table, Tag, Tooltip, Switch, Popover, Input } from 'antd';
-import { ExportOutlined, SearchOutlined } from '@ant-design/icons';
+import { Button, Table, Tag, Tooltip, Switch, Popover, Input, Dropdown, message } from 'antd';
+import { ExportOutlined, SearchOutlined, DownOutlined, FileExcelOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   getKeywords,
   KeywordBidUpdate,
   getCampaignsRulesList,
   getAdsGroup,
+  exportKeywords,
 } from '../../redux/advertising/actionCreator';
 
 function Keywords() {
@@ -14,6 +15,7 @@ function Keywords() {
   const [searchText, setSearchText] = React.useState('');
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
   const [selectedBid, setSelectedBid] = React.useState('');
+  const [exportLoading, setExportLoading] = useState(false);
   const [pagination, setPagination] = React.useState({
     current: 1,
     pageSize: 10,
@@ -32,6 +34,48 @@ function Keywords() {
   const [selectedRowKeys, setSelectedRowKeys] = React.useState([]);
 
   const { keywordsData, loading } = useSelector((state) => state.advertising);
+  const { dateRange } = useSelector((state) => state.dashboard);
+
+  const handleExport = async (format = 'xlsx') => {
+    setExportLoading(true);
+    try {
+      const payload = {
+        search: debouncedSearch,
+        campaign_id: selectedCampaign || null,
+        state: stateFilter,
+        match_type: matchType || '',
+        ad_group_id: selectedAdGroup,
+        ...(dateRange?.fromDate && { from_date: dateRange.fromDate, start_date: dateRange.fromDate }),
+        ...(dateRange?.endDate && { to_date: dateRange.endDate, end_date: dateRange.endDate }),
+      };
+      const res = await dispatch(exportKeywords(payload, format));
+      if (res?.status) {
+        message.success('Export report generated successfully!');
+      } else {
+        message.error(res?.message || 'Failed to export keywords');
+      }
+    } catch (err) {
+      console.error(err);
+      message.error('Failed to export keywords');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const exportMenuItems = [
+    {
+      key: 'xlsx',
+      label: 'Excel (.xlsx)',
+      icon: <FileExcelOutlined style={{ color: '#10b981' }} />,
+      onClick: () => handleExport('xlsx'),
+    },
+    {
+      key: 'csv',
+      label: 'CSV (.csv)',
+      icon: <FileTextOutlined style={{ color: '#3b82f6' }} />,
+      onClick: () => handleExport('csv'),
+    },
+  ];
 
   useEffect(() => {
     const payload = {
@@ -43,6 +87,8 @@ function Keywords() {
       match_type: matchType || '',
 
       ad_group_id: selectedAdGroup,
+      ...(dateRange?.fromDate && { from_date: dateRange.fromDate, start_date: dateRange.fromDate }),
+      ...(dateRange?.endDate && { to_date: dateRange.endDate, end_date: dateRange.endDate }),
     };
 
     dispatch(getKeywords(pagination.current, pagination.pageSize, payload));
@@ -55,6 +101,7 @@ function Keywords() {
     selectedCampaign,
     matchType,
     selectedAdGroup,
+    dateRange,
   ]);
 
   useEffect(() => {
@@ -484,10 +531,13 @@ function Keywords() {
       dataIndex: 'acos',
       align: 'center',
       width: 70,
-      sorter: (a, b) => a.acos - b.acos,
+      sorter: (a, b) => (a.acos || 0) - (b.acos || 0),
       render: (v) => (
-        <Tag className="!px-3 !py-[3px] !rounded-full" color={v > 100 ? 'error' : 'processing'}>
-          {v ? `${v.toFixed(2)}%` : '-'}
+        <Tag
+          className="!px-3 !py-[3px] !rounded-full"
+          color={v != null ? (v > 100 ? 'error' : 'processing') : 'default'}
+        >
+          {v != null ? `${Number(v).toFixed(2)}%` : '-'}
         </Tag>
       ),
     },
@@ -497,10 +547,10 @@ function Keywords() {
       dataIndex: 'roas',
       align: 'center',
       width: 70,
-      sorter: (a, b) => a.roas - b.roas,
+      sorter: (a, b) => (a.roas || 0) - (b.roas || 0),
       render: (v) => (
-        <Tag className="!px-3 !py-[3px] !rounded-full" color={v >= 1 ? 'success' : 'warning'}>
-          {v ? v.toFixed(2) : '-'}
+        <Tag className="!px-3 !py-[3px] !rounded-full" color={v != null ? (v >= 1 ? 'success' : 'warning') : 'default'}>
+          {v != null ? Number(v).toFixed(2) : '-'}
         </Tag>
       ),
     },
@@ -591,13 +641,16 @@ function Keywords() {
                 </select>
 
                 {/* Export */}
-                <Button
-                  type="primary"
-                  icon={<ExportOutlined />}
-                  className="!h-[30px] text-[13px] !px-3 !rounded-xl !bg-[#2563eb] !border-[#2563eb] !font-semibold !shadow-sm"
-                >
-                  Export
-                </Button>
+                <Dropdown menu={{ items: exportMenuItems }} placement="bottomRight" trigger={['click']}>
+                  <Button
+                    type="primary"
+                    loading={exportLoading}
+                    icon={<ExportOutlined />}
+                    className="!h-[30px] text-[13px] !px-3 !rounded-xl !bg-[#2563eb] !border-[#2563eb] !font-semibold !shadow-sm flex items-center gap-1 cursor-pointer"
+                  >
+                    Export <DownOutlined className="text-[10px]" />
+                  </Button>
+                </Dropdown>
               </div>
             </div>
           </div>

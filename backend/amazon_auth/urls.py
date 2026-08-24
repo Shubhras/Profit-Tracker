@@ -137,6 +137,8 @@ urlpatterns = [
     path('sync-product-pricing/',SyncProductPricingAPIView.as_view()),
 
     path("catalog-list-details/",AmazonCatalogDetailsAPIView.as_view(),name="catalog-details"),
+    path("catalog-list-details/export/", exports.export_amazon_catalog_details, name="export_amazon_catalog_details"),
+    path("catalog-list-details/list/export/", exports.export_amazon_catalog_details, name="export_amazon_catalog_details_alias"),
 
     path("amazon-listing-items/",AmazonListingItemsView.as_view(),name="amazon-listing-items"),
 
@@ -209,6 +211,8 @@ urlpatterns = [
     path('refund-transactions/export/', exports.export_refund_transactions),
     path('exports/history/', exports.list_export_history),
     path('exports/history/<int:export_id>/download/', exports.download_export_file),
+    path('exports/history/<int:export_id>/delete/', exports.delete_export_file),
+    path('exports/history/delete/', exports.delete_export_file),
  
 ]
 

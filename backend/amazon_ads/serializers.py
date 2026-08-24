@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db.models import Sum
 from .models import *
 
 
@@ -124,6 +125,7 @@ class AdsKeywordSerializer(serializers.ModelSerializer):
     profile_id = serializers.SerializerMethodField()
     country_code = serializers.SerializerMethodField()
     currency_code = serializers.SerializerMethodField()
+    metrics = serializers.SerializerMethodField()
 
     class Meta:
 
@@ -139,7 +141,7 @@ class AdsKeywordSerializer(serializers.ModelSerializer):
             "ad_group","ad_group_name",
             "ad_group_id_value",
             "profile_id","country_code",
-            "currency_code","raw_data",
+            "currency_code","metrics","raw_data",
             "created_at"
         ]
 
@@ -170,7 +172,67 @@ class AdsKeywordSerializer(serializers.ModelSerializer):
         return obj.amazon_account.country_code
 
     def get_currency_code(self, obj):
-        return obj.amazon_account.currency_code    
+        return obj.amazon_account.currency_code
+
+    def get_metrics(self, obj):
+        from_date = self.context.get("from_date")
+        to_date = self.context.get("to_date")
+
+        metrics_qs = KeywordMetric.objects.filter(keyword=obj)
+        if from_date:
+            metrics_qs = metrics_qs.filter(report_date__gte=from_date)
+        if to_date:
+            metrics_qs = metrics_qs.filter(report_date__lte=to_date)
+
+        if from_date or to_date:
+            agg = metrics_qs.aggregate(
+                total_impressions=Sum("impressions"),
+                total_clicks=Sum("clicks"),
+                total_cost=Sum("cost"),
+                total_sales=Sum("sales"),
+                total_orders=Sum("orders"),
+            )
+            impressions = agg["total_impressions"] or 0
+            clicks = agg["total_clicks"] or 0
+            cost = float(agg["total_cost"] or 0)
+            sales = float(agg["total_sales"] or 0)
+            orders = agg["total_orders"] or 0
+            acos = float(round((cost / sales * 100), 2)) if sales > 0 else 0.0
+            roas = float(round((sales / cost), 2)) if cost > 0 else 0.0
+
+            return {
+                "impressions": impressions,
+                "clicks": clicks,
+                "cost": round(cost, 2),
+                "sales": round(sales, 2),
+                "orders": orders,
+                "units": orders,
+                "acos": acos,
+                "roas": roas,
+            }
+
+        latest_metric = metrics_qs.order_by("-report_date").first()
+        if latest_metric:
+            impressions = latest_metric.impressions or 0
+            clicks = latest_metric.clicks or 0
+            cost = float(latest_metric.cost or 0)
+            sales = float(latest_metric.sales or 0)
+            orders = latest_metric.orders or 0
+            acos = float(latest_metric.acos or 0)
+            roas = float(latest_metric.roas or 0)
+
+            return {
+                "impressions": impressions,
+                "clicks": clicks,
+                "cost": round(cost, 2),
+                "sales": round(sales, 2),
+                "orders": orders,
+                "units": orders,
+                "acos": acos,
+                "roas": roas,
+            }
+
+        return None    
 
 
 

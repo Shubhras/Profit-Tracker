@@ -44,7 +44,7 @@ class CustomPagination(PageNumberPagination):
 
     page_size = 10
     page_size_query_param = "page_size"
-    max_page_size = 100
+    max_page_size = 100000
     def get_paginated_response(self, data):
 
         return Response({
@@ -771,56 +771,77 @@ class CampaignListView(APIView):
     permission_classes = [IsAuthenticated]
     pagination_class = CustomPagination
 
+    def get(self, request):
+        return self.post(request)
+
     def post(self, request):
         user = request.user
-        data = request.data
-        search = data.get("search")
-        state = data.get("state")
+        data = request.data if isinstance(request.data, dict) else {}
+        filters = data.get("filters") if isinstance(data.get("filters"), dict) else {}
 
-        campaign_type = data.get("campaign_type")
-        targeting_type = data.get(
-            "targeting_type"
-        )
+        def get_param(*keys):
+            for key in keys:
+                val = data.get(key)
+                if val is not None and str(val).strip() != "" and str(val).strip().lower() != "undefined":
+                    return str(val).strip()
+                val = filters.get(key)
+                if val is not None and str(val).strip() != "" and str(val).strip().lower() != "undefined":
+                    return str(val).strip()
+                val = request.query_params.get(key)
+                if val is not None and str(val).strip() != "" and str(val).strip().lower() != "undefined":
+                    return str(val).strip()
+            return None
 
-        ordering = data.get(
-            "ordering",
-            "-start_date"
-        )
+        search = get_param("search", "q", "searchTerm")
+        state = get_param("state")
+        campaign_type = get_param("campaign_type", "campaignType")
+        targeting_type = get_param("targeting_type", "targetingType")
+        start_date = get_param("start_date", "startDate", "fromDate", "from_date", "from")
+        end_date = get_param("end_date", "endDate", "toDate", "to_date", "to")
+        ordering = get_param("ordering") or "-start_date"
 
-        queryset = AdsCampaign.objects.filter(
+        primary_qs = AdsCampaign.objects.filter(
             amazon_account__user=user,
-            amazon_account__is_primary = True
-        ).select_related(
+            amazon_account__is_primary=True
+        )
+        if primary_qs.exists():
+            queryset = primary_qs
+        else:
+            queryset = AdsCampaign.objects.filter(amazon_account__user=user)
+
+        queryset = queryset.select_related(
             "amazon_account"
         ).prefetch_related(
             "campaignmetric_set"
         )
 
         if search:
-
             queryset = queryset.filter(
-
-                Q(name__icontains=search) |
-                Q(campaign_id__icontains=search)
+                Q(name__icontains=search) | Q(campaign_id__icontains=search)
             )
 
-        if state:
-            queryset = queryset.filter(
-                state=state
-            )
+        if state and state.lower() != 'all':
+            queryset = queryset.filter(state__iexact=state)
 
-        if campaign_type:
-            queryset = queryset.filter(
-                campaign_type=campaign_type
-            )
+        if campaign_type and campaign_type.lower() != 'all':
+            queryset = queryset.filter(campaign_type__iexact=campaign_type)
 
-        if targeting_type:
-            queryset = queryset.filter(
-                targeting_type=targeting_type
-            )
-        queryset = queryset.order_by(
-            ordering
-        )
+        if targeting_type and targeting_type.lower() != 'all':
+            queryset = queryset.filter(targeting_type__iexact=targeting_type)
+
+        if start_date:
+            try:
+                queryset = queryset.filter(start_date__gte=str(start_date)[:10])
+            except Exception as e:
+                pass
+
+        if end_date:
+            try:
+                queryset = queryset.filter(start_date__lte=str(end_date)[:10])
+            except Exception as e:
+                pass
+
+        queryset = queryset.order_by(ordering)
 
         total_campaigns = queryset.count()
         total_budget = queryset.aggregate(
@@ -843,9 +864,8 @@ class CampaignListView(APIView):
         )
 
         response.data["summary"] = {
-
-            "total_campaigns":total_campaigns,
-            "total_budget":total_budget
+            "total_campaigns": total_campaigns,
+            "total_budget": total_budget
         }
 
         return response
@@ -859,53 +879,86 @@ class AdsAdGroupListView(APIView):
 
     pagination_class = CustomPagination
 
+    def get(self, request):
+        return self.post(request)
+
     def post(self, request):
 
         user = request.user
 
-        data = request.data
+        data = request.data if isinstance(request.data, dict) else {}
+        filters = data.get("filters") if isinstance(data.get("filters"), dict) else {}
 
-        search = data.get("search")
+        def get_param(*keys):
+            for key in keys:
+                val = data.get(key)
+                if val is not None and str(val).strip() != "" and str(val).strip().lower() != "undefined":
+                    return str(val).strip()
+                val = filters.get(key)
+                if val is not None and str(val).strip() != "" and str(val).strip().lower() != "undefined":
+                    return str(val).strip()
+                val = request.query_params.get(key)
+                if val is not None and str(val).strip() != "" and str(val).strip().lower() != "undefined":
+                    return str(val).strip()
+            return None
 
-        state = data.get("state")
+        search = get_param("search", "q", "searchTerm")
+        state = get_param("state")
+        campaign_id = get_param("campaign_id", "campaignId")
+        start_date = get_param("start_date", "startDate", "fromDate", "from_date", "from")
+        end_date = get_param("end_date", "endDate", "toDate", "to_date", "to")
+        ordering = get_param("ordering") or "-created_at"
 
-        campaign_id = data.get(
-            "campaign_id"
-        )
-
-        ordering = data.get(
-            "ordering",
-            "-created_at"
-        )
-
-        queryset = AdsAdGroup.objects.filter(
+        primary_qs = AdsAdGroup.objects.filter(
             amazon_account__user=user,
             amazon_account__is_primary=True
-        ).select_related(
+        )
+
+        if primary_qs.exists():
+            queryset = primary_qs
+        else:
+            queryset = AdsAdGroup.objects.filter(
+                amazon_account__user=user
+            )
+
+        queryset = queryset.select_related(
             "amazon_account",
             "campaign"
         )
 
         if search:
-
             queryset = queryset.filter(
-
                 Q(name__icontains=search) |
-
                 Q(ad_group_id__icontains=search)
             )
 
-        if state:
-
+        if state and state.lower() != "all":
             queryset = queryset.filter(
-                state=state
+                state__iexact=state
             )
 
-        if campaign_id:
+        if campaign_id and campaign_id.lower() != "all":
+            try:
+                c_id_int = int(campaign_id)
+                queryset = queryset.filter(
+                    Q(campaign__campaign_id=c_id_int) | Q(campaign__id=c_id_int)
+                )
+            except ValueError:
+                queryset = queryset.filter(
+                    campaign__campaign_id=campaign_id
+                )
 
-            queryset = queryset.filter(
-                campaign__campaign_id=campaign_id
-            )
+        if start_date:
+            try:
+                queryset = queryset.filter(created_at__date__gte=str(start_date)[:10])
+            except Exception:
+                pass
+
+        if end_date:
+            try:
+                queryset = queryset.filter(created_at__date__lte=str(end_date)[:10])
+            except Exception:
+                pass
 
         queryset = queryset.order_by(
             ordering
@@ -934,12 +987,8 @@ class AdsAdGroupListView(APIView):
         )
 
         response.data["summary"] = {
-
-            "total_ad_groups":
-            total_ad_groups,
-
-            "average_default_bid":
-            round(average_bid, 2)
+            "total_ad_groups": total_ad_groups,
+            "average_default_bid": round(average_bid, 2)
         }
 
         return response
@@ -950,6 +999,9 @@ class AdsKeywordListView(APIView):
     permission_classes = [IsAuthenticated]
 
     pagination_class = CustomPagination
+
+    def get(self, request):
+        return self.post(request)
 
     def post(self, request):
 
@@ -994,10 +1046,31 @@ class AdsKeywordListView(APIView):
                 campaign__campaign_id=campaign_id
             )
 
-        if ad_group_id:
+        from_date = (
+            data.get("from_date")
+            or data.get("start_date")
+            or request.query_params.get("from_date")
+            or request.query_params.get("start_date")
+        )
+        to_date = (
+            data.get("to_date")
+            or data.get("end_date")
+            or request.query_params.get("to_date")
+            or request.query_params.get("end_date")
+        )
+
+        if from_date and to_date:
             queryset = queryset.filter(
-                ad_group__ad_group_id=ad_group_id
-            )
+                keywordmetric__report_date__range=[from_date, to_date]
+            ).distinct()
+        elif from_date:
+            queryset = queryset.filter(
+                keywordmetric__report_date__gte=from_date
+            ).distinct()
+        elif to_date:
+            queryset = queryset.filter(
+                keywordmetric__report_date__lte=to_date
+            ).distinct()
 
         queryset = queryset.order_by(
             ordering
@@ -1016,9 +1089,23 @@ class AdsKeywordListView(APIView):
             request
         )
 
+        from_date = (
+            data.get("from_date")
+            or data.get("start_date")
+            or request.query_params.get("from_date")
+            or request.query_params.get("start_date")
+        )
+        to_date = (
+            data.get("to_date")
+            or data.get("end_date")
+            or request.query_params.get("to_date")
+            or request.query_params.get("end_date")
+        )
+
         serializer = AdsKeywordSerializer(
             paginated_queryset,
-            many=True
+            many=True,
+            context={"from_date": from_date, "to_date": to_date}
         )
 
         response = paginator.get_paginated_response(
@@ -1142,6 +1229,9 @@ class ProductSKUReportView(APIView):
     permission_classes = [IsAuthenticated]
 
     pagination_class = CustomPagination
+
+    def get(self, request):
+        return self.post(request)
 
     def post(self, request):
 
@@ -1459,6 +1549,9 @@ class CampaignBySKUView(APIView):
 
     pagination_class = CustomPagination
 
+    def get(self, request):
+        return self.post(request)
+
     def post(self, request):
 
         user = request.user
@@ -1506,15 +1599,16 @@ class CampaignBySKUView(APIView):
                 state=state
             )
 
-        # DATE FILTER
-        if start_date and end_date:
+        from_date = data.get("from_date") or data.get("start_date")
+        to_date = data.get("to_date") or data.get("end_date")
 
-            queryset = queryset.filter(
-                campaignmetric__report_date__range=[
-                    start_date,
-                    end_date
-                ]
-            )
+        metric_filter = Q()
+        if from_date and to_date:
+            metric_filter = Q(campaignmetric__report_date__range=[from_date, to_date])
+        elif from_date:
+            metric_filter = Q(campaignmetric__report_date__gte=from_date)
+        elif to_date:
+            metric_filter = Q(campaignmetric__report_date__lte=to_date)
 
         # METRICS
         queryset = queryset.annotate(
@@ -1525,27 +1619,33 @@ class CampaignBySKUView(APIView):
             ),
 
             impressions=Sum(
-                "campaignmetric__impressions"
+                "campaignmetric__impressions",
+                filter=metric_filter
             ),
 
             clicks=Sum(
-                "campaignmetric__clicks"
+                "campaignmetric__clicks",
+                filter=metric_filter
             ),
 
             cost=Sum(
-                "campaignmetric__cost"
+                "campaignmetric__cost",
+                filter=metric_filter
             ),
 
             sales=Sum(
-                "campaignmetric__sales"
+                "campaignmetric__sales",
+                filter=metric_filter
             ),
 
             orders=Sum(
-                "campaignmetric__orders"
+                "campaignmetric__orders",
+                filter=metric_filter
             ),
 
             units=Sum(
-                "campaignmetric__units"
+                "campaignmetric__units",
+                filter=metric_filter
             )
 
         ).order_by(
@@ -1658,6 +1758,9 @@ class AdGroupByCampaignView(APIView):
 
     pagination_class = CustomPagination
 
+    def get(self, request):
+        return self.post(request)
+
     def post(self, request):
 
         user = request.user
@@ -1679,13 +1782,8 @@ class AdGroupByCampaignView(APIView):
             "-sales"
         )
 
-        start_date = data.get(
-            "start_date"
-        )
-
-        end_date = data.get(
-            "end_date"
-        )
+        start_date = data.get("start_date") or data.get("from_date")
+        end_date = data.get("end_date") or data.get("to_date")
 
         queryset = AdsAdGroup.objects.filter(
             amazon_account__user=user,
@@ -1718,14 +1816,13 @@ class AdGroupByCampaignView(APIView):
             )
 
         # DATE FILTER
+        metric_filter = Q()
         if start_date and end_date:
-
-            queryset = queryset.filter(
-                campaign__campaignmetric__report_date__range=[
-                    start_date,
-                    end_date
-                ]
-            )
+            metric_filter = Q(campaign__campaignmetric__report_date__range=[start_date, end_date])
+        elif start_date:
+            metric_filter = Q(campaign__campaignmetric__report_date__gte=start_date)
+        elif end_date:
+            metric_filter = Q(campaign__campaignmetric__report_date__lte=end_date)
 
         # ANNOTATIONS
         queryset = queryset.annotate(
@@ -1736,27 +1833,33 @@ class AdGroupByCampaignView(APIView):
             ),
 
             impressions=Sum(
-                "campaign__campaignmetric__impressions"
+                "campaign__campaignmetric__impressions",
+                filter=metric_filter
             ),
 
             clicks=Sum(
-                "campaign__campaignmetric__clicks"
+                "campaign__campaignmetric__clicks",
+                filter=metric_filter
             ),
 
             cost=Sum(
-                "campaign__campaignmetric__cost"
+                "campaign__campaignmetric__cost",
+                filter=metric_filter
             ),
 
             sales=Sum(
-                "campaign__campaignmetric__sales"
+                "campaign__campaignmetric__sales",
+                filter=metric_filter
             ),
 
             orders=Sum(
-                "campaign__campaignmetric__orders"
+                "campaign__campaignmetric__orders",
+                filter=metric_filter
             ),
 
             units=Sum(
-                "campaign__campaignmetric__units"
+                "campaign__campaignmetric__units",
+                filter=metric_filter
             )
 
         ).order_by(
@@ -2036,6 +2139,9 @@ class QueryAdsView(APIView):
 class SearchTermMetricListView(APIView):
     permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        return self.post(request)
+
     def post(self, request):
 
         data = request.data
@@ -2221,7 +2327,7 @@ class SearchTermMetricListView(APIView):
 
         top_terms_qs = (
             queryset
-            .order_by("-sales")[:5]
+            .order_by("-sales")[:50]
         )
 
         top_performing_terms = []

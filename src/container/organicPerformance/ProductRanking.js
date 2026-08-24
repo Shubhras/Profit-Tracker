@@ -1,7 +1,6 @@
-import React, { useEffect } from 'react';
-import { Button, Table, Tooltip, Tag } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Button, Table, Tooltip, Tag, Dropdown, message } from 'antd';
 import {
-  FilterOutlined,
   ExportOutlined,
   TrophyOutlined,
   InboxOutlined,
@@ -9,12 +8,19 @@ import {
   FundProjectionScreenOutlined,
   ArrowUpOutlined,
   ArrowDownOutlined,
+  SearchOutlined,
+  DownOutlined,
+  FileExcelOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { getProductRanking } from '../../redux/organicPerformance/actionCreator';
+import { getProductRanking, exportCatalogDetails } from '../../redux/organicPerformance/actionCreator';
 
 function ProductRanking() {
   const dispatch = useDispatch();
+  const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [exportLoading, setExportLoading] = useState(false);
 
   const [pagination, setPagination] = React.useState({
     current: 1,
@@ -29,8 +35,48 @@ function ProductRanking() {
   }));
 
   useEffect(() => {
-    dispatch(getProductRanking(pagination.current, pagination.pageSize, {}));
-  }, [dispatch, pagination.current, pagination.pageSize]);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchText]);
+
+  useEffect(() => {
+    dispatch(getProductRanking(pagination.current, pagination.pageSize, { search: debouncedSearch }));
+  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch]);
+
+  const handleExport = async (format = 'xlsx') => {
+    setExportLoading(true);
+    try {
+      const res = await dispatch(exportCatalogDetails({ search: debouncedSearch }, format));
+      if (res?.status) {
+        message.success('Export report generated successfully!');
+      } else {
+        message.error(res?.message || 'Failed to export product ranking data');
+      }
+    } catch (err) {
+      console.error(err);
+      message.error('Failed to export product ranking data');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const exportMenuItems = [
+    {
+      key: 'xlsx',
+      label: 'Excel (.xlsx)',
+      icon: <FileExcelOutlined style={{ color: '#10b981' }} />,
+      onClick: () => handleExport('xlsx'),
+    },
+    {
+      key: 'csv',
+      label: 'CSV (.csv)',
+      icon: <FileTextOutlined style={{ color: '#3b82f6' }} />,
+      onClick: () => handleExport('csv'),
+    },
+  ];
 
   const dataSource =
     productRankingData?.data?.map((item) => ({
@@ -154,10 +200,17 @@ function ProductRanking() {
     },
   ];
 
+  const summary = productRankingData?.summary || {};
+
   const stats = [
     {
       title: 'Total Products Tracked',
-      value: '156',
+      value:
+        summary?.total_products_tracked !== undefined
+          ? Number(summary.total_products_tracked).toLocaleString()
+          : productRankingData?.count !== undefined
+          ? Number(productRankingData.count).toLocaleString()
+          : '156',
       change: '—',
       trend: 'neutral',
       icon: <InboxOutlined className="text-[#7c3aed]" />,
@@ -166,7 +219,7 @@ function ProductRanking() {
 
     {
       title: 'In Top 100 (Product Category Rank)',
-      value: '28',
+      value: summary?.in_top_100 !== undefined ? Number(summary.in_top_100).toLocaleString() : '28',
       change: '12%',
       trend: 'up',
       icon: <TrophyOutlined className="text-[#16a34a]" />,
@@ -175,7 +228,10 @@ function ProductRanking() {
 
     {
       title: 'Avg. Product Category Rank',
-      value: '856',
+      value:
+        summary?.avg_product_category_rank !== undefined
+          ? Number(summary.avg_product_category_rank).toLocaleString()
+          : '856',
       change: '8%',
       trend: 'down',
       icon: <RiseOutlined className="text-[#f59e0b]" />,
@@ -184,7 +240,10 @@ function ProductRanking() {
 
     {
       title: 'Avg. Master Category Rank',
-      value: '45,362',
+      value:
+        summary?.avg_master_category_rank !== undefined
+          ? Number(summary.avg_master_category_rank).toLocaleString()
+          : '45,362',
       change: '5%',
       trend: 'down',
       icon: <FundProjectionScreenOutlined className="text-[#2563eb]" />,
@@ -193,7 +252,7 @@ function ProductRanking() {
 
     {
       title: 'Products Improved',
-      value: '64',
+      value: summary?.products_improved !== undefined ? Number(summary.products_improved).toLocaleString() : '64',
       change: '18%',
       trend: 'up',
       icon: <ArrowUpOutlined className="text-[#16a34a]" />,
@@ -202,7 +261,7 @@ function ProductRanking() {
 
     {
       title: 'Products Declined',
-      value: '34',
+      value: summary?.products_declined !== undefined ? Number(summary.products_declined).toLocaleString() : '34',
       change: '6%',
       trend: 'up',
       icon: <ArrowDownOutlined className="text-[#ef4444]" />,
@@ -214,7 +273,7 @@ function ProductRanking() {
     <div className="p-3 px-4 bg-[#f8fafc] min-h-screen">
       {/* HEADER */}
 
-      <div className="flex items-start justify-between mb-2 flex-wrap gap-3">
+      <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
         <div>
           <h1 className="text-[20px] font-bold mb-0">Product Ranking</h1>
 
@@ -223,17 +282,30 @@ function ProductRanking() {
           </p>
         </div>
 
-        <div className="flex gap-2 h-[30px] text-[11px]">
-          <Button className="text-[11px h-[30px]]" icon={<FilterOutlined />}>
-            Filters
-          </Button>
+        <div className="flex items-center gap-3">
+          {/* SEARCH INPUT */}
+          <div className="relative w-[260px]">
+            <input
+              type="text"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder="Search products, ASIN..."
+              className="w-full h-[30px] rounded-xl border bg-white pl-9 pr-3 text-[13px] text-[#111827] outline-none shadow-sm transition-all duration-200 focus:border-[#dbe1e8]"
+            />
+            <SearchOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[14px]" />
+          </div>
 
-          <Button
-            className="bg-[#16a34a] border-[#16a34a] text-white font-semibold h-[30px] text-[11px]"
-            icon={<ExportOutlined />}
-          >
-            Export
-          </Button>
+          {/* EXPORT DROPDOWN */}
+          <Dropdown menu={{ items: exportMenuItems }} placement="bottomRight" trigger={['click']}>
+            <Button
+              type="primary"
+              loading={exportLoading}
+              icon={<ExportOutlined />}
+              className="!h-[30px] text-[13px] !px-3 !rounded-xl !bg-[#16a34a] !border-[#16a34a] !font-semibold !flex !items-center !justify-center gap-1 cursor-pointer"
+            >
+              Export <DownOutlined className="text-[10px]" />
+            </Button>
+          </Dropdown>
         </div>
       </div>
 
@@ -278,36 +350,39 @@ function ProductRanking() {
           <h2 className="font-semibold text-[15px] text-[#111827] mb-0">Product Ranking Overview</h2>
         </div>
 
-        <Table
-          columns={columns}
-          dataSource={dataSource}
-          loading={loading}
-          showSorterTooltip={false}
-          tableLayout="fixed"
-          pagination={{
-            current: pagination.current,
-            pageSize: pagination.pageSize,
-            total: productRankingData?.count || 0,
-            showSizeChanger: true,
-            pageSizeOptions: ['10', '20', '50', '100'],
-          }}
-          onChange={(pag) => {
-            setPagination({
-              current: pag.current,
-              pageSize: pag.pageSize,
-            });
-          }}
-          scroll={{ x: 800 }}
-          size="middle"
-          bordered={false}
-          className="
+        <div className="p-3">
+          <Table
+            columns={columns}
+            dataSource={dataSource}
+            loading={loading}
+            showSorterTooltip={false}
+            tableLayout="fixed"
+            pagination={{
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: productRankingData?.count || 0,
+              showSizeChanger: true,
+              pageSizeOptions: ['10', '20', '50', '100'],
+              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
+            }}
+            onChange={(pag) => {
+              setPagination({
+                current: pag.current,
+                pageSize: pag.pageSize,
+              });
+            }}
+            scroll={{ x: 800 }}
+            size="middle"
+            bordered={false}
+            className="
     [&_.ant-table-thead>tr>th]:!text-[12px]
     [&_.ant-table-thead>tr>th]:!font-semibold
     [&_.ant-table-tbody>tr>td]:!text-[12px]
     [&_.ant-table-cell]:!px-2
     [&_.ant-table-cell]:!py-2
   "
-        />
+          />
+        </div>
       </div>
     </div>
   );

@@ -1,13 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Table, Tag, Tooltip, Switch, Modal, Dropdown, Checkbox, Popover, Input } from 'antd';
-import { ExportOutlined, RightOutlined, SearchOutlined, SettingOutlined } from '@ant-design/icons';
+import { Button, Table, Tag, Tooltip, Switch, Modal, Dropdown, Checkbox, Popover, Input, message } from 'antd';
+import {
+  ExportOutlined,
+  RightOutlined,
+  SearchOutlined,
+  SettingOutlined,
+  DownOutlined,
+  FileExcelOutlined,
+  FileTextOutlined,
+} from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { getCampaigns, getCampaignUpdate } from '../../redux/advertising/actionCreator';
+import moment from 'moment';
+import { getCampaigns, getCampaignUpdate, exportCampaigns } from '../../redux/advertising/actionCreator';
 
 function Campaigns() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const todayStr = moment().format('YYYY-MM-DD');
   const [pagination, setPagination] = React.useState({
     current: 1,
     pageSize: 10,
@@ -22,23 +32,79 @@ function Campaigns() {
   const [visibleColumns, setVisibleColumns] = useState([]);
   const [stateFilter, setStateFilter] = useState('');
   const [targetinType, settargetingType] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState(todayStr);
+  const [exportLoading, setExportLoading] = useState(false);
+  const { campaignData, loading } = useSelector((state) => state.advertising);
+  const { dateRange } = useSelector((state) => state.dashboard);
+
+  const effectiveStartDate = startDate || dateRange?.fromDate || '';
+  const effectiveEndDate = endDate || dateRange?.endDate || todayStr;
+
+  const handleExport = async (format = 'xlsx') => {
+    setExportLoading(true);
+    try {
+      const payload = {
+        ...(debouncedSearch.trim() && { search: debouncedSearch.trim() }),
+        ...(stateFilter && { state: stateFilter }),
+        ...(targetinType && { targeting_type: targetinType, targetingType: targetinType }),
+        ...(effectiveStartDate && { start_date: effectiveStartDate, startDate: effectiveStartDate }),
+        ...(effectiveEndDate && { end_date: effectiveEndDate, endDate: effectiveEndDate }),
+      };
+      const res = await dispatch(exportCampaigns(payload, format));
+      if (res?.status) {
+        message.success('Export report generated successfully!');
+      } else {
+        message.error(res?.message || 'Failed to export campaigns');
+      }
+    } catch (err) {
+      console.error(err);
+      message.error('Failed to export campaigns');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const exportMenuItems = [
+    {
+      key: 'xlsx',
+      label: 'Excel (.xlsx)',
+      icon: <FileExcelOutlined style={{ color: '#10b981' }} />,
+      onClick: () => handleExport('xlsx'),
+    },
+    {
+      key: 'csv',
+      label: 'CSV (.csv)',
+      icon: <FileTextOutlined style={{ color: '#3b82f6' }} />,
+      onClick: () => handleExport('csv'),
+    },
+  ];
 
   const [openBudgetId, setOpenBudgetId] = useState(null);
-
-  // const [openFilter, setOpenFilter] = React.useState(false);
-
-  const { campaignData, loading } = useSelector((state) => state.advertising);
 
   useEffect(() => {
     dispatch(
       getCampaigns(pagination.current, pagination.pageSize, {
         search: debouncedSearch,
         state: stateFilter,
+        targeting_type: targetinType,
         targetingType: targetinType,
+        start_date: effectiveStartDate,
+        startDate: effectiveStartDate,
+        end_date: effectiveEndDate,
+        endDate: effectiveEndDate,
       }),
     );
-    // }, [dispatch, pagination]);
-  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch, stateFilter, targetinType]);
+  }, [
+    dispatch,
+    pagination.current,
+    pagination.pageSize,
+    debouncedSearch,
+    stateFilter,
+    targetinType,
+    effectiveStartDate,
+    effectiveEndDate,
+  ]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -836,6 +902,7 @@ function Campaigns() {
                   <option value="">All State</option>
                   <option value="ENABLED">Enabled</option>
                   <option value="PAUSED">Paused</option>
+                  <option value="ARCHIVED">Archived</option>
                 </select>
 
                 <select
@@ -844,9 +911,29 @@ function Campaigns() {
                   className="h-[30px] px-2 pr-4 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
                 >
                   <option value="">All Targeting Type</option>
-                  <option value="ENABLED">Manual</option>
-                  <option value="PAUSED">Auto</option>
+                  <option value="MANUAL">Manual</option>
+                  <option value="AUTO">Auto</option>
                 </select>
+
+                <div className="flex items-center gap-1 border border-[#dbe1e8] rounded-xl px-2.5 py-0.5 bg-white text-[12px] h-[30px]">
+                  <span className="text-[#6b7280] font-medium text-[11px]">Start:</span>
+                  <input
+                    type="date"
+                    value={effectiveStartDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="h-[22px] text-[#374151] font-medium bg-transparent border-none outline-none cursor-pointer text-[12px]"
+                  />
+                </div>
+
+                <div className="flex items-center gap-1 border border-[#dbe1e8] rounded-xl px-2.5 py-0.5 bg-white text-[12px] h-[30px]">
+                  <span className="text-[#6b7280] font-medium text-[11px]">End:</span>
+                  <input
+                    type="date"
+                    value={effectiveEndDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="h-[22px] text-[#374151] font-medium bg-transparent border-none outline-none cursor-pointer text-[12px]"
+                  />
+                </div>
 
                 <Dropdown trigger={['click']} dropdownRender={() => manageColumnsDropdown} placement="bottomRight">
                   <Button
@@ -856,13 +943,16 @@ function Campaigns() {
                     Manage Columns
                   </Button>
                 </Dropdown>
-                <Button
-                  type="primary"
-                  icon={<ExportOutlined />}
-                  className="!h-[30px] text-[13px] !rounded-xl !bg-[#2563eb] !font-semibold !flex !items-center !justify-center"
-                >
-                  Export
-                </Button>
+                <Dropdown menu={{ items: exportMenuItems }} placement="bottomRight" trigger={['click']}>
+                  <Button
+                    type="primary"
+                    icon={<ExportOutlined />}
+                    loading={exportLoading}
+                    className="!h-[30px] text-[13px] !rounded-xl !bg-[#2563eb] !font-semibold !flex !items-center !justify-center"
+                  >
+                    Export <DownOutlined className="text-[10px] ml-1" />
+                  </Button>
+                </Dropdown>
               </div>
             </div>
           </div>
