@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Table, Button, Tooltip, Modal, message, Input } from 'antd';
 import { UploadOutlined, ExportOutlined, EditOutlined } from '@ant-design/icons';
@@ -83,13 +83,21 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
     }
   };
 
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const columns = [
     {
       title: 'Channel',
       dataIndex: 'channel',
       width: 80,
       align: 'center',
-      fixed: 'left',
+      fixed: isMobile ? false : 'left',
       render: (value) => {
         const logo = channelLogoMap[value];
 
@@ -111,7 +119,7 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
       dataIndex: 'image',
       width: 90,
       align: 'center',
-      fixed: 'left',
+      fixed: isMobile ? false : 'left',
       render: (img) =>
         img ? (
           <img src={img} alt="product" className="w-12 h-12 object-cover rounded-md mx-auto" />
@@ -182,7 +190,7 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
       key: 'actions',
       align: 'center',
       width: 80,
-      fixed: 'right',
+      fixed: isMobile ? false : 'right',
       render: (_, record) => (
         <Tooltip title="Edit Item">
           <Button
@@ -222,11 +230,14 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
 
   return (
     <>
-      <PageHeader className="flex justify-between items-center px-8 xl:px-[15px] pt-2 pb-2 sm:pb-[30px] bg-transparent sm:flex-col" />
-      <main className="min-h-[715px] px-5 xl:px-[15px] pb-[30px]">
+      <PageHeader
+        className="flex justify-between items-center px-8 xl:px-[15px] pt-2 pb-2 sm:pb-[30px] bg-transparent sm:flex-col
+        sm:items-start"
+      />
+      <main className="min-h-[715px] px-5 xl:px-[15px] pb-[30px] w-full">
         {/* Top Bar */}
-        <div className="flex justify-between items-center mb-4 gap-4 flex-wrap">
-          <div className="flex items-center gap-2 max-w-[360px] w-full">
+        <div className="flex justify-between items-center mb-4 gap-4 flex-wrap md:items-stretch">
+          <div className="flex items-center gap-2 max-w-[360px] w-full md:max-w-none md:w-full">
             <Input
               placeholder="Search by ASIN / ID, SKU"
               allowClear
@@ -234,11 +245,11 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
               className="w-full !h-[30px]"
             />{' '}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 shrink-0 md:w-full md:justify-end sm:w-full sm:justify-start sm:flex-1">
             <Button
               type="primary"
               icon={<ExportOutlined className="!text-[16px] !font-bold" />}
-              className="!h-[30px] !rounded-l !border-[#dbe1e8] !text-white !font-semibold !flex !items-center !justify-center"
+              className="!h-[30px] !rounded-lg !border-[#dbe1e8] !text-white !font-semibold !flex !items-center !justify-center"
               loading={exportLoading}
               onClick={() => dispatch(exportProductConfiguration(globalChannel, search))}
             >
@@ -247,7 +258,7 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
             <Button
               type="primary"
               icon={<UploadOutlined className="!text-[16px] !font-bold" />}
-              className="!h-[30px] !rounded-l !border-[#dbe1e8] !text-white !font-semibold !flex !items-center !justify-center"
+              className="!h-[30px] !rounded-lg !border-[#dbe1e8] !text-white !font-semibold !flex !items-center !justify-center sm:flex-1"
               onClick={() => setIsFieldModalOpen(true)}
             >
               Upload
@@ -256,38 +267,40 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
         </div>
 
         {/* Table */}
-        <Table
-          columns={columns}
-          dataSource={data}
-          loading={productconfigLoading}
-          showSorterTooltip={false}
-          size="small"
-          bordered
-          scroll={{ x: 'max-content' }}
-          pagination={{
-            total: productconfigData?.totalCount || 0,
-            current: pagination.current,
-            pageSize: pagination.pageSize,
-            showSizeChanger: true,
-            pageSizeOptions: ['10', '20', '50', '100'],
-            showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
-          }}
-          onChange={(pag, filters, sorter, extra) => {
-            if (extra.action === 'paginate') {
-              setPagination({
-                current: pag.current,
-                pageSize: pag.pageSize,
-              });
-            }
-          }}
-          className="
+        <div className="w-full overflow-hidden">
+          <Table
+            columns={columns}
+            dataSource={data}
+            loading={productconfigLoading}
+            showSorterTooltip={false}
+            size="small"
+            bordered
+            scroll={{ x: 'max-content' }}
+            pagination={{
+              total: productconfigData?.totalCount || 0,
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              showSizeChanger: true,
+              pageSizeOptions: ['10', '20', '50', '100'],
+              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
+            }}
+            onChange={(pag, filters, sorter, extra) => {
+              if (extra.action === 'paginate') {
+                setPagination({
+                  current: pag.current,
+                  pageSize: pag.pageSize,
+                });
+              }
+            }}
+            className="
     [&_.ant-table-thead>tr>th]:!text-[12px]
     [&_.ant-table-thead>tr>th]:!font-semibold
     [&_.ant-table-tbody>tr>td]:!text-[12px]
     [&_.ant-table-cell]:!px-4
     [&_.ant-table-cell]:!py-[7px]
   "
-        />
+          />
+        </div>
       </main>
 
       {/* Upload Modal */}

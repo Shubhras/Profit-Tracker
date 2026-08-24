@@ -11,8 +11,10 @@ import {
   SettingOutlined,
   LineChartOutlined,
 } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 
 function DigitalMarket() {
+  const navigate = useNavigate();
   const marketplaces = [
     { name: 'Google', icon: '/icons/googleADS.png' },
     { name: 'Meta', icon: '/icons/metaAds.jpg' },
@@ -111,6 +113,7 @@ function DigitalMarket() {
 
                     <Button
                       type="primary"
+                      onClick={() => navigate('/admin/pages/support')}
                       className="bg-[#16a34a] border-[#16a34a] h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
                     >
                       Choose Basic Plan
@@ -173,6 +176,7 @@ function DigitalMarket() {
 
                     <Button
                       type="primary"
+                      onClick={() => navigate('/admin/pages/support')}
                       className="bg-[#16a34a] border-[#16a34a] h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
                     >
                       Choose Pro Plan
@@ -230,6 +234,7 @@ function DigitalMarket() {
 
                     <Button
                       type="primary"
+                      onClick={() => navigate('/admin/pages/support')}
                       className="bg-[#16a34a] border-[#16a34a] h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
                     >
                       Choose Premium Plan

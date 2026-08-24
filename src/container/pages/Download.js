@@ -19,13 +19,6 @@ export default function Download() {
     pageSize: 10,
   });
 
-  const PageRoutes = [
-    {
-      path: '',
-      breadcrumbName: 'Download',
-    },
-  ];
-
   const fetchHistory = async () => {
     setLoading(true);
     try {
@@ -215,17 +208,16 @@ export default function Download() {
   return (
     <>
       <PageHeader
-        routes={PageRoutes}
         title="Download"
-        className="flex justify-between items-center px-4 xl:px-[15px] pt-2 pb-3 sm:pb-[30px] bg-transparent sm:flex-col"
+        className="flex justify-between items-center px-4 xl:px-[15px] pt-2 pb-3 sm:pb-[30px] bg-transparent  sm:flex-col sm:items-start"
       />
 
       <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-4 xl:px-[15px] pb-[30px] bg-transparent">
         <Spin spinning={loading} size="large">
-          <div className="bg-white dark:bg-white10 rounded-[10px] p-[20px] shadow-sm">
+          <div className="bg-white dark:bg-white10 rounded-[10px] p-3 shadow-sm">
             {/* Refresh Button */}
             <div className="flex justify-between items-center mb-3">
-              <span className="text-[14px] font-semibold text-gray-700">Export History & Generated Reports</span>
+              <span className="text-[16px] font-semibold text-gray-700">Export History & Generated Reports</span>
               <Button shape="circle" icon={<ReloadOutlined />} onClick={fetchHistory} loading={loading} />
             </div>
 
@@ -250,6 +242,13 @@ export default function Download() {
                   locale={{
                     emptyText: <Empty description="No exported reports found" className="py-10" />,
                   }}
+                  className="
+    [&_.ant-table-thead>tr>th]:!text-[12px]
+    [&_.ant-table-thead>tr>th]:!font-semibold
+    [&_.ant-table-tbody>tr>td]:!text-[12px]
+    [&_.ant-table-cell]:!px-2
+    [&_.ant-table-cell]:!py-[6px]
+  "
                 />
               </div>
             )}

@@ -11,8 +11,10 @@ import {
   LineChartOutlined,
   NotificationOutlined,
 } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 
 function QuickCommerce() {
+  const navigate = useNavigate();
   const marketplaces = [
     { name: 'Blinkit', icon: '/icons/blinkit.png' },
     { name: 'Zepto', icon: '/icons/zepto.png' },
@@ -112,7 +114,11 @@ function QuickCommerce() {
                       <p className="text-[10px] text-light leading-none">per month / per marketplace</p>
                     </div>
 
-                    <Button className="bg-[#16a34a] border-[#16a34a] text-white h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0">
+                    <Button
+                      type="primary"
+                      onClick={() => navigate('/admin/pages/support')}
+                      className="bg-[#16a34a] border-[#16a34a] h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
+                    >
                       Choose Basic Plan
                     </Button>
                   </div>
@@ -172,7 +178,11 @@ function QuickCommerce() {
                       <p className="text-[10px] text-light leading-none">per month / per marketplace</p>
                     </div>
 
-                    <Button className="bg-[#2563eb] border-[#2563eb] text-white h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0">
+                    <Button
+                      type="primary"
+                      onClick={() => navigate('/admin/pages/support')}
+                      className="bg-[#16a34a] border-[#16a34a] h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
+                    >
                       Choose Pro Plan
                     </Button>
                   </div>
@@ -227,8 +237,9 @@ function QuickCommerce() {
                     </div>
 
                     <Button
-                      // type="primary"
-                      className="bg-[#9333ea] border-[#9333ea] text-white h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
+                      type="primary"
+                      onClick={() => navigate('/admin/pages/support')}
+                      className="bg-[#16a34a] border-[#16a34a] h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
                     >
                       Choose Premium Plan
                     </Button>
