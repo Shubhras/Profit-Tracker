@@ -24,15 +24,7 @@ export default function Download() {
     current: 1,
     pageSize: 10,
   });
-
   const { dateRange } = useSelector((state) => state.dashboard);
-
-  const PageRoutes = [
-    {
-      path: '',
-      breadcrumbName: 'Download',
-    },
-  ];
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -285,9 +277,8 @@ export default function Download() {
   return (
     <>
       <PageHeader
-        routes={PageRoutes}
         title="Download"
-        className="flex justify-between items-center px-4 xl:px-[15px] pt-2 pb-3 sm:pb-[30px] bg-transparent sm:flex-col"
+        className="flex justify-between items-center px-4 xl:px-[15px] pt-2 pb-3 sm:pb-[30px] bg-transparent  sm:flex-col sm:items-start"
       />
 
       <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-4 xl:px-[15px] pb-[30px] bg-transparent">
@@ -339,6 +330,13 @@ export default function Download() {
                   locale={{
                     emptyText: <Empty description="No exported reports found" className="py-10" />,
                   }}
+                  className="
+    [&_.ant-table-thead>tr>th]:!text-[12px]
+    [&_.ant-table-thead>tr>th]:!font-semibold
+    [&_.ant-table-tbody>tr>td]:!text-[12px]
+    [&_.ant-table-cell]:!px-2
+    [&_.ant-table-cell]:!py-[6px]
+  "
                 />
               </div>
             )}

@@ -289,7 +289,7 @@ function OrderSettlement() {
 
   return (
     <>
-      <div className="min-h-screen bg-[#f6f8fc] p-3 md:p-2 sm:p-1">
+      <div className="min-h-screen bg-[#f6f8fc] p-3 md:p-2 sm:p-3">
         {' '}
         {/* HEADER */}
         <div className="mb-2 flex items-start justify-between lg:flex-col lg:gap-2">

@@ -265,12 +265,20 @@ export default function ProfitDetailsView() {
     return Number(cleaned) || 0;
   };
 
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const columns = [
     {
       title: '',
       dataIndex: 'image',
       width: 60,
-      fixed: 'left',
+      fixed: isMobile ? false : 'left',
       render: (value, record) => {
         if (record.key === 'total') return null;
 
@@ -302,7 +310,7 @@ export default function ProfitDetailsView() {
       title: '',
       dataIndex: 'channel',
       width: 70,
-      fixed: 'left',
+      fixed: isMobile ? false : 'left',
       // render: (value) => {
       //   const logo = channelLogoMap[value] || (value && value.toLowerCase().includes('myntra') ? myntra : null);
 
@@ -706,7 +714,7 @@ export default function ProfitDetailsView() {
     // },
     {
       key: 'action',
-      fixed: 'right',
+      fixed: isMobile ? false : 'right',
       width: 60,
       render: (_, record) => (
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>

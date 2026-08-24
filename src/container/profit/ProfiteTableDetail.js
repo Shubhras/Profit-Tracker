@@ -259,12 +259,20 @@ export default function ProfitDetailsView() {
     return Number(cleaned) || 0;
   };
 
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const columns = [
     {
       title: '',
       dataIndex: 'image',
       width: 60,
-      fixed: 'left',
+      fixed: isMobile ? false : 'left',
       render: (value, record) => {
         if (record.key === 'total') return null;
 
@@ -296,7 +304,7 @@ export default function ProfitDetailsView() {
       title: '',
       dataIndex: 'channel',
       width: 70,
-      fixed: 'left',
+      fixed: isMobile ? false : 'left',
       render: (value, record) => {
         if (record.key === 'total') {
           return <span>Total</span>;
@@ -704,7 +712,7 @@ export default function ProfitDetailsView() {
     // },
     {
       key: 'action',
-      fixed: 'right',
+      fixed: isMobile ? false : 'right',
       width: 60,
       render: (_, record) => (
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
@@ -847,7 +855,7 @@ export default function ProfitDetailsView() {
         className="flex justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 bg-transparent"
       /> */}
 
-      <main className="min-h-[600px] px-3 pb-[30px] py-3">
+      <main className="min-h-[600px] px-4 pb-[30px] py-3">
         {/* <div className="mb-3">
           <h1 className="text-[20px] font-semibold text-[#111827]">Sales Details</h1>
         </div> */}

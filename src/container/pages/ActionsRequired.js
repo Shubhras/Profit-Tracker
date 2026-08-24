@@ -226,9 +226,9 @@ function ActionsRequired() {
           </div>
 
           <div className="mt-5 w-full">
-            <div className="relative overflow-hidden rounded-[10px] border border-[#E1F1EB] bg-gradient-to-r from-[#F0FAF6] via-[#F5FCF9] to-[#EEF9F5] px-2 py-[10px] min-h-[100px] flex items-center">
+            <div className="relative overflow-hidden rounded-[10px] border border-[#E1F1EB] bg-gradient-to-r from-[#F0FAF6] via-[#F5FCF9] to-[#EEF9F5] px-4 py-3 min-h-[100px] flex items-center gap-3 lg:flex-wrap lg:gap-3 lg:py-4 md:flex-col md:items-start md:px-4 md:py-4 ">
               {/* LEFT GROWTH ICON */}
-              <div className="w-[62px] h-[52px] shrink-0 flex items-center justify-center">
+              <div className="w-[62px] h-[52px] shrink-0 flex items-center justify-center md:absolute md:top-4 md:right-4">
                 <div className="relative">
                   <LineChartOutlined className="text-[38px] text-[#16A37A]" />
 
@@ -237,12 +237,12 @@ function ActionsRequired() {
               </div>
 
               {/* BANNER CONTENT */}
-              <div className="flex-1 min-w-0 ml-3">
-                <h3 className="m-0 text-[20px] leading-[18px] font-semibold text-[#263238]">
+              <div className="flex-1 min-w-0 ml-1 md:w-full md:pr-[65px] md:ml-0">
+                <h3 className="m-0 text-[20px] leading-[26px] font-semibold text-dark sm:text-[17px] sm:leading-[23px]">
                   Want overall growth for your business?
                 </h3>
 
-                <p className="m-0 mt-2 text-[12px] leading-[18px] text-[#667085] max-w-[520px]">
+                <p className="m-0 mt-2 text-[12px] leading-[18px] text-light max-w-[520px] sm:text-[11px] sm:leading-[17px]">
                   Let our experts handle it for you. Take our Account Management Services and scale your business with
                   data-driven strategies and ongoing optimization.
                 </p>
@@ -250,7 +250,7 @@ function ActionsRequired() {
               <button
                 type="button"
                 onClick={() => navigate('/admin/valueadded/accountmanage')}
-                className="shrink-0 h-[32px] px-3 rounded-[6px] bg-[#149A73] hover:bg-[#087A5A] text-white text-[13px] font-semibold flex items-center gap-2 transition-colors duration-200 shadow-sm"
+                className="shrink-0 h-[32px] px-3 rounded-6 bg-primary hover:bg-primary-hover text-white text-[13px] font-semibold flex items-center justify-center gap-2 transition-colors duration-200 shadow-btn lg:ml-[76px] md:ml-0 md:w-auto sm:w-full sm:h-[34px] sm:text-[12px]"
               >
                 Explore Account Management Services
                 <ArrowRightOutlined className="text-[15px]" />

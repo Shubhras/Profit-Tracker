@@ -199,12 +199,20 @@ export default function ProfitDetailsView() {
     return Number(cleaned) || 0;
   };
 
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const columns = [
     {
       title: '',
       dataIndex: 'image',
       width: 60,
-      fixed: 'left',
+      fixed: isMobile ? false : 'left',
       render: (value) => (
         <div className="relative group w-[32px] h-[32px]">
           {value ? (
@@ -231,7 +239,7 @@ export default function ProfitDetailsView() {
       title: '',
       dataIndex: 'channel',
       width: 60,
-      fixed: 'left',
+      fixed: isMobile ? false : 'left',
       render: (value) => {
         const logo =
           channelLogoMap[value] ||
@@ -681,7 +689,7 @@ export default function ProfitDetailsView() {
 
   return (
     <>
-      <main className="min-h-[600px] px-3 py-3 pb-[10px]">
+      <main className="min-h-[600px] px-4 py-3 pb-[10px]">
         <Card bordered={false}>
           <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
             <button

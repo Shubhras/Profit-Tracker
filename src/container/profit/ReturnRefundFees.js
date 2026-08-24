@@ -143,7 +143,7 @@ function ReturnRefundFees() {
   const COLORS = ['#ff7875', '#52c41a'];
 
   return (
-    <div className="min-h-screen bg-[#f5f7fb] p-3 px-3">
+    <div className="min-h-screen bg-[#f5f7fb] p-3 px-4">
       {/* Header */}
       <div className="mb-2 flex flex-col gap-3 min-lg:flex-row min-lg:items-start min-lg:justify-between">
         <div className="flex-1 min-w-0">

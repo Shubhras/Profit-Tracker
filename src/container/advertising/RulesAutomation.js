@@ -517,7 +517,7 @@ function RulesAutomation() {
   return (
     <>
       {/* <div className="px-3 py-4 bg-[#f5f7fb] min-h-screen"> */}
-      <div className="px-3 py-3 bg-[#f5f7fb] min-h-screen sm:px-2">
+      <div className="px-4 py-3 bg-[#f5f7fb] min-h-screen sm:px-2">
         {/* ================= HEADER ================= */}
 
         <div className="flex items-start justify-between gap-3 mb-2 xl:flex-col xl:items-start">
