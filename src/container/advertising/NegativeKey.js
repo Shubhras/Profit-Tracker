@@ -14,7 +14,6 @@ function NegativeKey() {
   const [searchText, setSearchText] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedAdGroup, setSelectedAdGroup] = useState('');
-  const [activeTab, setActiveTab] = useState('Negative Keywords');
   const [campaigns, setCampaigns] = useState([]);
   const [selectedCampaign, setSelectedCampaign] = useState('');
 
@@ -211,33 +210,18 @@ function NegativeKey() {
     },
   ];
 
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-
-    switch (tab) {
-      case 'Negative Keywords':
-        setMatchType('');
-        break;
-
-      case 'Negative Phrases':
-        setMatchType('NEGATIVE_PHRASE');
-        break;
-
-      case 'Negative Exact':
-        setMatchType('NEGATIVE_EXACT');
-        break;
-
-      default:
-        setMatchType('');
-    }
+  const handleResetFilters = () => {
+    setSelectedCampaign('');
+    setMatchType('');
+    setSelectedAdGroup('');
+    setSearchText('');
+    setDebouncedSearch('');
 
     setPagination((prev) => ({
       ...prev,
       current: 1,
     }));
   };
-
-  const tabs = ['Negative Keywords', 'Negative Phrases', 'Negative Exact', 'ASIN Targeting', 'Auto Suggestions'];
 
   return (
     <div className="bg-[#f5f7fb] min-h-screen px-4 py-2">
@@ -253,28 +237,13 @@ function NegativeKey() {
 
       {/* TABS */}
 
-      <div className="flex items-center gap-6 overflow-x-auto whitespace-nowrap border-b border-[#e5e7eb] mb-2 scrollbar-hide">
-        {tabs.map((item) => (
-          <button
-            key={item}
-            type="button"
-            onClick={() => handleTabChange(item)}
-            className={`pb-1 text-[13px] font-medium transition-all ${
-              activeTab === item ? 'text-[#059669] border-b-2 border-[#059669]' : 'text-[#64748b]'
-            }`}
-          >
-            {item}
-          </button>
-        ))}
-      </div>
-
       {/* FILTERS */}
 
       <div className="flex flex-wrap items-center gap-2 mb-3">
         <select
           value={selectedCampaign}
           onChange={(e) => setSelectedCampaign(e.target.value)}
-          className="h-[30px] w-[170px] px-2 pr-5 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none cursor-pointer truncate"
+          className="h-[30px] w-[170px] px-2 pr-5 rounded-lg border border-[#dbe1e8] bg-white text-[12px] outline-none cursor-pointer truncate"
         >
           <option value="">All Campaigns</option>
 
@@ -288,7 +257,7 @@ function NegativeKey() {
         <select
           value={matchType}
           onChange={(e) => setMatchType(e.target.value)}
-          className="h-[30px] w-full min-sm:w-[170px] px-2 pr-5 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none cursor-pointer"
+          className="h-[30px] w-full min-sm:w-[170px] px-2 pr-5 rounded-lg border border-[#dbe1e8] bg-white text-[12px] outline-none cursor-pointer"
         >
           <option value="">All Match Type</option>
           <option value="NEGATIVE_BROAD">Broad</option>
@@ -299,7 +268,7 @@ function NegativeKey() {
         <select
           value={selectedAdGroup}
           onChange={(e) => setSelectedAdGroup(e.target.value)}
-          className="h-[30px] w-full min-sm:w-[170px] px-2 pr-5 rounded-xl border border-[#dbe1e8] bg-white text-[12px] outline-none cursor-pointer truncate"
+          className="h-[30px] w-full min-sm:w-[170px] px-2 pr-5 rounded-lg border border-[#dbe1e8] bg-white text-[12px] outline-none cursor-pointer truncate"
         >
           <option value="">All Ad Groups</option>
 
@@ -321,10 +290,13 @@ function NegativeKey() {
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             placeholder="Search negative keywords..."
-            className="w-full h-[30px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] outline-none"
+            className="w-full h-[30px] rounded-lg border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] outline-none"
           />
           <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
         </div>
+        <Button onClick={handleResetFilters} className="!h-[30px] !rounded-lg !px-4 !text-[12px] !font-medium">
+          Reset
+        </Button>
       </div>
 
       {/* MAIN CONTENT */}
