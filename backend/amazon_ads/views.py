@@ -66,29 +66,24 @@ class AmazonAdsConnectView(APIView):
     def get(self, request):
 
         user_id = request.GET.get("user_id")
+        if (not user_id or str(user_id).lower() in ["undefined", "null", "none"]) and hasattr(request, 'user') and request.user.is_authenticated:
+            user_id = request.user.id
 
-        if not user_id:
-            return Response({
-                "status": False,
-                "message": "user_id required"
-            })
-
-        try:
-            from subscription.utils.channel_limit import check_user_channel_connection_limit
-            u = User.objects.get(id=user_id)
-            is_allowed, max_allowed, current_count, err_msg = check_user_channel_connection_limit(u)
-            if not is_allowed:
-                return Response({"status": False, "error": err_msg, "message": err_msg}, status=403)
-        except User.DoesNotExist:
-            pass
-        except Exception as e:
-            print("Channel limit check error in AmazonAdsConnectView:", e)
+        if user_id and str(user_id).lower() not in ["undefined", "null", "none"]:
+            try:
+                from subscription.utils.channel_limit import check_user_channel_connection_limit
+                u = User.objects.get(id=user_id)
+                is_allowed, max_allowed, current_count, err_msg = check_user_channel_connection_limit(u)
+                if not is_allowed:
+                    return Response({"status": False, "error": err_msg, "message": err_msg}, status=403)
+            except Exception as e:
+                print("Channel limit check error in AmazonAdsConnectView:", e)
 
         state = f"{user_id}:{secrets.token_hex(16)}"
 
         request.session["amazon_ads_state"] = state
         client_id= settings.AMAZON_ADS_CLIENT_ID
-        print("client_id",client_id)
+        print("client_id",client_id, flush=True)
 
         auth_url = (
             "https://www.amazon.com/ap/oa?"
@@ -138,38 +133,28 @@ class AmazonAdsCallbackView(APIView):
 
         cache.set(code, True, timeout=300)
 
-        # Validate session state
-        session_state = request.session.get(
-            "amazon_ads_state"
-        )
-
-        # if (
-        #     not session_state
-        #     or session_state != state
-        # ):
-
-        #     return Response({
-        #         "status": False,
-        #         "message": "Invalid state"
-        #     })
-
         # Extract user
-        try:
+        user = None
+        if state:
+            try:
+                raw_uid = state.split(":")[0]
+                if raw_uid and str(raw_uid).lower() not in ["undefined", "null", "none"]:
+                    user = User.objects.get(id=raw_uid)
+            except Exception as e:
+                print("Error parsing ads state user_id:", e, flush=True)
 
-            user_id = state.split(":")[0]
+        if not user and hasattr(request, 'user') and request.user.is_authenticated:
+            user = request.user
 
-            user = User.objects.get(id=user_id)
-
-            amazon_account = AmazonAccount.objects.filter(
-                user=user
-            ).first()
-
-        except Exception as e:
-
+        if not user:
             return Response({
                 "status": False,
-                "message": str(e)
-            })
+                "message": "Invalid user account or state"
+            }, status=400)
+
+        amazon_account = AmazonAccount.objects.filter(
+            user=user
+        ).first()
 
         # Exchange auth code
         token_response = self.exchange_token(code)
