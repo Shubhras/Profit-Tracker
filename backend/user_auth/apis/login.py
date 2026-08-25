@@ -28,9 +28,6 @@ class UserLoginAPI(APIView):
             channels.append("Amazon-India")
         if MyntraConnection and MyntraConnection.objects.filter(user=target_user).exists():
             channels.append("Myntra")
-        # Fallback default if no seller account is linked yet
-        if not channels:
-            channels = ["Amazon-India"]
         return channels
 
     def post(self, request):
