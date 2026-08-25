@@ -12,7 +12,6 @@ import {
   SettingOutlined,
   LineChartOutlined,
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
 
 function DigitalMarket() {
   const navigate = useNavigate();
@@ -114,15 +113,7 @@ function DigitalMarket() {
 
                     <Button
                       type="primary"
-<<<<<<< HEAD
-                      onClick={() =>
-                        navigate('/admin/pages/support', {
-                          state: { openModal: true, title: 'Inquiry for Digital Marketing - Basic Plan' },
-                        })
-                      }
-=======
                       onClick={() => navigate('/admin/pages/support')}
->>>>>>> 62f6712fddde11f045b068d85f986af4c983cd9d
                       className="bg-[#16a34a] border-[#16a34a] h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
                     >
                       Choose Basic Plan
@@ -185,15 +176,7 @@ function DigitalMarket() {
 
                     <Button
                       type="primary"
-<<<<<<< HEAD
-                      onClick={() =>
-                        navigate('/admin/pages/support', {
-                          state: { openModal: true, title: 'Inquiry for Digital Marketing - Pro Plan' },
-                        })
-                      }
-=======
                       onClick={() => navigate('/admin/pages/support')}
->>>>>>> 62f6712fddde11f045b068d85f986af4c983cd9d
                       className="bg-[#16a34a] border-[#16a34a] h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
                     >
                       Choose Pro Plan
@@ -251,15 +234,7 @@ function DigitalMarket() {
 
                     <Button
                       type="primary"
-<<<<<<< HEAD
-                      onClick={() =>
-                        navigate('/admin/pages/support', {
-                          state: { openModal: true, title: 'Inquiry for Digital Marketing - Premium Plan' },
-                        })
-                      }
-=======
                       onClick={() => navigate('/admin/pages/support')}
->>>>>>> 62f6712fddde11f045b068d85f986af4c983cd9d
                       className="bg-[#16a34a] border-[#16a34a] h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
                     >
                       Choose Premium Plan

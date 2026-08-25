@@ -1,153 +1,74 @@
-import { React, useState } from 'react';
-// import { Upload } from 'antd';
-// import UilCamera from '@iconscout/react-unicons/icons/uil-camera';
-// import UilSetting from '@iconscout/react-unicons/icons/uil-setting';
-// import UilBell from '@iconscout/react-unicons/icons/uil-bell';
+import React, { useState } from 'react';
 import UilUser from '@iconscout/react-unicons/icons/uil-user';
-// import UilHeadphones from '@iconscout/react-unicons/icons/uil-headphones';
-// import UilUsersAlt from '@iconscout/react-unicons/icons/uil-users-alt';
+import UilLock from '@iconscout/react-unicons/icons/uil-padlock';
 import { NavLink } from 'react-router-dom';
-// import Heading from '../../../../components/heading/heading';
+
+const NAV_ITEMS = [
+  {
+    key: 'profile',
+    label: 'Edit Profile',
+    hint: 'Name, contact & business details',
+    icon: UilUser,
+  },
+  {
+    key: 'password',
+    label: 'Change Password',
+    hint: 'Update your login credentials',
+    icon: UilLock,
+  },
+];
 
 function AuthorBox() {
   const path = '/admin/pages/settings';
-
   const [activeValue, setActiveValue] = useState('profile');
 
   return (
-    <>
-      <div className="bg-white dark:bg-white10 rounded-[10px]">
-        {/* <div className="-mx-3 px-5 pt-[25px] pb-5 text-center border-b border-regular dark:border-white10">
-          <figure className="relative max-w-[120px] mx-auto mb-6">
-            <img className="mx-auto" src={require('../../../../static/img/users/1.png')} alt="" />
-            <Upload className="absolute right-0 -bottom-2 flex items-center justify-center bg-white dark:bg-white10 w-10 h-10 rounded-full">
-              <Link to="#" className="inline-flex items-center justify-center bg-primary w-8 h-8 rounded-full">
-                <UilCamera className="w-4 h-4 text-white" />
-              </Link>
-            </Upload>
-          </figure>
-          <figcaption>
-            <Heading as="h4" className="mb-0 text-dark dark:text-white87 text-lg font-semibold">
-              Duran Clayton
-            </Heading>
-            <p className="mb-0 text-light dark:text-white60 text-15">UI/UX Designer</p>
-          </figcaption>
-        </div> */}
-        <nav className="px-[25px] pt-8 pb-5">
-          <ul className="mb-0">
-            <li>
-              <NavLink
-                to={`${path}/profile`}
-                onClick={() => {
-                  setActiveValue('profile');
-                }}
-                className={`flex items-center mb-3 px-5 py-3 rounded-[6px] ${
-                  activeValue === 'profile'
-                    ? 'bg-primary-transparent text-primary font-medium'
-                    : 'bg-transparent text-light dark:text-white60 font-normal'
-                }`}
-              >
-                <UilUser className="w-4 h-4 ltr:mr-3 rtl:ml-3 mb-0.5" />
-                Edit Profile
-              </NavLink>
-            </li>
-            {/* <li>
-              <NavLink
-                to={`${path}/account`}
-                onClick={() => {
-                  setActiveValue('account');
-                }}
-                className={`flex items-center mb-3 px-5 py-3 rounded-[6px] ${
-                  activeValue === 'account'
-                    ? 'bg-primary-transparent text-primary font-medium'
-                    : 'bg-transparent text-light dark:text-white60 font-normal'
-                }`}
-              >
-                <UilSetting className="w-4 h-4 ltr:mr-3 rtl:ml-3 mb-0.5" />
-                Account Settings
-              </NavLink>
-            </li> */}
-            <li>
-              <NavLink
-                to={`${path}/password`}
-                onClick={() => {
-                  setActiveValue('password');
-                }}
-                className={`flex items-center mb-3 px-5 py-3 rounded-[6px] ${
-                  activeValue === 'password'
-                    ? 'bg-primary-transparent text-primary font-medium'
-                    : 'bg-transparent text-light dark:text-white60 font-normal'
-                }`}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="ltr:mr-3 rtl:ml-3 -mb-0.5 feather feather-key"
+    <div className="bg-white dark:bg-white10 rounded-lg border border-slate-100 dark:border-white10 overflow-hidden">
+      <nav className="px-3 py-4">
+        <ul className="mb-0 space-y-1">
+          {NAV_ITEMS.map(({ key, label, hint, icon: Icon }) => {
+            const isActive = activeValue === key;
+
+            return (
+              <li key={key}>
+                <NavLink
+                  to={`${path}/${key}`}
+                  onClick={() => setActiveValue(key)}
+                  className={`relative flex items-center gap-3 px-3 py-3 rounded-xl transition-colors duration-150 ${
+                    isActive ? 'bg-emerald-50 dark:bg-emerald-500/10' : 'hover:bg-slate-50 dark:hover:bg-white/5'
+                  }`}
                 >
-                  <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
-                </svg>
-                Change Password
-              </NavLink>
-            </li>
-            {/* <li>
-              <NavLink
-                to={`${path}/support`}
-                onClick={() => {
-                  setActiveValue('support');
-                }}
-                className={`flex items-center mb-3 px-5 py-3 rounded-[6px] ${
-                  activeValue === 'support'
-                    ? 'bg-primary-transparent text-primary font-medium'
-                    : 'bg-transparent text-light dark:text-white60 font-normal'
-                }`}
-              >
-                <UilHeadphones className="w-4 h-4 ltr:mr-3 rtl:ml-3 mb-0.5" />
-                Help & Support
-              </NavLink>
-            </li> */}
-            {/* <li>
-              <NavLink
-                to={`${path}/social`}
-                onClick={() => {
-                  setActiveValue('social');
-                }}
-                className={`flex items-center mb-3 px-5 py-3 rounded-[6px] ${
-                  activeValue === 'social'
-                    ? 'bg-primary-transparent text-primary font-medium'
-                    : 'bg-transparent text-light dark:text-white60 font-normal'
-                }`}
-              >
-                <UilUsersAlt className="w-4 h-4 ltr:mr-3 rtl:ml-3 mb-0.5" />
-                Social Profile
-              </NavLink>
-            </li> */}
-            {/* <li>
-              <NavLink
-                to={`${path}/notification`}
-                onClick={() => {
-                  setActiveValue('notification');
-                }}
-                className={`flex items-center mb-3 px-5 py-3 rounded-[6px] ${
-                  activeValue === 'notification'
-                    ? 'bg-primary-transparent text-primary font-medium'
-                    : 'bg-transparent text-light dark:text-white60 font-normal'
-                }`}
-              >
-                <UilBell className="w-4 h-4 ltr:mr-3 rtl:ml-3 mb-0.5" />
-                Notification
-              </NavLink>
-            </li> */}
-          </ul>
-        </nav>
-      </div>
-    </>
+                  {isActive && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-emerald-500" />}
+
+                  <span
+                    className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      isActive
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-white60'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </span>
+
+                  <span className="flex flex-col">
+                    <span
+                      className={`text-[13.5px] leading-tight ${
+                        isActive
+                          ? 'text-emerald-700 dark:text-emerald-400 font-semibold'
+                          : 'text-slate-700 dark:text-white70 font-medium'
+                      }`}
+                    >
+                      {label}
+                    </span>
+                    <span className="text-[11.5px] text-slate-400 dark:text-white40 mt-0.5">{hint}</span>
+                  </span>
+                </NavLink>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+    </div>
   );
 }
 

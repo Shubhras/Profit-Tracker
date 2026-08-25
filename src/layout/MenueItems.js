@@ -1029,10 +1029,7 @@ function MenuItems({ toggleCollapsed }) {
     }
     if (userPermissions && userPermissions.length > 0) {
       return userPermissions.some(
-        (p) =>
-          p.module_slug === slug ||
-          p.module_name?.toLowerCase() === slug.toLowerCase() ||
-          p.module === slug,
+        (p) => p.module_slug === slug || p.module_name?.toLowerCase() === slug.toLowerCase() || p.module === slug,
       );
     }
     return true;

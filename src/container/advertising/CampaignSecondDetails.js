@@ -197,7 +197,7 @@ function CampaignSecondDetails() {
   return (
     <>
       <div className="p-2">
-        <div className="mt-3 mb-3 rounded-2xl border border-[#e5e7eb] bg-white shadow-sm overflow-hidden">
+        <div className="mt-2 mb-3 rounded-lg border border-[#e5e7eb] bg-white shadow-sm overflow-hidden">
           <div className="border-b border-[#edf0f2] px-4 py-3">
             {/* Top Row */}
             <div className="flex items-center gap-4">

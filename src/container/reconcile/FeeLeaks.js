@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 import { Row, Col, Table, Spin, Select, Button } from 'antd';
 
-import { FilterOutlined, DownloadOutlined, BarChartOutlined, DollarOutlined } from '@ant-design/icons';
+import { DownloadOutlined } from '@ant-design/icons';
 
 export default function FeeLeaks() {
   const [loading, setLoading] = useState(true);
@@ -181,7 +181,7 @@ export default function FeeLeaks() {
 
   return (
     <>
-      <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-3 py-2 mt-2 xl:px-[15px] pb-5 bg-transparent">
+      <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-5 mt-4 xl:px-[15px] pb-5 bg-transparent">
         <Spin spinning={loading} size="large">
           {/* TOP HEADER */}
 
@@ -196,11 +196,11 @@ export default function FeeLeaks() {
               </div>
 
               <div className="flex items-center gap-2 sm:w-full sm:flex-wrap">
-                <Button icon={<FilterOutlined />} className="text-[12px] h-[30px]">
-                  Filters
-                </Button>
-
-                <Button type="primary" icon={<DownloadOutlined />} className="text-[12px] h-[30px] shadow-none">
+                <Button
+                  type="primary"
+                  icon={<DownloadOutlined />}
+                  className="text-[12px] h-[30px] font-semibold shadow-none"
+                >
                   Download All Leaks
                 </Button>
               </div>
@@ -368,46 +368,6 @@ export default function FeeLeaks() {
                   <button type="button" className="text-[#2563EB] text-[12px] font-medium">
                     View All →
                   </button>
-                </div>
-
-                <div className="bg-white rounded-lg border border-gray-200 p-2 shadow-sm">
-                  <h3 className="text-[13px] font-semibold text-[#111827] mb-4">Quick Actions</h3>
-
-                  <div className="space-y-2">
-                    <div className="flex items-start gap-3 cursor-pointer">
-                      <div className="w-8 h-8 rounded-md bg-gray-100 flex items-center justify-center">
-                        <DownloadOutlined className="text-[14px] text-gray-600" />
-                      </div>
-
-                      <div>
-                        <p className="text-[12px] font-medium text-[#111827] mb-0">Download Leak Report</p>
-                        <p className="text-[11px] text-gray-500">Export complete leak details</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3 cursor-pointer">
-                      <div className="w-8 h-8 rounded-md bg-gray-100 flex items-center justify-center">
-                        {' '}
-                        <BarChartOutlined className="text-[14px] text-gray-600" />
-                      </div>
-
-                      <div>
-                        <p className="text-[12px] font-medium text-[#111827] mb-0">View Leak Summary</p>
-                        <p className="text-[11px] text-gray-500">Analyze leak summary</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3 cursor-pointer">
-                      <div className="w-8 h-8 rounded-md bg-green-50 flex items-center justify-center">
-                        <DollarOutlined className="text-[14px] text-green-600" />
-                      </div>
-
-                      <div>
-                        <p className="text-[12px] font-medium text-[#111827] mb-0">Reimbursement Tracker</p>
-                        <p className="text-[11px] text-gray-500">Track claims & reimbursements</p>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             </Col>

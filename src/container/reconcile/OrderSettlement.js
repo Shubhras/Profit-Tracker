@@ -12,13 +12,14 @@ import {
   EyeOutlined,
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { getSettledOrders } from '../../redux/reconcilePayment/actionCreator';
+import { getSettledOrders, getAllSettlement } from '../../redux/reconcilePayment/actionCreator';
 
 function OrderSettlement() {
   const dispatch = useDispatch();
   const { RangePicker } = DatePicker;
   // const [fullfilment, setFullfilment] = useState('');
   const [dateRange, setDateRange] = useState();
+  const [activeTab, setActiveTab] = useState('summary');
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -35,22 +36,35 @@ function OrderSettlement() {
     setIsModalOpen(true);
   };
 
-  const { settledData, settledLoading } = useSelector((state) => state.reconcilePayment);
+  const {
+    settledData,
+    settledLoading,
+    allsettlementData,
+    loading: allSettlementLoading,
+  } = useSelector((state) => state.reconcilePayment);
+
   useEffect(() => {
-    dispatch(
-      getSettledOrders(
-        pagination.current,
-        pagination.pageSize,
-        debouncedSearch,
-        // filters: {
-        //   fulfillment_channel: fullfilment,
-        //   search: debouncedSearch,
-        //   start_date: dateRange?.[0]?.format('YYYY-MM-DD'),
-        //   end_date: dateRange?.[1]?.format('YYYY-MM-DD'),
-        // },
-      ),
-    );
-  }, [dispatch, dateRange, pagination.current, pagination.pageSize, debouncedSearch]);
+    if (activeTab === 'summary') {
+      // Order Summary ki existing API
+      dispatch(getSettledOrders(pagination.current, pagination.pageSize, debouncedSearch));
+    }
+
+    if (activeTab === 'settlement') {
+      // All Settlement ki new API
+      const today = new Date();
+
+      const startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+
+      const endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+
+      dispatch(
+        getAllSettlement({
+          start_date: startDate,
+          end_date: endDate,
+        }),
+      );
+    }
+  }, [dispatch, activeTab, pagination.current, pagination.pageSize, debouncedSearch]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -113,38 +127,34 @@ function OrderSettlement() {
   ];
 
   const dataSource =
-    settledData?.results?.map((item, index) => ({
-      key: item.id || index,
-      transactionId: item.transaction_id,
-      orderId: item.order_id,
-      transactionType: item.transaction_type,
-      transactionStatus: item.transaction_status,
-      description: item.description,
-      postedDate: item.posted_date,
-      totalAmount: item.total_amount,
-      currencyCode: item.currency_code,
-      breakdowns: item.breakdowns || [],
-      relatedIdentifiers: item.related_identifiers || [],
-    })) || [];
+    activeTab === 'summary'
+      ? settledData?.results?.map((item, index) => ({
+          key: item.id || index,
+          transactionId: item.transaction_id,
+          orderId: item.order_id,
+          transactionType: item.transaction_type,
+          transactionStatus: item.transaction_status,
+          description: item.description,
+          postedDate: item.posted_date,
+          totalAmount: item.total_amount,
+          currencyCode: item.currency_code,
+          breakdowns: item.breakdowns || [],
+          relatedIdentifiers: item.related_identifiers || [],
+        })) || []
+      : allsettlementData?.results?.map((item, index) => ({
+          key: item.settlement_date || index,
+
+          // SAME COLUMN NAMES
+          settlementDate: item.settlement_date,
+          sales: item.sales,
+          refunds: item.refunds,
+          expenses: item.expenses,
+          others: item.others,
+          payoutAmount: item.payout_amount,
+          totalTransactions: item.total_transactions,
+        })) || [];
 
   const columns = [
-    {
-      title: 'Transaction ID',
-      dataIndex: 'transactionId',
-      key: 'transactionId',
-      align: 'center',
-      width: 90,
-      sorter: (a, b) => String(a.transactionId || '').localeCompare(String(b.transactionId || '')),
-      ellipsis: true,
-      render: (v) => (
-        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-          <span className="font-medium text-[#1677ff] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
-            {v}
-          </span>
-        </Tooltip>
-      ),
-    },
-
     {
       title: 'Order ID',
       dataIndex: 'orderId',
@@ -287,6 +297,70 @@ function OrderSettlement() {
     },
   ];
 
+  const settlementColumns = [
+    {
+      title: 'Settlement Date',
+      dataIndex: 'settlementDate',
+      key: 'settlementDate',
+      align: 'center',
+      width: 100,
+      sorter: (a, b) => a.settlementDate - b.settlementDate,
+    },
+    {
+      title: 'Sales',
+      dataIndex: 'sales',
+      key: 'sales',
+      align: 'center',
+      width: 100,
+      render: (v) => `₹ ${Number(v || 0).toFixed(2)}`,
+      sorter: (a, b) => a.sales - b.sales,
+    },
+    {
+      title: 'Refunds',
+      dataIndex: 'refunds',
+      key: 'refunds',
+      align: 'center',
+      width: 100,
+      render: (v) => `₹ ${Number(v || 0).toFixed(2)}`,
+      sorter: (a, b) => a.refunds - b.refunds,
+    },
+    {
+      title: 'Expenses',
+      dataIndex: 'expenses',
+      key: 'expenses',
+      align: 'center',
+      width: 100,
+      render: (v) => `₹ ${Number(v || 0).toFixed(2)}`,
+      sorter: (a, b) => a.expenses - b.expenses,
+    },
+    {
+      title: 'Others',
+      dataIndex: 'others',
+      key: 'others',
+      align: 'center',
+      width: 100,
+      render: (v) => `₹ ${Number(v || 0).toFixed(2)}`,
+      sorter: (a, b) => a.others - b.others,
+    },
+    {
+      title: 'Payout Amount',
+      dataIndex: 'payoutAmount',
+      key: 'payoutAmount',
+      align: 'center',
+      width: 120,
+      render: (v) => `₹ ${Number(v || 0).toFixed(2)}`,
+      sorter: (a, b) => a.payoutAmount - b.payoutAmount,
+    },
+    {
+      title: 'Transactions',
+      dataIndex: 'totalTransactions',
+      key: 'totalTransactions',
+      align: 'center',
+      width: 100,
+      sorter: (a, b) => a.totalTransactions - b.totalTransactions,
+    },
+  ];
+
   return (
     <>
       <div className="min-h-screen bg-[#f6f8fc] p-3 md:p-2 sm:p-3">
@@ -347,19 +421,30 @@ function OrderSettlement() {
         <div className="w-full">
           {' '}
           {/* LEFT */}
-          <div className="rounded-2xl border border-[#e5e7eb] bg-white overflow-hidden">
+          <div className="rounded-lg p-2 border border-[#e5e7eb] bg-white overflow-hidden">
             {/* TABS */}
             <div className="flex items-center gap-6 border-b border-[#edf0f2] px-2 py-2 sm:gap-3 sm:flex-wrap">
               {' '}
-              {['Order Summary', 'Settlement Summary'].map((item, index) => (
+              {[
+                { label: 'Order Summary', value: 'summary' },
+                { label: 'All Settlement', value: 'settlement' },
+              ].map((item) => (
                 <button
-                  key={index}
+                  key={item.value}
                   type="button"
+                  onClick={() => {
+                    setActiveTab(item.value);
+
+                    setPagination({
+                      current: 1,
+                      pageSize: 10,
+                    });
+                  }}
                   className={`pb-0 text-[12px] font-semibold ${
-                    index === 0 ? 'border-b-2 border-[#16a34a] text-[#16a34a]' : 'text-[#6b7280]'
+                    activeTab === item.value ? 'border-b-2 border-[#16a34a] text-[#16a34a]' : 'text-[#6b7280]'
                   }`}
                 >
-                  {item}
+                  {item.label}
                 </button>
               ))}
             </div>
@@ -402,27 +487,19 @@ function OrderSettlement() {
 
                 <SearchOutlined className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-[#9ca3af]" />
               </div>
-              {/* <button
-              type="button"
-              className="flex py-1 items-center gap-2 rounded-l border border-[#e5e7eb] px-2 text-[11px] font-medium text-[#374151]"
-            >
-              <FilterOutlined className="text-[10px]" />
-              Filters
-            </button> */}
             </div>
 
             {/* TABLE */}
             <div className="overflow-x-auto w-full">
               <Table
-                columns={columns}
+                columns={activeTab === 'summary' ? columns : settlementColumns}
                 dataSource={dataSource}
-                loading={settledLoading}
                 showSorterTooltip={false}
-                tableLayout="fixed"
+                loading={activeTab === 'summary' ? settledLoading : allSettlementLoading}
                 pagination={{
                   current: pagination.current,
                   pageSize: pagination.pageSize,
-                  total: settledData?.count || 0,
+                  total: activeTab === 'summary' ? settledData?.count || 0 : allsettlementData?.count || 0,
                   showSizeChanger: true,
                   pageSizeOptions: ['10', '20', '50', '100'],
                   showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
@@ -434,14 +511,12 @@ function OrderSettlement() {
                   });
                 }}
                 scroll={{ x: 800, y: 500 }}
-                size="middle"
-                bordered={false}
                 className="
     [&_.ant-table-thead>tr>th]:!text-[12px]
     [&_.ant-table-thead>tr>th]:!font-semibold
     [&_.ant-table-tbody>tr>td]:!text-[12px]
     [&_.ant-table-cell]:!px-2
-    [&_.ant-table-cell]:!py-2
+    [&_.ant-table-cell]:!py-[6px]
   "
               />
             </div>
