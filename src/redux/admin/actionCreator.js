@@ -154,6 +154,14 @@ const {
   deleteUsersDetailsBegin,
   deleteUsersDetailsSuccess,
   deleteUsersDetailsErr,
+
+  getContactMessagesBegin,
+  getContactMessagesSuccess,
+  getContactMessagesErr,
+
+  updateContactMessageBegin,
+  updateContactMessageSuccess,
+  updateContactMessageErr,
 } = actions;
 
 export const getCouponCodes = () => {
@@ -926,6 +934,56 @@ export const getModulePermissionsDetails = (id, callback) => {
     } catch (err) {
       dispatch(getModulePermissionDetailsErr(err));
       callback?.(false, err);
+    }
+  };
+};
+
+export const getAdminContactMessages = (page = 1, limit = 10, search = '', status = '', callback) => {
+  return async (dispatch) => {
+    dispatch(getContactMessagesBegin());
+
+    try {
+      let url = `user/admin/contact-messages/?page=${page}&limit=${limit}`;
+      if (search) {
+        url += `&search=${encodeURIComponent(search)}`;
+      }
+      if (status) {
+        url += `&status=${encodeURIComponent(status)}`;
+      }
+
+      const response = await DataService.get(url);
+
+      if (response.data?.status === true || response.data?.status === 'success' || response.status === 200) {
+        dispatch(getContactMessagesSuccess(response.data));
+        callback?.(true, response.data);
+      } else {
+        dispatch(getContactMessagesErr('Failed to fetch contact messages'));
+        callback?.(false, response.data);
+      }
+    } catch (err) {
+      dispatch(getContactMessagesErr(err));
+      callback?.(false, err);
+    }
+  };
+};
+
+export const updateAdminContactMessage = (id, payload, callback) => {
+  return async (dispatch) => {
+    dispatch(updateContactMessageBegin());
+
+    try {
+      const response = await DataService.put(`user/admin/contact-messages/${id}/`, payload);
+
+      if (response.data?.status === true || response.data?.status === 'success' || response.status === 200) {
+        dispatch(updateContactMessageSuccess(response.data));
+        callback?.(true, response.data);
+      } else {
+        dispatch(updateContactMessageErr('Failed to update contact message'));
+        callback?.(false, response.data);
+      }
+    } catch (err) {
+      dispatch(updateContactMessageErr(err));
+      callback?.(false, err?.response?.data || err);
     }
   };
 };
