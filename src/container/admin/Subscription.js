@@ -25,6 +25,10 @@ function SubscriptionTable() {
   const [expandedModules, setExpandedModules] = useState([]);
   const [selectedModules, setSelectedModules] = useState([]);
   const [selectedSubmodules, setSelectedSubmodules] = useState([]);
+  const [expandedSubmodules, setExpandedSubmodules] = useState({});
+  const [expandedModulesList, setExpandedModulesList] = useState({});
+  const [expandedFeatures, setExpandedFeatures] = useState({});
+  const [expandedTerms, setExpandedTerms] = useState({});
 
   const toggleModule = (id) => {
     setExpandedModules((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -137,17 +141,44 @@ function SubscriptionTable() {
                   </div>
 
                   <h3 className="text-[18px] font-semibold mb-3 mt-2">Features :</h3>
-                  <div className="space-y-2">
-                    {plan.features?.map((feature, index) => (
-                      <div key={index} className="flex items-center gap-3">
-                        <div className="w-4 h-4 rounded-full bg-[#22c55e] text-white flex items-center justify-center">
-                          <CheckOutlined className="text-[10px]" />
+                  {(() => {
+                    const FEATURE_LIMIT = 3;
+                    const isFeaturesExpanded = expandedFeatures[plan.id];
+                    const features = plan.features || [];
+                    const visibleFeatures = isFeaturesExpanded ? features : features.slice(0, FEATURE_LIMIT);
+                    const remainingFeatures = features.length - FEATURE_LIMIT;
+
+                    return (
+                      <>
+                        <div className="space-y-2">
+                          {visibleFeatures.map((feature, index) => (
+                            <div key={index} className="flex items-center gap-3">
+                              <div className="w-4 h-4 rounded-full bg-[#22c55e] text-white flex items-center justify-center">
+                                <CheckOutlined className="text-[10px]" />
+                              </div>
+
+                              <span className="text-[14px] text-gray-600">{feature}</span>
+                            </div>
+                          ))}
                         </div>
 
-                        <span className="text-[14px] text-gray-600">{feature}</span>
-                      </div>
-                    ))}
-                  </div>
+                        {features.length > FEATURE_LIMIT && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setExpandedFeatures((prev) => ({
+                                ...prev,
+                                [plan.id]: !prev[plan.id],
+                              }))
+                            }
+                            className="mt-2 text-[12px] font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                          >
+                            {isFeaturesExpanded ? 'Show less' : `+ ${remainingFeatures} more`}
+                          </button>
+                        )}
+                      </>
+                    );
+                  })()}
 
                   {plan.terms_and_conditions?.length > 0 && (
                     <>
@@ -155,15 +186,42 @@ function SubscriptionTable() {
 
                       <h3 className="text-[18px] font-semibold mb-3">Terms & Conditions</h3>
 
-                      <div className="space-y-2">
-                        {plan.terms_and_conditions.map((term, index) => (
-                          <div key={index} className="flex items-start gap-3">
-                            <span className="text-[14px] font-semibold text-gray-500">{index + 1}.</span>
+                      {(() => {
+                        const TERMS_LIMIT = 3;
+                        const isTermsExpanded = expandedTerms[plan.id];
+                        const terms = plan.terms_and_conditions;
+                        const visibleTerms = isTermsExpanded ? terms : terms.slice(0, TERMS_LIMIT);
+                        const remainingTerms = terms.length - TERMS_LIMIT;
 
-                            <span className="text-[14px] text-gray-600">{term}</span>
-                          </div>
-                        ))}
-                      </div>
+                        return (
+                          <>
+                            <div className="space-y-2">
+                              {visibleTerms.map((term, index) => (
+                                <div key={index} className="flex items-start gap-3">
+                                  <span className="text-[14px] font-semibold text-gray-500">{index + 1}.</span>
+
+                                  <span className="text-[14px] text-gray-600">{term}</span>
+                                </div>
+                              ))}
+                            </div>
+
+                            {terms.length > TERMS_LIMIT && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setExpandedTerms((prev) => ({
+                                    ...prev,
+                                    [plan.id]: !prev[plan.id],
+                                  }))
+                                }
+                                className="mt-2 text-[12px] font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                              >
+                                {isTermsExpanded ? 'Show less' : `+ ${remainingTerms} more`}
+                              </button>
+                            )}
+                          </>
+                        );
+                      })()}
                     </>
                   )}
 
@@ -177,50 +235,107 @@ function SubscriptionTable() {
                       </div>
 
                       {plan.module_details?.length > 0 ? (
-                        plan.module_details?.map((module) => {
-                          const moduleSubmodules =
-                            plan.submodule_details?.filter((sub) => sub.module?.id === module.id) || [];
+                        (() => {
+                          const MODULE_LIMIT = 3;
+                          const isModulesExpanded = expandedModulesList[plan.id];
+                          const visibleModules = isModulesExpanded
+                            ? plan.module_details
+                            : plan.module_details.slice(0, MODULE_LIMIT);
+                          const remainingModules = plan.module_details.length - MODULE_LIMIT;
+
                           return (
-                            <div
-                              key={module.id}
-                              className="bg-white border border-gray-200 rounded-lg mb-3 overflow-hidden"
-                            >
-                              {/* Module Header */}
-                              <div className="flex items-center justify-between p-3 border-b border-gray-100">
-                                <div className="flex items-center gap-3">
-                                  <span className="font-medium text-[15px] text-gray-800">{module.name}</span>
-                                </div>
+                            <>
+                              {visibleModules.map((module) => {
+                                const moduleSubmodules =
+                                  plan.submodule_details?.filter((sub) => sub.module?.id === module.id) || [];
+                                return (
+                                  <div
+                                    key={module.id}
+                                    className="bg-white border border-gray-200 rounded-lg mb-3 overflow-hidden"
+                                  >
+                                    {/* Module Header */}
+                                    <div className="flex items-center justify-between p-3 border-b border-gray-100">
+                                      <div className="flex items-center gap-3">
+                                        <span className="font-medium text-[15px] text-gray-800">{module.name}</span>
+                                      </div>
 
-                                <span className="text-[12px] text-blue-600 bg-blue-100 px-3 py-1 rounded-full font-medium">
-                                  {moduleSubmodules.length} Submodule
-                                  {moduleSubmodules.length !== 1 ? 's' : ''}
-                                </span>
-                              </div>
-
-                              {/* Submodules */}
-                              <div className="p-3">
-                                {moduleSubmodules.length > 0 ? (
-                                  <div className="flex flex-wrap gap-2">
-                                    {moduleSubmodules.map((sub) => (
-                                      <span
-                                        key={sub.id}
-                                        className="px-3 py-1 bg-green-50 text-green-700 border border-green-200 rounded-full text-[12px] flex items-center gap-1"
-                                      >
-                                        <span className="w-2 h-2 rounded-full bg-green-500" />
-                                        {sub.name}
+                                      <span className="text-[12px] text-blue-600 bg-blue-100 px-3 py-1 rounded-full font-medium">
+                                        {moduleSubmodules.length} Submodule
+                                        {moduleSubmodules.length !== 1 ? 's' : ''}
                                       </span>
-                                    ))}
+                                    </div>
+
+                                    {/* Submodules */}
+                                    <div className="p-3">
+                                      {moduleSubmodules.length > 0 ? (
+                                        (() => {
+                                          const key = `${plan.id}-${module.id}`;
+                                          const isExpanded = expandedSubmodules[key];
+                                          const LIMIT = 3;
+                                          const visibleSubmodules = isExpanded
+                                            ? moduleSubmodules
+                                            : moduleSubmodules.slice(0, LIMIT);
+                                          const remaining = moduleSubmodules.length - LIMIT;
+
+                                          return (
+                                            <>
+                                              <div className="flex flex-wrap gap-2">
+                                                {visibleSubmodules.map((sub) => (
+                                                  <span
+                                                    key={sub.id}
+                                                    className="px-3 py-1 bg-green-50 text-green-700 border border-green-200 rounded-full text-[12px] flex items-center gap-1"
+                                                  >
+                                                    <span className="w-2 h-2 rounded-full bg-green-500" />
+                                                    {sub.name}
+                                                  </span>
+                                                ))}
+                                              </div>
+
+                                              {moduleSubmodules.length > LIMIT && (
+                                                <button
+                                                  type="button"
+                                                  onClick={() =>
+                                                    setExpandedSubmodules((prev) => ({
+                                                      ...prev,
+                                                      [key]: !prev[key],
+                                                    }))
+                                                  }
+                                                  className="mt-2 text-[12px] font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                                                >
+                                                  {isExpanded ? 'Show less' : `+ ${remaining} more`}
+                                                </button>
+                                              )}
+                                            </>
+                                          );
+                                        })()
+                                      ) : (
+                                        <div className="flex items-center gap-2 text-gray-500 text-[13px]">
+                                          <span className="w-2 h-2 rounded-full bg-gray-300" />
+                                          No submodules available
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
-                                ) : (
-                                  <div className="flex items-center gap-2 text-gray-500 text-[13px]">
-                                    <span className="w-2 h-2 rounded-full bg-gray-300" />
-                                    No submodules available
-                                  </div>
-                                )}
-                              </div>
-                            </div>
+                                );
+                              })}
+
+                              {plan.module_details.length > MODULE_LIMIT && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setExpandedModulesList((prev) => ({
+                                      ...prev,
+                                      [plan.id]: !prev[plan.id],
+                                    }))
+                                  }
+                                  className="w-full mt-1 mb-2 py-2 text-[13px] font-medium text-blue-600 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 hover:text-blue-800 transition-colors"
+                                >
+                                  {isModulesExpanded ? 'Show less modules' : `Show ${remainingModules} more modules`}
+                                </button>
+                              )}
+                            </>
                           );
-                        })
+                        })()
                       ) : (
                         <div className="bg-white border border-dashed border-gray-300 rounded-lg py-4 text-center">
                           <p className="text-[14px] font-medium text-gray-500">No modules found</p>

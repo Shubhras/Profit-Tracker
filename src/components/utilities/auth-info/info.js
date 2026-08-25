@@ -1,12 +1,8 @@
 import UilAngleDown from '@iconscout/react-unicons/icons/uil-angle-down';
-// import UilBell from '@iconscout/react-unicons/icons/uil-bell';
-// import UilDollarSign from '@iconscout/react-unicons/icons/uil-dollar-sign';
 import { UilReceipt, UilHeadphonesAlt } from '@iconscout/react-unicons';
-// import UilSetting from '@iconscout/react-unicons/icons/uil-setting';
 import UilSignout from '@iconscout/react-unicons/icons/uil-signout';
 import UilUser from '@iconscout/react-unicons/icons/uil-user';
-// import UilUsersAlt from '@iconscout/react-unicons/icons/uil-users-alt';
-import { Avatar, DatePicker, Button, Badge } from 'antd';
+import { Avatar, DatePicker, Button, Badge, Spin, Popover } from 'antd';
 import {
   BellOutlined,
   ToolOutlined,
@@ -17,24 +13,17 @@ import {
   CalendarOutlined,
 } from '@ant-design/icons';
 import React, { useEffect, useState } from 'react';
-// import { useTranslation} from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import UilTimes from '@iconscout/react-unicons/icons/uil-times';
 import moment from 'moment';
-// import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
-// import Search from './Search';
 import FilterDropdown from './FilterDropdown';
-// import Message from './Message';
-// import Notification from './Notification';
-// import Settings from './settings';
 import HeaderButton from './HeaderButton';
 import CustomCalendar from './CustomCalendar';
-import { Popover } from '../../popup/popup';
+// import { Popover } from '../../popup/popup';
 import Heading from '../../heading/heading';
-// import { Dropdown } from '../../dropdown/dropdown';
 import { HEADER_ACTIONS } from '../../../config/headerActionsConfig';
 import { logOut, getProfile } from '../../../redux/authentication/actionCreator';
 import { getNotifications } from '../../../redux/dashboard/actionCreator';
@@ -46,8 +35,10 @@ const AuthInfo = React.memo(() => {
   const navigate = useNavigate();
 
   const { RangePicker } = DatePicker;
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const [notificationLoading, setNotificationLoading] = useState(false);
 
-  const { notifications, loading } = useSelector((state) => state.dashboard);
+  const { notifications } = useSelector((state) => state.dashboard);
 
   const getNotificationIcon = (type) => {
     switch (type) {
@@ -109,8 +100,10 @@ const AuthInfo = React.memo(() => {
 
       {/* Body */}
       <div style={{ maxHeight: 340, overflowY: 'auto' }}>
-        {loading ? (
-          <div className="text-center py-4">Loading...</div>
+        {notificationLoading ? (
+          <div className="flex items-center justify-center py-6">
+            <Spin size="small" />
+          </div>
         ) : notifications?.length ? (
           <>
             {notifications.slice(0, 4).map((item) => {
@@ -154,7 +147,10 @@ const AuthInfo = React.memo(() => {
           <button
             type="button"
             className="font-semibold text-[#1677FF] hover:underline underline-offset-4"
-            onClick={() => navigate('/admin/pages/notifications')}
+            onClick={() => {
+              setNotificationOpen(false);
+              navigate('/admin/pages/notifications');
+            }}
           >
             View All Notifications →
           </button>
@@ -371,44 +367,6 @@ const AuthInfo = React.memo(() => {
     </div>
   );
 
-  // const onFlagChangeHandle = (value, e) => {
-  //   e.preventDefault();
-  //   setState({
-  //     ...state,
-  //     flag: value,
-  //   });
-  //   i18n.changeLanguage(value);
-  // };
-
-  // const country = (
-  //   <div className="block bg-white dark:bg-[#1b1d2a]">
-  //     <Link
-  //       to="#"
-  //       onClick={(e) => onFlagChangeHandle('en', e)}
-  //       className="flex items-center bg-white dark:bg-white10 hover:bg-primary-transparent px-3 py-1.5 text-sm text-dark dark:text-white60"
-  //     >
-  //       <img className="w-3.5 h-3.5 ltr:mr-2 rtl:ml-2" src={require('../../../static/img/flag/en.png')} alt="" />
-  //       <span>English</span>
-  //     </Link>
-  //     <Link
-  //       to="#"
-  //       onClick={(e) => onFlagChangeHandle('en', e)}
-  //       className="flex items-center bg-white dark:bg-white10 hover:bg-primary-transparent px-3 py-1.5 text-sm text-dark dark:text-white60"
-  //     >
-  //       <img className="w-3.5 h-3.5 ltr:mr-2 rtl:ml-2" src={require('../../../static/img/flag/esp.png')} alt="" />
-  //       <span>Spanish</span>
-  //     </Link>
-  //     <Link
-  //       to="#"
-  //       onClick={(e) => onFlagChangeHandle('en', e)}
-  //       className="flex items-center bg-white dark:bg-white10 hover:bg-primary-transparent px-3 py-1.5 text-sm text-dark dark:text-white60"
-  //     >
-  //       <img className="w-3.5 h-3.5 ltr:mr-2 rtl:ml-2" src={require('../../../static/img/flag/ar.png')} alt="" />
-  //       <span>Arabic</span>
-  //     </Link>
-  //   </div>
-  // );
-
   return (
     <div className="flex items-center justify-end flex-auto">
       <div className="md:hidden flex items-center gap-3">
@@ -431,20 +389,6 @@ const AuthInfo = React.memo(() => {
               onClick={() => setOpen(!open)}
               className="px-2 py-1 border rounded-md text-sm bg-white flex items-center gap-2"
             >
-              {/* DATE TEXT */}
-              {/* <span>
-              {dateRange
-                ? `${dateRange[0].format('DD/MM/YYYY')} - ${dateRange[1].format('DD/MM/YYYY')}`
-                : 'Select Date'}
-            </span> */}
-              {/* <span className="text-[12px]">
-                {dateRange
-                  ? isMonthMode
-                    ? `${dateRange[0].format('MMM YYYY')} - ${dateRange[1].format('MMM YYYY')}`
-                    : `${dateRange[0].format('DD/MM/YYYY')} - ${dateRange[1].format('DD/MM/YYYY')}`
-                  : 'Select Date'}
-              </span> */}
-
               <>
                 {/* Desktop */}
                 <span className="text-[12px] lg:hidden">
@@ -586,10 +530,18 @@ const AuthInfo = React.memo(() => {
         <Popover
           placement="bottomRight"
           content={notificationContent}
-          trigger="hover"
-          onOpenChange={() => {
-            if (open) {
-              dispatch(getNotifications());
+          trigger="click"
+          open={notificationOpen}
+          onOpenChange={async (visible) => {
+            setNotificationOpen(visible);
+
+            if (visible) {
+              try {
+                setNotificationLoading(true);
+                await dispatch(getNotifications());
+              } finally {
+                setNotificationLoading(false);
+              }
             }
           }}
         >

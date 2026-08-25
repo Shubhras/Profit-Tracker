@@ -4,11 +4,9 @@ import { Button } from 'antd';
 import {
   ShopOutlined,
   AppstoreOutlined,
-  // RocketOutlined,
   ThunderboltOutlined,
   BankOutlined,
   ArrowRightOutlined,
-  CheckCircleFilled,
 } from '@ant-design/icons';
 
 const categories = [
@@ -16,6 +14,7 @@ const categories = [
     id: 'marketplaces',
     name: 'Marketplaces',
     icon: <ShopOutlined />,
+    color: 'orange',
     platforms: [
       { name: 'Amazon', logo: '/icons/amazon.svg', status: 'coming' },
       { name: 'Flipkart', logo: '/icons/flipkart.png', status: 'coming' },
@@ -29,6 +28,7 @@ const categories = [
     id: 'd2c',
     name: 'D2C Platforms',
     icon: <AppstoreOutlined />,
+    color: 'violet',
     platforms: [
       { name: 'Shopify', logo: '/icons/shopify.png', status: 'coming' },
       { name: 'WooCommerce', logo: '/icons/woo.png', status: 'coming' },
@@ -39,6 +39,7 @@ const categories = [
     id: 'quick',
     name: 'Quick Commerce',
     icon: <ThunderboltOutlined />,
+    color: 'rose',
     platforms: [
       { name: 'Blinkit', logo: '/icons/blinkit.png', status: 'coming' },
       { name: 'Zepto', logo: '/icons/zepto.png', status: 'coming' },
@@ -49,6 +50,7 @@ const categories = [
     id: 'accounting',
     name: 'Accounting',
     icon: <BankOutlined />,
+    color: 'blue',
     platforms: [
       { name: 'Tally', logo: '/icons/tally.png', status: 'coming' },
       { name: 'Zoho Books', logo: '/icons/zoho.png', status: 'coming' },
@@ -56,11 +58,48 @@ const categories = [
   },
 ];
 
-// Combine all platforms for "All" view
-const allPlatforms = categories.flatMap((cat) => cat.platforms.map((p) => ({ ...p, category: cat.name })));
+// Tailwind-safe color config per category — keep classnames literal (not built with string concat)
+const COLOR_MAP = {
+  orange: {
+    iconBg: 'bg-orange-50 border-orange-100 text-orange-500',
+    cardBorder: 'shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50',
+    letter: 'text-orange-500',
+    button: 'bg-orange-500 border-orange-500',
+  },
+  violet: {
+    iconBg: 'bg-violet-50 border-violet-100 text-violet-500',
+    cardBorder: 'shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50',
+    letter: 'text-violet-500',
+    button: 'bg-violet-500 border-violet-500',
+  },
+  rose: {
+    iconBg: 'bg-rose-50 border-rose-100 text-rose-500',
+    cardBorder: 'shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50',
+    letter: 'text-rose-500',
+    button: 'bg-rose-500 border-rose-500',
+  },
+  blue: {
+    iconBg: 'bg-blue-50 border-blue-100 text-blue-500',
+    cardBorder: 'shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50',
+    letter: 'text-blue-500',
+    button: 'bg-blue-500 border-blue-500',
+  },
+  slate: {
+    iconBg: 'bg-slate-50 border-slate-100 text-slate-500',
+    cardBorder: 'shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50',
+    letter: 'text-slate-500',
+    button: 'bg-slate-800 border-slate-800',
+  },
+};
+
+// Combine all platforms for the grid, tagging each with its category's color
+const allPlatforms = categories.flatMap((cat) =>
+  cat.platforms.map((p) => ({ ...p, categoryName: cat.name, color: cat.color })),
+);
 
 function IntegrationCard({ platform }) {
   const isLive = platform.status === 'live';
+  const colors = COLOR_MAP[platform.color] || COLOR_MAP.slate;
 
   return (
     <motion.div
@@ -69,39 +108,33 @@ function IntegrationCard({ platform }) {
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
       transition={{ duration: 0.2 }}
-      className={`group relative flex items-center p-5 bg-white rounded-2xl border border-gray-100 hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300 ${
-        !isLive && 'opacity-70'
-      }`}
+      className={`group relative flex items-center p-5 bg-white rounded-2xl border border-gray-100 hover:shadow-xl transition-all duration-300 ${colors.cardBorder}`}
     >
       {/* Logo Section */}
-      <div className="flex-shrink-0 w-16 h-16 p-2 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center mr-5 group-hover:scale-105 transition-transform duration-300">
+      <div
+        className={`flex-shrink-0 w-16 h-16 p-2 rounded-xl border flex items-center justify-center mr-5 group-hover:scale-105 transition-transform duration-300 ${colors.iconBg}`}
+      >
         {platform.logo ? (
-          <img
-            src={platform.logo}
-            alt={platform.name}
-            className={`max-w-full max-h-full object-contain ${!isLive ? 'grayscale' : ''}`}
-          />
+          <img src={platform.logo} alt={platform.name} className="max-w-full max-h-full object-contain" />
         ) : (
-          <div className="text-2xl font-bold text-gray-300">{platform.name.charAt(0)}</div>
+          <div className={`text-2xl font-bold ${colors.letter}`}>{platform.name.charAt(0)}</div>
         )}
       </div>
 
       {/* Content Section */}
-      <div className="flex-grow min-w-0">
-        <div className="flex items-center justify-between mb-1">
-          <h3 className="text-lg font-bold text-gray-900 truncate pr-2">{platform.name}</h3>
-          {isLive && <CheckCircleFilled className="text-emerald-500 text-sm" />}
-        </div>
-        {/* <p className="text-xs text-gray-500 font-medium truncate">{isLive ? 'Full Sync Active' : 'Adding Soon'}</p> */}
+      <div className="flex-grow min-w-0 pr-6">
+        <h3 className="text-[16px] font-bold text-gray-900 truncate mb-0.5">{platform.name}</h3>
+        <p className="text-[12px] text-gray-400 font-medium truncate mb-0">{platform.categoryName}</p>
       </div>
 
-      {/* Action (Visible on Hover for Desktop, always for Mobile?) */}
-      <div className="ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block">
+      {/* Action (Visible on Hover for Desktop, always for Mobile) */}
+      <div className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block">
         <Button
           type="primary"
           shape="circle"
+          size="small"
           icon={<ArrowRightOutlined />}
-          className={isLive ? 'bg-emerald-500 border-emerald-500' : 'bg-gray-300 border-gray-300'}
+          className={isLive ? colors.button : 'bg-gray-200 border-gray-200 text-gray-400'}
           disabled={!isLive}
         />
       </div>
@@ -111,12 +144,13 @@ function IntegrationCard({ platform }) {
 
 export default function IntegrationChannel() {
   return (
-    <section className="w-full bg-gray-50 py-20 px-[3%]">
+    <section className="w-full bg-gray-50 py-10 px-[3%]">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
-        {/* <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Integration Channels</h2>
-        </div> */}
+        <div className="mb-10 text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-1">Integration Channels</h2>
+          <p className="text-[14px] text-gray-500">Connect the platforms your business already runs on</p>
+        </div>
 
         {/* All Integration Cards */}
         <motion.div layout className="grid grid-cols-1 min-md:grid-cols-2 min-lg:grid-cols-3 min-xl:grid-cols-4 gap-5">
