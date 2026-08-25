@@ -185,6 +185,7 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
             "description",
             "monthly_price",
             "annual_price",
+            "initial_sync_duration",
             "features",
             "terms_and_conditions",
             "status",
@@ -529,6 +530,7 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
             "description",
             "monthly_price",
             "annual_price",
+            "initial_sync_duration",
             "features",
             "terms_and_conditions",
 

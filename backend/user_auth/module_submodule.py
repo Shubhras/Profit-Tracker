@@ -6,6 +6,8 @@ from .serializers import *
 from .models import Module, SubModule, UserModulePermission
 from rest_framework import status
 from django.db import models
+from django.db.models import Q
+from django.core.paginator import Paginator
 
 
 class CreateModuleAPIView(APIView):
@@ -65,12 +67,58 @@ class ModuleListAPIView(APIView):
 
         try:
 
-            modules = Module.objects.filter(
+            queryset = Module.objects.filter(
                 is_active=True
-            ).order_by("-id")
+            )
+
+            search_query = (
+                request.GET.get("search") or
+                request.GET.get("key") or
+                request.GET.get("q") or
+                request.GET.get("name") or
+                ""
+            ).strip()
+
+            if search_query:
+                queryset = queryset.filter(
+                    Q(name__icontains=search_query) |
+                    Q(slug__icontains=search_query)
+                )
+
+            queryset = queryset.order_by("-id")
+
+            page = request.GET.get("page")
+            limit = request.GET.get("limit") or request.GET.get("page_size")
+
+            if page or limit:
+                try:
+                    page_num = int(page) if page else 1
+                    limit_num = int(limit) if limit else 10
+
+                    paginator = Paginator(queryset, limit_num)
+                    page_obj = paginator.get_page(page_num)
+
+                    serializer = ModuleSerializer(page_obj.object_list, many=True)
+
+                    return Response({
+                        "statusCode": 200,
+                        "status": True,
+                        "message": "Modules fetched successfully.",
+                        "data": serializer.data,
+                        "pagination": {
+                            "current_page": page_obj.number,
+                            "total_pages": paginator.num_pages,
+                            "total_records": paginator.count,
+                            "limit": limit_num,
+                            "has_next": page_obj.has_next(),
+                            "has_previous": page_obj.has_previous(),
+                        }
+                    }, status=status.HTTP_200_OK)
+                except Exception:
+                    pass
 
             serializer = ModuleSerializer(
-                modules,
+                queryset,
                 many=True
             )
 
@@ -327,6 +375,58 @@ class SubModuleListAPIView(APIView):
             queryset = SubModule.objects.filter(
                 is_active=True
             ).select_related("module")
+
+            search_query = (
+                request.GET.get("search") or
+                request.GET.get("key") or
+                request.GET.get("q") or
+                request.GET.get("name") or
+                ""
+            ).strip()
+
+            if search_query:
+                queryset = queryset.filter(
+                    Q(name__icontains=search_query) |
+                    Q(slug__icontains=search_query) |
+                    Q(description__icontains=search_query) |
+                    Q(module__name__icontains=search_query)
+                )
+
+            module_id = request.GET.get("module") or request.GET.get("module_id")
+            if module_id:
+                queryset = queryset.filter(module_id=module_id)
+
+            queryset = queryset.order_by("-id")
+
+            page = request.GET.get("page")
+            limit = request.GET.get("limit") or request.GET.get("page_size")
+
+            if page or limit:
+                try:
+                    page_num = int(page) if page else 1
+                    limit_num = int(limit) if limit else 10
+
+                    paginator = Paginator(queryset, limit_num)
+                    page_obj = paginator.get_page(page_num)
+
+                    serializer = SubModuleSerializer(page_obj.object_list, many=True)
+
+                    return Response({
+                        "statusCode": 200,
+                        "status": True,
+                        "message": "SubModules fetched successfully.",
+                        "data": serializer.data,
+                        "pagination": {
+                            "current_page": page_obj.number,
+                            "total_pages": paginator.num_pages,
+                            "total_records": paginator.count,
+                            "limit": limit_num,
+                            "has_next": page_obj.has_next(),
+                            "has_previous": page_obj.has_previous(),
+                        }
+                    }, status=status.HTTP_200_OK)
+                except Exception:
+                    pass
 
             serializer = SubModuleSerializer(
                 queryset,
