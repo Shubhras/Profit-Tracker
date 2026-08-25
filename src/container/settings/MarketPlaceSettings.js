@@ -33,7 +33,7 @@ export default function MarketPlaceSettings() {
     return () => clearTimeout(timer);
   }, []);
 
-  const userId = profile?.user_id;
+  const userId = profile?.id || profile?.user_id || profile?.user?.id;
 
   /* ============================================================
      ICON MAP
