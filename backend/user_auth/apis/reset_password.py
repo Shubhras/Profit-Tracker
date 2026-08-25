@@ -72,6 +72,34 @@ class UserResetPasswordAPI(APIView):
         )
 
 
+class VerifyResetOTPAPI(APIView):
+    def post(self, request):
+        email = request.data.get("email")
+        otp = request.data.get("otp") or request.data.get("token")
+
+        if not email or not otp:
+            return error_response("Email and OTP code are required.", 400)
+
+        email = email.strip().lower()
+        otp = str(otp).strip()
+
+        otp_record = EmailOTP.objects.filter(email=email).order_by("-created_at").first()
+
+        if not otp_record:
+            return error_response("No OTP request found for this email. Please request a new OTP.", 400)
+
+        if otp_record.is_expired():
+            return error_response("The OTP code has expired. Please request a new OTP.", 400)
+
+        if otp_record.otp != otp:
+            return error_response("Invalid OTP code. Please check and try again.", 400)
+
+        return success_response(
+            message="OTP code verified successfully.",
+            data={"email": email, "otp": otp}
+        )
+
+
 class RefreshTokenAPI(APIView):
     permission_classes = [AllowAny]
 

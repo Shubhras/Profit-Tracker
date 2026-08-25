@@ -296,6 +296,29 @@ const sendSignupOTP = (values, callback) => {
   };
 };
 
+const verifyResetOtp = (values, callback) => {
+  return async (dispatch) => {
+    dispatch(forgotBegin());
+
+    try {
+      const response = await DataService.post('/user/verify-reset-otp/', values);
+
+      if (response.data.status === true) {
+        dispatch(forgotSuccess(response.data.message));
+        if (callback) callback(true, response.data.message);
+      } else {
+        const msg = response.data.error || response.data.message || 'OTP verification failed';
+        dispatch(forgotErr(msg));
+        if (callback) callback(false, msg);
+      }
+    } catch (err) {
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || 'Invalid or expired OTP';
+      dispatch(forgotErr(errorMessage));
+      if (callback) callback(false, errorMessage);
+    }
+  };
+};
+
 export {
   login,
   subUserLogin,
@@ -303,6 +326,7 @@ export {
   register,
   sendSignupOTP,
   forgotPassword,
+  verifyResetOtp,
   resetPassword,
   changePassword,
   getProfile,

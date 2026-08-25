@@ -557,3 +557,28 @@ class EmailOTP(models.Model):
 
     def __str__(self):
         return f"OTP for {self.email}: {self.otp}"
+
+
+class ContactMessage(models.Model):
+    STATUS_CHOICES = (
+        ("new", "New"),
+        ("contacted", "Contacted"),
+        ("resolved", "Resolved"),
+    )
+
+    name = models.CharField(max_length=255)
+    company = models.CharField(max_length=255, blank=True, null=True)
+    email = models.EmailField()
+    phone = models.CharField(max_length=20)
+    designation = models.CharField(max_length=255, blank=True, null=True)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="new")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Contact Message from {self.name} ({self.email}) - {self.status}"

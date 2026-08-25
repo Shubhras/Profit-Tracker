@@ -353,9 +353,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
             channels.append("Amazon-India")
         if MyntraConnection.objects.filter(user=target_user).exists():
             channels.append("Myntra")
-        # Fallback default if no seller account is linked yet
-        if not channels:
-            channels = ["Amazon-India"]
         return channels    
 
     def get_subscription(self, obj):
@@ -377,6 +374,19 @@ class UserProfileSerializer(serializers.ModelSerializer):
             .order_by("-created_at")
             .first()
         )
+
+        if not subscription:
+            subscription = (
+                UserSubscription.objects
+                .select_related("plan")
+                .prefetch_related(
+                    "plan__modules",
+                    "plan__submodules__module"
+                )
+                .filter(user=target_user)
+                .order_by("-created_at")
+                .first()
+            )
 
         if not subscription:
             return None
@@ -866,3 +876,18 @@ class AdminSubUserSerializer(serializers.ModelSerializer):
     def get_permissions(self, obj):
         permissions = UserModulePermission.objects.filter(user=obj.user)
         return UserModulePermissionSerializer(permissions, many=True).data
+
+
+class ContactMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactMessage
+        fields = "__all__"
+
+    def validate_phone(self, value):
+        cleaned_phone = str(value).strip()
+        digits_only = re.sub(r'\D', '', cleaned_phone)
+        if not (7 <= len(digits_only) <= 15):
+            raise serializers.ValidationError("Please enter a valid phone number (7 to 15 digits).")
+        if not re.match(r'^\+?[0-9\s\-]+$', cleaned_phone):
+            raise serializers.ValidationError("Phone number contains invalid characters.")
+        return cleaned_phone
