@@ -308,6 +308,7 @@ function SubscriptionTable() {
               features: values.features || [],
               terms_and_conditions: values.terms_and_conditions || [],
               status: values.status,
+              initial_sync_duration: values.initial_sync_duration,
               // is_active: values.status === 'active',
               is_active: isEditMode ? values.status === 'active' : true,
               modules: selectedModules,
