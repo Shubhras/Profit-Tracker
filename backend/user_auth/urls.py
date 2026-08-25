@@ -2,6 +2,7 @@ from django.urls import path
 from user_auth.apis.register import UserRegisterAPI
 from user_auth.apis.signup_otp import SendSignupOTPAPIView
 from user_auth.apis.login import UserLoginAPI
+from user_auth.apis.logout import UserLogoutAPI
 from user_auth.apis.profile import UserProfileAPI
 from user_auth.apis.password import UserChangePasswordAPI
 from user_auth.apis.forgot_password import UserForgotPasswordAPI
@@ -22,6 +23,7 @@ from amazon_auth.growth_opportunities import GrowthOpportunitiesAPIView
 
 
 from admin_auth.apis.api_logs import AdminApiLogsAPI
+from admin_auth.apis.logout import AdminLogoutAPI
 
 from user_auth.apis.contact_us import (
     PublicContactMessageAPIView,
@@ -33,6 +35,7 @@ urlpatterns = [
     path('send-signup-otp/', SendSignupOTPAPIView.as_view(), name='send-signup-otp'),
     path('register/', UserRegisterAPI.as_view()),
     path('login/', UserLoginAPI.as_view()),
+    path('logout/', UserLogoutAPI.as_view(), name='logout'),
     path('profile/', UserProfileAPI.as_view()),
     path('contact-us/', PublicContactMessageAPIView.as_view(), name='contact-us'),
     # path('growth-opportunities/', GrowthOpportunitiesAPIView.as_view(), name='user-growth-opportunities'),
@@ -44,6 +47,7 @@ urlpatterns = [
     path('refresh-token/', RefreshTokenAPI.as_view(), name='refresh-token'),
     path('connected-accounts/', ConnectedMarketplacesView.as_view(), name='connected-accounts'),
     
+    path('admin/logout/', AdminLogoutAPI.as_view(), name='admin-logout'),
     path('admin/dashboard/', AdminDashboardAPI.as_view(), name='admin-dashboard'),
     path('admin/api-logs/', AdminApiLogsAPI.as_view(), name='admin-api-logs'),
     path('admin/marketplace-integrations/', AdminMarketplaceIntegrationsAPIView.as_view(), name='admin-marketplace-integrations'),

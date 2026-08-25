@@ -68,19 +68,29 @@ def format_date(dt):
 # =========================================
 # 1. CONNECT → Redirect to Amazon
 # =========================================
-# @login_required
 def amazon_connect(request):
     print("connect api callllll//////")
-    # state = secrets.token_hex(16)
-    # request.session["amazon_state"] = state
-
     user_id = request.GET.get("user_id")
+    if (not user_id or str(user_id).lower() in ["undefined", "null", "none"]) and hasattr(request, 'user') and request.user.is_authenticated:
+        user_id = request.user.id
+
+    if user_id and str(user_id).lower() not in ["undefined", "null", "none"]:
+        try:
+            from django.contrib.auth.models import User
+            from subscription.utils.channel_limit import check_user_channel_connection_limit
+            u = User.objects.get(id=user_id)
+            is_allowed, max_allowed, current_count, err_msg = check_user_channel_connection_limit(u)
+            if not is_allowed:
+                return JsonResponse({"status": False, "error": err_msg, "message": err_msg}, status=403)
+        except User.DoesNotExist:
+            pass
+        except Exception as e:
+            print("Channel limit check error in amazon_connect:", e)
+
     state = f"{user_id}:{secrets.token_hex(16)}"
     request.session["amazon_state"] = state
     request.session["code_used"] = False
 
-
-    # print("session_state//////",session_state)
     print("_state//////",state)
     
     auth_url = (
@@ -139,18 +149,34 @@ def amazon_callback(request):
     refresh_token = data.get("refresh_token")
 
 
-    # SAVE TO DATABASE (your original logic)
+    # SAVE TO DATABASE
     user = None
-    if user_id:
-        user = User.objects.get(id=user_id)
-
-    else:
+    if user_id and str(user_id).lower() not in ["undefined", "null", "none"]:
         try:
-            user_id = state.split(":")[0]
             user = User.objects.get(id=user_id)
-        except:
-            return JsonResponse({"error": "Invalid state"}, status=400)    
+        except User.DoesNotExist:
+            pass
 
+    if not user and state:
+        try:
+            raw_uid = state.split(":")[0]
+            if raw_uid and str(raw_uid).lower() not in ["undefined", "null", "none"]:
+                user = User.objects.get(id=raw_uid)
+        except Exception as e:
+            print("Error parsing state user_id:", e)
+
+    if not user and hasattr(request, 'user') and request.user.is_authenticated:
+        user = request.user
+
+    if not user:
+        return JsonResponse({"error": "Invalid state or user account not found"}, status=400)    
+
+    # Check connection limits before creating new account
+    if not AmazonAccount.objects.filter(user=user, seller_central_id=seller_id).exists():
+        from subscription.utils.channel_limit import check_user_channel_connection_limit
+        is_allowed, max_allowed, current_count, err_msg = check_user_channel_connection_limit(user)
+        if not is_allowed:
+            return JsonResponse({"status": False, "error": err_msg, "message": err_msg}, status=403)
 
     account, created = AmazonAccount.objects.get_or_create(
         user=user,

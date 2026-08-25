@@ -230,6 +230,11 @@ class SubscriptionPlan(models.Model):
         help_text="Number of historical days included in this subscription plan."
     )
 
+    max_channel_connection = models.PositiveIntegerField(
+        default=1,
+        help_text="Maximum number of channel connections (Amazon, Myntra, Ads, etc.) allowed under this subscription plan."
+    )
+
     status = models.CharField(
         max_length=10,
         choices=STATUS_CHOICES,
