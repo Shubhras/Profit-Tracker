@@ -26,6 +26,13 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
 
     discount_percentage.short_description = "Discount %"
 
+@admin.register(ContactMessage)
+class ContactMessageAdmin(admin.ModelAdmin):
+    list_display = ('name', 'email', 'phone', 'company', 'status', 'is_read', 'created_at')
+    list_filter = ('status', 'is_read', 'created_at')
+    search_fields = ('name', 'email', 'phone', 'company', 'message')
+
+
 @admin.register(LegalDocument)
 class LegalDocumentAdmin(admin.ModelAdmin):
     list_display = (

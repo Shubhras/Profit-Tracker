@@ -5,7 +5,7 @@ from user_auth.apis.login import UserLoginAPI
 from user_auth.apis.profile import UserProfileAPI
 from user_auth.apis.password import UserChangePasswordAPI
 from user_auth.apis.forgot_password import UserForgotPasswordAPI
-from user_auth.apis.reset_password import UserResetPasswordAPI,RefreshTokenAPI
+from user_auth.apis.reset_password import UserResetPasswordAPI, RefreshTokenAPI, VerifyResetOTPAPI
 from user_auth.apis.update_profile import UserUpdateProfileAPI
 from user_auth.apis.admin_user_update import AdminUserDetailUpdateAPIView, AdminUserSoftDeleteAPIView
 from user_auth.apis.admin_marketplace_integrations import AdminMarketplaceIntegrationsAPIView
@@ -23,15 +23,23 @@ from amazon_auth.growth_opportunities import GrowthOpportunitiesAPIView
 
 from admin_auth.apis.api_logs import AdminApiLogsAPI
 
+from user_auth.apis.contact_us import (
+    PublicContactMessageAPIView,
+    AdminContactMessageListAPIView,
+    AdminContactMessageDetailAPIView
+)
+
 urlpatterns = [
     path('send-signup-otp/', SendSignupOTPAPIView.as_view(), name='send-signup-otp'),
     path('register/', UserRegisterAPI.as_view()),
     path('login/', UserLoginAPI.as_view()),
     path('profile/', UserProfileAPI.as_view()),
+    path('contact-us/', PublicContactMessageAPIView.as_view(), name='contact-us'),
     # path('growth-opportunities/', GrowthOpportunitiesAPIView.as_view(), name='user-growth-opportunities'),
     path("update-profile/", UserUpdateProfileAPI.as_view()),
     path('change-password/', UserChangePasswordAPI.as_view()),
     path('forgot-password/', UserForgotPasswordAPI.as_view()),
+    path('verify-reset-otp/', VerifyResetOTPAPI.as_view(), name='verify-reset-otp'),
     path('reset-password/', UserResetPasswordAPI.as_view()),
     path('refresh-token/', RefreshTokenAPI.as_view(), name='refresh-token'),
     path('connected-accounts/', ConnectedMarketplacesView.as_view(), name='connected-accounts'),
@@ -40,6 +48,8 @@ urlpatterns = [
     path('admin/api-logs/', AdminApiLogsAPI.as_view(), name='admin-api-logs'),
     path('admin/marketplace-integrations/', AdminMarketplaceIntegrationsAPIView.as_view(), name='admin-marketplace-integrations'),
     path('admin/payment-transactions/', AdminPaymentTransactionsAPIView.as_view(), name='admin-payment-transactions'),
+    path('admin/contact-messages/', AdminContactMessageListAPIView.as_view(), name='admin-contact-messages'),
+    path('admin/contact-messages/<int:pk>/', AdminContactMessageDetailAPIView.as_view(), name='admin-contact-message-detail'),
     
     path(
         "admin/user-list/",

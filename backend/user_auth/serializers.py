@@ -876,3 +876,18 @@ class AdminSubUserSerializer(serializers.ModelSerializer):
     def get_permissions(self, obj):
         permissions = UserModulePermission.objects.filter(user=obj.user)
         return UserModulePermissionSerializer(permissions, many=True).data
+
+
+class ContactMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactMessage
+        fields = "__all__"
+
+    def validate_phone(self, value):
+        cleaned_phone = str(value).strip()
+        digits_only = re.sub(r'\D', '', cleaned_phone)
+        if not (7 <= len(digits_only) <= 15):
+            raise serializers.ValidationError("Please enter a valid phone number (7 to 15 digits).")
+        if not re.match(r'^\+?[0-9\s\-]+$', cleaned_phone):
+            raise serializers.ValidationError("Phone number contains invalid characters.")
+        return cleaned_phone
