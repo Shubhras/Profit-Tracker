@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Button, Form, Input, Spin, Avatar, Upload, message } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { setUserProfile } from '../../../../redux/authentication/actionCreator';
 import { DataService } from '../../../../config/dataService/dataService';
 
 function Profile() {
   const [form] = Form.useForm();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   // Loading states
   const [fetchLoading, setFetchLoading] = useState(false);
@@ -51,7 +53,6 @@ function Profile() {
     }
   };
 
-  // Call API on Page Load
   useEffect(() => {
     fetchProfile();
   }, []);
@@ -85,6 +86,7 @@ function Profile() {
           const pic = response.data.data.profile_picture;
           setPreviewImage(pic.startsWith('http') ? pic : `http://127.0.0.1:8000${pic}`);
         }
+        navigate('/admin/pages/actionsrequired');
       } else {
         message.error(response.data.message || 'Failed to update profile');
       }

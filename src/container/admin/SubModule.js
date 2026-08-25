@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Tag, Button, Modal, Input, Select, Switch, message } from 'antd';
-import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, SearchOutlined, CloseCircleOutlined } from '@ant-design/icons';
 
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -37,6 +37,7 @@ function SubModule() {
 
   const [deleteModal, setDeleteModal] = useState(false);
   const [selectedSubModule, setSelectedSubModule] = useState(null);
+  const [search, setSearch] = useState('');
 
   const moduleOptions =
     getModuleslist?.data?.map((item) => ({
@@ -205,30 +206,66 @@ function SubModule() {
       );
     }
   };
+  const filteredSubModuleData = subModuleData.filter((item) => {
+    const searchText = search.toLowerCase().trim();
+
+    return (
+      item.name?.toLowerCase().includes(searchText) ||
+      item.module_name?.toLowerCase().includes(searchText) ||
+      item.description?.toLowerCase().includes(searchText)
+    );
+  });
 
   return (
     <>
       <div className="min-h-screen bg-[#f8fafc] p-4">
         <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-[20px] font-semibold text-gray-800">Sub Modules</h2>
+          <div className="mb-5">
+            <div className="flex items-center justify-between">
+              <h2 className="text-[23px] font-semibold text-gray-800">Sub Modules</h2>
 
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              className="h-8 px-2 rounded-l text-[13px] font-semibold flex items-center"
-              onClick={() => {
-                resetForm();
-                setCreateModal(true);
-              }}
-            >
-              Create SubModules
-            </Button>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                className="h-8 px-2 rounded-l text-[13px] font-semibold flex items-center"
+                onClick={() => {
+                  resetForm();
+                  setCreateModal(true);
+                }}
+              >
+                Create SubModules
+              </Button>
+            </div>
+
+            {/* Search */}
+            <div className="relative w-[220px] mt-1">
+              <input
+                type="text"
+                placeholder="Search..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full h-[35px] rounded-lg border border-[#e5e7eb] bg-white pl-4 pr-10 text-[12px] outline-none shadow-sm focus:border-[#1677ff]"
+              />
+
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af]">
+                {search ? (
+                  <button
+                    type="button"
+                    onClick={() => setSearch('')}
+                    className="flex items-center justify-center cursor-pointer hover:text-[#374151]"
+                  >
+                    <CloseCircleOutlined style={{ fontSize: 16 }} />
+                  </button>
+                ) : (
+                  <SearchOutlined style={{ fontSize: 14 }} />
+                )}
+              </span>
+            </div>
           </div>
 
           <Table
             columns={columns}
-            dataSource={subModuleData}
+            dataSource={filteredSubModuleData}
             loading={loading}
             rowKey={(record) => record.id}
             bordered

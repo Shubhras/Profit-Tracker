@@ -384,7 +384,7 @@ function MenuItems({ toggleCollapsed }) {
         'reconcile',
         !topMenu && <UilCreateDashboard />,
         [
-          hasSubmodule('payment-reconcile-overview') &&
+          hasSubmodule('reconcile') &&
             getItem(
               <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-overview`}>
                 Reconcile

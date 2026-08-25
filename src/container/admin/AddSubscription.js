@@ -186,33 +186,48 @@ function AddSubscription() {
               <Input.TextArea autoSize={{ minRows: 2 }} placeholder="Enter description" />
             </Form.Item>
 
-            {isEditMode && (
+            <div className="grid grid-cols-2 gap-4">
+              {isEditMode && (
+                <Form.Item
+                  label="Status"
+                  name="status"
+                  rules={[
+                    {
+                      required: true,
+                      message: 'Please select status',
+                    },
+                  ]}
+                >
+                  <Select
+                    size="small"
+                    className="w-full"
+                    options={[
+                      {
+                        label: 'Active',
+                        value: 'active',
+                      },
+                      {
+                        label: 'Inactive',
+                        value: 'inactive',
+                      },
+                    ]}
+                  />
+                </Form.Item>
+              )}
+
               <Form.Item
-                label="Status"
-                name="status"
+                label="Initial Sync Days"
+                name="initial_sync_duration"
                 rules={[
                   {
                     required: true,
-                    message: 'Please select status',
+                    message: 'Please enter initial sync days',
                   },
                 ]}
               >
-                <Select
-                  size="small"
-                  options={[
-                    {
-                      label: 'Active',
-                      value: 'active',
-                    },
-                    {
-                      label: 'Inactive',
-                      value: 'inactive',
-                    },
-                  ]}
-                />
+                <InputNumber min={0} precision={0} size="small" className="w-full" placeholder="Enter days" />
               </Form.Item>
-            )}
-
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <Form.Item
                 label="Monthly Price"
