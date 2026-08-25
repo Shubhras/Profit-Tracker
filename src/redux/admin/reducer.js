@@ -148,6 +148,14 @@ const {
   DELETE_USERS_DETAILS_BEGIN,
   DELETE_USERS_DETAILS_SUCCESS,
   DELETE_USERS_DETAILS_ERR,
+
+  GET_CONTACT_MESSAGES_BEGIN,
+  GET_CONTACT_MESSAGES_SUCCESS,
+  GET_CONTACT_MESSAGES_ERR,
+
+  UPDATE_CONTACT_MESSAGE_BEGIN,
+  UPDATE_CONTACT_MESSAGE_SUCCESS,
+  UPDATE_CONTACT_MESSAGE_ERR,
 } = actions;
 
 const initialState = {
@@ -164,6 +172,8 @@ const initialState = {
   privacypolicyData: null,
   createPrivacyPolicy: null,
   getTicketsLists: null,
+  getContactMessagesData: null,
+  updateContactMessageData: null,
   updateModule: null,
   deleteModule: null,
   viewsingleModule: null,
@@ -969,6 +979,49 @@ const AdmindashboardReducer = (state = initialState, action) => {
         loading: false,
         error: action.err,
       };
+
+    case GET_CONTACT_MESSAGES_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case GET_CONTACT_MESSAGES_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        getContactMessagesData: action.data,
+      };
+
+    case GET_CONTACT_MESSAGES_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case UPDATE_CONTACT_MESSAGE_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case UPDATE_CONTACT_MESSAGE_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        updateContactMessageData: action.data,
+      };
+
+    case UPDATE_CONTACT_MESSAGE_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
     default:
       return state;
   }

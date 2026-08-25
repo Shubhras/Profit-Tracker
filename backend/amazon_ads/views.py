@@ -73,6 +73,17 @@ class AmazonAdsConnectView(APIView):
                 "message": "user_id required"
             })
 
+        try:
+            from subscription.utils.channel_limit import check_user_channel_connection_limit
+            u = User.objects.get(id=user_id)
+            is_allowed, max_allowed, current_count, err_msg = check_user_channel_connection_limit(u)
+            if not is_allowed:
+                return Response({"status": False, "error": err_msg, "message": err_msg}, status=403)
+        except User.DoesNotExist:
+            pass
+        except Exception as e:
+            print("Channel limit check error in AmazonAdsConnectView:", e)
+
         state = f"{user_id}:{secrets.token_hex(16)}"
 
         request.session["amazon_ads_state"] = state

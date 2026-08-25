@@ -732,6 +732,8 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             o_act_ship = tx_shipping_map.get(oid)
             if o_act_ship is None:
                 o_act_ship = abs(float(f.get('shipping_fee') or 0))
+            else:
+                o_act_ship = abs(float(o_act_ship))
 
             o_act_gst = abs(float(f.get('gst') or 0))
             o_act_settled = float(f.get('total_settled') or 0)
@@ -1420,6 +1422,8 @@ def _payment_reconcile_order_level_logic(request):
         row_actual_shipping = tx_actual_shipping_by_order.get(oid)
         if row_actual_shipping is None:
             row_actual_shipping = abs(float(f.get('shipping_fee') or 0))
+        else:
+            row_actual_shipping = abs(float(row_actual_shipping))
 
         row_actual_mp_gst = abs(float(f.get('gst') or 0))
         row_settlement_paid = float(f.get('total_settled') or 0)
@@ -1429,7 +1433,7 @@ def _payment_reconcile_order_level_logic(request):
             order_fee_map = extract_fees_and_tcs_per_asin(raw_data_map.get(oid, []))
             row_actual_tcs = sum(abs(float(fee_info.get("tcs", 0))) for fee_info in order_fee_map.values())
 
-        mpfees_num = abs(float(parse_currency_to_decimal(r.get("mpfees") if r.get("mpfees") is not None else r.get("estimatefees")) or 0))
+        mpfees_num = abs(float(parse_currency_to_decimal(r.get("estimatefees") if r.get("estimatefees") is not None else r.get("mpfees")) or 0))
         shipping_num = abs(float(parse_currency_to_decimal(r.get("shippingfees") if r.get("shippingfees") is not None else r.get("shipping")) or 0))
         tcs_num = abs(float(parse_currency_to_decimal(r.get("tcs")) or 0))
         exp_settlement_num = float(parse_currency_to_decimal(r.get("exp_settlement") if r.get("exp_settlement") is not None else r.get("expected_settlement")) or 0)

@@ -58,6 +58,7 @@ import {
   UilLayerGroup,
   UilAnalysis,
   UilBill,
+  UilEnvelope,
 } from '@iconscout/react-unicons';
 import { Menu } from 'antd';
 import React from 'react';
@@ -1036,9 +1037,15 @@ function MenuItems({ toggleCollapsed }) {
       return true;
     }
     if (userPermissions && userPermissions.length > 0) {
-      return userPermissions.some(
-        (p) => p.module_slug === slug || p.module_name?.toLowerCase() === slug.toLowerCase() || p.module === slug,
-      );
+      const target = slug.toLowerCase().replace(/[\s_-]+/g, '');
+      return userPermissions.some((p) => {
+        const mSlug = (p.module_slug || '').toLowerCase().replace(/[\s_-]+/g, '');
+        const mName = (p.module_name || '').toLowerCase().replace(/[\s_-]+/g, '');
+        const mId = String(p.module || '')
+          .toLowerCase()
+          .replace(/[\s_-]+/g, '');
+        return mSlug === target || mName === target || mId === target;
+      });
     }
     return true;
   };
@@ -1105,6 +1112,15 @@ function MenuItems({ toggleCollapsed }) {
         </NavLink>,
         'support',
         !topMenu && <UilLifeRing />,
+      ),
+
+    hasAdminModule('contact-messages') &&
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/contact-messages">
+          {t('Contact Messages')}
+        </NavLink>,
+        'contact-messages',
+        !topMenu && <UilEnvelope />,
       ),
 
     hasAdminModule('module') &&

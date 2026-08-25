@@ -150,6 +150,14 @@ const actions = {
   DELETE_USERS_DETAILS_BEGIN: 'DELETE_USERS_DETAILS_BEGIN',
   DELETE_USERS_DETAILS_SUCCESS: 'DELETE_USERS_DETAILS_SUCCESS',
   DELETE_USERS_DETAILS_ERR: 'DELETE_USERS_DETAILS_ERR',
+
+  GET_CONTACT_MESSAGES_BEGIN: 'GET_CONTACT_MESSAGES_BEGIN',
+  GET_CONTACT_MESSAGES_SUCCESS: 'GET_CONTACT_MESSAGES_SUCCESS',
+  GET_CONTACT_MESSAGES_ERR: 'GET_CONTACT_MESSAGES_ERR',
+
+  UPDATE_CONTACT_MESSAGE_BEGIN: 'UPDATE_CONTACT_MESSAGE_BEGIN',
+  UPDATE_CONTACT_MESSAGE_SUCCESS: 'UPDATE_CONTACT_MESSAGE_SUCCESS',
+  UPDATE_CONTACT_MESSAGE_ERR: 'UPDATE_CONTACT_MESSAGE_ERR',
   createCouponCodesBegin: () => ({
     type: actions.CREATE_COUPONCODE_BEGIN,
   }),
@@ -679,6 +687,30 @@ const actions = {
 
   deleteUsersDetailsErr: (err) => ({
     type: actions.DELETE_USERS_DETAILS_ERR,
+    err,
+  }),
+
+  getContactMessagesBegin: () => ({
+    type: actions.GET_CONTACT_MESSAGES_BEGIN,
+  }),
+  getContactMessagesSuccess: (data) => ({
+    type: actions.GET_CONTACT_MESSAGES_SUCCESS,
+    data,
+  }),
+  getContactMessagesErr: (err) => ({
+    type: actions.GET_CONTACT_MESSAGES_ERR,
+    err,
+  }),
+
+  updateContactMessageBegin: () => ({
+    type: actions.UPDATE_CONTACT_MESSAGE_BEGIN,
+  }),
+  updateContactMessageSuccess: (data) => ({
+    type: actions.UPDATE_CONTACT_MESSAGE_SUCCESS,
+    data,
+  }),
+  updateContactMessageErr: (err) => ({
+    type: actions.UPDATE_CONTACT_MESSAGE_ERR,
     err,
   }),
 };
