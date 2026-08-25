@@ -106,22 +106,24 @@ def amazon_connect(request):
 
 
 def amazon_callback(request):
-    print("callback api calll ///////////////:")
+    print("callback api calll ///////////////:", flush=True)
     state = request.GET.get("state")
     code = request.GET.get("spapi_oauth_code")
     seller_id = request.GET.get("selling_partner_id")
     user_id = request.GET.get("user_id")
 
     if not code:
+        print("Callback Error: Authorization code missing", flush=True)
         return JsonResponse({"error": "Authorization code missing"}, status=400)
 
     #  Prevent duplicate code usage
     if cache.get(code):
+        print(f"Callback Error: Code already used ({code})", flush=True)
         return JsonResponse({"error": "Code already used"}, status=400)
     cache.set(code, True, timeout=300)
 
-    print("CLIENT_ID:", AMAZON_CLIENT_ID)
-    print("CLIENT_SECRET:", AMAZON_CLIENT_SECRET)
+    print("CLIENT_ID:", AMAZON_CLIENT_ID, flush=True)
+    print("CLIENT_SECRET:", AMAZON_CLIENT_SECRET, flush=True)
 
     payload = {
         "grant_type": "authorization_code",
@@ -137,11 +139,11 @@ def amazon_callback(request):
         headers={"Content-Type": "application/x-www-form-urlencoded"}
     )
 
-    print("STATUS:", response.status_code)
-    print("RESPONSE:", response.text) 
-    
+    print("STATUS:", response.status_code, flush=True)
+    print("RESPONSE:", response.text, flush=True) 
 
     if response.status_code != 200:
+        print(f"Amazon Token Exchange Failed: {response.status_code} - {response.text}", flush=True)
         return JsonResponse({"error": response.text}, status=400)
 
     data = response.json()
