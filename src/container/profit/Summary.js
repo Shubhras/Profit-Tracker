@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback } from 'react';
-import { Row, Col, Spin, Select } from 'antd';
+import { Row, Col, Spin } from 'antd';
 import {
   ShoppingCartOutlined,
   RiseOutlined,
@@ -18,8 +18,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { amazonAction } from '../../redux/amazonAPI/actionCreator';
 // import { PageHeader } from '../../components/page-headers/page-headers';
 import { getDashboard } from '../../redux/dashboard/actionCreator';
-
-const { Option } = Select;
 
 export default function Summary() {
   // const path = '/admin';
@@ -658,7 +656,7 @@ export default function Summary() {
 
                       {/* CONTENT */}
                       <div className="flex flex-col justify-start flex-1 pt-[2px]">
-                        <p className="text-gray-500 text-[14px] font-semibold leading-none mb-3">Total Sales</p>
+                        <p className="text-gray-500 text-[14px] font-semibold leading-none mb-3">Net Sales</p>
 
                         <h2 className="text-[19px] font-semibold leading-tight text-[#111827] mt-[2px]">
                           {' '}
@@ -906,10 +904,6 @@ export default function Summary() {
             >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-[15px] font-semibold text-[#111827]">Sales, Quantity & Profit Overview</h3>
-
-                <Select size="small" defaultValue="daily" style={{ width: 100 }}>
-                  <Option value="daily">Daily</Option>
-                </Select>
               </div>
 
               <ResponsiveContainer width="100%" height={280}>

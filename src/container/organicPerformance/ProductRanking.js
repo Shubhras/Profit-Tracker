@@ -148,6 +148,7 @@ function ProductRanking() {
       dataIndex: 'saleRank',
       align: 'center',
       width: 70,
+      ellipsis: true,
       // sorter: (a, b) => {
       //   const rankA = Number(a.saleRank) || 0;
       //   const rankB = Number(b.saleRank) || 0;
@@ -191,7 +192,7 @@ function ProductRanking() {
       ),
     },
     {
-      title: 'Group Category Rank',
+      title: 'Master Category ',
       dataIndex: 'groupRankTitle',
       align: 'center',
       width: 70,

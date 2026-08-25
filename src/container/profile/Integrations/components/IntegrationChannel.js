@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button, Input } from 'antd';
+import { Button } from 'antd';
 import {
-  SearchOutlined,
-  AppstoreOutlined,
   ShopOutlined,
+  AppstoreOutlined,
   // RocketOutlined,
   ThunderboltOutlined,
   BankOutlined,
@@ -18,6 +17,7 @@ const categories = [
     name: 'Marketplaces',
     icon: <ShopOutlined />,
     platforms: [
+      { name: 'Amazon', logo: '/icons/amazon.svg', status: 'coming' },
       { name: 'Flipkart', logo: '/icons/flipkart.png', status: 'coming' },
       { name: 'Myntra', logo: '/icons/myntra.png', status: 'coming' },
       { name: 'Meesho', logo: '/icons/meesho.png', status: 'coming' },
@@ -92,7 +92,7 @@ function IntegrationCard({ platform }) {
           <h3 className="text-lg font-bold text-gray-900 truncate pr-2">{platform.name}</h3>
           {isLive && <CheckCircleFilled className="text-emerald-500 text-sm" />}
         </div>
-        <p className="text-xs text-gray-500 font-medium truncate">{isLive ? 'Full Sync Active' : 'Adding Soon'}</p>
+        {/* <p className="text-xs text-gray-500 font-medium truncate">{isLive ? 'Full Sync Active' : 'Adding Soon'}</p> */}
       </div>
 
       {/* Action (Visible on Hover for Desktop, always for Mobile?) */}
@@ -110,101 +110,22 @@ function IntegrationCard({ platform }) {
 }
 
 export default function IntegrationChannel() {
-  const [activeTab, setActiveTab] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // Filtering Logic
-  const getDisplayPlatforms = () => {
-    let baseList = [];
-    if (activeTab === 'all') {
-      baseList = allPlatforms;
-    } else {
-      const category = categories.find((c) => c.id === activeTab);
-      baseList = category ? category.platforms.map((p) => ({ ...p, category: category.name })) : [];
-    }
-
-    if (searchQuery) {
-      return baseList.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    }
-    return baseList;
-  };
-
-  const displayPlatforms = getDisplayPlatforms();
-
   return (
     <section className="w-full bg-gray-50 py-20 px-[3%]">
       <div className="max-w-7xl mx-auto">
-        {/* Controls Header */}
-        <div className="flex flex-col min-lg:flex-row items-start lg:items-center justify-between gap-6 mb-12">
-          {/* Tabs Scrollable */}
-          <div className="flex-1 overflow-x-auto pb-2 w-full min-lg:w-auto -mx-4 px-4 min-lg:mx-0 min-lg:px-0">
-            <div className="flex space-x-2">
-              <button
-                type="button"
-                onClick={() => setActiveTab('all')}
-                className={`px-5 py-2.5 flex items-center justify-center rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300 mt-0 ${
-                  activeTab === 'all'
-                    ? '!bg-gray-900 !text-white hover:!text-white focus:!text-white focus-visible:!text-white active:!text-white hover:!bg-gray-900'
-                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-                }`}
-              >
-                All Apps
-              </button>
-              {categories.map((cat, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  // type="text"
-                  onClick={() => setActiveTab(cat.id)}
-                  className={`px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap flex items-center gap-2 transition-all duration-300 !shadow-none ${
-                    activeTab === cat.id
-                      ? '!bg-gray-900 !text-white !border-none hover:!text-white focus:!text-white focus-visible:!text-white active:!text-white hover:!bg-gray-900'
-                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-                  }`}
-                >
-                  {cat.icon}
-                  {cat.name}
-                </button>
-              ))}
-            </div>
-          </div>
+        {/* Section Header */}
+        {/* <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Integration Channels</h2>
+        </div> */}
 
-          {/* Search */}
-          <div className="w-full min-lg:w-72">
-            <Input
-              placeholder="Search integrations..."
-              prefix={<SearchOutlined className="text-gray-400" />}
-              className="rounded-full py-2.5 px-4 border-gray-200 hover:border-emerald-500 focus:border-emerald-500 shadow-sm"
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Content Grid - Horizontal Cards */}
+        {/* All Integration Cards */}
         <motion.div layout className="grid grid-cols-1 min-md:grid-cols-2 min-lg:grid-cols-3 min-xl:grid-cols-4 gap-5">
           <AnimatePresence mode="popLayout">
-            {displayPlatforms.map((platform) => (
+            {allPlatforms.map((platform) => (
               <IntegrationCard key={platform.name} platform={platform} />
             ))}
           </AnimatePresence>
         </motion.div>
-
-        {/* Empty State */}
-        {displayPlatforms.length === 0 && (
-          <div className="text-center py-20">
-            <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-xl font-bold text-gray-900">No integration found</h3>
-            <p className="text-gray-500">Try adjusting your search or category filter.</p>
-          </div>
-        )}
-
-        {/* CTA Footer */}
-        {/* <div className="mt-20 pt-10 border-t border-gray-200 text-center">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Can&apos;t find what you need?</h3>
-          <Button className="text-emerald-600 font-bold hover:underline flex items-center justify-center gap-2 mx-auto">
-            <RocketOutlined /> Request a Custom Integration
-          </Button>
-        </div> */}
       </div>
     </section>
   );

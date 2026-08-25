@@ -14,25 +14,14 @@ const AuthorBox = lazy(() => import('./overview/ProfileAuthorBox'));
 // const CoverSection = lazy(() => import('../overview/CoverSection'));
 
 function Settings() {
-  const PageRoutes = [
-    // {
-    //   path: '/admin',
-    //   breadcrumbName: 'Dashboard',
-    // },
-    {
-      path: '',
-      breadcrumbName: 'My Profile',
-    },
-  ];
   return (
     <>
       <PageHeader
-        routes={PageRoutes}
-        title="My Profile"
-        className="flex  justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 sm:pb-[30px] bg-transparent sm:flex-col"
+        // title="My Profile"
+        className="flex  justify-between items-center px-6 xl:px-[15px] pt-2 pb-3 sm:pb-[30px] bg-transparent sm:flex-col"
       />
 
-      <main className="min-h-[715px] lg:min-h-[580px] bg-transparent px-8 xl:px-[15px] pb-[50px] ssm:pb-[30px]">
+      <main className="min-h-[715px] lg:min-h-[580px] bg-transparent px-5 xl:px-[15px] pb-[50px] ssm:pb-[30px]">
         <Row gutter={[25, 25]}>
           <Col xxl={6} lg={8} md={10} xs={24}>
             <Suspense

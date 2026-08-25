@@ -580,52 +580,58 @@ export default function ProfitDetailsView() {
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.claim_amount) - parseAmount(b.claim_amount),
     },
-    {
-      title: 'Product Cost',
-      dataIndex: 'std',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.std) - parseAmount(b.std),
-    },
-    {
-      title: 'Profit',
-      dataIndex: 'profit',
-      align: 'center',
-      width: 70,
-      sorter: (a, b) => parseAmount(a.profit) - parseAmount(b.profit),
-      render: (v, record) => (
-        <button
-          type="button"
-          onClick={() =>
-            setCalculationModal({
-              open: true,
-              type: 'profit',
-              record,
-            })
-          }
-          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none"
-        >
-          {v}
-        </button>
-      ),
-    },
-    {
-      title: 'Profit %',
-      dataIndex: 'profitPercent',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.profitPercent) - parseAmount(b.profitPercent),
-      render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>{v}%</span>,
-    },
+    ...(isReconcile
+      ? []
+      : [
+          {
+            title: 'Product Cost',
+            dataIndex: 'std',
+            align: 'center',
+            width: 70,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.std) - parseAmount(b.std),
+          },
+          {
+            title: 'Profit',
+            dataIndex: 'profit',
+            align: 'center',
+            width: 70,
+            sorter: (a, b) => parseAmount(a.profit) - parseAmount(b.profit),
+            render: (v, record) => (
+              <button
+                type="button"
+                onClick={() =>
+                  setCalculationModal({
+                    open: true,
+                    type: 'profit',
+                    record,
+                  })
+                }
+                className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none"
+              >
+                {v}
+              </button>
+            ),
+          },
+          {
+            title: 'Profit %',
+            dataIndex: 'profitPercent',
+            align: 'center',
+            width: 70,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.profitPercent) - parseAmount(b.profitPercent),
+            render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>{v}%</span>,
+          },
+        ]),
   ];
 
   useEffect(() => {
-    if (columns.length && visibleColumns.length === 0) {
+    if (columns.length) {
       setVisibleColumns(columns.map((col) => col.dataIndex || col.key || col.title));
     }
-  }, [columns]);
+    // Only initialize when reconcile mode changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReconcile]);
 
   const columnOptions = columns
     .filter(
@@ -637,23 +643,46 @@ export default function ProfitDetailsView() {
       label: typeof col.title === 'string' ? col.title : col.dataIndex || col.key,
     }));
 
+  const allColumnKeys = columnOptions.map((item) => item.key);
+
+  const allSelected = allColumnKeys.length > 0 && allColumnKeys.every((key) => visibleColumns.includes(key));
+
+  const someSelected = allColumnKeys.some((key) => visibleColumns.includes(key)) && !allSelected;
+
   const manageColumnsDropdown = (
     <div className="w-[260px] bg-white rounded-xl shadow-xl border border-[#e5e7eb]">
+      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b">
         <span className="font-medium text-[14px]">Manage Columns</span>
-        <button
-          type="button"
-          className="text-[#6366f1] text-[12px]"
-          onClick={() => setVisibleColumns(columnOptions.map((c) => c.key))}
-        >
+
+        <button type="button" className="text-[#6366f1] text-[12px]" onClick={() => setVisibleColumns(allColumnKeys)}>
           Restore
         </button>
       </div>
 
+      {/* Select All */}
+      <div className="flex items-center justify-between px-4 py-3 border-b bg-[#f9fafb]">
+        <span className="text-[13px] font-medium text-[#374151]">Select All</span>
+
+        <Checkbox
+          checked={allSelected}
+          indeterminate={someSelected}
+          onChange={(e) => {
+            if (e.target.checked) {
+              setVisibleColumns(allColumnKeys);
+            } else {
+              setVisibleColumns([]);
+            }
+          }}
+        />
+      </div>
+
+      {/* Individual Columns */}
       <div className="max-h-[350px] overflow-y-auto">
         {columnOptions.map((item) => (
           <div key={item.key} className="flex items-center justify-between px-4 py-2 hover:bg-[#f9fafb]">
-            <span className="text-[13px]">{item.label}</span>
+            <span className="text-[13px] text-[#374151]">{item.label}</span>
+
             <Checkbox
               checked={visibleColumns.includes(item.key)}
               onChange={(e) => {

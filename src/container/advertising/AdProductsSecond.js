@@ -291,7 +291,7 @@ function AdProductsDetails() {
       width: '70',
       sorter: (a, b) => a.cost - b.cost,
 
-      render: (v) => <span className="font-medium text-[#dc2626]">₹{v}</span>,
+      render: (v) => <span className="font-medium text-[#dc2626]">₹{Number(v || 0).toFixed(2)}</span>,
     },
 
     {
@@ -376,7 +376,7 @@ function AdProductsDetails() {
   return (
     <>
       <div className="px-4 py-1">
-        <div className="mt-3 mb-3 rounded-2xl border border-[#e5e7eb] bg-white shadow-sm overflow-hidden">
+        <div className="mt-2 mb-3 rounded-lg border border-[#e5e7eb] bg-white shadow-sm overflow-hidden">
           {/* Header */}
           {/* Header */}
           <div className="border-b border-[#edf0f2] px-3 py-3">
@@ -436,37 +436,39 @@ function AdProductsDetails() {
           </div>
 
           {/* Table */}
-          <Table
-            columns={columns}
-            dataSource={dataSource}
-            loading={loading}
-            showSorterTooltip={false}
-            tableLayout="fixed"
-            pagination={{
-              current: pagination.current,
-              pageSize: pagination.pageSize,
-              total: adsProductsDataDetails?.pagination?.total_records || 0,
-              showSizeChanger: true,
-              pageSizeOptions: ['10', '20', '50', '100'],
-              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
-            }}
-            onChange={(pag) => {
-              setPagination({
-                current: pag.current,
-                pageSize: pag.pageSize,
-              });
-            }}
-            scroll={{ x: 1900 }}
-            size="middle"
-            bordered={false}
-            className="
+          <div className="p-2">
+            <Table
+              columns={columns}
+              dataSource={dataSource}
+              loading={loading}
+              showSorterTooltip={false}
+              tableLayout="fixed"
+              pagination={{
+                current: pagination.current,
+                pageSize: pagination.pageSize,
+                total: adsProductsDataDetails?.pagination?.total_records || 0,
+                showSizeChanger: true,
+                pageSizeOptions: ['10', '20', '50', '100'],
+                showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
+              }}
+              onChange={(pag) => {
+                setPagination({
+                  current: pag.current,
+                  pageSize: pag.pageSize,
+                });
+              }}
+              scroll={{ x: 1900 }}
+              size="middle"
+              bordered={false}
+              className="
     [&_.ant-table-thead>tr>th]:!text-[12px]
     [&_.ant-table-thead>tr>th]:!font-semibold
     [&_.ant-table-tbody>tr>td]:!text-[12px]
     [&_.ant-table-cell]:!px-2
     [&_.ant-table-cell]:!py-2
   "
-          />
+            />
+          </div>
         </div>
       </div>
       <Modal

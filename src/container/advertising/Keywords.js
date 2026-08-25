@@ -559,7 +559,7 @@ function Keywords() {
   return (
     <>
       <div className="px-4">
-        <div className="mt-3 mb-3 rounded-2xl border border-[#e5e7eb] bg-white shadow-sm overflow-visible">
+        <div className="mt-3 mb-3 rounded-lg border border-[#e5e7eb] bg-white shadow-sm overflow-visible">
           {/* Header */}
           <div className="border-b border-[#edf0f2] px-3 py-3">
             {/* TOP CONTENT */}

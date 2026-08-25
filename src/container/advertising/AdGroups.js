@@ -25,7 +25,7 @@ function AdGroups() {
   const [openBidId, setOpenBidId] = useState(null);
 
   const [selectedRowKeys, setSelectedRowKeys] = React.useState([]);
-  const [visibleColumns, setVisibleColumns] = useState([]);
+  const [visibleColumns, setVisibleColumns] = useState(null);
   const [stateFilter, setStateFilter] = useState('');
   const [exportLoading, setExportLoading] = useState(false);
 
@@ -483,10 +483,11 @@ function AdGroups() {
   ];
 
   useEffect(() => {
-    if (columns.length && visibleColumns.length === 0) {
+    if (columns.length && visibleColumns === null) {
       setVisibleColumns(columns.map((col) => col.dataIndex || col.key || col.title));
     }
-  }, []);
+  }, [columns, visibleColumns]);
+
   const columnOptions = columns
     .filter((col) => col.dataIndex !== 'action')
     .map((col) => ({
@@ -494,33 +495,54 @@ function AdGroups() {
       label: typeof col.title === 'string' ? col.title : col.dataIndex || 'Column',
     }));
 
+  const allColumnKeys = columnOptions.map((item) => item.key);
+
+  const allSelected = allColumnKeys.length > 0 && allColumnKeys.every((key) => visibleColumns?.includes(key));
+
+  const someSelected = allColumnKeys.some((key) => visibleColumns?.includes(key)) && !allSelected;
+
   const manageColumnsDropdown = (
     <div className="w-[260px] bg-white rounded-xl shadow-xl border border-[#e5e7eb]">
+      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b">
         <span className="font-medium text-[14px]">Manage Columns</span>
 
-        <button
-          type="button"
-          className="text-[#6366f1] text-[12px]"
-          onClick={() => setVisibleColumns(columnOptions.map((item) => item.key))}
-        >
+        <button type="button" className="text-[#6366f1] text-[12px]" onClick={() => setVisibleColumns(allColumnKeys)}>
           Restore
         </button>
       </div>
 
+      {/* Select All */}
+      <div className="flex items-center justify-between px-4 py-3 border-b bg-[#f9fafb]">
+        <span className="text-[13px] font-medium text-[#374151]">Select All</span>
+
+        <Checkbox
+          checked={allSelected}
+          indeterminate={someSelected}
+          onChange={(e) => {
+            setVisibleColumns(e.target.checked ? allColumnKeys : []);
+          }}
+        />
+      </div>
+
+      {/* Individual Columns */}
       <div className="max-h-[350px] overflow-y-auto">
         {columnOptions.map((item) => (
           <div key={item.key} className="flex items-center justify-between px-4 py-2 hover:bg-[#f9fafb]">
             <span className="text-[13px] text-[#374151]">{item.label}</span>
 
             <Checkbox
-              checked={visibleColumns.includes(item.key)}
+              checked={visibleColumns?.includes(item.key)}
               onChange={(e) => {
-                if (e.target.checked) {
-                  setVisibleColumns((prev) => [...prev, item.key]);
-                } else {
-                  setVisibleColumns((prev) => prev.filter((c) => c !== item.key));
-                }
+                setVisibleColumns((prev) => {
+                  const current = prev || [];
+
+                  if (e.target.checked) {
+                    return current.includes(item.key) ? current : [...current, item.key];
+                  }
+
+                  return current.filter((key) => key !== item.key);
+                });
               }}
             />
           </div>
@@ -528,7 +550,6 @@ function AdGroups() {
       </div>
     </div>
   );
-
   const filteredColumns = columns.filter((col) => {
     const key = col.dataIndex || col.key || col.title;
 
@@ -536,13 +557,13 @@ function AdGroups() {
       return true;
     }
 
-    return visibleColumns.includes(key);
+    return visibleColumns?.includes(key);
   });
 
   return (
     <>
       <div className="px-4">
-        <div className="mt-3 mb-3 rounded-2xl border border-[#e5e7eb] bg-white shadow-sm overflow-hidden">
+        <div className="mt-3 mb-3 rounded-lg border border-[#e5e7eb] bg-white shadow-sm overflow-hidden">
           {/* Header */}
           <div className="border-b border-[#edf0f2] px-3 py-3">
             {/* TOP CONTENT */}

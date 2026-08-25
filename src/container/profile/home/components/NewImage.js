@@ -12,14 +12,14 @@ const NODE_R = 18; // marketplace circle radius (36px diameter)
 const leftMarkets = [
   { name: 'Amazon', short: 'AZ', connected: true, yPct: 26 },
   { name: 'Amazon Ads', short: 'A+', connected: true, yPct: 40 },
-  { name: 'Flipkart', short: 'FK', connected: true, yPct: 57 },
-  { name: 'Myntra', short: 'MY', connected: false, yPct: 72 },
+  { name: 'Myntra', short: 'MY', connected: true, yPct: 57 },
+  { name: 'Flipkart', short: 'FK', connected: false, yPct: 72 },
 ];
 
 const rightMarkets = [
   { name: 'Blinkit', short: 'BL', connected: true, yPct: 34 },
   { name: 'Swiggy Instamart', short: 'SI', connected: true, yPct: 50 },
-  { name: 'Zepto', short: 'ZP', connected: false, yPct: 65 },
+  { name: 'Zepto', short: 'ZP', connected: true, yPct: 65 },
   { name: 'Meesho', short: 'ME', connected: false, yPct: 79 },
 ];
 

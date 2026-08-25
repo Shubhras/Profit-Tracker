@@ -576,7 +576,7 @@ function RulesAutomation() {
           })}
         </div>
 
-        <div className="border border-[#edf0f2] rounded-xl px-3 pt-2 pb-0 mb-2 bg-white">
+        <div className="border border-[#edf0f2] rounded-lg px-3 pt-2 pb-0 mb-2 bg-white">
           <div className="flex items-center gap-5 overflow-x-auto scrollbar-hide">
             {[
               { label: 'Overview', count: rules?.count || 0 },
@@ -621,7 +621,7 @@ function RulesAutomation() {
           {' '}
           <div className="col-span-12 lg:col-span-12 space-y-2">
             {' '}
-            <div className="bg-white border border-[#edf0f2] rounded-2xl shadow-sm overflow-hidden">
+            <div className="bg-white border border-[#edf0f2] rounded-lg shadow-sm overflow-hidden p-2">
               {/* HEADER */}
 
               <div className="flex items-center justify-between px-3 py-2 border-b border-[#edf0f2] md:flex-col md:items-start md:gap-2">
