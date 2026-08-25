@@ -116,7 +116,11 @@ function QuickCommerce() {
 
                     <Button
                       type="primary"
-                      onClick={() => navigate('/admin/pages/support')}
+                      onClick={() =>
+                        navigate('/admin/pages/support', {
+                          state: { openModal: true, title: 'Inquiry for Account Management - Basic Plan' },
+                        })
+                      }
                       className="bg-[#16a34a] border-[#16a34a] h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
                     >
                       Choose Basic Plan
@@ -180,7 +184,11 @@ function QuickCommerce() {
 
                     <Button
                       type="primary"
-                      onClick={() => navigate('/admin/pages/support')}
+                      onClick={() =>
+                        navigate('/admin/pages/support', {
+                          state: { openModal: true, title: 'Inquiry for Account Management - Basic Plan' },
+                        })
+                      }
                       className="bg-[#16a34a] border-[#16a34a] h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
                     >
                       Choose Pro Plan
@@ -238,7 +246,11 @@ function QuickCommerce() {
 
                     <Button
                       type="primary"
-                      onClick={() => navigate('/admin/pages/support')}
+                      onClick={() =>
+                        navigate('/admin/pages/support', {
+                          state: { openModal: true, title: 'Inquiry for Account Management - Basic Plan' },
+                        })
+                      }
                       className="bg-[#16a34a] border-[#16a34a] h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
                     >
                       Choose Premium Plan
