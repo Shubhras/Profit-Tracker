@@ -376,6 +376,19 @@ class UserProfileSerializer(serializers.ModelSerializer):
         )
 
         if not subscription:
+            subscription = (
+                UserSubscription.objects
+                .select_related("plan")
+                .prefetch_related(
+                    "plan__modules",
+                    "plan__submodules__module"
+                )
+                .filter(user=target_user)
+                .order_by("-created_at")
+                .first()
+            )
+
+        if not subscription:
             return None
 
         if subuser:

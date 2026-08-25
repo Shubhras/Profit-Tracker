@@ -89,16 +89,26 @@ class UserLoginAPI(APIView):
             subscription_data = None
         else:
             subscription_user = subuser_obj.parent if (subuser_obj and subuser_obj.parent) else user
+            # Prioritize active and paid subscription first
             sub = (
                 UserSubscription.objects
                 .select_related("plan")
                 .prefetch_related("plan__modules", "plan__submodules__module")
-                .filter(user=subscription_user)
+                .filter(user=subscription_user, status="active", is_paid=True)
                 .order_by("-created_at")
                 .first()
             )
+            if not sub:
+                sub = (
+                    UserSubscription.objects
+                    .select_related("plan")
+                    .prefetch_related("plan__modules", "plan__submodules__module")
+                    .filter(user=subscription_user)
+                    .order_by("-created_at")
+                    .first()
+                )
 
-            has_subscription = sub is not None and sub.status == "active"
+            has_subscription = sub is not None and sub.status == "active" and sub.is_paid
             subscription_status = sub.status if sub else "no_subscription"
             subscription_data = None
 
@@ -153,11 +163,12 @@ class UserLoginAPI(APIView):
 
                 subscription_data = {
                     "subscription_id": sub.id,
-                    "plan_id": sub.plan.id,
-                    "plan_name": sub.plan.plan_name,
-                    "slug": sub.plan.slug,
+                    "plan_id": sub.plan.id if sub.plan else None,
+                    "plan_name": sub.plan.plan_name if sub.plan else None,
+                    "slug": sub.plan.slug if sub.plan else None,
                     "billing_cycle": sub.billing_cycle,
                     "status": sub.status,
+                    "is_paid": sub.is_paid,
                     "start_date": sub.start_date,
                     "end_date": sub.end_date,
                     "amount": sub.amount,
