@@ -175,15 +175,6 @@ function MenuItems({ toggleCollapsed }) {
     //   'actionsRequired',
     //   !topMenu && <UilBookOpen />,
     // ),
-    hasModule('action-required') &&
-      getItem(
-        <NavLink onClick={toggleCollapsed} to={`${path}/pages/actionsrequired`}>
-          {/* {t('actionsRequired')} */}
-          Growth Opportunities
-        </NavLink>,
-        'actionsrequired',
-        !topMenu && <UilBookOpen />,
-      ),
 
     // getItem(t('profit'), 'profit', !topMenu && <UilArrowGrowth />, [
     //   getItem(
@@ -272,7 +263,7 @@ function MenuItems({ toggleCollapsed }) {
           hasSubmodule('sku-wise-profit') &&
             getItem(
               <NavLink onClick={toggleCollapsed} to="/admin/profit/profitTableView/details">
-                SKU Wise Profit
+                Profit Explorer
               </NavLink>,
               'skuwiseprofit',
             ),
@@ -280,7 +271,7 @@ function MenuItems({ toggleCollapsed }) {
           hasSubmodule('marketplace-fees-estimate') &&
             getItem(
               <NavLink onClick={toggleCollapsed} to={`${path}/profit/estimatedfees`}>
-                MarketPlace Fees Estimate
+                Profit SKU Tracker
               </NavLink>,
               'estimatedfees',
             ),
@@ -288,33 +279,33 @@ function MenuItems({ toggleCollapsed }) {
           hasSubmodule('shipping-estimate') &&
             getItem(
               <NavLink onClick={toggleCollapsed} to={`${path}/profit/shippingestimate`}>
-                Shipping Estimate
+                Loss SKU Tracker
               </NavLink>,
               'shippingestimate',
-            ),
-
-          hasSubmodule('claims') &&
-            getItem(
-              <NavLink onClick={toggleCollapsed} to={`${path}/profit/claims`}>
-                Claims
-              </NavLink>,
-              'claims',
-            ),
-
-          hasSubmodule('return-fees') &&
-            getItem(
-              <NavLink onClick={toggleCollapsed} to={`${path}/profit/returnfees`}>
-                Return Fees
-              </NavLink>,
-              'returnfees',
             ),
 
           hasSubmodule('profit-table-view') &&
             getItem(
               <NavLink onClick={toggleCollapsed} to={`${path}/profit/profitTableView`}>
-                Profit Table View
+                Channel Wise Profit
               </NavLink>,
               'profitTableView',
+            ),
+
+          hasSubmodule('return-fees') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/profit/returnfees`}>
+                Return Tracker
+              </NavLink>,
+              'returnfees',
+            ),
+
+          hasSubmodule('claims') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/profit/claims`}>
+                Amazon Estimate Fees
+              </NavLink>,
+              'claims',
             ),
 
           hasSubmodule('profit-monthly-view') &&
@@ -376,70 +367,6 @@ function MenuItems({ toggleCollapsed }) {
     //     'reimbursement-planning',
     //   ),
     // ]),
-
-    hasModule('payment-reconcile') &&
-      getItem(
-        'Payment Reconcile',
-        'reconcile',
-        !topMenu && <UilCreateDashboard />,
-        [
-          hasSubmodule('reconcile') &&
-            getItem(
-              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-overview`}>
-                Reconcile
-              </NavLink>,
-              'payment-overview',
-            ),
-
-          hasSubmodule('payment') &&
-            getItem(
-              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-reconcile`}>
-                Payment
-              </NavLink>,
-              'payment-reconcile',
-            ),
-
-          hasSubmodule('order-settlement') &&
-            getItem(
-              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/ordersettlement`}>
-                Order & Settlement
-              </NavLink>,
-              'ordersettlement',
-            ),
-
-          // hasSubmodule('marketplace-payments') &&
-          //   getItem(
-          //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/marketPayment`}>
-          //       Marketplace Payments
-          //     </NavLink>,
-          //     'marketplace-payment',
-          //   ),
-
-          // hasSubmodule('returns-adjustments') &&
-          //   getItem(
-          //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/returnsAdjust`}>
-          //       Returns & Adjustments
-          //     </NavLink>,
-          //     'returns-adjustments',
-          //   ),
-
-          hasSubmodule('all-leaks') &&
-            getItem(
-              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/allLeaks`}>
-                All Leaks
-              </NavLink>,
-              'allLeaks',
-            ),
-
-          // hasSubmodule('reimbursement-planning') &&
-          //   getItem(
-          //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/reimbursement`}>
-          //       Reimbursement Planning
-          //     </NavLink>,
-          //     'reimbursement-planning',
-          //   ),
-        ].filter(Boolean),
-      ),
 
     // getItem(t('Advertising'), 'advertising', !topMenu && <UilMegaphone />, [
     //   getItem(
@@ -521,10 +448,10 @@ function MenuItems({ toggleCollapsed }) {
         'advertising',
         !topMenu && <UilMegaphone />,
         [
-          hasSubmodule('create-campaign') &&
+          hasSubmodule('Dashboard') &&
             getItem(
               <NavLink onClick={toggleCollapsed} to={`${path}/advertising/create-campaign`}>
-                Create Campaign
+                Dashboard
               </NavLink>,
               'create-campaign',
             ),
@@ -537,10 +464,18 @@ function MenuItems({ toggleCollapsed }) {
               'campaigns',
             ),
 
+          hasSubmodule('create-campaign') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/create-campaign`}>
+                Create Campaign
+              </NavLink>,
+              'create-campaign',
+            ),
+
           hasSubmodule('ad-products') &&
             getItem(
               <NavLink onClick={toggleCollapsed} to={`${path}/advertising/AdProducts`}>
-                Ad Products
+                Products
               </NavLink>,
               'AdProducts',
             ),
@@ -588,10 +523,74 @@ function MenuItems({ toggleCollapsed }) {
           hasSubmodule('rules-automation') &&
             getItem(
               <NavLink onClick={toggleCollapsed} to={`${path}/advertising/rulesAuto`}>
-                Rules & Automation
+                Automation
               </NavLink>,
               'rulesAuto',
             ),
+        ].filter(Boolean),
+      ),
+
+    hasModule('payment-reconcile') &&
+      getItem(
+        'Payment Reconcile',
+        'reconcile',
+        !topMenu && <UilCreateDashboard />,
+        [
+          hasSubmodule('reconcile') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-overview`}>
+                Auto Reconciliation
+              </NavLink>,
+              'payment-overview',
+            ),
+
+          hasSubmodule('payment') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-reconcile`}>
+                Amazon Payment Tracker
+              </NavLink>,
+              'payment-reconcile',
+            ),
+
+          hasSubmodule('order-settlement') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/ordersettlement`}>
+                Order & Settlement
+              </NavLink>,
+              'ordersettlement',
+            ),
+
+          // hasSubmodule('marketplace-payments') &&
+          //   getItem(
+          //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/marketPayment`}>
+          //       Marketplace Payments
+          //     </NavLink>,
+          //     'marketplace-payment',
+          //   ),
+
+          // hasSubmodule('returns-adjustments') &&
+          //   getItem(
+          //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/returnsAdjust`}>
+          //       Returns & Adjustments
+          //     </NavLink>,
+          //     'returns-adjustments',
+          //   ),
+
+          hasSubmodule('all-leaks') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/allLeaks`}>
+                Discrepancy Tracker
+              </NavLink>,
+              'allLeaks',
+            ),
+
+          // hasSubmodule('reimbursement-planning') &&
+          //   getItem(
+          //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/reimbursement`}>
+          //       Reimbursement Planning
+          //     </NavLink>,
+          //     'reimbursement-planning',
+          //   ),
         ].filter(Boolean),
       ),
 
@@ -727,6 +726,15 @@ function MenuItems({ toggleCollapsed }) {
               'reports',
             ),
         ].filter(Boolean),
+      ),
+    hasModule('action-required') &&
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/pages/actionsrequired`}>
+          {/* {t('actionsRequired')} */}
+          Growth Insight
+        </NavLink>,
+        'actionsrequired',
+        !topMenu && <UilBookOpen />,
       ),
 
     // getItem(t('Operations'), 'Operations', !topMenu && <UilProcess />, [
@@ -915,7 +923,7 @@ function MenuItems({ toggleCollapsed }) {
     hasModule('download') &&
       getItem(
         <NavLink onClick={toggleCollapsed} to={`${path}/pages/download`}>
-          Download
+          Reports
         </NavLink>,
         'download',
         !topMenu && (
