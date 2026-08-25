@@ -209,8 +209,8 @@ function ProductRanking() {
         summary?.total_products_tracked !== undefined
           ? Number(summary.total_products_tracked).toLocaleString()
           : productRankingData?.count !== undefined
-            ? Number(productRankingData.count).toLocaleString()
-            : '156',
+          ? Number(productRankingData.count).toLocaleString()
+          : '156',
       change: '—',
       trend: 'neutral',
       icon: <InboxOutlined className="text-[#7c3aed]" />,
@@ -328,8 +328,9 @@ function ProductRanking() {
 
             {/* CHANGE */}
             <div
-              className={`flex items-center gap-1 text-[11px] font-medium ${item.trend === 'up' ? 'text-[#16a34a]' : item.trend === 'down' ? 'text-[#ef4444]' : 'text-[#6b7280]'
-                }`}
+              className={`flex items-center gap-1 text-[11px] font-medium ${
+                item.trend === 'up' ? 'text-[#16a34a]' : item.trend === 'down' ? 'text-[#ef4444]' : 'text-[#6b7280]'
+              }`}
             >
               {item.trend === 'up' && <span>↑</span>}
               {item.trend === 'down' && <span>↓</span>}

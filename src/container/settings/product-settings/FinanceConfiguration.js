@@ -145,22 +145,18 @@ export default function FinanceConfiguration() {
   return (
     <>
       <div className="px-5 xl:px-[15px] pt-2 pb-5">
-        <div className="flex items-start justify-between gap-6 lg:flex-col">
+        <div className="flex items-start justify-between gap-6 lg:flex-col lg:gap-4">
           {/* LEFT SIDE */}
           <div>
             <PageHeader title="Upload Marketplace Reports" className="p-0 bg-transparent" />
 
-            <p className="text-[13px] text-[#6B7280] mt-[-8px] max-w-[540px] leading-[20px]">
+            <p className="text-[13px] text-[#6B7280] mt-[-8px] max-w-[540px] leading-[20px] sm:text-[12px] sm:leading-[18px]">
               Upload your marketplace reports to add sales, fees, transactions and other data to your TrackMyProfit
               dashboard.
             </p>
           </div>
 
-          <div
-            className="w-[500px] min-h-[92px] bg-white border border-[#E8EAED] rounded-[8px] px-4 py-3 flex items-start gap-3 shadow-[0_1px_3px_rgba(0,0,0,0.04)] lg:w-full
-            "
-          >
-            {/* ICON */}
+          <div className="w-[500px] min-h-[92px] shrink-0 bg-white border border-[#E8EAED] rounded-[8px] px-4 py-3 flex items-start gap-3 shadow-[0_1px_3px_rgba(0,0,0,0.04)] lg:w-full lg:shrink sm:px-3 sm:py-3 ">
             <div className="w-[38px] h-[38px] rounded-full bg-[#ECFDF5] flex items-center justify-center shrink-0">
               <QuestionCircleOutlined className="text-[19px] text-[#22C55E]" />
             </div>
@@ -169,7 +165,7 @@ export default function FinanceConfiguration() {
             <div>
               <h3 className="text-[15px] font-semibold text-[#1F2937] mb-[3px]">How it works?</h3>
 
-              <p className="text-[13px] text-[#6B7280] leading-[18px] mb-2">
+              <p className="text-[13px] text-[#6B7280] leading-[18px] mb-2 sm:text-[12px] sm:leading-[17px]">
                 Update your finance settings → We apply the configuration → It appears in your profit calculations.
               </p>
 
@@ -193,7 +189,8 @@ export default function FinanceConfiguration() {
               <h3 className="text-[15px] font-semibold text-[#1F2937]">1. Upload New Report</h3>
             </div>
 
-            <div className="grid grid-cols-[180px_190px_1fr] gap-5 items-start">
+            <div className="grid grid-cols-[180px_190px_1fr] gap-5 items-start lg:grid-cols-2 md:grid-cols-1 md:gap-4">
+              {' '}
               <div>
                 <label className="block text-[12px] font-medium text-[#374151] mb-[6px]">Select Marketplace</label>
 
@@ -205,24 +202,8 @@ export default function FinanceConfiguration() {
 
                   <select
                     defaultValue=""
-                    className="
-        h-[34px]
-        w-full
-        appearance-none
-        border
-        border-[#D9DDE3]
-        rounded-[5px]
-        bg-white
-        pl-[37px]
-        pr-[30px]
-        text-[10px]
-        text-[#4B5563]
-        outline-none
-        cursor-pointer
-        transition-all
-        hover:border-[#35B77B]
-        focus:border-[#35B77B]
-      "
+                    className="h-[34px] w-full appearance-none
+      border border-[#D9DDE3] rounded-[5px] bg-white pl-[37px] pr-[30px] text-[10px] text-[#4B5563] outline-none cursor-pointer transition-all hover:border-[#35B77B] focus:border-[#35B77B]"
                   >
                     <option value="" disabled>
                       Select Marketplace
@@ -237,7 +218,6 @@ export default function FinanceConfiguration() {
                   <DownOutlined className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] text-[#374151] pointer-events-none" />
                 </div>
               </div>
-
               <div>
                 <label className="block text-[12px] font-medium text-[#374151] mb-[6px]">Select Report Type</label>
 
@@ -249,24 +229,7 @@ export default function FinanceConfiguration() {
 
                   <select
                     defaultValue=""
-                    className="
-        h-[34px]
-        w-full
-        appearance-none
-        border
-        border-[#D9DDE3]
-        rounded-[5px]
-        bg-white
-        pl-[37px]
-        pr-[30px]
-        text-[10px]
-        text-[#4B5563]
-        outline-none
-        cursor-pointer
-        transition-all
-        hover:border-[#8B5CF6]
-        focus:border-[#8B5CF6]
-      "
+                    className="h-[34px] w-full appearance-none border border-[#D9DDE3] rounded-[5px] bg-white pl-[37px] pr-[30px] text-[10px] text-[#4B5563] outline-none cursor-pointer transition-all hover:border-[#8B5CF6] focus:border-[#8B5CF6]"
                   >
                     <option value="" disabled>
                       Select Report Type
@@ -281,14 +244,13 @@ export default function FinanceConfiguration() {
                   <DownOutlined className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] text-[#374151] pointer-events-none" />
                 </div>
               </div>
-
               <div>
                 <label className="block text-[12px] font-medium text-[#374151] mb-[6px]">Upload File</label>
 
                 <div
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={handleDrop}
-                  className="h-[114px] w-full border border-[#D9DDE3] rounded-[5px] bg-white flex items-center justify-center gap-3 transition-all hover:border-[#35B77B]"
+                  className="min-h-[114px] w-full border border-[#D9DDE3] rounded-[5px] bg-white flex items-center justify-center gap-3 px-3 py-3 transition-all hover:border-[#35B77B] sm:min-h-[125px] sm:gap-2"
                 >
                   {/* UPLOAD ICON - LEFT */}
                   <div className="shrink-0">
@@ -296,7 +258,7 @@ export default function FinanceConfiguration() {
                   </div>
 
                   {/* CONTENT - RIGHT */}
-                  <div className="flex flex-col items-center justify-center text-center">
+                  <div className="flex flex-col items-center justify-center text-center min-w-0">
                     {/* DRAG TEXT */}
                     <p className="text-[12px] text-[#6B7280] mb-[3px]">Drag & drop your file here</p>
 
@@ -320,7 +282,7 @@ export default function FinanceConfiguration() {
                     </button>
 
                     {/* FILE INFO */}
-                    <p className="text-[11px] text-[#9CA3AF] mt-[5px]">
+                    <p className="text-[11px] text-[#9CA3AF] mt-[5px] sm:text-[10px]">
                       Supports .csv, .xlsx, .xls
                       <span className="mx-1">|</span>
                       Max file size 25MB
@@ -354,12 +316,15 @@ export default function FinanceConfiguration() {
               </div>
             </div>
 
-            <div className="mt-3 pt-3 border-t border-[#F0F1F3] flex items-center justify-between gap-4">
+            <div className="mt-3 pt-3 border-t border-[#F0F1F3] flex items-center justify-between gap-4 md:flex-col md:items-stretch md:gap-3">
+              {' '}
               {/* INFO */}
-              <div className="flex items-center gap-1.5 min-w-0">
-                <ExclamationCircleOutlined className="text-[14px] text-[#6B7280]" />
+              <div className="flex items-center gap-1.5 min-w-0 md:flex-wrap">
+                <ExclamationCircleOutlined className="text-[14px] text-[#6B7280] shrink-0" />
 
-                <span className="text-[12px] text-[#4B5563]">Make sure your file is in the correct format.</span>
+                <span className="text-[12px] text-[#4B5563] sm:text-[11px]">
+                  Make sure your file is in the correct format.
+                </span>
 
                 <button
                   type="button"
@@ -368,12 +333,11 @@ export default function FinanceConfiguration() {
                   View format guide
                 </button>
               </div>
-
               {/* UPLOAD BUTTON */}
               <button
                 type="button"
                 onClick={handleUpload}
-                className="h-[31px] px-4 rounded-[5px] bg-[#16A36A] hover:bg-[#128A59] text-white text-[11px] font-semibold flex items-center gap-1.5 shadow-[0_2px_5px_rgba(22,163,106,0.18)] transition-all whitespace-nowrap"
+                className="h-[31px] px-4 rounded-[5px] bg-[#16A36A] hover:bg-[#128A59] text-white text-[11px] font-semibold flex items-center justify-center gap-1.5 shadow-[0_2px_5px_rgba(22,163,106,0.18)] transition-all whitespace-nowrap md:w-full "
               >
                 Upload & Process
               </button>
@@ -382,15 +346,13 @@ export default function FinanceConfiguration() {
         </div>
       </main>
 
-      {/* =========================================================
-    RECENT UPLOADS
-========================================================= */}
+      {/*  RECENT UPLOADS============ */}
       <section className="px-5 xl:px-[15px] pb-[30px]">
         <div className="bg-white border border-[#E8EAED] rounded-[8px] shadow-[0_1px_3px_rgba(0,0,0,0.03)] overflow-hidden">
           {/* SECTION HEADER */}
-          <div className="px-4 pt-4 pb-3 flex items-center justify-between">
+          <div className="px-4 pt-4 pb-3 flex items-center justify-between gap-3 sm:items-start">
+            {' '}
             <h3 className="text-[15px] font-semibold text-[#1F2937] mb-0">2. Recent Uploads</h3>
-
             <button
               type="button"
               className="text-[11px] text-[#1683D8] font-medium flex items-center gap-1 hover:text-[#0F6FB8] transition-colors"
@@ -558,9 +520,7 @@ export default function FinanceConfiguration() {
         </div>
       </section>
 
-      {/* =========================================================
-          RECALCULATE MODAL
-      ========================================================== */}
+      {/* ========= RECALCULATE MODAL====== */}
       <Modal open={recalculateModal} onCancel={() => setRecalculateModal(false)} footer={null} centered width={500}>
         <h3 className="text-[16px] font-semibold mb-4">Select Effective Date</h3>
 

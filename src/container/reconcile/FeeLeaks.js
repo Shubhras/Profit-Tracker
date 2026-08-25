@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Row, Col, Table, Spin, Select, Button } from 'antd';
 
 import { FilterOutlined, DownloadOutlined, BarChartOutlined, DollarOutlined } from '@ant-design/icons';
-import { ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, Tooltip, Area } from 'recharts';
 
 export default function FeeLeaks() {
   const [loading, setLoading] = useState(true);
@@ -11,29 +10,6 @@ export default function FeeLeaks() {
   useEffect(() => {
     setTimeout(() => setLoading(false), 800);
   }, []);
-
-  const leakCategoryData = [
-    { name: 'Shipping', value: 12450, color: '#3b82f6' },
-    { name: 'Other', value: 18320, color: '#9333ea' },
-    { name: 'Fee', value: 10125, color: '#f59e0b' },
-    { name: 'Tax', value: 8254, color: '#10b981' },
-  ];
-
-  const leakTrendData = [
-    { name: '01 May', amount: 39000 },
-    { name: '06 May', amount: 40000 },
-    { name: '11 May', amount: 32000 },
-    { name: '16 May', amount: 25000 },
-    { name: '21 May', amount: 29000 },
-    { name: '26 May', amount: 21000 },
-    { name: '31 May', amount: 30000 },
-  ];
-
-  const leakStatusData = [
-    { name: 'Open', value: 38420, color: '#ff4d6d' },
-    { name: 'In Review', value: 7290, color: '#facc15' },
-    { name: 'Recovered', value: 3439, color: '#22c55e' },
-  ];
 
   const varianceSummaryColumns = [
     {
@@ -311,159 +287,6 @@ export default function FeeLeaks() {
                 placeholder="Search Order ID / SKU"
                 prefix={<SearchOutlined />}
               /> */}
-            </div>
-          </div>
-
-          {/* CHARTS */}
-
-          <div className="grid grid-cols-4 gap-2 xl:grid-cols-2 sm:grid-cols-1 mb-3">
-            {/* CATEGORY BREAKDOWN */}
-
-            <div className="bg-white rounded-lg border border-gray-200 p-2 shadow-sm">
-              <h3 className="text-[14px] font-semibold text-[#111827] mb-3">Leak Category Breakdown</h3>
-
-              <div className="flex">
-                {/* Pie Chart */}
-                <div className="relative w-[110px] h-[110px] flex-shrink-0">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={leakCategoryData} dataKey="value" innerRadius={32} outerRadius={48} stroke="none">
-                        {leakCategoryData.map((item, index) => (
-                          <Cell key={index} fill={item.color} />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-[10px] text-gray-400">Total Loss</span>
-
-                    <span className="text-[11px] font-bold text-[#111827]">₹49,150.33</span>
-                  </div>
-                </div>
-
-                {/* Right Side Data */}
-                <div className="ml-2 flex-1">
-                  {leakCategoryData.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between mb-3 text-[10px]">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-
-                        <span>{item.name}</span>
-                      </div>
-
-                      <span className="font-medium">₹{item.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* TREND */}
-
-            <div className="bg-white rounded-lg border border-gray-200 p-2 shadow-sm">
-              {' '}
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-[14px] font-semibold text-[#111827]">Leak Trend (₹)</h3>
-
-                <div className="flex items-center gap-1 text-[10px] text-[#ff4d9d]">
-                  <span className="w-2 h-2 rounded-full bg-[#ff4d9d]" />
-                  <span>Total Leak Amount</span>
-                </div>
-              </div>
-              <div className="h-[105px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={leakTrendData}>
-                    <defs>
-                      <linearGradient id="leakGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#ff4d9d" stopOpacity={0.18} />
-                        <stop offset="95%" stopColor="#ff4d9d" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-
-                    <XAxis dataKey="name" tick={{ fontSize: 8 }} axisLine={false} tickLine={false} />
-
-                    <YAxis tick={{ fontSize: 8 }} axisLine={false} tickLine={false} />
-
-                    <Tooltip />
-
-                    <Area type="monotone" dataKey="amount" stroke="none" fill="url(#leakGradient)" />
-
-                    <Line type="monotone" dataKey="amount" stroke="#ff4d9d" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* STATUS BREAKDOWN */}
-
-            <div className="bg-white rounded-lg border border-gray-200 p-2 shadow-sm">
-              {' '}
-              <h3 className="text-[14px] font-semibold text-[#111827] mb-3">Leak Status Breakdown</h3>
-              <div className="flex items-center gap-3">
-                <div className="relative w-[110px] h-[110px] shrink-0">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={leakStatusData} dataKey="value" innerRadius={38} outerRadius={52} stroke="none">
-                        {leakStatusData.map((item, index) => (
-                          <Cell key={index} fill={item.color} />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-[10px] text-[#6b7280]">Total Loss</span>
-                    <span className="text-[11px] font-bold text-[#111827]">₹49,150.33</span>
-                  </div>
-                </div>
-
-                <div className="flex-1 space-y-2">
-                  {leakStatusData.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between text-[9px]">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-
-                        <span>{item.name}</span>
-                      </div>
-
-                      <span className="font-medium">₹ {item.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* TYPE BREAKDOWN */}
-
-            <div className="bg-white rounded-lg border border-gray-200 p-2 shadow-sm">
-              {' '}
-              <h3 className="text-[14px] font-semibold text-[#111827] mb-3">Leak Type Breakdown</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between text-[10px]">
-                  <span className="text-[#374151]">Shipping Leaks</span>
-                  <span className="font-medium">₹ 12,450.80 (25.3%)</span>
-                </div>
-
-                <div className="flex justify-between text-[10px]">
-                  <span className="text-[#374151]">Other Leaks</span>
-                  <span className="font-medium">₹ 18,320.45 (37.3%)</span>
-                </div>
-
-                <div className="flex justify-between text-[10px]">
-                  <span className="text-[#374151]">Fee / Commission Leaks</span>
-                  <span className="font-medium">₹ 10,125.06 (20.6%)</span>
-                </div>
-
-                <div className="flex justify-between text-[10px]">
-                  <span className="text-[#374151]">Tax / VAT Leaks</span>
-                  <span className="font-medium">₹ 8,254.00 (16.8%)</span>
-                </div>
-
-                <button type="button" className="text-[#2563eb] text-[10px] font-medium mt-2">
-                  View All →
-                </button>
-              </div>
             </div>
           </div>
 

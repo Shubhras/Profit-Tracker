@@ -165,7 +165,7 @@ export default function Summary() {
         className="flex justify-between items-center px-8 xl:px-[15px] pt-2 pb-2 sm:pb-[30px] bg-transparent sm:flex-col"
       /> */}
 
-      <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-3 xl:px-[15px] pb-[10px] bg-transparent py-3">
+      <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-4 xl:px-[15px] pb-[10px] bg-transparent py-3">
         <div className="flex items-start gap-3 mt-2 mb-3">
           <div
             className="w-[35px] h-[35px] rounded-xl flex items-center justify-center shadow-sm mt-1"

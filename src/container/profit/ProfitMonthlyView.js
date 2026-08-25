@@ -128,7 +128,7 @@ export default function ProfitMonthlyView() {
       <PageHeader
         routes={PageRoutes}
         title="Profit"
-        className="flex justify-between items-center px-4 xl:px-[15px] pt-2 pb-6 sm:pb-[30px] bg-transparent sm:flex-col"
+        className="flex justify-between items-center px-4 xl:px-[15px] pt-2 pb-3 sm:pb-[30px] bg-transparent sm:flex-col"
       />
       <main className="min-h-[715px] lg:min-h-[580p x] flex-1 h-auto px-4 xl:px-[15px] pb-[30px] bg-transparent">
         <Card className="bg-white rounded-md border overflow-x-auto">

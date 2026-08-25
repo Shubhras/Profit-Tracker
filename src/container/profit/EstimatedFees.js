@@ -78,6 +78,24 @@ function EstimatedFees() {
       render: (url) => (url ? <img src={url} alt="product" className="w-10 h-10 object-contain mx-auto" /> : '-'),
     },
     {
+      title: 'ASIN',
+      dataIndex: 'asin',
+      key: 'asin',
+      align: 'center',
+      width: 70,
+      sorter: (a, b) => String(a.asin).localeCompare(String(b.asin)),
+      render: (v) => (
+        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <span
+            className="block font-medium text-blue-500 hover:text-blue-600 underline cursor-pointer overflow-hidden whitespace-nowrap text-ellipsis"
+            style={{ maxWidth: '100%' }}
+          >
+            {v}
+          </span>
+        </Tooltip>
+      ),
+    },
+    {
       title: 'Seller SKU',
       dataIndex: 'sellerSku',
       key: 'sellerSku',
@@ -88,24 +106,6 @@ function EstimatedFees() {
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
           <span className="font-medium text-[#111827] cursor-pointer">{v}</span>
-        </Tooltip>
-      ),
-    },
-    {
-      title: 'ASIN',
-      dataIndex: 'asin',
-      key: 'asin',
-      align: 'center',
-      width: 70,
-      sorter: (a, b) => String(a.asin).localeCompare(String(b.asin)),
-      render: (v) => (
-        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-          <span
-            className="block font-medium text-[#111827] cursor-pointer overflow-hidden whitespace-nowrap text-ellipsis"
-            style={{ maxWidth: '100%' }}
-          >
-            {v}
-          </span>
         </Tooltip>
       ),
     },
@@ -277,7 +277,7 @@ function EstimatedFees() {
 
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           {/* Search */}
-          <div className="relative flex-1 min-w-[240px] lg:min-w-full md:w-full">
+          <div className="relative w-[220px] lg:w-full md:w-full sm:w-full">
             <input
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}

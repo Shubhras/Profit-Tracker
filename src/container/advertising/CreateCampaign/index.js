@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Steps } from 'antd';
+import { Steps } from 'antd';
 
 import CampaignTypeStep from './steps/CampaignTypeStep';
 import CampaignStep from './steps/CampaignStep';
@@ -86,11 +86,11 @@ function CreateCampaign() {
   };
 
   return (
-    <Card>
+    <main className="min-h-[600px] px-4 pb-[30px] py-3">
       <Steps current={currentStep} items={SP_STEPS} />
 
       <div style={{ marginTop: 32 }}>{renderStep()}</div>
-    </Card>
+    </main>
   );
 }
 

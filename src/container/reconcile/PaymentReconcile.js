@@ -327,7 +327,7 @@ function PaymentReconcile() {
   const columns = activeTab === 'payments' ? paymentColumns : settlementColumns;
 
   return (
-    <div className="min-h-screen bg-[#f6f8fc] px-3 py-4 md:p-2 sm:p-1">
+    <div className="min-h-screen bg-[#f6f8fc] px-4 py-4 md:p-2 sm:p-3">
       {' '}
       {/* HEADER */}
       <div className="mb-2 flex items-start justify-between lg:flex-col lg:gap-2">

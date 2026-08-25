@@ -268,12 +268,20 @@ export default function ProfitViewSecondTable() {
     return Number(cleaned) || 0;
   };
 
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const columns = [
     {
       title: '',
       dataIndex: 'image',
       width: 60,
-      fixed: 'left',
+      fixed: isMobile ? false : 'left',
       render: (value, record) => {
         if (record.key === 'total') return null;
 
@@ -305,7 +313,7 @@ export default function ProfitViewSecondTable() {
       title: '',
       dataIndex: 'channel',
       width: 50,
-      fixed: 'left',
+      fixed: isMobile ? false : 'left',
       // render: (value) => {
       //   const logo = channelLogoMap[value];
 
@@ -804,7 +812,7 @@ export default function ProfitViewSecondTable() {
       //   </button>
       // ),
       key: 'action',
-      fixed: 'right',
+      fixed: isMobile ? false : 'right',
       width: 60,
       render: (_, record) => (
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
@@ -951,7 +959,7 @@ export default function ProfitViewSecondTable() {
 
   return (
     <>
-      <main className="min-h-[600px] px-3 pb-[10px] py-3">
+      <main className="min-h-[600px] px-4 pb-[10px] py-3">
         <Card bordered={false}>
           <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
             <button
@@ -962,8 +970,9 @@ export default function ProfitViewSecondTable() {
               <ArrowLeftOutlined className="text-[#374151]" />
             </button>
 
-            <div className="flex flex-1 flex-wrap items-center justify-end gap-3 lg:w-full md:w-full">
-              <div className="relative w-[220px] lg:flex-1 lg:min-w-[220px] md:w-full sm:w-full">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+              {/* Search */}
+              <div className="relative w-[220px] lg:w-full md:w-full sm:w-full">
                 <input
                   type="text"
                   placeholder="Search..."

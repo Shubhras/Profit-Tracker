@@ -289,7 +289,7 @@ function NegativeKey() {
   const tabs = ['Negative Keywords', 'Negative Phrases', 'Negative Exact', 'ASIN Targeting', 'Auto Suggestions'];
 
   return (
-    <div className="bg-[#f5f7fb] min-h-screen p-3">
+    <div className="bg-[#f5f7fb] min-h-screen px-4 py-2">
       {/* HEADER */}
 
       <div className="flex flex-col min-lg:flex-row min-lg:items-start justify-between gap-3 mb-2">

@@ -572,8 +572,8 @@ export default function ProfitTableView() {
         title="Profit Table"
         className="flex  justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 sm:pb-[30px] bg-transparent sm:flex-col"
       /> */}
-      <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-3 py-3 xl:px-[15px] pb-[10px] bg-transparent">
-        <div className="flex items-center justify-between mb-3">
+      <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-4 py-3 xl:px-[15px] pb-[10px] bg-transparent">
+        <div className="flex items-center justify-between mb-2">
           <h1 className="text-[20px] font-semibold text-[#111827]">Sales Details</h1>
           {/* <Dropdown menu={{ items: exportMenuItems }} trigger={['click']} placement="bottomRight">
             <Button

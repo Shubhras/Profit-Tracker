@@ -12,6 +12,7 @@ import {
   LineChartOutlined,
   NotificationOutlined,
 } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 
 function QuickCommerce() {
   const navigate = useNavigate();
@@ -115,12 +116,18 @@ function QuickCommerce() {
                     </div>
 
                     <Button
+<<<<<<< HEAD
                       onClick={() =>
                         navigate('/admin/pages/support', {
                           state: { openModal: true, title: 'Inquiry for Quick Commerce - Basic Plan' },
                         })
                       }
                       className="bg-[#16a34a] border-[#16a34a] text-white h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
+=======
+                      type="primary"
+                      onClick={() => navigate('/admin/pages/support')}
+                      className="bg-[#16a34a] border-[#16a34a] h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
+>>>>>>> 62f6712fddde11f045b068d85f986af4c983cd9d
                     >
                       Choose Basic Plan
                     </Button>
@@ -182,12 +189,18 @@ function QuickCommerce() {
                     </div>
 
                     <Button
+<<<<<<< HEAD
                       onClick={() =>
                         navigate('/admin/pages/support', {
                           state: { openModal: true, title: 'Inquiry for Quick Commerce - Pro Plan' },
                         })
                       }
                       className="bg-[#2563eb] border-[#2563eb] text-white h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
+=======
+                      type="primary"
+                      onClick={() => navigate('/admin/pages/support')}
+                      className="bg-[#16a34a] border-[#16a34a] h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
+>>>>>>> 62f6712fddde11f045b068d85f986af4c983cd9d
                     >
                       Choose Pro Plan
                     </Button>
@@ -243,12 +256,18 @@ function QuickCommerce() {
                     </div>
 
                     <Button
+<<<<<<< HEAD
                       onClick={() =>
                         navigate('/admin/pages/support', {
                           state: { openModal: true, title: 'Inquiry for Quick Commerce - Premium Plan' },
                         })
                       }
                       className="bg-[#9333ea] border-[#9333ea] text-white h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
+=======
+                      type="primary"
+                      onClick={() => navigate('/admin/pages/support')}
+                      className="bg-[#16a34a] border-[#16a34a] h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
+>>>>>>> 62f6712fddde11f045b068d85f986af4c983cd9d
                     >
                       Choose Premium Plan
                     </Button>
