@@ -168,6 +168,11 @@ class UserLoginAPI(APIView):
                     "submodules": submodules_data
                 }
 
+        profile_pic = None
+        if hasattr(user, 'profile') and user.profile.profile_picture:
+            url = user.profile.profile_picture.url
+            profile_pic = request.build_absolute_uri(url) if request else url
+
         return Response({
             "statusCode": 200,
             "status": True,
@@ -177,6 +182,8 @@ class UserLoginAPI(APIView):
                 "email": user.email,
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
+                "profile_picture": profile_pic,
+                "image": profile_pic,
                 
                 # User role and classification flags
                 "is_staff": user.is_staff or is_admin_user,

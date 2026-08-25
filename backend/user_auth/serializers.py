@@ -267,6 +267,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
     is_sub_user = serializers.SerializerMethodField()
     role = serializers.SerializerMethodField()
 
+    profile_picture = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
     connected_channels = serializers.SerializerMethodField() 
 
     subscription = serializers.SerializerMethodField()
@@ -284,6 +286,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "business_name",
             "mobile_number",
             "profile_picture",
+            "image",
 
             "address",
             "city",
@@ -316,6 +319,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
         except Exception:
             pass
         return None
+
+    def get_image(self, obj):
+        return self.get_profile_picture(obj)
 
     def get_is_sub_user(self, obj):
         return SubUser.objects.filter(user=obj).exists() or AdminSubUser.objects.filter(user=obj).exists()
