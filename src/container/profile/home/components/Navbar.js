@@ -33,16 +33,14 @@ function Navbar() {
   const isLoggedIn = useSelector((state) => state.auth.login);
   const profile = useSelector((state) => state.auth.profile);
   console.log('Navbar profile:', profile);
-  const getDashboardRoute = () => {
-    if (profile?.is_superuser) {
-      return '/super-admin/dashboard';
-    }
-
-    return '/admin/profit/summary';
-  };
 
   // Get email from cookie (fallback to profile)
   const userEmail = Cookies.get('userEmail') || profile?.email || '';
+  const isSuperAdmin = Cookies.get('isSuperAdmin') === 'true' || profile?.is_superuser === true;
+
+  const getDashboardRoute = () => {
+    return isSuperAdmin ? '/super-admin/dashboard' : '/admin/profit/summary';
+  };
 
   // Handle scroll effect
   useEffect(() => {

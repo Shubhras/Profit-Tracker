@@ -1,4 +1,5 @@
 import Cookies from 'js-cookie';
+import { message } from 'antd';
 import actions from './actions';
 import { DataService } from '../../config/dataService/dataService';
 
@@ -27,7 +28,7 @@ const login = (values, callback) => {
       // console.log('Login Success:', response.data);
 
       if (response.data.status === true) {
-        console.log('LOGIN API DATA', response.data.data);
+        message.success('Login successful');
 
         // Store tokens
         Cookies.set('access_token', response.data.data.access);
@@ -189,22 +190,50 @@ const changePassword = (values, callback) => {
 const logOut = (callback) => {
   return async (dispatch) => {
     dispatch(logoutBegin());
+
     try {
-      // Cookies.remove('loggedIn');
+      const refreshToken = Cookies.get('refresh_token');
+
+      // Logout API call
+      if (refreshToken) {
+        await DataService.post('/user/logout/', {
+          refresh: refreshToken,
+        });
+      }
+
+      // Clear cookies after successful logout API call
       Cookies.remove('access_token');
       Cookies.remove('refresh_token');
-      Cookies.remove('logedIn'); // Clear logedIn cookie
-      Cookies.remove('hasSubscription'); // Clear subscription status cookie
+      Cookies.remove('logedIn');
+      Cookies.remove('hasSubscription');
       Cookies.remove('isSuperAdmin');
-      Cookies.remove('userEmail'); // Clear user email cookie
+      Cookies.remove('userEmail');
+
       dispatch(logoutSuccess(false));
-      callback();
+      message.success('Logged out successfully');
+
+      if (callback) {
+        callback();
+      }
     } catch (err) {
+      console.log('Logout Failed:', err.response?.data || err);
+
+      // Even if API fails, clear local session
+      Cookies.remove('access_token');
+      Cookies.remove('refresh_token');
+      Cookies.remove('logedIn');
+      Cookies.remove('hasSubscription');
+      Cookies.remove('isSuperAdmin');
+      Cookies.remove('userEmail');
+
       dispatch(logoutErr(err));
+
+      if (callback) {
+        callback();
+      }
     }
   };
 };
-
 const getProfile = () => {
   return async (dispatch, getState) => {
     // Check if profile is already loading or already loaded to prevent duplicate calls
