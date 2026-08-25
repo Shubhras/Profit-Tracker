@@ -212,6 +212,7 @@ urlpatterns = [
     path('exports/history/', exports.list_export_history),
     path('exports/history/<int:export_id>/download/', exports.download_export_file),
     path('exports/history/<int:export_id>/delete/', exports.delete_export_file),
+    path('exports/history/delete-all/', exports.delete_all_export_reports),
     path('exports/history/delete/', exports.delete_export_file),
  
 ]

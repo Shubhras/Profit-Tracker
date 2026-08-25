@@ -113,6 +113,17 @@ class SupportTicketAdmin(admin.ModelAdmin):
     search_fields = ('ticket_id', 'title', 'user__email')
     readonly_fields = ('ticket_id', 'created_at', 'updated_at')
 
+@admin.register(AdminSubUser)
+class AdminSubUserAdmin(admin.ModelAdmin):
+    list_display = (
+        'name',
+        'user',
+        'parent',
+        'mobile_number',
+        'created_at',
+    )
+    list_filter = ('created_at',)
+    search_fields = ('name', 'user__email', 'parent__email', 'mobile_number')
 
 @admin.register(SubUser)
 class SubUserAdmin(admin.ModelAdmin):

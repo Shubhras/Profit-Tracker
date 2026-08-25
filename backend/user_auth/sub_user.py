@@ -9,8 +9,8 @@ from django.db import models, transaction
 from django.core.mail import send_mail
 from django.conf import settings
 
-from user_auth.models import SubUser, UserProfile, UserModulePermission, Module, SubModule
-from user_auth.serializers import SubUserSerializer, SubUserPermissionInputSerializer
+from user_auth.models import SubUser, AdminSubUser, UserProfile, UserModulePermission, Module, SubModule
+from user_auth.serializers import SubUserSerializer, AdminSubUserSerializer, SubUserPermissionInputSerializer
 from user_auth.subscription import CustomPagination
 from rest_framework_simplejwt.tokens import RefreshToken
 from subscription.models import UserSubscription
@@ -117,12 +117,13 @@ Best regards,
 
 class IsParentUser(BasePermission):
     """
-    Allows access only to parent users (not registered in the SubUser model).
+    Allows access only to parent users (not registered in SubUser or AdminSubUser models).
     """
     def has_permission(self, request, view):
         return (
             request.user.is_authenticated and 
-            not SubUser.objects.filter(user=request.user).exists()
+            not SubUser.objects.filter(user=request.user).exists() and
+            not AdminSubUser.objects.filter(user=request.user).exists()
         )
 
 
@@ -188,6 +189,10 @@ class SubUserCreateAPIView(APIView):
                     password=password
                 )
 
+                if request.user.is_staff or request.user.is_superuser or role in ["Admin", "Staff"]:
+                    new_user.is_staff = True
+                    new_user.save()
+
                 # Create UserProfile
                 UserProfile.objects.create(
                     user=new_user,
@@ -201,14 +206,24 @@ class SubUserCreateAPIView(APIView):
                     accepted_terms=True
                 )
 
-                # Create SubUser model instance
-                sub_user_obj = SubUser.objects.create(
-                    user=new_user,
-                    parent=request.user,
-                    name=name,
-                    mobile_number=mobile_number,
-                    role=role
-                )
+                # Create SubUser or AdminSubUser model instance based on role/privilege
+                is_admin_creation = request.user.is_staff or request.user.is_superuser or role in ["Admin"]
+                if is_admin_creation:
+                    sub_user_obj = AdminSubUser.objects.create(
+                        user=new_user,
+                        parent=request.user,
+                        name=name,
+                        mobile_number=mobile_number,
+                        role=role
+                    )
+                else:
+                    sub_user_obj = SubUser.objects.create(
+                        user=new_user,
+                        parent=request.user,
+                        name=name,
+                        mobile_number=mobile_number,
+                        role=role
+                    )
 
                 # Assign permissions
                 for perm in perm_serializer.validated_data:
@@ -250,7 +265,7 @@ class SubUserCreateAPIView(APIView):
                 is_update=False
             )
 
-            serializer = SubUserSerializer(sub_user_obj)
+            serializer = AdminSubUserSerializer(sub_user_obj) if isinstance(sub_user_obj, AdminSubUser) else SubUserSerializer(sub_user_obj)
             res_data = serializer.data
             res_data["email_sent"] = email_sent
 
@@ -275,7 +290,14 @@ class SubUserListAPIView(APIView):
     def get(self, request):
         try:
             search_query = request.query_params.get("search") or request.query_params.get("q")
-            base_queryset = SubUser.objects.filter(parent=request.user)
+            if request.user.is_staff or request.user.is_superuser:
+                base_queryset = AdminSubUser.objects.filter(
+                    models.Q(parent=request.user) | models.Q(user__is_staff=True)
+                ).distinct()
+                use_admin_serializer = True
+            else:
+                base_queryset = SubUser.objects.filter(parent=request.user)
+                use_admin_serializer = False
 
             total_users = base_queryset.count()
             active_users = base_queryset.filter(user__is_active=True).count()
@@ -291,7 +313,7 @@ class SubUserListAPIView(APIView):
                 )
 
             queryset = queryset.order_by("-created_at")
-            serializer = SubUserSerializer(queryset, many=True)
+            serializer = AdminSubUserSerializer(queryset, many=True) if use_admin_serializer else SubUserSerializer(queryset, many=True)
 
             summary = {
                 "total_users": total_users,
@@ -319,25 +341,42 @@ class SubUserListAPIView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+def get_subuser_instance(pk, parent_user):
+    """
+    Utility to fetch subuser instance from AdminSubUser or SubUser models.
+    Returns (instance, is_admin_subuser).
+    """
+    admin_sub = AdminSubUser.objects.filter(pk=pk).first()
+    if admin_sub and (admin_sub.parent == parent_user or parent_user.is_staff or parent_user.is_superuser):
+        return admin_sub, True
+
+    sub = SubUser.objects.filter(pk=pk).first()
+    if sub and (sub.parent == parent_user or parent_user.is_staff or parent_user.is_superuser):
+        return sub, False
+
+    return None, False
+
+
 class SubUserDetailAPIView(APIView):
     permission_classes = [IsAuthenticated, IsParentUser]
 
     def get(self, request, pk):
         try:
-            subuser = SubUser.objects.get(pk=pk, parent=request.user)
-            serializer = SubUserSerializer(subuser)
+            subuser, is_admin = get_subuser_instance(pk, request.user)
+            if not subuser:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Sub-user not found."
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            serializer = AdminSubUserSerializer(subuser) if is_admin else SubUserSerializer(subuser)
             return Response({
                 "statusCode": 200,
                 "status": True,
                 "message": "Sub-user details fetched successfully.",
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
-        except SubUser.DoesNotExist:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "Sub-user not found."
-            }, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({
                 "statusCode": 500,
@@ -350,9 +389,8 @@ class SubUserUpdateAPIView(APIView):
     permission_classes = [IsAuthenticated, IsParentUser]
 
     def put(self, request, pk):
-        try:
-            subuser = SubUser.objects.get(pk=pk, parent=request.user)
-        except SubUser.DoesNotExist:
+        subuser, is_admin = get_subuser_instance(pk, request.user)
+        if not subuser:
             return Response({
                 "statusCode": 404,
                 "status": False,
@@ -448,7 +486,7 @@ class SubUserUpdateAPIView(APIView):
                     is_update=True
                 )
 
-            serializer = SubUserSerializer(subuser)
+            serializer = AdminSubUserSerializer(subuser) if is_admin else SubUserSerializer(subuser)
             res_data = serializer.data
             if password:
                 res_data["email_sent"] = email_sent
@@ -479,20 +517,21 @@ class SubUserDeleteAPIView(APIView):
 
     def delete(self, request, pk):
         try:
-            subuser = SubUser.objects.get(pk=pk, parent=request.user)
-            # Cascade delete user (also deletes profile and SubUser instance)
+            subuser, _ = get_subuser_instance(pk, request.user)
+            if not subuser:
+                return Response({
+                    "statusCode": 404,
+                    "status": False,
+                    "message": "Sub-user not found."
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            # Cascade delete user (also deletes profile and SubUser/AdminSubUser instance)
             subuser.user.delete()
             return Response({
                 "statusCode": 200,
                 "status": True,
                 "message": "Sub-user deleted successfully."
             }, status=status.HTTP_200_OK)
-        except SubUser.DoesNotExist:
-            return Response({
-                "statusCode": 404,
-                "status": False,
-                "message": "Sub-user not found."
-            }, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({
                 "statusCode": 500,
@@ -539,9 +578,8 @@ class SubUserLoginAPIView(APIView):
     permission_classes = [IsAuthenticated, IsParentUser]
 
     def post(self, request, pk):
-        try:
-            subuser = SubUser.objects.get(pk=pk, parent=request.user)
-        except SubUser.DoesNotExist:
+        subuser, _ = get_subuser_instance(pk, request.user)
+        if not subuser:
             return Response({
                 "statusCode": 404,
                 "status": False,

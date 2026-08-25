@@ -12,17 +12,17 @@ from subscription.utils.custom_response import success_response, error_response
 logger = logging.getLogger(__name__)
 
 
-def send_password_reset_otp_email(user_email, otp_code):
+def send_otp_email(user_email, otp_code):
     """
-    Sends 6-digit password reset OTP code to the specified email address.
+    Sends 6-digit signup OTP verification code to the specified email address.
     """
-    subject = "TrackMyProfit - Password Reset OTP"
+    subject = "TrackMyProfit - Email Verification OTP"
     plain_message = f"""
 Hello,
 
-Your password reset OTP code for TrackMyProfit is: {otp_code}
+Your verification code for TrackMyProfit account registration is: {otp_code}
 
-This code is valid for 10 minutes. If you did not request a password reset, please ignore this email.
+This code is valid for 10 minutes. Please do not share this OTP with anyone.
 
 Best regards,
 TrackMyProfit Team
@@ -38,7 +38,7 @@ TrackMyProfit Team
         .header {{ text-align: center; padding-bottom: 20px; border-bottom: 2px solid #eef2f5; }}
         .header h2 {{ color: #0d9488; margin: 0; }}
         .content {{ padding: 20px 0; color: #334155; line-height: 1.6; text-align: center; }}
-        .otp-box {{ background-color: #fef2f2; border: 2px dashed #ef4444; border-radius: 10px; padding: 18px; margin: 24px 0; font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #dc2626; }}
+        .otp-box {{ background-color: #f0fdf4; border: 2px dashed #16a34a; border-radius: 10px; padding: 18px; margin: 24px 0; font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #15803d; }}
         .footer {{ text-align: center; margin-top: 25px; color: #94a3b8; font-size: 12px; }}
     </style>
 </head>
@@ -49,14 +49,14 @@ TrackMyProfit Team
         </div>
         <div class="content">
             <p>Hello,</p>
-            <p>We received a request to reset your password for your <strong>TrackMyProfit</strong> account. Use the OTP code below to reset your password:</p>
+            <p>Thank you for creating an account with <strong>TrackMyProfit</strong>. Use the verification OTP below to complete your registration:</p>
             
             <div class="otp-box">{otp_code}</div>
             
-            <p style="font-size: 13px; color: #64748b;">This OTP code is valid for <strong>10 minutes</strong>. If you did not request a password reset, please ignore this email.</p>
+            <p style="font-size: 13px; color: #64748b;">This OTP code is valid for <strong>10 minutes</strong>. Do not share this code with anyone.</p>
         </div>
         <div class="footer">
-            <p>This is an automated security notification from TrackMyProfit.</p>
+            <p>This is an automated notification from TrackMyProfit.</p>
         </div>
     </div>
 </body>
@@ -73,16 +73,16 @@ TrackMyProfit Team
             html_message=html_message,
             fail_silently=False
         )
-        logger.info(f"Password reset OTP email sent to {user_email}")
+        logger.info(f"Signup OTP email sent successfully to {user_email}")
         return True
     except Exception as e:
-        logger.error(f"Failed to send password reset OTP email to {user_email}: {str(e)}")
+        logger.error(f"Failed to send signup OTP email to {user_email}: {str(e)}")
         return False
 
 
-class UserForgotPasswordAPI(APIView):
+class SendSignupOTPAPIView(APIView):
     """
-    API to send a 6-digit OTP code to user's email for password reset.
+    API to send a 6-digit verification OTP to user's email before registration.
     """
     def post(self, request):
         email = request.data.get("email")
@@ -92,16 +92,15 @@ class UserForgotPasswordAPI(APIView):
 
         email = email.strip().lower()
 
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            return error_response("No registered account found with this email address.", 404)
+        # Check if email is already registered
+        if User.objects.filter(email=email).exists():
+            return error_response("A user with this email address already exists.", 400)
 
         # Generate 6-digit OTP
         otp_code = f"{random.randint(100000, 999999)}"
         expires_at = timezone.now() + timedelta(minutes=10)
 
-        # Save/update OTP
+        # Store or update OTP for this email
         EmailOTP.objects.filter(email=email).delete()
         EmailOTP.objects.create(
             email=email,
@@ -109,12 +108,13 @@ class UserForgotPasswordAPI(APIView):
             expires_at=expires_at
         )
 
-        email_sent = send_password_reset_otp_email(user_email=email, otp_code=otp_code)
+        # Dispatch email
+        email_sent = send_otp_email(user_email=email, otp_code=otp_code)
 
         if not email_sent:
             return error_response("Failed to send OTP email. Please try again.", 500)
 
         return success_response(
-            message=f"Password reset OTP sent successfully to {email}.",
+            message=f"Verification OTP sent successfully to {email}.",
             data={"email": email}
         )

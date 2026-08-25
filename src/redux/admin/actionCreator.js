@@ -150,6 +150,10 @@ const {
   getModulePermissionDetailsBegin,
   getModulePermissionDetailsSuccess,
   getModulePermissionDetailsErr,
+
+  deleteUsersDetailsBegin,
+  deleteUsersDetailsSuccess,
+  deleteUsersDetailsErr,
 } = actions;
 
 export const getCouponCodes = () => {
@@ -445,6 +449,27 @@ export const updateUserDetails = (id, payload) => {
       return response.data;
     } catch (err) {
       dispatch(updateUsersDetailsErr(err));
+    }
+  };
+};
+
+export const deleteUserDetails = (id, callback) => {
+  return async (dispatch) => {
+    dispatch(deleteUsersDetailsBegin());
+
+    try {
+      const response = await DataService.delete(`user/admin/main-users/${id}/delete/`);
+
+      if (response.data?.status === true || response.data?.status === 'success') {
+        dispatch(deleteUsersDetailsSuccess(response.data));
+        callback?.(true, response.data);
+      } else {
+        dispatch(deleteUsersDetailsErr(response.data?.message || 'Something went wrong'));
+        callback?.(false, response.data);
+      }
+    } catch (err) {
+      dispatch(deleteUsersDetailsErr(err));
+      callback?.(false, err?.response?.data);
     }
   };
 };
@@ -753,7 +778,12 @@ export const getSubUsers = (page = 1, limit = 10, callback) => {
     try {
       const response = await DataService.get(`user/sub-users/?page=${page}&limit=${limit}`);
 
-      if (response.data?.results?.status === true || response.data?.results?.status === 'success') {
+      if (
+        response.data?.status === true ||
+        response.data?.status === 'success' ||
+        response.data?.statusCode === 200 ||
+        response.data?.results?.status === true
+      ) {
         dispatch(getSubUsersSuccess(response.data));
         callback?.(true, response.data);
       } else {
@@ -833,23 +863,27 @@ export const deleteSubUsers = (id, callback) => {
   };
 };
 
-export const getModulesSubmodules = (callback) => {
+export const getModulesSubmodules = (type, callback) => {
   return async (dispatch) => {
     dispatch(getModuleSubModuleBegin());
 
+    const cb = typeof type === 'function' ? type : callback;
+    const moduleType = typeof type === 'string' ? type : '';
+
     try {
-      const response = await DataService.get('user/modules-with-submodules/');
+      const url = moduleType ? `user/modules-with-submodules/?type=${moduleType}` : 'user/modules-with-submodules/';
+      const response = await DataService.get(url);
 
       if (response.data?.status === true || response.data?.status === 'success') {
         dispatch(getModuleSubModuleSuccess(response.data));
-        callback?.(true, response.data);
+        cb?.(true, response.data);
       } else {
         dispatch(getModuleSubModuleErr(response.data?.message));
-        callback?.(false, response.data);
+        cb?.(false, response.data);
       }
     } catch (err) {
       dispatch(getModuleSubModuleErr(err));
-      callback?.(false, err);
+      cb?.(false, err);
     }
   };
 };

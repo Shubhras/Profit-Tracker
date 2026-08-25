@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Input, Tag, Switch, Modal, Button, Select, Tooltip } from 'antd';
+import { Table, Input, Tag, Switch, Modal, Button, Select, Tooltip, message } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { EyeOutlined, SearchOutlined, DeleteOutlined } from '@ant-design/icons';
-import { getUsersList } from '../../redux/admin/actionCreator';
+import { getUsersList, deleteUserDetails } from '../../redux/admin/actionCreator';
 
 function UsersList() {
   const navigate = useNavigate();
@@ -18,6 +18,10 @@ function UsersList() {
 
   const [subscriptionModal, setSubscriptionModal] = useState(false);
   const [selectedSubscription, setSelectedSubscription] = useState(null);
+
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [selectedUserForDelete, setSelectedUserForDelete] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const dispatch = useDispatch();
 
@@ -46,12 +50,36 @@ function UsersList() {
     status: true,
   });
 
+  const handleDeleteClick = (record) => {
+    setSelectedUserForDelete(record);
+    setDeleteModal(true);
+  };
+
+  const confirmDeleteUser = () => {
+    if (!selectedUserForDelete) return;
+    setDeleteLoading(true);
+    dispatch(
+      deleteUserDetails(selectedUserForDelete.user_id, (success, response) => {
+        setDeleteLoading(false);
+        setDeleteModal(false);
+        if (success) {
+          message.success(response?.message || 'User deleted successfully.');
+          dispatch(getUsersList(pagination.current, pagination.pageSize, debouncedSearch));
+        } else {
+          message.error(response?.message || 'Failed to delete user.');
+        }
+        setSelectedUserForDelete(null);
+      }),
+    );
+  };
+
   const dataSource =
     getuserlist?.data?.map((item) => ({
       key: item.user_id,
       user_id: item.user_id,
       name: item.name,
       email: item.email,
+      is_active: item.is_active,
       business_name: item.business_name,
       mobile_number: item.mobile_number,
       address: item.address,
@@ -178,12 +206,13 @@ function UsersList() {
       render: (_, record) => <Tag color="blue">{record?.subscription?.plan_name || 'Trial'}</Tag>,
     },
 
-    // {
-    //   title: 'Status',
-    //   width: 100,
-    //   align: 'center',
-    //   render: (_, record) => <Switch checked={record.subscription_active} size="small" />,
-    // },
+    {
+      title: 'Status',
+      dataIndex: 'is_active',
+      width: 80,
+      align: 'center',
+      render: (isActive) => <Tag color={isActive ? 'green' : 'red'}>{isActive ? 'Active' : 'Inactive'}</Tag>,
+    },
 
     {
       title: 'Created',
@@ -202,10 +231,6 @@ function UsersList() {
           <Button
             type="text"
             icon={<EyeOutlined className="text-[#1677ff] text-[18px]" />}
-            // onClick={() => {
-            //   setSelectedSubscription(record.subscription);
-            //   setSubscriptionModal(true);
-            // }}
             onClick={() => {
               navigate('/super-admin/user/view', {
                 state: {
@@ -214,17 +239,12 @@ function UsersList() {
               });
             }}
           />
-          {/* <Button
-            type="text"
-            icon={<LockOutlined className="text-orange-500 text-[16px]" />}
-            onClick={() => handlePermissionModal(record)}
-          /> */}
 
           <Button
             type="text"
             danger
             icon={<DeleteOutlined className="text-red-500 text-[16px]" />}
-            // onClick={() => handleDeleteClick(record)}
+            onClick={() => handleDeleteClick(record)}
           />
         </div>
       ),
@@ -624,6 +644,53 @@ function UsersList() {
             </div>
           </div>
         )}
+      </Modal>
+
+      <Modal
+        open={deleteModal}
+        centered
+        width={420}
+        footer={null}
+        closable={false}
+        onCancel={() => {
+          setDeleteModal(false);
+          setSelectedUserForDelete(null);
+        }}
+      >
+        <div className="py-2 text-center">
+          <DeleteOutlined
+            style={{
+              fontSize: 42,
+              color: '#ef4444',
+              marginBottom: 12,
+            }}
+          />
+
+          <h3 className="text-lg font-semibold mb-2">Delete User</h3>
+
+          <p className="text-gray-500 mb-1">
+            Are you sure you want to delete user{' '}
+            <strong>{selectedUserForDelete?.name || selectedUserForDelete?.email}</strong>?
+          </p>
+          <p className="text-xs text-red-500 mb-6">
+            This will set the user&apos;s account and linked sub-accounts to Inactive.
+          </p>
+
+          <div className="flex justify-center gap-3">
+            <Button
+              onClick={() => {
+                setDeleteModal(false);
+                setSelectedUserForDelete(null);
+              }}
+            >
+              Cancel
+            </Button>
+
+            <Button danger type="primary" loading={deleteLoading} onClick={confirmDeleteUser}>
+              Delete User
+            </Button>
+          </div>
+        </div>
       </Modal>
     </>
   );

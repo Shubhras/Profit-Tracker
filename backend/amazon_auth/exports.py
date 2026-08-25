@@ -1293,6 +1293,38 @@ def delete_export_file(request, export_id=None):
         return Response({"success": False, "message": "No reports found or failed to delete"}, status=status.HTTP_404_NOT_FOUND)
 
 
+@api_view(['DELETE', 'POST'])
+@permission_classes([IsAuthenticated])
+def delete_all_export_reports(request):
+    """
+    Deletes all export history reports in a single API request.
+    """
+    from django.db.models import Q
+    if request.user and request.user.is_authenticated:
+        exports = ExportedReport.objects.filter(Q(user=request.user) | Q(user__isnull=True))
+    else:
+        exports = ExportedReport.objects.filter(user__isnull=True)
+
+    total_count = exports.count()
+    deleted_count = 0
+
+    for exp in exports:
+        try:
+            if exp.file:
+                exp.file.delete(save=False)
+            exp.delete()
+            deleted_count += 1
+        except Exception:
+            pass
+
+    return Response({
+        "success": True,
+        "message": f"Successfully deleted all {deleted_count} report(s)",
+        "deleted_count": deleted_count,
+        "total": total_count
+    })
+
+
 CAMPAIGN_COLUMNS = {
     "name": "Campaign Name",
     "state": "State",

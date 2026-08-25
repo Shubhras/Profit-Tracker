@@ -2607,7 +2607,8 @@ def get_full_dashboard(request):
     )
 
 
-    cancelled_qty = cancelled_qs.count() 
+    # cancelled_qty = cancelled_qs.count() 
+    cancelled_qty = 0
 
     
     total_return_count_dashboard += total_replacement_return_count_dashboard
@@ -2616,16 +2617,26 @@ def get_full_dashboard(request):
     
     total_q = (
         gross_item_qty
-        + cancelled_qty
+        # + cancelled_qty
         # + rto_qty
         # + returns_qty
         + total_claim_count_dashboard
-        + total_return_count_dashboard
+        # + total_return_count_dashboard
     )
 
 
     # net_gross_item_qty = gross_item_qty - cancelled_qty 
     net_gross_item_qty = gross_item_qty 
+    
+    net_gross_item_qty = net_gross_item_qty - courier_return_count_dashboard - customer_return_count_dashboard
+    
+    print("net final quantity",net_gross_item_qty)
+    print("net total_return_count_dashboard",total_return_count_dashboard) 
+    
+    print("net courier_return_count_dashboard", courier_return_count_dashboard)
+            
+    print("net total_return_countcustomer_return_count_dashboard_dashboard",customer_return_count_dashboard)        
+  
     print("gross_sales>>>>>",gross_sales)
     net_gross_sales = gross_sales + cancelled_amount
     
@@ -2638,7 +2649,7 @@ def get_full_dashboard(request):
         # - rto_amount
         # - returns_amount
         - cancelled_amount
-        # - total_claim_amount_dashboard
+        - total_claim_amount_dashboard
         - courier_return_amount_dashboard
         - customer_return_amount_dashboard
     )
@@ -2665,7 +2676,7 @@ def get_full_dashboard(request):
             "tacos": f"{round(tacos)}%",
             "shipping": format_currency(total_shipping_final),
             
-            "total_return_count": total_return_count_dashboard,
+            # "total_return_count": total_return_count_dashboard,
             "courier_return_count": courier_return_count_dashboard,
             "customer_return_count": customer_return_count_dashboard,
             "return_amount": format_currency(total_return_amount_dashboard),
@@ -2678,7 +2689,9 @@ def get_full_dashboard(request):
         },
         "breakdown_table": {
             "gross": {"qty": total_q, "amount": format_currency(total_gross)}, 
-            "cancelled": {"qty": -abs(cancelled_qs.count()), "amount": format_currency(cancelled_amount)},
+            # "gross": {"qty": total_q, "amount": format_currency(accurate_net_sales)}, #new chnages on 24Augst
+            # "cancelled": {"qty": -abs(cancelled_qs.count()), "amount": format_currency(cancelled_amount)},
+            "cancelled": {"qty": -abs(cancelled_qty), "amount": format_currency(cancelled_amount)},
             "cancelled(RTO)": {"qty": -abs(rto_qty), "amount": format_currency(rto_amount)},
             # "returned": {"qty": -abs(returns_qty), "amount": format_currency(returns_amount)},
             # "returned(RTO)": {"qty": -abs(rto_qty), "amount": format_currency(rto_amount)},

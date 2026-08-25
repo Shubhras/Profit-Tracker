@@ -1,12 +1,13 @@
 from django.urls import path
 from user_auth.apis.register import UserRegisterAPI
+from user_auth.apis.signup_otp import SendSignupOTPAPIView
 from user_auth.apis.login import UserLoginAPI
 from user_auth.apis.profile import UserProfileAPI
 from user_auth.apis.password import UserChangePasswordAPI
 from user_auth.apis.forgot_password import UserForgotPasswordAPI
 from user_auth.apis.reset_password import UserResetPasswordAPI,RefreshTokenAPI
 from user_auth.apis.update_profile import UserUpdateProfileAPI
-from user_auth.apis.admin_user_update import AdminUserDetailUpdateAPIView
+from user_auth.apis.admin_user_update import AdminUserDetailUpdateAPIView, AdminUserSoftDeleteAPIView
 from user_auth.apis.admin_marketplace_integrations import AdminMarketplaceIntegrationsAPIView
 from user_auth.apis.admin_payment_transactions import AdminPaymentTransactionsAPIView
 from .views import *
@@ -23,6 +24,7 @@ from amazon_auth.growth_opportunities import GrowthOpportunitiesAPIView
 from admin_auth.apis.api_logs import AdminApiLogsAPI
 
 urlpatterns = [
+    path('send-signup-otp/', SendSignupOTPAPIView.as_view(), name='send-signup-otp'),
     path('register/', UserRegisterAPI.as_view()),
     path('login/', UserLoginAPI.as_view()),
     path('profile/', UserProfileAPI.as_view()),
@@ -48,6 +50,16 @@ urlpatterns = [
         "admin/main-users/<int:pk>/get-update/",
         AdminUserDetailUpdateAPIView.as_view(),
         name="admin-user-detail-update"
+    ),
+    path(
+        "admin/main-users/<int:pk>/delete/",
+        AdminUserSoftDeleteAPIView.as_view(),
+        name="admin-user-delete"
+    ),
+    path(
+        "admin/main-users/<int:pk>/soft-delete/",
+        AdminUserSoftDeleteAPIView.as_view(),
+        name="admin-user-soft-delete"
     ),
     
     

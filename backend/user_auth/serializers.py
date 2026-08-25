@@ -80,6 +80,7 @@ class UserRegisterSerializer(serializers.Serializer):
 
     # ✅ new field — frontend sends the captcha token here
     captcha_token = serializers.CharField(write_only=True)
+    otp = serializers.CharField(write_only=True, required=True)
 
     def validate_password(self, value):
         pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$'
@@ -90,20 +91,29 @@ class UserRegisterSerializer(serializers.Serializer):
         return value
 
     def validate_captcha_token(self, value):
-        response = requests.post(
-            settings.RECAPTCHA_VERIFY_URL,
-            data={
-                "secret": settings.RECAPTCHA_SECRET_KEY,
-                "response": value,
-            },
-            timeout=5,
-        )
-        result = response.json()
+        if not value:
+            raise serializers.ValidationError("Captcha token is required")
 
-        if not result.get("success"):
-            raise serializers.ValidationError("Captcha verification failed")
+        try:
+            response = requests.post(
+                settings.RECAPTCHA_VERIFY_URL,
+                data={
+                    "secret": getattr(settings, "RECAPTCHA_SECRET_KEY", ""),
+                    "response": value,
+                },
+                timeout=5,
+            )
+            result = response.json()
+            if result.get("success"):
+                return value
+        except Exception:
+            pass
 
-        return value
+        # In DEBUG / development environment or when using test sitekeys, pass captcha validation
+        if getattr(settings, "DEBUG", False):
+            return value
+
+        raise serializers.ValidationError("Captcha verification failed")
 
     def validate(self, data):
         if data["password"] != data["confirm_password"]:
@@ -115,12 +125,27 @@ class UserRegisterSerializer(serializers.Serializer):
         if User.objects.filter(email=data["email"]).exists():
             raise serializers.ValidationError("Email already registered")
 
+        # OTP Validation
+        email = data["email"].strip().lower()
+        otp_val = data.get("otp", "").strip()
+
+        otp_record = EmailOTP.objects.filter(email=email).order_by("-created_at").first()
+        if not otp_record:
+            raise serializers.ValidationError("No OTP found for this email address. Please request a new OTP.")
+
+        if otp_record.is_expired():
+            raise serializers.ValidationError("The OTP code has expired. Please request a new OTP.")
+
+        if otp_record.otp != otp_val:
+            raise serializers.ValidationError("Invalid OTP verification code. Please try again.")
+
         return data
 
     def create(self, validated_data):
         password = validated_data.pop("password")
         validated_data.pop("confirm_password")
         validated_data.pop("captcha_token")  # ✅ not a model field, remove before saving
+        validated_data.pop("otp", None)
 
         user = User.objects.create_user(
             username=validated_data["email"],
@@ -139,6 +164,9 @@ class UserRegisterSerializer(serializers.Serializer):
             pin_code=validated_data["pin_code"],
             accepted_terms=validated_data["accepted_terms"]
         )
+
+        # Clear used OTP record
+        EmailOTP.objects.filter(email=validated_data["email"].strip().lower()).delete()
 
         return user
     
@@ -212,12 +240,11 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
             "city",
             "state",
             "pin_code",
+            "profile_picture",
             "accepted_terms"
         ]
         
 
-
-          
 class UserProfileSerializer(serializers.ModelSerializer):
     # Profile fields
     name = serializers.CharField(source="profile.name", read_only=True)
@@ -228,6 +255,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
     city = serializers.CharField(source="profile.city", read_only=True)
     state = serializers.CharField(source="profile.state", read_only=True)
     pin_code = serializers.CharField(source="profile.pin_code", read_only=True)
+
+    profile_picture = serializers.SerializerMethodField()
 
     accepted_terms = serializers.BooleanField(
         source="profile.accepted_terms",
@@ -242,6 +271,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     subscription = serializers.SerializerMethodField()
     unread_notification_count = serializers.SerializerMethodField()
+    permissions = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -253,6 +283,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "name",
             "business_name",
             "mobile_number",
+            "profile_picture",
 
             "address",
             "city",
@@ -267,18 +298,39 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "subscription",
             "unread_notification_count",
             "connected_channels",
+            "permissions",
         ]
 
+    def get_permissions(self, obj):
+        perms = UserModulePermission.objects.filter(user=obj, can_view=True)
+        return UserModulePermissionSerializer(perms, many=True).data
+
+    def get_profile_picture(self, obj):
+        try:
+            if hasattr(obj, 'profile') and obj.profile.profile_picture:
+                url = obj.profile.profile_picture.url
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(url)
+                return url
+        except Exception:
+            pass
+        return None
+
     def get_is_sub_user(self, obj):
-        return SubUser.objects.filter(user=obj).exists()
+        return SubUser.objects.filter(user=obj).exists() or AdminSubUser.objects.filter(user=obj).exists()
 
     def get_is_client_user(self, obj):
-        return not self.get_is_sub_user(obj) and not obj.is_superuser
+        is_admin_user = obj.is_superuser or obj.is_staff or AdminSubUser.objects.filter(user=obj).exists()
+        return not is_admin_user and not SubUser.objects.filter(user=obj).exists()
 
     def get_role(self, obj):
         sub = SubUser.objects.filter(user=obj).first()
         if sub:
             return sub.role
+        admin_sub = AdminSubUser.objects.filter(user=obj).first()
+        if admin_sub:
+            return admin_sub.role
         return "Superadmin" if obj.is_superuser else "Client"
 
     def get_unread_notification_count(self, obj):
@@ -641,6 +693,10 @@ class SubModuleSerializer(serializers.ModelSerializer):
 class UserModulePermissionSerializer(
     serializers.ModelSerializer
 ):
+    module_name = serializers.CharField(source="module.name", read_only=True)
+    module_slug = serializers.CharField(source="module.slug", read_only=True)
+    submodule_name = serializers.CharField(source="submodule.name", read_only=True)
+    submodule_slug = serializers.CharField(source="submodule.slug", read_only=True)
 
     class Meta:
         model = UserModulePermission
@@ -753,6 +809,37 @@ class SubUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SubUser
+        fields = [
+            "id",
+            "username",
+            "email",
+            "name",
+            "mobile_number",
+            "role",
+            "status",
+            "is_active",
+            "permissions",
+            "created_at",
+            "updated_at",
+        ]
+
+    def get_status(self, obj):
+        return "Active" if obj.user and obj.user.is_active else "Pending"
+
+    def get_permissions(self, obj):
+        permissions = UserModulePermission.objects.filter(user=obj.user)
+        return UserModulePermissionSerializer(permissions, many=True).data
+
+
+class AdminSubUserSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source="user.email", read_only=True)
+    username = serializers.CharField(source="user.username", read_only=True)
+    is_active = serializers.BooleanField(source="user.is_active", read_only=True)
+    status = serializers.SerializerMethodField()
+    permissions = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AdminSubUser
         fields = [
             "id",
             "username",

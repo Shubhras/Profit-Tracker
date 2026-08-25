@@ -17,6 +17,7 @@ export default function Download() {
   const [reports, setReports] = useState([]);
   const [downloadingIds, setDownloadingIds] = useState({});
   const [deletingIds, setDeletingIds] = useState({});
+  const [deletingAll, setDeletingAll] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [totalCount, setTotalCount] = useState(0);
@@ -141,6 +142,37 @@ export default function Download() {
       cancelText: 'No',
       onOk() {
         return handleDelete(record);
+      },
+    });
+  };
+
+  const handleDeleteAll = async () => {
+    setDeletingAll(true);
+    try {
+      const response = await DataService.delete('amazon/exports/history/delete-all/');
+      if (response.data && response.data.success) {
+        message.success(response.data.message || 'All reports deleted successfully');
+        fetchHistory();
+      } else {
+        message.error(response.data?.message || 'Failed to delete reports');
+      }
+    } catch (err) {
+      console.error('Delete all failed:', err);
+      message.error(err.response?.data?.message || 'Failed to delete reports');
+    } finally {
+      setDeletingAll(false);
+    }
+  };
+
+  const confirmDeleteAll = () => {
+    Modal.confirm({
+      title: 'Delete All Reports',
+      content: 'Are you sure you want to delete ALL exported reports? This action cannot be undone.',
+      okText: 'Delete All',
+      okType: 'danger',
+      cancelText: 'Cancel',
+      onOk() {
+        return handleDeleteAll();
       },
     });
   };
@@ -309,6 +341,18 @@ export default function Download() {
                   />
                   <SearchOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[14px]" />
                 </div>
+
+                {/* Delete All Button */}
+                <Button
+                  danger
+                  onClick={confirmDeleteAll}
+                  loading={deletingAll}
+                  disabled={reports.length === 0}
+                  className="bg-red-50 text-red-600 hover:bg-red-100 rounded-md inline-flex items-center gap-1 border-none shadow-none text-[12px] font-medium px-3 h-[30px]"
+                >
+                  <DeleteOutlined />
+                  Delete All
+                </Button>
               </div>
             </div>
 

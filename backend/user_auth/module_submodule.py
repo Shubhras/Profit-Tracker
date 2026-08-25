@@ -627,10 +627,12 @@ class ModuleWithSubModulesAPIView(APIView):
     def get(self, request):
 
         try:
+            module_type = request.query_params.get("type")
+            queryset = Module.objects.filter(is_active=True)
+            if module_type in ["admin", "client"]:
+                queryset = queryset.filter(module_type=module_type)
 
-            modules = Module.objects.filter(
-                is_active=True
-            ).prefetch_related("submodules")
+            modules = queryset.prefetch_related("submodules").order_by("id")
 
             serializer = ModuleWithSubModulesSerializer(
                 modules,

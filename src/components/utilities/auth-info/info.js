@@ -302,8 +302,14 @@ const AuthInfo = React.memo(() => {
             alt=""
           /> */}
           <Avatar
-            src="https://cdn0.iconfinder.com/data/icons/user-pictures/100/matureman1-512.png"
-            className="w-12 h-12 rounded-full border-2 border-white/30 p-0.5"
+            src={
+              profile?.profile_picture
+                ? profile.profile_picture.startsWith('http')
+                  ? profile.profile_picture
+                  : `http://127.0.0.1:8000${profile.profile_picture}`
+                : 'https://cdn0.iconfinder.com/data/icons/user-pictures/100/matureman1-512.png'
+            }
+            className="w-12 h-12 rounded-full border-2 border-white/30 p-0.5 object-cover"
           />
 
           <figcaption className="text-white">
@@ -949,7 +955,16 @@ const AuthInfo = React.memo(() => {
       <div className="flex ltr:ml-3 rtl:mr-3 ltr:mr-4 rtl:ml-4 ssm:mr-0 ssm:rtl:ml-0">
         <Popover placement="bottomRight" content={userContent} action="click">
           <Link to="#" className="flex items-center text-light whitespace-nowrap">
-            <Avatar src="https://cdn0.iconfinder.com/data/icons/user-pictures/100/matureman1-512.png" />
+            <Avatar
+              src={
+                profile?.profile_picture
+                  ? profile.profile_picture.startsWith('http')
+                    ? profile.profile_picture
+                    : `http://127.0.0.1:8000${profile.profile_picture}`
+                  : 'https://cdn0.iconfinder.com/data/icons/user-pictures/100/matureman1-512.png'
+              }
+              className="object-cover"
+            />
             <span className="ltr:mr-1.5 rtl:ml-1.5 ltr:ml-2.5 rtl:mr-2.5 text-body dark:text-white60 text-sm font-medium md:hidden capitalize">
               {profile?.name}
             </span>
