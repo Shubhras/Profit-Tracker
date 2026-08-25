@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Form, Input, Button, message } from 'antd';
+import { MailOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { resetPassword } from '../../../../redux/authentication/actionCreator';
@@ -9,14 +10,18 @@ function ResetPassword() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // ✅ Get loading/error from redux
   const { loading, error } = useSelector((state) => state.auth);
 
-  // ✅ Submit Handler
   const handleSubmit = (values) => {
+    const payload = {
+      email: values.email.trim(),
+      otp: values.otp.trim(),
+      new_password: values.new_password,
+    };
+
     dispatch(
-      resetPassword(values, () => {
-        message.success('Password reset successfully!');
+      resetPassword(payload, () => {
+        message.success('Password reset successfully! Please sign in.');
         navigate('/auth/login');
       }),
     );
@@ -24,18 +29,40 @@ function ResetPassword() {
 
   return (
     <div className="w-full">
-      <div className="text-center mb-10">
+      <div className="text-center mb-8">
         <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Reset Password</h2>
-        <p className="text-gray-500">Enter your reset token and new password</p>
+        <p className="text-gray-500">Enter your email, the 6-digit OTP code received, and your new password</p>
       </div>
 
       <Form name="resetPass" onFinish={handleSubmit} layout="vertical">
         <Form.Item
-          label={<span className="font-medium text-gray-700">Reset Token</span>}
-          name="token"
-          rules={[{ required: true, message: 'Please enter reset token!' }]}
+          label={<span className="font-medium text-gray-700">Email Address</span>}
+          name="email"
+          rules={[
+            { required: true, message: 'Please enter your email!' },
+            { type: 'email', message: 'Enter a valid email!' },
+          ]}
         >
-          <Input className="rounded-lg py-2.5" placeholder="Enter token here" />
+          <Input
+            className="rounded-lg py-2"
+            placeholder="name@example.com"
+            prefix={<MailOutlined className="text-gray-400 mr-2" />}
+          />
+        </Form.Item>
+
+        <Form.Item
+          label={<span className="font-medium text-gray-700">6-Digit Reset OTP Code</span>}
+          name="otp"
+          rules={[
+            { required: true, message: 'Please enter 6-digit OTP!' },
+            { pattern: /^[0-9]{6}$/, message: 'OTP must be a 6-digit number' },
+          ]}
+        >
+          <Input
+            className="rounded-lg py-2 tracking-widest font-mono text-center text-lg"
+            placeholder="123456"
+            maxLength={6}
+          />
         </Form.Item>
 
         <Form.Item
@@ -43,10 +70,33 @@ function ResetPassword() {
           name="new_password"
           rules={[
             { required: true, message: 'Please enter new password!' },
-            { min: 6, message: 'Password must be at least 6 characters' },
+            {
+              pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$/,
+              message:
+                'Password must be at least 12 characters and include uppercase, lowercase, number, and special character.',
+            },
           ]}
         >
-          <Input.Password className="rounded-lg py-2.5" placeholder="Enter new password" />
+          <Input.Password className="rounded-lg py-2" placeholder="Enter new password" />
+        </Form.Item>
+
+        <Form.Item
+          label={<span className="font-medium text-gray-700">Confirm New Password</span>}
+          name="confirm_password"
+          dependencies={['new_password']}
+          rules={[
+            { required: true, message: 'Please confirm password!' },
+            ({ getFieldValue }) => ({
+              validator(_, value) {
+                if (!value || getFieldValue('new_password') === value) {
+                  return Promise.resolve();
+                }
+                return Promise.reject(new Error('Passwords do not match'));
+              },
+            }),
+          ]}
+        >
+          <Input.Password className="rounded-lg py-2" placeholder="Confirm new password" />
         </Form.Item>
 
         {error && (

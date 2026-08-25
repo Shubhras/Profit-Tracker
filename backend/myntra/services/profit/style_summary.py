@@ -113,6 +113,8 @@ class StyleSummary:
 
             courier_return_count = 0
             customer_return_count = 0
+            courier_return_amount = Decimal(0)
+            customer_return_amount = Decimal(0)
 
             return_types = set()
 
@@ -173,9 +175,19 @@ class StyleSummary:
 
                     if return_category == "COURIER_RETURN":
                         courier_return_count += qty
+                        print("courier_return_count myntraaaaaaa ", courier_return_count)
+                        courier_return_amount = self.calculator.calculate_gross_sales(
+                            [order]
+                        ) or Decimal(0)
+                        print("courier_return_amount myntraaaaaaa ", courier_return_amount)
 
                     elif return_category == "CUSTOMER_RETURN":
                         customer_return_count += qty
+                        print("customer_return_count myntraaaaaaa ", customer_return_count)
+                        customer_return_amount = self.calculator.calculate_gross_sales(
+                            [order]
+                        ) or Decimal(0)
+                        print("customer_return_amount myntraaaaaaa ", customer_return_amount)
 
                     if return_item.type:
                         return_types.add(return_item.type)
@@ -352,6 +364,8 @@ class StyleSummary:
 
                 order_courier_return_count = 0
                 order_customer_return_count = 0
+                order_courier_return_amount = Decimal(0)
+                order_customer_return_amount = Decimal(0)
 
                 for return_item in order_returns:
                     qty = return_item.quantity or 0
@@ -360,9 +374,15 @@ class StyleSummary:
 
                     if category == "COURIER_RETURN":
                         order_courier_return_count += qty
+                        order_courier_return_amount = self.calculator.calculate_gross_sales(
+                            [order]
+                        ) or Decimal(0)
 
                     elif category == "CUSTOMER_RETURN":
                         order_customer_return_count += qty
+                        order_customer_return_amount = self.calculator.calculate_gross_sales(
+                            [order]
+                        ) or Decimal(0)
 
                 # --------------------------------------
                 # PURE COURIER RETURN / RTO
@@ -546,6 +566,8 @@ class StyleSummary:
                     ),
                     "courier_return_count": (courier_return_count),
                     "customer_return_count": (customer_return_count),
+                    "courier_return_amount": (courier_return_amount),
+                    "customer_return_amount": (customer_return_amount),
                     # ----------------------------------
                     # SALES
                     # ----------------------------------

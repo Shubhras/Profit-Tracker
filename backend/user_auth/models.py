@@ -44,6 +44,7 @@ class UserProfile(models.Model):
     state = models.CharField(max_length=50)
     pin_code = models.CharField(max_length=10)
 
+    profile_picture = models.ImageField(upload_to="profile_pics/", null=True, blank=True)
     accepted_terms = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -73,6 +74,10 @@ class PasswordResetRequest(models.Model):
 
 
 class Module(models.Model):
+    MODULE_TYPE_CHOICES = [
+        ('client', 'Client Module'),
+        ('admin', 'Admin Module'),
+    ]
 
     name = models.CharField(
         max_length=100,
@@ -82,6 +87,12 @@ class Module(models.Model):
     slug = models.SlugField(
         unique=True,
         blank=True
+    )
+
+    module_type = models.CharField(
+        max_length=20,
+        choices=MODULE_TYPE_CHOICES,
+        default='client'
     )
 
     description = models.TextField(
@@ -494,9 +505,30 @@ class SubUser(models.Model):
         return f"{self.name} (Sub-user of {self.parent.email})"
 
 
+class AdminSubUser(models.Model):
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="admin_subuser_profile"
+    )
+    parent = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="admin_sub_users"
+    )
+    name = models.CharField(max_length=100)
+    mobile_number = models.CharField(max_length=50)
+    role = models.CharField(max_length=50, default="Admin", blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} (Admin Sub-user of {self.parent.email})"
+
+
 def get_effective_user(user):
     """
-    Returns the parent account owner if the given user is a sub-user,
+    Returns the parent account owner if the given user is a sub-user or admin sub-user,
     otherwise returns the user itself.
     """
     if not user or not user.is_authenticated:
@@ -505,6 +537,23 @@ def get_effective_user(user):
         subuser = SubUser.objects.filter(user=user).select_related("parent").first()
         if subuser and subuser.parent:
             return subuser.parent
+        admin_subuser = AdminSubUser.objects.filter(user=user).select_related("parent").first()
+        if admin_subuser and admin_subuser.parent:
+            return admin_subuser.parent
     except Exception:
         pass
     return user
+
+
+
+class EmailOTP(models.Model):
+    email = models.EmailField(db_index=True)
+    otp = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
+    def __str__(self):
+        return f"OTP for {self.email}: {self.otp}"

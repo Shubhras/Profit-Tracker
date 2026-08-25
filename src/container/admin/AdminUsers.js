@@ -48,14 +48,61 @@ function AdminUsers() {
   }, [dispatch, pagination.current, pagination.pageSize]);
 
   const handleSubmit = () => {
-    const payload = {
-      name,
-      email,
-      mobile_number: mobileNumber,
-      permissions,
-    };
+    if (!name || !name.trim()) {
+      message.error('Please enter full name.');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !email.trim()) {
+      message.error('Please enter email address.');
+      return;
+    }
+    if (!emailRegex.test(email.trim())) {
+      message.error('Please enter a valid email address.');
+      return;
+    }
+
+    if (!mobileNumber) {
+      message.error('Please enter mobile number.');
+      return;
+    }
+    if (mobileNumber.length < 10) {
+      message.error('Mobile number must be at least 10 digits.');
+      return;
+    }
+
+    const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$/;
 
     if (!isEdit) {
+      if (!password) {
+        message.error('Please enter password.');
+        return;
+      }
+      if (!PASSWORD_REGEX.test(password)) {
+        message.error(
+          'Password must be at least 12 characters and include uppercase, lowercase, number, and special character.',
+        );
+        return;
+      }
+    } else if (password) {
+      if (!PASSWORD_REGEX.test(password)) {
+        message.error(
+          'Password must be at least 12 characters and include uppercase, lowercase, number, and special character.',
+        );
+        return;
+      }
+    }
+
+    const payload = {
+      name: name.trim(),
+      email: email.trim(),
+      mobile_number: mobileNumber,
+      permissions,
+      role: 'Admin',
+    };
+
+    if (password) {
       payload.password = password;
     }
 
@@ -148,7 +195,7 @@ function AdminUsers() {
     setSelectedUser(record);
 
     dispatch(
-      getModulesSubmodules((success) => {
+      getModulesSubmodules('admin', (success) => {
         if (success) {
           setPermissions(record.permissions || []);
           setPermissionModal(true);
@@ -207,7 +254,7 @@ function AdminUsers() {
 
   const handleViewDetails = (record) => {
     dispatch(
-      getModulesSubmodules((success) => {
+      getModulesSubmodules('admin', (success) => {
         if (success) {
           dispatch(
             getModulePermissionsDetails(record.id, (res) => {
@@ -227,16 +274,23 @@ function AdminUsers() {
     setViewExpandedModules((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
   };
 
-  const userData =
-    getSubUserslist?.results?.data?.map((item) => ({
-      id: item.id,
-      name: item.name,
-      email: item.email,
-      mobile_number: item.mobile_number,
-      username: item.username,
-      permissions: item.permissions,
-      created_at: item.created_at,
-    })) || [];
+  const rawData =
+    getSubUserslist?.data ||
+    getSubUserslist?.results?.data ||
+    getSubUserslist?.results ||
+    (Array.isArray(getSubUserslist) ? getSubUserslist : []);
+
+  const userData = Array.isArray(rawData)
+    ? rawData.map((item) => ({
+        id: item.id,
+        name: item.name,
+        email: item.email,
+        mobile_number: item.mobile_number,
+        username: item.username || item.email,
+        permissions: item.permissions,
+        created_at: item.created_at,
+      }))
+    : [];
 
   const columns = [
     {
@@ -325,7 +379,7 @@ function AdminUsers() {
                 setCreateModal(true);
               }}
             >
-              Create SubUsers
+              + Create Admin User
             </Button>
           </div>
 
@@ -338,7 +392,7 @@ function AdminUsers() {
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
-              total: userData.length,
+              total: getSubUserslist?.total_users || getSubUserslist?.count || userData.length,
               showSizeChanger: true,
               pageSizeOptions: ['10', '20', '50', '100'],
               showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
@@ -389,7 +443,7 @@ function AdminUsers() {
               <label className="block mb-1 text-sm font-medium">Email</label>
 
               <Input
-                placeholder="example@gmaill.com"
+                placeholder="example@gmail.com"
                 size="small"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -402,10 +456,13 @@ function AdminUsers() {
               <Input.Password
                 size="small"
                 className="h-8"
-                placeholder="Enter password"
+                placeholder={isEdit ? 'Leave empty to keep current password' : 'Enter password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+              <span className="text-[11px] text-gray-500 block mt-1">
+                Must be at least 12 characters with uppercase, lowercase, number & special character.
+              </span>
             </div>
 
             <div>
@@ -430,7 +487,7 @@ function AdminUsers() {
             <Button onClick={() => setCreateModal(false)}>Cancel</Button>
 
             <Button type="primary" className="font-semibold px-4" onClick={handleSubmit}>
-              Create User
+              {isEdit ? 'Update Admin User' : 'Create Admin User'}
             </Button>
           </div>
         </div>

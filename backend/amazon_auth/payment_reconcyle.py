@@ -343,11 +343,11 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             continue
         tx_shipping_map[order_id] = tx_shipping_map.get(order_id, 0.0) + float(txn["total_amount"] or 0)
 
-    afn_tx_ids = AmazonTransaction.objects.filter(
+    afn_tx_ids = set(AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
         transaction_type="Shipment",
         transaction_status="DEFERRED",
-    ).values_list("id", flat=True)
+    ).values_list("id", flat=True))
 
     afn_breakdowns = (
         AmazonTransactionBreakdown.objects.filter(
@@ -363,6 +363,36 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         if not order_id:
             continue
         tx_shipping_map[order_id] = tx_shipping_map.get(order_id, 0.0) + float(bd["total"] or 0)
+
+    # 1. Actual TCS from Shipment DEFERRED (TaxCollectedAtSource breakdown)
+    tcs_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=afn_tx_ids,
+            breakdown_type="TaxCollectedAtSource"
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+    tx_actual_tcs_by_order = {}
+    for bd in tcs_breakdowns:
+        oid = tx_to_order.get(bd["transaction_id"])
+        if oid:
+            tx_actual_tcs_by_order[oid] = tx_actual_tcs_by_order.get(oid, 0.0) + abs(float(bd["total"] or 0))
+
+    # 2. Actual MP Fees from Shipment DEFERRED (AmazonFees breakdown)
+    mp_fees_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=afn_tx_ids,
+            breakdown_type="AmazonFees"
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+    tx_actual_fees_by_order = {}
+    for bd in mp_fees_breakdowns:
+        oid = tx_to_order.get(bd["transaction_id"])
+        if oid:
+            tx_actual_fees_by_order[oid] = tx_actual_fees_by_order.get(oid, 0.0) + abs(float(bd["total"] or 0))
 
     FULFILLMENT_FEE_REFUND_PATTERNS = ["FulfillmentFeeRefund"]
 
@@ -691,12 +721,18 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             gst += float(f.get('gst') or 0)
 
             # RECONCILIATION ACTUALS PER ORDER
-            o_act_fees = (
-                abs(float(f.get('commission') or 0)) +
-                abs(float(f.get('fulfillment') or 0)) +
-                abs(float(f.get('other_fee') or 0))
-            )
-            o_act_ship = abs(float(f.get('shipping_fee') or 0))
+            o_act_fees = tx_actual_fees_by_order.get(oid)
+            if o_act_fees is None:
+                o_act_fees = (
+                    abs(float(f.get('commission') or 0)) +
+                    abs(float(f.get('fulfillment') or 0)) +
+                    abs(float(f.get('other_fee') or 0))
+                )
+
+            o_act_ship = tx_shipping_map.get(oid)
+            if o_act_ship is None:
+                o_act_ship = abs(float(f.get('shipping_fee') or 0))
+
             o_act_gst = abs(float(f.get('gst') or 0))
             o_act_settled = float(f.get('total_settled') or 0)
 
@@ -705,16 +741,19 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             row_actual_mp_gst += o_act_gst
             row_settlement_paid += o_act_settled
 
-            order_fee_map = extract_fees_and_tcs_per_asin(
-                raw_data_map.get(oid, []),
-                sku_asin_map=sku_asin_map
-            )
+            if oid in tx_actual_tcs_by_order:
+                row_actual_tcs += tx_actual_tcs_by_order[oid]
+            else:
+                order_fee_map = extract_fees_and_tcs_per_asin(
+                    raw_data_map.get(oid, []),
+                    sku_asin_map=sku_asin_map
+                )
 
-            for child_asin, fee_data_inner in order_fee_map.items():
-                parent_key = child_parent_map.get(child_asin)
-                if parent_key == parent_asin:
-                    t_new_charge += float(fee_data_inner["fee"])
-                    row_actual_tcs += abs(float(fee_data_inner.get("tcs", 0)))
+                for child_asin, fee_data_inner in order_fee_map.items():
+                    parent_key = child_parent_map.get(child_asin)
+                    if parent_key == parent_asin:
+                        t_new_charge += float(fee_data_inner["fee"])
+                        row_actual_tcs += abs(float(fee_data_inner.get("tcs", 0)))
 
             r = float(f.get('refund') or 0)
             rto_amt = float(f.get('rto') or 0)
@@ -1316,17 +1355,79 @@ def _payment_reconcile_order_level_logic(request):
     tot_settled_paid = 0.0
     tot_unsettled = 0.0
 
+    tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+        identifier_name="ORDER_ID",
+        identifier_value__in=order_ids
+    ).values("transaction_id", "identifier_value")
+
+    tx_to_order = {row["transaction_id"]: row["identifier_value"] for row in tx_identifiers}
+
+    shipment_deferred_tx_ids = set(AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_type="Shipment",
+        transaction_status="DEFERRED"
+    ).values_list("id", flat=True))
+
+    tcs_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=shipment_deferred_tx_ids,
+            breakdown_type="TaxCollectedAtSource"
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+    tx_actual_tcs_by_order = {}
+    for bd in tcs_breakdowns:
+        oid = tx_to_order.get(bd["transaction_id"])
+        if oid:
+            tx_actual_tcs_by_order[oid] = tx_actual_tcs_by_order.get(oid, 0.0) + abs(float(bd["total"] or 0))
+
+    mp_fees_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=shipment_deferred_tx_ids,
+            breakdown_type="AmazonFees"
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+    tx_actual_fees_by_order = {}
+    for bd in mp_fees_breakdowns:
+        oid = tx_to_order.get(bd["transaction_id"])
+        if oid:
+            tx_actual_fees_by_order[oid] = tx_actual_fees_by_order.get(oid, 0.0) + abs(float(bd["total"] or 0))
+
+    mfn_postage_txns = AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_type="ServiceFee",
+        transaction_status="DEFERRED",
+        description__icontains="MfnPostageFee",
+    ).values("id", "total_amount")
+
+    tx_actual_shipping_by_order = {}
+    for txn in mfn_postage_txns:
+        oid = tx_to_order.get(txn["id"])
+        if oid:
+            tx_actual_shipping_by_order[oid] = tx_actual_shipping_by_order.get(oid, 0.0) + abs(float(txn["total_amount"] or 0))
+
     for r in rows:
         oid = r.get("order_id")
         f = finance_map.get(oid, {})
 
-        row_actual_fees = abs(float(f.get('commission') or 0)) + abs(float(f.get('fulfillment') or 0)) + abs(float(f.get('other_fee') or 0))
-        row_actual_shipping = abs(float(f.get('shipping_fee') or 0))
+        row_actual_fees = tx_actual_fees_by_order.get(oid)
+        if row_actual_fees is None:
+            row_actual_fees = abs(float(f.get('commission') or 0)) + abs(float(f.get('fulfillment') or 0)) + abs(float(f.get('other_fee') or 0))
+
+        row_actual_shipping = tx_actual_shipping_by_order.get(oid)
+        if row_actual_shipping is None:
+            row_actual_shipping = abs(float(f.get('shipping_fee') or 0))
+
         row_actual_mp_gst = abs(float(f.get('gst') or 0))
         row_settlement_paid = float(f.get('total_settled') or 0)
 
-        order_fee_map = extract_fees_and_tcs_per_asin(raw_data_map.get(oid, []))
-        row_actual_tcs = sum(abs(float(fee_info.get("tcs", 0))) for fee_info in order_fee_map.values())
+        row_actual_tcs = tx_actual_tcs_by_order.get(oid)
+        if row_actual_tcs is None:
+            order_fee_map = extract_fees_and_tcs_per_asin(raw_data_map.get(oid, []))
+            row_actual_tcs = sum(abs(float(fee_info.get("tcs", 0))) for fee_info in order_fee_map.values())
 
         mpfees_num = abs(float(parse_currency_to_decimal(r.get("mpfees") if r.get("mpfees") is not None else r.get("estimatefees")) or 0))
         shipping_num = abs(float(parse_currency_to_decimal(r.get("shippingfees") if r.get("shippingfees") is not None else r.get("shipping")) or 0))

@@ -146,6 +146,10 @@ const actions = {
   UPDATE_USERS_DETAILS_BEGIN: 'UPDATE_USERS_DETAILS_BEGIN',
   UPDATE_USERS_DETAILS_SUCCESS: 'UPDATE_USERS_DETAILS_SUCCESS',
   UPDATE_USERS_DETAILS_ERR: 'UPDATE_USERS_DETAILS_ERR',
+
+  DELETE_USERS_DETAILS_BEGIN: 'DELETE_USERS_DETAILS_BEGIN',
+  DELETE_USERS_DETAILS_SUCCESS: 'DELETE_USERS_DETAILS_SUCCESS',
+  DELETE_USERS_DETAILS_ERR: 'DELETE_USERS_DETAILS_ERR',
   createCouponCodesBegin: () => ({
     type: actions.CREATE_COUPONCODE_BEGIN,
   }),
@@ -661,6 +665,20 @@ const actions = {
 
   updateUsersDetailsErr: (err) => ({
     type: actions.UPDATE_USERS_DETAILS_ERR,
+    err,
+  }),
+
+  deleteUsersDetailsBegin: () => ({
+    type: actions.DELETE_USERS_DETAILS_BEGIN,
+  }),
+
+  deleteUsersDetailsSuccess: (data) => ({
+    type: actions.DELETE_USERS_DETAILS_SUCCESS,
+    data,
+  }),
+
+  deleteUsersDetailsErr: (err) => ({
+    type: actions.DELETE_USERS_DETAILS_ERR,
     err,
   }),
 };

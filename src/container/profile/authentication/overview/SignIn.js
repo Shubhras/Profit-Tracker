@@ -44,7 +44,11 @@ function SignIn() {
       dispatch(
         // login(values, (hasSubscription) => {
         login(values, (userData) => {
-          const isSuperAdmin = userData.is_superuser;
+          const isSuperAdmin =
+            userData.is_superuser ||
+            userData.is_staff ||
+            userData.role === 'Admin' ||
+            (!userData.is_client_user && userData.role !== 'Client');
           const hasSubscription = userData.has_subscription;
 
           if (isSuperAdmin) {

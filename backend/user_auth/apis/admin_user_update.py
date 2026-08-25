@@ -1,5 +1,8 @@
+import logging
 from django.contrib.auth.models import User
 from django.db import transaction
+from django.core.mail import send_mail
+from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -14,6 +17,80 @@ from user_auth.serializers import (
     UserModulePermissionSerializer,
     SubUserSerializer
 )
+
+logger = logging.getLogger(__name__)
+
+
+def send_user_deactivation_email(user_email, user_name=""):
+    """
+    Sends an email notification to the user when their account is deactivated/soft-deleted by admin.
+    """
+    subject = "TrackMyProfit - Account Status Deactivated"
+    display_name = user_name or user_email
+
+    plain_message = f"""
+Hello {display_name},
+
+This is to inform you that your TrackMyProfit account ({user_email}) has been deactivated by the system administrator.
+
+If you believe this is an error or require further assistance, please contact our support team at support@trackmyprofit.com.
+
+Best regards,
+TrackMyProfit Team
+"""
+
+    html_message = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }}
+        .container {{ max-width: 560px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }}
+        .header {{ text-align: center; padding-bottom: 20px; border-bottom: 2px solid #eef2f5; }}
+        .header h2 {{ color: #dc2626; margin: 0; }}
+        .content {{ padding: 20px 0; color: #334155; line-height: 1.6; }}
+        .notice-box {{ background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin: 20px 0; color: #991b1b; }}
+        .footer {{ text-align: center; margin-top: 25px; color: #94a3b8; font-size: 12px; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>TrackMyProfit</h2>
+        </div>
+        <div class="content">
+            <p>Hello <strong>{display_name}</strong>,</p>
+            <p>This is to inform you that your TrackMyProfit user account (<strong>{user_email}</strong>) has been deactivated by an administrator.</p>
+            
+            <div class="notice-box">
+                <strong>Account Deactivated:</strong> Access to your dashboard and integrated marketplace services has been temporarily disabled.
+            </div>
+            
+            <p>If you have any questions or believe this was done in error, please reach out to our support team.</p>
+        </div>
+        <div class="footer">
+            <p>This is an automated notification from TrackMyProfit.</p>
+        </div>
+    </div>
+</body>
+</html>
+"""
+
+    try:
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@trackmyprofit.com')
+        send_mail(
+            subject=subject,
+            message=plain_message,
+            from_email=from_email,
+            recipient_list=[user_email],
+            html_message=html_message,
+            fail_silently=True
+        )
+        logger.info(f"Deactivation email sent successfully to {user_email}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send deactivation email to {user_email}: {str(e)}")
+        return False
 
 
 def get_user_subscription_data(user):
@@ -281,4 +358,55 @@ class AdminUserDetailUpdateAPIView(APIView):
 
         except Exception as e:
             return error_response(f"Failed to update user details: {str(e)}", 500)
+
+    def delete(self, request, pk):
+        return AdminUserSoftDeleteAPIView().delete(request, pk)
+
+
+class AdminUserSoftDeleteAPIView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, pk):
+        try:
+            user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return error_response("User not found", 404)
+
+        if user.is_superuser:
+            return error_response("Superuser accounts cannot be deactivated or soft deleted.", 400)
+
+        try:
+            with transaction.atomic():
+                user.is_active = False
+                user.save()
+
+                if hasattr(user, 'profile') and user.profile:
+                    user.profile.subscription_active = False
+                    user.profile.is_paid_subscription_active = False
+                    user.profile.subscription_status = 'inactive'
+                    user.profile.save()
+
+                # Deactivate sub-users linked to this parent account
+                subuser_user_ids = SubUser.objects.filter(parent=user).values_list('user_id', flat=True)
+                User.objects.filter(id__in=subuser_user_ids).update(is_active=False)
+
+            user_name = user.profile.name if hasattr(user, 'profile') and user.profile else user.username
+            email_sent = send_user_deactivation_email(user_email=user.email, user_name=user_name)
+
+            return success_response(
+                message="User deleted successfully.",
+                data={
+                    "user_id": user.id,
+                    "email": user.email,
+                    "is_active": user.is_active,
+                    "email_sent": email_sent
+                }
+            )
+        except Exception as e:
+            return error_response(f"Failed to delete user: {str(e)}", 500)
+
+    def post(self, request, pk):
+        return self.delete(request, pk)
+
 

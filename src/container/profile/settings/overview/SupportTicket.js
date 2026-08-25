@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Empty, Modal, Form, Input, Upload, message, Tag, Avatar, Spin } from 'antd';
+import { useLocation } from 'react-router-dom';
 
 import {
   PlusOutlined,
@@ -19,6 +20,7 @@ import {
 
 function SupportTicket() {
   const dispatch = useDispatch();
+  const location = useLocation();
 
   const { getsupportTickets, loading, getTicketsDetails: ticketDetails } = useSelector((state) => state.dashboard);
 
@@ -29,7 +31,13 @@ function SupportTicket() {
 
   useEffect(() => {
     dispatch(getSupportTickets());
-  }, [dispatch]);
+    if (location.state?.openModal) {
+      setOpenModal(true);
+      if (location.state?.title) {
+        form.setFieldsValue({ title: location.state.title });
+      }
+    }
+  }, [dispatch, location.state, form]);
 
   const handleSubmit = async (values) => {
     // setLoading(true);

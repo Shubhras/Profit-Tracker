@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import {
   InfoCircleOutlined,
   SettingFilled,
@@ -11,7 +12,6 @@ import {
   LineChartOutlined,
   NotificationOutlined,
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
 
 function QuickCommerce() {
   const navigate = useNavigate();

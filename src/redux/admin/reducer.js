@@ -144,6 +144,10 @@ const {
   UPDATE_USERS_DETAILS_BEGIN,
   UPDATE_USERS_DETAILS_SUCCESS,
   UPDATE_USERS_DETAILS_ERR,
+
+  DELETE_USERS_DETAILS_BEGIN,
+  DELETE_USERS_DETAILS_SUCCESS,
+  DELETE_USERS_DETAILS_ERR,
 } = actions;
 
 const initialState = {
@@ -183,6 +187,7 @@ const initialState = {
   modulePermissionsDetails: null,
   getusersDetailsData: null,
   updateUserDetailsData: null,
+  deleteUserDetailsData: null,
 };
 
 const AdmindashboardReducer = (state = initialState, action) => {
@@ -938,6 +943,27 @@ const AdmindashboardReducer = (state = initialState, action) => {
       };
 
     case UPDATE_USERS_DETAILS_ERR:
+      return {
+        ...state,
+        loading: false,
+        error: action.err,
+      };
+
+    case DELETE_USERS_DETAILS_BEGIN:
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case DELETE_USERS_DETAILS_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        deleteUserDetailsData: action.data,
+      };
+
+    case DELETE_USERS_DETAILS_ERR:
       return {
         ...state,
         loading: false,

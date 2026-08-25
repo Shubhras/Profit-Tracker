@@ -108,7 +108,7 @@ function ActionsRequired() {
       value: (
         <>
           {actionRequiredData?.data?.low_roi_products?.count ?? 0}{' '}
-          <span className="text-[12px] font-normal text-[#16A34A]">SKU</span>
+          <span className="text-[12px] font-normal text-[#2563EB]">SKU</span>
         </>
       ),
       path: '/admin/advertising/AdProducts',

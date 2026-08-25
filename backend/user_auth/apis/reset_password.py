@@ -1,52 +1,75 @@
-from django.contrib.auth.tokens import PasswordResetTokenGenerator
+import re
+from django.contrib.auth.models import User
 from rest_framework.views import APIView
 from rest_framework import status
-
-from subscription.utils.custom_response import success_response, error_response
-from user_auth.models import PasswordResetRequest
-
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
+from subscription.utils.custom_response import success_response, error_response
+from user_auth.models import EmailOTP, PasswordResetRequest
+
 
 class UserResetPasswordAPI(APIView):
     def post(self, request):
-        token = request.data.get("token")
+        email = request.data.get("email")
+        otp = request.data.get("otp") or request.data.get("token")
         new_password = request.data.get("new_password")
 
-        if not token or not new_password:
-            return error_response("token and new_password are required", 400)
+        if not email or not otp or not new_password:
+            return error_response("Email, OTP code, and new password are required.", 400)
+
+        email = email.strip().lower()
+        otp = str(otp).strip()
+
+        # Validate password policy
+        pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$'
+        if not re.match(pattern, new_password):
+            return error_response(
+                "Password must be at least 12 characters and include uppercase, lowercase, number, and special character.",
+                400
+            )
 
         try:
-            reset_obj = PasswordResetRequest.objects.get(token=token, is_used=False)
-        except PasswordResetRequest.DoesNotExist:
-            return error_response("Invalid token", 400)
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return error_response("User account not found.", 404)
 
-        # ✅ Check expiry (15 minutes)
-        if reset_obj.is_expired():
-            return error_response("Token expired", 400)
+        # Verify OTP
+        otp_record = EmailOTP.objects.filter(email=email).order_by("-created_at").first()
 
-        user = reset_obj.user
+        # Fallback compatibility if reset_obj token is passed
+        if not otp_record:
+            reset_obj = PasswordResetRequest.objects.filter(token=otp, is_used=False).first()
+            if reset_obj and not reset_obj.is_expired():
+                user.set_password(new_password)
+                user.save()
+                reset_obj.is_used = True
+                reset_obj.save()
+                return success_response(message="Password reset successfully.", data={})
+            return error_response("No OTP request found for this email. Please request a new OTP.", 400)
 
-        # ✅ Double check with Django token validation
-        if not PasswordResetTokenGenerator().check_token(user, token):
-            return error_response("Invalid or expired token", 400)
+        if otp_record.is_expired():
+            return error_response("The OTP code has expired. Please request a new OTP.", 400)
 
-        # ✅ Set new password
+        if otp_record.otp != otp:
+            return error_response("Invalid OTP code. Please check and try again.", 400)
+
+        # Set new password
         user.set_password(new_password)
         user.save()
 
-        # ✅ Mark token used
-        reset_obj.is_used = True
-        reset_obj.save()
+        # Clean up OTP record
+        EmailOTP.objects.filter(email=email).delete()
+
+        # Send confirmation email
+        from user_auth.apis.password import send_password_changed_email
+        send_password_changed_email(user)
 
         return success_response(
-        message="Password reset successfully",
-        data={}
+            message="Password reset successfully.",
+            data={}
         )
-    
-
 
 
 class RefreshTokenAPI(APIView):
@@ -79,4 +102,4 @@ class RefreshTokenAPI(APIView):
                 "statusCode": 401,
                 "status": False,
                 "error": "Invalid or expired refresh token"
-            }, status=status.HTTP_401_UNAUTHORIZED)    
+            }, status=status.HTTP_401_UNAUTHORIZED)

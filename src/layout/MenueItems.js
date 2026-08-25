@@ -1020,111 +1020,139 @@ function MenuItems({ toggleCollapsed }) {
       ),
   ];
 
+  const userPermissions = profile?.permissions || [];
+  const isSubUser = profile?.is_sub_user;
+
+  const hasAdminModule = (slug) => {
+    if (!isSubUser) {
+      return true;
+    }
+    if (userPermissions && userPermissions.length > 0) {
+      return userPermissions.some(
+        (p) => p.module_slug === slug || p.module_name?.toLowerCase() === slug.toLowerCase() || p.module === slug,
+      );
+    }
+    return true;
+  };
+
   const superAdminItems = [
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/dashboard">
-        Dashboard
-      </NavLink>,
-      'dashboard',
-      !topMenu && <UilApps />,
-    ),
+    hasAdminModule('dashboard') &&
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/dashboard">
+          Dashboard
+        </NavLink>,
+        'dashboard',
+        !topMenu && <UilApps />,
+      ),
 
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/users">
-        Users
-      </NavLink>,
-      'users',
-      !topMenu && <UilUsersAlt />,
-    ),
+    hasAdminModule('users') &&
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/users">
+          Users
+        </NavLink>,
+        'users',
+        !topMenu && <UilUsersAlt />,
+      ),
 
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/admin-users">
-        Admin Users
-      </NavLink>,
-      'admin-users',
-      !topMenu && <UilUserCheck />,
-    ),
+    hasAdminModule('admin-users') &&
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/admin-users">
+          Admin Users
+        </NavLink>,
+        'admin-users',
+        !topMenu && <UilUserCheck />,
+      ),
 
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/subscription">
-        Subscription
-      </NavLink>,
-      'subscription',
-      !topMenu && <UilCreditCard />,
-    ),
+    hasAdminModule('subscription') &&
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/subscription">
+          Subscription
+        </NavLink>,
+        'subscription',
+        !topMenu && <UilCreditCard />,
+      ),
 
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/marketplaceIntegration">
-        Marketplace Integration
-      </NavLink>,
-      'marketplaceIntegration',
-      !topMenu && <UilStore />,
-    ),
+    hasAdminModule('marketplaceIntegration') &&
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/marketplaceIntegration">
+          Marketplace Integration
+        </NavLink>,
+        'marketplaceIntegration',
+        !topMenu && <UilStore />,
+      ),
 
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/CouponCode">
-        {t('Coupon Code')}
-      </NavLink>,
-      'CouponCode',
-      !topMenu && <UilTag />,
-    ),
+    hasAdminModule('CouponCode') &&
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/CouponCode">
+          {t('Coupon Code')}
+        </NavLink>,
+        'CouponCode',
+        !topMenu && <UilTag />,
+      ),
 
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/support">
-        {t('Help & Support')}
-      </NavLink>,
-      'support',
-      !topMenu && <UilLifeRing />,
-    ),
+    hasAdminModule('support') &&
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/support">
+          {t('Help & Support')}
+        </NavLink>,
+        'support',
+        !topMenu && <UilLifeRing />,
+      ),
 
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/module">
-        {t('Module')}
-      </NavLink>,
-      'module',
-      !topMenu && <UilCube />,
-    ),
+    hasAdminModule('module') &&
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/module">
+          {t('Module')}
+        </NavLink>,
+        'module',
+        !topMenu && <UilCube />,
+      ),
 
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/submodule">
-        {t('Sub Module')}
-      </NavLink>,
-      'submodule',
-      !topMenu && <UilLayerGroup />,
-    ),
+    hasAdminModule('submodule') &&
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/submodule">
+          {t('Sub Module')}
+        </NavLink>,
+        'submodule',
+        !topMenu && <UilLayerGroup />,
+      ),
 
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/notifications">
-        {t('Notifications')}
-      </NavLink>,
-      'notifications',
-      !topMenu && <UilBell />,
-    ),
+    hasAdminModule('notifications') &&
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/notifications">
+          {t('Notifications')}
+        </NavLink>,
+        'notifications',
+        !topMenu && <UilBell />,
+      ),
 
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/privacy-policy">
-        {t('Privacy Policy')}
-      </NavLink>,
-      'privacy-policy',
-      !topMenu && <UilShieldCheck />,
-    ),
+    hasAdminModule('privacy-policy') &&
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/privacy-policy">
+          {t('Privacy Policy')}
+        </NavLink>,
+        'privacy-policy',
+        !topMenu && <UilShieldCheck />,
+      ),
 
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/api-logs">
-        {t('API Call Logs')}
-      </NavLink>,
-      'api-logs',
-      !topMenu && <UilAnalysis />,
-    ),
+    hasAdminModule('api-logs') &&
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/api-logs">
+          {t('API Call Logs')}
+        </NavLink>,
+        'api-logs',
+        !topMenu && <UilAnalysis />,
+      ),
 
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/payment-transactions">
-        {t('Payment Transactions')}
-      </NavLink>,
-      'payment-transactions',
-      !topMenu && <UilBill />,
-    ),
-  ];
+    hasAdminModule('payment-transactions') &&
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/payment-transactions">
+          {t('Payment Transactions')}
+        </NavLink>,
+        'payment-transactions',
+        !topMenu && <UilBill />,
+      ),
+  ].filter(Boolean);
 
   // const selectedKey = React.useMemo(() => {
   //   if (location.pathname === '/admin/profit/profitTableView/details') {

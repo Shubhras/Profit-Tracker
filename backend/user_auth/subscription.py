@@ -536,12 +536,24 @@ class UserListAPIView(APIView):
             page = int(request.GET.get("page", 1))
             limit = int(request.GET.get("limit", 10))
 
-            queryset = UserProfile.objects.select_related(
-                "user"
-            ).filter(
-                user__subuser_profile__isnull=True,
-                user__is_superuser=False
-            ).order_by("-created_at")
+            is_active_param = request.GET.get("is_active")
+            if is_active_param is not None:
+                is_active_bool = is_active_param.lower() in ["true", "1"]
+                queryset = UserProfile.objects.select_related(
+                    "user"
+                ).filter(
+                    user__subuser_profile__isnull=True,
+                    user__is_superuser=False,
+                    user__is_active=is_active_bool
+                ).order_by("-created_at")
+            else:
+                queryset = UserProfile.objects.select_related(
+                    "user"
+                ).filter(
+                    user__subuser_profile__isnull=True,
+                    user__is_superuser=False,
+                    user__is_active=True
+                ).order_by("-created_at")
 
             # ==========================================
             # SEARCH
@@ -601,6 +613,7 @@ class UserListAPIView(APIView):
                     "user_id": profile.user.id,
                     "name": profile.name,
                     "email": profile.user.email,
+                    "is_active": profile.user.is_active,
                     "business_name": profile.business_name,
                     "mobile_number": profile.mobile_number,
                     "address": profile.address,

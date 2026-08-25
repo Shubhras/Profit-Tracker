@@ -1166,6 +1166,8 @@ def get_myntra_dashboard_stats(user, from_date_str, to_date_str):
     customer_return_count = 0
     claim_count = 0
     claim_amount = Decimal(0)
+    customer_return_amount = Decimal(0)
+    courier_return_amount = Decimal(0)
     
     for r in myntra_raw_rows:
         g_sales = Decimal(str(r.get("gross_sales") or 0))
@@ -1186,6 +1188,8 @@ def get_myntra_dashboard_stats(user, from_date_str, to_date_str):
         return_qty += int(r.get("returnqty") or 0)
         courier_return_count += int(r.get("courier_return_count") or 0)
         customer_return_count += int(r.get("customer_return_count") or 0)
+        courier_return_amount += Decimal(str(r.get("courier_return_amount") or 0))
+        customer_return_amount += Decimal(str(r.get("customer_return_amount") or 0))
         claim_count += int(r.get("claim_count") or 0)
         claim_amount += Decimal(str(r.get("claim_amount") or 0))
         
@@ -1203,6 +1207,9 @@ def get_myntra_dashboard_stats(user, from_date_str, to_date_str):
         sales=Sum('seller_price'),
         qty=Count('id')
     ).order_by('date')
+
+    final_net_qty = net_qty - (courier_return_count + customer_return_count + claim_count)
+    print("final_net_qty myntraaaaaaa ", final_net_qty)
     
     margin_factor = float(profit / net_sales) if net_sales else 0.0
     
@@ -1235,21 +1242,34 @@ def get_myntra_dashboard_stats(user, from_date_str, to_date_str):
             "shippingfees": float(r.get("shipping_fees") or 0),
             "channel": "Myntra-India",
         })
+
+    final_net_sales = gross_sales - (courier_return_amount + customer_return_amount + claim_amount) 
+    # print("gross_sales myntraaaaaaa ", gross_sales)
+    # print("courier_return_amount myntraaaaaaa>>>>>>>>>>>>>>>> ", courier_return_amount)
+    # print("customer_return_amount myntraaaaaaa>>>>>>>>>>>>>>>>>>>>>> ", customer_return_amount)
+    # print("claim_amount myntraaaaaaa ", claim_amount)
+    # print("final_net_sales myntraaaaaaa ", final_net_sales)   
+    # print("courier_return_count myntraaaaaaa ", courier_return_count)
+    # print("customer_return_count myntraaaaaaa ", customer_return_count)
         
     return {
         "gross_sales": gross_sales,
-        "net_sales": net_sales,
+        # "net_sales": net_sales,
+        "net_sales": final_net_sales,
         "final_net_sales": final_net_sales,
         "profit": profit,
         "mp_fees": mp_fees,
         "shipping_fees": shipping_fees,
         "ads": ads,
         "gross_qty": gross_qty,
-        "net_qty": net_qty,
+        # "net_qty": net_qty,
+        "net_qty": final_net_qty,
         "final_net_qty": final_net_qty,
         "return_qty": return_qty,
         "courier_return_count": courier_return_count,
         "customer_return_count": customer_return_count,
+        "courier_return_amount": courier_return_amount,
+        "customer_return_amount": customer_return_amount,
         "claim_count": claim_count,
         "claim_amount": claim_amount,
         "trends": trends_data,
@@ -1557,6 +1577,8 @@ def combined_get_full_dashboard(request):
         "return_qty": 0,
         "courier_return_count": 0,
         "customer_return_count": 0,
+        "courier_return_amount": Decimal(0),
+        "customer_return_amount": Decimal(0),
         "claim_count": 0,
         "claim_amount": Decimal(0),
         "trends": {},

@@ -48,8 +48,13 @@ const login = (values, callback) => {
 
         // callback(hasSubscription);
         const userData = response.data.data;
+        const isSuperAdmin =
+          userData.is_superuser ||
+          userData.is_staff ||
+          userData.role === 'Admin' ||
+          (!userData.is_client_user && userData.role !== 'Client');
 
-        Cookies.set('isSuperAdmin', userData.is_superuser ? 'true' : 'false');
+        Cookies.set('isSuperAdmin', isSuperAdmin ? 'true' : 'false');
 
         callback(userData);
       }
@@ -241,8 +246,14 @@ const subUserLogin = (subUserId, callback) => {
         Cookies.set('userEmail', userData.email);
 
         const hasSubscription = userData.has_subscription === true;
+        const isSuperAdmin =
+          userData.is_superuser ||
+          userData.is_staff ||
+          userData.role === 'Admin' ||
+          (!userData.is_client_user && userData.role !== 'Client');
+
         Cookies.set('hasSubscription', hasSubscription ? 'true' : 'false');
-        Cookies.set('isSuperAdmin', userData.is_superuser ? 'true' : 'false');
+        Cookies.set('isSuperAdmin', isSuperAdmin ? 'true' : 'false');
 
         dispatch(loginSuccess(true));
         dispatch(actions.setUserProfile(userData));
@@ -266,11 +277,31 @@ const setUserProfile = (data) => {
   };
 };
 
+const sendSignupOTP = (values, callback) => {
+  return async () => {
+    try {
+      const response = await DataService.post('/user/send-signup-otp/', values);
+      if (response.data.status === true) {
+        if (callback) callback(true, response.data);
+      } else {
+        const errorMessage = response.data.error || response.data.message || 'Failed to send OTP';
+        if (callback) callback(false, errorMessage);
+      }
+    } catch (err) {
+      console.log('Send OTP Failed:', err.response?.data);
+      const errorMessage =
+        err.response?.data?.error || err.response?.data?.message || 'Something went wrong while sending OTP';
+      if (callback) callback(false, errorMessage);
+    }
+  };
+};
+
 export {
   login,
   subUserLogin,
   logOut,
   register,
+  sendSignupOTP,
   forgotPassword,
   resetPassword,
   changePassword,

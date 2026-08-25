@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Form, Input, Spin, message } from 'antd';
+import { Button, Form, Input, Spin, Avatar, Upload, message } from 'antd';
+import { UploadOutlined } from '@ant-design/icons';
 import { useDispatch } from 'react-redux';
-import UilUser from '@iconscout/react-unicons/icons/uil-user';
 import { setUserProfile } from '../../../../redux/authentication/actionCreator';
 import { DataService } from '../../../../config/dataService/dataService';
 
@@ -9,10 +9,15 @@ function Profile() {
   const [form] = Form.useForm();
   const dispatch = useDispatch();
 
+  // Loading states
   const [fetchLoading, setFetchLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
-  const [displayName, setDisplayName] = useState('');
 
+  // Avatar state
+  const [previewImage, setPreviewImage] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+
+  // Fetch Profile API
   const fetchProfile = async () => {
     try {
       setFetchLoading(true);
@@ -20,10 +25,7 @@ function Profile() {
 
       if (response.data.status === true) {
         const { data } = response.data;
-
         dispatch(setUserProfile(data));
-        setDisplayName(data.name || '');
-
         form.setFieldsValue({
           name: data.name,
           business_name: data.business_name,
@@ -35,6 +37,11 @@ function Profile() {
           state: data.state,
           pin_code: data.pin_code,
         });
+
+        if (data.profile_picture) {
+          const pic = data.profile_picture;
+          setPreviewImage(pic.startsWith('http') ? pic : `http://127.0.0.1:8000${pic}`);
+        }
       }
     } catch (error) {
       console.log('Profile Fetch Error:', error.response?.data);
@@ -44,19 +51,40 @@ function Profile() {
     }
   };
 
+  // Call API on Page Load
   useEffect(() => {
     fetchProfile();
   }, []);
 
+  // Update Profile Submit
   const handleSubmit = async (values) => {
     try {
       setUpdateLoading(true);
-      const response = await DataService.patch('/user/update-profile/', values);
+      const formData = new FormData();
+      Object.keys(values).forEach((key) => {
+        if (values[key] !== undefined && values[key] !== null) {
+          formData.append(key, values[key]);
+        }
+      });
+
+      if (imageFile) {
+        formData.append('profile_picture', imageFile);
+      }
+
+      const response = await DataService.patch('/user/update-profile/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
       if (response.data.status === true) {
         message.success('Profile updated successfully!');
         dispatch(setUserProfile(response.data.data));
-        setDisplayName(values.name || displayName);
+
+        if (response.data.data.profile_picture) {
+          const pic = response.data.data.profile_picture;
+          setPreviewImage(pic.startsWith('http') ? pic : `http://127.0.0.1:8000${pic}`);
+        }
       } else {
         message.error(response.data.message || 'Failed to update profile');
       }
@@ -68,84 +96,99 @@ function Profile() {
     }
   };
 
-  const initials = displayName
-    ? displayName
-        .split(' ')
-        .map((w) => w[0])
-        .join('')
-        .slice(0, 2)
-        .toUpperCase()
-    : '';
-
   return (
-    <div className="w-full rounded-lg overflow-hidden mx-auto bg-white dark:bg-[#202531] border border-slate-100 dark:border-white/5 shadow-sm">
-      {/* Header */}
-      <div className="flex items-center gap-4 px-4 pt-4 pb-4 border-b border-slate-100 dark:border-white/5">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0">
-          {initials ? (
-            <span className="text-white text-[15px] font-semibold">{initials}</span>
-          ) : (
-            <UilUser className="w-5 h-5 text-white" />
-          )}
+    <div className="w-full rounded-2xl overflow-hidden mx-auto">
+      <div className="h-1 w-full bg-gradient-to-r from-emerald-500 to-teal-500" />
+      <div className="bg-white dark:bg-[#202531] shadow-sm border border-slate-200 dark:border-white/5 p-4">
+        <div className="mb-8 pb-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">General Settings</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">Update your personal and business details.</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-0.5">General Settings</h2>
-          <p className="text-slate-500 dark:text-slate-400 text-[13px] mb-0">
-            Update your personal and business details.
-          </p>
-        </div>
-      </div>
 
-      <div className="p-4">
         <Spin spinning={fetchLoading}>
           <Form form={form} layout="vertical" onFinish={handleSubmit} requiredMark={false}>
+            {/* Profile Picture / Logo Section */}
+            <div className="mb-8 p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200/60 dark:border-white/10 flex flex-col sm:flex-row items-center gap-5">
+              <div className="relative group">
+                <Avatar
+                  size={84}
+                  src={previewImage || 'https://cdn0.iconfinder.com/data/icons/user-pictures/100/matureman1-512.png'}
+                  className="border-2 border-emerald-500 shadow-md object-cover"
+                />
+              </div>
+
+              <div className="flex-1 text-center sm:text-left">
+                <h4 className="text-base font-semibold text-slate-800 dark:text-white mb-1">Profile Image / Logo</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                  Upload your photo or logo. Shown in top navigation header. (Max 5MB)
+                </p>
+
+                <Upload
+                  accept="image/*"
+                  showUploadList={false}
+                  beforeUpload={(file) => {
+                    const isLt5M = file.size / 1024 / 1024 < 5;
+                    if (!isLt5M) {
+                      message.error('Image must be smaller than 5MB!');
+                      return false;
+                    }
+                    setImageFile(file);
+                    setPreviewImage(URL.createObjectURL(file));
+                    return false;
+                  }}
+                >
+                  <Button
+                    icon={<UploadOutlined />}
+                    className="rounded-lg text-emerald-600 border-emerald-500 hover:text-emerald-700 hover:border-emerald-600 font-medium"
+                  >
+                    Upload Image
+                  </Button>
+                </Upload>
+              </div>
+            </div>
+
             {/* Personal Information */}
-            <div className="mb-9">
-              <h3 className="text-[12px] font-bold text-slate-500 dark:text-white60 uppercase tracking-wider mb-5 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <div className="mb-10">
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-6">
                 Personal Information
               </h3>
-              <div className="grid grid-cols-1 min-md:grid-cols-2 gap-x-4 gap-y-1">
+              <div className="grid grid-cols-1 min-md:grid-cols-2 gap-x-4 gap-y-2">
                 <Form.Item
-                  label={<span className="font-medium text-[13px] text-slate-700 dark:text-slate-300">Full Name</span>}
+                  label={<span className="font-medium text-slate-700 dark:text-slate-300">Full Name</span>}
                   name="name"
                   rules={[{ required: true, message: 'Required' }]}
                 >
                   <Input
-                    className="h-10 text-[13px] rounded-lg border-slate-300 focus:border-emerald-500 focus:shadow-none hover:border-slate-400"
+                    className="h-11 rounded-lg border-slate-300 focus:border-primary focus:shadow-none hover:border-slate-400"
                     placeholder="John Doe"
                   />
                 </Form.Item>
 
                 <Form.Item
-                  label={
-                    <span className="font-medium text-[13px] text-slate-700 dark:text-slate-300">Email Address</span>
-                  }
+                  label={<span className="font-medium text-slate-700 dark:text-slate-300">Email Address</span>}
                   name="email"
                 >
-                  <Input disabled className="h-10 text-[13px] rounded-lg border-slate-200 bg-slate-50 text-slate-500" />
+                  <Input disabled className="h-11 rounded-lg border-slate-200 bg-slate-50 text-slate-500" />
                 </Form.Item>
 
                 <Form.Item
-                  label={
-                    <span className="font-medium text-[13px] text-slate-700 dark:text-slate-300">Phone Number</span>
-                  }
+                  label={<span className="font-medium text-slate-700 dark:text-slate-300">Phone Number</span>}
                   name="mobile_number"
                 >
                   <Input
-                    className="h-10 text-[13px] rounded-lg border-slate-300 focus:border-emerald-500 focus:shadow-none hover:border-slate-400"
+                    className="h-11 rounded-lg border-slate-300 focus:border-primary focus:shadow-none hover:border-slate-400"
                     placeholder="+1 234 567 890"
                   />
                 </Form.Item>
 
                 <Form.Item
-                  label={
-                    <span className="font-medium text-[13px] text-slate-700 dark:text-slate-300">Business Name</span>
-                  }
+                  label={<span className="font-medium text-slate-700 dark:text-slate-300">Business Name</span>}
                   name="business_name"
                 >
                   <Input
-                    className="h-10 rounded-lg text-[13px] border-slate-300 focus:border-emerald-500 focus:shadow-none hover:border-slate-400"
+                    className="h-11 rounded-lg border-slate-300 focus:border-primary focus:shadow-none hover:border-slate-400"
                     placeholder="Business Ltd."
                   />
                 </Form.Item>
@@ -154,61 +197,58 @@ function Profile() {
 
             {/* Address Information */}
             <div className="mb-8">
-              <h3 className="text-[12px] font-bold text-slate-500 dark:text-white60 uppercase tracking-wider mb-5 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-6">
                 Address Details
               </h3>
-              <div className="grid grid-cols-1 min-md:grid-cols-2 gap-x-4 gap-y-1">
+              <div className="grid grid-cols-1 min-md:grid-cols-2 gap-x-4 gap-y-2">
                 <div className="col-span-1 min-md:col-span-2">
                   <Form.Item
-                    label={
-                      <span className="font-medium text-[13px] text-slate-700 dark:text-slate-300">Street Address</span>
-                    }
+                    label={<span className="font-medium text-slate-700 dark:text-slate-300">Street Address</span>}
                     name="address"
                   >
                     <Input
-                      className="h-10 rounded-lg text-[13px] border-slate-300 focus:border-emerald-500 focus:shadow-none hover:border-slate-400"
+                      className="h-11 rounded-lg border-slate-300 focus:border-primary focus:shadow-none hover:border-slate-400"
                       placeholder="123 Main St"
                     />
                   </Form.Item>
                 </div>
 
                 <Form.Item
-                  label={<span className="font-medium text-[13px] text-slate-700 dark:text-slate-300">City</span>}
+                  label={<span className="font-medium text-slate-700 dark:text-slate-300">City</span>}
                   name="city"
                 >
                   <Input
-                    className="h-10 rounded-lg text-[13px] border-slate-300 focus:border-emerald-500 focus:shadow-none hover:border-slate-400"
+                    className="h-11 rounded-lg border-slate-300 focus:border-primary focus:shadow-none hover:border-slate-400"
                     placeholder="New York"
                   />
                 </Form.Item>
 
                 <Form.Item
-                  label={<span className="font-medium text-[13px] text-slate-700 dark:text-slate-300">State</span>}
+                  label={<span className="font-medium text-slate-700 dark:text-slate-300">State</span>}
                   name="state"
                 >
                   <Input
-                    className="h-10 rounded-lg text-[13px] border-slate-300 focus:border-emerald-500 focus:shadow-none hover:border-slate-400"
+                    className="h-11 rounded-lg border-slate-300 focus:border-primary focus:shadow-none hover:border-slate-400"
                     placeholder="NY"
                   />
                 </Form.Item>
 
                 <Form.Item
-                  label={<span className="font-medium text-[13px] text-slate-700 dark:text-slate-300">Zip Code</span>}
+                  label={<span className="font-medium text-slate-700 dark:text-slate-300">Zip Code</span>}
                   name="pin_code"
                 >
                   <Input
-                    className="h-10 rounded-lg text-[13px] border-slate-300 focus:border-emerald-500 focus:shadow-none hover:border-slate-400"
+                    className="h-11 rounded-lg border-slate-300 focus:border-primary focus:shadow-none hover:border-slate-400"
                     placeholder="10001"
                   />
                 </Form.Item>
 
                 <Form.Item
-                  label={<span className="font-medium text-[13px] text-slate-700 dark:text-slate-300">GST Number</span>}
+                  label={<span className="font-medium text-slate-700 dark:text-slate-300">GST Number</span>}
                   name="gst_number"
                 >
                   <Input
-                    className="h-10 rounded-lg text-[13px] border-slate-300 focus:border-emerald-500 focus:shadow-none hover:border-slate-400"
+                    className="h-11 rounded-lg border-slate-300 focus:border-primary focus:shadow-none hover:border-slate-400"
                     placeholder="Tax ID"
                   />
                 </Form.Item>
@@ -216,10 +256,10 @@ function Profile() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col-reverse min-sm:flex-row gap-3 pt-4 border-t border-slate-100 dark:border-white/5">
+            <div className="flex flex-col-reverse min-sm:flex-row gap-3 pt-4">
               <Button
                 size="large"
-                className="w-full rounded-xl h-10 border-gray-200 text-gray-600 hover:text-gray-800 hover:border-gray-300 hover:bg-gray-50 font-medium"
+                className="w-full rounded-xl h-12 border-gray-200 text-gray-600 hover:text-gray-800 hover:border-gray-300 hover:bg-gray-50 font-medium"
                 onClick={() => form.resetFields()}
               >
                 Cancel
@@ -229,7 +269,7 @@ function Profile() {
                 htmlType="submit"
                 loading={updateLoading}
                 disabled={fetchLoading}
-                className="w-full rounded-xl h-10 bg-gradient-to-r from-emerald-500 to-teal-600 border-0 shadow-emerald-500/30 font-semibold"
+                className="w-full rounded-xl h-12 bg-gradient-to-r from-emerald-500 to-teal-600 border-0 shadow-lg shadow-emerald-500/30 font-semibold"
               >
                 Save Changes
               </Button>

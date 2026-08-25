@@ -1,17 +1,18 @@
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework import status
-
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from subscription.utils.custom_response import success_response, error_response
-from user_auth.serializers import UserProfileUpdateSerializer
+from user_auth.serializers import UserProfileUpdateSerializer, UserProfileSerializer
 from user_auth.models import UserProfile
 
 
 class UserUpdateProfileAPI(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def patch(self, request):
         try:
@@ -29,8 +30,10 @@ class UserUpdateProfileAPI(APIView):
 
         serializer.save()
 
+        # Return full updated user profile data
+        full_serializer = UserProfileSerializer(request.user, context={'request': request})
+
         return success_response(
             message="Profile updated successfully",
-            data=serializer.data
+            data=full_serializer.data
         )
-    
