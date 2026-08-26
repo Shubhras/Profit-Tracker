@@ -123,7 +123,7 @@ function QuickCommerce() {
                       }
                       className="bg-[#16a34a] border-[#16a34a] h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
                     >
-                      Choose Basic Plan
+                      Get Inquiry
                     </Button>
                   </div>
                 </div>
@@ -191,7 +191,7 @@ function QuickCommerce() {
                       }
                       className="bg-[#16a34a] border-[#16a34a] h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
                     >
-                      Choose Pro Plan
+                      Get Inquiry
                     </Button>
                   </div>
                 </div>
@@ -253,7 +253,7 @@ function QuickCommerce() {
                       }
                       className="bg-[#16a34a] border-[#16a34a] h-[28px] px-3 text-[10px] font-semibold rounded-md flex-shrink-0"
                     >
-                      Choose Premium Plan
+                      Get Inquiry
                     </Button>
                   </div>
                 </div>

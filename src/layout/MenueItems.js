@@ -269,7 +269,7 @@ function MenuItems({ toggleCollapsed }) {
               'skuwiseprofit',
             ),
 
-          hasSubmodule('marketplace-fees-estimate') &&
+          hasSubmodule('prodit-sku-tracker') &&
             getItem(
               <NavLink
                 onClick={toggleCollapsed}
@@ -285,7 +285,7 @@ function MenuItems({ toggleCollapsed }) {
               'sku-profit',
             ),
 
-          hasSubmodule('shipping-estimate') &&
+          hasSubmodule('loss-sku-tracker') &&
             getItem(
               <NavLink
                 onClick={toggleCollapsed}
@@ -760,7 +760,7 @@ function MenuItems({ toggleCollapsed }) {
             ),
         ].filter(Boolean),
       ),
-    hasModule('action-required') &&
+    hasModule('growth-insight') &&
       getItem(
         <NavLink onClick={toggleCollapsed} to={`${path}/pages/actionsrequired`}>
           {/* {t('actionsRequired')} */}
@@ -953,7 +953,7 @@ function MenuItems({ toggleCollapsed }) {
     //   ),
     // ),
 
-    hasModule('download') &&
+    hasModule('report') &&
       getItem(
         <NavLink onClick={toggleCollapsed} to={`${path}/pages/download`}>
           Reports
