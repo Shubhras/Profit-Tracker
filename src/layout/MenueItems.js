@@ -271,18 +271,34 @@ function MenuItems({ toggleCollapsed }) {
 
           hasSubmodule('marketplace-fees-estimate') &&
             getItem(
-              <NavLink onClick={toggleCollapsed} to={`${path}/profit/estimatedfees`}>
+              <NavLink
+                onClick={toggleCollapsed}
+                to={`${path}/profit/profitTableView/sku-profit`}
+                state={{
+                  type: 'all',
+                  profitType: 'profitable',
+                }}
+              >
+                {' '}
                 Profit SKU Tracker
               </NavLink>,
-              'estimatedfees',
+              'sku-profit',
             ),
 
           hasSubmodule('shipping-estimate') &&
             getItem(
-              <NavLink onClick={toggleCollapsed} to={`${path}/profit/shippingestimate`}>
+              <NavLink
+                onClick={toggleCollapsed}
+                to={`${path}/profit/profitTableView/sku-profit`}
+                state={{
+                  type: 'all',
+                  profitType: 'losing',
+                }}
+              >
+                {' '}
                 Loss SKU Tracker
               </NavLink>,
-              'shippingestimate',
+              'loss-sku',
             ),
 
           hasSubmodule('profit-table-view') &&
@@ -304,7 +320,7 @@ function MenuItems({ toggleCollapsed }) {
           hasSubmodule('claims') &&
             getItem(
               <NavLink onClick={toggleCollapsed} to={`${path}/profit/claims`}>
-                Amazon Estimate Fees
+                claims
               </NavLink>,
               'claims',
             ),
@@ -315,6 +331,14 @@ function MenuItems({ toggleCollapsed }) {
                 Profit Monthly View
               </NavLink>,
               'profitMonthlyView',
+            ),
+
+          hasSubmodule('amazon-estimate-fees') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/profit/estimatedfees`}>
+                Amazon Estimate Fees
+              </NavLink>,
+              'estimatedfees',
             ),
         ].filter(Boolean),
       ),
@@ -449,12 +473,12 @@ function MenuItems({ toggleCollapsed }) {
         'advertising',
         !topMenu && <UilMegaphone />,
         [
-          hasSubmodule('Dashboard') &&
+          hasSubmodule('advertise-dashboard') &&
             getItem(
-              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/create-campaign`}>
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/dashboard`}>
                 Dashboard
               </NavLink>,
-              'create-campaign',
+              'dashboard',
             ),
 
           hasSubmodule('campaigns') &&
@@ -537,6 +561,14 @@ function MenuItems({ toggleCollapsed }) {
         'reconcile',
         !topMenu && <UilCreateDashboard />,
         [
+          hasSubmodule('summary-reconcile') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-overview`}>
+                Summary
+              </NavLink>,
+              'payment-overview',
+            ),
+
           hasSubmodule('reconcile') &&
             getItem(
               <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-overview`}>
@@ -556,7 +588,7 @@ function MenuItems({ toggleCollapsed }) {
           hasSubmodule('order-settlement') &&
             getItem(
               <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/ordersettlement`}>
-                Order & Settlement
+                Amazon Payment Tracker
               </NavLink>,
               'ordersettlement',
             ),
@@ -1197,6 +1229,11 @@ function MenuItems({ toggleCollapsed }) {
     // ✅ Profit Table View - exact route
     if (pathname === '/admin/profit/profitTableView') {
       return 'profitTableView';
+    }
+
+    // ✅ Profit / Loss SKU Tracker
+    if (pathname === '/admin/profit/profitTableView/sku-profit') {
+      return location.state?.profitType === 'losing' ? 'loss-sku' : 'sku-profit';
     }
 
     // ✅ Profit Monthly View

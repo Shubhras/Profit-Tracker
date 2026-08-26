@@ -309,7 +309,7 @@ export default function Download() {
   return (
     <>
       <PageHeader
-        title="Download"
+        title="Downloads"
         className="flex justify-between items-center px-4 xl:px-[15px] pt-2 pb-3 sm:pb-[30px] bg-transparent  sm:flex-col sm:items-start"
       />
 

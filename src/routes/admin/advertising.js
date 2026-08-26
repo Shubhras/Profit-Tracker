@@ -14,6 +14,7 @@ const CampaignSecondDetails = lazy(() => import('../../container/advertising/Cam
 const Keywords = lazy(() => import('../../container/advertising/Keywords'));
 const AdProductsSecond = lazy(() => import('../../container/advertising/AdProductsSecond'));
 const AdsProductsThird = lazy(() => import('../../container/advertising/AdsProductsThird'));
+const AdvertisingDashboard = lazy(() => import('../../container/advertising/AdvertisingDashboard'));
 
 const NegativeKey = lazy(() => import('../../container/advertising/NegativeKey'));
 const Targets = lazy(() => import('../../container/advertising/Targets'));
@@ -153,6 +154,15 @@ function AdvertisingRoutes() {
         element={
           <SubscriptionGate allowFree>
             <AdsProductsThird />
+          </SubscriptionGate>
+        }
+      />
+
+      <Route
+        path="dashboard"
+        element={
+          <SubscriptionGate allowFree>
+            <AdvertisingDashboard />
           </SubscriptionGate>
         }
       />
