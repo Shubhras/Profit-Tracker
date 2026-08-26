@@ -177,6 +177,47 @@ class BusinessReportAdmin(admin.ModelAdmin):
 
 
 
+@admin.register(ReturnItem)
+class ReturnItemAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "return_id",
+        "amazon_order_id",
+        "seller_sku",
+        "user",
+        "amazon_account",
+        "quantity",
+        "status",
+        "return_type",
+        "return_reason",
+        "tracking_id",
+        "created_at",
+        "updated_at",
+        "created_db",
+    )
+
+    search_fields = (
+        "return_id",
+        "amazon_order_id",
+        "seller_sku",
+        "tracking_id",
+        "return_reason",
+    )
+
+    list_filter = (
+        "status",
+        "return_type",
+        "amazon_account",
+        "created_at",
+        "created_db",
+    )
+
+    readonly_fields = (
+        "created_db",
+    )
+
+    ordering = ("-created_db",)
+
 @admin.register(ReportRequest)
 class ReportRequestAdmin(admin.ModelAdmin):
     list_display = ("id", "amazon_account", "report_type", "report_id", "status", "start_date", "end_date", "created_at")

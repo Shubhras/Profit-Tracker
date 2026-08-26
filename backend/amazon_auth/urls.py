@@ -129,10 +129,25 @@ urlpatterns = [
     path("get-retuns-details/", courier_vs_customer_returns , name ='get-retunsdetails'),
     path("get-financial-details/", financial_event_group_transactions , name ='get-rfinancialdetails'),
 
+    # Amazon Returns Report APIs (SP-API Reports API)
+    path("returns/request-report/", request_amazon_returns_report, name="request_amazon_returns_report_clean"),
+    path("returns/report-status/<str:report_id>/", check_amazon_returns_report_status, name="check_amazon_returns_report_status_clean_path"),
+    path("returns/report-status/", check_amazon_returns_report_status, name="check_amazon_returns_report_status_clean"),
+    path("returns/sync-now/", sync_amazon_returns_now, name="sync_amazon_returns_now_clean"),
+    path("returns/list-db/", list_db_returns, name="list_db_returns_clean"),
+
+    path("amazon/returns/request-report/", request_amazon_returns_report, name="request_amazon_returns_report"),
+    path("amazon/returns/report-status/<str:report_id>/", check_amazon_returns_report_status, name="check_amazon_returns_report_status_path"),
+    path("amazon/returns/report-status/", check_amazon_returns_report_status, name="check_amazon_returns_report_status"),
+    path("amazon/returns/sync-now/", sync_amazon_returns_now, name="sync_amazon_returns_now"),
+    path("amazon/returns/list-db/", list_db_returns, name="list_db_returns"),
+
+
     #catelog details
     path('get-catlog/details/', get_catalog_details, name='get_catelog_details'),
 
     path("amazon-returns/", amazon_returns_list, name="amazon_returns_list"),
+
 
     path('sync-product-pricing/',SyncProductPricingAPIView.as_view()),
 

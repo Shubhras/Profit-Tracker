@@ -814,5 +814,530 @@ def financial_event_group_transactions(request):
         },
         "response": group_summaries[page_no * page_size:(page_no + 1) * page_size]
     })
-      
+
+
+# New api for return amazon 
+
+# ============================================================
+# AMAZON SP-API RETURNS REPORT (FBA & MERCHANT / EASY SHIP)
+# ============================================================
+import gzip
+import time
+from django.utils.dateparse import parse_datetime, parse_date
+from user_auth.models import get_effective_user
+
+
+def parse_and_save_returns_tsv(content_str, user, account, report_type):
+    """
+    Parses tab-separated values (TSV) from Amazon Returns report and updates ReturnItem table.
+    Supports both FBA Customer Returns (GET_FBA_FULFILLMENT_CUSTOMER_RETURNS_DATA)
+    and MFN / Merchant Returns (GET_FLAT_FILE_RETURNS_DATA_BY_RETURN_DATE).
+    """
+    effective_user = get_effective_user(user)
+    reader = csv.DictReader(StringIO(content_str), delimiter='\t')
+
+    parsed_items = []
+    saved_count = 0
+
+    for idx, row in enumerate(reader):
+        try:
+            # Clean keys by stripping whitespace
+            cleaned_row = { (k.strip() if k else f"col_{i}"): (v.strip() if v else "") for i, (k, v) in enumerate(row.items()) }
+
+            # FBA Customer Returns column names
+            order_id = cleaned_row.get("order-id") or cleaned_row.get("Order ID") or cleaned_row.get("order_id") or ""
+            sku = cleaned_row.get("sku") or cleaned_row.get("Merchant SKU") or cleaned_row.get("seller-sku") or cleaned_row.get("SKU") or ""
+            
+            if not order_id and not sku:
+                continue
+
+            quantity_str = cleaned_row.get("quantity") or cleaned_row.get("Return Quantity") or "1"
+            try:
+                quantity = int(float(quantity_str))
+            except (ValueError, TypeError):
+                quantity = 1
+
+            status = cleaned_row.get("detailed-disposition") or cleaned_row.get("status") or cleaned_row.get("Return Request Status") or "RETURNED"
+            return_reason = cleaned_row.get("reason") or cleaned_row.get("Return Reason") or cleaned_row.get("customer-comments") or ""
+            tracking_id = cleaned_row.get("license-plate-number") or cleaned_row.get("In Transit Tracking ID") or cleaned_row.get("tracking-id") or ""
+            
+            # Generate unique return identifier
+            lpn = cleaned_row.get("license-plate-number") or cleaned_row.get("RMA ID") or cleaned_row.get("Amazon RTO ID")
+            if lpn:
+                return_id = f"RET_{lpn}"
+            else:
+                return_id = f"RET_{order_id}_{sku}_{idx}"
+
+            date_str = cleaned_row.get("return-date") or cleaned_row.get("Return Request Date") or cleaned_row.get("Order Date")
+            parsed_dt = None
+            if date_str:
+                parsed_dt = parse_datetime(date_str)
+                if not parsed_dt:
+                    d = parse_date(date_str[:10])
+                    if d:
+                        parsed_dt = timezone.make_aware(datetime.combine(d, datetime.min.time()))
+
+            now_dt = timezone.now()
+            created_dt = parsed_dt or now_dt
+
+            return_type_label = "FBA" if "FBA" in report_type.upper() else "MFN"
+
+            obj, created = ReturnItem.objects.update_or_create(
+                return_id=return_id,
+                defaults={
+                    "user": effective_user,
+
+                    "amazon_account": account,
+                    "amazon_order_id": order_id,
+                    "seller_sku": sku,
+                    "quantity": quantity,
+                    "status": status,
+                    "return_type": return_type_label,
+                    "return_reason": return_reason,
+                    "tracking_id": tracking_id,
+                    "created_at": created_dt,
+                    "updated_at": now_dt,
+                    "raw_data": cleaned_row
+                }
+            )
+            saved_count += 1
+
+            label_cost = cleaned_row.get("Label cost") or cleaned_row.get("label_cost") or "0.00"
+            order_amount = cleaned_row.get("Order Amount") or cleaned_row.get("order_amount") or "0.00"
+            refunded_amount = cleaned_row.get("Refunded Amount") or cleaned_row.get("refunded_amount") or "0.00"
+            label_paid_by = cleaned_row.get("Label to be paid by") or ""
+            return_carrier = cleaned_row.get("Return carrier") or ""
+
+            parsed_items.append({
+                "return_id": return_id,
+                "amazon_order_id": order_id,
+                "seller_sku": sku,
+                "quantity": quantity,
+                "status": status,
+                "return_type": return_type_label,
+                "return_reason": return_reason,
+                "tracking_id": tracking_id,
+                "label_cost": label_cost,
+                "order_amount": order_amount,
+                "refunded_amount": refunded_amount,
+                "label_paid_by": label_paid_by,
+                "return_carrier": return_carrier,
+                "return_date": created_dt.isoformat() if created_dt else None
+            })
+        except Exception as parse_err:
+            logger.exception(f"Error parsing return row {idx}: {parse_err}")
+            continue
+
+    return saved_count, parsed_items
+
+
+
+@api_view(['POST'])
+
+@permission_classes([IsAuthenticated])
+def request_amazon_returns_report(request, report_type=None):
+    """
+    Request a customer returns report from Amazon SP-API.
     
+    Payload parameters:
+    - report_type: "GET_FLAT_FILE_RETURNS_DATA_BY_RETURN_DATE" (default) or "GET_FBA_FULFILLMENT_CUSTOMER_RETURNS_DATA"
+    - start_date: e.g. "2026-08-01" (defaults to 30 days ago)
+    - end_date: e.g. "2026-08-26" (defaults to now)
+    """
+    try:
+        user = get_effective_user(request.user)
+        account = AmazonAccount.objects.filter(user=user).first()
+
+        if not account:
+            return Response({"status": False, "message": "No connected Amazon account found."}, status=404)
+
+        data = request.data or {}
+        if not report_type:
+            report_type = data.get("report_type", "GET_FLAT_FILE_RETURNS_DATA_BY_RETURN_DATE")
+
+        # Parse date range
+        start_date_param = data.get("start_date") or data.get("from_date")
+        end_date_param = data.get("end_date") or data.get("to_date")
+
+        now_utc = datetime.utcnow() - timedelta(minutes=5)
+        start_dt = datetime.utcnow() - timedelta(days=30)
+        end_dt = now_utc
+
+        if start_date_param:
+            try:
+                start_dt = datetime.strptime(start_date_param[:10], "%Y-%m-%d")
+            except ValueError:
+                pass
+
+        if end_date_param:
+            try:
+                parsed_end = datetime.strptime(end_date_param[:10], "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+                if parsed_end < now_utc:
+                    end_dt = parsed_end
+            except ValueError:
+                pass
+
+        iso_start = start_dt.strftime("%Y-%m-%dT00:00:00Z")
+        iso_end = end_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        create_kwargs = {
+            "report_type": report_type,
+            "marketplaceIds": [account.marketplace_id] if account.marketplace_id else ["A21TJRUUN4KGV"],
+            "dataStartTime": iso_start,
+            "dataEndTime": iso_end,
+        }
+
+        sp_manager = SPAPIManager(user=user, account=account)
+
+        report_response = sp_manager.create_report(**create_kwargs)
+
+        if "errors" in report_response:
+            return Response({
+                "status": False,
+                "message": "Amazon SP-API error creating report",
+                "errors": report_response.get("errors")
+            }, status=400)
+
+        report_id = report_response.get("reportId")
+
+        # Record report in AmazonReport table
+        if report_id:
+            AmazonReport.objects.update_or_create(
+                account=account,
+                report_id=report_id,
+                defaults={
+                    "report_type": report_type,
+                    "marketplace_id": account.marketplace_id or "A21TJRUUN4KGV",
+                    "processing_status": "SUBMITTED",
+                    "data_start_time": timezone.make_aware(start_dt),
+                    "data_end_time": timezone.make_aware(end_dt),
+                }
+            )
+
+        return Response({
+            "status": True,
+            "message": "Returns report requested successfully from Amazon.",
+            "report_id": report_id,
+            "report_type": report_type,
+            "data_start_time": iso_start,
+            "data_end_time": iso_end,
+            "raw_response": report_response
+        })
+
+    except Exception as e:
+        logger.exception(f"request_amazon_returns_report failed: {e}")
+        return Response({"status": False, "message": str(e)}, status=500)
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def check_amazon_returns_report_status(request, report_id=None):
+    """
+    Checks the status of an Amazon Returns Report by report_id.
+    When completed, automatically downloads the TSV document, parses return items,
+    and updates the database.
+    """
+    try:
+        if not report_id:
+            report_id = request.data.get("report_id") or request.GET.get("report_id")
+        
+        if not report_id:
+            return Response({"status": False, "message": "report_id parameter is required."}, status=400)
+
+        user = get_effective_user(request.user)
+
+        account = AmazonAccount.objects.filter(user=user).first()
+        if not account:
+            return Response({"status": False, "message": "No connected Amazon account found."}, status=404)
+
+        sp_manager = SPAPIManager(user=user, account=account)
+
+        report_info = sp_manager.get_report(report_id)
+
+        if "errors" in report_info:
+            return Response({
+                "status": False,
+                "message": "Failed to get report details from Amazon",
+                "errors": report_info.get("errors")
+            }, status=400)
+
+        processing_status = report_info.get("processingStatus")
+        report_document_id = report_info.get("reportDocumentId")
+        report_type = report_info.get("reportType", "GET_FLAT_FILE_RETURNS_DATA_BY_RETURN_DATE")
+
+        # Update local report object
+        AmazonReport.objects.filter(report_id=report_id).update(
+            processing_status=processing_status,
+            report_document_id=report_document_id
+        )
+
+        if processing_status in ["COMPLETED", "DONE"] and report_document_id:
+            # Download document details
+            doc_info = sp_manager.get_report_document(report_document_id)
+            download_url = doc_info.get("url")
+            compression = doc_info.get("compressionAlgorithm")
+
+            if not download_url:
+                return Response({
+                    "status": False,
+                    "message": "Report document download URL not found in Amazon response.",
+                    "doc_info": doc_info
+                }, status=400)
+
+            # Download TSV document content
+            doc_res = requests.get(download_url)
+            if doc_res.status_code != 200:
+                return Response({
+                    "status": False,
+                    "message": f"Failed to download report document file (HTTP {doc_res.status_code})"
+                }, status=400)
+
+            raw_bytes = doc_res.content
+
+            # Decompress if GZIP
+            if compression == "GZIP" or raw_bytes[:2] == b'\x1f\x8b':
+                content_str = gzip.decompress(raw_bytes).decode('utf-8', errors='ignore')
+            else:
+                content_str = raw_bytes.decode('utf-8', errors='ignore')
+
+            # Parse TSV and store into DB
+            saved_count, parsed_data = parse_and_save_returns_tsv(content_str, user, account, report_type)
+
+            AmazonReport.objects.filter(report_id=report_id).update(
+                download_status="PARSED",
+                last_synced_at=timezone.now()
+            )
+
+            return Response({
+                "status": True,
+                "report_id": report_id,
+                "processing_status": "COMPLETED",
+                "synced_count": saved_count,
+                "data": parsed_data,
+                "message": f"Successfully parsed and synced {saved_count} return records."
+            })
+
+        if processing_status in ["CANCELLED", "FATAL"]:
+            # If FBA report was cancelled, attempt automatic fallback to MFN returns report
+            if report_type == "GET_FBA_FULFILLMENT_CUSTOMER_RETURNS_DATA":
+                logger.info(f"Report {report_id} of type GET_FBA_FULFILLMENT_CUSTOMER_RETURNS_DATA was cancelled. Initiating fallback to GET_FLAT_FILE_RETURNS_DATA_BY_RETURN_DATE...")
+                fallback_req = request_amazon_returns_report(
+                    request._request,
+                    report_type="GET_FLAT_FILE_RETURNS_DATA_BY_RETURN_DATE"
+                )
+                if fallback_req.status_code == 200 and fallback_req.data.get("status"):
+                    new_id = fallback_req.data.get("report_id")
+                    return Response({
+                        "status": True,
+                        "report_id": new_id,
+                        "previous_report_id": report_id,
+                        "processing_status": "SUBMITTED",
+                        "message": f"FBA report {report_id} was cancelled by Amazon (no FBA return data). Automatically requested Merchant/Easy Ship return report ({new_id}). Please check status again in a few seconds."
+                    })
+
+            return Response({
+                "status": False,
+                "report_id": report_id,
+                "processing_status": processing_status,
+                "message": f"Amazon report generation was '{processing_status}'. Common reasons: dataEndTime was set in the future or no return records match the requested parameters."
+            }, status=400)
+
+
+        return Response({
+            "status": True,
+            "report_id": report_id,
+            "processing_status": processing_status,
+            "message": f"Report processing status is '{processing_status}'. Check back in a few seconds."
+        })
+
+
+    except Exception as e:
+        logger.exception(f"check_amazon_returns_report_status failed: {e}")
+        return Response({"status": False, "message": str(e)}, status=500)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def sync_amazon_returns_now(request):
+    """
+    One-click workflow to request a Return Report from Amazon, wait for it to finish,
+    and return the parsed data in a single response.
+    """
+    try:
+        user = get_effective_user(request.user)
+
+        account = AmazonAccount.objects.filter(user=user).first()
+        if not account:
+            return Response({"status": False, "message": "No connected Amazon account found."}, status=404)
+
+        data = request.data or {}
+        report_type = data.get("report_type", "GET_FLAT_FILE_RETURNS_DATA_BY_RETURN_DATE")
+
+        # Step 1: Request report
+        req_res = request_amazon_returns_report(request._request)
+        if req_res.status_code != 200 or not req_res.data.get("status"):
+            return req_res
+
+        report_id = req_res.data.get("report_id")
+
+        # Step 2: Poll up to 6 times (max 30s)
+        sp_manager = SPAPIManager(user=user, account=account)
+        attempts = 0
+        max_attempts = 6
+
+        while attempts < max_attempts:
+            time.sleep(5)
+            attempts += 1
+
+            status_res = check_amazon_returns_report_status(request._request, report_id=report_id)
+            status_data = status_res.data
+
+            if status_data.get("processing_status") in ["COMPLETED", "DONE"]:
+                return status_res
+
+
+            if status_data.get("processing_status") in ["CANCELLED", "FATAL"]:
+                return Response({
+                    "status": False,
+                    "message": f"Report generation failed on Amazon side with status '{status_data.get('processing_status')}'",
+                    "report_id": report_id
+                }, status=400)
+
+        return Response({
+            "status": True,
+            "report_id": report_id,
+            "processing_status": "IN_PROGRESS",
+            "message": f"Report requested successfully. Processing is still underway at Amazon. Please poll status endpoint GET /api/amazon/returns/report-status/{report_id}/ in a moment."
+        })
+
+    except Exception as e:
+        logger.exception(f"sync_amazon_returns_now failed: {e}")
+        return Response({"status": False, "message": str(e)}, status=500)
+
+
+def format_return_item_response(item):
+
+    """
+    Normalizes a ReturnItem DB model object into a comprehensive dictionary
+    containing all standard and extended report fields.
+    """
+    raw = item.raw_data or {}
+    
+    def get_val(*keys):
+        for k in keys:
+            if k in raw and raw[k] is not None:
+                val = str(raw[k]).strip()
+                if val:
+                    return val
+        return ""
+
+    return {
+        "id": getattr(item, "id", None),
+        "return_id": getattr(item, "return_id", ""),
+        "amazon_order_id": getattr(item, "amazon_order_id", "") or get_val("Order ID", "order-id", "order_id"),
+        "seller_sku": getattr(item, "seller_sku", "") or get_val("Merchant SKU", "seller-sku", "sku", "SKU"),
+        "quantity": getattr(item, "quantity", 1),
+        "status": getattr(item, "status", "") or get_val("Return request status", "detailed-disposition", "status"),
+        "return_type": getattr(item, "return_type", "MFN"),
+        "return_reason": getattr(item, "return_reason", "") or get_val("Return Reason", "reason", "customer-comments"),
+        "tracking_id": getattr(item, "tracking_id", "") or get_val("Tracking ID", "tracking-id", "license-plate-number", "In Transit Tracking ID"),
+        
+        # Extended Catalog & Item Metadata
+        "asin": get_val("ASIN", "asin"),
+        "item_name": get_val("Item Name", "item-name"),
+        "category": get_val("Category", "category"),
+        "is_prime": get_val("Is prime", "is-prime"),
+        "in_policy": get_val("In policy", "in-policy"),
+        "currency_code": get_val("Currency code", "currency-code") or "INR",
+        
+        # Extended Shipping & Carrier Details
+        "label_cost": get_val("Label cost", "label-cost") or "0.00",
+        "label_type": get_val("Label type", "label-type"),
+        "label_paid_by": get_val("Label to be paid by", "label-to-be-paid-by"),
+        "return_carrier": get_val("Return carrier", "return-carrier"),
+        
+        # Extended Order & Refund Financials
+        "order_amount": get_val("Order Amount", "order-amount") or "0.00",
+        "refunded_amount": get_val("Refunded Amount", "refunded-amount") or "0.00",
+        "order_quantity": get_val("Order quantity", "order-quantity") or str(getattr(item, "quantity", 1)),
+        "return_quantity": get_val("Return quantity", "return-quantity") or str(getattr(item, "quantity", 1)),
+        
+        # Extended Dates & Workflow Status
+        "order_date": get_val("Order date", "order-date"),
+        "return_request_date": get_val("Return request date", "return-request-date", "return-date"),
+        "return_delivery_date": get_val("Return delivery date", "return-delivery-date"),
+        "resolution": get_val("Resolution", "resolution"),
+        "a_to_z_claim": get_val("A-to-Z Claim", "a-to-z-claim"),
+        "amazon_rma_id": get_val("Amazon RMA ID", "rma-id", "RMA ID"),
+        "merchant_rma_id": get_val("Merchant RMA ID", "merchant-rma-id"),
+        "order_item_id": get_val("Order Item ID", "order-item-id"),
+        "invoice_number": get_val("Invoice number", "invoice-number"),
+        
+        # SAFE-T Claim Details
+        "safet_claim_id": get_val("SafeT claim id", "safet-claim-id"),
+        "safet_claim_state": get_val("SafeT claim state", "safet-claim-state"),
+        "safet_action_reason": get_val("SafeT Action reason", "safet-action-reason"),
+        "safet_claim_creation_time": get_val("SafeT claim creation time", "safet-claim-creation-time"),
+        "safet_claim_reimbursement_amount": get_val("SafeT claim reimbursement amount", "safet-claim-reimbursement-amount") or "0.00",
+
+        "created_at": item.created_at.strftime("%Y-%m-%d %H:%M:%S") if getattr(item, "created_at", None) else None,
+        "raw_data": raw
+    }
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def list_db_returns(request):
+
+    """
+    Get paginated and filtered list of saved return items from the ReturnItem database model.
+    """
+    try:
+        user = get_effective_user(request.user)
+        data = request.data if request.method == 'POST' else request.GET
+
+        qs = ReturnItem.objects.filter(user=user).order_by('-created_at')
+
+
+        # Filters
+        search = data.get("search") or data.get("search_text")
+        if search:
+            qs = qs.filter(
+                Q(amazon_order_id__icontains=search) |
+                Q(seller_sku__icontains=search) |
+                Q(tracking_id__icontains=search) |
+                Q(return_reason__icontains=search)
+            )
+
+        status_filter = data.get("status")
+        if status_filter:
+            qs = qs.filter(status__iexact=status_filter)
+
+        return_type_filter = data.get("return_type")
+        if return_type_filter:
+            qs = qs.filter(return_type__iexact=return_type_filter)
+
+        page_no = int(data.get("page", 1))
+        page_size = int(data.get("page_size", 50))
+
+        total_count = qs.count()
+        offset = (page_no - 1) * page_size
+        items = qs[offset:offset + page_size]
+
+        results = []
+        for item in items:
+            results.append(format_return_item_response(item))
+
+        return Response({
+            "status": True,
+            "total": total_count,
+            "page": page_no,
+            "page_size": page_size,
+            "data": results
+        })
+
+
+    except Exception as e:
+        logger.exception(f"list_db_returns failed: {e}")
+        return Response({"status": False, "message": str(e)}, status=500)
+

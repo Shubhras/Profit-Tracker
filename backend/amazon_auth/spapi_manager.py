@@ -402,9 +402,18 @@ class SPAPIManager:
         """Returns the information required for retrieving a report document's contents."""
         path = f"/reports/2021-06-30/documents/{document_id}"
         return self.request("GET", path)
+
+    def get_external_fulfillment_returns(self, **kwargs):
+        """
+        Calls the External Fulfillment API v2024-09-11 to retrieve external fulfillment returns.
+        Path: /externalFulfillment/2024-09-11/returns
+        """
+        path = "/externalFulfillment/2024-09-11/returns"
+        return self.request("GET", path, params=kwargs)
     
 
     #get estimate fees 
+
 
     def get_my_fees_estimate_for_sku(
         self,
