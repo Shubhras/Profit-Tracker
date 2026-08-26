@@ -1,16 +1,20 @@
+import logging
 from decimal import Decimal
 
 from django.db import transaction
+from django.db.models import Q
 
 from myntra.constants import MyntraReports
 from myntra.models import MyntraListing
 from myntra.parsers.listing_parser import ListingParser
 from myntra.services.sync.base_sync import BaseSyncService
 
+logger = logging.getLogger(__name__)
+
 
 def extract_myntra_image_url(data):
     """
-    Extract high quality secure HTTPS image URL from Myntra payload or imageCollection dictionary.
+    Extract high quality secure HTTPS image URL from Myntra API payload or imageCollection dictionary.
     """
     if not isinstance(data, dict):
         return None
@@ -37,66 +41,16 @@ def extract_myntra_image_url(data):
         if default_entry.get("path"):
             return default_entry["path"]
 
-    return None
-
-
-import json
-import re
-import requests
-
-
-def resolve_myntra_style_image_url(style_id):
-    """
-    Resolves high resolution secure HTTPS product image URL from Myntra for a given style_id.
-    """
-    if not style_id:
-        return None
-
-    url = f"https://www.myntra.com/{style_id}"
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-            "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        )
-    }
-
-    try:
-        r = requests.get(url, headers=headers, timeout=8)
-        if r.status_code != 200:
-            return None
-
-        match = re.search(r"window\.__myx\s*=\s*(\{.*?\});?</script>", r.text)
-        if match:
-            myx_data = json.loads(match.group(1))
-            pdp_data = myx_data.get("pdpData", {})
-            media = pdp_data.get("media", {})
-            albums = media.get("albums", [])
-            for album in albums:
-                for img in album.get("images", []):
-                    src = img.get("src") or img.get("secureSrc")
-                    if src:
-                        src = src.replace("http://", "https://")
-                        src = re.sub(
-                            r"h_\(\$height\),q_\(\$qualityPercentage\),w_\(\$width\)/?",
-                            "h_480,q_80,w_360/",
-                            src,
-                        )
-                        return src
-
-        imgs = re.findall(
-            r"https?://assets\.myntassets\.com/[^\"]+?\.(?:jpg|jpeg|png|webp)",
-            r.text,
-        )
-        if imgs:
-            src = imgs[0].replace("http://", "https://")
-            src = re.sub(
-                r"h_\(\$height\),q_\(\$qualityPercentage\),w_\(\$width\)/?",
-                "h_480,q_80,w_360/",
-                src,
-            )
-            return src
-    except Exception:
-        pass
+    # Fallback to direct images array if present in catalog response
+    images = data.get("images") or data.get("styleImages")
+    if isinstance(images, list) and images:
+        first = images[0]
+        if isinstance(first, dict):
+            src = first.get("src") or first.get("secureSrc") or first.get("imageURL")
+            if src:
+                return src
+        elif isinstance(first, str):
+            return first
 
     return None
 
@@ -108,6 +62,21 @@ class ListingSyncService(BaseSyncService):
         super().__init__(connection)
         self.parser = ListingParser()
 
+    def process_report(self, download_url):
+        """
+        Processes listing report and automatically triggers catalog image resolution via Myntra API.
+        """
+        result = super().process_report(download_url)
+
+        try:
+            images_updated = self.sync_listing_images_via_api()
+            result["images_updated"] = images_updated
+            logger.info(f"Updated {images_updated} listing image(s) via Myntra API during sync.")
+        except Exception as exc:
+            logger.error(f"Failed auto sync of catalog images: {exc}")
+
+        return result
+
     def _build(self, row):
         img_url = extract_myntra_image_url(row) or row.get("image_url")
 
@@ -117,11 +86,11 @@ class ListingSyncService(BaseSyncService):
             brand=row.get("brand"),
             style_status=row.get("style_status"),
             style_status_description=row.get("style_status_description"),
-            style_id=row.get("style_id"),
+            style_id=str(row.get("style_id")).strip() if row.get("style_id") else None,
             style_name=row.get("style_name"),
             size=row.get("size"),
             seller_sku_code=row.get("seller_sku_code"),
-            sku_id=row.get("sku_id"),
+            sku_id=str(row.get("sku_id")).strip() if row.get("sku_id") else None,
             sku_code=row.get("sku_code"),
             van=row.get("van"),
             mrp=Decimal(row["mrp"]) if row.get("mrp") else None,
@@ -157,7 +126,7 @@ class ListingSyncService(BaseSyncService):
 
             if obj:
                 listing.pk = obj.pk
-                # Preserve existing image_url if incoming does not specify one
+                # Preserve existing image_url if incoming report row does not specify one
                 if not listing.image_url and obj.image_url:
                     listing.image_url = obj.image_url
                 update_list.append(listing)
@@ -200,13 +169,13 @@ class ListingSyncService(BaseSyncService):
 
     def update_listing_images_from_catalog(self, catalog_products):
         """
-        Updates MyntraListing.image_url for products matching by style_id or sku_id/seller_sku_code.
+        Updates MyntraListing.image_url for products matching by style_id, sku_id, seller_sku_code, or van.
         catalog_products: List of product dicts from /partner/catalog/v2/product/search/nofilter
         """
         if not catalog_products:
             return 0
 
-        updated_count = 0
+        updated_pks = set()
         update_list = []
 
         for prod in catalog_products:
@@ -217,58 +186,88 @@ class ListingSyncService(BaseSyncService):
             if not img_url:
                 continue
 
-            style_id = str(prod.get("productId") or prod.get("styleId") or "")
-            if not style_id:
+            style_id = str(prod.get("productId") or prod.get("styleId") or "").strip()
+            sku_id = str(prod.get("skuId") or prod.get("sku_id") or "").strip()
+            seller_sku = str(prod.get("sellerSkuCode") or prod.get("seller_sku_code") or "").strip()
+            van = str(prod.get("vendorArticleNumber") or prod.get("van") or "").strip()
+
+            query = Q()
+            if style_id:
+                query |= Q(style_id=style_id)
+            if sku_id:
+                query |= Q(sku_id=sku_id)
+            if seller_sku:
+                query |= Q(seller_sku_code=seller_sku)
+            if van:
+                query |= Q(van=van)
+
+            if not query:
                 continue
 
             matching_listings = MyntraListing.objects.filter(
-                myntra_connection=self.connection,
-                style_id=style_id,
-            )
+                myntra_connection=self.connection
+            ).filter(query)
 
             for listing in matching_listings:
-                if listing.image_url != img_url:
+                if listing.pk not in updated_pks and listing.image_url != img_url:
                     listing.image_url = img_url
                     update_list.append(listing)
-
-        if update_list:
-            MyntraListing.objects.bulk_update(update_list, fields=["image_url"])
-            updated_count = len(update_list)
-
-        return updated_count
-
-    def sync_all_listing_images(self):
-        """
-        Resolves and updates missing product image URLs for all listings of this connection.
-        """
-        listings_without_img = MyntraListing.objects.filter(
-            myntra_connection=self.connection,
-            image_url__isnull=True,
-        )
-
-        unique_style_ids = set(
-            listings_without_img.values_list("style_id", flat=True)
-        )
-        unique_style_ids = [s for s in unique_style_ids if s]
-
-        if not unique_style_ids:
-            return 0
-
-        style_map = {}
-        for style_id in unique_style_ids:
-            img = resolve_myntra_style_image_url(style_id)
-            if img:
-                style_map[style_id] = img
-
-        update_list = []
-        for listing in listings_without_img:
-            if listing.style_id in style_map:
-                listing.image_url = style_map[listing.style_id]
-                update_list.append(listing)
+                    updated_pks.add(listing.pk)
 
         if update_list:
             MyntraListing.objects.bulk_update(update_list, fields=["image_url"])
 
         return len(update_list)
+
+    def sync_listing_images_via_api(self):
+        """
+        Fetches product catalog details from official Myntra API and updates image URLs for all listings.
+        Does not use web scraping.
+        """
+        from myntra.services.myntra_client import MyntraClient
+
+        if not self.connection:
+            return 0
+
+        try:
+            client = MyntraClient(connection=self.connection)
+            cursor_mark = "*"
+            page = 1
+            total_updated = 0
+
+            while page <= 20:
+                res = client.search_catalog_products(
+                    start=0,
+                    cursor_mark=cursor_mark,
+                )
+
+                if not isinstance(res, dict) or res.get("error"):
+                    break
+
+                products = res.get("data", [])
+                if not products:
+                    break
+
+                updated = self.update_listing_images_from_catalog(products)
+                total_updated += updated
+
+                next_cursor = res.get("nextCursorMark")
+                if not next_cursor or next_cursor == cursor_mark:
+                    break
+
+                cursor_mark = next_cursor
+                page += 1
+
+            return total_updated
+        except Exception as exc:
+            logger.error(f"Error syncing catalog images via Myntra API: {exc}")
+            return 0
+
+    def sync_all_listing_images(self):
+        """
+        Alias for sync_listing_images_via_api for backward compatibility with management commands.
+        """
+        return self.sync_listing_images_via_api()
+
 
 

@@ -17,6 +17,7 @@ from myntra.services.profit.hierarchy_csv import MyntraProfitHierarchyCSVExporte
 from myntra.services.profit.style_summary import StyleSummary
 from myntra.services.profit.validation_export import MyntraProfitValidationExporter
 from myntra.services.report_service import MyntraReportService
+from myntra.services.sync.listing_sync import ListingSyncService
 from myntra.services.sync.order_sync import OrderSyncService
 from myntra.services.sync.payment_sync import PaymentSyncService
 from myntra.services.sync.return_sync import ReturnSyncService
@@ -26,6 +27,41 @@ from user_auth.models import get_effective_user
 from .services.myntra_client_v4 import MyntraClientV4
 
 logger = logging.getLogger(__name__)
+
+
+class SyncMyntraCatalogImagesAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """
+        Triggers Myntra Catalog Search API sync to update image URLs for all listings of the logged-in user.
+        """
+        user = get_effective_user(request.user)
+        connection = MyntraConnection.objects.filter(user=user).first()
+        if not connection:
+            return Response(
+                {"status": "FAILED", "error": "Myntra connection not found for this user."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        try:
+            sync_service = ListingSyncService(connection)
+            updated_count = sync_service.sync_listing_images_via_api()
+
+            return Response(
+                {
+                    "status": "SUCCESS",
+                    "message": f"Successfully updated {updated_count} listing image(s) via Myntra Catalog API.",
+                    "updated_images": updated_count,
+                },
+                status=status.HTTP_200_OK,
+            )
+        except Exception as exc:
+            return Response(
+                {"status": "FAILED", "error": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
 
 
 def parse_dt(dt_str):

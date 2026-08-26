@@ -1995,6 +1995,86 @@ def export_amazon_catalog_details(request):
     )
 
 
+NEGATIVE_KEYWORDS_COLUMNS = {
+    "keyword_text": "Keyword Text",
+    "match_type": "Match Type",
+    "campaign_name": "Campaign Name",
+    "state": "State",
+    "created_at": "Added On",
+    "ad_group_name": "Ad Group Name",
+    "negative_keyword_id": "Negative Keyword ID",
+    "campaign_id": "Campaign ID",
+    "ad_group_id": "Ad Group ID",
+    "serving_status": "Serving Status",
+}
+
+
+def format_negative_keywords_export(results, totals_dict=None):
+    formatted = []
+    if not isinstance(results, list):
+        results = []
+    for item in results:
+        if not isinstance(item, dict):
+            continue
+        created_at_val = item.get("created_at") or item.get("creation_date_time") or ""
+        if created_at_val and len(str(created_at_val)) >= 10:
+            created_at_val = str(created_at_val)[:10]
+        formatted.append({
+            "keyword_text": item.get("keyword_text", ""),
+            "match_type": item.get("match_type", ""),
+            "campaign_name": item.get("campaign_name", ""),
+            "state": item.get("state", ""),
+            "created_at": created_at_val,
+            "ad_group_name": item.get("ad_group_name", ""),
+            "negative_keyword_id": item.get("negative_keyword_id", ""),
+            "campaign_id": item.get("campaign_id", ""),
+            "ad_group_id": item.get("ad_group_id", ""),
+            "serving_status": item.get("serving_status", ""),
+        })
+    return formatted, None
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def export_amazon_ads_negative_keywords(request):
+    from amazon_ads.views import NegativeKeywordListAPIView
+
+    response_format = (
+        request.query_params.get("file_format")
+        or request.query_params.get("export_format")
+        or request.query_params.get("format")
+        or "xlsx"
+    ).lower()
+
+    override_params = {
+        "POST": {
+            "page": 1,
+            "page_size": 100000,
+            "pagination": {
+                "page": 1,
+                "page_size": 100000
+            }
+        },
+        "GET": {
+            "page": 1,
+            "page_size": 100000
+        }
+    }
+
+    return generic_export_view(
+        request,
+        NegativeKeywordListAPIView,
+        NEGATIVE_KEYWORDS_COLUMNS,
+        "ads_negative_keywords",
+        response_format,
+        override_params=override_params,
+        list_key="data",
+        formatter_func=format_negative_keywords_export,
+        report_type_name="ads_negative_keywords"
+    )
+
+
+
 
 
 
