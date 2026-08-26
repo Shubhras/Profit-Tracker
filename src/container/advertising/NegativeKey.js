@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Table, Tag, Tooltip } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
-import { SearchOutlined, MoreOutlined } from '@ant-design/icons';
-import { getNegativeKeywords, getCampaignsRulesList, getAdsGroup } from '../../redux/advertising/actionCreator'; // apne path ke hisab se
+import { SearchOutlined, MoreOutlined, DownloadOutlined } from '@ant-design/icons';
+import {
+  getNegativeKeywords,
+  getCampaignsRulesList,
+  getAdsGroup,
+  exportNegativeKeywords,
+} from '../../redux/advertising/actionCreator';
 
 function NegativeKey() {
   const dispatch = useDispatch();
@@ -223,6 +228,41 @@ function NegativeKey() {
     }));
   };
 
+  const handleExport = async () => {
+    try {
+      const payload = {
+        file_format: 'xlsx',
+        search: debouncedSearch || '',
+        state: '',
+        match_type: matchType || '',
+        campaign_id: selectedCampaign || '',
+        ad_group_id: selectedAdGroup || '',
+      };
+
+      const response = await dispatch(exportNegativeKeywords(payload));
+
+      if (response?.data) {
+        const blob = new Blob([response.data], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+
+        link.href = url;
+        link.download = 'negative-keywords.xlsx';
+
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Negative keywords export failed:', error);
+    }
+  };
+
   return (
     <div className="bg-[#f5f7fb] min-h-screen px-4 py-2">
       <div className="flex flex-col min-lg:flex-row min-lg:items-start justify-between gap-3 mb-2">
@@ -233,6 +273,15 @@ function NegativeKey() {
             Discover, analyze and manage negative keywords to prevent wasted ad spend and improve campaign performance.
           </p>
         </div>
+
+        <Button
+          type="primary"
+          onClick={handleExport}
+          className="!h-[30px] text-[13px] !rounded-xl !bg-[#2563eb] !font-semibold !flex !items-center !justify-center"
+        >
+          <DownloadOutlined />
+          Export
+        </Button>
       </div>
 
       {/* TABS */}

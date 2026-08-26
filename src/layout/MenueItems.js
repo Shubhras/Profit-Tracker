@@ -298,7 +298,7 @@ function MenuItems({ toggleCollapsed }) {
                 {' '}
                 Loss SKU Tracker
               </NavLink>,
-              'shippingestimate',
+              'loss-sku',
             ),
 
           hasSubmodule('profit-table-view') &&
@@ -333,7 +333,7 @@ function MenuItems({ toggleCollapsed }) {
               'profitMonthlyView',
             ),
 
-          hasSubmodule('estimated-fees-profit') &&
+          hasSubmodule('amazon-estimate-fees') &&
             getItem(
               <NavLink onClick={toggleCollapsed} to={`${path}/profit/estimatedfees`}>
                 Amazon Estimate Fees
@@ -473,12 +473,12 @@ function MenuItems({ toggleCollapsed }) {
         'advertising',
         !topMenu && <UilMegaphone />,
         [
-          hasSubmodule('Dashboard') &&
+          hasSubmodule('advertise-dashboard') &&
             getItem(
-              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/create-campaign`}>
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/dashboard`}>
                 Dashboard
               </NavLink>,
-              'create-campaign',
+              'dashboard',
             ),
 
           hasSubmodule('campaigns') &&
@@ -1229,6 +1229,11 @@ function MenuItems({ toggleCollapsed }) {
     // ✅ Profit Table View - exact route
     if (pathname === '/admin/profit/profitTableView') {
       return 'profitTableView';
+    }
+
+    // ✅ Profit / Loss SKU Tracker
+    if (pathname === '/admin/profit/profitTableView/sku-profit') {
+      return location.state?.profitType === 'losing' ? 'loss-sku' : 'sku-profit';
     }
 
     // ✅ Profit Monthly View

@@ -1013,3 +1013,58 @@ export const exportAdGroupByCampaign = (payload = {}, format = 'xlsx') => {
     }
   };
 };
+
+export const exportNegativeKeywords = (payload = {}, format = 'xlsx') => {
+  return async () => {
+    try {
+      const response = await DataService.post(
+        `/amazon-ads/negative-keywords/list/export/?file_format=${format}`,
+        payload,
+        {
+          responseType: 'blob',
+        },
+      );
+
+      const blob = new Blob([response.data], {
+        type: response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+
+      link.href = url;
+
+      let filename = `negative_keywords.${format}`;
+
+      const contentDisposition = response.headers['content-disposition'];
+
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?([^"]+)"?/);
+        const [, matchedFilename] = match || [];
+
+        if (matchedFilename) {
+          filename = matchedFilename;
+        }
+      }
+
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+
+      return {
+        status: true,
+        filename,
+      };
+    } catch (err) {
+      console.error('Export negative keywords error:', err);
+
+      return {
+        status: false,
+        message: err.response?.data?.message || err.message,
+      };
+    }
+  };
+};
