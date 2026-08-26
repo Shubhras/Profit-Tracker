@@ -14,7 +14,7 @@ from amazon_ads.services.negative_targets import *
 from amazon_ads.services.portfolio import *
 from amazon_ads.services.dashboard import AdsDashboardStatsAPIView
 
-from amazon_auth.exports import export_amazon_ads_campaigns, export_amazon_ads_ad_groups, export_amazon_ads_search_terms, export_amazon_ads_ad_products, export_amazon_ads_keywords, export_amazon_ads_campaign_by_sku, export_amazon_ads_adgroup_by_campaign
+from amazon_auth.exports import export_amazon_ads_campaigns, export_amazon_ads_ad_groups, export_amazon_ads_search_terms, export_amazon_ads_ad_products, export_amazon_ads_keywords, export_amazon_ads_campaign_by_sku, export_amazon_ads_adgroup_by_campaign, export_amazon_ads_negative_keywords
 
 urlpatterns = [
 
@@ -96,6 +96,9 @@ urlpatterns = [
     ),
 
     path("negative-keywords/list/",NegativeKeywordListAPIView.as_view(),name="negative-keywords-list"),
+    path("negative-keywords/export/", export_amazon_ads_negative_keywords, name="export_amazon_ads_negative_keywords"),
+    path("negative-keywords/list/export/", export_amazon_ads_negative_keywords, name="export_amazon_ads_negative_keywords_alias"),
+
 
     path(
         "optimization-rules/create/",

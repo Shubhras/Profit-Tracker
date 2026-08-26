@@ -3167,33 +3167,43 @@ class NegativeKeywordListAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        return self.post(request)
+
     def post(self, request):
 
         user = request.user
+        data = request.data if isinstance(request.data, dict) else {}
+        filters = data.get("filters") if isinstance(data.get("filters"), dict) else {}
 
-        search = request.data.get("search")
+        def get_param(*keys):
+            for key in keys:
+                val = data.get(key)
+                if val is not None and str(val).strip() != "" and str(val).strip().lower() != "undefined":
+                    return str(val).strip()
+                val = filters.get(key)
+                if val is not None and str(val).strip() != "" and str(val).strip().lower() != "undefined":
+                    return str(val).strip()
+                val = request.query_params.get(key)
+                if val is not None and str(val).strip() != "" and str(val).strip().lower() != "undefined":
+                    return str(val).strip()
+            return None
 
-        campaign_id = request.data.get(
-            "campaign_id"
-        )
+        search = get_param("search", "q", "searchTerm")
+        campaign_id = get_param("campaign_id", "campaignId")
+        ad_group_id = get_param("ad_group_id", "adGroupId")
+        state = get_param("state")
+        match_type = get_param("match_type", "matchType")
 
-        ad_group_id = request.data.get(
-            "ad_group_id"
-        )
+        try:
+            page = int(get_param("page") or 1)
+        except Exception:
+            page = 1
 
-        state = request.data.get("state")
-
-        match_type = request.data.get(
-            "match_type"
-        )
-
-        page = int(
-            request.data.get("page", 1)
-        )
-
-        page_size = int(
-            request.data.get("page_size", 10)
-        )
+        try:
+            page_size = int(get_param("page_size", "pageSize") or 10)
+        except Exception:
+            page_size = 10
 
         queryset = AdsNegativeKeyword.objects.filter(
             amazon_account__user=user
@@ -3247,13 +3257,13 @@ class NegativeKeywordListAPIView(APIView):
         if state:
 
             queryset = queryset.filter(
-                state=state
+                state__iexact=state
             )
 
         if match_type:
 
             queryset = queryset.filter(
-                match_type=match_type
+                match_type__iexact=match_type
             )
 
         total_records = queryset.count()
@@ -3288,5 +3298,6 @@ class NegativeKeywordListAPIView(APIView):
             "data":
             serializer.data
         })
+
     
     
