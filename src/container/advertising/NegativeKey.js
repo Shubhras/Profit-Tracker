@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Table, Tag, Tooltip } from 'antd';
+import { Button, Table, Tag, Tooltip, Dropdown, message } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
-import { SearchOutlined, MoreOutlined, DownloadOutlined } from '@ant-design/icons';
+import {
+  SearchOutlined,
+  MoreOutlined,
+  ExportOutlined,
+  DownOutlined,
+  FileExcelOutlined,
+  FileTextOutlined,
+} from '@ant-design/icons';
 import {
   getNegativeKeywords,
   getCampaignsRulesList,
@@ -14,6 +21,7 @@ function NegativeKey() {
   // const { RangePicker } = DatePicker;
   const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
   const [matchType, setMatchType] = useState('');
   const [searchText, setSearchText] = useState('');
@@ -228,40 +236,48 @@ function NegativeKey() {
     }));
   };
 
-  const handleExport = async () => {
+  const handleExport = async (format = 'xlsx') => {
+    setExportLoading(true);
     try {
       const payload = {
-        file_format: 'xlsx',
         search: debouncedSearch || '',
         state: '',
         match_type: matchType || '',
         campaign_id: selectedCampaign || '',
         ad_group_id: selectedAdGroup || '',
+        ...(dateRange?.fromDate && { from_date: dateRange.fromDate, start_date: dateRange.fromDate }),
+        ...(dateRange?.endDate && { to_date: dateRange.endDate, end_date: dateRange.endDate }),
       };
 
-      const response = await dispatch(exportNegativeKeywords(payload));
+      const res = await dispatch(exportNegativeKeywords(payload, format));
 
-      if (response?.data) {
-        const blob = new Blob([response.data], {
-          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        });
-
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-
-        link.href = url;
-        link.download = 'negative-keywords.xlsx';
-
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-
-        window.URL.revokeObjectURL(url);
+      if (res?.status) {
+        message.success('Export report generated successfully!');
+      } else {
+        message.error(res?.message || 'Failed to export negative keywords');
       }
     } catch (error) {
       console.error('Negative keywords export failed:', error);
+      message.error('Failed to export negative keywords');
+    } finally {
+      setExportLoading(false);
     }
   };
+
+  const exportMenuItems = [
+    {
+      key: 'xlsx',
+      label: 'Excel (.xlsx)',
+      icon: <FileExcelOutlined style={{ color: '#10b981' }} />,
+      onClick: () => handleExport('xlsx'),
+    },
+    {
+      key: 'csv',
+      label: 'CSV (.csv)',
+      icon: <FileTextOutlined style={{ color: '#3b82f6' }} />,
+      onClick: () => handleExport('csv'),
+    },
+  ];
 
   return (
     <div className="bg-[#f5f7fb] min-h-screen px-4 py-2">
@@ -274,14 +290,16 @@ function NegativeKey() {
           </p>
         </div>
 
-        <Button
-          type="primary"
-          onClick={handleExport}
-          className="!h-[30px] text-[13px] !rounded-xl !bg-[#2563eb] !font-semibold !flex !items-center !justify-center"
-        >
-          <DownloadOutlined />
-          Export
-        </Button>
+        <Dropdown menu={{ items: exportMenuItems }} placement="bottomRight" trigger={['click']}>
+          <Button
+            type="primary"
+            loading={exportLoading}
+            icon={<ExportOutlined />}
+            className="!h-[30px] text-[13px] !px-3 !rounded-xl !bg-[#2563eb] !border-[#2563eb] !font-semibold !shadow-sm flex items-center gap-1 cursor-pointer"
+          >
+            Export <DownOutlined className="text-[10px]" />
+          </Button>
+        </Dropdown>
       </div>
 
       {/* TABS */}
