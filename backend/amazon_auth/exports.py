@@ -27,7 +27,8 @@ from .profit import (
 from .reconcile import (
     AmazonTransactionsGroupedAPIView,
     AmazonOrderRelatedTransactionsAPIView,
-    AmazonRefundTransactionsAPIView
+    AmazonRefundTransactionsAPIView,
+    AmazonSettlementSummaryAPIView
 )
 from .payment_reconcyle import (
     combined_payment_reconcile_overview,
@@ -38,6 +39,11 @@ from .payment_reconcyle import (
 
 from .models import ExportedReport
 from .export_utils import generate_csv, generate_xlsx, generate_pdf
+from rest_framework.negotiation import DefaultContentNegotiation
+
+class IgnoreFormatContentNegotiation(DefaultContentNegotiation):
+    def select_renderer(self, request, renderers, format_suffix=None):
+        return renderers[0], renderers[0].media_type
 
 def get_data_from_view(view_func_or_class, request, override_params=None):
     if hasattr(request, '_request'):
@@ -45,16 +51,19 @@ def get_data_from_view(view_func_or_class, request, override_params=None):
     else:
         django_req = request
         
-    # Copy query params if GET available
-    if hasattr(request, 'GET') and request.GET:
-        django_req.GET = request.GET.copy()
-    
-    # Apply GET overrides
-    if override_params and "GET" in override_params:
-        if not hasattr(django_req, 'GET') or django_req.GET is None:
-            django_req.GET = {}
-        for gk, gv in override_params["GET"].items():
-            django_req.GET[gk] = gv
+    # Copy query params if GET available and make mutable
+    if hasattr(django_req, 'GET') and django_req.GET is not None:
+        new_get = django_req.GET.copy()
+        if hasattr(new_get, '_mutable'):
+            new_get._mutable = True
+        # Strip DRF format parameter so content negotiation in target view does not throw 404 NotFound for 'xlsx' or 'csv'
+        new_get.pop('format', None)
+        new_get.pop('export_format', None)
+        new_get.pop('file_format', None)
+        if override_params and "GET" in override_params:
+            for gk, gv in override_params["GET"].items():
+                new_get[gk] = str(gv)
+        django_req.GET = new_get
 
     # Parse channel filter if present in query params or request data
     channel_list = []
@@ -217,17 +226,21 @@ def generic_export_view(request, view_func_or_class, column_mapping, filename_ba
         user = None
 
     exported_report = None
+    if user and getattr(user, 'is_authenticated', False):
+        try:
+            exported_report = ExportedReport.objects.create(
+                user=user,
+                report_type=report_type_name if report_type_name else filename_base,
+                file_name=f"{filename_base}.{response_format}",
+                format=response_format,
+                from_date=from_date,
+                to_date=to_date,
+                status="PROCESSING"
+            )
+        except Exception as create_err:
+            print(f"Warning: Could not create ExportedReport entry ({create_err})")
+
     try:
-        exported_report = ExportedReport.objects.create(
-            user=user,
-            report_type=report_type_name if report_type_name else filename_base,
-            file_name=f"{filename_base}.{response_format}",
-            format=response_format,
-            from_date=from_date,
-            to_date=to_date,
-            status="PROCESSING"
-        )
-        
         # Call the target view
         data = get_data_from_view(view_func_or_class, request, override_params)
         
@@ -829,7 +842,7 @@ def export_grouped_transactions(request):
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def export_order_settlement_dashboard(request):
-    response_format = request.query_params.get("format", "xlsx").lower()
+    response_format = (request.query_params.get("export_format") or request.query_params.get("file_format") or request.query_params.get("format") or "xlsx").lower()
     override_params = {
         "GET": {"page_size": 100000, "page": 1}
     }
@@ -843,6 +856,26 @@ def export_order_settlement_dashboard(request):
         list_key="results",
         totals_key=None
     )
+export_order_settlement_dashboard.cls.content_negotiation_class = IgnoreFormatContentNegotiation
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def export_settlement_summary(request):
+    response_format = (request.query_params.get("export_format") or request.query_params.get("file_format") or request.query_params.get("format") or "xlsx").lower()
+    override_params = {
+        "GET": {"page_size": 100000, "page": 1}
+    }
+    return generic_export_view(
+        request,
+        AmazonSettlementSummaryAPIView,
+        GROUPED_TRANSACTIONS_COLUMNS,
+        "settlement_summary",
+        response_format,
+        override_params=override_params,
+        list_key="results",
+        totals_key=None
+    )
+export_settlement_summary.cls.content_negotiation_class = IgnoreFormatContentNegotiation
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])

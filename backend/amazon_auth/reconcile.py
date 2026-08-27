@@ -404,9 +404,67 @@ from amazon_auth.serializers import (
  
 
 
+def compute_kpi_stats(amazon_account, start_date=None, end_date=None):
+    """
+    Computes top-level KPI metrics:
+    - total_orders
+    - total_gmv
+    - total_settlements
+    - pending_settlements
+    - settlement_success_rate
+    """
+    txns = AmazonTransaction.objects.filter(amazon_account=amazon_account).exclude(posted_date__isnull=True)
+    if start_date:
+        txns = txns.filter(posted_date__date__gte=start_date)
+    if end_date:
+        txns = txns.filter(posted_date__date__lte=end_date)
+
+    total_orders = txns.filter(
+        related_identifiers__identifier_name__icontains="order"
+    ).values("related_identifiers__identifier_value").distinct().count()
+
+    gmv_val = Decimal("0.00")
+    released_val = Decimal("0.00")
+    deferred_val = Decimal("0.00")
+
+    for txn in txns.prefetch_related("breakdowns"):
+        status_upper = (txn.transaction_status or "").upper()
+        amount = Decimal(str(txn.total_amount or "0.00"))
+
+        for b in txn.breakdowns.filter(parent__isnull=True):
+            b_type = (b.breakdown_type or "").lower()
+            if ("sale" in b_type or "sales" in b_type) and b.amount and b.amount > 0:
+                gmv_val += Decimal(str(b.amount))
+
+        if status_upper in ["RELEASED", "CLOSED", "PAID", "SETTLED"]:
+            if amount > 0:
+                released_val += amount
+        elif status_upper in ["DEFERRED", "HOLD", "PENDING", "UNSETTLED"]:
+            if amount > 0:
+                deferred_val += amount
+
+    if gmv_val == Decimal("0.00") and (released_val > 0 or deferred_val > 0):
+        gmv_val = released_val + deferred_val
+
+    total_eligible = released_val + deferred_val
+    if total_eligible > Decimal("0.00"):
+        success_rate = round(float((released_val / total_eligible) * 100), 2)
+    else:
+        success_rate = 100.0
+
+    return {
+        "total_orders": total_orders,
+        "total_gmv": round(float(gmv_val), 2),
+        "total_settlements": round(float(released_val), 2),
+        "pending_settlements": round(float(deferred_val), 2),
+        "settlement_success_rate": success_rate
+    }
+
+
 class AmazonSettlementSummaryAPIView(APIView):
 
     def get(self, request):
+
 
         user = request.user
 
@@ -859,36 +917,33 @@ class AmazonSettlementSummaryAPIView(APIView):
         # Final Response
         # =========================================
 
+        kpi_stats = compute_kpi_stats(amazon_account, start_date=start_date, end_date=end_date)
+
         return Response(
             {
                 "success": True,
-
                 "type": "summary",
-
+                "kpi_stats": kpi_stats,
                 "count": paginator.count,
-
                 "total_pages": paginator.num_pages,
-
                 "current_page": page_obj.number,
-
                 "next": (
                     page_obj.next_page_number()
                     if page_obj.has_next()
                     else None
                 ),
-
                 "previous": (
                     page_obj.previous_page_number()
                     if page_obj.has_previous()
                     else None
                 ),
-
                 "results": list(
                     page_obj.object_list
                 )
             },
             status=status.HTTP_200_OK
         )
+
                 
     
 
@@ -1598,36 +1653,30 @@ class AmazonOrderRelatedTransactionsAPIView(APIView):
         # Response
         # =====================================
 
+        kpi_stats = compute_kpi_stats(amazon_account, start_date=start_date, end_date=end_date)
+
         return Response(
             {
                 "success": True,
-
+                "kpi_stats": kpi_stats,
                 "count": paginator.count,
-
-                "total_pages": (
-                    paginator.num_pages
-                ),
-
-                "current_page": (
-                    page_obj.number
-                ),
-
+                "total_pages": paginator.num_pages,
+                "current_page": page_obj.number,
                 "next": (
                     page_obj.next_page_number()
                     if page_obj.has_next()
                     else None
                 ),
-
                 "previous": (
                     page_obj.previous_page_number()
                     if page_obj.has_previous()
                     else None
                 ),
-
                 "results": serializer.data
             },
             status=status.HTTP_200_OK
         )
+
         
 
 class AmazonRefundTransactionsAPIView(APIView):

@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from cryptography.fernet import Fernet
 import os
+from decimal import Decimal
 from django.conf import settings
 from django.db.models import UniqueConstraint
 
@@ -1024,5 +1025,54 @@ class ExportedReport(models.Model):
 
     def __str__(self):
         return f"{self.file_name} ({self.status})"
+
+
+# ==========================================
+# MODEL: OtherExpense (Business Expenses)
+# ==========================================
+class OtherExpense(models.Model):
+    COST_TYPE_CHOICES = [
+        ('per_sku', 'Per SKU'),
+        ('per_order', 'Per Order'),
+    ]
+
+    SPLIT_MODE_CHOICES = [
+        ('equally', 'Equally across SKUs'),
+        ('net_sales', 'By net sales'),
+        ('units_sold', 'By units sold'),
+    ]
+
+    STATUS_CHOICES = [
+        ('applied', 'Applied'),
+        ('recalculating', 'Recalculating'),
+        ('draft', 'Draft'),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='other_expenses'
+    )
+    expense_name = models.CharField(max_length=255)
+    marketplace = models.CharField(max_length=50, default='Amazon')
+    cost_value = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    cost_type = models.CharField(max_length=20, choices=COST_TYPE_CHOICES, default='per_sku')
+    split_lump_sum_by = models.CharField(max_length=50, choices=SPLIT_MODE_CHOICES, default='equally')
+    repeat_monthly = models.BooleanField(default=False)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='applied')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'amazon_auth'
+        db_table = 'amazon_auth_otherexpense'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.expense_name} - ₹{self.cost_value} ({self.marketplace})"
+
     
                 

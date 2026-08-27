@@ -18,6 +18,11 @@ from . import exports
 from . import profit
 from . import payment_reconcyle
 from .growth_opportunities import GrowthOpportunitiesAPIView
+from .other_expence import (
+    OtherExpenseListCreateAPIView,
+    OtherExpenseDetailAPIView,
+    OtherExpensePreviewAPIView
+)
 
 urlpatterns = [
     path('dashboard-stats-old/', views.get_full_dashboard, name='dashboard-stats-old'),
@@ -223,13 +228,18 @@ urlpatterns = [
     path('bank/ransfer-summary/export/', exports.export_bank_transfer_workflow),
     path('grouped-transactions/export/', exports.export_grouped_transactions),
     path('order-settlement-dashboard/export/', exports.export_order_settlement_dashboard),
+    path('settlement-summary/export/', exports.export_settlement_summary),
     path('refund-transactions/export/', exports.export_refund_transactions),
     path('exports/history/', exports.list_export_history),
     path('exports/history/<int:export_id>/download/', exports.download_export_file),
     path('exports/history/<int:export_id>/delete/', exports.delete_export_file),
     path('exports/history/delete-all/', exports.delete_all_export_reports),
     path('exports/history/delete/', exports.delete_export_file),
- 
+
+    # OTHER EXPENSES ENDPOINTS
+    path('other-expenses/', OtherExpenseListCreateAPIView.as_view(), name='other-expenses-list-create'),
+    path('other-expenses/<int:pk>/', OtherExpenseDetailAPIView.as_view(), name='other-expenses-detail'),
+    path('other-expenses/preview/', OtherExpensePreviewAPIView.as_view(), name='other-expenses-preview'),
 ]
 
 

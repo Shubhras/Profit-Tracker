@@ -80,14 +80,18 @@ export const getBankTransferSummary = (payload) => {
   };
 };
 
-export const getSettledOrders = (page = 1, pageSize = 10, search = '') => {
+export const getSettledOrders = (page = 1, pageSize = 10, search = '', startDate = '', endDate = '') => {
   return async (dispatch) => {
     dispatch(settledOrderBegin());
 
     try {
-      const response = await DataService.get(
-        `/amazon/order-settlement-dashboard/?page=${page}&page_size=${pageSize}&search=${search}`,
-      );
+      let url = `/amazon/order-settlement-dashboard/?page=${page}&page_size=${pageSize}&search=${encodeURIComponent(
+        search,
+      )}`;
+      if (startDate) url += `&start_date=${startDate}`;
+      if (endDate) url += `&end_date=${endDate}`;
+
+      const response = await DataService.get(url);
       if (response.data.success === true) {
         dispatch(settledOrderSuccess(response.data));
       } else {

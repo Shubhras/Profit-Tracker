@@ -108,6 +108,17 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
     parent_ids = filters.get("parentproductid", {}).get("IN", []) if isinstance(filters.get("parentproductid"), dict) else []
     if parent_ids:
         order_filter &= Q(asin__in=parent_ids)
+
+    search_term = filters.get("search") or filters.get("searchTerm") or filters.get("q") or filters.get("sku")
+    if isinstance(search_term, list) and search_term:
+        search_term = search_term[0]
+    if search_term:
+        search_term = str(search_term).strip()
+        order_filter &= (
+            Q(seller_sku__icontains=search_term) |
+            Q(asin__icontains=search_term) |
+            Q(title__icontains=search_term)
+        )
         
     from_date = start_date
     to_date = end_date
@@ -1630,7 +1641,21 @@ def get_val(row, *keys, default=0):
     return default
 
 def format_currency(value):
-    value = float(value or 0)
+    if isinstance(value, str):
+        cleaned = value.replace("₹", "").replace(",", "").replace(" ", "").strip()
+        try:
+            value = float(cleaned) if cleaned else 0.0
+        except ValueError:
+            value = 0.0
+    elif isinstance(value, Decimal):
+        value = float(value)
+    elif value is None:
+        value = 0.0
+    else:
+        try:
+            value = float(value)
+        except (ValueError, TypeError):
+            value = 0.0
     return f"-₹{abs(round(value, 2))}" if value < 0 else f"₹{round(value, 2)}"
 
 

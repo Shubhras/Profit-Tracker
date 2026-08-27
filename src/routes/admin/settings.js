@@ -5,6 +5,7 @@ import SubscriptionGate from '../../components/utilities/SubscriptionGate';
 const Overview = lazy(() => import('../../container/settings/product-settings/Overview'));
 const ProductConfiguration = lazy(() => import('../../container/settings/product-settings/ProductConfiguration'));
 const FinanceConfiguration = lazy(() => import('../../container/settings/product-settings/FinanceConfiguration'));
+const BusinessExpenses = lazy(() => import('../../container/settings/product-settings/BusinessExpenses'));
 const AccountSettings = lazy(() => import('../../container/settings/AccountSettings'));
 const MarketPlaceSettings = lazy(() => import('../../container/settings/MarketPlaceSettings'));
 const MarketplaceConnection = lazy(() => import('../../container/settings/MarketplaceConnection'));
@@ -35,6 +36,14 @@ function SettingsRoutes() {
         element={
           <SubscriptionGate>
             <FinanceConfiguration />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="product-setting/business-expenses"
+        element={
+          <SubscriptionGate>
+            <BusinessExpenses />
           </SubscriptionGate>
         }
       />

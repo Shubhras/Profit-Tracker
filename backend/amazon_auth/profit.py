@@ -22,10 +22,12 @@ from .utils import format_currency
 def parse_currency_to_decimal(val):
     if val in (None, ""):
         return Decimal(0)
-    val_str = str(val).replace("₹", "").replace(",", "").strip()
+    if isinstance(val, (int, float, Decimal)):
+        return Decimal(str(val))
+    val_str = str(val).replace("₹", "").replace(",", "").replace(" ", "").strip()
     try:
         return Decimal(val_str)
-    except:
+    except Exception:
         return Decimal(0)
 
 
@@ -1912,6 +1914,76 @@ def combined_profitability_monthwise(request):
     })
 
 
+def _recalculate_totals_from_rows(rows):
+    if not rows:
+        return {}
+
+    total_ads = sum(parse_currency_to_decimal(r.get('ads', 0)) for r in rows)
+    total_qty = sum(int(r.get('netqty', 0) or 0) for r in rows)
+    total_final_net_qty = sum(int(r.get('final_net_qty', r.get('netqty', 0)) or 0) for r in rows)
+    total_return_count = sum(int(r.get('returnqty', r.get('return_count', 0)) or 0) for r in rows)
+
+    grosssales = sum(parse_currency_to_decimal(r.get('grosssales', 0)) for r in rows)
+    netsales = sum(parse_currency_to_decimal(r.get('netsales', 0)) for r in rows)
+    total_final_net_sales = sum(parse_currency_to_decimal(r.get('final_net_sales', r.get('netsales', 0)) or 0) for r in rows)
+    total_profit = sum(parse_currency_to_decimal(r.get('profit', 0)) for r in rows)
+
+    mpfees = sum(parse_currency_to_decimal(r.get('mpfees', r.get('new_mpfees', 0)) or 0) for r in rows)
+    mp_gst = sum(parse_currency_to_decimal(r.get('mp_gst', 0)) for r in rows)
+    estimatefees = sum(parse_currency_to_decimal(r.get('estimatefees', 0)) for r in rows)
+    shippingfees = sum(parse_currency_to_decimal(r.get('shippingfees', 0)) for r in rows)
+    stdcost = sum(parse_currency_to_decimal(r.get('stdcost', 0)) for r in rows)
+    tcs = sum(parse_currency_to_decimal(r.get('tcs', 0)) for r in rows)
+    taxable_value = sum(parse_currency_to_decimal(r.get('taxable_value', 0)) for r in rows)
+    gst_to_pay_amount = sum(parse_currency_to_decimal(r.get('gst_to_pay_amount', 0)) for r in rows)
+    exp_settlement = sum(parse_currency_to_decimal(r.get('exp_settlement', 0)) for r in rows)
+    promo_discount = sum(parse_currency_to_decimal(r.get('promo_discount', 0)) for r in rows)
+
+    courier_return_count = sum(int(r.get('courier_return_count', 0) or 0) for r in rows)
+    customer_return_count = sum(int(r.get('customer_return_count', 0) or 0) for r in rows)
+    courier_return_price = sum(parse_currency_to_decimal(r.get('courier_return_price', 0)) for r in rows)
+    customer_return_price = sum(parse_currency_to_decimal(r.get('customer_return_price', 0)) for r in rows)
+    claim_count = sum(int(r.get('claim_count', r.get('total_claim_count', 0)) or 0) for r in rows)
+    claim_amount = sum(parse_currency_to_decimal(r.get('claim_amount', r.get('total_claim_amount', 0)) or 0) for r in rows)
+
+    return_percentage = (Decimal(total_return_count) / Decimal(total_final_net_qty) * Decimal(100)) if total_final_net_qty else Decimal(0)
+    profit_perc = (total_profit / total_final_net_sales * Decimal(100)) if total_final_net_sales else (total_profit / netsales * Decimal(100)) if netsales else Decimal(0)
+
+    return {
+        "ads": format_currency(total_ads),
+        "netqty": total_qty,
+        "totalreturn": total_return_count,
+        "totalreturnper": f"{round(return_percentage, 2)}%",
+        "grosssales": format_currency(grosssales),
+        "netsales": format_currency(netsales),
+        "total_net_sales": format_currency(netsales),
+        "total_final_net_sales": format_currency(total_final_net_sales),
+        "profit": format_currency(total_profit),
+        "grossprofitper": float(round(profit_perc, 2)),
+        "mpfees": format_currency(mpfees),
+        "mp_gst": format_currency(mp_gst),
+        "estimatefees": format_currency(-abs(estimatefees)),
+        "total_new_mpfees": format_currency(mpfees),
+        "shippingfees": format_currency(shippingfees),
+        "tacos": float(round((abs(total_ads) / grosssales * Decimal(100)) if grosssales else Decimal(0), 2)),
+        "stdcost": format_currency(stdcost),
+        "totalgst": format_currency(0),
+        "tcs": format_currency(tcs),
+        "taxable_value": format_currency(taxable_value),
+        "gst_to_pay_amount": format_currency(gst_to_pay_amount),
+        "gst_to_pay_perc": f"{round((gst_to_pay_amount / taxable_value * Decimal(100)), 2) if taxable_value else 0}%",
+        "exp_settlement": format_currency(exp_settlement),
+        "total_promo_discount": format_currency(promo_discount),
+        "total_return_count": total_return_count,
+        "courier_return_count": courier_return_count,
+        "customer_return_count": customer_return_count,
+        "courier_return_price": format_currency(courier_return_price),
+        "customer_return_price": format_currency(customer_return_price),
+        "total_claim_count": claim_count,
+        "total_claim_amount": format_currency(claim_amount),
+    }
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def combined_sku_profitability_list_filtered(request):
@@ -1936,8 +2008,7 @@ def combined_sku_profitability_list_filtered(request):
     profit_filter = filters.get("profit_filter") or data.get("profit_filter")
 
     if has_amazon and not has_myntra:
-        undecorated = get_undecorated_view(sku_profitability_list_filtered)
-        res = undecorated(request)
+        res = _call_view_for_all_results(sku_profitability_list_filtered, request)
         if res.status_code == 200 and isinstance(res.data, dict) and "response" in res.data:
             res.data["response"] = enrich_row_image_urls(res.data["response"], user)
             rows = res.data["response"]
@@ -1951,6 +2022,9 @@ def combined_sku_profitability_list_filtered(request):
                     rows = [r for r in rows if parse_currency_to_decimal(r.get("profit")) == 0]
             rows.sort(key=lambda r: parse_currency_to_decimal(r.get("grosssales") or r.get("gross_sales")), reverse=True)
             res.data["pagination"]["count"] = len(rows)
+            res.data["pagination"]["pageNo"] = page_no
+            res.data["pagination"]["pageSize"] = page_size
+            res.data["totals"] = _recalculate_totals_from_rows(rows)
             res.data["response"] = rows[page_no * page_size : (page_no + 1) * page_size]
         return res
 
@@ -2036,7 +2110,8 @@ def combined_sku_profitability_list_filtered(request):
     dto_rows = enrich_dto_image_urls(dto_rows, user)
     dto_rows.sort(key=lambda item: parse_currency_to_decimal(item.grosssales), reverse=True)
 
-    combined_totals = _combine_totals(amazon_totals, myntra_totals, type="sku")
+    all_rows = [dto.to_dict() for dto in dto_rows]
+    combined_totals = _recalculate_totals_from_rows(all_rows)
     total_count = len(dto_rows)
     paginated_dtos = dto_rows[page_no * page_size : (page_no + 1) * page_size]
     paginated_rows = [dto.to_dict() for dto in paginated_dtos]

@@ -851,3 +851,38 @@ class ExportedReportAdmin(admin.ModelAdmin):
     )
     readonly_fields = ("created_at",)
     ordering = ("-created_at",)
+
+
+
+@admin.register(OtherExpense)    
+class OtherExpenseAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "user",
+        "expense_name",
+        "marketplace",
+        "cost_value",
+        "start_date",
+        "end_date",
+        "cost_type",
+        "split_lump_sum_by",
+        "repeat_monthly",
+        "status",
+        "created_at",
+        "updated_at",
+    )
+    list_filter = (
+        "marketplace",
+        "cost_type",
+        "split_lump_sum_by",
+        "repeat_monthly",
+        "status",
+        "created_at",
+    )
+    search_fields = (
+        "expense_name",
+        "user__username",
+        "user__email",
+    )
+    readonly_fields = ("created_at", "updated_at")
+    ordering = ("-created_at",)    

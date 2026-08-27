@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Tooltip, DatePicker, Modal } from 'antd';
+import { Table, Tooltip, Modal, Button, Dropdown } from 'antd';
+import moment from 'moment';
 import {
   InfoCircleOutlined,
   SearchOutlined,
@@ -10,16 +11,37 @@ import {
   ClockCircleOutlined,
   RiseOutlined,
   EyeOutlined,
+  ExportOutlined,
+  DownOutlined,
+  FileExcelOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { getSettledOrders, getAllSettlement } from '../../redux/reconcilePayment/actionCreator';
+import { DataService } from '../../config/dataService/dataService';
 
 function OrderSettlement() {
   const dispatch = useDispatch();
-  const { RangePicker } = DatePicker;
-  // const [fullfilment, setFullfilment] = useState('');
-  const [dateRange, setDateRange] = useState();
+
+  const { dateRange: globalDateRange } = useSelector((state) => state.dashboard);
+  const [dateRange, setDateRange] = useState(() => {
+    if (globalDateRange?.fromDate && globalDateRange?.endDate) {
+      return [moment(globalDateRange.fromDate), moment(globalDateRange.endDate)];
+    }
+    return [moment().startOf('month'), moment().endOf('month')];
+  });
   const [activeTab, setActiveTab] = useState('summary');
+
+  useEffect(() => {
+    if (globalDateRange?.fromDate && globalDateRange?.endDate) {
+      const start = moment(globalDateRange.fromDate);
+      const end = moment(globalDateRange.endDate);
+      if (start.isValid() && end.isValid()) {
+        setDateRange([start, end]);
+      }
+    }
+  }, [globalDateRange]);
+
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -36,6 +58,79 @@ function OrderSettlement() {
     setIsModalOpen(true);
   };
 
+  const [exportLoading, setExportLoading] = useState(false);
+
+  const formatDateStr = (dateObj) => {
+    if (!dateObj) return '';
+    if (typeof dateObj.format === 'function') {
+      return dateObj.format('YYYY-MM-DD');
+    }
+    if (dateObj instanceof Date) {
+      return dateObj.toISOString().split('T')[0];
+    }
+    return String(dateObj);
+  };
+
+  const handleExport = async (format = 'xlsx') => {
+    try {
+      setExportLoading(true);
+      let startDate = '';
+      let endDate = '';
+      if (dateRange && dateRange[0] && dateRange[1]) {
+        startDate = formatDateStr(dateRange[0]);
+        endDate = formatDateStr(dateRange[1]);
+      } else {
+        const today = new Date();
+        [startDate] = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T');
+        [endDate] = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T');
+      }
+
+      const isSummary = activeTab === 'summary';
+      const endpoint = isSummary
+        ? `/amazon/order-settlement-dashboard/export/?start_date=${startDate}&end_date=${endDate}&search=${encodeURIComponent(
+            debouncedSearch || '',
+          )}&format=${format}`
+        : `/amazon/settlement-summary/export/?start_date=${startDate}&end_date=${endDate}&search=${encodeURIComponent(
+            debouncedSearch || '',
+          )}&format=${format}`;
+
+      const response = await DataService.get(endpoint, { responseType: 'blob' });
+
+      const blob = new Blob([response.data], {
+        type: response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const filename = isSummary ? `order_settlement_dashboard.${format}` : `settlement_summary.${format}`;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Export failed:', error);
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const exportMenuItems = [
+    {
+      key: 'xlsx',
+      label: 'Excel (.xlsx)',
+      icon: <FileExcelOutlined style={{ color: '#10b981' }} />,
+      onClick: () => handleExport('xlsx'),
+    },
+    {
+      key: 'csv',
+      label: 'CSV (.csv)',
+      icon: <FileTextOutlined style={{ color: '#3b82f6' }} />,
+      onClick: () => handleExport('csv'),
+    },
+  ];
+
   const {
     settledData,
     settledLoading,
@@ -44,27 +139,32 @@ function OrderSettlement() {
   } = useSelector((state) => state.reconcilePayment);
 
   useEffect(() => {
+    let startDate = '';
+    let endDate = '';
+
+    if (dateRange && dateRange[0] && dateRange[1]) {
+      startDate = formatDateStr(dateRange[0]);
+      endDate = formatDateStr(dateRange[1]);
+    } else {
+      const today = new Date();
+      [startDate] = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T');
+      [endDate] = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T');
+    }
+
     if (activeTab === 'summary') {
-      // Order Summary ki existing API
-      dispatch(getSettledOrders(pagination.current, pagination.pageSize, debouncedSearch));
+      dispatch(getSettledOrders(pagination.current, pagination.pageSize, debouncedSearch, startDate, endDate));
     }
 
     if (activeTab === 'settlement') {
-      // All Settlement ki new API
-      const today = new Date();
-
-      const startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
-
-      const endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
-
       dispatch(
         getAllSettlement({
           start_date: startDate,
           end_date: endDate,
+          search: debouncedSearch,
         }),
       );
     }
-  }, [dispatch, activeTab, pagination.current, pagination.pageSize, debouncedSearch]);
+  }, [dispatch, activeTab, pagination.current, pagination.pageSize, debouncedSearch, dateRange]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -74,11 +174,17 @@ function OrderSettlement() {
     return () => clearTimeout(timer);
   }, [searchText]);
 
+  const kpiStats =
+    (activeTab === 'summary' ? settledData?.kpi_stats : allsettlementData?.kpi_stats) ||
+    settledData?.kpi_stats ||
+    allsettlementData?.kpi_stats ||
+    {};
+
   const topCards = [
     {
       title: 'Total Orders',
-      value: '2,189',
-      sub: 'vs Last Month + 8.45%',
+      value: kpiStats?.total_orders !== undefined ? Number(kpiStats.total_orders).toLocaleString('en-IN') : '0',
+      sub: 'Order Volume',
       icon: <ShoppingCartOutlined />,
       iconBg: 'bg-[#eff6ff]',
       iconColor: 'text-[#2563eb]',
@@ -87,8 +193,15 @@ function OrderSettlement() {
 
     {
       title: 'Total GMV',
-      value: '₹ 3,85,420.75',
-      sub: 'vs Last Month + 11.2%',
+      value: `₹ ${
+        kpiStats?.total_gmv !== undefined
+          ? Number(kpiStats.total_gmv).toLocaleString('en-IN', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })
+          : '0.00'
+      }`,
+      sub: 'Gross Sales',
       icon: <DollarOutlined />,
       iconBg: 'bg-[#ecfdf3]',
       iconColor: 'text-[#16a34a]',
@@ -97,8 +210,15 @@ function OrderSettlement() {
 
     {
       title: 'Total Settlements',
-      value: '₹ 2,20,790.85',
-      sub: 'vs Last Month + 9.3%',
+      value: `₹ ${
+        kpiStats?.total_settlements !== undefined
+          ? Number(kpiStats.total_settlements).toLocaleString('en-IN', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })
+          : '0.00'
+      }`,
+      sub: 'Released Payouts',
       icon: <CheckCircleOutlined />,
       iconBg: 'bg-[#f5f3ff]',
       iconColor: 'text-[#7c3aed]',
@@ -107,8 +227,15 @@ function OrderSettlement() {
 
     {
       title: 'Pending Settlements',
-      value: '₹ 65,130.50',
-      sub: 'vs Last Month - 14.2%',
+      value: `₹ ${
+        kpiStats?.pending_settlements !== undefined
+          ? Number(kpiStats.pending_settlements).toLocaleString('en-IN', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })
+          : '0.00'
+      }`,
+      sub: 'Deferred Payouts',
       icon: <ClockCircleOutlined />,
       iconBg: 'bg-[#fff7ed]',
       iconColor: 'text-[#f97316]',
@@ -117,8 +244,8 @@ function OrderSettlement() {
 
     {
       title: 'Settlement Success Rate',
-      value: '89.32%',
-      sub: 'vs Last Month + 5.67%',
+      value: `${kpiStats?.settlement_success_rate !== undefined ? kpiStats.settlement_success_rate : 0}%`,
+      sub: 'Released / Total',
       icon: <RiseOutlined />,
       iconBg: 'bg-[#ecfeff]',
       iconColor: 'text-[#0891b2]',
@@ -152,6 +279,7 @@ function OrderSettlement() {
           others: item.others,
           payoutAmount: item.payout_amount,
           totalTransactions: item.total_transactions,
+          transactions: item.transactions || [],
         })) || [];
 
   const columns = [
@@ -359,6 +487,24 @@ function OrderSettlement() {
       width: 100,
       sorter: (a, b) => a.totalTransactions - b.totalTransactions,
     },
+    {
+      title: '',
+      key: 'view',
+      align: 'center',
+      width: 30,
+      render: (record) => (
+        <Tooltip title="View Details" color="black" overlayInnerStyle={{ color: '#fff' }}>
+          <EyeOutlined
+            style={{
+              fontSize: '16px',
+              cursor: 'pointer',
+              color: '#1677ff',
+            }}
+            onClick={() => handleView(record)}
+          />
+        </Tooltip>
+      ),
+    },
   ];
 
   return (
@@ -451,41 +597,27 @@ function OrderSettlement() {
 
             {/* FILTERS */}
             <div className="flex items-center gap-3 border-b border-[#edf0f2] px-4 py-3 lg:flex-wrap">
-              {' '}
-              {/* <select className="py-1 rounded-l border border-[#e5e7eb] px-2 text-[11px] outline-none">
-              <option>All Marketplaces</option>
-            </select> */}
-              {/* <select
-              value={fullfilment}
-              onChange={(e) => setFullfilment(e.target.value)}
-              className="h-[30px] w-[150px] md:w-full px-2 rounded-l border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
-            >
-              <option value="">All Fulfillment</option>
-              <option value="AFN">AFN</option>
-              <option value="MFN">MFN</option>
-            </select> */}
-              <RangePicker
-                value={dateRange}
-                onChange={(dates) => setDateRange(dates)}
-                format="DD/MM/YYYY"
-                allowClear={false}
-                className="
-    h-[30px] w-[240px] md:w-full
-    [&_.ant-picker-input>input]:text-[11px]
-    [&_.ant-picker-input>input]:font-normal
-    [&_.ant-picker-separator]:text-[11px]
-    [&_.ant-picker-suffix]:text-[11px]
-  "
-              />
-              <div className="relative ml-auto md:ml-0 md:w-full">
-                <input
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  placeholder="Search Order ID / SKU"
-                  className="py-1 w-[180px] md:w-full rounded-l border border-[#e5e7eb] pl-3 pr-9 text-[12px] outline-none"
-                />
+              <div className="flex items-center gap-2 ml-auto md:ml-0 md:w-full">
+                <div className="relative md:w-full">
+                  <input
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    placeholder="Search Order ID / SKU"
+                    className="py-1 w-[180px] md:w-full rounded-l border border-[#e5e7eb] pl-3 pr-9 text-[12px] outline-none"
+                  />
 
-                <SearchOutlined className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-[#9ca3af]" />
+                  <SearchOutlined className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-[#9ca3af]" />
+                </div>
+                <Dropdown menu={{ items: exportMenuItems }} trigger={['click']} placement="bottomRight">
+                  <Button
+                    type="primary"
+                    icon={<ExportOutlined />}
+                    loading={exportLoading}
+                    className="bg-[#10b981] hover:bg-[#059669] border-none text-white font-medium px-3 h-[30px] rounded-lg flex items-center gap-1.5 shadow-sm"
+                  >
+                    Export <DownOutlined style={{ fontSize: 10 }} />
+                  </Button>
+                </Dropdown>
               </div>
             </div>
 
@@ -538,52 +670,120 @@ function OrderSettlement() {
           },
         }}
       >
-        {selectedRecord && (
+        {selectedRecord && selectedRecord.settlementDate ? (
           <div className="space-y-4">
-            {/* Breakdown Section */}
             <div>
-              <h3 className="mb-3 text-[13px] font-semibold text-gray-800">Breakdown Summary</h3>
-              <div className="mb-2 font-semibold text-[13px] text-gray-800">
-                {selectedRecord?.transactionType} : ₹ {Math.abs(Number(selectedRecord?.totalAmount || 0)).toFixed(2)}
+              <h3 className="mb-1 text-[14px] font-semibold text-gray-800">Settlement Details</h3>
+              <p className="text-[12px] text-gray-500 mb-3">
+                Settlement Date: <span className="font-semibold text-gray-700">{selectedRecord.settlementDate}</span>
+              </p>
+
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                <div className="p-2 rounded bg-gray-50 border text-center">
+                  <span className="text-[11px] text-gray-500 block">Sales</span>
+                  <span className="text-[13px] font-semibold text-green-600">
+                    ₹ {Number(selectedRecord.sales || 0).toFixed(2)}
+                  </span>
+                </div>
+                <div className="p-2 rounded bg-gray-50 border text-center">
+                  <span className="text-[11px] text-gray-500 block">Refunds</span>
+                  <span className="text-[13px] font-semibold text-red-500">
+                    ₹ {Number(selectedRecord.refunds || 0).toFixed(2)}
+                  </span>
+                </div>
+                <div className="p-2 rounded bg-gray-50 border text-center">
+                  <span className="text-[11px] text-gray-500 block">Expenses</span>
+                  <span className="text-[13px] font-semibold text-red-500">
+                    ₹ {Number(selectedRecord.expenses || 0).toFixed(2)}
+                  </span>
+                </div>
+                <div className="p-2 rounded bg-gray-50 border text-center">
+                  <span className="text-[11px] text-gray-500 block">Payout Amount</span>
+                  <span className="text-[13px] font-semibold text-blue-600">
+                    ₹ {Number(selectedRecord.payoutAmount || 0).toFixed(2)}
+                  </span>
+                </div>
               </div>
 
-              <div className="space-y-2">
-                {selectedRecord.breakdowns?.map((item) => (
-                  <div key={item.id} className="rounded-md border border-gray-200 p-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[13px] font-medium text-gray-800">{item.breakdown_type}</span>
-
-                      <span
-                        className={`text-[13px] font-semibold ${
-                          Number(item.amount) < 0 ? 'text-red-500' : 'text-green-600'
-                        }`}
+              {selectedRecord.transactions?.length > 0 && (
+                <div>
+                  <h4 className="mb-2 text-[12px] font-semibold text-gray-700">
+                    Transactions ({selectedRecord.totalTransactions || selectedRecord.transactions.length})
+                  </h4>
+                  <div className="max-h-[220px] overflow-y-auto space-y-1.5 pr-1">
+                    {selectedRecord.transactions.map((txn, idx) => (
+                      <div
+                        key={txn.id || idx}
+                        className="flex items-center justify-between p-2 rounded border border-gray-100 bg-white text-[12px]"
                       >
-                        ₹ {Math.abs(Number(item.amount)).toFixed(2)}
-                      </span>
-                    </div>
-
-                    {item.children?.length > 0 && (
-                      <div className="mt-2 space-y-1 border-l-2 border-gray-200 pl-3">
-                        {item.children.map((child) => (
-                          <div key={child.id} className="flex items-center justify-between">
-                            <span className="text-[12px] text-gray-500">{child.breakdown_type}</span>
-
-                            <span
-                              className={`text-[12px] font-medium ${
-                                Number(child.amount) < 0 ? 'text-red-500' : 'text-green-600'
-                              }`}
-                            >
-                              ₹ {Math.abs(Number(child.amount)).toFixed(2)}
-                            </span>
-                          </div>
-                        ))}
+                        <div>
+                          <span className="font-medium text-gray-800 block">
+                            {txn.transaction_type} - {txn.description || 'N/A'}
+                          </span>
+                          <span className="text-[10px] text-gray-400">ID: {txn.transaction_id}</span>
+                        </div>
+                        <span
+                          className={`font-semibold ${
+                            Number(txn.total_amount) < 0 ? 'text-red-500' : 'text-green-600'
+                          }`}
+                        >
+                          ₹ {Math.abs(Number(txn.total_amount || 0)).toFixed(2)}
+                        </span>
                       </div>
-                    )}
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
             </div>
           </div>
+        ) : (
+          selectedRecord && (
+            <div className="space-y-4">
+              {/* Breakdown Section */}
+              <div>
+                <h3 className="mb-3 text-[13px] font-semibold text-gray-800">Breakdown Summary</h3>
+                <div className="mb-2 font-semibold text-[13px] text-gray-800">
+                  {selectedRecord?.transactionType} : ₹ {Math.abs(Number(selectedRecord?.totalAmount || 0)).toFixed(2)}
+                </div>
+
+                <div className="space-y-2">
+                  {selectedRecord.breakdowns?.map((item) => (
+                    <div key={item.id} className="rounded-md border border-gray-200 p-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[13px] font-medium text-gray-800">{item.breakdown_type}</span>
+
+                        <span
+                          className={`text-[13px] font-semibold ${
+                            Number(item.amount) < 0 ? 'text-red-500' : 'text-green-600'
+                          }`}
+                        >
+                          ₹ {Math.abs(Number(item.amount)).toFixed(2)}
+                        </span>
+                      </div>
+
+                      {item.children?.length > 0 && (
+                        <div className="mt-2 space-y-1 border-l-2 border-gray-200 pl-3">
+                          {item.children.map((child) => (
+                            <div key={child.id} className="flex items-center justify-between">
+                              <span className="text-[12px] text-gray-500">{child.breakdown_type}</span>
+
+                              <span
+                                className={`text-[12px] font-medium ${
+                                  Number(child.amount) < 0 ? 'text-red-500' : 'text-green-600'
+                                }`}
+                              >
+                                ₹ {Math.abs(Number(child.amount)).toFixed(2)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )
         )}
       </Modal>
     </>
