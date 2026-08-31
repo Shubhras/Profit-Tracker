@@ -618,6 +618,7 @@ class AmazonListingItemAdmin(admin.ModelAdmin):
 class AmazonTransactionRelatedIdentifierInline(admin.TabularInline):
     model = AmazonTransactionRelatedIdentifier
     extra = 0
+    raw_id_fields = ("transaction",)
 
 
 # ==========================================
@@ -628,6 +629,7 @@ class AmazonTransactionBreakdownInline(admin.TabularInline):
     model = AmazonTransactionBreakdown
     extra = 0
     fk_name = "transaction"
+    raw_id_fields = ("transaction", "parent")
 
 
 # ==========================================
@@ -637,6 +639,7 @@ class AmazonTransactionBreakdownInline(admin.TabularInline):
 class AmazonTransactionContextInline(admin.TabularInline):
     model = AmazonTransactionContext
     extra = 0
+    raw_id_fields = ("transaction",)
 
 
 
@@ -644,51 +647,6 @@ class AmazonTransactionContextInline(admin.TabularInline):
 # ==========================================
 # Amazon Transaction Admin
 # ==========================================
-
-# @admin.register(AmazonTransaction)
-# class AmazonTransactionAdmin(admin.ModelAdmin):
-
-#     list_display = (
-#         "id",
-#         "transaction_id",
-#         "transaction_type",
-#         "transaction_status",
-#         "total_amount",
-#         "currency_code",
-#         "posted_date",
-#         "amazon_account",
-#         "created_at",
-#     )
-
-#     list_filter = (
-#         "transaction_type",
-#         "transaction_status",
-#         "currency_code",
-#         "posted_date",
-#         "created_at",
-#     )
-
-#     search_fields = (
-#         "transaction_id",
-#         "description",
-#     )
-
-#     readonly_fields = (
-#         "created_at",
-#         "updated_at",
-#         "raw_payload",
-#     )
-
-#     inlines = [
-#         AmazonTransactionRelatedIdentifierInline,
-#         AmazonTransactionBreakdownInline,
-#         AmazonTransactionContextInline,
-#     ]
-
-#     ordering = ("-posted_date",)
-
-#     date_hierarchy = "posted_date"
-
 
 @admin.register(AmazonTransaction)
 class AmazonTransactionAdmin(admin.ModelAdmin):
@@ -724,6 +682,8 @@ class AmazonTransactionAdmin(admin.ModelAdmin):
         "raw_payload",
     )
 
+    raw_id_fields = ("amazon_account",)
+
     inlines = [
         AmazonTransactionRelatedIdentifierInline,
         AmazonTransactionBreakdownInline,
@@ -748,9 +708,7 @@ class AmazonTransactionAdmin(admin.ModelAdmin):
 
 # ==========================================
 # Related Identifier Admin
-# ==========================================
-
-@admin.register(AmazonTransactionRelatedIdentifier)
+# ==============@admin.register(AmazonTransactionRelatedIdentifier)
 class AmazonTransactionRelatedIdentifierAdmin(admin.ModelAdmin):
 
     list_display = (
@@ -759,6 +717,8 @@ class AmazonTransactionRelatedIdentifierAdmin(admin.ModelAdmin):
         "identifier_name",
         "identifier_value",
     )
+
+    raw_id_fields = ("transaction",)
 
     search_fields = (
         "identifier_name",
@@ -783,6 +743,8 @@ class AmazonTransactionBreakdownAdmin(admin.ModelAdmin):
         "parent",
     )
 
+    raw_id_fields = ("transaction", "parent")
+
     list_filter = (
         "breakdown_type",
         "currency_code",
@@ -801,6 +763,7 @@ class AmazonTransactionBreakdownAdmin(admin.ModelAdmin):
 @admin.register(AmazonTransactionContext)
 class AmazonTransactionContextAdmin(admin.ModelAdmin):
 
+    raw_id_fields = ("transaction",)
     list_display = (
         "id",
         "transaction",
@@ -885,4 +848,24 @@ class OtherExpenseAdmin(admin.ModelAdmin):
         "user__email",
     )
     readonly_fields = ("created_at", "updated_at")
-    ordering = ("-created_at",)    
+    ordering = ("-created_at",)
+
+
+@admin.register(ProfitCalculationSetting)
+class ProfitCalculationSettingAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "user",
+        "gst_treatment",
+        "tcs",
+        "tds",
+        "input_gst_itc",
+        "output_gst",
+        "claim",
+        "product_cost",
+        "ad_spend",
+        "other_expense",
+        "updated_at",
+    )
+    search_fields = ("user__username", "user__email")
+    raw_id_fields = ("user",)

@@ -1049,6 +1049,13 @@ function MenuItems({ toggleCollapsed }) {
             'business-expenses',
           ),
 
+          getItem(
+            <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/profit-calculation`}>
+              Profit Calculation Settings
+            </NavLink>,
+            'profit-calculation',
+          ),
+
           hasSubmodule('marketplace-settings') &&
             getItem(
               <NavLink onClick={toggleCollapsed} to={`${path}/settings/user-setting/marketplace-settings`}>
