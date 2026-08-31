@@ -9,6 +9,7 @@ import {
   DashboardOutlined,
   SyncOutlined,
   ArrowRightOutlined,
+  CarOutlined,
 } from '@ant-design/icons';
 
 // const features = [
@@ -63,6 +64,21 @@ const features = [
     description: 'Match orders, payouts, and expenses across marketplaces automatically.',
     color: 'from-yellow-400 to-orange-500',
     delay: 0.1,
+  },
+  {
+    icon: <CarOutlined />,
+    title: '📦 Shipping & Return Management',
+    description:
+      'Track merchant-fulfilled orders, carrier shipping label costs, return deliveries, and shipment profit reconciliation across Amazon marketplaces.',
+    highlights: [
+      '🚚 Order Shipment Tracking: Monitor direct-to-consumer order dispatch, carrier shipping statuses, and delivery dates.',
+      '🏷️ Shipping & Label Cost Reconciliation: Track return shipping label fees (ATS, BlueDart, Delhivery), compare carrier weight charges, and eliminate shipping fee overcharges.',
+      '🔄 Returns Management: Automate return request tracking, return reasons, disposition statuses, and refund calculations for MFN and FBA orders.',
+      '🛡️ SAFE-T Reimbursement Tracking: Calculate return-to-origin (RTO) expenses and track SAFE-T claim reimbursements to protect your profit margins.',
+    ],
+    color: 'from-amber-400 via-orange-500 to-rose-500',
+    delay: 0.15,
+    featured: true,
   },
   {
     icon: <DashboardOutlined />,
@@ -133,7 +149,8 @@ function ShiftToAISection() {
             </span>
           </h2>
           <p className="text-xl text-gray-600 leading-relaxed">
-            From reconciliation to AI insights, we have built the complete toolkit for modern finance teams
+            From reconciliation to AI insights and direct-to-consumer shipping management, we have built the complete
+            toolkit for modern e-commerce brands
           </p>
         </motion.div>
 
@@ -147,18 +164,27 @@ function ShiftToAISection() {
               viewport={{ once: true }}
               transition={{ delay: feature.delay, duration: 0.6 }}
               whileHover={{ y: -8, scale: 1.02 }}
-              className="group relative bg-white rounded-3xl p-8 border-2 border-gray-100 hover:border-emerald-200 shadow-sm hover:shadow-2xl transition-all duration-500 "
+              className={`group relative bg-white rounded-3xl p-8 border-2 border-gray-100 hover:border-emerald-200 shadow-sm hover:shadow-2xl transition-all duration-500 ${
+                feature.featured
+                  ? 'min-md:col-span-2 min-lg:col-span-2 border-emerald-300 bg-gradient-to-br from-emerald-50/20 via-white to-orange-50/20'
+                  : ''
+              }`}
             >
               {/* Gradient Background on Hover */}
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 via-teal-50/30 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
               {/* Icon */}
-              <div className="relative z-10 mb-6">
+              <div className="relative z-10 mb-6 flex items-center justify-between">
                 <div
                   className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} text-white shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-500`}
                 >
                   <span className="text-2xl">{feature.icon}</span>
                 </div>
+                {feature.featured && (
+                  <span className="px-3 py-1 bg-amber-100 text-amber-800 font-semibold text-xs rounded-full border border-amber-200">
+                    Direct-to-Consumer & MFN
+                  </span>
+                )}
               </div>
 
               {/* Content */}
@@ -166,7 +192,17 @@ function ShiftToAISection() {
                 <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-emerald-600 transition-colors duration-300">
                   {feature.title}
                 </h3>
-                <p className="text-gray-600 leading-relaxed">{feature.description}</p>
+                <p className="text-gray-600 leading-relaxed mb-4">{feature.description}</p>
+
+                {feature.highlights && (
+                  <ul className="mt-4 space-y-2.5 pt-4 border-t border-gray-100 text-sm text-gray-700">
+                    {feature.highlights.map((point, pIdx) => (
+                      <li key={pIdx} className="flex items-start gap-2 leading-snug">
+                        <span>{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
 
               {/* Decorative Corner */}

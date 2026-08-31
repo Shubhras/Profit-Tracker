@@ -102,7 +102,9 @@ exports/
 */exports/
 media/exports/
 media/exported_reports/
-*.xlsx
-*.xls
-*.csv
+# -------------------------
+# Documentation & Compliance Files
+# -------------------------
+Amazon_SP_API_Solution_Provider_Profile_Answers.md
+
 

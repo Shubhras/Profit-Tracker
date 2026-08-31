@@ -336,8 +336,7 @@ function PrivacyPolicy() {
 
           <SubPointHeading number="19.1">Amazon Restricted Data</SubPointHeading>
           <p className="mb-4">
-            Personally Identifiable Information (PII) obtained through Amazon SP-API is retained for less than 30 days
-            unless a longer retention period is legally required.
+            Personally Identifiable Information (PII) obtained through Amazon SP-API is retained for less than 30 days for fulfillment and reconciliation purposes, after which it is permanently and securely deleted.
           </p>
 
           <SubPointHeading number="19.2">Non-PII Business Data</SubPointHeading>

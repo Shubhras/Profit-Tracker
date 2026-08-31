@@ -96,6 +96,7 @@ urlpatterns = [
    
     path('profitability-monthwise/', profit.combined_profitability_monthwise, name='get_profitability_monthwise'),
     path('profitability-monthwise-old/', views.get_profitability_monthwise, name='get_profitability_monthwise_old'),
+    path('profit-calculation-settings/', views.profit_calculation_settings_view, name='profit_calculation_settings'),
 
     path('payment-reconcile/summary/', payment_reconcyle.combined_payment_reconcile_summary, name='payment_reconcile_summary'),
     path('payment-reconcile/overview/', payment_reconcyle.combined_payment_reconcile_overview, name='payment_reconcile_overview'),

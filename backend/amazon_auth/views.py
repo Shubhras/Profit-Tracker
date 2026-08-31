@@ -10847,5 +10847,76 @@ def get_parent_asin_ad_spend(request):
         },
         "response": results[page_no * page_size:(page_no + 1) * page_size]
     })
-    
-    
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def profit_calculation_settings_view(request):
+    """
+    API endpoint to retrieve and update user's Profit Calculation Settings.
+    GET: Returns current settings or default fallback values.
+    POST: Creates/Updates user settings.
+    """
+    user = get_effective_user(request.user)
+    setting, created = ProfitCalculationSetting.objects.get_or_create(user=user)
+
+    if request.method == 'GET':
+        return Response({
+            "status": True,
+            "message": "Settings fetched successfully",
+            "settings": {
+                "tcs": setting.tcs,
+                "tds": setting.tds,
+                "gst_treatment": setting.gst_treatment,
+                "input_gst_itc": setting.input_gst_itc,
+                "output_gst": setting.output_gst,
+                "claim": setting.claim,
+                "product_cost": setting.product_cost,
+                "ad_spend": setting.ad_spend,
+                "other_expense": setting.other_expense,
+                "preview_output_gst_rate": float(setting.preview_output_gst_rate or 0.05),
+                "preview_input_gst_rate": float(setting.preview_input_gst_rate or 0.18),
+                "preview_other_expense": float(setting.preview_other_expense or 25),
+            }
+        })
+
+    if request.method == 'POST':
+        data = request.data or {}
+        setting.tcs = bool(data.get('tcs', setting.tcs))
+        setting.tds = bool(data.get('tds', setting.tds))
+        if 'gst_treatment' in data:
+            setting.gst_treatment = str(data.get('gst_treatment', 'adjusted'))
+        setting.input_gst_itc = bool(data.get('input_gst_itc', setting.input_gst_itc))
+        setting.output_gst = bool(data.get('output_gst', setting.output_gst))
+        setting.claim = bool(data.get('claim', setting.claim))
+        setting.product_cost = bool(data.get('product_cost', setting.product_cost))
+        setting.ad_spend = bool(data.get('ad_spend', setting.ad_spend))
+        setting.other_expense = bool(data.get('other_expense', setting.other_expense))
+
+        if 'preview_output_gst_rate' in data:
+            setting.preview_output_gst_rate = data.get('preview_output_gst_rate')
+        if 'preview_input_gst_rate' in data:
+            setting.preview_input_gst_rate = data.get('preview_input_gst_rate')
+        if 'preview_other_expense' in data:
+            setting.preview_other_expense = data.get('preview_other_expense')
+
+        setting.save()
+
+        return Response({
+            "status": True,
+            "message": "Settings updated successfully",
+            "settings": {
+                "tcs": setting.tcs,
+                "tds": setting.tds,
+                "gst_treatment": setting.gst_treatment,
+                "input_gst_itc": setting.input_gst_itc,
+                "output_gst": setting.output_gst,
+                "claim": setting.claim,
+                "product_cost": setting.product_cost,
+                "ad_spend": setting.ad_spend,
+                "other_expense": setting.other_expense,
+                "preview_output_gst_rate": float(setting.preview_output_gst_rate or 0.05),
+                "preview_input_gst_rate": float(setting.preview_input_gst_rate or 0.18),
+                "preview_other_expense": float(setting.preview_other_expense or 25),
+            }
+        })

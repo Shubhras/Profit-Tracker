@@ -1074,5 +1074,37 @@ class OtherExpense(models.Model):
     def __str__(self):
         return f"{self.expense_name} - ₹{self.cost_value} ({self.marketplace})"
 
-    
-                
+
+class ProfitCalculationSetting(models.Model):
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='profit_calculation_setting'
+    )
+    # Taxes & Deductions Toggles
+    tcs = models.BooleanField(default=True)
+    tds = models.BooleanField(default=True)
+    gst_treatment = models.CharField(max_length=20, default='adjusted')  # 'adjusted' or 'inclusive'
+    input_gst_itc = models.BooleanField(default=True)
+    output_gst = models.BooleanField(default=True)
+    claim = models.BooleanField(default=True)
+
+    # Cost Toggles
+    product_cost = models.BooleanField(default=True)
+    ad_spend = models.BooleanField(default=True)
+    other_expense = models.BooleanField(default=True)
+
+    # Calculation Preview Assumptions
+    preview_output_gst_rate = models.FloatField(default=0.05)
+    preview_input_gst_rate = models.FloatField(default=0.18)
+    preview_other_expense = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('25.00'))
+
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
+
+    class Meta:
+        app_label = 'amazon_auth'
+        db_table = 'amazon_auth_profitcalculationsetting'
+
+    def __str__(self):
+        return f"ProfitCalculationSetting for {self.user.username}"
