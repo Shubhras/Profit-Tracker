@@ -220,11 +220,11 @@ function AdvertisingDashboard() {
         <div className="grid grid-cols-6 lg:grid-cols-3 sm:grid-cols-2 xs:grid-cols-1 gap-4 mb-6">
           {/* 1. Ad Spend */}
           <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-sm flex flex-col justify-between">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#10b981] text-white">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#10b981] text-white">
                 <WalletOutlined className="text-lg" />
               </div>
-              <span className="text-xs font-semibold text-gray-600">Ad Spend</span>
+              <span className="text-[13px] font-semibold text-gray-600">Ad Spend</span>
             </div>
             <div>
               <h2 className="text-xl font-extrabold text-[#111827]">{formatCurrency(summary.ad_spend?.value)}</h2>
@@ -240,11 +240,11 @@ function AdvertisingDashboard() {
 
           {/* 2. Ad Sales */}
           <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-sm flex flex-col justify-between">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#3b82f6] text-white">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#3b82f6] text-white">
                 <ShoppingCartOutlined className="text-lg" />
               </div>
-              <span className="text-xs font-semibold text-gray-600">Ad Sales</span>
+              <span className="text-[13px] font-semibold text-gray-600">Ad Sales</span>
             </div>
             <div>
               <h2 className="text-xl font-extrabold text-[#111827]">{formatCurrency(summary.sales_from_ads?.value)}</h2>
@@ -260,11 +260,11 @@ function AdvertisingDashboard() {
 
           {/* 3. ROI */}
           <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-sm flex flex-col justify-between">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#8b5cf6] text-white">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#8b5cf6] text-white">
                 <RiseOutlined className="text-lg" />
               </div>
-              <span className="text-xs font-semibold text-gray-600">ROI</span>
+              <span className="text-[13px] font-semibold text-gray-600">ROI</span>
             </div>
             <div>
               <h2 className="text-xl font-extrabold text-[#111827]">{summary.roas?.value ?? 0}</h2>
@@ -280,11 +280,11 @@ function AdvertisingDashboard() {
 
           {/* 4. ACOS */}
           <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-sm flex flex-col justify-between">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f97316] text-white">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f97316] text-white">
                 <PercentageOutlined className="text-lg" />
               </div>
-              <span className="text-xs font-semibold text-gray-600">ACOS</span>
+              <span className="text-[13px] font-semibold text-gray-600">ACOS</span>
             </div>
             <div>
               <h2 className="text-xl font-extrabold text-[#111827]">{summary.acos?.value ?? 0}%</h2>
@@ -300,11 +300,11 @@ function AdvertisingDashboard() {
 
           {/* 5. Clicks */}
           <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-sm flex flex-col justify-between">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#06b6d4] text-white">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#06b6d4] text-white">
                 <AimOutlined className="text-lg" />
               </div>
-              <span className="text-xs font-semibold text-gray-600">Clicks</span>
+              <span className="text-[13px] font-semibold text-gray-600">Clicks</span>
             </div>
             <div>
               <h2 className="text-xl font-extrabold text-[#111827]">{formatNumber(summary.clicks?.value)}</h2>
@@ -320,11 +320,11 @@ function AdvertisingDashboard() {
 
           {/* 6. Impressions */}
           <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-sm flex flex-col justify-between">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#ec4899] text-white">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#ec4899] text-white">
                 <EyeOutlined className="text-lg" />
               </div>
-              <span className="text-xs font-semibold text-gray-600">Impressions</span>
+              <span className="text-[13px] font-semibold text-gray-600">Impressions</span>
             </div>
             <div>
               <h2 className="text-xl font-extrabold text-[#111827]">{formatNumber(summary.impressions?.value)}</h2>
