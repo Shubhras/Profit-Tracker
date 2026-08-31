@@ -52,11 +52,49 @@ class AdsCampaignSerializer(serializers.ModelSerializer):
         return obj.amazon_account.currency_code
 
     def get_metrics(self, obj):
+        start_date = self.context.get("start_date") or self.context.get("from_date")
+        end_date = self.context.get("end_date") or self.context.get("to_date")
 
-        latest_metric = CampaignMetric.objects.filter(
-            campaign=obj
-        ).order_by("-report_date").first()
+        metrics_qs = CampaignMetric.objects.filter(campaign=obj)
+        if start_date:
+            metrics_qs = metrics_qs.filter(report_date__gte=start_date)
+        if end_date:
+            metrics_qs = metrics_qs.filter(report_date__lte=end_date)
 
+        if start_date or end_date:
+            agg = metrics_qs.aggregate(
+                total_impressions=Sum("impressions"),
+                total_clicks=Sum("clicks"),
+                total_cost=Sum("cost"),
+                total_sales=Sum("sales"),
+                total_orders=Sum("orders"),
+                total_units=Sum("units"),
+            )
+            impressions = agg["total_impressions"] or 0
+            clicks = agg["total_clicks"] or 0
+            cost = float(agg["total_cost"] or 0)
+            sales = float(agg["total_sales"] or 0)
+            orders = agg["total_orders"] or 0
+            units = agg["total_units"] or 0
+            acos = float(round((cost / sales * 100), 2)) if sales > 0 else 0.0
+            roas = float(round((sales / cost), 2)) if cost > 0 else 0.0
+            ctr = float(round((clicks / impressions * 100), 2)) if impressions > 0 else 0.0
+            cpc = float(round((cost / clicks), 2)) if clicks > 0 else 0.0
+
+            return {
+                "impressions": impressions,
+                "clicks": clicks,
+                "cost": round(cost, 2),
+                "sales": round(sales, 2),
+                "orders": orders,
+                "units": units,
+                "acos": acos,
+                "roas": roas,
+                "ctr": ctr,
+                "cpc": cpc,
+            }
+
+        latest_metric = metrics_qs.order_by("-report_date").first()
         if latest_metric:
             return CampaignMetricSerializer(
                 latest_metric

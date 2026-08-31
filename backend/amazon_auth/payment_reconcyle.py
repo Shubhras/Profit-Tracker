@@ -126,7 +126,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
 
     from_date_str = find_key(['fromDate', 'start_date', 'from_date', 'startDate'])
     to_date_str = find_key(['toDate', 'end_date', 'to_date', 'endDate'])
-    search_term = find_key(['search', 'searchTerm', 'q', 'keyword'])
+    search_term = find_key(['search', 'searchTerm', 'q', 'keyword', 'asin', 'sku', 'parent_asin', 'parentProductId', 'searchQuery'])
 
     pagination = data_source.get("pagination", {})
     page_no = int(pagination.get("pageNo", 0))
@@ -163,7 +163,9 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         order_filter &= (
             Q(asin__icontains=search_term) |
             Q(parent_asin__icontains=search_term) |
-            Q(seller_sku__icontains=search_term)
+            Q(seller_sku__icontains=search_term) |
+            Q(order__amazon_order_id__icontains=search_term) |
+            Q(title__icontains=search_term)
         )
 
     if from_date:
@@ -1515,7 +1517,7 @@ def combined_payment_reconcile_by_parentproductid(request):
     page_no = int(pagination.get("pageNo", 0))
     page_size = int(pagination.get("pageSize", 25))
 
-    search_term = data.get("search") or filters.get("search") or filters.get("searchTerm") or filters.get("q") or filters.get("keyword")
+    search_term = data.get("search") or filters.get("search") or filters.get("searchTerm") or filters.get("q") or filters.get("keyword") or data.get("searchQuery") or filters.get("searchQuery") or data.get("asin") or filters.get("asin")
     if isinstance(search_term, list) and search_term:
         search_term = search_term[0]
     if search_term:
@@ -1526,13 +1528,24 @@ def combined_payment_reconcile_by_parentproductid(request):
     sku = data.get("sku") or filters.get("sku")
     parent_product_id = data.get("parentProductId") or filters.get("parentProductId") or filters.get("parent_product_id") or data.get("asin") or filters.get("asin") or filters.get("parent_asin")
 
-    channels = filters.get("channel", {}).get("IN", []) if isinstance(filters.get("channel"), dict) else []
+    raw_ch = filters.get("channel") or data.get("channel")
+    if isinstance(raw_ch, dict):
+        channels = raw_ch.get("IN", [])
+    elif isinstance(raw_ch, list):
+        channels = raw_ch
+    elif isinstance(raw_ch, str):
+        channels = [raw_ch]
+    else:
+        channels = []
 
-    has_myntra = "Myntra" in channels
-    has_amazon = "Amazon-India" in channels or len(channels) == 0
+    channels_lower = [str(ch).lower() for ch in channels if ch]
+
+    has_all = len(channels_lower) == 0 or "all" in channels_lower
+    has_myntra = has_all or any("myntra" in ch for ch in channels_lower)
+    has_amazon = has_all or any("amazon" in ch for ch in channels_lower)
 
     if has_amazon and not has_myntra:
-        return _payment_reconcile_order_level_logic(request)
+        return _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False)
 
     amazon_rows = []
     myntra_rows = []
@@ -1540,7 +1553,7 @@ def combined_payment_reconcile_by_parentproductid(request):
     myntra_totals = {}
 
     if has_amazon:
-        amazon_res = _call_view_for_all_results(_payment_reconcile_order_level_logic, request)
+        amazon_res = _call_view_for_all_results(lambda req: _payment_reconcile_details_transactions_shipping_logic(req, by_sku=False), request)
         if amazon_res.status_code == 200 and isinstance(amazon_res.data, dict):
             amazon_rows = amazon_res.data.get("response", [])
             amazon_totals = amazon_res.data.get("totals", {})
@@ -1580,6 +1593,7 @@ def combined_payment_reconcile_by_parentproductid(request):
                 if search_term_lower in str(r.get("order_line_id") or r.get("order_id") or "").lower()
                 or search_term_lower in str(r.get("style_name") or "").lower()
                 or search_term_lower in str(r.get("brand") or "").lower()
+                or search_term_lower in str(r.get("sku") or r.get("seller_sku") or r.get("asin") or r.get("style_id") or r.get("vendor_sku") or "").lower()
             ]
 
         myntra_adapted = MyntraAmazonProfitAdapter.order_response(
@@ -1598,6 +1612,20 @@ def combined_payment_reconcile_by_parentproductid(request):
     else:
         dto_rows = amazon_dtos + myntra_dtos
 
+    if search_term:
+        st_lower = search_term.lower()
+        dto_rows = [
+            d for d in dto_rows
+            if st_lower in str(getattr(d, 'asin', '') or '').lower()
+            or st_lower in str(getattr(d, 'seller_sku', '') or '').lower()
+            or st_lower in str(getattr(d, 'parent_asin', '') or '').lower()
+            or st_lower in str(getattr(d, 'child_sku', '') or '').lower()
+            or st_lower in str(getattr(d, 'name', '') or '').lower()
+            or st_lower in str(getattr(d, 'view', '') or '').lower()
+            or st_lower in str(getattr(d, 'order_id', '') or '').lower()
+            or st_lower in str(getattr(d, 'channel', '') or '').lower()
+        ]
+
     dto_rows = enrich_dto_image_urls(dto_rows, user)
     dto_rows.sort(key=lambda item: float(str(item.grosssales).replace('₹', '').replace(',', '') or 0), reverse=True)
 
@@ -1605,6 +1633,8 @@ def combined_payment_reconcile_by_parentproductid(request):
     total_count = len(dto_rows)
     paginated_dtos = dto_rows[page_no * page_size : (page_no + 1) * page_size]
     paginated_rows = [dto.to_dict() for dto in paginated_dtos]
+
+    summary_data = _build_reconciliation_summary(dto_rows)
 
     return Response({
         "status": True,
@@ -1615,7 +1645,190 @@ def combined_payment_reconcile_by_parentproductid(request):
             "count": total_count,
         },
         "totals": combined_totals,
+        "summary": summary_data,
         "response": paginated_rows
     })
+
+
+def _build_reconciliation_summary(dto_rows):
+    def parse_val(v):
+        if v is None:
+            return 0.0
+        if isinstance(v, (int, float)):
+            return float(v)
+        val_str = str(v).replace('₹', '').replace(',', '').strip()
+        try:
+            return float(val_str)
+        except Exception:
+            return 0.0
+
+    mp_stats = {}
+
+    for d in dto_rows:
+        row_dict = d.to_dict() if hasattr(d, 'to_dict') else d
+        ch_name = str(row_dict.get("channel") or "Amazon-India").strip()
+        if "myntra" in ch_name.lower():
+            mp_key = "myntra"
+            mp_label = "Myntra"
+            mp_color = "#FF3F6C"
+        elif "flipkart" in ch_name.lower():
+            mp_key = "flipkart"
+            mp_label = "Flipkart"
+            mp_color = "#2874F0"
+        elif "meesho" in ch_name.lower():
+            mp_key = "meesho"
+            mp_label = "Meesho"
+            mp_color = "#E5399B"
+        else:
+            mp_key = "amazon"
+            mp_label = "Amazon"
+            mp_color = "#FF9900"
+
+        if mp_key not in mp_stats:
+            mp_stats[mp_key] = {
+                "id": mp_key,
+                "name": mp_label,
+                "color": mp_color,
+                "net_sales": 0.0,
+                "deductions": 0.0,
+                "received": 0.0,
+                "orders": 0,
+                "flagged": 0,
+                "discrepancy": 0.0,
+            }
+
+        ns = parse_val(row_dict.get("netsales") or row_dict.get("grosssales"))
+        fee = parse_val(row_dict.get("mpfees") or row_dict.get("estimatefees"))
+        ship = parse_val(row_dict.get("shippingfees") or row_dict.get("actual_shipping_charges"))
+        gst = parse_val(row_dict.get("mp_gst") or row_dict.get("actual_mp_gst"))
+        tcs = parse_val(row_dict.get("tcs") or row_dict.get("actual_tcs"))
+        ded = fee + ship + gst + tcs
+
+        rec = parse_val(row_dict.get("settlement_paid_in_bank") or row_dict.get("settled_amount"))
+        exp = parse_val(row_dict.get("exp_settlement") or row_dict.get("expected_settlement")) or (ns - ded)
+
+        fee_leak = parse_val(row_dict.get("fees_leaks"))
+        ship_leak = parse_val(row_dict.get("shipping_leaks"))
+        tcs_leak = parse_val(row_dict.get("tcs_leaks"))
+        uns_leak = parse_val(row_dict.get("unsettled_not_paid"))
+        tot_leak = fee_leak + ship_leak + tcs_leak + uns_leak
+        if tot_leak <= 0 and exp > rec:
+            tot_leak = round(exp - rec, 2)
+
+        mp_stats[mp_key]["net_sales"] += ns
+        mp_stats[mp_key]["deductions"] += ded
+        mp_stats[mp_key]["received"] += rec
+        mp_stats[mp_key]["orders"] += 1
+        if tot_leak > 0:
+            mp_stats[mp_key]["flagged"] += 1
+            mp_stats[mp_key]["discrepancy"] += tot_leak
+
+    marketplaces_list = list(mp_stats.values())
+    total_net_sales = sum(m["net_sales"] for m in marketplaces_list)
+    total_deductions = sum(m["deductions"] for m in marketplaces_list)
+    total_received = sum(m["received"] for m in marketplaces_list)
+    total_expected = total_net_sales - total_deductions
+    total_discrepancy = sum(m["discrepancy"] for m in marketplaces_list)
+    total_orders = sum(m["orders"] for m in marketplaces_list)
+    total_flagged = sum(m["flagged"] for m in marketplaces_list)
+
+    discrepancy_pct = round((total_discrepancy / total_expected * 100), 1) if total_expected > 0 else 0.0
+
+    return {
+        "net_sales": round(total_net_sales, 2),
+        "deductions": round(total_deductions, 2),
+        "expected_payout": round(total_expected, 2),
+        "received_payout": round(total_received, 2),
+        "total_discrepancy": round(total_discrepancy, 2),
+        "total_orders": total_orders,
+        "discrepancy_orders": total_flagged,
+        "discrepancy_percentage": discrepancy_pct,
+        "marketplaces": marketplaces_list
+    }
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def combined_payment_reconcile_summary(request):
+    """
+    Dedicated Payment Reconciliation Summary API.
+    Returns calculated financial summary totals (Net Sales, Deductions, Received Payout, Discrepancy)
+    and marketplace breakdowns for the Summary Dashboard.
+    """
+    user = get_effective_user(request.user)
+    data = request.data or {}
+    filters = data.get("filters", {})
+
+    from_date_str = filters.get('fromDate')
+    to_date_str = filters.get('endDate') or filters.get('toDate')
+
+    raw_ch = filters.get("channel") or data.get("channel")
+    if isinstance(raw_ch, dict):
+        channels = raw_ch.get("IN", [])
+    elif isinstance(raw_ch, list):
+        channels = raw_ch
+    elif isinstance(raw_ch, str):
+        channels = [raw_ch]
+    else:
+        channels = []
+
+    has_amazon = True
+    has_myntra = True
+
+    amazon_rows = []
+    myntra_rows = []
+
+    if has_amazon:
+        amazon_res = _call_view_for_all_results(lambda req: _payment_reconcile_details_transactions_shipping_logic(req, by_sku=False), request)
+        if amazon_res.status_code == 200 and isinstance(amazon_res.data, dict):
+            amazon_rows = amazon_res.data.get("response", [])
+
+    if has_myntra:
+        from myntra.services.profit.calculator import MyntraProfitCalculator
+        from myntra.services.profit.order_summary import OrderSummary
+        from myntra.amazon_adapter import MyntraAmazonProfitAdapter
+
+        from_date_local = None
+        to_date_local = None
+        try:
+            if from_date_str:
+                from_date_local = datetime.strptime(str(from_date_str).split('T')[0], "%Y-%m-%d").date()
+            if to_date_str:
+                to_date_local = datetime.strptime(str(to_date_str).split('T')[0], "%Y-%m-%d").date()
+        except Exception:
+            pass
+
+        myntra_filters = {
+            "fromDate": from_date_local,
+            "toDate": to_date_local,
+        }
+
+        calculator = MyntraProfitCalculator(user=user, filters=myntra_filters)
+        summary = OrderSummary(calculator)
+        myntra_raw_rows = summary.execute()
+
+        myntra_adapted = MyntraAmazonProfitAdapter.order_response(
+            rows=myntra_raw_rows,
+            page_no=0,
+            page_size=1000000
+        )
+        myntra_rows = myntra_adapted.get("response", [])
+
+    amazon_dtos = [ProfitabilityDTOAdapter.from_row(r, default_channel="Amazon-India") for r in amazon_rows]
+    myntra_dtos = [ProfitabilityDTOAdapter.from_row(r, default_channel="Myntra") for r in myntra_rows]
+
+    if has_myntra and not has_amazon:
+        dto_rows = myntra_dtos
+    else:
+        dto_rows = amazon_dtos + myntra_dtos
+
+    summary_data = _build_reconciliation_summary(dto_rows)
+
+    return Response({
+        "status": True,
+        "message": "Success",
+        "summary": summary_data
+    })
+
 
 

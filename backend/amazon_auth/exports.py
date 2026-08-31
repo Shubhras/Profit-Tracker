@@ -1178,6 +1178,170 @@ def export_payment_reconcile_by_parentproductid(request):
         report_type_name="payment_reconcile_order_level"
     )
 
+DISCREPANCY_LEAKS_COLUMNS = {
+    "leak_id": "Leak ID",
+    "marketplace": "Marketplace",
+    "leak_type": "Leak Type",
+    "reason": "Category / Reason",
+    "sku": "SKU / ASIN",
+    "expected_amount": "Expected Amount",
+    "impact_amount": "Impact Amount",
+    "status": "Status",
+    "source": "Detect Source"
+}
+
+def format_discrepancy_leaks_export(data_list, totals_dict=None):
+    if not isinstance(data_list, list):
+        data_list = []
+        
+    formatted_leaks = []
+
+    for idx, row in enumerate(data_list):
+        if not isinstance(row, dict):
+            continue
+
+        order_id = str(row.get("order_id") or row.get("orderId") or row.get("view") or f"ORD-{idx + 1001}")
+        sku = str(row.get("child_sku") or row.get("seller_sku") or row.get("asin") or row.get("parent_asin") or "N/A")
+        raw_mp = str(row.get("channel") or row.get("channel1") or "Amazon")
+        
+        mp_lower = raw_mp.lower()
+        if "amazon" in mp_lower:
+            marketplace = "Amazon"
+        elif "myntra" in mp_lower:
+            marketplace = "Myntra"
+        elif "flipkart" in mp_lower:
+            marketplace = "Flipkart"
+        elif "meesho" in mp_lower:
+            marketplace = "Meesho"
+        else:
+            marketplace = raw_mp
+
+        leak_date = str(row.get("date") or row.get("order_date") or "N/A")
+
+        def parse_val(v):
+            if v is None:
+                return 0.0
+            if isinstance(v, (int, float)):
+                return float(v)
+            val_str = str(v).replace('₹', '').replace(',', '').strip()
+            try:
+                return float(val_str)
+            except Exception:
+                return 0.0
+
+        fees_leak = parse_val(row.get("fees_leaks"))
+        ship_leak = parse_val(row.get("shipping_leaks"))
+        tcs_leak = parse_val(row.get("tcs_leaks"))
+        unsettled_leak = parse_val(row.get("unsettled_not_paid"))
+        
+        actual_gst = parse_val(row.get("actual_mp_gst"))
+        est_gst = parse_val(row.get("mp_gst"))
+        gst_leak = parse_val(row.get("mp_gst_leaks")) or (abs(actual_gst - est_gst) if actual_gst > 0 and actual_gst != est_gst else 0.0)
+
+        # Fee Leak
+        if fees_leak > 0:
+            formatted_leaks.append({
+                "leak_id": f"LEAK-FEE-{order_id[-6:]}",
+                "marketplace": marketplace,
+                "leak_type": "Fee Leak",
+                "reason": "Excess Fee Charged",
+                "order_id": order_id,
+                "sku": sku,
+                "leak_date": leak_date,
+                "expected_amount": format_val_currency(row.get("estimatefees") or row.get("mpfees")),
+                "impact_amount": f"- {format_val_currency(fees_leak)}",
+                "status": "Open" if fees_leak > 500 else "In Review",
+                "source": "System"
+            })
+
+        # Shipping Leak
+        if ship_leak > 0:
+            formatted_leaks.append({
+                "leak_id": f"LEAK-SHP-{order_id[-6:]}",
+                "marketplace": marketplace,
+                "leak_type": "Shipping Leak",
+                "reason": "Wrong Shipping Charge",
+                "order_id": order_id,
+                "sku": sku,
+                "leak_date": leak_date,
+                "expected_amount": format_val_currency(row.get("shippingfees") or row.get("shipping")),
+                "impact_amount": f"- {format_val_currency(ship_leak)}",
+                "status": "Open" if ship_leak > 300 else "In Review",
+                "source": "System"
+            })
+
+        # MP-GST Leak
+        if gst_leak > 0:
+            formatted_leaks.append({
+                "leak_id": f"LEAK-GST-{order_id[-6:]}",
+                "marketplace": marketplace,
+                "leak_type": "MP-GST Leak",
+                "reason": "MP-GST Discrepancy",
+                "order_id": order_id,
+                "sku": sku,
+                "leak_date": leak_date,
+                "expected_amount": format_val_currency(est_gst),
+                "impact_amount": f"- {format_val_currency(gst_leak)}",
+                "status": "Open",
+                "source": "System"
+            })
+
+        # TCS Leak
+        if tcs_leak > 0:
+            formatted_leaks.append({
+                "leak_id": f"LEAK-TCS-{order_id[-6:]}",
+                "marketplace": marketplace,
+                "leak_type": "TCS Leak",
+                "reason": "TCS Discrepancy",
+                "order_id": order_id,
+                "sku": sku,
+                "leak_date": leak_date,
+                "expected_amount": format_val_currency(row.get("tcs")),
+                "impact_amount": f"- {format_val_currency(tcs_leak)}",
+                "status": "Open",
+                "source": "System"
+            })
+
+        # Unsettled Leak
+        if unsettled_leak > 0:
+            formatted_leaks.append({
+                "leak_id": f"LEAK-UNS-{order_id[-6:]}",
+                "marketplace": marketplace,
+                "leak_type": "Unsettled Leak",
+                "reason": "Unsettled Payment",
+                "order_id": order_id,
+                "sku": sku,
+                "leak_date": leak_date,
+                "expected_amount": format_val_currency(row.get("expected_settlement") or row.get("exp_settlement")),
+                "impact_amount": f"- {format_val_currency(unsettled_leak)}",
+                "status": "Open",
+                "source": "System"
+            })
+
+    return formatted_leaks, None
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def export_discrepancy_all_leaks(request):
+    response_format = (request.query_params.get("file_format") or request.query_params.get("export_format") or request.query_params.get("format") or "xlsx").lower()
+    override_params = {
+        "POST": {
+            "pagination": {"pageNo": 0, "pageSize": 100000}
+        }
+    }
+    return generic_export_view(
+        request,
+        combined_payment_reconcile_by_parentproductid,
+        DISCREPANCY_LEAKS_COLUMNS,
+        "discrepancy_all_leaks",
+        response_format,
+        override_params=override_params,
+        list_key="response",
+        totals_key=None,
+        formatter_func=format_discrepancy_leaks_export,
+        report_type_name="discrepancy_all_leaks"
+    )
+
 # EXPORT HISTORY AND DOWNLOAD
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
