@@ -114,7 +114,7 @@ function Profile() {
       <div className="bg-white dark:bg-[#202531] shadow-sm border border-slate-200 dark:border-white/5 p-4">
         <div className="mb-5 pb-3 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">General Settings</h2>
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-1">Edit Profile</h2>
             <p className="text-slate-500 dark:text-slate-400 text-sm">Update your personal and business details.</p>
           </div>
         </div>
@@ -124,11 +124,7 @@ function Profile() {
             {/* Profile Picture / Logo Section */}
             <div className="mb-6 p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200/60 dark:border-white/10 flex flex-col sm:flex-row items-center gap-5">
               <div className="relative group">
-                <Avatar
-                  size={84}
-                  src={previewImage || 'https://cdn0.iconfinder.com/data/icons/user-pictures/100/matureman1-512.png'}
-                  className="border-2 border-emerald-500 shadow-md object-cover"
-                />
+                <Avatar size={84} src={previewImage} className="border-2 border-emerald-500 shadow-md object-cover" />
               </div>
 
               <div className="flex-1 text-center sm:text-left">

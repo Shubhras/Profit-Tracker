@@ -7,6 +7,7 @@ import {
   ThunderboltOutlined,
   BankOutlined,
   ArrowRightOutlined,
+  NodeIndexOutlined,
 } from '@ant-design/icons';
 
 const categories = [
@@ -148,8 +149,14 @@ export default function IntegrationChannel() {
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="mb-10 text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-1">Integration Channels</h2>
-          <p className="text-[14px] text-gray-500">Connect the platforms your business already runs on</p>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-100 shadow-sm">
+            <NodeIndexOutlined className="text-emerald-600 text-sm" />
+
+            <h2 className="text-emerald-700 font-bold text-xs tracking-wide uppercase mb-0">Integration Channels</h2>
+          </div>
+          <p className="block text-[15px] mx-auto leading-relaxed mb-10 mt-2">
+            Connect the platforms your business already runs on
+          </p>
         </div>
 
         {/* All Integration Cards */}
