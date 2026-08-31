@@ -248,100 +248,100 @@ function MenuItems({ toggleCollapsed }) {
     // ]),
 
     hasModule('profit') &&
-    getItem(
-      'Profit',
-      'profit',
-      !topMenu && <UilArrowGrowth />,
-      [
-        hasSubmodule('summary') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/profit/summary`}>
-            Summary
-          </NavLink>,
-          'summary',
-        ),
+      getItem(
+        'Profit',
+        'profit',
+        !topMenu && <UilArrowGrowth />,
+        [
+          hasSubmodule('summary') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/profit/summary`}>
+                Summary
+              </NavLink>,
+              'summary',
+            ),
 
-        hasSubmodule('sku-wise-profit') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to="/admin/profit/profitTableView/details">
-            Profit Explorer
-          </NavLink>,
-          'skuwiseprofit',
-        ),
+          hasSubmodule('sku-wise-profit') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to="/admin/profit/profitTableView/details">
+                Profit Explorer
+              </NavLink>,
+              'skuwiseprofit',
+            ),
 
-        hasSubmodule('prodit-sku-tracker') &&
-        getItem(
-          <NavLink
-            onClick={toggleCollapsed}
-            to={`${path}/profit/profitTableView/sku-profit`}
-            state={{
-              type: 'all',
-              profitType: 'profitable',
-            }}
-          >
-            {' '}
-            Profit SKU Tracker
-          </NavLink>,
-          'sku-profit',
-        ),
+          hasSubmodule('prodit-sku-tracker') &&
+            getItem(
+              <NavLink
+                onClick={toggleCollapsed}
+                to={`${path}/profit/profitTableView/sku-profit`}
+                state={{
+                  type: 'all',
+                  profitType: 'profitable',
+                }}
+              >
+                {' '}
+                Profit SKU Tracker
+              </NavLink>,
+              'sku-profit',
+            ),
 
-        hasSubmodule('loss-sku-tracker') &&
-        getItem(
-          <NavLink
-            onClick={toggleCollapsed}
-            to={`${path}/profit/profitTableView/sku-profit`}
-            state={{
-              type: 'all',
-              profitType: 'losing',
-            }}
-          >
-            {' '}
-            Loss SKU Tracker
-          </NavLink>,
-          'loss-sku',
-        ),
+          hasSubmodule('loss-sku-tracker') &&
+            getItem(
+              <NavLink
+                onClick={toggleCollapsed}
+                to={`${path}/profit/profitTableView/sku-profit`}
+                state={{
+                  type: 'all',
+                  profitType: 'losing',
+                }}
+              >
+                {' '}
+                Loss SKU Tracker
+              </NavLink>,
+              'loss-sku',
+            ),
 
-        hasSubmodule('profit-table-view') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/profit/profitTableView`}>
-            Channel Wise Profit
-          </NavLink>,
-          'profitTableView',
-        ),
+          hasSubmodule('profit-table-view') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/profit/profitTableView`}>
+                Channel Wise Profit
+              </NavLink>,
+              'profitTableView',
+            ),
 
-        hasSubmodule('return-fees') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/profit/returnfees`}>
-            Return Tracker
-          </NavLink>,
-          'returnfees',
-        ),
+          hasSubmodule('return-fees') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/profit/returnfees`}>
+                Return Tracker
+              </NavLink>,
+              'returnfees',
+            ),
 
-        hasSubmodule('claims') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/profit/claims`}>
-            claims
-          </NavLink>,
-          'claims',
-        ),
+          hasSubmodule('claims') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/profit/claims`}>
+                claims
+              </NavLink>,
+              'claims',
+            ),
 
-        hasSubmodule('profit-monthly-view') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/profit/profitMonthlyView`}>
-            Profit Monthly View
-          </NavLink>,
-          'profitMonthlyView',
-        ),
+          hasSubmodule('profit-monthly-view') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/profit/profitMonthlyView`}>
+                Profit Monthly View
+              </NavLink>,
+              'profitMonthlyView',
+            ),
 
-        hasSubmodule('amazon-estimate-fees') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/profit/estimatedfees`}>
-            Amazon Estimate Fees
-          </NavLink>,
-          'estimatedfees',
-        ),
-      ].filter(Boolean),
-    ),
+          hasSubmodule('amazon-estimate-fees') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/profit/estimatedfees`}>
+                Amazon Estimate Fees
+              </NavLink>,
+              'estimatedfees',
+            ),
+        ].filter(Boolean),
+      ),
 
     // getItem(t('paymentreconcile'), 'reconcile', !topMenu && <UilCreateDashboard />, [
     //   getItem(
@@ -468,164 +468,164 @@ function MenuItems({ toggleCollapsed }) {
     // ]),
 
     hasModule('advertising') &&
-    getItem(
-      'Advertising',
-      'advertising',
-      !topMenu && <UilMegaphone />,
-      [
-        hasSubmodule('advertise-dashboard') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/advertising/dashboard`}>
-            Dashboard
-          </NavLink>,
-          'dashboard',
-        ),
+      getItem(
+        'Advertising',
+        'advertising',
+        !topMenu && <UilMegaphone />,
+        [
+          hasSubmodule('advertise-dashboard') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/dashboard`}>
+                Dashboard
+              </NavLink>,
+              'dashboard',
+            ),
 
-        hasSubmodule('campaigns') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/advertising/campaigns`}>
-            Campaigns
-          </NavLink>,
-          'campaigns',
-        ),
+          hasSubmodule('campaigns') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/campaigns`}>
+                Campaigns
+              </NavLink>,
+              'campaigns',
+            ),
 
-        hasSubmodule('create-campaign') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/advertising/create-campaign`}>
-            Create Campaign
-          </NavLink>,
-          'create-campaign',
-        ),
+          hasSubmodule('create-campaign') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/create-campaign`}>
+                Create Campaign
+              </NavLink>,
+              'create-campaign',
+            ),
 
-        hasSubmodule('ad-products') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/advertising/AdProducts`}>
-            Products
-          </NavLink>,
-          'AdProducts',
-        ),
+          hasSubmodule('ad-products') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/AdProducts`}>
+                Products
+              </NavLink>,
+              'AdProducts',
+            ),
 
-        hasSubmodule('ad-groups') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/advertising/adsgroup`}>
-            Ad Groups
-          </NavLink>,
-          'adsgroup',
-        ),
+          hasSubmodule('ad-groups') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/adsgroup`}>
+                Ad Groups
+              </NavLink>,
+              'adsgroup',
+            ),
 
-        hasSubmodule('search-terms') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/advertising/searchTerms`}>
-            Search Terms
-          </NavLink>,
-          'searchTerms',
-        ),
+          hasSubmodule('search-terms') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/searchTerms`}>
+                Search Terms
+              </NavLink>,
+              'searchTerms',
+            ),
 
-        hasSubmodule('keywords') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/advertising/keywords`}>
-            Keywords
-          </NavLink>,
-          'keywords',
-        ),
+          hasSubmodule('keywords') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/keywords`}>
+                Keywords
+              </NavLink>,
+              'keywords',
+            ),
 
-        hasSubmodule('targets') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/advertising/targets`}>
-            Targets
-          </NavLink>,
-          'targets',
-        ),
+          hasSubmodule('targets') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/targets`}>
+                Targets
+              </NavLink>,
+              'targets',
+            ),
 
-        hasSubmodule('negative-keywords') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/advertising/negativeKey`}>
-            Negative Keywords
-          </NavLink>,
-          'negativeKey',
-        ),
+          hasSubmodule('negative-keywords') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/negativeKey`}>
+                Negative Keywords
+              </NavLink>,
+              'negativeKey',
+            ),
 
-        hasSubmodule('rules-automation') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/advertising/rulesAuto`}>
-            Automation
-          </NavLink>,
-          'rulesAuto',
-        ),
-      ].filter(Boolean),
-    ),
+          hasSubmodule('rules-automation') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/advertising/rulesAuto`}>
+                Automation
+              </NavLink>,
+              'rulesAuto',
+            ),
+        ].filter(Boolean),
+      ),
 
     hasModule('payment-reconcile') &&
-    getItem(
-      'Payment Reconcile',
-      'reconcile',
-      !topMenu && <UilCreateDashboard />,
-      [
-        hasSubmodule('summary-reconcile') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/summary`}>
-            Summary
-          </NavLink>,
-          'summary',
-        ),
+      getItem(
+        'Payment Reconcile',
+        'reconcile',
+        !topMenu && <UilCreateDashboard />,
+        [
+          hasSubmodule('summary-reconcile') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/summary`}>
+                Summary
+              </NavLink>,
+              'summary',
+            ),
 
-        hasSubmodule('reconcile') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-overview`}>
-            Auto Reconciliation
-          </NavLink>,
-          'payment-overview',
-        ),
+          hasSubmodule('reconcile') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-overview`}>
+                Auto Reconciliation
+              </NavLink>,
+              'payment-overview',
+            ),
 
-        hasSubmodule('payment') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-reconcile`}>
-            Amazon Payment Tracker
-          </NavLink>,
-          'payment-reconcile',
-        ),
+          hasSubmodule('payment') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/payment-reconcile`}>
+                Amazon Payment Tracker
+              </NavLink>,
+              'payment-reconcile',
+            ),
 
-        hasSubmodule('order-settlement') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/ordersettlement`}>
-            Amazon Payment Tracker
-          </NavLink>,
-          'ordersettlement',
-        ),
+          hasSubmodule('order-settlement') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/ordersettlement`}>
+                Amazon Payment Tracker
+              </NavLink>,
+              'ordersettlement',
+            ),
 
-        // hasSubmodule('marketplace-payments') &&
-        //   getItem(
-        //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/marketPayment`}>
-        //       Marketplace Payments
-        //     </NavLink>,
-        //     'marketplace-payment',
-        //   ),
+          // hasSubmodule('marketplace-payments') &&
+          //   getItem(
+          //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/marketPayment`}>
+          //       Marketplace Payments
+          //     </NavLink>,
+          //     'marketplace-payment',
+          //   ),
 
-        // hasSubmodule('returns-adjustments') &&
-        //   getItem(
-        //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/returnsAdjust`}>
-        //       Returns & Adjustments
-        //     </NavLink>,
-        //     'returns-adjustments',
-        //   ),
+          // hasSubmodule('returns-adjustments') &&
+          //   getItem(
+          //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/returnsAdjust`}>
+          //       Returns & Adjustments
+          //     </NavLink>,
+          //     'returns-adjustments',
+          //   ),
 
-        hasSubmodule('all-leaks') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/allLeaks`}>
-            Discrepancy Tracker
-          </NavLink>,
-          'allLeaks',
-        ),
+          hasSubmodule('all-leaks') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/allLeaks`}>
+                Discrepancy Tracker
+              </NavLink>,
+              'allLeaks',
+            ),
 
-        // hasSubmodule('reimbursement-planning') &&
-        //   getItem(
-        //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/reimbursement`}>
-        //       Reimbursement Planning
-        //     </NavLink>,
-        //     'reimbursement-planning',
-        //   ),
-      ].filter(Boolean),
-    ),
+          // hasSubmodule('reimbursement-planning') &&
+          //   getItem(
+          //     <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/reimbursement`}>
+          //       Reimbursement Planning
+          //     </NavLink>,
+          //     'reimbursement-planning',
+          //   ),
+        ].filter(Boolean),
+      ),
 
     // getItem(t('Organic Performance'), 'organicperformance', !topMenu && <UilChartGrowth />, [
     //   getItem(
@@ -690,85 +690,85 @@ function MenuItems({ toggleCollapsed }) {
     // ]),
 
     hasModule('organic-performance') &&
-    getItem(
-      'Organic Performance',
-      'organicperformance',
-      !topMenu && <UilChartGrowth />,
-      [
-        hasSubmodule('Organic-Performance-overview') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/overview`}>
-            Overview
-          </NavLink>,
-          'perofrmance-Overview',
-        ),
+      getItem(
+        'Organic Performance',
+        'organicperformance',
+        !topMenu && <UilChartGrowth />,
+        [
+          hasSubmodule('Organic-Performance-overview') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/overview`}>
+                Overview
+              </NavLink>,
+              'perofrmance-Overview',
+            ),
 
-        hasSubmodule('traffic-visibility') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/trafficVisibility`}>
-            Traffic & Visibility
-          </NavLink>,
-          'trafficVisibility',
-        ),
+          hasSubmodule('traffic-visibility') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/trafficVisibility`}>
+                Traffic & Visibility
+              </NavLink>,
+              'trafficVisibility',
+            ),
 
-        hasSubmodule('sales-drivers') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/salesDrivers`}>
-            Sales Drivers
-          </NavLink>,
-          'salesDrivers',
-        ),
+          hasSubmodule('sales-drivers') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/salesDrivers`}>
+                Sales Drivers
+              </NavLink>,
+              'salesDrivers',
+            ),
 
-        hasSubmodule('keyword-performance') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/Keyperformance`}>
-            Keyword Performance
-          </NavLink>,
-          'Keyperformance',
-        ),
+          hasSubmodule('keyword-performance') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/Keyperformance`}>
+                Keyword Performance
+              </NavLink>,
+              'Keyperformance',
+            ),
 
-        hasSubmodule('product-ranking') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/productranking`}>
-            Product Ranking
-          </NavLink>,
-          'productranking',
-        ),
+          hasSubmodule('product-ranking') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/productranking`}>
+                Product Ranking
+              </NavLink>,
+              'productranking',
+            ),
 
-        hasSubmodule('reviews-ratings') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/reviewRating`}>
-            Reviews & Ratings
-          </NavLink>,
-          'reviewRating',
-        ),
+          hasSubmodule('reviews-ratings') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/reviewRating`}>
+                Reviews & Ratings
+              </NavLink>,
+              'reviewRating',
+            ),
 
-        hasSubmodule('inventory-impact') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/inventoryImpact`}>
-            Inventory Impact
-          </NavLink>,
-          'inventoryImpact',
-        ),
+          hasSubmodule('inventory-impact') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/inventoryImpact`}>
+                Inventory Impact
+              </NavLink>,
+              'inventoryImpact',
+            ),
 
-        hasSubmodule('reports') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/reports`}>
-            Reports
-          </NavLink>,
-          'reports',
-        ),
-      ].filter(Boolean),
-    ),
+          hasSubmodule('reports') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/organicperformace/reports`}>
+                Reports
+              </NavLink>,
+              'reports',
+            ),
+        ].filter(Boolean),
+      ),
     hasModule('growth-insight') &&
-    getItem(
-      <NavLink onClick={toggleCollapsed} to={`${path}/pages/actionsrequired`}>
-        {/* {t('actionsRequired')} */}
-        Growth Insight
-      </NavLink>,
-      'actionsrequired',
-      !topMenu && <UilBookOpen />,
-    ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/pages/actionsrequired`}>
+          {/* {t('actionsRequired')} */}
+          Growth Insight
+        </NavLink>,
+        'actionsrequired',
+        !topMenu && <UilBookOpen />,
+      ),
 
     // getItem(t('Operations'), 'Operations', !topMenu && <UilProcess />, [
     //   getItem(
@@ -816,60 +816,60 @@ function MenuItems({ toggleCollapsed }) {
     // ]),
 
     hasModule('operations') &&
-    getItem(
-      'Operations',
-      'Operations',
-      !topMenu && <UilProcess />,
-      [
-        hasSubmodule('daily-operations') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/operations/dailyOperations`}>
-            Daily Operations
-          </NavLink>,
-          'dailyOperations',
-        ),
+      getItem(
+        'Operations',
+        'Operations',
+        !topMenu && <UilProcess />,
+        [
+          hasSubmodule('daily-operations') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/operations/dailyOperations`}>
+                Daily Operations
+              </NavLink>,
+              'dailyOperations',
+            ),
 
-        hasSubmodule('order-processing') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/operations/orderProcessing`}>
-            Order Processing
-          </NavLink>,
-          'orderProcessing',
-        ),
+          hasSubmodule('order-processing') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/operations/orderProcessing`}>
+                Order Processing
+              </NavLink>,
+              'orderProcessing',
+            ),
 
-        hasSubmodule('inventory-sync') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/operations/inventorySync`}>
-            Inventory Sync
-          </NavLink>,
-          'inventorySync',
-        ),
+          hasSubmodule('inventory-sync') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/operations/inventorySync`}>
+                Inventory Sync
+              </NavLink>,
+              'inventorySync',
+            ),
 
-        hasSubmodule('auto-claims') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/operations/autoClaims`}>
-            Auto Claims
-          </NavLink>,
-          'autoClaims',
-        ),
+          hasSubmodule('auto-claims') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/operations/autoClaims`}>
+                Auto Claims
+              </NavLink>,
+              'autoClaims',
+            ),
 
-        hasSubmodule('logs-history') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/operations/logsHistory`}>
-            Logs & History
-          </NavLink>,
-          'logsHistory',
-        ),
+          hasSubmodule('logs-history') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/operations/logsHistory`}>
+                Logs & History
+              </NavLink>,
+              'logsHistory',
+            ),
 
-        hasSubmodule('settings') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/operations/settings`}>
-            Settings
-          </NavLink>,
-          'settings',
-        ),
-      ].filter(Boolean),
-    ),
+          hasSubmodule('settings') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/operations/settings`}>
+                Settings
+              </NavLink>,
+              'settings',
+            ),
+        ].filter(Boolean),
+      ),
 
     // getItem(t('Value Added Services'), 'valueadded', !topMenu && <UilLayersAlt />, [
     //   getItem(
@@ -910,36 +910,36 @@ function MenuItems({ toggleCollapsed }) {
     // ]),
 
     hasModule('value-added-services') &&
-    getItem(
-      'Value Added Services',
-      'valueadded',
-      !topMenu && <UilLayersAlt />,
-      [
-        hasSubmodule('account-management') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/accountmanage`}>
-            Account Management
-          </NavLink>,
-          'accountmanage',
-        ),
+      getItem(
+        'Value Added Services',
+        'valueadded',
+        !topMenu && <UilLayersAlt />,
+        [
+          hasSubmodule('account-management') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/accountmanage`}>
+                Account Management
+              </NavLink>,
+              'accountmanage',
+            ),
 
-        hasSubmodule('digital-marketing') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/digitalmarketing`}>
-            Digital Marketing
-          </NavLink>,
-          'digitalmarketing',
-        ),
+          hasSubmodule('digital-marketing') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/digitalmarketing`}>
+                Digital Marketing
+              </NavLink>,
+              'digitalmarketing',
+            ),
 
-        hasSubmodule('quick-commerce') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/QuickCommerce`}>
-            Quick Commerce
-          </NavLink>,
-          'QuickCommerce',
-        ),
-      ].filter(Boolean),
-    ),
+          hasSubmodule('quick-commerce') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/valueadded/QuickCommerce`}>
+                Quick Commerce
+              </NavLink>,
+              'QuickCommerce',
+            ),
+        ].filter(Boolean),
+      ),
 
     // getItem(
     //   <NavLink onClick={toggleCollapsed} to={`${path}/pages/download`}>
@@ -954,17 +954,17 @@ function MenuItems({ toggleCollapsed }) {
     // ),
 
     hasModule('report') &&
-    getItem(
-      <NavLink onClick={toggleCollapsed} to={`${path}/pages/download`}>
-        Reports
-      </NavLink>,
-      'download',
-      !topMenu && (
-        <NavLink className="menuItem-iocn" to={`${path}/pages/download`}>
-          <UilFileShieldAlt />
-        </NavLink>
+      getItem(
+        <NavLink onClick={toggleCollapsed} to={`${path}/pages/download`}>
+          Reports
+        </NavLink>,
+        'download',
+        !topMenu && (
+          <NavLink className="menuItem-iocn" to={`${path}/pages/download`}>
+            <UilFileShieldAlt />
+          </NavLink>
+        ),
       ),
-    ),
 
     // getItem(t('settings'), 'settings', !topMenu && <UilSetting />, [
     //   getItem(t('productSettings'), 'productSettings', null, [
@@ -1021,51 +1021,51 @@ function MenuItems({ toggleCollapsed }) {
     // ]),
 
     hasModule('settings') &&
-    getItem(
-      'Settings',
-      'settings',
-      !topMenu && <UilSetting />,
-      [
-        hasSubmodule('product-configuration') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/product-configuration`}>
-            Product Configuration
-          </NavLink>,
-          'product-configuration',
-        ),
+      getItem(
+        'Settings',
+        'settings',
+        !topMenu && <UilSetting />,
+        [
+          hasSubmodule('product-configuration') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/product-configuration`}>
+                Product Configuration
+              </NavLink>,
+              'product-configuration',
+            ),
 
-        hasSubmodule('finance-configuration') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/finance-configuration`}>
-            Finance Configuration
-          </NavLink>,
-          'finance-configuration',
-        ),
+          hasSubmodule('finance-configuration') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/finance-configuration`}>
+                Finance Configuration
+              </NavLink>,
+              'finance-configuration',
+            ),
 
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/business-expenses`}>
-            Business Expenses
-          </NavLink>,
-          'business-expenses',
-        ),
+          getItem(
+            <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/business-expenses`}>
+              Business Expenses
+            </NavLink>,
+            'business-expenses',
+          ),
 
-        hasSubmodule('marketplace-settings') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/settings/user-setting/marketplace-settings`}>
-            Marketplace Settings
-          </NavLink>,
-          'marketplace-settings',
-        ),
+          hasSubmodule('marketplace-settings') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/settings/user-setting/marketplace-settings`}>
+                Marketplace Settings
+              </NavLink>,
+              'marketplace-settings',
+            ),
 
-        hasSubmodule('user-management') &&
-        getItem(
-          <NavLink onClick={toggleCollapsed} to={`${path}/settings/user-setting/user-management`}>
-            User Management
-          </NavLink>,
-          'user-management',
-        ),
-      ].filter(Boolean),
-    ),
+          hasSubmodule('user-management') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/settings/user-setting/user-management`}>
+                User Management
+              </NavLink>,
+              'user-management',
+            ),
+        ].filter(Boolean),
+      ),
   ];
 
   const userPermissions = profile?.permissions || [];
@@ -1091,130 +1091,130 @@ function MenuItems({ toggleCollapsed }) {
 
   const superAdminItems = [
     hasAdminModule('dashboard') &&
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/dashboard">
-        Dashboard
-      </NavLink>,
-      'dashboard',
-      !topMenu && <UilApps />,
-    ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/dashboard">
+          Dashboard
+        </NavLink>,
+        'dashboard',
+        !topMenu && <UilApps />,
+      ),
 
     hasAdminModule('users') &&
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/users">
-        Users
-      </NavLink>,
-      'users',
-      !topMenu && <UilUsersAlt />,
-    ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/users">
+          Users
+        </NavLink>,
+        'users',
+        !topMenu && <UilUsersAlt />,
+      ),
 
     hasAdminModule('admin-users') &&
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/admin-users">
-        Admin Users
-      </NavLink>,
-      'admin-users',
-      !topMenu && <UilUserCheck />,
-    ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/admin-users">
+          Admin Users
+        </NavLink>,
+        'admin-users',
+        !topMenu && <UilUserCheck />,
+      ),
 
     hasAdminModule('subscription') &&
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/subscription">
-        Subscription
-      </NavLink>,
-      'subscription',
-      !topMenu && <UilCreditCard />,
-    ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/subscription">
+          Subscription
+        </NavLink>,
+        'subscription',
+        !topMenu && <UilCreditCard />,
+      ),
 
     hasAdminModule('marketplaceIntegration') &&
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/marketplaceIntegration">
-        Marketplace Integration
-      </NavLink>,
-      'marketplaceIntegration',
-      !topMenu && <UilStore />,
-    ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/marketplaceIntegration">
+          Marketplace Integration
+        </NavLink>,
+        'marketplaceIntegration',
+        !topMenu && <UilStore />,
+      ),
 
     hasAdminModule('CouponCode') &&
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/CouponCode">
-        {t('Coupon Code')}
-      </NavLink>,
-      'CouponCode',
-      !topMenu && <UilTag />,
-    ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/CouponCode">
+          {t('Coupon Code')}
+        </NavLink>,
+        'CouponCode',
+        !topMenu && <UilTag />,
+      ),
 
     hasAdminModule('support') &&
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/support">
-        {t('Help & Support')}
-      </NavLink>,
-      'support',
-      !topMenu && <UilLifeRing />,
-    ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/support">
+          {t('Help & Support')}
+        </NavLink>,
+        'support',
+        !topMenu && <UilLifeRing />,
+      ),
 
     hasAdminModule('contact-messages') &&
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/contact-messages">
-        {t('Contact Messages')}
-      </NavLink>,
-      'contact-messages',
-      !topMenu && <UilEnvelope />,
-    ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/contact-messages">
+          {t('Contact Messages')}
+        </NavLink>,
+        'contact-messages',
+        !topMenu && <UilEnvelope />,
+      ),
 
     hasAdminModule('module') &&
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/module">
-        {t('Module')}
-      </NavLink>,
-      'module',
-      !topMenu && <UilCube />,
-    ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/module">
+          {t('Module')}
+        </NavLink>,
+        'module',
+        !topMenu && <UilCube />,
+      ),
 
     hasAdminModule('submodule') &&
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/submodule">
-        {t('Sub Module')}
-      </NavLink>,
-      'submodule',
-      !topMenu && <UilLayerGroup />,
-    ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/submodule">
+          {t('Sub Module')}
+        </NavLink>,
+        'submodule',
+        !topMenu && <UilLayerGroup />,
+      ),
 
     hasAdminModule('notifications') &&
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/notifications">
-        {t('Notifications')}
-      </NavLink>,
-      'notifications',
-      !topMenu && <UilBell />,
-    ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/notifications">
+          {t('Notifications')}
+        </NavLink>,
+        'notifications',
+        !topMenu && <UilBell />,
+      ),
 
     hasAdminModule('privacy-policy') &&
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/privacy-policy">
-        {t('Privacy Policy')}
-      </NavLink>,
-      'privacy-policy',
-      !topMenu && <UilShieldCheck />,
-    ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/privacy-policy">
+          {t('Privacy Policy')}
+        </NavLink>,
+        'privacy-policy',
+        !topMenu && <UilShieldCheck />,
+      ),
 
     hasAdminModule('api-logs') &&
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/api-logs">
-        {t('API Call Logs')}
-      </NavLink>,
-      'api-logs',
-      !topMenu && <UilAnalysis />,
-    ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/api-logs">
+          {t('API Call Logs')}
+        </NavLink>,
+        'api-logs',
+        !topMenu && <UilAnalysis />,
+      ),
 
     hasAdminModule('payment-transactions') &&
-    getItem(
-      <NavLink onClick={toggleCollapsed} to="/super-admin/payment-transactions">
-        {t('Payment Transactions')}
-      </NavLink>,
-      'payment-transactions',
-      !topMenu && <UilBill />,
-    ),
+      getItem(
+        <NavLink onClick={toggleCollapsed} to="/super-admin/payment-transactions">
+          {t('Payment Transactions')}
+        </NavLink>,
+        'payment-transactions',
+        !topMenu && <UilBill />,
+      ),
   ].filter(Boolean);
 
   // const selectedKey = React.useMemo(() => {
@@ -1252,8 +1252,8 @@ function MenuItems({ toggleCollapsed }) {
     return mainPathSplit.length === 1
       ? 'home'
       : mainPathSplit.length === 2
-        ? mainPathSplit[1]
-        : mainPathSplit[mainPathSplit.length - 1];
+      ? mainPathSplit[1]
+      : mainPathSplit[mainPathSplit.length - 1];
   }, [location.pathname, mainPathSplit]);
 
   const isSuperAdmin = Cookies.get('isSuperAdmin') === 'true';
