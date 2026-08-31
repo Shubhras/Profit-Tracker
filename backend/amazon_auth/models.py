@@ -1094,6 +1094,11 @@ class ProfitCalculationSetting(models.Model):
     ad_spend = models.BooleanField(default=True)
     other_expense = models.BooleanField(default=True)
 
+    # Calculation Preview Assumptions
+    preview_output_gst_rate = models.FloatField(default=0.05)
+    preview_input_gst_rate = models.FloatField(default=0.18)
+    preview_other_expense = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('25.00'))
+
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
 

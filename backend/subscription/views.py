@@ -440,7 +440,6 @@ class CancelSubscriptionAPIView(APIView):
             return error_response(str(e), 500)
 
 
-'''
 class RazorpayWebhookAPIView(APIView):
     authentication_classes = []
     permission_classes = []
@@ -449,34 +448,78 @@ class RazorpayWebhookAPIView(APIView):
         payload = request.body
         received_signature = request.headers.get("X-Razorpay-Signature")
 
-        if not received_signature:
-            return error_response("X-Razorpay-Signature header missing", 400)
+        webhook_secret = getattr(settings, 'RAZORPAY_WEBHOOK_SECRET', '')
+        if webhook_secret and received_signature:
+            expected_signature = hmac.new(
+                bytes(webhook_secret, "utf-8"),
+                msg=payload,
+                digestmod=hashlib.sha256
+            ).hexdigest()
 
-        expected_signature = hmac.new(
-            bytes(settings.RAZORPAY_WEBHOOK_SECRET, "utf-8"),
-            msg=payload,
-            digestmod=hashlib.sha256
-        ).hexdigest()
-
-        if not hmac.compare_digest(received_signature, expected_signature):
-            return error_response("Invalid signature", 400)
+            if not hmac.compare_digest(received_signature, expected_signature):
+                return error_response("Invalid signature", 400)
 
         event = request.data.get("event")
 
-        if event == "subscription.activated":
-            sub_id = request.data["payload"]["subscription"]["entity"]["id"]
-            UserSubscription.objects.filter(razorpay_subscription_id=sub_id).update(status="active")
+        if event in ["subscription.charged", "subscription.activated", "invoice.paid"]:
+            sub_id = request.data.get("payload", {}).get("subscription", {}).get("entity", {}).get("id")
+            if sub_id:
+                subscriptions = UserSubscription.objects.filter(razorpay_subscription_id=sub_id)
+                now = timezone.now()
+                from dateutil.relativedelta import relativedelta
+                from subscription.services.email_notifications import send_auto_renewal_success_notice
 
-        elif event == "subscription.cancelled":
-            sub_id = request.data["payload"]["subscription"]["entity"]["id"]
-            UserSubscription.objects.filter(razorpay_subscription_id=sub_id).update(status="cancelled")
+                for sub in subscriptions:
+                    sub.status = "active"
+                    sub.start_date = now
+                    if sub.billing_cycle == "monthly":
+                        sub.end_date = now + relativedelta(months=1)
+                    else:
+                        sub.end_date = now + relativedelta(years=1)
+                    sub.reminder_3day_sent = False
+                    sub.reminder_1day_sent = False
+                    sub.expired_email_sent = False
+                    sub.save()
+                    send_auto_renewal_success_notice(sub)
+
+        elif event in ["subscription.cancelled", "subscription.halted"]:
+            sub_id = request.data.get("payload", {}).get("subscription", {}).get("entity", {}).get("id")
+            if sub_id:
+                from subscription.services.email_notifications import send_subscription_expired_notice
+                subscriptions = UserSubscription.objects.filter(razorpay_subscription_id=sub_id)
+                for sub in subscriptions:
+                    sub.status = "expired" if event == "subscription.halted" else "cancelled"
+                    sub.save()
+                    send_subscription_expired_notice(sub)
 
         return success_response(
             message="Webhook received",
             data={"event": event},
             statusCode=200
         )
-        '''
+
+
+class ToggleAutoRenewAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        auto_renew = request.data.get("auto_renew")
+        if auto_renew is None:
+            return error_response("auto_renew field (boolean) is required.", 400)
+
+        sub = UserSubscription.objects.filter(user=user).order_by("-created_at").first()
+        if not sub:
+            return error_response("No subscription found.", 404)
+
+        sub.auto_renew = bool(auto_renew)
+        sub.save(update_fields=["auto_renew"])
+
+        return success_response(
+            message=f"Auto-renewal has been {'enabled' if sub.auto_renew else 'disabled'}.",
+            data={"auto_renew": sub.auto_renew}
+        )
+
 # class VerifyPaymentAPIView(APIView):
 #     permission_classes = [IsAuthenticated]
 
@@ -611,6 +654,10 @@ class VerifyPaymentAPIView(APIView):
             subscription.end_date = timezone.now() + relativedelta(months=1)
         else:
             subscription.end_date = timezone.now() + relativedelta(years=1)
+
+        subscription.reminder_3day_sent = False
+        subscription.reminder_1day_sent = False
+        subscription.expired_email_sent = False
 
         subscription.save()
 

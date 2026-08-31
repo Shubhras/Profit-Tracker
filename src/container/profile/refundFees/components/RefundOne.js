@@ -68,21 +68,23 @@ const features = [
   },
   {
     id: 'returns-adjustments',
-    tag: 'Returns & Refunds',
+    tag: 'Shipping & Returns Management',
     icon: <SwapOutlined />,
-    title: 'Catch every refund and adjustment marketplaces quietly make',
+    title: 'Direct-to-consumer shipping, carrier label fees, and return reconciliation',
     description:
-      'Returns, refunds and adjustment offsets happen across every connected marketplace, often without a clean paper trail. This view reconciles all of it against your orders, so nothing slips through unnoticed.',
+      'Track merchant-fulfilled orders, carrier shipping label costs, return deliveries, and shipment profit reconciliation across Amazon marketplaces. Returns, refunds and adjustment offsets happen across connected channels — this view reconciles all of it against your orders, so nothing slips through unnoticed.',
     points: [
-      'Total returns, refunds issued and net impact in one place',
-      'Returns trend chart so spikes are visible the week they happen',
-      'Transaction-level detail with status, date and order ID',
+      'Order Shipment Tracking: Monitor direct-to-consumer order dispatch, carrier shipping statuses, and delivery dates',
+      'Shipping & Label Cost Reconciliation: Track return shipping label fees (ATS, BlueDart, Delhivery), compare carrier weight charges, and eliminate shipping fee overcharges',
+      'Returns & MFN Management: Automate return request tracking, return reasons, disposition statuses, and refund calculations for MFN and FBA orders',
+      'SAFE-T Reimbursement Tracking: Calculate return-to-origin (RTO) expenses and track SAFE-T claim reimbursements to protect profit margins',
+      'Total returns, refunds issued, return trend charts, and transaction-level order ID reconciliation in one place',
     ],
     color: 'amber',
     media: {
       type: 'screenshot',
       src: '/icons/returns.png',
-      alt: 'Returns and adjustments dashboard with trend chart and transaction table',
+      alt: 'Shipping, returns and adjustments dashboard with trend chart and transaction table',
     },
   },
   {

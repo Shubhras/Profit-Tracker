@@ -112,6 +112,16 @@ class UserSubscription(models.Model):
         blank=True
     )
 
+    next_billing_date = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    auto_renew = models.BooleanField(default=True)
+    reminder_3day_sent = models.BooleanField(default=False)
+    reminder_1day_sent = models.BooleanField(default=False)
+    expired_email_sent = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

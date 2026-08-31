@@ -10874,6 +10874,9 @@ def profit_calculation_settings_view(request):
                 "product_cost": setting.product_cost,
                 "ad_spend": setting.ad_spend,
                 "other_expense": setting.other_expense,
+                "preview_output_gst_rate": float(setting.preview_output_gst_rate or 0.05),
+                "preview_input_gst_rate": float(setting.preview_input_gst_rate or 0.18),
+                "preview_other_expense": float(setting.preview_other_expense or 25),
             }
         })
 
@@ -10889,6 +10892,14 @@ def profit_calculation_settings_view(request):
         setting.product_cost = bool(data.get('product_cost', setting.product_cost))
         setting.ad_spend = bool(data.get('ad_spend', setting.ad_spend))
         setting.other_expense = bool(data.get('other_expense', setting.other_expense))
+
+        if 'preview_output_gst_rate' in data:
+            setting.preview_output_gst_rate = data.get('preview_output_gst_rate')
+        if 'preview_input_gst_rate' in data:
+            setting.preview_input_gst_rate = data.get('preview_input_gst_rate')
+        if 'preview_other_expense' in data:
+            setting.preview_other_expense = data.get('preview_other_expense')
+
         setting.save()
 
         return Response({
@@ -10904,5 +10915,8 @@ def profit_calculation_settings_view(request):
                 "product_cost": setting.product_cost,
                 "ad_spend": setting.ad_spend,
                 "other_expense": setting.other_expense,
+                "preview_output_gst_rate": float(setting.preview_output_gst_rate or 0.05),
+                "preview_input_gst_rate": float(setting.preview_input_gst_rate or 0.18),
+                "preview_other_expense": float(setting.preview_other_expense or 25),
             }
         })

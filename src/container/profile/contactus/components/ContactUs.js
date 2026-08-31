@@ -31,7 +31,13 @@ function ContactUs() {
   const canvasRef = useRef(null);
 
   const policyContent = privacypolicyData?.data?.[0]?.content || '{}';
-  const contactData = JSON.parse(policyContent);
+  let contactData = {};
+  try {
+    contactData =
+      typeof policyContent === 'string' && policyContent.trim().startsWith('{') ? JSON.parse(policyContent) : {};
+  } catch (e) {
+    contactData = {};
+  }
 
   const contactInfo = [
     {

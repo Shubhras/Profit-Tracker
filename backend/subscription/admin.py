@@ -15,15 +15,30 @@ class UserSubscriptionAdmin(admin.ModelAdmin):
         "amount",
         "is_paid",
         "status",
+        "auto_renew",
+        # "reminder_3day_sent",
+        # "reminder_1day_sent",
+        # "expired_email_sent",
         "start_date",
         "end_date",
         "created_at",
+    )
+
+    list_editable = (
+        "auto_renew",
+        # "reminder_3day_sent",
+        # "reminder_1day_sent",
+        # "expired_email_sent",
     )
 
     list_filter = (
         "billing_cycle",
         "is_paid",
         "status",
+        "auto_renew",
+        "reminder_3day_sent",
+        "reminder_1day_sent",
+        "expired_email_sent",
         "created_at",
     )
 
@@ -59,6 +74,10 @@ class UserSubscriptionAdmin(admin.ModelAdmin):
                     "amount",
                     "is_paid",
                     "status",
+                    "auto_renew",
+                    "reminder_3day_sent",
+                    "reminder_1day_sent",
+                    "expired_email_sent",
                 )
             },
         ),
