@@ -908,6 +908,18 @@ def parse_and_save_returns_tsv(content_str, user, account, report_type):
             label_paid_by = cleaned_row.get("Label to be paid by") or ""
             return_carrier = cleaned_row.get("Return carrier") or ""
 
+            raw_rt = cleaned_row.get("Return type") or cleaned_row.get("return_type") or ""
+            rt_upper = raw_rt.upper()
+            if "REPLACE" in rt_upper:
+                ret_cat = "REPLACEMENT"
+                ret_desc = "A return where the customer receives a replacement item."
+            elif "EXCHANGE" in rt_upper:
+                ret_cat = "EXCHANGE"
+                ret_desc = "A return where the customer exchanges the item for a different one."
+            else:
+                ret_cat = "NORMAL"
+                ret_desc = "A standard return where the customer returns the item."
+
             parsed_items.append({
                 "return_id": return_id,
                 "amazon_order_id": order_id,
@@ -915,9 +927,15 @@ def parse_and_save_returns_tsv(content_str, user, account, report_type):
                 "quantity": quantity,
                 "status": status,
                 "return_type": return_type_label,
+                "return_type_category": ret_cat,
+                "return_type_detail": ret_cat,
+                "return_type_description": ret_desc,
                 "return_reason": return_reason,
                 "tracking_id": tracking_id,
                 "label_cost": label_cost,
+                "shipping": label_cost,
+                "shipping_fee": label_cost,
+                "shipping_charge": label_cost,
                 "order_amount": order_amount,
                 "refunded_amount": refunded_amount,
                 "label_paid_by": label_paid_by,
@@ -1231,6 +1249,20 @@ def format_return_item_response(item):
                     return val
         return ""
 
+    raw_return_type = get_val("Return type", "return-type", "return_type", "Return category") or getattr(item, "return_type", "MFN")
+    rt_upper = raw_return_type.upper()
+    if "REPLACE" in rt_upper:
+        return_category = "REPLACEMENT"
+        return_type_description = "A return where the customer receives a replacement item."
+    elif "EXCHANGE" in rt_upper:
+        return_category = "EXCHANGE"
+        return_type_description = "A return where the customer exchanges the item for a different one."
+    else:
+        return_category = "NORMAL"
+        return_type_description = "A standard return where the customer returns the item."
+
+    label_cost_val = get_val("Label cost", "label-cost", "label_cost") or "0.00"
+
     return {
         "id": getattr(item, "id", None),
         "return_id": getattr(item, "return_id", ""),
@@ -1251,10 +1283,18 @@ def format_return_item_response(item):
         "currency_code": get_val("Currency code", "currency-code") or "INR",
         
         # Extended Shipping & Carrier Details
-        "label_cost": get_val("Label cost", "label-cost") or "0.00",
+        "label_cost": label_cost_val,
+        "shipping": label_cost_val,
+        "shipping_fee": label_cost_val,
+        "shipping_charge": label_cost_val,
         "label_type": get_val("Label type", "label-type"),
         "label_paid_by": get_val("Label to be paid by", "label-to-be-paid-by"),
         "return_carrier": get_val("Return carrier", "return-carrier"),
+        
+        # Extended Return Type Classification & Descriptions
+        "return_type_category": return_category,
+        "return_type_detail": return_category,
+        "return_type_description": return_type_description,
         
         # Extended Order & Refund Financials
         "order_amount": get_val("Order Amount", "order-amount") or "0.00",

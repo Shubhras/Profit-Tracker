@@ -825,17 +825,8 @@ class CampaignListView(APIView):
         if targeting_type and targeting_type.lower() != 'all':
             queryset = queryset.filter(targeting_type__iexact=targeting_type)
 
-        if start_date:
-            try:
-                queryset = queryset.filter(start_date__gte=str(start_date)[:10])
-            except Exception as e:
-                pass
-
-        if end_date:
-            try:
-                queryset = queryset.filter(start_date__lte=str(end_date)[:10])
-            except Exception as e:
-                pass
+        clean_start_date = str(start_date)[:10] if start_date else None
+        clean_end_date = str(end_date)[:10] if end_date else None
 
         queryset = queryset.order_by(ordering)
 
@@ -852,7 +843,13 @@ class CampaignListView(APIView):
 
         serializer = AdsCampaignSerializer(
             paginated_queryset,
-            many=True
+            many=True,
+            context={
+                "start_date": clean_start_date,
+                "end_date": clean_end_date,
+                "from_date": clean_start_date,
+                "to_date": clean_end_date,
+            }
         )
 
         response = paginator.get_paginated_response(

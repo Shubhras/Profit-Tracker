@@ -481,6 +481,19 @@ class MyntraAmazonProfitAdapter:
             "replacement_return_count": 0,
             # Myntra-specific metadata is safe to retain
             "finance_data_available": bool(row.get("finance_data_available")),
+            # ==========================================
+            # RECONCILIATION & LEAKS
+            # ==========================================
+            "actual_fees": cls._money(row.get("actual_fees") if row.get("actual_fees") is not None else (row.get("mp_fees") if row.get("finance_data_available") else 0)),
+            "fees_leaks": cls._money(row.get("fees_leaks") if row.get("fees_leaks") is not None else 0),
+            "actual_shipping_charges": cls._money(row.get("actual_shipping_charges") if row.get("actual_shipping_charges") is not None else (row.get("shipping_fees") if row.get("finance_data_available") else 0)),
+            "shipping_leaks": cls._money(row.get("shipping_leaks") if row.get("shipping_leaks") is not None else 0),
+            "actual_mp_gst": cls._money(row.get("actual_mp_gst") if row.get("actual_mp_gst") is not None else (row.get("mp_gst") if row.get("finance_data_available") else 0)),
+            "mp_gst_leaks": cls._money(row.get("mp_gst_leaks") if row.get("mp_gst_leaks") is not None else 0),
+            "actual_tcs": cls._money(row.get("actual_tcs") if row.get("actual_tcs") is not None else (row.get("tcs") if row.get("finance_data_available") else 0)),
+            "tcs_leaks": cls._money(row.get("tcs_leaks") if row.get("tcs_leaks") is not None else 0),
+            "settlement_paid_in_bank": cls._money(row.get("settlement_paid_in_bank") if row.get("settlement_paid_in_bank") is not None else (row.get("final_net_sales") if row.get("finance_data_available") else 0)),
+            "unsettled_not_paid": cls._money(row.get("unsettled_not_paid") if row.get("unsettled_not_paid") is not None else (row.get("expected_settlement") if not row.get("finance_data_available") else 0)),
         }
 
     # =========================================================

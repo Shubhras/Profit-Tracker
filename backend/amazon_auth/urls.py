@@ -97,7 +97,7 @@ urlpatterns = [
     path('profitability-monthwise/', profit.combined_profitability_monthwise, name='get_profitability_monthwise'),
     path('profitability-monthwise-old/', views.get_profitability_monthwise, name='get_profitability_monthwise_old'),
 
-    # Payment Reconciliation Overview
+    path('payment-reconcile/summary/', payment_reconcyle.combined_payment_reconcile_summary, name='payment_reconcile_summary'),
     path('payment-reconcile/overview/', payment_reconcyle.combined_payment_reconcile_overview, name='payment_reconcile_overview'),
     path('payment-reconcile/details/', payment_reconcyle.combined_payment_reconcile_overview, name='payment_reconcile_details'),
     path('payment-reconcile/details/export/', exports.export_payment_reconcile_overview, name='export_payment_reconcile_overview'),
@@ -106,6 +106,7 @@ urlpatterns = [
     path('payment-reconcile/details/by-parent-asin/export/', exports.export_payment_reconcile_by_parent_asin, name='export_payment_reconcile_by_parent_asin'),
     path('payment-reconcile/details/by-parentproductid/', payment_reconcyle.combined_payment_reconcile_by_parentproductid, name='payment_reconcile_details_by_parentproductid'),
     path('payment-reconcile/details/by-parentproductid/export/', exports.export_payment_reconcile_by_parentproductid, name='export_payment_reconcile_by_parentproductid'),
+    path('payment-reconcile/all-leaks/export/', exports.export_discrepancy_all_leaks, name='export_discrepancy_all_leaks'),
     path('payment-reconcile/details-old/', payment_reconcyle.payment_reconcile_details_transactions_shipping, name='payment_reconcile_details_old'),
 
 

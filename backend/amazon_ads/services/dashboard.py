@@ -6,8 +6,8 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from amazon_ads.models import CampaignMetric, AmazonAdsAccount
-from amazon_auth.models import Order
+from amazon_ads.models import CampaignMetric, AmazonAdsAccount, ProductAdMetric, AdsProductAd
+from amazon_auth.models import Order, AmazonCatalogDetails, AmazonListingItem
 
 
 def get_campaign_type(name):
@@ -67,26 +67,33 @@ class AdsDashboardStatsAPIView(APIView):
         # 3. QUERY ACTIVE ADS ACCOUNT
         # ---------------------------------------------------------------------
         ad_account_id = request.GET.get("ad_account_id")
-        account_filter = Q(campaign__amazon_account__user=user)
+        prod_account_filter = Q(product_ad__amazon_account__user=user)
+        camp_account_filter = Q(campaign__amazon_account__user=user)
         
         if ad_account_id:
-            account_filter &= Q(campaign__amazon_account__profile_id=ad_account_id)
-        else:
-            account_filter &= Q(campaign__amazon_account__is_primary=True)
+            prod_account_filter &= Q(product_ad__amazon_account__profile_id=ad_account_id)
+            camp_account_filter &= Q(campaign__amazon_account__profile_id=ad_account_id)
+        elif AmazonAdsAccount.objects.filter(user=user, is_primary=True).exists():
+            prod_account_filter &= Q(product_ad__amazon_account__is_primary=True)
+            camp_account_filter &= Q(campaign__amazon_account__is_primary=True)
 
         # ---------------------------------------------------------------------
         # 4. CURRENT PERIOD STATS
         # ---------------------------------------------------------------------
-        curr_metrics = CampaignMetric.objects.filter(
-            account_filter,
+        curr_metrics = ProductAdMetric.objects.filter(
+            prod_account_filter,
             report_date__range=[start_date, end_date]
         ).aggregate(
             spend=Sum("cost"),
-            sales=Sum("sales")
+            sales=Sum("sales"),
+            clicks=Sum("clicks"),
+            impressions=Sum("impressions")
         )
 
         curr_spend = float(curr_metrics["spend"] or 0.0)
         curr_sales = float(curr_metrics["sales"] or 0.0)
+        curr_clicks = float(curr_metrics["clicks"] or 0)
+        curr_impressions = float(curr_metrics["impressions"] or 0)
 
         curr_acos = (curr_spend / curr_sales * 100.0) if curr_sales > 0 else 0.0
         curr_roas = (curr_sales / curr_spend) if curr_spend > 0 else 0.0
@@ -102,16 +109,20 @@ class AdsDashboardStatsAPIView(APIView):
         # ---------------------------------------------------------------------
         # 5. PREVIOUS PERIOD STATS (for comparison)
         # ---------------------------------------------------------------------
-        prev_metrics = CampaignMetric.objects.filter(
-            account_filter,
+        prev_metrics = ProductAdMetric.objects.filter(
+            prod_account_filter,
             report_date__range=[prev_start_date, prev_end_date]
         ).aggregate(
             spend=Sum("cost"),
-            sales=Sum("sales")
+            sales=Sum("sales"),
+            clicks=Sum("clicks"),
+            impressions=Sum("impressions")
         )
 
         prev_spend = float(prev_metrics["spend"] or 0.0)
         prev_sales = float(prev_metrics["sales"] or 0.0)
+        prev_clicks = float(prev_metrics["clicks"] or 0)
+        prev_impressions = float(prev_metrics["impressions"] or 0)
 
         prev_acos = (prev_spend / prev_sales * 100.0) if prev_sales > 0 else 0.0
         prev_roas = (prev_sales / prev_spend) if prev_spend > 0 else 0.0
@@ -141,8 +152,8 @@ class AdsDashboardStatsAPIView(APIView):
         # ---------------------------------------------------------------------
         daily_metrics = {
             m["report_date"]: m
-            for m in CampaignMetric.objects.filter(
-                account_filter,
+            for m in ProductAdMetric.objects.filter(
+                prod_account_filter,
                 report_date__range=[start_date, end_date]
             ).values("report_date").annotate(
                 spend=Sum("cost"),
@@ -188,7 +199,7 @@ class AdsDashboardStatsAPIView(APIView):
         # 7. PERFORMANCE BY CAMPAIGN TYPE (Donut / Table)
         # ---------------------------------------------------------------------
         campaign_metrics = CampaignMetric.objects.filter(
-            account_filter,
+            camp_account_filter,
             report_date__range=[start_date, end_date]
         ).values(
             "campaign_id",
@@ -266,7 +277,78 @@ class AdsDashboardStatsAPIView(APIView):
             })
 
         # ---------------------------------------------------------------------
-        # 9. CONSTRUCT RESPONSE
+        # 9. TOP PERFORMING PRODUCTS
+        # ---------------------------------------------------------------------
+        prod_account_filter = Q(product_ad__amazon_account__user=user)
+        if ad_account_id:
+            prod_account_filter &= Q(product_ad__amazon_account__profile_id=ad_account_id)
+        elif AmazonAdsAccount.objects.filter(user=user, is_primary=True).exists():
+            prod_account_filter &= Q(product_ad__amazon_account__is_primary=True)
+
+        product_metrics = ProductAdMetric.objects.filter(
+            prod_account_filter,
+            report_date__range=[start_date, end_date]
+        ).values(
+            "product_ad__asin",
+            "product_ad__sku"
+        ).annotate(
+            spend=Sum("cost"),
+            sales=Sum("sales"),
+            clicks=Sum("clicks"),
+            impressions=Sum("impressions")
+        )
+
+        sorted_products = sorted(product_metrics, key=lambda x: (x["sales"] or 0.0), reverse=True)[:5]
+        
+        asins = [p["product_ad__asin"] for p in sorted_products if p.get("product_ad__asin")]
+        skus = [p["product_ad__sku"] for p in sorted_products if p.get("product_ad__sku")]
+
+        catalog_map = {
+            c.asin: c for c in AmazonCatalogDetails.objects.filter(user=user, asin__in=asins)
+        }
+        listing_map = {
+            l.sku: l for l in AmazonListingItem.objects.filter(user=user, sku__in=skus)
+        }
+
+        top_products = []
+        for row in sorted_products:
+            p_spend = float(row["spend"] or 0.0)
+            p_sales = float(row["sales"] or 0.0)
+            p_acos = (p_spend / p_sales * 100.0) if p_sales > 0 else 0.0
+            p_roi = (p_sales / p_spend) if p_spend > 0 else 0.0
+
+            asin = row["product_ad__asin"]
+            sku = row["product_ad__sku"]
+
+            catalog = catalog_map.get(asin)
+            listing = listing_map.get(sku)
+
+            product_name = ""
+            image_url = ""
+
+            if catalog:
+                product_name = catalog.item_name or ""
+                image_url = catalog.image_url or ""
+            if not product_name and listing:
+                product_name = listing.item_name or ""
+                image_url = listing.image_url or image_url
+
+            if not product_name:
+                product_name = sku or asin or "Product"
+
+            top_products.append({
+                "asin": asin,
+                "sku": sku,
+                "product_name": product_name,
+                "image_url": image_url,
+                "spend": round(p_spend, 2),
+                "sales": round(p_sales, 2),
+                "roi": round(p_roi, 2),
+                "acos": round(p_acos, 2)
+            })
+
+        # ---------------------------------------------------------------------
+        # 10. CONSTRUCT RESPONSE
         # ---------------------------------------------------------------------
         response_data = {
             "summary_cards": {
@@ -289,12 +371,21 @@ class AdsDashboardStatsAPIView(APIView):
                 "sales_from_ads": {
                     "value": round(curr_sales, 2),
                     "change": calculate_change(curr_sales, prev_sales)
+                },
+                "clicks": {
+                    "value": int(curr_clicks),
+                    "change": calculate_change(curr_clicks, prev_clicks)
+                },
+                "impressions": {
+                    "value": int(curr_impressions),
+                    "change": calculate_change(curr_impressions, prev_impressions)
                 }
             },
             "performance_trend": performance_trend,
             "performance_breakdown": performance_breakdown,
             "performance_by_type": performance_by_type,
-            "top_campaigns": top_campaigns
+            "top_campaigns": top_campaigns,
+            "top_products": top_products
         }
 
         return Response({
@@ -302,3 +393,4 @@ class AdsDashboardStatsAPIView(APIView):
             "message": "Dashboard statistics fetched successfully",
             "data": response_data
         })
+
