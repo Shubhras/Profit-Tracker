@@ -21,6 +21,8 @@ from user_auth.serializers import (
 logger = logging.getLogger(__name__)
 
 
+from core.email_utils import get_email_logo_header_html, send_email_with_logo
+
 def send_user_deactivation_email(user_email, user_name=""):
     """
     Sends an email notification to the user when their account is deactivated/soft-deleted by admin.
@@ -39,6 +41,8 @@ Best regards,
 TrackMyProfit Team
 """
 
+    logo_header = get_email_logo_header_html("TrackMyProfit")
+
     html_message = f"""
 <!DOCTYPE html>
 <html>
@@ -47,7 +51,6 @@ TrackMyProfit Team
         body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }}
         .container {{ max-width: 560px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }}
         .header {{ text-align: center; padding-bottom: 20px; border-bottom: 2px solid #eef2f5; }}
-        .header h2 {{ color: #dc2626; margin: 0; }}
         .content {{ padding: 20px 0; color: #334155; line-height: 1.6; }}
         .notice-box {{ background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin: 20px 0; color: #991b1b; }}
         .footer {{ text-align: center; margin-top: 25px; color: #94a3b8; font-size: 12px; }}
@@ -55,9 +58,7 @@ TrackMyProfit Team
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h2>TrackMyProfit</h2>
-        </div>
+        {logo_header}
         <div class="content">
             <p>Hello <strong>{display_name}</strong>,</p>
             <p>This is to inform you that your TrackMyProfit user account (<strong>{user_email}</strong>) has been deactivated by an administrator.</p>
@@ -78,12 +79,12 @@ TrackMyProfit Team
 
     try:
         from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@trackmyprofit.com')
-        send_mail(
+        send_email_with_logo(
             subject=subject,
-            message=plain_message,
-            from_email=from_email,
-            recipient_list=[user_email],
+            plain_message=plain_message,
             html_message=html_message,
+            recipient_list=[user_email],
+            from_email=from_email,
             fail_silently=True
         )
         logger.info(f"Deactivation email sent successfully to {user_email}")

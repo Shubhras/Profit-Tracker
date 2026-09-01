@@ -17,7 +17,7 @@ const categories = [
     icon: <ShopOutlined />,
     color: 'orange',
     platforms: [
-      { name: 'Amazon', logo: '/icons/amazon.svg', status: 'coming' },
+      { name: 'Amazon', logo: '', status: 'coming' },
       { name: 'Flipkart', logo: '/icons/flipkart.png', status: 'coming' },
       { name: 'Myntra', logo: '/icons/myntra.png', status: 'coming' },
       { name: 'Meesho', logo: '/icons/meesho.png', status: 'coming' },

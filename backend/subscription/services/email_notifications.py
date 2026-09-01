@@ -1,6 +1,6 @@
 import logging
 from django.conf import settings
-from django.core.mail import send_mail
+from core.email_utils import get_email_logo_header_html, send_email_with_logo
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +44,8 @@ Best regards,
 TrackMyProfit Team
 """
 
+    logo_header = get_email_logo_header_html("TrackMyProfit")
+
     html_message = f"""
 <!DOCTYPE html>
 <html>
@@ -52,7 +54,6 @@ TrackMyProfit Team
         body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }}
         .container {{ max-width: 560px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }}
         .header {{ text-align: center; padding-bottom: 20px; border-bottom: 2px solid #eef2f5; }}
-        .header h2 {{ color: #0284c7; margin: 0; font-size: 24px; }}
         .content {{ padding: 20px 0; color: #334155; line-height: 1.6; }}
         .alert-box {{ background-color: #e0f2fe; border-left: 4px solid #0284c7; border-radius: 6px; padding: 16px; margin: 20px 0; color: #0369a1; }}
         .btn {{ display: inline-block; background-color: #0284c7; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 15px; }}
@@ -61,9 +62,7 @@ TrackMyProfit Team
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h2>TrackMyProfit</h2>
-        </div>
+        {logo_header}
         <div class="content">
             <p>Hello <strong>{user.first_name or user.username}</strong>,</p>
             <p>Your <strong>{plan_name}</strong> subscription will expire in <strong>3 days</strong> on <strong>{end_date_str}</strong>.</p>
@@ -85,9 +84,9 @@ TrackMyProfit Team
 """
 
     try:
-        send_mail(
+        send_email_with_logo(
             subject=subject,
-            message=plain_message,
+            plain_message=plain_message,
             from_email=get_from_email(),
             recipient_list=[user_email],
             html_message=html_message,
@@ -134,6 +133,8 @@ Best regards,
 TrackMyProfit Team
 """
 
+    logo_header = get_email_logo_header_html("TrackMyProfit")
+
     html_message = f"""
 <!DOCTYPE html>
 <html>
@@ -142,7 +143,6 @@ TrackMyProfit Team
         body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }}
         .container {{ max-width: 560px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }}
         .header {{ text-align: center; padding-bottom: 20px; border-bottom: 2px solid #eef2f5; }}
-        .header h2 {{ color: #d97706; margin: 0; font-size: 24px; }}
         .content {{ padding: 20px 0; color: #334155; line-height: 1.6; }}
         .alert-box {{ background-color: #fffbe6; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 16px; margin: 20px 0; color: #b45309; }}
         .btn {{ display: inline-block; background-color: #f59e0b; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 15px; }}
@@ -151,9 +151,7 @@ TrackMyProfit Team
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h2>TrackMyProfit</h2>
-        </div>
+        {logo_header}
         <div class="content">
             <p>Hello <strong>{user.first_name or user.username}</strong>,</p>
             <p>Your <strong>{plan_name}</strong> subscription will expire <strong>tomorrow ({end_date_str})</strong>.</p>
@@ -175,9 +173,9 @@ TrackMyProfit Team
 """
 
     try:
-        send_mail(
+        send_email_with_logo(
             subject=subject,
-            message=plain_message,
+            plain_message=plain_message,
             from_email=get_from_email(),
             recipient_list=[user_email],
             html_message=html_message,
@@ -215,6 +213,8 @@ Best regards,
 TrackMyProfit Team
 """
 
+    logo_header = get_email_logo_header_html("TrackMyProfit")
+
     html_message = f"""
 <!DOCTYPE html>
 <html>
@@ -223,7 +223,6 @@ TrackMyProfit Team
         body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }}
         .container {{ max-width: 560px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }}
         .header {{ text-align: center; padding-bottom: 20px; border-bottom: 2px solid #eef2f5; }}
-        .header h2 {{ color: #dc2626; margin: 0; font-size: 24px; }}
         .content {{ padding: 20px 0; color: #334155; line-height: 1.6; }}
         .alert-box {{ background-color: #fef2f2; border-left: 4px solid #ef4444; border-radius: 6px; padding: 16px; margin: 20px 0; color: #991b1b; }}
         .btn {{ display: inline-block; background-color: #dc2626; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 15px; }}
@@ -232,9 +231,7 @@ TrackMyProfit Team
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h2>TrackMyProfit</h2>
-        </div>
+        {logo_header}
         <div class="content">
             <p>Hello <strong>{user.first_name or user.username}</strong>,</p>
             <p>Your <strong>{plan_name}</strong> subscription has officially expired.</p>
@@ -256,9 +253,9 @@ TrackMyProfit Team
 """
 
     try:
-        send_mail(
+        send_email_with_logo(
             subject=subject,
-            message=plain_message,
+            plain_message=plain_message,
             from_email=get_from_email(),
             recipient_list=[user_email],
             html_message=html_message,
@@ -299,6 +296,8 @@ Best regards,
 TrackMyProfit Team
 """
 
+    logo_header = get_email_logo_header_html("TrackMyProfit")
+
     html_message = f"""
 <!DOCTYPE html>
 <html>
@@ -307,7 +306,6 @@ TrackMyProfit Team
         body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }}
         .container {{ max-width: 560px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }}
         .header {{ text-align: center; padding-bottom: 20px; border-bottom: 2px solid #eef2f5; }}
-        .header h2 {{ color: #16a34a; margin: 0; font-size: 24px; }}
         .content {{ padding: 20px 0; color: #334155; line-height: 1.6; }}
         .alert-box {{ background-color: #f0fdf4; border-left: 4px solid #16a34a; border-radius: 6px; padding: 16px; margin: 20px 0; color: #15803d; }}
         .footer {{ text-align: center; margin-top: 25px; color: #94a3b8; font-size: 12px; }}
@@ -315,9 +313,7 @@ TrackMyProfit Team
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h2>TrackMyProfit</h2>
-        </div>
+        {logo_header}
         <div class="content">
             <p>Hello <strong>{user.first_name or user.username}</strong>,</p>
             <p>Your <strong>{plan_name}</strong> subscription has been successfully auto-renewed!</p>
@@ -336,9 +332,9 @@ TrackMyProfit Team
 """
 
     try:
-        send_mail(
+        send_email_with_logo(
             subject=subject,
-            message=plain_message,
+            plain_message=plain_message,
             from_email=get_from_email(),
             recipient_list=[user_email],
             html_message=html_message,

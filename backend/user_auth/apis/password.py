@@ -11,6 +11,8 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 logger = logging.getLogger(__name__)
 
 
+from core.email_utils import get_email_logo_header_html, send_email_with_logo
+
 def send_password_changed_email(user):
     """
     Sends a security notification email to the user when their password is changed.
@@ -39,6 +41,8 @@ Best regards,
 TrackMyProfit Security Team
 """
 
+    logo_header = get_email_logo_header_html("TrackMyProfit")
+
     html_message = f"""
 <!DOCTYPE html>
 <html>
@@ -47,7 +51,6 @@ TrackMyProfit Security Team
         body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }}
         .container {{ max-width: 520px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }}
         .header {{ text-align: center; padding-bottom: 20px; border-bottom: 2px solid #eef2f5; }}
-        .header h2 {{ color: #0d9488; margin: 0; }}
         .content {{ padding: 20px 0; color: #334155; line-height: 1.6; }}
         .alert-box {{ background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 14px 16px; margin: 20px 0; border-radius: 6px; }}
         .warning-box {{ background-color: #fff1f2; border-left: 4px solid #f43f5e; padding: 14px 16px; margin: 20px 0; border-radius: 6px; font-size: 13px; color: #9f1239; }}
@@ -56,9 +59,7 @@ TrackMyProfit Security Team
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h2>TrackMyProfit</h2>
-        </div>
+        {logo_header}
         <div class="content">
             <p>Hello <strong>{user_name}</strong>,</p>
             <div class="alert-box">
@@ -80,12 +81,12 @@ TrackMyProfit Security Team
 
     try:
         from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@trackmyprofit.com')
-        send_mail(
+        send_email_with_logo(
             subject=subject,
-            message=plain_message,
-            from_email=from_email,
-            recipient_list=[user_email],
+            plain_message=plain_message,
             html_message=html_message,
+            recipient_list=[user_email],
+            from_email=from_email,
             fail_silently=False
         )
         logger.info(f"Password change confirmation email sent to {user_email}")

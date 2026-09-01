@@ -13,6 +13,8 @@ from user_auth.subscription import CustomPagination, IsAdministrator
 logger = logging.getLogger(__name__)
 
 
+from core.email_utils import get_email_logo_header_html, send_email_with_logo
+
 def send_contact_notification_email(contact_obj):
     """
     Sends an automated email notification to the site administrator when a new contact message is received.
@@ -33,6 +35,8 @@ Message:
 Submitted At: {contact_obj.created_at.strftime('%Y-%m-%d %H:%M:%S')}
 """
 
+    logo_header = get_email_logo_header_html("TrackMyProfit")
+
     html_message = f"""
 <!DOCTYPE html>
 <html>
@@ -41,7 +45,6 @@ Submitted At: {contact_obj.created_at.strftime('%Y-%m-%d %H:%M:%S')}
         body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }}
         .container {{ max-width: 580px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }}
         .header {{ text-align: center; padding-bottom: 20px; border-bottom: 2px solid #eef2f5; }}
-        .header h2 {{ color: #0d9488; margin: 0; }}
         .content {{ padding: 20px 0; color: #334155; line-height: 1.6; }}
         .info-box {{ background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin: 16px 0; }}
         .message-box {{ background-color: #f8fafc; border-left: 4px solid #0d9488; padding: 16px; margin: 16px 0; font-style: italic; }}
@@ -50,10 +53,7 @@ Submitted At: {contact_obj.created_at.strftime('%Y-%m-%d %H:%M:%S')}
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h2>TrackMyProfit</h2>
-            <p style="color: #64748b; margin: 4px 0 0 0;">New Website Inquiry</p>
-        </div>
+        {logo_header}
         <div class="content">
             <p>You have received a new contact message from <strong>{contact_obj.name}</strong>:</p>
 
@@ -81,9 +81,9 @@ Submitted At: {contact_obj.created_at.strftime('%Y-%m-%d %H:%M:%S')}
     try:
         from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@trackmyprofit.com')
         admin_emails = ['letstalk@trackmyprofit.com']
-        send_mail(
+        send_email_with_logo(
             subject=subject,
-            message=plain_message,
+            plain_message=plain_message,
             from_email=from_email,
             recipient_list=admin_emails,
             html_message=html_message,
