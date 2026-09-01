@@ -209,6 +209,10 @@ export default function ProfitDetailsView() {
         profit: item.profit || 0,
         // profitPercent: Number(item.grossprofitper) || 0,
         profitPercent: item.grossprofitper || 0,
+        cancelled_qty: item.cancelled_qty || 0,
+        cancelled_sales: item.cancelled_sales || 0,
+        tds: item.tds || 0,
+        other_expenses: item.other_expenses || 0,
 
         // settledamount: Number(item.profit_settled_amount) || 0,
       })) || [];
@@ -239,7 +243,11 @@ export default function ProfitDetailsView() {
       courier_return_count: 'courier_return_count',
       customer_return_count: 'customer_return_count',
       final_net_qty: 'total_final_net_qty',
+      cancelled_qty: 'cancelled_qty',
       final_net_sales: 'total_final_net_sales',
+      cancelled_sales: 'cancelled_sales',
+      tds: 'tds',
+      other_expenses: 'other_expenses',
     };
 
     const value = totals?.[keyMap[dataIndex]];
@@ -384,6 +392,15 @@ export default function ProfitDetailsView() {
       sorter: (a, b) => a.final_net_qty - b.final_net_qty,
     },
     {
+      title: 'Cancelled Qty',
+      dataIndex: 'cancelled_qty',
+      align: 'center',
+      // width: 70,
+      width: getDynamicWidth('cancelled_qty', 70),
+      ellipsis: true,
+      sorter: (a, b) => a.cancelled_qty - b.cancelled_qty,
+    },
+    {
       title: 'Return Qty',
       dataIndex: 'returnqty',
       align: 'center',
@@ -463,6 +480,15 @@ export default function ProfitDetailsView() {
       width: getDynamicWidth('final_net_sales', 70),
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.final_net_sales) - parseAmount(b.final_net_sales),
+    },
+    {
+      title: 'Cancelled Sales',
+      dataIndex: 'cancelled_sales',
+      align: 'center',
+      // width: 70,
+      width: getDynamicWidth('cancelled_sales', 70),
+      ellipsis: true,
+      sorter: (a, b) => parseAmount(a.cancelled_sales) - parseAmount(b.cancelled_sales),
     },
     // {
     //   title: 'TCS-IGST',
@@ -548,6 +574,16 @@ export default function ProfitDetailsView() {
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.tcs) - parseAmount(b.tcs),
     },
+
+    {
+      title: 'TDS',
+      dataIndex: 'tds',
+      align: 'center',
+      // width: 100,
+      width: getDynamicWidth('tds', 70),
+      ellipsis: true,
+      sorter: (a, b) => parseAmount(a.tds) - parseAmount(b.tds),
+    },
     // {
     //   title: 'Net asp',
     //   dataIndex: 'netasp',
@@ -608,6 +644,15 @@ export default function ProfitDetailsView() {
       width: getDynamicWidth('claim_amount', 70),
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.claim_amount) - parseAmount(b.claim_amount),
+    },
+    {
+      title: 'Other expenses',
+      dataIndex: 'other_expenses',
+      align: 'center',
+      // width: 70,
+      width: getDynamicWidth('other_expenses', 70),
+      ellipsis: true,
+      sorter: (a, b) => parseAmount(a.other_expenses) - parseAmount(b.other_expenses),
     },
     {
       title: 'Expected Settlement',
@@ -1007,6 +1052,10 @@ export default function ProfitDetailsView() {
                         drr: 'drr',
                         final_net_qty: 'total_final_net_qty',
                         final_net_sales: 'total_final_net_sales',
+                        cancelled_qty: 'total_cancelled_qty',
+                        cancelled_sales: 'total_cancelled_sales',
+                        tds: 'total_tds',
+                        other_expenses: 'total_other_expenses',
                       };
 
                       const value = totals?.[keyMap[col.dataIndex]];

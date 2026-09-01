@@ -189,6 +189,10 @@ export default function ProfitDetailsView() {
       tcs_leaks: item.tcs_leaks || 0,
       settlement_paid_in_bank: item.settlement_paid_in_bank || 0,
       unsettled_not_paid: item.unsettled_not_paid || 0,
+      cancelled_qty: item.cancelled_qty || 0,
+      cancelled_sales: item.cancelled_sales || 0,
+      tds: item.tds || 0,
+      other_expenses: item.other_expenses || 0,
     })) || [];
 
   const parseAmount = (value) => {
@@ -302,6 +306,15 @@ export default function ProfitDetailsView() {
       sorter: (a, b) => a.final_net_qty - b.final_net_qty,
     },
     {
+      title: 'Cancelled Qty',
+      dataIndex: 'cancelled_qty',
+      align: 'center',
+      // width: 70,
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.cancelled_qty - b.cancelled_qty,
+    },
+    {
       title: 'Return Qty',
       dataIndex: 'returnqty',
       align: 'center',
@@ -357,6 +370,15 @@ export default function ProfitDetailsView() {
       width: 70,
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.final_net_sales) - parseAmount(b.final_net_sales),
+    },
+    {
+      title: 'Cancelled Sales',
+      dataIndex: 'cancelled_sales',
+      align: 'center',
+      // width: 70,
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => parseAmount(a.cancelled_sales) - parseAmount(b.cancelled_sales),
     },
     {
       title: 'MP fees',
@@ -487,6 +509,15 @@ export default function ProfitDetailsView() {
       width: 70,
       sorter: (a, b) => parseAmount(a.tcs) - parseAmount(b.tcs),
     },
+    {
+      title: 'TDS',
+      dataIndex: 'tds',
+      align: 'center',
+      // width: 100,
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => parseAmount(a.tds) - parseAmount(b.tds),
+    },
 
     ...(isReconcile
       ? [
@@ -509,6 +540,15 @@ export default function ProfitDetailsView() {
           },
         ]
       : []),
+    {
+      title: 'Other expenses',
+      dataIndex: 'other_expenses',
+      align: 'center',
+      // width: 70,
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => parseAmount(a.other_expenses) - parseAmount(b.other_expenses),
+    },
 
     {
       title: 'Expected Settlement',
@@ -864,6 +904,10 @@ export default function ProfitDetailsView() {
                       tcs_leaks: 'tcs_leaks',
                       settlement_paid_in_bank: 'settlement_paid_in_bank',
                       unsettled_not_paid: 'unsettled_not_paid',
+                      cancelled_qty: 'total_cancelled_qty',
+                      cancelled_sales: 'total_cancelled_sales',
+                      tds: 'total_tds',
+                      other_expenses: 'total_other_expenses',
                     };
 
                     const value = profitData?.totals?.[keyMap[col.dataIndex]];
