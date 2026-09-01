@@ -20,7 +20,7 @@ const features = [
     id: 2,
     title: 'Advertising',
     icon: <NotificationOutlined />,
-    image: '/icons/advertising.png',
+    image: '/icons/advertisingDashboard.png',
   },
   {
     id: 3,
@@ -39,13 +39,13 @@ const features = [
     id: 6,
     title: 'Returns',
     icon: <BarChartOutlined />,
-    image: '/icons/returns.png',
+    image: '/icons/returnsDashboard.png',
   },
   {
     id: 7,
-    title: 'Operations',
+    title: 'Growth',
     icon: <AppstoreOutlined />,
-    image: '/icons/operations.png',
+    image: '/icons/Growth.png',
   },
 ];
 

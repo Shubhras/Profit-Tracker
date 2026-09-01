@@ -62,7 +62,7 @@ const features = [
     color: 'purple',
     media: {
       type: 'screenshot',
-      src: '/icons/advertising.png',
+      src: '/icons/advertisingDashboard.png',
       alt: 'Advertising dashboard showing ACOS, TACOS, ROAS and campaign performance',
     },
   },
@@ -83,7 +83,7 @@ const features = [
     color: 'amber',
     media: {
       type: 'screenshot',
-      src: '/icons/returns.png',
+      src: '/icons/returnsDashboard.png',
       alt: 'Shipping, returns and adjustments dashboard with trend chart and transaction table',
     },
   },

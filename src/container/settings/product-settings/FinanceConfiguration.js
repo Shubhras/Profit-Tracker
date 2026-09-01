@@ -14,9 +14,12 @@ import {
   ShopOutlined,
   DownOutlined,
 } from '@ant-design/icons';
+import { useSelector } from 'react-redux';
 import { PageHeader } from '../../../components/page-headers/page-headers';
 
 export default function FinanceConfiguration() {
+  const profile = useSelector((state) => state.auth.profile);
+  const connectedChannels = profile?.connected_channels || [];
   const [recalculateModal, setRecalculateModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [deleteModal, setDeleteModal] = useState(false);
@@ -25,11 +28,6 @@ export default function FinanceConfiguration() {
 
   const fileInputRef = useRef(null);
 
-  /*
-   * Existing header actions are kept so that
-   * other parts of the application can still
-   * trigger upload / recalculate actions.
-   */
   useEffect(() => {
     const handler = (e) => {
       if (e.detail === 'recalculate') {
@@ -60,7 +58,7 @@ export default function FinanceConfiguration() {
     const isValidFile = allowedExtensions.some((extension) => fileName.endsWith(extension));
 
     if (!isValidFile) {
-      message.error('Please upload a CSV, XLSX or XLS file.');
+      message.error('Please uploads a CSV, XLSX or XLS file.');
       return;
     }
 
@@ -203,15 +201,19 @@ export default function FinanceConfiguration() {
                   <select
                     defaultValue=""
                     className="h-[34px] w-full appearance-none
-      border border-[#D9DDE3] rounded-[5px] bg-white pl-[37px] pr-[30px] text-[10px] text-[#4B5563] outline-none cursor-pointer transition-all hover:border-[#35B77B] focus:border-[#35B77B]"
+    border border-[#D9DDE3] rounded-[5px] bg-white pl-[37px] pr-[30px]
+    text-[10px] text-[#4B5563] outline-none cursor-pointer transition-all
+    hover:border-[#35B77B] focus:border-[#35B77B]"
                   >
                     <option value="" disabled>
                       Select Marketplace
                     </option>
-                    <option value="amazon">Amazon</option>
-                    <option value="flipkart">Flipkart</option>
-                    <option value="myntra">Myntra</option>
-                    <option value="meesho">Meesho</option>
+
+                    {connectedChannels.map((channel) => (
+                      <option key={channel} value={channel}>
+                        {channel}
+                      </option>
+                    ))}
                   </select>
 
                   {/* Dropdown Arrow */}
@@ -552,9 +554,7 @@ export default function FinanceConfiguration() {
         </div>
       </Modal>
 
-      {/* =========================================================
-          DELETE MODAL
-      ========================================================== */}
+      {/* =================== DELETE MODAL==================================== */}
       <Modal open={deleteModal} onCancel={() => setDeleteModal(false)} footer={null} centered>
         <div className="flex items-start gap-3 mb-3">
           <div className="bg-yellow-100 text-yellow-600 rounded-full p-2">
