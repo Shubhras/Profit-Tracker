@@ -194,8 +194,10 @@ export default function ReconcileSummary() {
           {/* HEADER SECTION */}
           <div className="flex justify-between items-end gap-6 flex-wrap mb-5">
             <div className="min-w-[280px] flex-1">
-              <h1 className="text-xl font-bold text-gray-900 tracking-tight">Payment reconciliation summary</h1>
-              <p className="text-sm text-gray-500 mt-1 max-w-[680px] leading-relaxed">
+              <h1 className="text-[20px] md:text-[18px] sm:text-[16px] mb-0 font-semibold text-[#111827] leading-none">
+                Payment reconciliation summary
+              </h1>
+              <p className="text-[13px] text-gray-500 mt-1 max-w-[680px] leading-relaxed">
                 We match the fees you expected against the marketplace&apos;s actual transaction report. Anything that
                 does not match is a discrepancy.
               </p>
@@ -230,11 +232,11 @@ export default function ReconcileSummary() {
           <div className="flex items-stretch gap-1 bg-white border border-gray-200 rounded-2xl p-3.5 my-5 overflow-x-auto shadow-sm w-full">
             {/* Step 1 */}
             <div className="flex flex-col gap-0.5 p-2 rounded-xl min-w-[140px] flex-1">
-              <span className="w-4.5 h-4.5 rounded-full bg-gray-100 text-gray-600 text-[10px] font-bold flex items-center justify-center mb-1">
+              <span className="w-[18px] h-[18px] shrink-0 self-start rounded-full bg-gray-100 text-gray-600 text-[10px] font-bold flex items-center justify-center mb-2">
                 1
               </span>
-              <span className="text-xs font-semibold text-gray-900 whitespace-nowrap">Estimated charges</span>
-              <span className="text-[11px] text-gray-400 whitespace-nowrap">{formatCurrency(stats.deductions)}</span>
+              <span className="text-[14px] font-semibold text-gray-900 whitespace-nowrap">Estimated charges</span>
+              <span className="text-[12px] text-gray-400 whitespace-nowrap">{formatCurrency(stats.deductions)}</span>
             </div>
 
             <div className="flex items-center justify-center px-1 text-gray-300 text-lg font-light flex-shrink-0">
@@ -243,11 +245,13 @@ export default function ReconcileSummary() {
 
             {/* Step 2 */}
             <div className="flex flex-col gap-0.5 p-2 rounded-xl min-w-[140px] flex-1">
-              <span className="w-4.5 h-4.5 rounded-full bg-gray-100 text-gray-600 text-[10px] font-bold flex items-center justify-center mb-1">
+              <span className="w-[18px] h-[18px] shrink-0 self-start rounded-full bg-gray-100 text-gray-600 text-[10px] font-bold flex items-center justify-center mb-2">
                 2
               </span>
-              <span className="text-xs font-semibold text-gray-900 whitespace-nowrap">Actual transaction report</span>
-              <span className="text-[11px] text-gray-400 whitespace-nowrap">From the marketplace</span>
+              <span className="text-[14px] font-semibold text-gray-900 whitespace-nowrap">
+                Actual transaction report
+              </span>
+              <span className="text-[12px] text-gray-400 whitespace-nowrap">From the marketplace</span>
             </div>
 
             <div className="flex items-center justify-center px-1 text-gray-300 text-lg font-light flex-shrink-0">
@@ -256,11 +260,11 @@ export default function ReconcileSummary() {
 
             {/* Step 3 */}
             <div className="flex flex-col gap-0.5 p-2 rounded-xl min-w-[140px] flex-1">
-              <span className="w-4.5 h-4.5 rounded-full bg-gray-100 text-gray-600 text-[10px] font-bold flex items-center justify-center mb-1">
+              <span className="w-[18px] h-[18px] shrink-0 self-start rounded-full bg-gray-100 text-gray-600 text-[10px] font-bold flex items-center justify-center mb-2">
                 3
               </span>
-              <span className="text-xs font-semibold text-gray-900 whitespace-nowrap">Match & compare</span>
-              <span className="text-[11px] text-gray-400 whitespace-nowrap">{stats.totalOrders} orders</span>
+              <span className="text-[14px] font-semibold text-gray-900 whitespace-nowrap">Match & compare</span>
+              <span className="text-[12px] text-gray-400 whitespace-nowrap">{stats.totalOrders} orders</span>
             </div>
 
             <div className="flex items-center justify-center px-1 text-gray-300 text-lg font-light flex-shrink-0">
@@ -274,14 +278,14 @@ export default function ReconcileSummary() {
               }`}
             >
               <span
-                className={`w-4.5 h-4.5 rounded-full text-[10px] font-bold flex items-center justify-center mb-1 ${
+                className={`w-[18px] h-[18px] shrink-0 self-start rounded-full text-[10px] font-bold flex items-center justify-center mb-2 ${
                   clean ? 'bg-emerald-600 text-white' : 'bg-rose-500 text-white'
                 }`}
               >
                 4
               </span>
-              <span className="text-xs font-semibold whitespace-nowrap">Discrepancy found</span>
-              <span className="text-[11px] font-medium whitespace-nowrap">
+              <span className="text-[14px] font-semibold whitespace-nowrap">Discrepancy found</span>
+              <span className="text-[12px] font-medium whitespace-nowrap">
                 {clean ? 'None' : `${formatCurrency(stats.totalDiscrepancy)} · ${stats.discrepancyOrders} orders`}
               </span>
             </div>
@@ -296,11 +300,11 @@ export default function ReconcileSummary() {
               className="text-left flex flex-col gap-0.5 p-2 rounded-xl min-w-[140px] flex-1 bg-emerald-50 text-emerald-900 cursor-pointer hover:bg-emerald-100/70 transition border-0"
               onClick={() => navigate('/admin/reconcile/fee-leaks')}
             >
-              <span className="w-4.5 h-4.5 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center mb-1">
+              <span className="w-[18px] h-[18px] shrink-0 self-start rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center mb-2">
                 5
               </span>
-              <span className="text-xs font-semibold whitespace-nowrap">Claim or Investigate</span>
-              <span className="text-[11px] font-medium whitespace-nowrap">Fee Leaks Dashboard</span>
+              <span className="text-[14px] font-semibold whitespace-nowrap">Claim or Investigate</span>
+              <span className="text-[12px] font-medium whitespace-nowrap">Fee Leaks Dashboard</span>
             </button>
           </div>
 
@@ -311,9 +315,7 @@ export default function ReconcileSummary() {
               <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center mb-3">
                 <WalletOutlined className="text-base" />
               </div>
-              <span className="text-[11.5px] font-medium text-gray-500 min-h-[30px] leading-snug">
-                Net Sales (Estimated)
-              </span>
+              <span className="text-[13px] font-semibold text-gray-500 min-h-[30px] ">Net Sales (Estimated)</span>
               <span className="text-xl font-bold text-gray-900 tracking-tight mt-1">
                 {formatCurrency(stats.netSales)}
               </span>
@@ -325,9 +327,7 @@ export default function ReconcileSummary() {
               <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center mb-3">
                 <FileTextOutlined className="text-base" />
               </div>
-              <span className="text-[11.5px] font-medium text-gray-500 min-h-[30px] leading-snug">
-                Total Deductions (Estimated)
-              </span>
+              <span className="text-[13px] font-semibold text-gray-500 min-h-[30px]">Total Deductions (Estimated)</span>
               <span className="text-xl font-bold text-gray-900 tracking-tight mt-1">
                 {formatCurrency(stats.deductions)}
               </span>
@@ -339,9 +339,7 @@ export default function ReconcileSummary() {
               <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
                 <BankOutlined className="text-base" />
               </div>
-              <span className="text-[11.5px] font-medium text-gray-500 min-h-[30px] leading-snug">
-                Actual Payout Received
-              </span>
+              <span className="text-[13px] font-semibold text-gray-500 min-h-[30px]">Actual Payout Received</span>
               <span className="text-xl font-bold text-gray-900 tracking-tight mt-1">
                 {formatCurrency(stats.receivedPayout)}
               </span>
@@ -361,9 +359,7 @@ export default function ReconcileSummary() {
               >
                 <WarningOutlined className="text-base" />
               </div>
-              <span className="text-[11.5px] font-medium text-gray-500 min-h-[30px] leading-snug">
-                Total Discrepancy
-              </span>
+              <span className="text-[13px] font-semibold text-gray-500 min-h-[30px]">Total Discrepancy</span>
               <span
                 className={`text-xl font-bold tracking-tight mt-1 ${!clean ? 'text-rose-600' : 'text-emerald-700'}`}
               >
@@ -377,9 +373,7 @@ export default function ReconcileSummary() {
               <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center mb-3">
                 <UnorderedListOutlined className="text-base" />
               </div>
-              <span className="text-[11.5px] font-medium text-gray-500 min-h-[30px] leading-snug">
-                Discrepancy Orders
-              </span>
+              <span className="text-[13px] font-semibold text-gray-500 min-h-[30px]">Discrepancy Orders</span>
               <span className="text-xl font-bold text-gray-900 tracking-tight mt-1">{stats.discrepancyOrders}</span>
               <span className="text-[11px] text-gray-400 mt-1">out of {stats.totalOrders} orders</span>
             </div>

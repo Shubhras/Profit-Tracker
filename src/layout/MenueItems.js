@@ -1042,19 +1042,21 @@ function MenuItems({ toggleCollapsed }) {
               'finance-configuration',
             ),
 
-          getItem(
-            <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/business-expenses`}>
-              Business Expenses
-            </NavLink>,
-            'business-expenses',
-          ),
+          hasSubmodule('business-expenses') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/business-expenses`}>
+                Business Expenses
+              </NavLink>,
+              'business-expenses',
+            ),
 
-          getItem(
-            <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/profit-calculation`}>
-              Profit Calculation Settings
-            </NavLink>,
-            'profit-calculation',
-          ),
+          hasSubmodule('profit-calculation-settings') &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/profit-calculation`}>
+                Profit Calculation Settings
+              </NavLink>,
+              'profit-calculation',
+            ),
 
           hasSubmodule('marketplace-settings') &&
             getItem(

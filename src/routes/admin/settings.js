@@ -6,7 +6,9 @@ const Overview = lazy(() => import('../../container/settings/product-settings/Ov
 const ProductConfiguration = lazy(() => import('../../container/settings/product-settings/ProductConfiguration'));
 const FinanceConfiguration = lazy(() => import('../../container/settings/product-settings/FinanceConfiguration'));
 const BusinessExpenses = lazy(() => import('../../container/settings/product-settings/BusinessExpenses'));
-const ProfitCalculationSettings = lazy(() => import('../../container/settings/product-settings/ProfitCalculationSettings'));
+const ProfitCalculationSettings = lazy(() =>
+  import('../../container/settings/product-settings/ProfitCalculationSettings'),
+);
 const AccountSettings = lazy(() => import('../../container/settings/AccountSettings'));
 const MarketPlaceSettings = lazy(() => import('../../container/settings/MarketPlaceSettings'));
 const MarketplaceConnection = lazy(() => import('../../container/settings/MarketplaceConnection'));
