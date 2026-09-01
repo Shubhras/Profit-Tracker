@@ -58,7 +58,7 @@ export default function FinanceConfiguration() {
     const isValidFile = allowedExtensions.some((extension) => fileName.endsWith(extension));
 
     if (!isValidFile) {
-      message.error('Please upload a CSV, XLSX or XLS file.');
+      message.error('Please uploads a CSV, XLSX or XLS file.');
       return;
     }
 
