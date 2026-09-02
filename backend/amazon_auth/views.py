@@ -2648,7 +2648,7 @@ def get_full_dashboard(request):
         # + cancelled_qty
         # + rto_qty
         # + returns_qty
-        + total_claim_count_dashboard
+        # + total_claim_count_dashboard
         # + total_return_count_dashboard
     )
 
@@ -2728,6 +2728,7 @@ def get_full_dashboard(request):
             "returned": {"qty": -abs(returns_qty), "amount": format_currency(returns_amount)},
             "returned(RTO)": {"qty": -abs(rto_qty), "amount": format_currency(rto_amount)},
             "returned(CRef)": {"qty": claim_qty, "amount": format_currency(claim_amount)},
+            # "claim": {"qty": total_claim_count_dashboard, "amount": format_currency(total_claim_amount_dashboard)},
             "claim": {"qty": total_claim_count_dashboard, "amount": format_currency(total_claim_amount_dashboard)},
             "fees": {"amount": round(total_fees, 2), "method": "calculated"},
             # "net": {"qty": net_gross_item_qty, "amount": format_currency(net_gross_sales)},
