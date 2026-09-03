@@ -37,6 +37,8 @@ from .payment_reconcyle import (
 )
 
 
+from .feesestimate import AmazonEstimatedFeeListView
+
 from .models import ExportedReport
 from .export_utils import generate_csv, generate_xlsx, generate_pdf
 from rest_framework.negotiation import DefaultContentNegotiation
@@ -2269,6 +2271,82 @@ def export_amazon_ads_negative_keywords(request):
         formatter_func=format_negative_keywords_export,
         report_type_name="ads_negative_keywords"
     )
+
+
+ESTIMATED_FEES_COLUMNS = {
+    "asin": "ASIN",
+    "seller_sku": "Seller SKU",
+    "fulfillment_channel": "Fulfillment Channel",
+    "order_id": "Order ID",
+    "selling_price": "Selling Price",
+    "total_fees": "Total Fee",
+    "per_item_fee": "Per Item Fee",
+    "fba_fee": "FBA Fee",
+    "referral_fee": "Referral Fee",
+    "closing_fee": "Closing Fee",
+    "fba_pick_pack_fee": "FBA Pick Pack Fee",
+    "fba_weight_handling_fee": "FBA Weight Handling Fee",
+    "tax_amount": "Tax Amount"
+}
+
+
+def format_estimated_fees_export(data_list, totals_dict=None):
+    if not isinstance(data_list, list):
+        data_list = []
+    formatted_list = []
+    for item in data_list:
+        if not isinstance(item, dict):
+            continue
+        row = {
+            "asin": item.get("asin", ""),
+            "seller_sku": item.get("seller_sku") or item.get("sellerSku", ""),
+            "fulfillment_channel": item.get("fulfillment_channel") or item.get("fulfillmentChannel", ""),
+            "order_id": item.get("order_id", ""),
+            "selling_price": format_val_currency(item.get("selling_price") if item.get("selling_price") is not None else item.get("sellingPrice")),
+            "total_fees": format_val_currency(item.get("total_fees")),
+            "per_item_fee": format_val_currency(item.get("per_item_fee")),
+            "fba_fee": format_val_currency(item.get("fba_fee")),
+            "referral_fee": format_val_currency(item.get("referral_fee")),
+            "closing_fee": format_val_currency(item.get("closing_fee")),
+            "fba_pick_pack_fee": format_val_currency(item.get("fba_pick_pack_fee")),
+            "fba_weight_handling_fee": format_val_currency(item.get("fba_weight_handling_fee")),
+            "tax_amount": format_val_currency(item.get("tax_amount")),
+        }
+        formatted_list.append(row)
+    return formatted_list, None
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def export_estimated_fees_list(request):
+    response_format = (
+        request.query_params.get("file_format")
+        or request.query_params.get("export_format")
+        or request.query_params.get("format")
+        or "xlsx"
+    ).lower()
+
+    override_params = {
+        "POST": {
+            "pagination": {
+                "pageNo": 1,
+                "pageSize": 100000
+            }
+        }
+    }
+
+    return generic_export_view(
+        request,
+        AmazonEstimatedFeeListView,
+        ESTIMATED_FEES_COLUMNS,
+        "estimated_fees_list",
+        response_format,
+        override_params=override_params,
+        list_key="data",
+        formatter_func=format_estimated_fees_export,
+        report_type_name="estimated_fees_list"
+    )
+
 
 
 

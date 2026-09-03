@@ -92,6 +92,7 @@ urlpatterns = [
     
     
     path("promocodes/list/", PromocodeListAPIView.as_view(), name="promocode-list"),
+    path("promocodes/validate/", ValidatePromocodeAPIView.as_view(), name="promocode-validate"),
     path("promocodes/create/", PromocodeCreateAPIView.as_view(), name="promocode-create"),
     path("promocodes/get/<int:pk>/", PromocodeDetailAPIView.as_view(), name="promocode-detail"),
     path("promocodes/update/<int:pk>/", PromocodeUpdateAPIView.as_view(), name="promocode-update"),

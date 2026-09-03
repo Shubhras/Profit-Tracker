@@ -236,6 +236,67 @@ class PromocodeDeleteAPIView(APIView):
                 "statusCode": 500,
                 "message": f"Unexpected error: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+from rest_framework.permissions import AllowAny
+from django.utils import timezone
+
+class ValidatePromocodeAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        code = request.data.get("code") or request.data.get("promocode") or request.data.get("coupon_code")
+        if not code:
+            return Response({
+                "status": False,
+                "statusCode": 400,
+                "message": "Coupon code is required"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        code_clean = str(code).strip()
+        now = timezone.now()
+
+        promocode = Promocode.objects.filter(
+            promocode=code_clean,
+            is_deleted=False
+        ).first()
+
+        if not promocode or promocode.promocode != code_clean:
+            return Response({
+                "status": False,
+                "statusCode": 404,
+                "message": "Invalid coupon code"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        if not promocode.is_active:
+            return Response({
+                "status": False,
+                "statusCode": 400,
+                "message": "This coupon code is currently inactive"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if promocode.startDateTime and promocode.startDateTime > now:
+            return Response({
+                "status": False,
+                "statusCode": 400,
+                "message": "This coupon code is not active yet"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if promocode.endDateTime and promocode.endDateTime < now:
+            return Response({
+                "status": False,
+                "statusCode": 400,
+                "message": "This coupon code has expired"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = PromocodeSerializer(promocode)
+        return Response({
+            "status": True,
+            "statusCode": 200,
+            "message": "Coupon code applied successfully",
+            "data": serializer.data
+        }, status=status.HTTP_200_OK)
+
         
         
         

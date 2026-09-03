@@ -143,39 +143,134 @@ class CreateSubscriptionAPIView(APIView):
         )
 
         # ==========================
-        # FREE PLAN
+        # FREE PLAN / STARTER TRIAL
         # ==========================
-        if amount == 0:
+        is_starter_trial = "starter" in (plan.plan_name or "").lower() or amount == 0
+        growth_plan = SubscriptionPlan.objects.filter(plan_name__icontains="Growth", is_active=True).first()
 
+        if is_starter_trial:
             start_date = timezone.now()
+            end_date = start_date + timedelta(days=7)
+            start_at_ts = int((start_date + timedelta(days=7)).timestamp())
 
-            end_date = (
-                start_date + relativedelta(months=1)
-                if billing_cycle == "monthly"
-                else start_date + relativedelta(years=1)
-            )
+            UserSubscription.objects.filter(user=user, status__in=["active", "trial"]).update(status="inactive")
+
+            rzp_sub_id = None
+            if getattr(settings, 'RAZORPAY_KEY_ID', None) and getattr(settings, 'RAZORPAY_KEY_SECRET', None):
+                try:
+                    growth_base_price = float(growth_plan.monthly_price) if (growth_plan and growth_plan.monthly_price) else 9999.0
+                    coupon_code = request.data.get("coupon_code") or request.data.get("promocode")
+                    discount_amount = 0.0
+                    promo_obj = None
+
+                    if coupon_code:
+                        code_clean = str(coupon_code).strip()
+                        from user_auth.models import Promocode
+                        promo = Promocode.objects.filter(
+                            promocode=code_clean,
+                            is_active=True,
+                            is_deleted=False
+                        ).first()
+                        if promo and promo.promocode == code_clean:
+                            now = timezone.now()
+                            if (not promo.startDateTime or promo.startDateTime <= now) and (not promo.endDateTime or promo.endDateTime >= now):
+                                promo_obj = promo
+                                if promo.promoType == "discount" and promo.percentage:
+                                    discount_amount = round(growth_base_price * (float(promo.percentage) / 100.0), 2)
+                                elif promo.promoType == "fix":
+                                    if float(promo.percentage or 0) == 100:
+                                        discount_amount = growth_base_price
+                                    elif promo.specificAmount:
+                                        discount_amount = min(growth_base_price, float(promo.specificAmount))
+
+                    taxable_growth = max(0.0, growth_base_price - discount_amount)
+                    gst_growth = round(taxable_growth * 0.18, 2)
+                    final_growth_price = round(taxable_growth + gst_growth, 2)
+                    growth_amount_paise = int(round(final_growth_price * 100))
+
+                    plan_item_name = f"TrackMyProfit Growth Plan ({promo_obj.promocode})" if promo_obj else "TrackMyProfit Growth Plan"
+
+                    rzp_plan = client.plan.create({
+                        "period": "monthly",
+                        "interval": 1,
+                        "item": {
+                            "name": plan_item_name,
+                            "amount": growth_amount_paise,
+                            "currency": "INR",
+                            "description": f"Monthly subscription for Growth Plan after 7-day trial (₹{final_growth_price}/mo)"
+                        }
+                    })
+
+                    rzp_sub = client.subscription.create({
+                        "plan_id": rzp_plan["id"],
+                        "total_count": 12,
+                        "quantity": 1,
+                        "customer_notify": 1,
+                        "start_at": start_at_ts
+                    })
+                    rzp_sub_id = rzp_sub.get("id")
+                except Exception as ex:
+                    import logging
+                    logging.getLogger(__name__).warning(f"Razorpay subscription mandate creation fallback: {str(ex)}")
 
             subscription = UserSubscription.objects.create(
                 user=user,
                 plan=plan,
+                next_plan=growth_plan,
                 billing_cycle=billing_cycle,
                 amount=0,
                 is_paid=True,
-                status="active",
+                status="trial",
                 start_date=start_date,
-                end_date=end_date
+                end_date=end_date,
+                razorpay_subscription_id=rzp_sub_id
             )
 
+            if hasattr(user, "profile") and user.profile:
+                user.profile.subscriptiontype = plan
+                user.profile.subscription_active = True
+                user.profile.subscription_status = "trial"
+                user.profile.trial_start_date = start_date
+                user.profile.trial_end_date = end_date
+                user.profile.save()
+
+            if rzp_sub_id:
+                return success_response(
+                    message="Starter 7-Day Free Trial initiated with Auto-Pay Mandate.",
+                    data={
+                        "subscription_id": subscription.id,
+                        "razorpay_subscription_id": rzp_sub_id,
+                        "razorpay_key": settings.RAZORPAY_KEY_ID,
+                        "plan_id": plan.id,
+                        "plan_name": plan.plan_name,
+                        "next_plan_id": growth_plan.id if growth_plan else None,
+                        "next_plan_name": growth_plan.plan_name if growth_plan else "Growth Plan",
+                        "billing_cycle": billing_cycle,
+                        "amount": 0,
+                        "payment_required": True,
+                        "isFreePlan": False,
+                        "isTrial": True,
+                        "status": "trial",
+                        "start_date": start_date,
+                        "end_date": end_date
+                    },
+                    statusCode=200
+                )
+
             return success_response(
-                message="Free plan activated successfully",
+                message="Starter 7-Day Free Trial activated successfully. Your subscription moves to Growth plan after 7 days.",
                 data={
                     "subscription_id": subscription.id,
                     "plan_id": plan.id,
                     "plan_name": plan.plan_name,
+                    "next_plan_id": growth_plan.id if growth_plan else None,
+                    "next_plan_name": growth_plan.plan_name if growth_plan else "Growth Plan",
                     "billing_cycle": billing_cycle,
                     "amount": 0,
                     "payment_required": False,
-                    "status": "active",
+                    "isFreePlan": True,
+                    "isTrial": True,
+                    "status": "trial",
                     "start_date": start_date,
                     "end_date": end_date
                 },
@@ -186,9 +281,36 @@ class CreateSubscriptionAPIView(APIView):
         # PAID PLAN
         # ==========================
         try:
+            base_amount = float(amount)
+            coupon_code = request.data.get("coupon_code") or request.data.get("promocode")
+            discount_amount = 0.0
+
+            if coupon_code:
+                code_clean = str(coupon_code).strip()
+                from user_auth.models import Promocode
+                promo = Promocode.objects.filter(
+                    promocode=code_clean,
+                    is_active=True,
+                    is_deleted=False
+                ).first()
+                if promo and promo.promocode == code_clean:
+                    now = timezone.now()
+                    if (not promo.startDateTime or promo.startDateTime <= now) and (not promo.endDateTime or promo.endDateTime >= now):
+                        if promo.promoType == "discount" and promo.percentage:
+                            discount_amount = round(base_amount * (float(promo.percentage) / 100.0), 2)
+                        elif promo.promoType == "fix":
+                            if float(promo.percentage or 0) == 100:
+                                discount_amount = base_amount
+                            elif promo.specificAmount:
+                                discount_amount = min(base_amount, float(promo.specificAmount))
+
+            taxable_amount = max(0.0, base_amount - discount_amount)
+            gst_amount = round(taxable_amount * 0.18, 2)
+            total_amount = round(taxable_amount + gst_amount, 2)
+            amount_paise = int(round(total_amount * 100))
 
             razorpay_order = client.order.create({
-                "amount": int(float(amount) * 100),
+                "amount": amount_paise,
                 "currency": "INR",
                 "payment_capture": 1
             })
@@ -197,9 +319,9 @@ class CreateSubscriptionAPIView(APIView):
                 user=user,
                 plan=plan,
                 billing_cycle=billing_cycle,
-                amount=amount,
+                amount=total_amount,
                 status="created",
-                razorpay_order_id=razorpay_order["id"]  # add field in model
+                razorpay_order_id=razorpay_order["id"]
             )
 
             return success_response(
@@ -210,8 +332,12 @@ class CreateSubscriptionAPIView(APIView):
                     "plan_id": plan.id,
                     "plan_name": plan.plan_name,
                     "billing_cycle": billing_cycle,
-                    "amount": float(amount),
-                    "amount_paise": int(float(amount) * 100),
+                    "base_amount": base_amount,
+                    "discount_amount": discount_amount,
+                    "taxable_amount": taxable_amount,
+                    "gst_amount": gst_amount,
+                    "amount": total_amount,
+                    "amount_paise": amount_paise,
                     "currency": "INR",
                     "razorpay_key": settings.RAZORPAY_KEY_ID,
                     "payment_required": True
@@ -325,6 +451,19 @@ class MySubscriptionAPIView(APIView):
         all_subscriptions = UserSubscription.objects.filter(
             user=request.user
         ).select_related("plan").order_by("-created_at")
+
+        if sub and sub.status == "trial" and sub.end_date and sub.end_date <= timezone.now() and sub.next_plan:
+            sub.plan = sub.next_plan
+            sub.next_plan = None
+            sub.status = "active"
+            sub.start_date = timezone.now()
+            sub.end_date = timezone.now() + relativedelta(months=1) if sub.billing_cycle == "monthly" else timezone.now() + relativedelta(years=1)
+            sub.amount = sub.plan.monthly_price if sub.billing_cycle == "monthly" else sub.plan.annual_price
+            sub.save()
+            if hasattr(request.user, "profile") and request.user.profile:
+                request.user.profile.subscriptiontype = sub.plan
+                request.user.profile.subscription_status = "paid"
+                request.user.profile.save()
 
         if not sub:
             return success_response(
@@ -577,12 +716,9 @@ import hashlib
 class VerifyPaymentAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-
     def post(self, request):
-
         required_fields = [
             "subscription_id",
-            "razorpay_order_id",
             "razorpay_payment_id",
             "razorpay_signature"
         ]
@@ -596,6 +732,7 @@ class VerifyPaymentAPIView(APIView):
 
         subscription_id = request.data.get("subscription_id")
         razorpay_order_id = request.data.get("razorpay_order_id")
+        razorpay_subscription_id = request.data.get("razorpay_subscription_id")
         razorpay_payment_id = request.data.get("razorpay_payment_id")
         razorpay_signature = request.data.get("razorpay_signature")
 
@@ -604,38 +741,34 @@ class VerifyPaymentAPIView(APIView):
                 id=subscription_id,
                 user=request.user
             )
-
         except UserSubscription.DoesNotExist:
             return error_response(
                 "Subscription not found",
                 404
             )
 
-        if subscription.is_paid:
-            return error_response(
-                "Subscription is already activated",
-                400
-            )
+        # Verify signature against order payload OR subscription payload
+        possible_payloads = []
+        if razorpay_subscription_id:
+            possible_payloads.append(f"{razorpay_payment_id}|{razorpay_subscription_id}")
+        if razorpay_order_id:
+            possible_payloads.append(f"{razorpay_order_id}|{razorpay_payment_id}")
 
-        payload = (
-            f"{razorpay_order_id}|{razorpay_payment_id}"
-        )
+        valid_signature = False
+        secret_bytes = bytes(getattr(settings, "RAZORPAY_KEY_SECRET", ""), "utf-8")
 
-        generated_signature = hmac.new(
-            bytes(settings.RAZORPAY_KEY_SECRET, "utf-8"),
-            bytes(payload, "utf-8"),
-            hashlib.sha256
-        ).hexdigest()
+        for payload in possible_payloads:
+            gen_sig = hmac.new(secret_bytes, bytes(payload, "utf-8"), hashlib.sha256).hexdigest()
+            if hmac.compare_digest(gen_sig, razorpay_signature):
+                valid_signature = True
+                break
 
-        if generated_signature != razorpay_signature:
-            return error_response(
-                "Invalid payment signature",
-                400
-            )
+        if not valid_signature and possible_payloads:
+            return error_response("Invalid payment signature", 400)
 
         UserSubscription.objects.filter(
             user=request.user,
-            status="active"
+            status__in=["active", "trial"]
         ).exclude(
             id=subscription.id
         ).update(
@@ -643,17 +776,21 @@ class VerifyPaymentAPIView(APIView):
         )
 
         subscription.razorpay_payment_id = razorpay_payment_id
+        if razorpay_subscription_id:
+            subscription.razorpay_subscription_id = razorpay_subscription_id
+        if razorpay_order_id:
+            subscription.razorpay_order_id = razorpay_order_id
         subscription.razorpay_signature = razorpay_signature
         subscription.is_paid = True
-        subscription.status = "active"
-        subscription.start_date = timezone.now()
 
-        from dateutil.relativedelta import relativedelta
-
-        if subscription.billing_cycle == "monthly":
-            subscription.end_date = timezone.now() + relativedelta(months=1)
-        else:
-            subscription.end_date = timezone.now() + relativedelta(years=1)
+        if subscription.status != "trial":
+            subscription.status = "active"
+            subscription.start_date = timezone.now()
+            from dateutil.relativedelta import relativedelta
+            if subscription.billing_cycle == "monthly":
+                subscription.end_date = timezone.now() + relativedelta(months=1)
+            else:
+                subscription.end_date = timezone.now() + relativedelta(years=1)
 
         subscription.reminder_3day_sent = False
         subscription.reminder_1day_sent = False

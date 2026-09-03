@@ -906,7 +906,7 @@ export default function ProfitDetailsView() {
                       unsettled_not_paid: 'unsettled_not_paid',
                       cancelled_qty: 'total_cancelled_qty',
                       cancelled_sales: 'total_cancelled_sales',
-                      tds: 'total_tds',
+                      tds: 'tds',
                       other_expenses: 'total_other_expenses',
                     };
 

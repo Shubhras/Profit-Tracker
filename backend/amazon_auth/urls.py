@@ -21,10 +21,28 @@ from .growth_opportunities import GrowthOpportunitiesAPIView
 from .other_expence import (
     OtherExpenseListCreateAPIView,
     OtherExpenseDetailAPIView,
-    OtherExpensePreviewAPIView
+    OtherExpensePreviewAPIView,
+    OtherExpenseDownloadSampleAPIView,
+    OtherExpenseUploadExcelAPIView,
+)
+from .estimated_fee_rules import (
+    MarketplaceEstimatedFeeRuleListCreateAPIView,
+    MarketplaceEstimatedFeeRuleDetailAPIView,
+    MarketplaceEstimatedFeeCalculateAPIView,
+    MarketplaceEstimatedFeeRuleDownloadSampleAPIView,
+    MarketplaceEstimatedFeeRuleUploadExcelAPIView,
 )
 
 urlpatterns = [
+    path('estimated-fee-rules/', MarketplaceEstimatedFeeRuleListCreateAPIView.as_view(), name='estimated_fee_rules_list_create'),
+    path('estimated-fee-rules/download-sample/', MarketplaceEstimatedFeeRuleDownloadSampleAPIView.as_view(), name='estimated_fee_rules_download_sample'),
+    path('estimated-fee-rules/upload-excel/', MarketplaceEstimatedFeeRuleUploadExcelAPIView.as_view(), name='estimated_fee_rules_upload_excel'),
+    path('estimated-fee-rules/<int:pk>/', MarketplaceEstimatedFeeRuleDetailAPIView.as_view(), name='estimated_fee_rules_detail'),
+    path('estimated-fee-rules/calculate/', MarketplaceEstimatedFeeCalculateAPIView.as_view(), name='estimated_fee_rules_calculate'),
+
+    path('other-expenses/download-sample/', OtherExpenseDownloadSampleAPIView.as_view(), name='other_expense_download_sample'),
+    path('other-expenses/upload-excel/', OtherExpenseUploadExcelAPIView.as_view(), name='other_expense_upload_excel'),
+
     path('dashboard-stats-old/', views.get_full_dashboard, name='dashboard-stats-old'),
     path('dashboard-stats/', profit.combined_get_full_dashboard, name='dashboard-stats'),
     path('growth-opportunities/', GrowthOpportunitiesAPIView.as_view(), name='growth-opportunities'),
@@ -180,6 +198,11 @@ urlpatterns = [
         "estimated-fees/list/",
         AmazonEstimatedFeeListView.as_view(),
         name="estimated-fees-list"
+    ),
+    path(
+        "estimated-fees/list/export/",
+        exports.export_estimated_fees_list,
+        name="estimated-fees-list-export"
     ),
     
     path(

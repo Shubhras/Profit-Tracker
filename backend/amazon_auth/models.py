@@ -1108,3 +1108,38 @@ class ProfitCalculationSetting(models.Model):
 
     def __str__(self):
         return f"ProfitCalculationSetting for {self.user.username}"
+
+
+class MarketplaceEstimatedFeeRule(models.Model):
+    HOW_CHOICES = (
+        ('pct', 'Percentage'),
+        ('flat', 'Flat Amount'),
+        ('pct-slab', 'Percentage Slab'),
+        ('flat-slab', 'Flat Amount Slab'),
+        ('weight', 'Weight Based'),
+    )
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='marketplace_estimated_fee_rules'
+    )
+    marketplace = models.CharField(max_length=50, default='Myntra', db_index=True)
+    name = models.CharField(max_length=255)
+    desc = models.CharField(max_length=500, blank=True, null=True)
+    how = models.CharField(max_length=20, choices=HOW_CHOICES, default='pct-slab')
+    by_cat = models.BooleanField(default=False)
+    on = models.BooleanField(default=True)
+    value = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    groups = models.JSONField(default=list, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'amazon_auth'
+        db_table = 'amazon_auth_marketplaceestimatedfeerule'
+        ordering = ['id']
+
+    def __str__(self):
+        return f"{self.marketplace} - {self.name} ({self.how})"

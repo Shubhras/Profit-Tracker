@@ -1170,7 +1170,7 @@ export default function ProfitViewSecondTable() {
                       final_net_sales: 'total_final_net_sales',
                       cancelled_qty: 'total_cancelled_qty',
                       cancelled_sales: 'total_cancelled_sales',
-                      tds: 'total_tds',
+                      tds: 'tds',
                       other_expenses: 'total_other_expenses',
                     };
 

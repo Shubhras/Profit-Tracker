@@ -1,8 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Spin, Tooltip, Checkbox, Dropdown, Button } from 'antd';
-import { SearchOutlined, SettingOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import {
+  SearchOutlined,
+  SettingOutlined,
+  CloseCircleOutlined,
+  ExportOutlined,
+  DownOutlined,
+  FileExcelOutlined,
+  FileTextOutlined,
+} from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { getEstimatedFees } from '../../redux/dashboard/actionCreator';
+import { getEstimatedFees, exportProfitabilityDetails } from '../../redux/dashboard/actionCreator';
 
 function EstimatedFees() {
   const dispatch = useDispatch();
@@ -12,11 +20,47 @@ function EstimatedFees() {
   const [searchText, setSearchText] = useState('');
   const [fullfilment, setFullfilment] = useState('');
   const [visibleColumns, setVisibleColumns] = useState(null);
-
+  const [exportLoading, setExportLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 20,
   });
+
+  const handleExport = async (format = 'xlsx') => {
+    try {
+      setExportLoading(true);
+      const payload = {
+        filters: {
+          search: debouncedSearch,
+          fulfillment_channel: fullfilment,
+        },
+        pagination: {
+          pageNo: pagination.current,
+          pageSize: pagination.pageSize,
+        },
+      };
+      await dispatch(exportProfitabilityDetails(payload, format, '/amazon/estimated-fees/list/export/'));
+    } catch (error) {
+      console.error('Export failed:', error);
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const exportMenuItems = [
+    {
+      key: 'xlsx',
+      label: 'Excel (.xlsx)',
+      icon: <FileExcelOutlined style={{ color: '#10b981' }} />,
+      onClick: () => handleExport('xlsx'),
+    },
+    {
+      key: 'csv',
+      label: 'CSV (.csv)',
+      icon: <FileTextOutlined style={{ color: '#3b82f6' }} />,
+      onClick: () => handleExport('csv'),
+    },
+  ];
   useEffect(() => {
     const payload = {
       filters: {
@@ -340,6 +384,17 @@ function EstimatedFees() {
                 className="!h-[30px] !flex !items-center !justify-center gap-1 text-[13px] !rounded-lg !border-[#dbe1e8] !text-[#374151] !font-medium"
               >
                 <span className="text-[#4B5563] text-[13px]">Manage Columns</span>
+              </Button>
+            </Dropdown>
+
+            <Dropdown menu={{ items: exportMenuItems }} trigger={['click']} placement="bottomRight">
+              <Button
+                type="primary"
+                icon={<ExportOutlined />}
+                loading={exportLoading}
+                className="bg-[#10b981] hover:bg-[#059669] border-none text-white font-medium px-4 !h-[30px] rounded-lg flex items-center gap-1.5 shadow-sm text-[13px]"
+              >
+                Export <DownOutlined style={{ fontSize: 10 }} />
               </Button>
             </Dropdown>
           </div>

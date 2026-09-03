@@ -223,13 +223,19 @@ function PricingCard({ plan, index, onSelect, selectedPlanId, setSelectedPlanId,
                   selectedPrice: selectedType === 'monthly' ? plan.monthly_price : plan.annual_price,
                 });
               }}
-              className="h-[46px] rounded-lg font-semibold text-[14px] border-none"
+              className="h-[48px] rounded-[14px] font-bold text-[15px] border-none"
               style={{
-                background: isSelected ? '#0C8B5E' : '#10182B',
-                color: '#fff',
+                background: plan.plan_name?.toLowerCase().includes('starter')
+                  ? '#00BA70'
+                  : isSelected
+                  ? '#0C8B5E'
+                  : '#10182B',
+                color: plan.plan_name?.toLowerCase().includes('starter') ? '#0D0F0E' : '#fff',
               }}
             >
-              {plan.button.text}
+              {plan.plan_name?.toLowerCase().includes('starter')
+                ? 'Start Free Trial'
+                : plan.button?.text || 'Subscribe'}
             </Button>
           </motion.div>
         </div>

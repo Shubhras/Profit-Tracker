@@ -95,9 +95,7 @@ export default function ProfitSKUIdPage() {
     try {
       setExportLoading(true);
       const payload = buildPayload();
-      await dispatch(
-        exportProfitabilityDetails(payload, format, '/amazon/profitability/details/by-parentproductid/export/'),
-      );
+      await dispatch(exportProfitabilityDetails(payload, format, '/amazon/profitability/list/by-sku/filtered/export/'));
     } catch (error) {
       console.error('Export failed:', error);
     } finally {

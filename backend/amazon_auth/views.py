@@ -48,6 +48,7 @@ from amazon_auth.spapi_manager import SPAPIManager
 from amazon_auth.utils import safe_catalog_call
 
 from amazon_ads.models import ProductAdMetric
+from .other_expence import calculate_other_expenses_map
 
 # Load .env file
 load_dotenv()
@@ -4407,6 +4408,10 @@ def amazon_profitability_details(request):
                 listing_qs.values("tcs")[:1]
             ),
 
+            sku_tds_rate=Subquery(
+                listing_qs.values("tds")[:1]
+            ),
+
             sku_region=Subquery(
                 listing_qs.values("region")[:1]
             ),
@@ -4436,6 +4441,7 @@ def amazon_profitability_details(request):
             sku_standard_cost=Max('sku_standard_cost'),
             sku_gst_rate=Max('sku_gst_rate'),
             sku_tcs_rate=Max('sku_tcs_rate'),
+            sku_tds_rate=Max('sku_tds_rate'),
             sku_region=Max('sku_region'),
         )
     )
@@ -4567,6 +4573,7 @@ def amazon_profitability_details(request):
     total_mp_gst = 0
     total_gst = 0
     total_tcs = 0
+    total_tds = 0
     total_taxable_value = 0
     total_gst_payable = 0
     total_exp_settlement = 0
@@ -4650,6 +4657,7 @@ def amazon_profitability_details(request):
         # ----------------------------------------------------------
 
         tcs_rate = float(str(row.get("sku_tcs_rate") or 1))
+        tds_rate = float(str(row.get("sku_tds_rate") or 0))
 
         # ----------------------------------------------------------
         # TAXABLE VALUE
@@ -4691,6 +4699,10 @@ def amazon_profitability_details(request):
             taxable_value *
             (tcs_rate / float("100"))
         )
+        tds_total = (
+            taxable_value *
+            (tds_rate / float("100"))
+        ) if tds_rate else float("0")
         
 
         adjusted_gross_sales = gross_sales + item_tax - promo_discount + shipping_price
@@ -4940,6 +4952,7 @@ def amazon_profitability_details(request):
             "gst": format_currency(0),
             # "gst": "0",
             "tcs": format_currency(tcs_total),
+            "tds": format_currency(tds_total),
             "taxable_value": format_currency(taxable_value),
 
             "gst_to_pay_amount": format_currency(gst_to_pay_amount),
@@ -4961,6 +4974,7 @@ def amazon_profitability_details(request):
         total_stdcost += stdcost
         total_gst += gst
         total_tcs += tcs_total
+        total_tds += tds_total
         total_ret_percent += ret_percent
         total_estimatefees += estimated_fees
         total_mp_gst += mp_gst
@@ -5004,6 +5018,7 @@ def amazon_profitability_details(request):
             # "totalgst": format_currency(total_tcs),
             "totalgst": format_currency(0),
             "tcs": format_currency(total_tcs),
+            "tds": format_currency(total_tds),
             "taxable_value": format_currency(total_taxable_value),
 
             "gst_to_pay_amount": format_currency(total_gst_payable),
@@ -5069,8 +5084,9 @@ def amazon_profitability_parent(request):
     # ============================================================
 
     listing_qs = AmazonListingItem.objects.filter(
-        user=user,
-        sku=OuterRef("seller_sku")
+        user=user
+    ).filter(
+        Q(sku=OuterRef("seller_sku")) | Q(asin=OuterRef("asin"))
     ).order_by("-updated_at")
 
     # ---------------- CHILD ASIN DATA ----------------
@@ -5091,6 +5107,10 @@ def amazon_profitability_parent(request):
 
             sku_tcs_rate=Subquery(
                 listing_qs.values("tcs")[:1]
+            ),
+
+            sku_tds_rate=Subquery(
+                listing_qs.values("tds")[:1]
             ),
 
             sku_region=Subquery(
@@ -5114,6 +5134,7 @@ def amazon_profitability_parent(request):
             'sku_standard_cost',
             'sku_gst_rate',
             'sku_tcs_rate',
+            'sku_tds_rate',
             'sku_region',
             'sku_shipping_estimate',
             'sku_step_level',
@@ -5348,6 +5369,7 @@ def amazon_profitability_parent(request):
     total_net_sales = total_qty = Decimal(0)
     total_returns = total_shipping = Decimal(0)
     total_tcs = Decimal(0)
+    total_tds = Decimal(0)
     total_mpfees = Decimal(0)   
     total_ret_percent = Decimal(0)  
     total_stdcost = Decimal(0) 
@@ -5391,26 +5413,6 @@ def amazon_profitability_parent(request):
 
         shipping_price = Decimal(row.get('shipping_price') or 0)
 
-        # ---------------- GST / TAXABLE ----------------
-
-        # # Gross sales excluding GST
-        # taxable_value = gross_sales
-
-        # # GST collected from order
-        # gst_to_pay_amount = item_tax
-
-        # # GST %
-        # gst_to_pay_perc = (
-        #     (gst_to_pay_amount / taxable_value) * 100
-        #     if taxable_value else Decimal("0")
-        # )
-
-        # # TCS = 1% of taxable value
-        # tcs_total = gst_to_pay_amount * Decimal("0.01")
-
-        # # adjusted_gross_sales = gross_sales + item_tax - promo_discount
-        # adjusted_gross_sales = gross_sales + item_tax - promo_discount + shipping_price
-
         # ------------------------------------------------------------
         # ADJUSTED SALES
         # ------------------------------------------------------------
@@ -5423,11 +5425,12 @@ def amazon_profitability_parent(request):
         )
 
         # ------------------------------------------------------------
-        # SKU GST / TCS
+        # SKU GST / TCS / TDS
         # ------------------------------------------------------------
 
         gst_rate = Decimal(str(row.get("sku_gst_rate") or 0))
         tcs_rate = Decimal(str(row.get("sku_tcs_rate") or 0))
+        tds_rate = Decimal(str(row.get("sku_tds_rate") or 0))
 
         # ------------------------------------------------------------
         # TAXABLE VALUE
@@ -5441,7 +5444,6 @@ def amazon_profitability_parent(request):
             )
             gst_to_pay_amount = adjusted_gross_sales - taxable_value
             
-            # taxable_value = gross_sales
 
         else:
 
@@ -5449,15 +5451,7 @@ def amazon_profitability_parent(request):
             gst_to_pay_amount = item_tax
 
         # ------------------------------------------------------------
-        # GST TO PAY
-        # ------------------------------------------------------------
-
-        # gst_to_pay_amount = (
-        #     adjusted_gross_sales - taxable_value
-        # )
-
-        # ------------------------------------------------------------
-        # TCS
+        # TCS / TDS
         # ------------------------------------------------------------
 
         if tcs_rate:
@@ -5472,12 +5466,18 @@ def amazon_profitability_parent(request):
                 (Decimal("1") / Decimal("100"))
             )   
 
+        if tds_rate:
+            tds_total = (
+                taxable_value *
+                (tds_rate / Decimal("100"))
+            )
+        else:
+            tds_total = Decimal(0)
+
         # ------------------------------------------------------------
         # GST %
         # ------------------------------------------------------------
 
-        # gst_to_pay_perc = gst_rate
-        
         if gst_rate:
             gst_to_pay_perc = gst_rate
 
@@ -5493,7 +5493,6 @@ def amazon_profitability_parent(request):
 
         refund = rto = mpfees = shipping_fee = Decimal(0)
         return_units = Decimal(0)
-        # tcs_total = Decimal(0)
         t_new_charge = Decimal(0)
 
         refund = rto = mpfees = shipping_fee = Decimal(0)
@@ -5530,7 +5529,6 @@ def amazon_profitability_parent(request):
 
             refund += Decimal(f.get('refund') or 0)
             rto += Decimal(f.get('rto') or 0)
-            # ads += Decimal(f.get('ads') or 0)
 
             mpfees += (
                 Decimal(f.get('commission') or 0) +
@@ -5547,15 +5545,12 @@ def amazon_profitability_parent(request):
 
             if asin in order_fee_map:
                 t_new_charge += Decimal(order_fee_map[asin]["fee"])
-                # tcs_total += Decimal(order_fee_map[asin]["tcs"])
 
             r = Decimal(f.get('refund') or 0)
             rto_amt = Decimal(f.get('rto') or 0)
 
             refund += r
             rto += rto_amt
-
-            # total_estimatefees += estimated_fees
 
             if r < 0 or rto_amt < 0:
                 return_units += qty
@@ -5564,17 +5559,9 @@ def amazon_profitability_parent(request):
         net_qty = max(gross_qty , 0)
         # net_sales = gross_sales + refund + rto
         net_sales = adjusted_gross_sales
-        # total_estimatefees += estimated_fees
         shipping_final = Decimal(row['shipping_price'] or 0)
 
-        # mp_gst = (net_sales + shipping_final) * 0.18
-       
-
         mp_gst = (net_sales + shipping_final) * Decimal("0.18")
-        
-        # total_cost = Decimal(row['total_cost'] or 0)
-
-        # total_cost = Decimal(50) * net_qty
         
         standard_cost = Decimal(
             str(row.get("sku_standard_cost") or 0)
@@ -5582,9 +5569,6 @@ def amazon_profitability_parent(request):
 
         total_cost = standard_cost * net_qty
 
-        # profit = net_sales + t_new_charge + shipping_final - total_cost + tcs_total
-        # profit = net_sales - estimated_fees - shipping_final - tcs_total + mp_gst - total_cost
-        
         profit = (
             net_sales
             - estimated_fees
@@ -5595,13 +5579,6 @@ def amazon_profitability_parent(request):
             - total_cost
             - gst_to_pay_amount
         )
-
-        # exp_settlement = (
-        #     profit
-        #     - total_cost
-        #     - tcs_total
-        #     - mp_gst
-        # )
 
         exp_settlement = (
             net_sales
@@ -5624,7 +5601,6 @@ def amazon_profitability_parent(request):
             "parent_asin": parent_asin,
             "name": row['title'],
             "child_sku": clean_sku(child_sku),
-            # "child_sku": row['child_sku'],
             "image_url": row['image_url'],
             "channel": "Amazon-India",
             "channel1": "Amazon-India",
@@ -5652,13 +5628,12 @@ def amazon_profitability_parent(request):
             "tax_amount": format_currency(tax_amount),
             "shippingfees": format_currency(shipping_final),
             "tcs": format_currency(tcs_total),
+            "tds": format_currency(tds_total),
 
             "profit": format_currency(profit),
             "grossprofitper": round(profit_margin, 2),
             "retpercent": round(ret_percent, 2),
             "returnqty": int(return_units),
-            # "tacos": round(tacos, 2),
-            # "gst": format_currency(tcs_total),
             "gst": format_currency(0),
 
             "taxable_value": format_currency(taxable_value),
@@ -5680,6 +5655,7 @@ def amazon_profitability_parent(request):
         total_returns += return_units
         total_shipping += shipping_final
         total_tcs += tcs_total
+        total_tds += tds_total
         total_mpfees += t_new_charge
         total_ret_percent += ret_percent
         total_stdcost += total_cost
@@ -5717,6 +5693,7 @@ def amazon_profitability_parent(request):
             # "totalgst": format_currency(total_tcs),
             "totalgst": format_currency(0),
             "tcs": format_currency(total_tcs),
+            "tds": format_currency(total_tds),
             "taxable_value": format_currency(total_taxable_value),
 
             "gst_to_pay_amount": format_currency(total_gst_payable),
@@ -5730,6 +5707,7 @@ def amazon_profitability_parent(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def amazon_profitability_parent_transactions_shipping(request):
+    from amazon_auth.models import ProductMapping, OrderItem, AmazonListingItem
 
     user = get_effective_user(request.user)
     data = request.data
@@ -5823,8 +5801,9 @@ def amazon_profitability_parent_transactions_shipping(request):
     # ============================================================
 
     listing_qs = AmazonListingItem.objects.filter(
-        user=user,
-        sku=OuterRef("seller_sku")
+        user=user
+    ).filter(
+        Q(sku=OuterRef("seller_sku")) | Q(asin=OuterRef("asin"))
     ).order_by("-updated_at")
 
     # ---------------- CHILD ASIN DATA ----------------
@@ -5845,6 +5824,10 @@ def amazon_profitability_parent_transactions_shipping(request):
 
             sku_tcs_rate=Subquery(
                 listing_qs.values("tcs")[:1]
+            ),
+
+            sku_tds_rate=Subquery(
+                listing_qs.values("tds")[:1]
             ),
 
             sku_region=Subquery(
@@ -5868,6 +5851,7 @@ def amazon_profitability_parent_transactions_shipping(request):
             'sku_standard_cost',
             'sku_gst_rate',
             'sku_tcs_rate',
+            'sku_tds_rate',
             'sku_region',
             'sku_shipping_estimate',
             'sku_step_level',
@@ -6500,6 +6484,7 @@ def amazon_profitability_parent_transactions_shipping(request):
     total_final_net_sales = Decimal(0)
     total_returns = total_shipping = Decimal(0)
     total_tcs = Decimal(0)
+    total_tds = Decimal(0)
     total_mpfees = Decimal(0)   
     total_ret_percent = Decimal(0)  
     total_stdcost = Decimal(0) 
@@ -6524,8 +6509,48 @@ def amazon_profitability_parent_transactions_shipping(request):
     total_claim_amount = 0.0
     total_claim_count = 0
 
+    total_other_expenses = Decimal(0)
 
-    for row in items:
+    # ---------------- CALCULATE OTHER EXPENSES ----------------
+    parent_sku_map = {}
+    for oi in asin_orders:
+        p = oi.get('parent_asin') or oi.get('asin')
+        s = oi.get('seller_sku')
+        if p and s:
+            parent_sku_map.setdefault(p, set()).add(s)
+
+    pm_qs = ProductMapping.objects.filter(account__user=user).values('parent_asin', 'asin', 'seller_sku')
+    for pm in pm_qs:
+        p = pm.get('parent_asin') or pm.get('asin')
+        s = pm.get('seller_sku')
+        if p and s:
+            parent_sku_map.setdefault(p, set()).add(s)
+
+    ali_qs = AmazonListingItem.objects.filter(user=user).values('asin', 'sku')
+    for ali in ali_qs:
+        p = ali.get('asin')
+        s = ali.get('sku')
+        if p and s:
+            parent_sku_map.setdefault(p, set()).add(s)
+
+    expense_items = []
+    for idx, r in enumerate(items):
+        g_qty = Decimal(r.get('grossqty') or 0)
+        n_qty = max(g_qty, 0)
+        f_sales = Decimal(r.get('grosssales') or 0)
+
+        expense_items.append({
+            'key': idx,
+            'marketplace': r.get('channel') or r.get('marketplace') or 'Amazon-India',
+            'units': float(n_qty),
+            'net_sales': float(f_sales),
+            'sku_count': 1,
+            'order_count_for_sku': 1
+        })
+
+    other_expenses_map = calculate_other_expenses_map(user, from_date_local, to_date_local, expense_items)
+
+    for idx, row in enumerate(items):
 
         asin = row['asin']
         parent_asin = row['parent_asin']
@@ -6651,6 +6676,7 @@ def amazon_profitability_parent_transactions_shipping(request):
 
         gst_rate = Decimal(str(row.get("sku_gst_rate") or 0))
         tcs_rate = Decimal(str(row.get("sku_tcs_rate") or 0))
+        tds_rate = Decimal(str(row.get("sku_tds_rate") or 0))
 
         refund = rto = mpfees = shipping_fee = Decimal(0)
         return_units = Decimal(0)
@@ -6751,7 +6777,7 @@ def amazon_profitability_parent_transactions_shipping(request):
             gst_to_pay_amount = Decimal("0")
 
         # ------------------------------------------------------------
-        # TCS  GST TO PAY
+        # TCS / TDS
         # ------------------------------------------------------------
 
         if tcs_rate:
@@ -6765,6 +6791,14 @@ def amazon_profitability_parent_transactions_shipping(request):
                 taxable_value *
                 (Decimal("1") / Decimal("100"))
             )   
+
+        if tds_rate:
+            tds_total = (
+                taxable_value *
+                (tds_rate / Decimal("100"))
+            )
+        else:
+            tds_total = Decimal(0)   
 
         if gst_rate:
             gst_to_pay_perc = gst_rate
@@ -6782,6 +6816,8 @@ def amazon_profitability_parent_transactions_shipping(request):
 
         mp_gst = (-abs(estimated_fees) + shipping_final) * Decimal("0.18")
         
+        row_other_expense = Decimal(str(other_expenses_map.get(idx, 0)))
+
         profit = (
             final_net_sales
             + shipping_final
@@ -6792,6 +6828,7 @@ def amazon_profitability_parent_transactions_shipping(request):
             - promo_discount
             - Decimal(str(order_claim_amount))
             - total_cost
+            - row_other_expense
         )
 
         exp_settlement = (
@@ -6825,18 +6862,8 @@ def amazon_profitability_parent_transactions_shipping(request):
                 customer_return_count += 1
                 customer_return_price += amount
 
-        # total_return_count = courier_return_count + customer_return_count + order_replacement_count
-        
-        # print("total_return_count innnn    >>>>>>>>>>",total_return_count)
-        # print("courier_return_count>>>>>>>>>>",courier_return_count)
-        # print("customer_return_count>>>>>>>>>>",customer_return_count)
-        # print("order_replacement_count>>>>>>>>>>",order_replacement_count)
-
         total_claim_amount = sum(claim_amount_by_order.values())
         total_claim_count = len(claim_amount_by_order)
-        
-        
-        # ret_percent = (return_units / net_qty * 100) if net_qty else 0
         
         row_customer_return_count += order_replacement_count
         
@@ -6852,14 +6879,13 @@ def amazon_profitability_parent_transactions_shipping(request):
             "parent_asin": parent_asin,
             "name": row['title'],
             "child_sku": clean_sku(child_sku),
-            # "child_sku": row['child_sku'],
             "image_url": row['image_url'],
             "channel": "Amazon-India",
             "channel1": "Amazon-India",
 
             "grossqty": int(gross_qty),
             "netqty": int(net_qty),
-            "final_net_qty":final_net_qty,   # final_net_qty - all retur
+            "final_net_qty":final_net_qty,
 
             "grosssales": format_currency(gross_sales),
             "netsales": format_currency(net_sales),
@@ -6871,6 +6897,7 @@ def amazon_profitability_parent_transactions_shipping(request):
             "new_mpfees": format_currency(t_new_charge),
          
             "estimatefees": format_currency(-abs(estimated_fees)),
+            "other_expenses": format_currency(-abs(row_other_expense)),
             "referral_fee": format_currency(referral_fee),
             "closing_fee": format_currency(closing_fee),
             "per_item_fee": format_currency(per_item_fee),
@@ -6882,14 +6909,12 @@ def amazon_profitability_parent_transactions_shipping(request):
             "tax_amount": format_currency(tax_amount),
             "shippingfees": format_currency(shipping_final),
             "tcs": format_currency(tcs_total),
+            "tds": format_currency(tds_total),
 
             "profit": format_currency(profit),
             "grossprofitper": round(profit_margin, 2),
             "retpercent": round(ret_percent, 2),
-            # "returnqty": int(return_units),
             "returnqty": int(order_return_count),
-            # "tacos": round(tacos, 2),
-            # "gst": format_currency(tcs_total),
             "gst": format_currency(0),
 
             "taxable_value": format_currency(taxable_value),
@@ -6926,12 +6951,14 @@ def amazon_profitability_parent_transactions_shipping(request):
         total_net_sales += net_sales
         total_final_net_sales += final_net_sales
         total_profit += Decimal(str(round(profit, 2)))
+        total_other_expenses += row_other_expense
         total_ads += ads
         total_qty += net_qty
         total_final_net_qty += final_net_qty
         total_returns += return_units
         total_shipping += shipping_final
         total_tcs += Decimal(str(round(tcs_total, 2)))
+        total_tds += Decimal(str(round(tds_total, 2)))
         total_mpfees += t_new_charge
         total_ret_percent += ret_percent
         total_stdcost += total_cost
@@ -6942,9 +6969,6 @@ def amazon_profitability_parent_transactions_shipping(request):
         total_exp_settlement += Decimal(str(round(exp_settlement, 2)))  
         total_promo_discount += Decimal(str(round(promo_discount, 2))) 
         
-        # total_return_count += order_replacement_count
-        # print("total_return_count out >>>>>>>>>>>>>>>>>>>>>>>>>>>",total_return_count)
-        
         customer_return_count += order_replacement_count
         
         total_courier_return_count += row_courier_return_count
@@ -6953,10 +6977,7 @@ def amazon_profitability_parent_transactions_shipping(request):
         total_return_count += (
             row_courier_return_count
             + row_customer_return_count
-            # + order_replacement_count
         )
-        
-        print("total_return_count out newwwwww >>>>>>>>>>>>>>>>>>>>>>>>>>>",total_return_count)
 
     # ====== ADD ASINS WITH AD SPEND BUT NO ORDERS ======
     for sku, data in ads_by_sku.items():
@@ -6964,7 +6985,6 @@ def amazon_profitability_parent_transactions_shipping(request):
         if sku in processed_skus:
             continue
         
-        # NEW: respect search_term — match by SKU
         if search_term:
             sku_val = str(sku or "")
             if search_term.lower() not in sku_val.lower():
@@ -6993,6 +7013,7 @@ def amazon_profitability_parent_transactions_shipping(request):
             "mp_gst": format_currency(0),
             "new_mpfees": format_currency(0),
             "estimatefees": format_currency(0),
+            "other_expenses": format_currency(0),
             "referral_fee": format_currency(0),
             "closing_fee": format_currency(0),
             "per_item_fee": format_currency(0),
@@ -7002,8 +7023,8 @@ def amazon_profitability_parent_transactions_shipping(request):
             "tax_amount": format_currency(0),
             "shippingfees": format_currency(0),
             "tcs": format_currency(0),
+            "tds": format_currency(0),
             "profit": format_currency(ads_cost),
-            # "grossprofitper": 0,
             "grossprofitper": round((ads_cost / 100 * 100), 2) if ads_cost else 0,
             "retpercent": 0,
             "returnqty": 0,
@@ -7034,9 +7055,6 @@ def amazon_profitability_parent_transactions_shipping(request):
         total_ads += ads_cost
         total_profit += ads_cost
     
-    # total_return_count += order_replacement_count
-    print("total_customer_return_count out >>>>>>>>>>>>>>>>>>>>>>>>>>>",total_customer_return_count)
-
     return Response({
         "status": True,
         "message": "Success",
@@ -7049,15 +7067,15 @@ def amazon_profitability_parent_transactions_shipping(request):
             "ads": format_currency(total_ads),
             "netqty": total_qty,
             "total_final_net_qty":total_final_net_qty,
-            # "totalreturn": total_returns,
             "totalreturn": total_return_count,
             "totalreturnper": f"{round((total_return_count / float(total_qty) * 100), 2) if total_final_net_qty else 0.0}%",
             "grosssales": format_currency(total_sales),
             "netsales": format_currency(total_net_sales),
             "total_net_sales": format_currency(total_net_sales),
             "total_final_net_sales": format_currency(total_final_net_sales),
+            "other_expenses": format_currency(-abs(total_other_expenses)),
+            "total_other_expenses": format_currency(-abs(total_other_expenses)),
             "profit": format_currency(total_profit),
-            # "grossprofitper": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
             "grossprofitper": (
                 round((total_profit / total_net_sales) * 100, 2)
                 if total_net_sales
@@ -7074,6 +7092,7 @@ def amazon_profitability_parent_transactions_shipping(request):
             # "totalgst": format_currency(total_tcs),
             "totalgst": format_currency(0),
             "tcs": format_currency(total_tcs),
+            "tds": format_currency(total_tds),
             "taxable_value": format_currency(total_taxable_value),
 
             "gst_to_pay_amount": format_currency(total_gst_payable),
@@ -7958,8 +7977,9 @@ def sku_profit_report_transactions_shipping(request):
     # ============================================================
 
     listing_qs = AmazonListingItem.objects.filter(
-        user=user,
-        sku=OuterRef("seller_sku")
+        user=user
+    ).filter(
+        Q(sku=OuterRef("seller_sku")) | Q(asin=OuterRef("asin"))
     ).order_by("-updated_at")
 
     items = (
@@ -7979,6 +7999,10 @@ def sku_profit_report_transactions_shipping(request):
 
             sku_tcs_rate=Subquery(
                 listing_qs.values("tcs")[:1]
+            ),
+
+            sku_tds_rate=Subquery(
+                listing_qs.values("tds")[:1]
             ),
 
             sku_region=Subquery(
@@ -8008,6 +8032,7 @@ def sku_profit_report_transactions_shipping(request):
             'sku_standard_cost',
             'sku_gst_rate',
             'sku_tcs_rate',
+            'sku_tds_rate',
             'sku_region',
             'sku_shipping_estimate',
             'sku_step_level',
@@ -8617,7 +8642,7 @@ def sku_profit_report_transactions_shipping(request):
 
     total_sales = total_profit = total_qty = total_final_net_qty = 0
     total_ads = total_mpfees = total_shipping = 0
-    total_gst = total_tcs = total_cost = 0
+    total_gst = total_tcs = total_tds = total_cost = 0
     total_net_sales = 0
     total_final_net_sales = 0
     total_returns = 0
@@ -8630,8 +8655,27 @@ def sku_profit_report_transactions_shipping(request):
     total_gst_payable = 0
     total_promo_discount = 0
     total_exp_settlement = 0
+    total_other_expenses = 0.0
 
-    for row in items:
+    # ---------------- CALCULATE OTHER EXPENSES ----------------
+    expense_items = []
+    total_orders_for_sku = len(items) if items else 1
+    for idx, r in enumerate(items):
+        g_qty = float(r.get('grossqty') or 0)
+        n_qty = max(g_qty, 0)
+        f_sales = float(r.get('grosssales') or 0)
+        expense_items.append({
+            'key': idx,
+            'marketplace': r.get('channel') or r.get('marketplace') or 'Amazon-India',
+            'units': float(n_qty),
+            'net_sales': float(f_sales),
+            'sku_count': 1,
+            'order_count_for_sku': total_orders_for_sku
+        })
+
+    other_expenses_map = calculate_other_expenses_map(user, from_date_local, to_date_local, expense_items)
+
+    for idx, row in enumerate(items):
 
         oid = row['order__amazon_order_id']
 
@@ -8769,10 +8813,11 @@ def sku_profit_report_transactions_shipping(request):
 
         gst = float(f.get('gst') or 0)
 
-        # ---------------- TCS ----------------
+        # ---------------- TCS & TDS ----------------
 
         gst_rate = float(str(row.get("sku_gst_rate") or 0))
         tcs_rate = float(str(row.get("sku_tcs_rate") or 0))
+        tds_rate = float(str(row.get("sku_tds_rate") or 0))
 
         refunded_sales = refunded_sales_by_order.get(oid, 0.0)
         
@@ -8810,6 +8855,12 @@ def sku_profit_report_transactions_shipping(request):
         tcs = (
             taxable_value *
             ((tcs_rate or float("1")) / float("100"))
+        )
+
+        tds = (
+            taxable_value *
+            (tds_rate / float("100"))
+            if tds_rate else 0.0
         )
 
         if gst_rate:
@@ -8876,6 +8927,8 @@ def sku_profit_report_transactions_shipping(request):
         # print("mp_gst>>>>>>>>>>>****************",mp_gst)
         # print("ads****************",ads)
         
+        row_other_expense = float(other_expenses_map.get(idx, 0))
+
         profit = (
             final_net_sales
             + shipping_final
@@ -8886,7 +8939,7 @@ def sku_profit_report_transactions_shipping(request):
             - promo_discount
             - order_claim_amount
             - cost
-        
+            - row_other_expense
         )
 
         exp_settlement = (
@@ -8907,8 +8960,6 @@ def sku_profit_report_transactions_shipping(request):
             if gross_sales else 0
         )
         drr = tacos
-        # ret_percent = (return_units / net_qty * 100) if net_qty else 0
-        
         
         row_customer_return_count += order_replacement_count
         
@@ -8930,7 +8981,7 @@ def sku_profit_report_transactions_shipping(request):
 
             "grossqty": gross_qty,
             "qty": net_qty,
-            "final_net_qty":final_net_qty,   # final_net_qty - all returns
+            "final_net_qty":final_net_qty,
 
             "grosssales": round(gross_sales, 2),
             "netsales": format_currency(net_sales),
@@ -8950,6 +9001,7 @@ def sku_profit_report_transactions_shipping(request):
             "mpfees": round(mpfees, 2),
             "mp_gst": format_currency(mp_gst),
             "estimatefees": format_currency(-abs(estimated_fees)),
+            "other_expenses": format_currency(-abs(row_other_expense)),
             "referral_fee": format_currency(referral_fee),
             "closing_fee": format_currency(closing_fee),
             "per_item_fee": format_currency(per_item_fee),
@@ -8965,7 +9017,6 @@ def sku_profit_report_transactions_shipping(request):
             "profit": format_currency(profit),
             "grossprofitper": round(profit_margin, 2),
 
-            "returnqty": return_units,
             "returnqty": order_return_count,
             "retpercent": round(ret_percent, 2),
 
@@ -8976,6 +9027,7 @@ def sku_profit_report_transactions_shipping(request):
 
             "gst": format_currency(0),
             "tcs": format_currency(tcs),
+            "tds": format_currency(tds),
             "exp_settlement": format_currency(exp_settlement),
             "promo_discount":format_currency(promo_discount),
             
@@ -9003,6 +9055,7 @@ def sku_profit_report_transactions_shipping(request):
         total_net_sales += net_sales
         total_final_net_sales += final_net_sales
         total_profit += round(profit, 2)
+        total_other_expenses += row_other_expense
         total_qty += net_qty
         total_final_net_qty += final_net_qty
         total_returns += return_units
@@ -9011,9 +9064,9 @@ def sku_profit_report_transactions_shipping(request):
         total_shipping += shipping_final
         total_gst += gst
         total_tcs += round(tcs, 2)
+        total_tds += round(tds, 2)
         total_cost += cost
         total_new_charge += new_charge
-        print("estimated_fees", estimated_fees)
         total_estimatefees += estimated_fees
         total_mp_gst += round(mp_gst, 2)
         total_taxable_value += round(taxable_value, 2)
@@ -9023,8 +9076,6 @@ def sku_profit_report_transactions_shipping(request):
         
         total_return_count += order_replacement_count
         customer_return_count += order_replacement_count
-
-    print("totale ads spends", total_ads)
 
     # ---------------- RESPONSE ----------------
     return Response({
@@ -9042,9 +9093,9 @@ def sku_profit_report_transactions_shipping(request):
             "total_final_net_sales": format_currency(total_final_net_sales),
             "total_netquantity": total_qty,
             "total_final_net_qty":total_final_net_qty,
+            "other_expenses": format_currency(-abs(total_other_expenses)),
+            "total_other_expenses": format_currency(-abs(total_other_expenses)),
             "profit": format_currency(total_profit),
-            # "total_returns": total_returns,
-            # "total_ret_percent": f"{round((total_returns / total_qty * 100), 2) if total_qty else 0.0}%",
             
             "total_returns": total_return_count,
             "total_ret_percent": f"{round((total_return_count / total_qty * 100), 2) if total_qty else 0.0}%",
@@ -9060,6 +9111,7 @@ def sku_profit_report_transactions_shipping(request):
             "shipping": format_currency(total_shipping),
             "gst": format_currency(0),
             "tcs": format_currency(total_tcs),
+            "tds": format_currency(total_tds),
             "cost": format_currency(total_cost),
 
             "taxable_value": format_currency(total_taxable_value),
@@ -9179,6 +9231,7 @@ def get_catalog_details(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def amazon_profitability_details_transactions_shipping(request):
+    from amazon_auth.models import ProductMapping, OrderItem, AmazonListingItem
 
     user = get_effective_user(request.user)
     data_source_raw = getattr(request, 'data', None) or (request.POST if request.method == 'POST' else request.GET)
@@ -9344,8 +9397,9 @@ def amazon_profitability_details_transactions_shipping(request):
     # ---------------- ORDER ITEM AGG ----------------
 
     listing_qs = AmazonListingItem.objects.filter(
-            user=user,
-            sku=OuterRef("seller_sku")
+            user=user
+        ).filter(
+            Q(asin=OuterRef("parent_asin")) | Q(asin=OuterRef("asin")) | Q(sku=OuterRef("seller_sku"))
         ).order_by("-updated_at")
     
     items = (
@@ -9365,6 +9419,10 @@ def amazon_profitability_details_transactions_shipping(request):
 
             sku_tcs_rate=Subquery(
                 listing_qs.values("tcs")[:1]
+            ),
+
+            sku_tds_rate=Subquery(
+                listing_qs.values("tds")[:1]
             ),
 
             sku_region=Subquery(
@@ -9412,6 +9470,7 @@ def amazon_profitability_details_transactions_shipping(request):
             sku_standard_cost=Max('sku_standard_cost'),
             sku_gst_rate=Max('sku_gst_rate'),
             sku_tcs_rate=Max('sku_tcs_rate'),
+            sku_tds_rate=Max('sku_tds_rate'),
             sku_region=Max('sku_region'),
         )
     )
@@ -9511,7 +9570,7 @@ def amazon_profitability_details_transactions_shipping(request):
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
-        .values('asin','parent_asin', 'order__amazon_order_id', 'quantity_ordered', 'item_price','new_item_price', 'item_tax', 'promotion_discount')
+        .values('asin', 'seller_sku', 'parent_asin', 'order__amazon_order_id', 'quantity_ordered', 'item_price','new_item_price', 'item_tax', 'promotion_discount')
     )
 
     child_parent_map = {}
@@ -9885,6 +9944,60 @@ def amazon_profitability_details_transactions_shipping(request):
         replacement_count_by_order[oid] = replacement_count_by_order.get(oid, 0) + 1
 
     total_replacement_return_count = len(order_ids_with_replacement)
+
+    from_date_local = from_date_ist.date() if from_date_ist else None
+    to_date_local = to_date_ist.date() if to_date_ist else None
+
+    # ---------------- CALCULATE OTHER EXPENSES ----------------
+    parent_sku_map = {}
+    
+    pm_qs = ProductMapping.objects.filter(account__user=user).values('parent_asin', 'asin', 'seller_sku')
+    for pm in pm_qs:
+        p = pm.get('parent_asin') or pm.get('asin')
+        s = pm.get('seller_sku')
+        if p and s:
+            parent_sku_map.setdefault(p, set()).add(s)
+
+    all_oi_qs = OrderItem.objects.filter(order__user=user).values('parent_asin', 'asin', 'seller_sku').distinct()
+    for oi in all_oi_qs:
+        p = oi.get('parent_asin') or oi.get('asin')
+        s = oi.get('seller_sku')
+        if p and s:
+            parent_sku_map.setdefault(p, set()).add(s)
+
+    sku_to_parent = {}
+    for p, skus in parent_sku_map.items():
+        for s in skus:
+            sku_to_parent[s] = p
+
+    ali_qs = AmazonListingItem.objects.filter(user=user).values('asin', 'sku')
+    for ali in ali_qs:
+        s = ali.get('sku')
+        a = ali.get('asin')
+        p = sku_to_parent.get(s) or a
+        if p and s:
+            parent_sku_map.setdefault(p, set()).add(s)
+
+    expense_items = []
+    for idx, r in enumerate(items):
+        g_qty = float(r.get('grossqty') or 0)
+        n_qty = max(g_qty, 0)
+        f_sales = float(r.get('grosssales') or 0)
+
+        p_asin = r.get('parent_asin') or r.get('asin')
+        sku_cnt = len(parent_sku_map.get(p_asin, set())) or 1
+
+        expense_items.append({
+            'key': idx,
+            'marketplace': r.get('channel') or r.get('marketplace') or 'Amazon-India',
+            'units': float(n_qty),
+            'net_sales': float(f_sales),
+            'sku_count': sku_cnt,
+            'order_count_for_sku': 1
+        })
+
+    other_expenses_map = calculate_other_expenses_map(user, from_date_local, to_date_local, expense_items)
+
     # ---------------- BUILD RESPONSE ----------------
     results = []
 
@@ -9899,10 +10012,12 @@ def amazon_profitability_details_transactions_shipping(request):
     total_mp_gst = 0
     total_gst = 0
     total_tcs = 0
+    total_tds = 0
     total_taxable_value = 0
     total_gst_payable = 0
     total_exp_settlement = 0
     total_promo_discount = 0
+    total_other_expenses = 0.0
 
     sku_asin_map = {
         normalize_sku(k): v
@@ -9929,6 +10044,7 @@ def amazon_profitability_details_transactions_shipping(request):
     #     ads_metrics_qs = ads_metrics_qs.filter(report_date__gte=from_date.date())
     # if to_date:
     #     ads_metrics_qs = ads_metrics_qs.filter(report_date__lte=to_date.date())
+    
     ads_metrics_qs = ProductAdMetric.objects.filter(
         product_ad__amazon_account__user=user,
         product_ad__amazon_account__is_primary=True,
@@ -10001,7 +10117,7 @@ def amazon_profitability_details_transactions_shipping(request):
 
     processed_parent_asins = set()
 
-    for row in items:
+    for idx, row in enumerate(items):
         # asin = row['asin']
         parent_asin = row['parent_asin']
         processed_parent_asins.add(parent_asin)
@@ -10030,7 +10146,9 @@ def amazon_profitability_details_transactions_shipping(request):
 
         gst_rate = float(str(row.get("sku_gst_rate") or 0))
         tcs_rate = float(str(row.get("sku_tcs_rate") or 0))
+        tds_rate = float(str(row.get("sku_tds_rate") or 0))
         standard_cost = float(str(row.get("sku_standard_cost") or 0))
+        print("row", row["sku_tds_rate"])
 
         orders = asin_map.get(parent_asin, [])
 
@@ -10202,6 +10320,11 @@ def amazon_profitability_details_transactions_shipping(request):
         else:
             tcs_total = taxable_value * 0.01
 
+        if tds_rate:
+            tds_total = taxable_value * (tds_rate / 100.0)
+        else:
+            tds_total = 0.0
+
         if gst_rate:
             gst_to_pay_perc = gst_rate
         else:
@@ -10209,6 +10332,10 @@ def amazon_profitability_details_transactions_shipping(request):
                 (gst_to_pay_amount / taxable_value) * 100.0
                 if taxable_value else 0.0
             )  
+
+
+        print("tds_rate>>>>>>??????????????????????????????????", tds_rate)    
+        print("tds_total>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", tds_total)    
 
         # ---------------- CALCULATIONS ----------------
         net_qty = max(gross_qty , 0)
@@ -10221,6 +10348,8 @@ def amazon_profitability_details_transactions_shipping(request):
 
         mp_gst = (-abs(estimated_fees) + shipping_final) * 0.18
 
+        row_other_expense = float(other_expenses_map.get(idx, 0))
+
         stdcost = total_cost
         stdcost_per_unit = (total_cost / gross_qty) if gross_qty else 0
 
@@ -10231,7 +10360,7 @@ def amazon_profitability_details_transactions_shipping(request):
                 missing_qty += o['quantity_ordered']
 
         stdcost_missing_percentage = (missing_qty / gross_qty * 100) if gross_qty else 0
-        
+
         exp_settlement = (
             final_net_sales
             + shipping_final
@@ -10252,10 +10381,11 @@ def amazon_profitability_details_transactions_shipping(request):
             - promo_discount
             - order_claim_amount
             - stdcost
+            - row_other_expense
         )
         profit_margin = (profit / final_net_sales * 100) if final_net_sales else 0
-        
-        
+
+
         print("final_net_sales>>>>>>>>>>>>>>>>",final_net_sales)
         print("gross_qty>>>>>>>>>>>>>>>>",gross_qty)
         print("gross_sales>>>>>>>>>>>??????????????????????",gross_sales)
@@ -10263,13 +10393,13 @@ def amazon_profitability_details_transactions_shipping(request):
         tacos = (
             abs(ads) / gross_sales * 100
         ) if gross_sales else 0
-        
+
         row_customer_return_count += order_replacement_count
         order_return_count += order_replacement_count
-        final_net_qty = final_net_qty - order_return_count        
-        
+        final_net_qty = final_net_qty - order_return_count
+
         ret_percent = (order_return_count / final_net_qty * 100) if final_net_qty else 0
-    
+
         results.append({
             # "asin": asin,
             "asin": parent_asin, 
@@ -10295,6 +10425,7 @@ def amazon_profitability_details_transactions_shipping(request):
             "new_mpfees": format_currency(t_new_charge),
             # "estimatefees": format_currency(estimated_fees),
             "estimatefees": format_currency(-abs(estimated_fees)),
+            "other_expenses": format_currency(-abs(row_other_expense)),
 
             "referral_fee": format_currency(referral_fee),
             "closing_fee": format_currency(closing_fee),
@@ -10321,6 +10452,7 @@ def amazon_profitability_details_transactions_shipping(request):
             "gst": format_currency(0),
             # "gst": "0",
             "tcs": format_currency(tcs_total),
+            "tds": format_currency(tds_total),
             "taxable_value": format_currency(taxable_value),
             "gst_to_pay_amount": format_currency(gst_to_pay_amount),
             "gst_to_pay_perc": round(gst_to_pay_perc, 2),
@@ -10351,6 +10483,7 @@ def amazon_profitability_details_transactions_shipping(request):
         total_net_sales += net_sales
         total_final_net_sales +=  final_net_sales
         total_profit += profit
+        total_other_expenses += row_other_expense
         total_ads += ads
         total_mpfees += t_new_charge
         total_qty += net_qty
@@ -10360,7 +10493,8 @@ def amazon_profitability_details_transactions_shipping(request):
         total_stdcost += stdcost
         total_gst += gst
         total_tcs += tcs_total
-        
+        total_tds += tds_total
+
         total_estimatefees += estimated_fees
         total_mp_gst += mp_gst
 
@@ -10368,19 +10502,19 @@ def amazon_profitability_details_transactions_shipping(request):
         total_gst_payable += gst_to_pay_amount
         total_exp_settlement += exp_settlement
         total_promo_discount += promo_discount
-        
+
         total_return_count += order_replacement_count
-        
+
         customer_return_count += order_replacement_count
         total_ret_percent = (total_return_count / total_final_net_qty * 100) if total_final_net_qty else 0
     # ====== START: ADD ASINS WITH AD SPEND BUT NO ORDERS ======
     for p_asin, data in ads_by_parent.items():
         if p_asin in processed_parent_asins:
             continue
-            
+
         if parent_ids and p_asin not in parent_ids:
             continue
-        
+
         # NEW: respect search_term the same way order_filter does
         if search_term:
             title = str(data.get("title") or "")
@@ -10388,7 +10522,7 @@ def amazon_profitability_details_transactions_shipping(request):
                     and search_term.lower() not in title.lower()):
                 continue
 
-            
+
         ads_cost = -abs(data["cost"])
         if ads_cost == 0:
             continue
@@ -10415,6 +10549,7 @@ def amazon_profitability_details_transactions_shipping(request):
             "mp_gst": format_currency(0),
             "new_mpfees": format_currency(0),
             "estimatefees": format_currency(0),
+            "other_expenses": format_currency(0),
             "referral_fee": format_currency(0),
             "closing_fee": format_currency(0),
             "per_item_fee": format_currency(0),
@@ -10436,6 +10571,7 @@ def amazon_profitability_details_transactions_shipping(request):
             "redirecturl": f"https://www.amazon.in/dp/{p_asin}" if p_asin else None,
             "gst": format_currency(0),
             "tcs": format_currency(0),
+            "tds": format_currency(0),
             "taxable_value": format_currency(0),
             "gst_to_pay_amount": format_currency(0),
             "gst_to_pay_perc": 0,
@@ -10455,7 +10591,7 @@ def amazon_profitability_details_transactions_shipping(request):
             "is_replacement_return": False,
             "replacement_return_count": 0,
         })
-        
+
         total_ads += ads_cost
         total_profit += ads_cost
 
@@ -10501,6 +10637,8 @@ def amazon_profitability_details_transactions_shipping(request):
             "mp_gst": format_currency(total_mp_gst),
             # "estimatefees": format_currency(total_estimatefees),
             "estimatefees": format_currency(-abs(total_estimatefees)),
+            "other_expenses": format_currency(-abs(total_other_expenses)),
+            "total_other_expenses": format_currency(-abs(total_other_expenses)),
             "total_new_mpfees": format_currency(total_mpfees),
             "shippingfees": format_currency(total_shipping),
             "tacos": (total_ads / total_sales * 100) if total_sales else 0,
@@ -10508,6 +10646,7 @@ def amazon_profitability_details_transactions_shipping(request):
             # "totalgst": format_currency(total_tcs),
             "totalgst": format_currency(0),
             "tcs": format_currency(total_tcs),
+            "tds": format_currency(total_tds),
             "taxable_value": format_currency(total_taxable_value),
 
             "gst_to_pay_amount": format_currency(total_gst_payable),
@@ -10600,6 +10739,7 @@ def sku_profitability_list_filtered(request):
         row["estimatefees"] = format_currency(-abs(row.get("estimatefees", 0)))
         row["stdcost"] = format_currency(row.get("stdcost", 0))
         row["tcs"] = format_currency(row.get("tcs", 0))
+        row["tds"] = format_currency(row.get("tds", 0))
         row["taxable_value"] = format_currency(row.get("taxable_value", 0))
         row["gst_to_pay_amount"] = format_currency(row.get("gst_to_pay_amount", 0))
         row["exp_settlement"] = format_currency(row.get("exp_settlement", 0))

@@ -59,7 +59,7 @@ class Command(BaseCommand):
         # ==========================================
         one_day_from_now = now + timedelta(days=1)
         subscriptions_1day = UserSubscription.objects.filter(
-            status='active',
+            status__in=['active', 'trial'],
             end_date__isnull=False,
             end_date__gte=now,
             end_date__lte=one_day_from_now,

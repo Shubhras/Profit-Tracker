@@ -53,6 +53,14 @@ class UserSubscription(models.Model):
         related_name="user_subscriptions", null=True
     )
 
+    next_plan = models.ForeignKey(
+        SubscriptionPlan,
+        on_delete=models.SET_NULL,
+        related_name="pending_user_subscriptions",
+        null=True,
+        blank=True
+    )
+
     billing_cycle = models.CharField(
         max_length=20,
         choices=BILLING_CYCLE_CHOICES,default="monthly"

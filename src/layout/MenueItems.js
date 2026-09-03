@@ -1050,6 +1050,14 @@ function MenuItems({ toggleCollapsed }) {
               'business-expenses',
             ),
 
+          (hasSubmodule('estimated-fees') || hasSubmodule('business-expenses')) &&
+            getItem(
+              <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/estimated-fees`}>
+                Estimated Fees
+              </NavLink>,
+              'estimated-fees',
+            ),
+
           hasSubmodule('profit-calculation-settings') &&
             getItem(
               <NavLink onClick={toggleCollapsed} to={`${path}/settings/product-setting/profit-calculation`}>

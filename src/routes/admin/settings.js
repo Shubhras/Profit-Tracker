@@ -6,6 +6,7 @@ const Overview = lazy(() => import('../../container/settings/product-settings/Ov
 const ProductConfiguration = lazy(() => import('../../container/settings/product-settings/ProductConfiguration'));
 const FinanceConfiguration = lazy(() => import('../../container/settings/product-settings/FinanceConfiguration'));
 const BusinessExpenses = lazy(() => import('../../container/settings/product-settings/BusinessExpenses'));
+const EstimatedFees = lazy(() => import('../../container/settings/product-settings/EstimatedFees'));
 const ProfitCalculationSettings = lazy(() =>
   import('../../container/settings/product-settings/ProfitCalculationSettings'),
 );
@@ -55,6 +56,14 @@ function SettingsRoutes() {
         element={
           <SubscriptionGate>
             <BusinessExpenses />
+          </SubscriptionGate>
+        }
+      />
+      <Route
+        path="product-setting/estimated-fees"
+        element={
+          <SubscriptionGate>
+            <EstimatedFees />
           </SubscriptionGate>
         }
       />

@@ -150,6 +150,10 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
                 listing_qs.values("tcs")[:1]
             ),
 
+            sku_tds_rate=Subquery(
+                listing_qs.values("tds")[:1]
+            ),
+
             sku_region=Subquery(
                 listing_qs.values("region")[:1]
             ),
@@ -193,6 +197,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
             sku_standard_cost=Max('sku_standard_cost'),
             sku_gst_rate=Max('sku_gst_rate'),
             sku_tcs_rate=Max('sku_tcs_rate'),
+            sku_tds_rate=Max('sku_tds_rate'),
             sku_region=Max('sku_region'),
         )
     )
@@ -691,6 +696,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
     total_mp_gst = 0
     total_gst = 0
     total_tcs = 0
+    total_tds = 0
     total_taxable_value = 0
     total_gst_payable = 0
     total_exp_settlement = 0
@@ -823,6 +829,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
 
         gst_rate = float(str(row.get("sku_gst_rate") or 0))
         tcs_rate = float(str(row.get("sku_tcs_rate") or 0))
+        tds_rate = float(str(row.get("sku_tds_rate") or 0))
         standard_cost = float(str(row.get("sku_standard_cost") or 0))
 
         orders = asin_map.get(parent_asin, [])
@@ -996,6 +1003,11 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
         else:
             tcs_total = taxable_value * 0.01
 
+        if tds_rate:
+            tds_total = taxable_value * (tds_rate / 100.0)
+        else:
+            tds_total = 0.0
+
         if gst_rate:
             gst_to_pay_perc = gst_rate
         else:
@@ -1111,6 +1123,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
             "gst": float(0),
             # "gst": "0",
             "tcs": float(tcs_total),
+            "tds": float(tds_total),
             "taxable_value": float(taxable_value),
             "gst_to_pay_amount": float(gst_to_pay_amount),
             "gst_to_pay_perc": round(gst_to_pay_perc, 2),
@@ -1150,6 +1163,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
         total_stdcost += stdcost
         total_gst += gst
         total_tcs += tcs_total
+        total_tds += tds_total
         
         total_estimatefees += estimated_fees
         total_mp_gst += mp_gst
@@ -1218,6 +1232,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
             "redirecturl": f"https://www.amazon.in/dp/{p_asin}" if p_asin else None,
             "gst": float(0),
             "tcs": float(0),
+            "tds": float(0),
             "taxable_value": float(0),
             "gst_to_pay_amount": float(0),
             "gst_to_pay_perc": 0,

@@ -101,28 +101,37 @@ TrackMyProfit Team
 
 def send_1day_expiry_reminder(subscription):
     """
-    Sends email notification 1 day before subscription expiration.
+    Sends email notification 1 day before subscription expiration or 7-day trial end.
     """
     user = subscription.user
     user_email = getattr(user, 'email', None)
     if not user_email:
         return False
 
+    is_trial = subscription.status == 'trial' or (subscription.plan and 'starter' in subscription.plan.plan_name.lower())
     plan_name = subscription.plan.plan_name if subscription.plan else "Pro Plan"
     end_date_str = subscription.end_date.strftime('%B %d, %Y') if subscription.end_date else 'tomorrow'
 
-    subject = f"⚡ Urgent: Your TrackMyProfit Subscription Expires Tomorrow! ({plan_name})"
-
-    auto_renew_text = (
-        f"Automatic renewal will run tomorrow on {end_date_str}. Please ensure your payment method has sufficient balance."
-        if subscription.auto_renew
-        else "Auto-renewal is turned off. Please renew today to prevent service interruption."
-    )
+    if is_trial:
+        next_plan_name = subscription.next_plan.plan_name if subscription.next_plan else "Growth Plan"
+        subject = "⏰ Action Required: Your TrackMyProfit 7-Day Free Trial Ends Tomorrow!"
+        auto_renew_text = (
+            f"Your 7-day free trial ends tomorrow ({end_date_str}). Your subscription will automatically move to the "
+            f"<strong>{next_plan_name}</strong> and your stored payment mandate will process the payment. "
+            "If you wish to change or cancel your subscription, please do so before tomorrow."
+        )
+    else:
+        subject = f"⚡ Urgent: Your TrackMyProfit Subscription Expires Tomorrow! ({plan_name})"
+        auto_renew_text = (
+            f"Automatic renewal will run tomorrow on {end_date_str}. Please ensure your payment method has sufficient balance."
+            if subscription.auto_renew
+            else "Auto-renewal is turned off. Please renew today to prevent service interruption."
+        )
 
     plain_message = f"""
 Hello {user.first_name or user.username},
 
-Your TrackMyProfit subscription ({plan_name}) expires tomorrow ({end_date_str}).
+{'Your TrackMyProfit 7-Day Free Trial ends tomorrow (' + end_date_str + ').' if is_trial else 'Your TrackMyProfit subscription (' + plan_name + ') expires tomorrow (' + end_date_str + ').'}
 
 {auto_renew_text}
 
@@ -154,14 +163,14 @@ TrackMyProfit Team
         {logo_header}
         <div class="content">
             <p>Hello <strong>{user.first_name or user.username}</strong>,</p>
-            <p>Your <strong>{plan_name}</strong> subscription will expire <strong>tomorrow ({end_date_str})</strong>.</p>
+            <p>{'Your <strong>7-Day Free Trial</strong> ends <strong>tomorrow (' + end_date_str + ')</strong>.' if is_trial else 'Your <strong>' + plan_name + '</strong> subscription will expire <strong>tomorrow (' + end_date_str + ')</strong>.'}</p>
             
             <div class="alert-box">
                 {auto_renew_text}
             </div>
 
             <p style="text-align: center;">
-                <a href="https://trackmyprofit.in/admin/settings/user-setting/user-management" class="btn" style="color: #ffffff;">Renew / Manage Plan</a>
+                <a href="https://trackmyprofit.in/admin/settings/user-setting/user-management" class="btn" style="color: #ffffff;">Manage Subscription</a>
             </p>
         </div>
         <div class="footer">

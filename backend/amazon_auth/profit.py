@@ -124,12 +124,15 @@ def _combine_totals(amazon_t, myntra_t, type="style"):
             "mpfees": format_currency(get_sum("mpfees")),
             "mp_gst": format_currency(get_sum("mp_gst")),
             "estimatefees": format_currency(-abs(get_sum("estimatefees"))),
+            "other_expenses": format_currency(-abs(get_sum("other_expenses") or get_sum("total_other_expenses"))),
+            "total_other_expenses": format_currency(-abs(get_sum("other_expenses") or get_sum("total_other_expenses"))),
             "total_new_mpfees": format_currency(get_sum("total_new_mpfees")),
             "shippingfees": format_currency(get_sum("shippingfees")),
             "tacos": float(round((ads / grosssales * Decimal(100)) if grosssales else Decimal(0), 2)),
             "stdcost": format_currency(get_sum("stdcost")),
             "totalgst": format_currency(0),
             "tcs": format_currency(get_sum("tcs")),
+            "tds": format_currency(get_sum("tds")),
             "taxable_value": format_currency(get_sum("taxable_value")),
             
             "gst_to_pay_amount": format_currency(get_sum("gst_to_pay_amount")),
@@ -215,10 +218,13 @@ def _combine_totals(amazon_t, myntra_t, type="style"):
             "mpfees": float(round(get_sum("mpfees"), 2)),
             "mp_gst": format_currency(get_sum("mp_gst")),
             "estimatefees": format_currency(-abs(get_sum("estimatefees"))),
+            "other_expenses": format_currency(-abs(get_sum("other_expenses") or get_sum("total_other_expenses"))),
+            "total_other_expenses": format_currency(-abs(get_sum("other_expenses") or get_sum("total_other_expenses"))),
             "total_new_mpfees": format_currency(get_sum("total_new_mpfees")),
             "shipping": format_currency(shipping),
             "gst": format_currency(0),
             "tcs": format_currency(get_sum("tcs")),
+            "tds": format_currency(get_sum("tds")),
             "cost": format_currency(get_sum("cost") or get_sum("stdcost")),
 
             "taxable_value": format_currency(get_sum("taxable_value")),
@@ -341,6 +347,7 @@ class ProfitabilityItemDTO:
     final_net_sales: Any = "₹0.0"
     mpfees: Any = "₹0.0"
     estimatefees: Any = "₹0.0"
+    other_expenses: Any = "₹0.0"
     referral_fee: Any = "₹0.0"
     closing_fee: Any = "₹0.0"
     per_item_fee: Any = "₹0.0"
@@ -350,6 +357,7 @@ class ProfitabilityItemDTO:
     shippingfees: Any = "₹0.0"
     mp_gst: Any = "₹0.0"
     tcs: Any = "₹0.0"
+    tds: Any = "₹0.0"
     ads: Any = "₹0.0"
     taxable_value: Any = "₹0.0"
     gst_to_pay_amount: Any = "₹0.0"
@@ -423,6 +431,7 @@ class ProfitabilityDTOAdapter:
 
         mpfees = _format_curr(row.get("mpfees") if row.get("mpfees") is not None else (row.get("estimatefees") or row.get("commission")))
         estimatefees = _format_curr(row.get("estimatefees") if row.get("estimatefees") is not None else (row.get("mpfees") or mpfees))
+        other_expenses = _format_curr(row.get("other_expenses") if row.get("other_expenses") is not None else row.get("total_other_expenses"))
         referral_fee = _format_curr(row.get("referral_fee"))
         closing_fee = _format_curr(row.get("closing_fee"))
         per_item_fee = _format_curr(row.get("per_item_fee"))
@@ -432,6 +441,7 @@ class ProfitabilityDTOAdapter:
         shippingfees = _format_curr(row.get("shippingfees") if row.get("shippingfees") is not None else row.get("logistics_charge"))
         mp_gst = _format_curr(row.get("mp_gst"))
         tcs = _format_curr(row.get("tcs"))
+        tds = _format_curr(row.get("tds"))
         ads = _format_curr(row.get("ads") if row.get("ads") is not None else row.get("ad_spend"))
         taxable_value = _format_curr(row.get("taxable_value"))
         gst_to_pay_amount = _format_curr(row.get("gst_to_pay_amount") if row.get("gst_to_pay_amount") is not None else row.get("gsttopay"))
@@ -477,6 +487,7 @@ class ProfitabilityDTOAdapter:
             final_net_sales=final_net_sales,
             mpfees=mpfees,
             estimatefees=estimatefees,
+            other_expenses=other_expenses,
             referral_fee=referral_fee,
             closing_fee=closing_fee,
             per_item_fee=per_item_fee,
@@ -486,6 +497,7 @@ class ProfitabilityDTOAdapter:
             shippingfees=shippingfees,
             mp_gst=mp_gst,
             tcs=tcs,
+            tds=tds,
             ads=ads,
             taxable_value=taxable_value,
             gst_to_pay_amount=gst_to_pay_amount,
@@ -783,6 +795,52 @@ def enrich_row_image_urls(rows, user=None):
     return rows
 
 
+def _apply_other_expenses_to_myntra_rows(user, from_date_local, to_date_local, myntra_rows, myntra_totals, level='style'):
+    if not myntra_rows:
+        return
+    from .other_expence import calculate_other_expenses_map
+    expense_items = []
+    for idx, r in enumerate(myntra_rows):
+        g_qty = float(r.get('grossqty') or r.get('qty') or r.get('netqty') or r.get('final_net_qty') or 0)
+        n_qty = max(g_qty, 1.0) if level == 'order' else max(g_qty, 0.0)
+        f_sales = float(parse_currency_to_decimal(r.get('grosssales') or r.get('netsales') or r.get('final_net_sales') or 0))
+        expense_items.append({
+            'key': idx,
+            'marketplace': r.get('channel') or 'Myntra-India',
+            'units': float(n_qty),
+            'net_sales': float(f_sales),
+            'sku_count': 1,
+            'order_count_for_sku': 1
+        })
+    
+    exp_map = calculate_other_expenses_map(user, from_date_local, to_date_local, expense_items)
+    myntra_total_other_expenses = Decimal('0')
+    for idx, r in enumerate(myntra_rows):
+        allocated = exp_map.get(idx, Decimal('0'))
+        myntra_total_other_expenses += allocated
+        allocated_val = float(allocated)
+        r['other_expenses'] = f"-₹{round(allocated_val, 2)}" if allocated_val > 0 else "₹0.0"
+        
+        # Deduct allocated other_expenses from profit
+        cur_profit = parse_currency_to_decimal(r.get('profit') or 0)
+        new_profit = cur_profit - allocated
+        r['profit'] = f"₹{round(float(new_profit), 2)}"
+
+        # Recalculate profit percentage
+        f_sales = parse_currency_to_decimal(r.get('final_net_sales') or r.get('netsales') or r.get('grosssales') or 0)
+        if f_sales > 0:
+            r['grossprofitper'] = float(round((new_profit / f_sales) * Decimal(100), 2))
+
+    tot_other_val = float(myntra_total_other_expenses)
+    myntra_totals['other_expenses'] = f"-₹{round(tot_other_val, 2)}" if tot_other_val > 0 else "₹0.0"
+    myntra_totals['total_other_expenses'] = myntra_totals['other_expenses']
+    
+    # Recalculate myntra_totals profit
+    cur_tot_profit = parse_currency_to_decimal(myntra_totals.get('profit') or 0)
+    new_tot_profit = cur_tot_profit - myntra_total_other_expenses
+    myntra_totals['profit'] = f"₹{round(float(new_tot_profit), 2)}"
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def combined_profitability_details_transactions_shipping(request):
@@ -863,6 +921,7 @@ def combined_profitability_details_transactions_shipping(request):
         )
         myntra_rows = myntra_adapted.get("response", [])
         myntra_totals = myntra_adapted.get("totals", {})
+        _apply_other_expenses_to_myntra_rows(user, from_date_local, to_date_local, myntra_rows, myntra_totals, level='style')
         
     amazon_dtos = [ProfitabilityDTOAdapter.from_row(r, default_channel="Amazon-India") for r in amazon_rows]
     myntra_dtos = [ProfitabilityDTOAdapter.from_row(r, default_channel="Myntra") for r in myntra_rows]
@@ -979,6 +1038,7 @@ def combined_profitability_parent_transactions_shipping(request):
         )
         myntra_rows = myntra_adapted.get("response", [])
         myntra_totals = myntra_adapted.get("totals", {})
+        _apply_other_expenses_to_myntra_rows(user, from_date_local, to_date_local, myntra_rows, myntra_totals, level='parent')
         
     amazon_dtos = [ProfitabilityDTOAdapter.from_row(r, default_channel="Amazon-India") for r in amazon_rows]
     myntra_dtos = [ProfitabilityDTOAdapter.from_row(r, default_channel="Myntra") for r in myntra_rows]
@@ -1095,6 +1155,7 @@ def combined_sku_profit_report_transactions_shipping(request):
         )
         myntra_rows = myntra_adapted.get("response", [])
         myntra_totals = myntra_adapted.get("totals", {})
+        _apply_other_expenses_to_myntra_rows(user, from_date_local, to_date_local, myntra_rows, myntra_totals, level='order')
         
     amazon_dtos = [ProfitabilityDTOAdapter.from_row(r, default_channel="Amazon-India") for r in amazon_rows]
     myntra_dtos = [ProfitabilityDTOAdapter.from_row(r, default_channel="Myntra") for r in myntra_rows]
@@ -1934,6 +1995,7 @@ def _recalculate_totals_from_rows(rows):
     shippingfees = sum(parse_currency_to_decimal(r.get('shippingfees', 0)) for r in rows)
     stdcost = sum(parse_currency_to_decimal(r.get('stdcost', 0)) for r in rows)
     tcs = sum(parse_currency_to_decimal(r.get('tcs', 0)) for r in rows)
+    tds = sum(parse_currency_to_decimal(r.get('tds', 0)) for r in rows)
     taxable_value = sum(parse_currency_to_decimal(r.get('taxable_value', 0)) for r in rows)
     gst_to_pay_amount = sum(parse_currency_to_decimal(r.get('gst_to_pay_amount', 0)) for r in rows)
     exp_settlement = sum(parse_currency_to_decimal(r.get('exp_settlement', 0)) for r in rows)
@@ -1969,6 +2031,7 @@ def _recalculate_totals_from_rows(rows):
         "stdcost": format_currency(stdcost),
         "totalgst": format_currency(0),
         "tcs": format_currency(tcs),
+        "tds": format_currency(tds),
         "taxable_value": format_currency(taxable_value),
         "gst_to_pay_amount": format_currency(gst_to_pay_amount),
         "gst_to_pay_perc": f"{round((gst_to_pay_amount / taxable_value * Decimal(100)), 2) if taxable_value else 0}%",

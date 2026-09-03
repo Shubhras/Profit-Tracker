@@ -869,3 +869,36 @@ class ProfitCalculationSettingAdmin(admin.ModelAdmin):
     )
     search_fields = ("user__username", "user__email")
     raw_id_fields = ("user",)
+
+
+
+@admin.register(MarketplaceEstimatedFeeRule)
+class MarketplaceEstimatedFeeRuleAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'name',
+        'marketplace',
+        'how',
+        'by_cat',
+        'on',
+        'value',
+        'user',
+        'updated_at',
+    )
+    list_filter = ('marketplace', 'how', 'by_cat', 'on')
+    search_fields = ('name', 'desc', 'user__username', 'user__email')
+    autocomplete_fields = ('user',)
+    ordering = ('id',)
+    readonly_fields = ('created_at', 'updated_at')
+
+    fieldsets = (
+        (None, {
+            'fields': ('user', 'marketplace', 'name', 'desc')
+        }),
+        ('Rule Configuration', {
+            'fields': ('how', 'by_cat', 'on', 'value', 'groups')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
