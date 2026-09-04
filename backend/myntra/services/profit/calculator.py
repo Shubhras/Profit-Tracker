@@ -728,6 +728,15 @@ class MyntraProfitCalculator:
     # PROFIT
     # =====================================================
 
+    def get_profit_setting(self):
+        if not hasattr(self, '_profit_setting'):
+            from amazon_auth.models import ProfitCalculationSetting
+            setting = ProfitCalculationSetting.objects.filter(user=self.user).first()
+            if not setting:
+                setting = ProfitCalculationSetting()
+            self._profit_setting = setting
+        return self._profit_setting
+
     def calculate_profit(
         self,
         net_sales,
@@ -780,9 +789,16 @@ class MyntraProfitCalculator:
         gst_to_pay = gst_to_pay or ZERO
         tcs = tcs or ZERO
 
+        setting = self.get_profit_setting()
+
         signed_mp_fees = -mp_fees
         signed_shipping = -shipping_fees
-        signed_ads = -ad_spend
+        signed_ads = -ad_spend if setting.ad_spend else ZERO
+        mp_gst = mp_gst if setting.input_gst_itc else ZERO
+        product_cost = product_cost if setting.product_cost else ZERO
+        claim_amount = claim_amount if setting.claim else ZERO
+        gst_to_pay = gst_to_pay if setting.output_gst else ZERO
+        tcs = tcs if setting.tcs else ZERO
 
         return (
             net_sales

@@ -931,11 +931,29 @@ function Checkout() {
 
             {/* Rollover Box */}
             {isStarter && (
-              <div className="checkout-rollover-co">
-                On <b>{formatAddDays(7)}</b> your subscription moves to <b>Growth</b> — ₹9,999 plus tax,{' '}
-                <b>₹11,798.82 a month</b> in total, charged automatically. We email you 3 days before the due date and
-                again 1 day before. Cancel before that date and nothing further is taken.
-              </div>
+              <>
+                <div className="checkout-rollover-co">
+                  On <b>{formatAddDays(7)}</b> your subscription moves to <b>Growth</b> — ₹9,999 plus tax,{' '}
+                  <b>₹11,798.82 a month</b> in total, charged automatically. We email you 3 days before the due date and
+                  again 1 day before. Cancel before that date and nothing further is taken.
+                </div>
+                <div
+                  style={{
+                    fontSize: '12px',
+                    color: '#00784D',
+                    marginTop: '10px',
+                    background: '#F0FDF4',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid #DCFCE7',
+                    lineHeight: 1.5,
+                  }}
+                >
+                  💡 <b>UPI Autopay Tip:</b> If scanning the QR code displays an error in your UPI app, enter your{' '}
+                  <b>UPI ID</b> (e.g. <code>name@upi</code>) directly or select <b>Cards</b> inside the payment window
+                  to receive the Autopay approval request.
+                </div>
+              </>
             )}
 
             {/* Micro text */}

@@ -798,6 +798,11 @@ def enrich_row_image_urls(rows, user=None):
 def _apply_other_expenses_to_myntra_rows(user, from_date_local, to_date_local, myntra_rows, myntra_totals, level='style'):
     if not myntra_rows:
         return
+    from .models import ProfitCalculationSetting
+    profit_setting = ProfitCalculationSetting.objects.filter(user=user).first()
+    if not profit_setting:
+        profit_setting = ProfitCalculationSetting()
+
     from .other_expence import calculate_other_expenses_map
     expense_items = []
     for idx, r in enumerate(myntra_rows):
@@ -821,24 +826,26 @@ def _apply_other_expenses_to_myntra_rows(user, from_date_local, to_date_local, m
         allocated_val = float(allocated)
         r['other_expenses'] = f"-₹{round(allocated_val, 2)}" if allocated_val > 0 else "₹0.0"
         
-        # Deduct allocated other_expenses from profit
-        cur_profit = parse_currency_to_decimal(r.get('profit') or 0)
-        new_profit = cur_profit - allocated
-        r['profit'] = f"₹{round(float(new_profit), 2)}"
+        # Deduct allocated other_expenses from profit ONLY IF profit_setting.other_expense is True
+        if profit_setting.other_expense:
+            cur_profit = parse_currency_to_decimal(r.get('profit') or 0)
+            new_profit = cur_profit - allocated
+            r['profit'] = f"₹{round(float(new_profit), 2)}"
 
-        # Recalculate profit percentage
-        f_sales = parse_currency_to_decimal(r.get('final_net_sales') or r.get('netsales') or r.get('grosssales') or 0)
-        if f_sales > 0:
-            r['grossprofitper'] = float(round((new_profit / f_sales) * Decimal(100), 2))
+            # Recalculate profit percentage
+            f_sales = parse_currency_to_decimal(r.get('final_net_sales') or r.get('netsales') or r.get('grosssales') or 0)
+            if f_sales > 0:
+                r['grossprofitper'] = float(round((new_profit / f_sales) * Decimal(100), 2))
 
     tot_other_val = float(myntra_total_other_expenses)
     myntra_totals['other_expenses'] = f"-₹{round(tot_other_val, 2)}" if tot_other_val > 0 else "₹0.0"
     myntra_totals['total_other_expenses'] = myntra_totals['other_expenses']
     
-    # Recalculate myntra_totals profit
-    cur_tot_profit = parse_currency_to_decimal(myntra_totals.get('profit') or 0)
-    new_tot_profit = cur_tot_profit - myntra_total_other_expenses
-    myntra_totals['profit'] = f"₹{round(float(new_tot_profit), 2)}"
+    # Recalculate myntra_totals profit ONLY IF profit_setting.other_expense is True
+    if profit_setting.other_expense:
+        cur_tot_profit = parse_currency_to_decimal(myntra_totals.get('profit') or 0)
+        new_tot_profit = cur_tot_profit - myntra_total_other_expenses
+        myntra_totals['profit'] = f"₹{round(float(new_tot_profit), 2)}"
 
 
 @api_view(['POST'])
@@ -1086,10 +1093,14 @@ def combined_sku_profit_report_transactions_shipping(request):
     if search_term:
         search_term = str(search_term).strip()
         
-    from_date_str = filters.get('fromDate')
-    to_date_str = filters.get('endDate')
+    from_date_str = filters.get('fromDate') or filters.get('from_date')
+    to_date_str = filters.get('endDate') or filters.get('toDate') or filters.get('to_date')
     sku = data.get("sku") or filters.get("sku")
-    parent_product_id = data.get("parentProductId") or filters.get("parentProductId") or filters.get("parent_product_id") or data.get("asin") or filters.get("asin") or filters.get("parent_asin")
+    parent_product_id = data.get("parentProductId") or filters.get("parentProductId") or filters.get("parent_product_id") or data.get("asin") or filters.get("asin") or filters.get("parent_asin") or filters.get("parentproductid")
+    if isinstance(parent_product_id, dict):
+        parent_product_id = parent_product_id.get("IN", [])
+    if isinstance(parent_product_id, list) and parent_product_id:
+        parent_product_id = parent_product_id[0]
     
     channels, has_amazon, has_myntra = _extract_channels_and_flags(data, filters)
     
@@ -1192,7 +1203,12 @@ def get_myntra_dashboard_stats(user, from_date_str, to_date_str):
     from myntra.models import MyntraOrder
     from django.db.models import Sum
     from datetime import datetime
+    from .models import ProfitCalculationSetting
     
+    profit_setting = ProfitCalculationSetting.objects.filter(user=user).first()
+    if not profit_setting:
+        profit_setting = ProfitCalculationSetting()
+
     from_date_local = None
     to_date_local = None
     try:
@@ -1212,6 +1228,23 @@ def get_myntra_dashboard_stats(user, from_date_str, to_date_str):
     summary = StyleSummary(calculator)
     myntra_raw_rows = summary.execute()
     
+    # Calculate other_expenses for Myntra style rows
+    from .other_expence import calculate_other_expenses_map
+    expense_items = []
+    for idx, r in enumerate(myntra_raw_rows):
+        g_qty = float(r.get('gross_qty') or r.get('net_qty') or 0)
+        n_qty = max(g_qty, 0.0)
+        f_sales = float(Decimal(str(r.get('gross_sales') or 0)))
+        expense_items.append({
+            'key': idx,
+            'marketplace': 'Myntra-India',
+            'units': float(n_qty),
+            'net_sales': float(f_sales),
+            'sku_count': 1,
+            'order_count_for_sku': 1
+        })
+    other_expenses_map = calculate_other_expenses_map(user, from_date_local, to_date_local, expense_items)
+
     # Aggregate values from style rows
     gross_sales = Decimal(0)
     net_sales = Decimal(0)
@@ -1232,13 +1265,18 @@ def get_myntra_dashboard_stats(user, from_date_str, to_date_str):
     customer_return_amount = Decimal(0)
     courier_return_amount = Decimal(0)
     
-    for r in myntra_raw_rows:
+    for idx, r in enumerate(myntra_raw_rows):
         g_sales = Decimal(str(r.get("gross_sales") or 0))
         n_sales = Decimal(str(r.get("net_sales") or 0))
         gross_sales += g_sales
         net_sales += g_sales
         final_net_sales += n_sales
-        profit += Decimal(str(r.get("profit") or 0))
+
+        row_profit = Decimal(str(r.get("profit") or 0))
+        if profit_setting.other_expense:
+            row_profit -= other_expenses_map.get(idx, Decimal('0'))
+
+        profit += row_profit
         mp_fees += Decimal(str(r.get("mp_fees") or 0))
         shipping_fees += Decimal(str(r.get("shipping_fees") or 0))
         ads += Decimal(str(r.get("ads") or 0))
@@ -1272,7 +1310,6 @@ def get_myntra_dashboard_stats(user, from_date_str, to_date_str):
     ).order_by('date')
 
     final_net_qty = net_qty - (courier_return_count + customer_return_count + claim_count)
-    print("final_net_qty myntraaaaaaa ", final_net_qty)
     
     margin_factor = float(profit / net_sales) if net_sales else 0.0
     
@@ -1292,14 +1329,33 @@ def get_myntra_dashboard_stats(user, from_date_str, to_date_str):
     from myntra.services.profit.sku_summary import SKUSummary
     sku_summary = SKUSummary(calculator)
     myntra_skus = sku_summary.execute()
+
+    sku_expense_items = []
+    for idx, r in enumerate(myntra_skus):
+        g_qty = float(r.get('gross_qty') or r.get('net_qty') or 0)
+        n_qty = max(g_qty, 0.0)
+        f_sales = float(Decimal(str(r.get('gross_sales') or 0)))
+        sku_expense_items.append({
+            'key': idx,
+            'marketplace': 'Myntra-India',
+            'units': float(n_qty),
+            'net_sales': float(f_sales),
+            'sku_count': 1,
+            'order_count_for_sku': 1
+        })
+    sku_other_expenses_map = calculate_other_expenses_map(user, from_date_local, to_date_local, sku_expense_items)
     
     top_skus_mapped = []
-    for r in myntra_skus:
+    for idx, r in enumerate(myntra_skus):
         sku_code = r.get("seller_sku") or r.get("seller_sku_code") or ""
+        s_profit = Decimal(str(r.get("profit") or 0))
+        if profit_setting.other_expense:
+            s_profit -= sku_other_expenses_map.get(idx, Decimal('0'))
+
         top_skus_mapped.append({
             "child_sku": sku_code,
             "sku": sku_code,
-            "profit": float(r.get("profit") or 0),
+            "profit": float(s_profit),
             "net_sales": float(r.get("net_sales") or 0),
             "grosssales": f"₹{round(float(r.get('gross_sales') or 0), 2)}",
             "shippingfees": float(r.get("shipping_fees") or 0),
@@ -1307,17 +1363,9 @@ def get_myntra_dashboard_stats(user, from_date_str, to_date_str):
         })
 
     final_net_sales = gross_sales - (courier_return_amount + customer_return_amount + claim_amount) 
-    # print("gross_sales myntraaaaaaa ", gross_sales)
-    # print("courier_return_amount myntraaaaaaa>>>>>>>>>>>>>>>> ", courier_return_amount)
-    # print("customer_return_amount myntraaaaaaa>>>>>>>>>>>>>>>>>>>>>> ", customer_return_amount)
-    # print("claim_amount myntraaaaaaa ", claim_amount)
-    # print("final_net_sales myntraaaaaaa ", final_net_sales)   
-    # print("courier_return_count myntraaaaaaa ", courier_return_count)
-    # print("customer_return_count myntraaaaaaa ", customer_return_count)
         
     return {
         "gross_sales": gross_sales,
-        # "net_sales": net_sales,
         "net_sales": final_net_sales,
         "final_net_sales": final_net_sales,
         "profit": profit,
@@ -1325,7 +1373,6 @@ def get_myntra_dashboard_stats(user, from_date_str, to_date_str):
         "shipping_fees": shipping_fees,
         "ads": ads,
         "gross_qty": gross_qty,
-        # "net_qty": net_qty,
         "net_qty": final_net_qty,
         "final_net_qty": final_net_qty,
         "return_qty": return_qty,
@@ -1982,11 +2029,13 @@ def _recalculate_totals_from_rows(rows):
     total_ads = sum(parse_currency_to_decimal(r.get('ads', 0)) for r in rows)
     total_qty = sum(int(r.get('netqty', 0) or 0) for r in rows)
     total_final_net_qty = sum(int(r.get('final_net_qty', r.get('netqty', 0)) or 0) for r in rows)
+    total_cancelled_qty = sum(int(r.get('cancelled_qty', r.get('cancelledcanqty', 0)) or 0) for r in rows)
     total_return_count = sum(int(r.get('returnqty', r.get('return_count', 0)) or 0) for r in rows)
 
     grosssales = sum(parse_currency_to_decimal(r.get('grosssales', 0)) for r in rows)
     netsales = sum(parse_currency_to_decimal(r.get('netsales', 0)) for r in rows)
     total_final_net_sales = sum(parse_currency_to_decimal(r.get('final_net_sales', r.get('netsales', 0)) or 0) for r in rows)
+    cancelledsales = sum(parse_currency_to_decimal(r.get('cancelled_sales', r.get('cancelledcansales', 0)) or 0) for r in rows)
     total_profit = sum(parse_currency_to_decimal(r.get('profit', 0)) for r in rows)
 
     mpfees = sum(parse_currency_to_decimal(r.get('mpfees', r.get('new_mpfees', 0)) or 0) for r in rows)
@@ -1996,6 +2045,7 @@ def _recalculate_totals_from_rows(rows):
     stdcost = sum(parse_currency_to_decimal(r.get('stdcost', 0)) for r in rows)
     tcs = sum(parse_currency_to_decimal(r.get('tcs', 0)) for r in rows)
     tds = sum(parse_currency_to_decimal(r.get('tds', 0)) for r in rows)
+    other_expenses = sum(parse_currency_to_decimal(r.get('other_expenses', r.get('total_other_expenses', 0)) or 0) for r in rows)
     taxable_value = sum(parse_currency_to_decimal(r.get('taxable_value', 0)) for r in rows)
     gst_to_pay_amount = sum(parse_currency_to_decimal(r.get('gst_to_pay_amount', 0)) for r in rows)
     exp_settlement = sum(parse_currency_to_decimal(r.get('exp_settlement', 0)) for r in rows)
@@ -2014,12 +2064,15 @@ def _recalculate_totals_from_rows(rows):
     return {
         "ads": format_currency(total_ads),
         "netqty": total_qty,
+        "total_final_net_qty": total_final_net_qty,
+        "cancelled_qty": total_cancelled_qty,
         "totalreturn": total_return_count,
         "totalreturnper": f"{round(return_percentage, 2)}%",
         "grosssales": format_currency(grosssales),
         "netsales": format_currency(netsales),
         "total_net_sales": format_currency(netsales),
         "total_final_net_sales": format_currency(total_final_net_sales),
+        "cancelled_sales": format_currency(cancelledsales),
         "profit": format_currency(total_profit),
         "grossprofitper": float(round(profit_perc, 2)),
         "mpfees": format_currency(mpfees),
@@ -2032,6 +2085,8 @@ def _recalculate_totals_from_rows(rows):
         "totalgst": format_currency(0),
         "tcs": format_currency(tcs),
         "tds": format_currency(tds),
+        "other_expenses": format_currency(other_expenses),
+        "total_other_expenses": format_currency(other_expenses),
         "taxable_value": format_currency(taxable_value),
         "gst_to_pay_amount": format_currency(gst_to_pay_amount),
         "gst_to_pay_perc": f"{round((gst_to_pay_amount / taxable_value * Decimal(100)), 2) if taxable_value else 0}%",

@@ -4342,7 +4342,8 @@ def get_outstanding_payments(request):
 @permission_classes([IsAuthenticated])
 def amazon_profitability_details(request):
 
-    user = request.user
+    user = get_effective_user(request.user)
+    profit_setting, _ = ProfitCalculationSetting.objects.get_or_create(user=user)
     data = request.data
 
     filters = data.get("filters", {})
@@ -4913,8 +4914,10 @@ def amazon_profitability_details(request):
             "channel1": "Amazon-India",
             "grossqty": gross_qty,
             "netqty": net_qty,
+            "final_net_qty": net_qty,
             "grosssales": format_currency(gross_sales),
             "netsales": format_currency(net_sales),
+            "final_net_sales": format_currency(net_sales),
             # "ads": format_currency(ads),
             "ads": format_currency(ads),
             "ads_sales": format_currency(ads_sales),
@@ -5607,9 +5610,11 @@ def amazon_profitability_parent(request):
 
             "grossqty": int(gross_qty),
             "netqty": int(net_qty),
+            "final_net_qty": int(net_qty),
 
             "grosssales": format_currency(gross_sales),
             "netsales": format_currency(net_sales),
+            "final_net_sales": format_currency(net_sales),
 
             "ads": format_currency(ads),
             "tacos": round(tacos, 2),
@@ -5707,9 +5712,10 @@ def amazon_profitability_parent(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def amazon_profitability_parent_transactions_shipping(request):
-    from amazon_auth.models import ProductMapping, OrderItem, AmazonListingItem
+    from amazon_auth.models import ProductMapping, OrderItem, AmazonListingItem, ProfitCalculationSetting
 
     user = get_effective_user(request.user)
+    profit_setting, _ = ProfitCalculationSetting.objects.get_or_create(user=user)
     data = request.data
 
     filters = data.get("filters", {})
@@ -6533,18 +6539,70 @@ def amazon_profitability_parent_transactions_shipping(request):
         if p and s:
             parent_sku_map.setdefault(p, set()).add(s)
 
+    processed_skus_in_order = set()
+    parent_row_counts = {}
+    for r in items:
+        s = r.get('child_sku') or r.get('seller_sku')
+        if s:
+            processed_skus_in_order.add(s)
+        p = r.get('parent_asin') or r.get('asin')
+        if p:
+            parent_row_counts[p] = parent_row_counts.get(p, 0) + 1
+
+    for sku, data in ads_by_sku.items():
+        if sku in processed_skus_in_order:
+            continue
+        if search_term:
+            sku_val = str(sku or "")
+            if search_term.lower() not in sku_val.lower():
+                continue
+        ads_cost = -abs(data["cost"])
+        if ads_cost == 0:
+            continue
+        p = data.get("parent_asin") or data.get("asin")
+        if p:
+            parent_row_counts[p] = parent_row_counts.get(p, 0) + 1
+
     expense_items = []
     for idx, r in enumerate(items):
         g_qty = Decimal(r.get('grossqty') or 0)
         n_qty = max(g_qty, 0)
         f_sales = Decimal(r.get('grosssales') or 0)
+        p = r.get('parent_asin') or r.get('asin')
+        tot_p_skus = len(parent_sku_map.get(p, set())) or 1
+        k_rows = parent_row_counts.get(p, 1) or 1
+        sku_cnt = float(tot_p_skus) / float(k_rows)
 
         expense_items.append({
             'key': idx,
             'marketplace': r.get('channel') or r.get('marketplace') or 'Amazon-India',
             'units': float(n_qty),
             'net_sales': float(f_sales),
-            'sku_count': 1,
+            'sku_count': sku_cnt,
+            'order_count_for_sku': 1
+        })
+
+    for sku, data in ads_by_sku.items():
+        if sku in processed_skus_in_order:
+            continue
+        if search_term:
+            sku_val = str(sku or "")
+            if search_term.lower() not in sku_val.lower():
+                continue
+        ads_cost = -abs(data["cost"])
+        if ads_cost == 0:
+            continue
+        p = data.get("parent_asin") or data.get("asin")
+        tot_p_skus = len(parent_sku_map.get(p, set())) or 1
+        k_rows = parent_row_counts.get(p, 1) or 1
+        sku_cnt = float(tot_p_skus) / float(k_rows)
+
+        expense_items.append({
+            'key': f"ad_sku_{sku}",
+            'marketplace': 'Amazon-India',
+            'units': 0.0,
+            'net_sales': 0.0,
+            'sku_count': sku_cnt,
             'order_count_for_sku': 1
         })
 
@@ -6821,14 +6879,15 @@ def amazon_profitability_parent_transactions_shipping(request):
         profit = (
             final_net_sales
             + shipping_final
-            + ads
-            + tcs_total
+            + (ads if profit_setting.ad_spend else Decimal("0"))
+            + (tcs_total if profit_setting.tcs else Decimal("0"))
             - estimated_fees
-            - mp_gst
+            - (mp_gst if profit_setting.input_gst_itc else Decimal("0"))
+            - (gst_to_pay_amount if profit_setting.output_gst else Decimal("0"))
             - promo_discount
-            - Decimal(str(order_claim_amount))
-            - total_cost
-            - row_other_expense
+            - (Decimal(str(order_claim_amount)) if profit_setting.claim else Decimal("0"))
+            - (total_cost if profit_setting.product_cost else Decimal("0"))
+            - (row_other_expense if profit_setting.other_expense else Decimal("0"))
         )
 
         exp_settlement = (
@@ -6994,6 +7053,10 @@ def amazon_profitability_parent_transactions_shipping(request):
         if ads_cost == 0:
             continue
             
+        row_other_expense = Decimal(str(other_expenses_map.get(f"ad_sku_{sku}", Decimal(0))))
+        profit = ads_cost - abs(row_other_expense)
+        ads_margin = (profit / 100 * 100) if 1 else 0
+
         results.append({
             "asin": data["asin"],
             "parent_asin": data["parent_asin"],
@@ -7013,7 +7076,7 @@ def amazon_profitability_parent_transactions_shipping(request):
             "mp_gst": format_currency(0),
             "new_mpfees": format_currency(0),
             "estimatefees": format_currency(0),
-            "other_expenses": format_currency(0),
+            "other_expenses": format_currency(-abs(row_other_expense)),
             "referral_fee": format_currency(0),
             "closing_fee": format_currency(0),
             "per_item_fee": format_currency(0),
@@ -7024,8 +7087,8 @@ def amazon_profitability_parent_transactions_shipping(request):
             "shippingfees": format_currency(0),
             "tcs": format_currency(0),
             "tds": format_currency(0),
-            "profit": format_currency(ads_cost),
-            "grossprofitper": round((ads_cost / 100 * 100), 2) if ads_cost else 0,
+            "profit": format_currency(profit),
+            "grossprofitper": round(ads_margin, 2),
             "retpercent": 0,
             "returnqty": 0,
             "gst": format_currency(0),
@@ -7053,7 +7116,8 @@ def amazon_profitability_parent_transactions_shipping(request):
         })
         
         total_ads += ads_cost
-        total_profit += ads_cost
+        total_profit += profit
+        total_other_expenses += row_other_expense
     
     return Response({
         "status": True,
@@ -7877,14 +7941,26 @@ def sku_profit_report(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def sku_profit_report_transactions_shipping(request):
+    from amazon_auth.models import ProfitCalculationSetting
 
     user = get_effective_user(request.user)
+    profit_setting, _ = ProfitCalculationSetting.objects.get_or_create(user=user)
     data = request.data
 
     # ---------------- GET ASIN ----------------
     filters = data.get("filters", {})
 
     sku = data.get("sku") or filters.get("sku")
+
+    sku = data.get("sku") or filters.get("sku")
+    if not sku:
+        p_id = data.get("parentProductId") or filters.get("parentProductId") or filters.get("parent_product_id") or data.get("asin") or filters.get("asin") or filters.get("parent_asin") or filters.get("parentproductid")
+        if isinstance(p_id, dict):
+            p_id = p_id.get("IN", [])
+        if isinstance(p_id, list) and p_id:
+            sku = p_id[0]
+        elif isinstance(p_id, str):
+            sku = p_id
 
     if not sku:
         return Response({
@@ -7914,12 +7990,14 @@ def sku_profit_report_transactions_shipping(request):
 
     from_date = to_date = None
     try:
-        if filters.get("fromDate"):
-            naive_from = datetime.strptime(filters["fromDate"], "%Y-%m-%d")
+        f_date_str = filters.get("fromDate") or filters.get("from_date")
+        e_date_str = filters.get("endDate") or filters.get("toDate") or filters.get("to_date")
+        if f_date_str:
+            naive_from = datetime.strptime(f_date_str, "%Y-%m-%d")
             from_date = naive_from.replace(tzinfo=IST).astimezone(UTC)
 
-        if filters.get("endDate"):
-            naive_to = datetime.strptime(filters["endDate"], "%Y-%m-%d") + timedelta(days=1)
+        if e_date_str:
+            naive_to = datetime.strptime(e_date_str, "%Y-%m-%d") + timedelta(days=1)
             to_date = naive_to.replace(tzinfo=IST).astimezone(UTC)
 
         if from_date and not to_date:
@@ -7931,10 +8009,12 @@ def sku_profit_report_transactions_shipping(request):
         
     from_date_local = to_date_local = None    #for ads timezone
     try:
-        if filters.get("fromDate"):
-            from_date_local = datetime.strptime(filters["fromDate"], "%Y-%m-%d").date()
-        if filters.get("endDate"):
-            to_date_local = datetime.strptime(filters["endDate"], "%Y-%m-%d").date()
+        f_date_str = filters.get("fromDate") or filters.get("from_date")
+        e_date_str = filters.get("endDate") or filters.get("toDate") or filters.get("to_date")
+        if f_date_str:
+            from_date_local = datetime.strptime(f_date_str, "%Y-%m-%d").date()
+        if e_date_str:
+            to_date_local = datetime.strptime(e_date_str, "%Y-%m-%d").date()
         if from_date_local and not to_date_local:
             to_date_local = from_date_local
     except Exception as e:
@@ -7942,9 +8022,8 @@ def sku_profit_report_transactions_shipping(request):
 
 
     order_filter = Q(
-        order__user=user,
-        seller_sku=sku
-    )
+        order__user=user
+    ) & (Q(seller_sku=sku) | Q(asin=sku))
 
     if from_date:
         order_filter &= Q(order__purchase_date__gte=from_date)
@@ -8658,19 +8737,102 @@ def sku_profit_report_transactions_shipping(request):
     total_other_expenses = 0.0
 
     # ---------------- CALCULATE OTHER EXPENSES ----------------
+    all_oi = OrderItem.objects.filter(order__user=user).values('parent_asin', 'asin', 'seller_sku')
+    parent_sku_map = {}
+    for oi in all_oi:
+        p = oi.get('parent_asin') or oi.get('asin')
+        s = oi.get('seller_sku')
+        if p and s:
+            parent_sku_map.setdefault(p, set()).add(s)
+
+    pm_qs = ProductMapping.objects.filter(account__user=user).values('parent_asin', 'asin', 'seller_sku')
+    for pm in pm_qs:
+        p = pm.get('parent_asin') or pm.get('asin')
+        s = pm.get('seller_sku')
+        if p and s:
+            parent_sku_map.setdefault(p, set()).add(s)
+
+    ali_qs = AmazonListingItem.objects.filter(user=user).values('asin', 'sku')
+    for ali in ali_qs:
+        p = ali.get('asin')
+        s = ali.get('sku')
+        if p and s:
+            parent_sku_map.setdefault(p, set()).add(s)
+
+    child_to_parent = {}
+    sku_to_asin = {}
+    for oi in all_oi:
+        p = oi.get('parent_asin')
+        s = oi.get('seller_sku')
+        a = oi.get('asin')
+        if s and a: sku_to_asin[s] = a
+        if p:
+            if s: child_to_parent[s] = p
+            if a: child_to_parent[a] = p
+
+    for pm in pm_qs:
+        p = pm.get('parent_asin')
+        s = pm.get('seller_sku')
+        a = pm.get('asin')
+        if s and a: sku_to_asin[s] = a
+        if p:
+            if s: child_to_parent[s] = p
+            if a: child_to_parent[a] = p
+
+    for ali in ali_qs:
+        s = ali.get('sku')
+        a = ali.get('asin')
+        if s and a: sku_to_asin[s] = a
+
+    active_asins_by_parent = {}
+    period_oi = OrderItem.objects.filter(order__user=user)
+    if from_date:
+        period_oi = period_oi.filter(order__purchase_date__gte=from_date)
+    if to_date:
+        period_oi = period_oi.filter(order__purchase_date__lt=to_date)
+    period_oi = period_oi.exclude(order__order_status__icontains='Cancel')
+
+    for oi in period_oi.values('parent_asin', 'asin', 'seller_sku'):
+        s = oi.get('seller_sku')
+        a = oi.get('asin')
+        p = child_to_parent.get(s) or child_to_parent.get(a) or oi.get('parent_asin')
+        child_key = s or a or sku_to_asin.get(s)
+        if p and child_key:
+            active_asins_by_parent.setdefault(p, set()).add(child_key)
+
+    for k, ad_val in ads_map.items():
+        if ad_val.get("cost", 0) != 0:
+            p = child_to_parent.get(k) or child_to_parent.get(sku_to_asin.get(k)) or k
+            if k not in sku_to_asin.values() or not active_asins_by_parent.get(p):
+                active_asins_by_parent.setdefault(p, set()).add(k)
+
     expense_items = []
-    total_orders_for_sku = len(items) if items else 1
+    sku_order_counts = {}
+    for r in items:
+        s_key = r.get('seller_sku') or r.get('asin')
+        if s_key:
+            sku_order_counts[s_key] = sku_order_counts.get(s_key, 0) + 1
+
     for idx, r in enumerate(items):
         g_qty = float(r.get('grossqty') or 0)
         n_qty = max(g_qty, 0)
         f_sales = float(r.get('grosssales') or 0)
+        s = r.get('seller_sku')
+        a = r.get('asin')
+        p = child_to_parent.get(s) or child_to_parent.get(a) or r.get('parent_asin') or a
+        tot_p_skus = len(parent_sku_map.get(p, set())) or 1
+        active_rows = len(active_asins_by_parent.get(p, set())) or 1
+        sku_weight_for_child = float(tot_p_skus) / float(active_rows)
+        s_key = s or a
+        ord_cnt_sku = sku_order_counts.get(s_key, 1)
+
         expense_items.append({
             'key': idx,
             'marketplace': r.get('channel') or r.get('marketplace') or 'Amazon-India',
             'units': float(n_qty),
             'net_sales': float(f_sales),
-            'sku_count': 1,
-            'order_count_for_sku': total_orders_for_sku
+            'sku_count': sku_weight_for_child,
+            'order_count_for_sku': ord_cnt_sku
         })
 
     other_expenses_map = calculate_other_expenses_map(user, from_date_local, to_date_local, expense_items)
@@ -8929,17 +9091,32 @@ def sku_profit_report_transactions_shipping(request):
         
         row_other_expense = float(other_expenses_map.get(idx, 0))
 
+        # profit = (
+        #     final_net_sales
+        #     + shipping_final
+        #     + ads
+        #     + tcs
+        #     - estimated_fees
+        #     - mp_gst
+        #     - gst_to_pay_amount
+        #     - promo_discount
+        #     - order_claim_amount
+        #     - cost
+        #     - row_other_expense
+        # )
+
         profit = (
             final_net_sales
             + shipping_final
-            + ads
-            + tcs
+            + (ads if profit_setting.ad_spend else 0)
+            + (tcs if profit_setting.tcs else 0)
             - estimated_fees
-            - mp_gst
+            - (mp_gst if profit_setting.input_gst_itc else 0)
+            - (gst_to_pay_amount if profit_setting.output_gst else 0)
             - promo_discount
-            - order_claim_amount
-            - cost
-            - row_other_expense
+            - (order_claim_amount if profit_setting.claim else 0)
+            - (cost if profit_setting.product_cost else 0)
+            - (row_other_expense if profit_setting.other_expense else 0)
         )
 
         exp_settlement = (
@@ -9231,9 +9408,10 @@ def get_catalog_details(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def amazon_profitability_details_transactions_shipping(request):
-    from amazon_auth.models import ProductMapping, OrderItem, AmazonListingItem
+    from amazon_auth.models import ProductMapping, OrderItem, AmazonListingItem, ProfitCalculationSetting
 
     user = get_effective_user(request.user)
+    profit_setting, _ = ProfitCalculationSetting.objects.get_or_create(user=user)
     data_source_raw = getattr(request, 'data', None) or (request.POST if request.method == 'POST' else request.GET)
     
     data_source = {}
@@ -9978,26 +10156,6 @@ def amazon_profitability_details_transactions_shipping(request):
         if p and s:
             parent_sku_map.setdefault(p, set()).add(s)
 
-    expense_items = []
-    for idx, r in enumerate(items):
-        g_qty = float(r.get('grossqty') or 0)
-        n_qty = max(g_qty, 0)
-        f_sales = float(r.get('grosssales') or 0)
-
-        p_asin = r.get('parent_asin') or r.get('asin')
-        sku_cnt = len(parent_sku_map.get(p_asin, set())) or 1
-
-        expense_items.append({
-            'key': idx,
-            'marketplace': r.get('channel') or r.get('marketplace') or 'Amazon-India',
-            'units': float(n_qty),
-            'net_sales': float(f_sales),
-            'sku_count': sku_cnt,
-            'order_count_for_sku': 1
-        })
-
-    other_expenses_map = calculate_other_expenses_map(user, from_date_local, to_date_local, expense_items)
-
     # ---------------- BUILD RESPONSE ----------------
     results = []
 
@@ -10114,6 +10272,52 @@ def amazon_profitability_details_transactions_shipping(request):
         ads_by_parent[p_asin]["orders"] += int(agg["total_ads_orders"] or 0)
         ads_by_parent[p_asin]["impressions"] += int(agg["total_ads_impressions"] or 0)
     # ===================================
+
+    expense_items = []
+    processed_asins_in_order = set()
+    for idx, r in enumerate(items):
+        p_asin = r.get('parent_asin') or r.get('asin')
+        if p_asin:
+            processed_asins_in_order.add(p_asin)
+        g_qty = float(r.get('grossqty') or 0)
+        n_qty = max(g_qty, 0)
+        f_sales = float(r.get('grosssales') or 0)
+
+        sku_cnt = len(parent_sku_map.get(p_asin, set())) or 1
+
+        expense_items.append({
+            'key': idx,
+            'marketplace': r.get('channel') or r.get('marketplace') or 'Amazon-India',
+            'units': float(n_qty),
+            'net_sales': float(f_sales),
+            'sku_count': sku_cnt,
+            'order_count_for_sku': 1
+        })
+
+    for p_asin, data in ads_by_parent.items():
+        if p_asin in processed_asins_in_order:
+            continue
+        if parent_ids and p_asin not in parent_ids:
+            continue
+        if search_term:
+            title = str(data.get("title") or "")
+            if (search_term.lower() not in str(p_asin).lower()
+                    and search_term.lower() not in title.lower()):
+                continue
+        ads_cost = -abs(data["cost"])
+        if ads_cost == 0:
+            continue
+        sku_cnt = len(parent_sku_map.get(p_asin, set())) or 1
+        expense_items.append({
+            'key': f"ad_{p_asin}",
+            'marketplace': 'Amazon-India',
+            'units': 0.0,
+            'net_sales': 0.0,
+            'sku_count': sku_cnt,
+            'order_count_for_sku': 1
+        })
+
+    other_expenses_map, total_effective_expense = calculate_other_expenses_map(user, from_date_local, to_date_local, expense_items, return_total_expense=True)
 
     processed_parent_asins = set()
 
@@ -10371,17 +10575,20 @@ def amazon_profitability_details_transactions_shipping(request):
             - promo_discount
             - order_claim_amount
         )
+
+        
         profit = (
             final_net_sales
             + shipping_final
-            + ads
-            + tcs_total
+            + (ads if profit_setting.ad_spend else 0)
+            + (tcs_total if profit_setting.tcs else 0)
             - estimated_fees
-            - mp_gst
+            - (mp_gst if profit_setting.input_gst_itc else 0)
+            - (gst_to_pay_amount if profit_setting.output_gst else 0)
             - promo_discount
-            - order_claim_amount
-            - stdcost
-            - row_other_expense
+            - (order_claim_amount if profit_setting.claim else 0)
+            - (stdcost if profit_setting.product_cost else 0)
+            - (row_other_expense if profit_setting.other_expense else 0)
         )
         profit_margin = (profit / final_net_sales * 100) if final_net_sales else 0
 
@@ -10526,7 +10733,9 @@ def amazon_profitability_details_transactions_shipping(request):
         ads_cost = -abs(data["cost"])
         if ads_cost == 0:
             continue
-        ads_margin = (ads_cost / 100 * 100) if 1 else 0
+        row_other_expense = float(other_expenses_map.get(f"ad_{p_asin}", Decimal(0)))
+        profit = ads_cost - abs(row_other_expense)
+        ads_margin = (profit / 100 * 100) if 1 else 0
         # ads_margin = 0
         results.append({
             "asin": p_asin, 
@@ -10549,7 +10758,7 @@ def amazon_profitability_details_transactions_shipping(request):
             "mp_gst": format_currency(0),
             "new_mpfees": format_currency(0),
             "estimatefees": format_currency(0),
-            "other_expenses": format_currency(0),
+            "other_expenses": format_currency(-abs(row_other_expense)),
             "referral_fee": format_currency(0),
             "closing_fee": format_currency(0),
             "per_item_fee": format_currency(0),
@@ -10558,7 +10767,7 @@ def amazon_profitability_details_transactions_shipping(request):
             "fba_weight_handling_fee": format_currency(0),
             "tax_amount": format_currency(0),
             "shippingfees": format_currency(0),
-            "profit": format_currency(ads_cost),
+            "profit": format_currency(profit),
             "grossprofitper": round(ads_margin, 2),
             "returnqty": 0,
             "retpercent": 0,
@@ -10593,7 +10802,8 @@ def amazon_profitability_details_transactions_shipping(request):
         })
 
         total_ads += ads_cost
-        total_profit += ads_cost
+        total_profit += profit
+        total_other_expenses += row_other_expense
 
     # ====== END: ADD ASINS WITH AD SPEND BUT NO ORDERS ======
 
@@ -10637,8 +10847,8 @@ def amazon_profitability_details_transactions_shipping(request):
             "mp_gst": format_currency(total_mp_gst),
             # "estimatefees": format_currency(total_estimatefees),
             "estimatefees": format_currency(-abs(total_estimatefees)),
-            "other_expenses": format_currency(-abs(total_other_expenses)),
-            "total_other_expenses": format_currency(-abs(total_other_expenses)),
+            "other_expenses": format_currency(-abs(total_effective_expense if total_effective_expense > 0 else total_other_expenses)),
+            "total_other_expenses": format_currency(-abs(total_effective_expense if total_effective_expense > 0 else total_other_expenses)),
             "total_new_mpfees": format_currency(total_mpfees),
             "shippingfees": format_currency(total_shipping),
             "tacos": (total_ads / total_sales * 100) if total_sales else 0,
@@ -10740,6 +10950,10 @@ def sku_profitability_list_filtered(request):
         row["stdcost"] = format_currency(row.get("stdcost", 0))
         row["tcs"] = format_currency(row.get("tcs", 0))
         row["tds"] = format_currency(row.get("tds", 0))
+        row["other_expenses"] = format_currency(row.get("other_expenses", 0))
+        row["total_other_expenses"] = format_currency(row.get("other_expenses", 0))
+        row["cancelled_qty"] = row.get("cancelled_qty", 0)
+        row["cancelled_sales"] = format_currency(row.get("cancelled_sales", 0))
         row["taxable_value"] = format_currency(row.get("taxable_value", 0))
         row["gst_to_pay_amount"] = format_currency(row.get("gst_to_pay_amount", 0))
         row["exp_settlement"] = format_currency(row.get("exp_settlement", 0))

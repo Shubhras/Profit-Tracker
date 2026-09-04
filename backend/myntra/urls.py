@@ -16,6 +16,7 @@ from .views_v4 import (
     MyntraPaymentHistoryAPIView,
     MyntraProfitExportAPIView,
     MyntraProfitValidationExportAPIView,
+    ListUploadedReportsAPIView,
     ScheduleReportAPIView,
     SyncMyntraCatalogImagesAPIView,
     SyncMyntraDetailsView,
@@ -76,21 +77,10 @@ urlpatterns = [
         MyntraProfitValidationExportAPIView.as_view(),
         name="myntra-profit-validation-export",
     ),
-    path(
-        "reports/orders/upload/",
-        UploadMyntraOrderReportAPIView.as_view(),
-        name="myntra-orders-report-upload",
-    ),
-    path(
-        "reports/returns/upload/",
-        UploadMyntraReturnReportAPIView.as_view(),
-        name="myntra-returns-report-upload",
-    ),
-    path(
-        "reports/payments/upload/",
-        UploadMyntraPaymentReportAPIView.as_view(),
-        name="myntra-payments-report-upload",
-    ),
+    path("reports/orders/upload/",UploadMyntraOrderReportAPIView.as_view(),name="myntra-orders-report-upload",), #use in finace to uoload this mannually
+    path("reports/returns/upload/",UploadMyntraReturnReportAPIView.as_view(),name="myntra-returns-report-upload",), #use in finace to uoload this mannually
+    path("reports/payments/upload/",UploadMyntraPaymentReportAPIView.as_view(),name="myntra-payments-report-upload",), #use in finace to uoload this mannually
+    path("reports/list/", ListUploadedReportsAPIView.as_view(), name="myntra-reports-list"),
     path(
         "profit/amazon-compatible/style/",
         MyntraAmazonStyleSummaryAPIView.as_view(),

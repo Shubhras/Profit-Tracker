@@ -61,6 +61,8 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
     - unsettled_not_paid
     """
     user = get_effective_user(request.user)
+    from amazon_auth.models import ProfitCalculationSetting
+    profit_setting, _ = ProfitCalculationSetting.objects.get_or_create(user=user)
     data_source_raw = request.data if hasattr(request, 'data') and request.data else (request.GET if hasattr(request, 'GET') else {})
 
     data_source = {}
@@ -827,17 +829,18 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
 
         cost = total_cost
 
-        profit = (
-            final_net_sales
-            + shipping_price
-            + ads
-            + tcs
-            - estimated_fees
-            - mp_gst
-            - promo_discount
-            - order_claim_amount
-            - cost
-        )
+        # profit = (
+        #     final_net_sales
+        #     + shipping_price
+        #     + ads 
+        #     + tcs 
+        #     - estimated_fees
+        #     - mp_gst
+        #     - gst_to_pay_amount
+        #     - promo_discount
+        #     - order_claim_amount
+        #     - cost
+        # )
 
         exp_settlement = (
             final_net_sales
@@ -849,6 +852,31 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             - promo_discount
             - order_claim_amount
         )
+
+        profit = (
+            final_net_sales
+            + shipping_price
+            + (ads if profit_setting.ad_spend else 0)
+            + (tcs if profit_setting.tcs else 0)
+            - estimated_fees
+            - (mp_gst if profit_setting.input_gst_itc else 0)
+            - (gst_to_pay_amount if profit_setting.output_gst else 0)
+            - promo_discount
+            - (order_claim_amount if profit_setting.claim else 0)
+            - (cost if profit_setting.product_cost else 0)
+        )
+        
+
+        # exp_settlement = (
+        #     final_net_sales
+        #     + shipping_price
+        #     + (ads if profit_setting.ad_spend else 0)
+        #     + (tcs if profit_setting.tcs else 0)
+        #     - estimated_fees
+        #     - (mp_gst if profit_setting.input_gst_itc else 0)
+        #     - promo_discount
+        #     - (order_claim_amount if profit_setting.claim else 0)
+        # )
 
         profit_margin = (profit / net_sales * 100) if net_sales else 0.0
         tacos = (abs(ads) / gross_sales * 100) if gross_sales else 0.0

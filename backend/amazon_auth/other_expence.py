@@ -440,7 +440,7 @@ class OtherExpenseUploadExcelAPIView(APIView):
             return Response({'success': False, 'message': f'Error parsing file: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-def calculate_other_expenses_map(user, from_date_local=None, to_date_local=None, items=None):
+def calculate_other_expenses_map(user, from_date_local=None, to_date_local=None, items=None, return_total_expense=False):
     """
     Calculates allocated Other Expenses for a list of profitability items/rows.
     
@@ -451,6 +451,7 @@ def calculate_other_expenses_map(user, from_date_local=None, to_date_local=None,
       - 'net_sales': net sales amount (Decimal or float)
       
     Returns a dict: { item_key: Decimal(allocated_expense) }
+    or (expense_map, total_effective_expense) if return_total_expense is True.
     """
     from decimal import Decimal
     from django.db.models import Q, Sum
@@ -461,7 +462,10 @@ def calculate_other_expenses_map(user, from_date_local=None, to_date_local=None,
         MyntraListing = None
 
     expense_map = {}
+    total_effective_expense = Decimal('0')
     if not user or not items:
+        if return_total_expense:
+            return expense_map, total_effective_expense
         return expense_map
 
     qs = OtherExpense.objects.filter(user=user).filter(Q(status='applied') | Q(status__isnull=True))
@@ -473,6 +477,8 @@ def calculate_other_expenses_map(user, from_date_local=None, to_date_local=None,
 
     expenses = list(qs)
     if not expenses:
+        if return_total_expense:
+            return expense_map, total_effective_expense
         return expense_map
 
     for exp in expenses:
@@ -497,8 +503,73 @@ def calculate_other_expenses_map(user, from_date_local=None, to_date_local=None,
         if not matching_items:
             continue
 
+        # Calculate date proration for the expense over the requested date filter
+        effective_cost = cost_val
+        if exp.repeat_monthly:
+            import calendar
+            from datetime import datetime as dt_cls
+            filt_start = from_date_local if from_date_local else (exp.start_date or dt_cls.now().date())
+            filt_end = to_date_local if to_date_local else (exp.end_date or filt_start)
+            
+            eff_start = max(filt_start, exp.start_date) if exp.start_date else filt_start
+            eff_end = filt_end
+            if exp.end_date and exp.start_date:
+                if (exp.end_date.year, exp.end_date.month) > (exp.start_date.year, exp.start_date.month):
+                    eff_end = min(filt_end, exp.end_date)
+            
+            if eff_start > eff_end:
+                effective_cost = Decimal('0')
+            else:
+                tot = Decimal('0')
+                curr_year = eff_start.year
+                curr_month = eff_start.month
+                
+                while True:
+                    m_start = dt_cls(curr_year, curr_month, 1).date()
+                    last_day = calendar.monthrange(curr_year, curr_month)[1]
+                    m_end = dt_cls(curr_year, curr_month, last_day).date()
+                    
+                    ov_start = max(eff_start, m_start)
+                    ov_end = min(eff_end, m_end)
+                    
+                    if ov_start <= ov_end:
+                        ov_days = (ov_end - ov_start).days + 1
+                        m_days = last_day
+                        tot += cost_val * Decimal(str(ov_days)) / Decimal(str(m_days))
+                    
+                    if curr_year == eff_end.year and curr_month == eff_end.month:
+                        break
+                    
+                    curr_month += 1
+                    if curr_month > 12:
+                        curr_month = 1
+                        curr_year += 1
+                
+                effective_cost = tot
+        elif exp.start_date and exp.end_date:
+            exp_start = exp.start_date
+            exp_end = exp.end_date
+            exp_total_days = (exp_end - exp_start).days + 1
+            if exp_total_days > 0:
+                filt_start = from_date_local if from_date_local else exp_start
+                filt_end = to_date_local if to_date_local else exp_end
+                
+                overlap_start = max(exp_start, filt_start)
+                overlap_end = min(exp_end, filt_end)
+                
+                if overlap_start <= overlap_end:
+                    overlap_days = (overlap_end - overlap_start).days + 1
+                    effective_cost = cost_val * Decimal(str(overlap_days)) / Decimal(str(exp_total_days))
+                else:
+                    effective_cost = Decimal('0')
+
+        if effective_cost <= 0:
+            continue
+
+        total_effective_expense += effective_cost
+
         if exp.cost_type == 'per_order':
-            # Per Order: lump-sum cost_val (e.g. ₹1000) distributed per order/unit sold across all catalog orders in the period.
+            # Per Order: effective_cost distributed per order/unit sold across catalog orders in the period.
             catalog_units = None
             try:
                 if 'myntra' in exp_mkt:
@@ -529,7 +600,7 @@ def calculate_other_expenses_map(user, from_date_local=None, to_date_local=None,
             if not catalog_units or catalog_units <= 0:
                 catalog_units = Decimal(str(len(matching_items) or 1))
 
-            unit_cost_per_order = cost_val / catalog_units
+            unit_cost_per_order = effective_cost / catalog_units
 
             for item in matching_items:
                 key = item['key']
@@ -537,43 +608,88 @@ def calculate_other_expenses_map(user, from_date_local=None, to_date_local=None,
                 allocated = unit_cost_per_order * units
                 expense_map[key] = expense_map.get(key, Decimal('0')) + allocated
         else:
-            # Per SKU: cost_val is the total expense amount (e.g. ₹38 total) distributed across all SKUs.
-            # Rate per SKU = cost_val / total_skus_count
-            all_skus = set()
-            if 'myntra' in exp_mkt:
+            # Per SKU: Distribute effective_cost equally across active SKUs in the user's account for the requested date range.
+            parent_sku_map = {}
+
+            if 'amazon' in exp_mkt or exp_mkt in ['all', 'all connected marketplaces', '']:
+                active_parents = set()
+
+                oi_qs = OrderItem.objects.filter(order__user=user)
+                if from_date_local:
+                    oi_qs = oi_qs.filter(order__purchase_date__date__gte=from_date_local)
+                if to_date_local:
+                    oi_qs = oi_qs.filter(order__purchase_date__date__lte=to_date_local)
+
+                for row in oi_qs.values('parent_asin', 'asin'):
+                    p = row.get('parent_asin') or row.get('asin')
+                    if p:
+                        active_parents.add(p)
+
                 try:
-                    from myntra.models import MyntraListing, MyntraOrder
-                    ml_skus = MyntraListing.objects.filter(myntra_connection__user=user).values_list('seller_sku_code', flat=True)
-                    all_skus.update(s for s in ml_skus if s)
-                    mo_skus = MyntraOrder.objects.filter(myntra_connection__user=user).values_list('seller_sku_code', flat=True).distinct()
-                    all_skus.update(s for s in mo_skus if s)
-                except Exception:
-                    pass
-            elif 'amazon' in exp_mkt:
-                pm_skus = ProductMapping.objects.filter(account__user=user).values_list('seller_sku', flat=True)
-                all_skus.update(s for s in pm_skus if s)
-                oi_skus = OrderItem.objects.filter(order__user=user).values_list('seller_sku', flat=True).distinct()
-                all_skus.update(s for s in oi_skus if s)
-                ali_skus = AmazonListingItem.objects.filter(user=user).values_list('sku', flat=True)
-                all_skus.update(s for s in ali_skus if s)
-            else:
-                pm_skus = ProductMapping.objects.filter(account__user=user).values_list('seller_sku', flat=True)
-                all_skus.update(s for s in pm_skus if s)
-                oi_skus = OrderItem.objects.filter(order__user=user).values_list('seller_sku', flat=True).distinct()
-                all_skus.update(s for s in oi_skus if s)
-                ali_skus = AmazonListingItem.objects.filter(user=user).values_list('sku', flat=True)
-                all_skus.update(s for s in ali_skus if s)
-                try:
-                    from myntra.models import MyntraListing, MyntraOrder
-                    ml_skus = MyntraListing.objects.filter(myntra_connection__user=user).values_list('seller_sku_code', flat=True)
-                    all_skus.update(s for s in ml_skus if s)
-                    mo_skus = MyntraOrder.objects.filter(myntra_connection__user=user).values_list('seller_sku_code', flat=True).distinct()
-                    all_skus.update(s for s in mo_skus if s)
+                    from amazon_ads.models import ProductAdMetric
+                    ad_qs = ProductAdMetric.objects.filter(product_ad__amazon_account__user=user, cost__gt=0)
+                    if from_date_local:
+                        ad_qs = ad_qs.filter(report_date__gte=from_date_local)
+                    if to_date_local:
+                        ad_qs = ad_qs.filter(report_date__lte=to_date_local)
+                    ad_skus = set(ad_qs.values_list('product_ad__sku', flat=True))
+
+                    pm_dict = {m['seller_sku']: (m.get('parent_asin') or m.get('asin')) for m in ProductMapping.objects.filter(account__user=user, seller_sku__in=ad_skus).values('seller_sku', 'parent_asin', 'asin')}
+                    ali_dict = {m['sku']: m.get('asin') for m in AmazonListingItem.objects.filter(user=user, sku__in=ad_skus).values('sku', 'asin')}
+
+                    for s in ad_skus:
+                        p = pm_dict.get(s) or ali_dict.get(s) or s
+                        if p:
+                            active_parents.add(p)
                 except Exception:
                     pass
 
-            total_skus_cnt = Decimal(str(len(all_skus) or 1))
-            unit_cost_per_sku = cost_val / total_skus_cnt
+                parent_sku_map = {p: set() for p in active_parents}
+
+                for row in oi_qs.values('parent_asin', 'asin', 'seller_sku'):
+                    p = row.get('parent_asin') or row.get('asin')
+                    s = row.get('seller_sku')
+                    if p in parent_sku_map and s:
+                        parent_sku_map[p].add(s)
+
+                pm_qs = ProductMapping.objects.filter(account__user=user, parent_asin__in=active_parents).values('parent_asin', 'seller_sku')
+                for pm in pm_qs:
+                    p = pm.get('parent_asin')
+                    s = pm.get('seller_sku')
+                    if p in parent_sku_map and s:
+                        parent_sku_map[p].add(s)
+
+                ali_qs = AmazonListingItem.objects.filter(user=user, asin__in=active_parents).values('asin', 'sku')
+                for ali in ali_qs:
+                    p = ali.get('asin')
+                    s = ali.get('sku')
+                    if p in parent_sku_map and s:
+                        parent_sku_map[p].add(s)
+
+            if 'myntra' in exp_mkt or exp_mkt in ['all', 'all connected marketplaces', '']:
+                try:
+                    from myntra.models import MyntraOrder
+                    mo_qs = MyntraOrder.objects.filter(myntra_connection__user=user)
+                    if from_date_local:
+                        mo_qs = mo_qs.filter(created_on__date__gte=from_date_local)
+                    if to_date_local:
+                        mo_qs = mo_qs.filter(created_on__date__lte=to_date_local)
+                    for s in mo_qs.values_list('seller_sku_code', flat=True).distinct():
+                        if s:
+                            parent_sku_map.setdefault(s, set()).add(s)
+                except Exception:
+                    pass
+
+            total_account_skus_cnt = Decimal(str(sum(len(skus) for skus in parent_sku_map.values()))) if parent_sku_map else Decimal('0')
+            report_skus_cnt = sum(
+                (Decimal(str(item.get('sku_count') or 1)) / (Decimal(str(item.get('order_count_for_sku') or 1)) if Decimal(str(item.get('order_count_for_sku') or 1)) > 0 else Decimal('1')))
+                for item in matching_items
+            )
+            total_active_skus_cnt = max(report_skus_cnt, total_account_skus_cnt)
+            if total_active_skus_cnt <= 0:
+                total_active_skus_cnt = Decimal(str(len(matching_items) or 1))
+
+            unit_cost_per_sku = effective_cost / total_active_skus_cnt
 
             for item in matching_items:
                 key = item['key']
@@ -584,6 +700,8 @@ def calculate_other_expenses_map(user, from_date_local=None, to_date_local=None,
                 allocated = (unit_cost_per_sku * sku_cnt) / ord_cnt
                 expense_map[key] = expense_map.get(key, Decimal('0')) + allocated
 
+    if return_total_expense:
+        return expense_map, total_effective_expense
     return expense_map
 
 

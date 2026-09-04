@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 // import ProfitFilterBar from './component/ProfitFilterBar';
 // import ProfitModal from './component/ProfitModal';
 // import { PageHeader } from '../../components/page-headers/page-headers';
-import { getProfitData, exportProfitData } from '../../redux/dashboard/actionCreator';
+import { getProfitData, exportProfitabilityDetails } from '../../redux/dashboard/actionCreator';
 // import flipkartLogo from '../../assets/flipkart.png';
 
 export default function ProfitTableView() {
@@ -144,52 +144,19 @@ export default function ProfitTableView() {
     dispatch(getProfitData(payload));
   }, [dispatch, dateRange, search, globalChannel]);
 
+  const handleExport = async (format = 'xlsx') => {
+    try {
+      const payload = buildPayload();
+      await dispatch(exportProfitabilityDetails(payload, format, '/amazon/profitability/details/export/'));
+    } catch (error) {
+      console.error('Export failed:', error);
+    }
+  };
+
   useEffect(() => {
     const handleHeaderAction = (event) => {
-      // ✅ EXPORT BUTTON
       if (event.detail === 'export') {
-        const payload = {
-          reportType: 'MOMExport',
-
-          params: {
-            filters: {
-              channel: {
-                IN: globalChannel,
-              },
-              fromDate: dateRange?.fromDate || null,
-              toDate: dateRange?.endDate || null,
-            },
-
-            // metric: getMetricFromFilters(),
-          },
-
-          email: 'bhavnaaprostore@gmail.com',
-        };
-
-        dispatch(exportProfitData(payload));
-      }
-
-      // ✅ LOWEST BUTTON
-      if (event.detail === 'lowest') {
-        const payload = {
-          reportType: 'MOMExportSkuBased',
-
-          params: {
-            filters: {
-              channel: {
-                IN: globalChannel,
-              },
-              fromDate: dateRange?.fromDate || null,
-              toDate: dateRange?.endDate || null,
-            },
-
-            // metric: getMetricFromFilters(),
-          },
-
-          email: 'bhavnaaprostore@gmail.com',
-        };
-
-        dispatch(exportProfitData(payload));
+        handleExport();
       }
     };
 
@@ -198,7 +165,7 @@ export default function ProfitTableView() {
     return () => {
       window.removeEventListener('headerAction', handleHeaderAction);
     };
-  }, [dispatch, dateRange, globalChannel]);
+  }, [dispatch, dateRange, globalChannel, search]);
 
   // console.log(data);
   // const PageRoutes = [

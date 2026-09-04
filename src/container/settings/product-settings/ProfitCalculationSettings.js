@@ -161,7 +161,6 @@ export default function ProfitCalculationSettings() {
     };
 
     // Build Line Items for Calculation Breakdown
-    const tg = inc ? 'Incl. GST' : 'Excl. GST';
     const mp = inc ? mpFees * (1 + inRate) : mpFees;
     const sh = inc ? shipping * (1 + inRate) : shipping;
     const ad = inc ? ads * (1 + inRate) : ads;
@@ -184,7 +183,7 @@ export default function ProfitCalculationSettings() {
 
     if (settings.output_gst) {
       rows.push({
-        l: '(-) Output GST',
+        l: '(-) GST to Pay',
         sub: 'Net Sales − Taxable value',
         v: -outGST,
         g: 'tax',
@@ -200,21 +199,21 @@ export default function ProfitCalculationSettings() {
       });
     }
 
-    rows.push({ l: `(-) MP FEES (${tg})`, v: -mp, g: 'cost' });
+    rows.push({ l: '(-) MP FEES', v: -mp, g: 'cost' });
     t -= mp;
-    rows.push({ l: `(-) Shipping (${tg})`, v: -sh, g: 'cost' });
+    rows.push({ l: '(-) Shipping', v: -sh, g: 'cost' });
     t -= sh;
 
     if (settings.ad_spend) {
-      rows.push({ l: `(-) Ad spend (${tg})`, v: -ad, g: 'cost' });
+      rows.push({ l: '(-) Ad spend', v: -ad, g: 'cost' });
       t -= ad;
     }
     if (settings.product_cost) {
-      rows.push({ l: `(-) Product cost (${tg})`, v: -pc, g: 'cost' });
+      rows.push({ l: '(-) Product cost', v: -pc, g: 'cost' });
       t -= pc;
     }
     if (settings.other_expense) {
-      rows.push({ l: `(-) Other expense (${tg})`, v: -oe, g: 'cost' });
+      rows.push({ l: '(-) Other expense', v: -oe, g: 'cost' });
       t -= oe;
     }
     if (settings.claim) {
@@ -225,7 +224,7 @@ export default function ProfitCalculationSettings() {
     if (inc) {
       if (settings.input_gst_itc) {
         rows.push({
-          l: '+ Input GST (ITC)',
+          l: '+ MP-GST',
           sub: 'incl. credit on ad spend, product & other',
           v: itcAll,
           g: 'tax',
@@ -234,7 +233,7 @@ export default function ProfitCalculationSettings() {
         t += itcAll;
       } else {
         rows.push({
-          l: 'Input GST not claimable',
+          l: 'MP-GST not claimable',
           sub: 'left inside the costs above',
           v: null,
           g: 'tax',
@@ -244,7 +243,7 @@ export default function ProfitCalculationSettings() {
       }
     } else if (settings.input_gst_itc) {
       rows.push({
-        l: 'Input GST',
+        l: 'MP-GST',
         sub: 'already netted — costs shown excl. GST',
         v: inputGST,
         g: 'tax',
@@ -254,7 +253,7 @@ export default function ProfitCalculationSettings() {
       });
     } else {
       rows.push({
-        l: '(-) Input GST not claimable',
+        l: '(-) MP-GST not claimable',
         v: -itcAll,
         g: 'tax',
         cls: 'border-t border-dashed border-[#E5E7EB] pt-2',
@@ -288,7 +287,7 @@ export default function ProfitCalculationSettings() {
     let profitLabel = 'Profit';
     if (!settings.product_cost) profitLabel = 'Profit before Product cost';
     else if (!settings.ad_spend) profitLabel = 'Profit before Ad spend';
-    else if (!settings.output_gst) profitLabel = 'Profit before Output GST';
+    else if (!settings.output_gst) profitLabel = 'Profit before GST to Pay';
 
     const netProfit = t;
     const profitMargin = net > 0 ? (netProfit / net) * 100 : 0;
@@ -490,63 +489,10 @@ export default function ProfitCalculationSettings() {
                       '',
                     )}
 
-                    {/* GST TREATMENT SEGMENTED TOGGLE */}
-                    <div className="border border-[#E5E7EB] rounded-[11px] p-4 flex flex-col bg-white">
-                      <div className="flex items-center gap-2.5 mb-2">
-                        <div className="w-[34px] h-[34px] rounded-[9px] bg-[#EEF2FF] flex items-center justify-center">
-                          <svg
-                            viewBox="0 0 24 24"
-                            className="w-[17px] h-[17px] stroke-[#4F46E5] fill-none stroke-[1.8]"
-                          >
-                            <rect x="4" y="3" width="16" height="18" rx="2" />
-                            <path d="M8 8h8M8 12h8M8 16h5" />
-                          </svg>
-                        </div>
-                        <div className="text-[13.8px] font-semibold text-[#111827] flex items-center gap-1.5">
-                          GST Treatment
-                          <Tooltip title="Display only — both options produce the same profit">
-                            <span className="w-3.5 h-3.5 rounded-full border border-[#9CA3AF] text-[#9CA3AF] text-[9.5px] font-bold inline-flex items-center justify-center cursor-help leading-none">
-                              i
-                            </span>
-                          </Tooltip>
-                        </div>
-                      </div>
-                      <p className="text-[#6B7280] text-[12.2px] leading-relaxed flex-1 mb-3">
-                        Choose how GST should be considered in profit.
-                      </p>
-
-                      <div className="inline-flex border border-[#E5E7EB] rounded-full p-[3px] bg-white self-start">
-                        <button
-                          type="button"
-                          onClick={() => setSettings((prev) => ({ ...prev, gst_treatment: 'adjusted' }))}
-                          aria-pressed={settings.gst_treatment === 'adjusted'}
-                          className={`text-[12.2px] font-semibold px-3 py-1.5 rounded-full border-0 transition-all ${
-                            settings.gst_treatment === 'adjusted'
-                              ? 'bg-gradient-to-r from-[#1BB255] to-[#15803D] text-white shadow-[0_2px_7px_rgba(22,163,74,0.26)]'
-                              : 'bg-transparent text-[#6B7280] hover:text-[#111827]'
-                          }`}
-                        >
-                          GST Adjusted
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setSettings((prev) => ({ ...prev, gst_treatment: 'inclusive' }))}
-                          aria-pressed={settings.gst_treatment === 'inclusive'}
-                          className={`text-[12.2px] font-semibold px-3 py-1.5 rounded-full border-0 transition-all ${
-                            settings.gst_treatment === 'inclusive'
-                              ? 'bg-gradient-to-r from-[#1BB255] to-[#15803D] text-white shadow-[0_2px_7px_rgba(22,163,74,0.26)]'
-                              : 'bg-transparent text-[#6B7280] hover:text-[#111827]'
-                          }`}
-                        >
-                          GST Inclusive
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* INPUT GST / ITC */}
+                    {/* MP-GST */}
                     {renderItemCard(
                       'input_gst_itc',
-                      'Input GST / ITC',
+                      'MP-GST',
                       'Eligible GST on marketplace fees and services',
                       '18% on MP FEES and Shipping. Turn off if credit is blocked.',
                       '#059669',
@@ -556,10 +502,10 @@ export default function ProfitCalculationSettings() {
                       '',
                     )}
 
-                    {/* OUTPUT GST */}
+                    {/* GST TO PAY */}
                     {renderItemCard(
                       'output_gst',
-                      'Output GST',
+                      'GST to Pay',
                       'GST collected on sales',
                       'Net Sales − Taxable value, at product GST slab',
                       '#E11D48',
@@ -681,7 +627,7 @@ export default function ProfitCalculationSettings() {
                     </div>
 
                     <div className="flex items-center gap-2 text-[12.2px]">
-                      <label className="text-[#6B7280] flex-1">Output GST %</label>
+                      <label className="text-[#6B7280] flex-1">GST to Pay %</label>
                       <Select
                         value={previewOutputGstRate}
                         onChange={(val) => setPreviewOutputGstRate(val)}
@@ -697,7 +643,7 @@ export default function ProfitCalculationSettings() {
                     </div>
 
                     <div className="flex items-center gap-2 text-[12.2px]">
-                      <label className="text-[#6B7280] flex-1">Input GST %</label>
+                      <label className="text-[#6B7280] flex-1">MP-GST %</label>
                       <Select
                         value={previewInputGstRate}
                         onChange={(val) => setPreviewInputGstRate(val)}

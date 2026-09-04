@@ -68,6 +68,13 @@ def extract_financials(raw_data):
 # correct one 
 # def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}):
 def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_date_ist=None, to_date_ist=None):
+    from amazon_auth.models import ProfitCalculationSetting
+    try:
+        profit_setting, _ = ProfitCalculationSetting.objects.get_or_create(user=user)
+    except Exception:
+        profit_setting = ProfitCalculationSetting.objects.filter(user=user).first()
+        if not profit_setting:
+            profit_setting = ProfitCalculationSetting(user=user)
     
     from django.db.models import (
         Avg,
@@ -127,8 +134,9 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
 # ---------------- ORDER ITEM AGG ----------------
 
     listing_qs = AmazonListingItem.objects.filter(
-            user=user,
-            sku=OuterRef("seller_sku")
+            user=user
+        ).filter(
+            Q(asin=OuterRef("parent_asin")) | Q(asin=OuterRef("asin")) | Q(sku=OuterRef("seller_sku"))
         ).order_by("-updated_at")
     
     items = (
@@ -800,7 +808,61 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
 
     processed_parent_asins = set()
 
-    for row in items:
+    from amazon_auth.other_expence import calculate_other_expenses_map
+    from_date_local = from_date_ist.date() if from_date_ist else (start_date.date() if start_date else None)
+    to_date_local = to_date_ist.date() if to_date_ist else (end_date.date() if end_date else None)
+
+    parent_sku_map = {}
+    
+    pm_qs = ProductMapping.objects.filter(account__user=user).values('parent_asin', 'asin', 'seller_sku')
+    for pm in pm_qs:
+        p = pm.get('parent_asin') or pm.get('asin')
+        s = pm.get('seller_sku')
+        if p and s:
+            parent_sku_map.setdefault(p, set()).add(s)
+
+    all_oi_qs = OrderItem.objects.filter(order__user=user).values('parent_asin', 'asin', 'seller_sku').distinct()
+    for oi in all_oi_qs:
+        p = oi.get('parent_asin') or oi.get('asin')
+        s = oi.get('seller_sku')
+        if p and s:
+            parent_sku_map.setdefault(p, set()).add(s)
+
+    sku_to_parent = {}
+    for p, skus in parent_sku_map.items():
+        for s in skus:
+            sku_to_parent[s] = p
+
+    ali_qs = AmazonListingItem.objects.filter(user=user).values('asin', 'sku')
+    for ali in ali_qs:
+        s = ali.get('sku')
+        a = ali.get('asin')
+        p = sku_to_parent.get(s) or a
+        if p and s:
+            parent_sku_map.setdefault(p, set()).add(s)
+
+    expense_items = []
+    for idx, r in enumerate(items):
+        g_qty = float(r.get('grossqty') or 0)
+        n_qty = max(g_qty, 0)
+        f_sales = float(str(r.get('grosssales') or 0))
+
+        p_asin = r.get('parent_asin') or r.get('asin')
+        sku_cnt = len(parent_sku_map.get(p_asin, set())) or 1
+
+        expense_items.append({
+            'key': idx,
+            'marketplace': r.get('channel') or r.get('marketplace') or 'Amazon-India',
+            'units': float(n_qty),
+            'net_sales': float(f_sales),
+            'sku_count': sku_cnt,
+            'order_count_for_sku': 1
+        })
+
+    other_expenses_map = calculate_other_expenses_map(user, from_date_local, to_date_local, expense_items)
+
+    for idx, row in enumerate(items):
+        row_other_expense = float(other_expenses_map.get(idx, 0))
         # asin = row['asin']
         parent_asin = row['parent_asin']
         processed_parent_asins.add(parent_asin)
@@ -1051,13 +1113,15 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
         profit = (
             final_net_sales
             + shipping_final
-            + ads
-            + tcs_total
+            + (ads if profit_setting.ad_spend else 0)
+            + (tcs_total if profit_setting.tcs else 0)
             - estimated_fees
-            - mp_gst
+            - (mp_gst if profit_setting.input_gst_itc else 0)
+            - (gst_to_pay_amount if profit_setting.output_gst else 0)
             - promo_discount
-            - order_claim_amount
-            - stdcost
+            - (order_claim_amount if profit_setting.claim else 0)
+            - (stdcost if profit_setting.product_cost else 0)
+            - (row_other_expense if profit_setting.other_expense else 0)
         )
         profit_margin = (profit / final_net_sales * 100) if final_net_sales else 0
 
@@ -1124,6 +1188,10 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
             # "gst": "0",
             "tcs": float(tcs_total),
             "tds": float(tds_total),
+            "other_expenses": float(row_other_expense),
+            "total_other_expenses": float(row_other_expense),
+            "cancelled_qty": 0,
+            "cancelled_sales": 0.0,
             "taxable_value": float(taxable_value),
             "gst_to_pay_amount": float(gst_to_pay_amount),
             "gst_to_pay_perc": round(gst_to_pay_perc, 2),

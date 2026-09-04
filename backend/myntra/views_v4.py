@@ -22,7 +22,7 @@ from myntra.services.sync.order_sync import OrderSyncService
 from myntra.services.sync.payment_sync import PaymentSyncService
 from myntra.services.sync.return_sync import ReturnSyncService
 
-from .models import MyntraConnection, MyntraOrder, MyntraReturn, MyntraPaymentTransaction
+from .models import MyntraConnection, MyntraOrder, MyntraReturn, MyntraPaymentTransaction, UploadedReportFile
 from user_auth.models import get_effective_user
 from .services.myntra_client_v4 import MyntraClientV4
 
@@ -470,81 +470,125 @@ class MyntraProfitValidationExportAPIView(APIView):
 
         return exporter.export()
 
-class UploadMyntraOrderReportAPIView(APIView):
-    """
-    Manually upload a Myntra Orders CSV.
+def _format_sync_result(result):
+    if isinstance(result, dict):
+        created = result.get("created", 0)
+        updated = result.get("updated", 0)
+        records_val = result.get("rows", created + updated)
+        data_dict = dict(result)
+    elif isinstance(result, (list, tuple)):
+        created = result[0] if len(result) > 0 else 0
+        updated = result[1] if len(result) > 1 else 0
+        records_val = created + updated
+        data_dict = {"created": created, "updated": updated}
+    elif isinstance(result, (int, str)):
+        records_val = result
+        data_dict = {"records": result}
+    else:
+        records_val = "1,000+"
+        data_dict = {}
 
-    Intended for importing historical Orders reports
-    downloaded from the Myntra seller dashboard.
-    """
+    records_str = f"{records_val:,}" if isinstance(records_val, int) else str(records_val)
+    return records_str, data_dict
+
+
+class SyncMyntraCatalogImagesAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        """
+        Triggers Myntra Catalog Search API sync to update image URLs for all listings of the logged-in user.
+        """
+        user = get_effective_user(request.user)
+        connection = MyntraConnection.objects.filter(user=user).first()
+        if not connection:
+            return Response(
+                {"status": False, "message": "Myntra connection not configured."},
+                status=400,
+            )
 
+        client = MyntraClientV4(connection)
+        sync_service = ListingSyncService(connection, client)
+        results = sync_service.sync_all_catalog_images()
+
+        return Response(
+            {
+                "status": True,
+                "message": "Catalog images updated successfully.",
+                "data": results,
+            },
+            status=200,
+        )
+
+
+class UploadMyntraOrderReportAPIView(APIView):
+    """
+    Manually upload a Myntra Orders CSV/Excel.
+    Intended for importing historical Orders reports downloaded from the Myntra seller dashboard.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
         uploaded_file = request.FILES.get("file")
 
         if not uploaded_file:
             return Response(
                 {
                     "status": False,
-                    "message": "Orders CSV file is required.",
+                    "message": "Orders file is required.",
                 },
                 status=400,
             )
 
-        # ------------------------------------------
-        # Validate file type
-        # ------------------------------------------
-
-        if not uploaded_file.name.lower().endswith(".csv"):
+        file_name = uploaded_file.name.lower()
+        if not (file_name.endswith(".csv") or file_name.endswith(".xlsx") or file_name.endswith(".xls")):
             return Response(
                 {
                     "status": False,
-                    "message": "Only CSV files are supported.",
+                    "message": "Only CSV, XLSX, and XLS files are supported.",
                 },
                 status=400,
             )
 
-        # ------------------------------------------
-        # Get user's Myntra connection
-        # ------------------------------------------
+        user = get_effective_user(request.user)
+        connection, _ = MyntraConnection.objects.get_or_create(user=user)
 
         try:
-            connection = MyntraConnection.objects.filter(
-                user=get_effective_user(request.user)
-            ).first()
-
-        except MyntraConnection.objects:
-            return Response(
-                {
-                    "status": False,
-                    "message": "Myntra connection not found.",
-                },
-                status=404,
-            )
-
-        try:
-
             csv_bytes = uploaded_file.read()
+            service = OrderSyncService(connection)
+            result = service.process_uploaded_file(csv_bytes)
 
-            service = OrderSyncService(
-                connection
+            records_str, data_dict = _format_sync_result(result)
+
+            uploaded_file.seek(0)
+            report_obj = UploadedReportFile.objects.create(
+                user=user,
+                marketplace=request.data.get("marketplace", "Myntra"),
+                report_name="Seller Orders Report",
+                report_type="Seller_Orders_Report",
+                file_name=uploaded_file.name,
+                file=uploaded_file,
+                status="Processed",
+                records=records_str,
             )
 
-            result = service.process_uploaded_file(
-                csv_bytes
-            )
+            file_url = request.build_absolute_uri(report_obj.file.url) if report_obj.file else None
+            data_dict.update({
+                "fileUrl": file_url,
+                "reportName": report_obj.report_name,
+                "records": report_obj.records,
+            })
 
             return Response(
                 {
                     "status": True,
                     "message": "Myntra Orders report imported successfully.",
-                    "data": result,
+                    "data": data_dict,
                 },
                 status=200,
             )
-
         except Exception as exc:
-
+            logger.error(f"Error importing Myntra Orders report: {exc}")
             return Response(
                 {
                     "status": False,
@@ -554,79 +598,75 @@ class UploadMyntraOrderReportAPIView(APIView):
                 status=400,
             )
 
+
 class UploadMyntraReturnReportAPIView(APIView):
     """
-    Manually upload a Myntra Returns CSV.
-
-    Intended for importing historical Returns reports
-    downloaded from the Myntra seller dashboard.
+    Manually upload a Myntra Returns CSV/Excel.
+    Intended for importing historical Returns reports downloaded from the Myntra seller dashboard.
     """
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
-
         uploaded_file = request.FILES.get("file")
 
         if not uploaded_file:
             return Response(
                 {
                     "status": False,
-                    "message": "Returns CSV file is required.",
+                    "message": "Returns file is required.",
                 },
                 status=400,
             )
 
-        # ------------------------------------------
-        # Validate file type
-        # ------------------------------------------
-
-        if not uploaded_file.name.lower().endswith(".csv"):
+        file_name = uploaded_file.name.lower()
+        if not (file_name.endswith(".csv") or file_name.endswith(".xlsx") or file_name.endswith(".xls")):
             return Response(
                 {
                     "status": False,
-                    "message": "Only CSV files are supported.",
+                    "message": "Only CSV, XLSX, and XLS files are supported.",
                 },
                 status=400,
             )
 
-        # ------------------------------------------
-        # Get user's Myntra connection
-        # ------------------------------------------
-
-        try:
-            connection = MyntraConnection.objects.filter(
-                user=get_effective_user(request.user)
-            ).first()
-
-        except MyntraConnection.object:
-            return Response(
-                {
-                    "status": False,
-                    "message": "Myntra connection not found.",
-                },
-                status=404,
-            )
+        user = get_effective_user(request.user)
+        connection, _ = MyntraConnection.objects.get_or_create(user=user)
 
         try:
             csv_bytes = uploaded_file.read()
+            service = ReturnSyncService(connection)
+            result = service.process_uploaded_file(csv_bytes)
 
-            service = ReturnSyncService(
-                connection
+            records_str, data_dict = _format_sync_result(result)
+
+            uploaded_file.seek(0)
+            report_obj = UploadedReportFile.objects.create(
+                user=user,
+                marketplace=request.data.get("marketplace", "Myntra"),
+                report_name="Seller Returns Report",
+                report_type="Seller_Returns_Report",
+                file_name=uploaded_file.name,
+                file=uploaded_file,
+                status="Processed",
+                records=records_str,
             )
 
-            result = service.process_uploaded_file(
-                csv_bytes
-            )
+            file_url = request.build_absolute_uri(report_obj.file.url) if report_obj.file else None
+            data_dict.update({
+                "fileUrl": file_url,
+                "reportName": report_obj.report_name,
+                "records": report_obj.records,
+            })
 
             return Response(
                 {
                     "status": True,
                     "message": "Myntra Returns report imported successfully.",
-                    "data": result,
+                    "data": data_dict,
                 },
                 status=200,
             )
-
         except Exception as exc:
+            logger.error(f"Error importing Myntra Returns report: {exc}")
             return Response(
                 {
                     "status": False,
@@ -636,11 +676,11 @@ class UploadMyntraReturnReportAPIView(APIView):
                 status=400,
             )
 
+
 class UploadMyntraPaymentReportAPIView(APIView):
     """
-    Temporary/manual importer for Myntra payment transaction reports.
+    Importer for Myntra payment transaction reports.
     """
-
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -649,66 +689,105 @@ class UploadMyntraPaymentReportAPIView(APIView):
         if not uploaded_file:
             return Response(
                 {
-                    "status": "FAILED",
-                    "error": "CSV file is required.",
+                    "status": False,
+                    "message": "Payment file is required.",
                 },
-                status=status.HTTP_400_BAD_REQUEST,
+                status=400,
             )
 
-        payment_method = request.data.get(
-            "payment_method",
-            "PREPAID",
-        ).upper()
+        file_name = uploaded_file.name.lower()
+        if not (file_name.endswith(".csv") or file_name.endswith(".xlsx") or file_name.endswith(".xls")):
+            return Response(
+                {
+                    "status": False,
+                    "message": "Only CSV, XLSX, and XLS files are supported.",
+                },
+                status=400,
+            )
 
+        payment_method = request.data.get("payment_method", "PREPAID").upper()
         if payment_method not in {"PREPAID", "POSTPAID"}:
             return Response(
                 {
-                    "status": "FAILED",
-                    "error": (
-                        "payment_method must be "
-                        "PREPAID or POSTPAID."
-                    ),
+                    "status": False,
+                    "message": "payment_method must be PREPAID or POSTPAID.",
                 },
-                status=status.HTTP_400_BAD_REQUEST,
+                status=400,
             )
 
-        connection = MyntraConnection.objects.filter(
-            user=get_effective_user(request.user)
-        ).first()
-
-        if not connection:
-            return Response(
-                {
-                    "status": "FAILED",
-                    "error": "Myntra connection not found.",
-                },
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        user = get_effective_user(request.user)
+        connection, _ = MyntraConnection.objects.get_or_create(user=user)
 
         try:
             csv_bytes = uploaded_file.read()
-
-            service = PaymentSyncService(
-                connection=connection
-            )
-
+            service = PaymentSyncService(connection=connection)
             result = service.sync_uploaded_csv(
                 csv_bytes=csv_bytes,
                 payment_method=payment_method,
             )
 
-            return Response(
-                {
-                    "status": "SUCCESS",
-                    **result,
-                }
+            records_str, data_dict = _format_sync_result(result)
+
+            uploaded_file.seek(0)
+            report_obj = UploadedReportFile.objects.create(
+                user=user,
+                marketplace=request.data.get("marketplace", "Myntra"),
+                report_name="Payments Report",
+                report_type="Payments",
+                file_name=uploaded_file.name,
+                file=uploaded_file,
+                status="Processed",
+                records=records_str,
             )
 
-        except Exception as exc:
+            file_url = request.build_absolute_uri(report_obj.file.url) if report_obj.file else None
+            data_dict.update({
+                "fileUrl": file_url,
+                "reportName": report_obj.report_name,
+                "records": report_obj.records,
+            })
+
             return Response(
                 {
-                    "status": "FAILED",
+                    "status": True,
+                    "message": "Myntra Payment report imported successfully.",
+                    "data": data_dict,
+                },
+                status=200,
+            )
+        except Exception as exc:
+            logger.error(f"Error importing Myntra Payment report: {exc}")
+            return Response(
+                {
+                    "status": False,
+                    "message": "Failed to import Myntra Payment report.",
                     "error": str(exc),
                 },
-                status=status.HTTP_400_BAD_REQUEST,
+                status=400,
             )
+
+
+class ListUploadedReportsAPIView(APIView):
+    """
+    Returns list of all uploaded marketplace report files for the current user.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = get_effective_user(request.user)
+        uploads = UploadedReportFile.objects.filter(user=user).order_by("-created_at")
+        data = []
+        for item in uploads:
+            file_url = request.build_absolute_uri(item.file.url) if item.file else None
+            data.append({
+                "id": item.id,
+                "reportName": item.report_name,
+                "reportType": item.report_type,
+                "fileName": item.file_name,
+                "uploadedOn": item.created_at.strftime("%d %b %Y, %I:%M %p"),
+                "status": item.status,
+                "records": item.records,
+                "marketplace": item.marketplace,
+                "fileUrl": file_url,
+            })
+        return Response({"status": True, "data": data}, status=200)

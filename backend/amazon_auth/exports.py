@@ -313,6 +313,7 @@ DETAILS_COLUMNS = {
     "asin": "View",
     "netqty": "Gross Qty",
     "final_net_qty": "Net Qty",
+    "cancelled_qty": "Cancelled Qty",
     "returnqty": "Return Qty",
     "courier_return_count": "Courier Return Count",
     "customer_return_count": "Customer Return Count",
@@ -320,16 +321,19 @@ DETAILS_COLUMNS = {
     "promo_discount": "Promo Discount",
     "netsales": "Gross Sales",
     "final_net_sales": "Net Sales",
+    "cancelled_sales": "Cancelled Sales",
     "mpfees": "MP fees",
     "shippingfees": "Shipping",
     "mp_gst": "MP-GST",
     "tcs": "TCS",
+    "tds": "TDS",
+    "other_expenses": "Other Expenses",
+    "exp_settlement": "Expected Settlement",
     "ads": "Ad Spend",
     "taxable_value": "Taxable Value",
     "gst_to_pay_amount": "GST to Pay",
     "gst_to_pay_perc": "GST to Pay %",
     "claim_amount": "Claim Amount",
-    "exp_settlement": "Expected Settlement",
     "stdcost": "Product Cost",
     "profit": "Profit",
     "grossprofitper": "Profit %"
@@ -345,10 +349,12 @@ def format_details_export(data_list, totals_dict=None):
             continue
         
         row = {}
+        row['child_sku'] = item.get('child_sku') or item.get('seller_sku') or item.get('sku') or item.get('asin') or ''
         row['channel'] = item.get('channel', '')
         row['asin'] = item.get('asin') or item.get('view') or item.get('seller_sku') or item.get('child_sku') or ''
         row['netqty'] = item.get('netQty') if 'netQty' in item else (item.get('netqty') if 'netqty' in item else item.get('qty', item.get('grossqty', 0)))
         row['final_net_qty'] = item.get('final_net_qty') if item.get('final_net_qty') is not None else item.get('netqty', 0)
+        row['cancelled_qty'] = item.get('cancelled_qty') if item.get('cancelled_qty') is not None else item.get('cancelledcanqty', 0)
         row['returnqty'] = item.get('returnqty', 0)
         row['courier_return_count'] = item.get('courier_return_count', 0)
         row['customer_return_count'] = item.get('customer_return_count', 0)
@@ -360,17 +366,21 @@ def format_details_export(data_list, totals_dict=None):
             val = str(ret_perc or 0)
             row['retpercent'] = val if val.endswith('%') else f"{val}%"
             
-        row['promo_discount'] = item.get('promo_discount', '₹0.0')
-        row['netsales'] = item.get('netsales') or item.get('grosssales', '₹0.0')
-        row['final_net_sales'] = item.get('final_net_sales', '₹0.0')
+        row['promo_discount'] = format_val_currency(item.get('promo_discount'))
+        row['netsales'] = format_val_currency(item.get('netsales') if item.get('netsales') is not None else item.get('grosssales', '₹0.0'))
+        row['final_net_sales'] = format_val_currency(item.get('final_net_sales') if item.get('final_net_sales') is not None else item.get('netsales', '₹0.0'))
+        row['cancelled_sales'] = format_val_currency(item.get('cancelled_sales') if item.get('cancelled_sales') is not None else item.get('cancelledcansales', 0))
         
-        row['mpfees'] = item.get('mpfees', '₹0.0')
-        row['shippingfees'] = item.get('shippingfees') or item.get('shipping', '₹0.0')
-        row['mp_gst'] = item.get('mp_gst', '₹0.0')
-        row['tcs'] = item.get('tcs', '₹0.0')
-        row['ads'] = item.get('ads') or item.get('adSpend', '₹0.0')
-        row['taxable_value'] = item.get('taxable_value') or item.get('taxableValue', '₹0.0')
-        row['gst_to_pay_amount'] = item.get('gst_to_pay_amount', '₹0.0')
+        row['mpfees'] = format_val_currency(item.get('mpfees', '₹0.0'))
+        row['shippingfees'] = format_val_currency(item.get('shippingfees') or item.get('shipping', '₹0.0'))
+        row['mp_gst'] = format_val_currency(item.get('mp_gst', '₹0.0'))
+        row['tcs'] = format_val_currency(item.get('tcs', '₹0.0'))
+        row['tds'] = format_val_currency(item.get('tds', '₹0.0'))
+        row['other_expenses'] = format_val_currency(item.get('other_expenses') if item.get('other_expenses') is not None else item.get('total_other_expenses', '₹0.0'))
+        row['exp_settlement'] = format_val_currency(item.get('exp_settlement') or item.get('settleAmount', '₹0.0'))
+        row['ads'] = format_val_currency(item.get('ads') or item.get('adSpend', '₹0.0'))
+        row['taxable_value'] = format_val_currency(item.get('taxable_value') or item.get('taxableValue', '₹0.0'))
+        row['gst_to_pay_amount'] = format_val_currency(item.get('gst_to_pay_amount', '₹0.0'))
         
         gst_perc = item.get('gst_to_pay_perc', 0)
         if isinstance(gst_perc, (int, float)):
@@ -379,10 +389,9 @@ def format_details_export(data_list, totals_dict=None):
             val = str(gst_perc or 0)
             row['gst_to_pay_perc'] = val if val.endswith('%') else f"{val}%"
             
-        row['claim_amount'] = item.get('claim_amount', '₹0.0')
-        row['exp_settlement'] = item.get('exp_settlement') or item.get('settleAmount', '₹0.0')
-        row['stdcost'] = item.get('stdcost', '₹0.0')
-        row['profit'] = item.get('profit', '₹0.0')
+        row['claim_amount'] = format_val_currency(item.get('claim_amount', '₹0.0'))
+        row['stdcost'] = format_val_currency(item.get('stdcost', '₹0.0'))
+        row['profit'] = format_val_currency(item.get('profit', '₹0.0'))
         
         prof_perc = item.get('grossprofitper') if item.get('grossprofitper') is not None else item.get('profitPercent', 0)
         if isinstance(prof_perc, (int, float)):
@@ -396,29 +405,34 @@ def format_details_export(data_list, totals_dict=None):
     formatted_totals = None
     if isinstance(totals_dict, dict):
         formatted_totals = {
+            'child_sku': 'Total',
             'channel': 'Total',
             'asin': '',
             'netqty': totals_dict.get('netqty') or totals_dict.get('qty', 0),
             'final_net_qty': totals_dict.get('total_final_net_qty') or totals_dict.get('final_net_qty', 0),
+            'cancelled_qty': totals_dict.get('cancelled_qty') if totals_dict.get('cancelled_qty') is not None else totals_dict.get('cancelledcanqty', 0),
             'returnqty': totals_dict.get('totalreturn') or totals_dict.get('returnqty', 0),
             'courier_return_count': totals_dict.get('courier_return_count', 0),
             'customer_return_count': totals_dict.get('customer_return_count', 0),
             'retpercent': totals_dict.get('totalreturnper') or totals_dict.get('retpercent', '0%'),
-            'promo_discount': totals_dict.get('total_promo_discount') or totals_dict.get('promo_discount', '₹0.0'),
-            'netsales': totals_dict.get('netsales') or totals_dict.get('grosssales', '₹0.0'),
-            'final_net_sales': totals_dict.get('total_final_net_sales') or totals_dict.get('final_net_sales', '₹0.0'),
-            'mpfees': totals_dict.get('mpfees', '₹0.0'),
-            'shippingfees': totals_dict.get('shippingfees') or totals_dict.get('shipping', '₹0.0'),
-            'mp_gst': totals_dict.get('mp_gst', '₹0.0'),
-            'tcs': totals_dict.get('tcs', '₹0.0'),
-            'ads': totals_dict.get('ads', '₹0.0'),
-            'taxable_value': totals_dict.get('taxable_value', '₹0.0'),
-            'gst_to_pay_amount': totals_dict.get('gst_to_pay_amount', '₹0.0'),
+            'promo_discount': format_val_currency(totals_dict.get('total_promo_discount') or totals_dict.get('promo_discount', '₹0.0')),
+            'netsales': format_val_currency(totals_dict.get('netsales') if totals_dict.get('netsales') is not None else totals_dict.get('grosssales', '₹0.0')),
+            'final_net_sales': format_val_currency(totals_dict.get('total_final_net_sales') or totals_dict.get('final_net_sales') or totals_dict.get('netsales', '₹0.0')),
+            'cancelled_sales': format_val_currency(totals_dict.get('cancelled_sales') if totals_dict.get('cancelled_sales') is not None else totals_dict.get('cancelledcansales', 0)),
+            'mpfees': format_val_currency(totals_dict.get('mpfees', '₹0.0')),
+            'shippingfees': format_val_currency(totals_dict.get('shippingfees') or totals_dict.get('shipping', '₹0.0')),
+            'mp_gst': format_val_currency(totals_dict.get('mp_gst', '₹0.0')),
+            'tcs': format_val_currency(totals_dict.get('tcs', '₹0.0')),
+            'tds': format_val_currency(totals_dict.get('total_tds') if totals_dict.get('total_tds') is not None else totals_dict.get('tds', '₹0.0')),
+            'other_expenses': format_val_currency(totals_dict.get('total_other_expenses') if totals_dict.get('total_other_expenses') is not None else totals_dict.get('other_expenses', '₹0.0')),
+            'exp_settlement': format_val_currency(totals_dict.get('exp_settlement', '₹0.0')),
+            'ads': format_val_currency(totals_dict.get('adSpend') or totals_dict.get('ads', '₹0.0')),
+            'taxable_value': format_val_currency(totals_dict.get('taxable_value', '₹0.0')),
+            'gst_to_pay_amount': format_val_currency(totals_dict.get('gst_to_pay_amount', '₹0.0')),
             'gst_to_pay_perc': totals_dict.get('gst_to_pay_perc', '0%'),
-            'claim_amount': totals_dict.get('total_claim_amount') or totals_dict.get('claim_amount', '₹0.0'),
-            'exp_settlement': totals_dict.get('exp_settlement', '₹0.0'),
-            'stdcost': totals_dict.get('stdcost', '₹0.0'),
-            'profit': totals_dict.get('profit', '₹0.0'),
+            'claim_amount': format_val_currency(totals_dict.get('total_claim_amount') or totals_dict.get('claim_amount', '₹0.0')),
+            'stdcost': format_val_currency(totals_dict.get('stdcost', '₹0.0')),
+            'profit': format_val_currency(totals_dict.get('profit', '₹0.0')),
             'grossprofitper': f"{totals_dict.get('grossprofitper', 0)}%" if not str(totals_dict.get('grossprofitper', '')).endswith('%') else totals_dict.get('grossprofitper')
         }
         
@@ -478,6 +492,7 @@ def format_sku_report_export(data_list, totals_dict=None):
         
         row['grossqty'] = g_q
         row['final_net_qty'] = f_net_q
+        row['cancelled_qty'] = item.get('cancelled_qty') if item.get('cancelled_qty') is not None else item.get('cancelledcanqty', 0)
         row['returnqty'] = r_q
         row['courier_return_count'] = cour_r
         row['customer_return_count'] = cust_r
@@ -490,13 +505,17 @@ def format_sku_report_export(data_list, totals_dict=None):
             row['retpercent'] = val if val.endswith('%') else f"{val}%"
             
         row['promo_discount'] = format_val_currency(item.get('promo_discount'))
-        row['netsales'] = format_val_currency(item.get('grosssales') if item.get('grosssales') is not None else item.get('netsales'))
-        row['final_net_sales'] = format_val_currency(item.get('final_net_sales') or item.get('netsales'))
+        row['netsales'] = format_val_currency(item.get('netsales') if item.get('netsales') is not None else item.get('grosssales'))
+        row['final_net_sales'] = format_val_currency(item.get('final_net_sales') if item.get('final_net_sales') is not None else item.get('netsales'))
+        row['cancelled_sales'] = format_val_currency(item.get('cancelled_sales') if item.get('cancelled_sales') is not None else item.get('cancelledcansales', 0))
         
         row['mpfees'] = format_val_currency(item.get('mpfees') if item.get('mpfees') is not None else item.get('estimatefees'))
         row['shippingfees'] = format_val_currency(item.get('shippingfees') or item.get('shipping'))
         row['mp_gst'] = format_val_currency(item.get('mp_gst'))
         row['tcs'] = format_val_currency(item.get('tcs'))
+        row['tds'] = format_val_currency(item.get('tds'))
+        row['other_expenses'] = format_val_currency(item.get('other_expenses') if item.get('other_expenses') is not None else item.get('total_other_expenses'))
+        row['exp_settlement'] = format_val_currency(item.get('exp_settlement') or item.get('settleAmount'))
         row['ads'] = format_val_currency(item.get('ads') or item.get('adSpend'))
         row['taxable_value'] = format_val_currency(item.get('taxable_value') or item.get('taxableValue'))
         row['gst_to_pay_amount'] = format_val_currency(item.get('gst_to_pay_amount'))
@@ -509,7 +528,6 @@ def format_sku_report_export(data_list, totals_dict=None):
             row['gst_to_pay_perc'] = val if val.endswith('%') else f"{val}%"
             
         row['claim_amount'] = format_val_currency(item.get('claim_amount'))
-        row['exp_settlement'] = format_val_currency(item.get('exp_settlement') or item.get('settleAmount'))
         row['stdcost'] = format_val_currency(item.get('stdcost') or item.get('std'))
         row['profit'] = format_val_currency(item.get('profit'))
         
@@ -531,34 +549,33 @@ def format_sku_report_export(data_list, totals_dict=None):
             'channel': '',
             'grossqty': totals_dict.get('grossqty', tot_gross_q),
             'final_net_qty': totals_dict.get('total_final_net_qty') if totals_dict.get('total_final_net_qty') is not None else totals_dict.get('final_net_qty', tot_final_net_q),
+            'cancelled_qty': totals_dict.get('cancelled_qty') if totals_dict.get('cancelled_qty') is not None else totals_dict.get('cancelledcanqty', 0),
             'returnqty': totals_dict.get('total_returns') if totals_dict.get('total_returns') is not None else (totals_dict.get('total_return_count') if totals_dict.get('total_return_count') is not None else totals_dict.get('returnqty', tot_ret_q)),
             'courier_return_count': totals_dict.get('courier_return_count', tot_cour_ret),
             'customer_return_count': totals_dict.get('customer_return_count', tot_cust_ret),
             'retpercent': str(totals_dict.get('total_ret_percent') or totals_dict.get('totalreturnper') or totals_dict.get('retpercent') or '0%'),
             'promo_discount': format_val_currency(totals_dict.get('total_promo_discount') or totals_dict.get('promo_discount')),
-            'netsales': format_val_currency(totals_dict.get('grosssales') if totals_dict.get('grosssales') is not None else totals_dict.get('netsales')),
+            'netsales': format_val_currency(totals_dict.get('netsales') if totals_dict.get('netsales') is not None else totals_dict.get('grosssales')),
             'final_net_sales': format_val_currency(totals_dict.get('total_final_net_sales') or totals_dict.get('final_net_sales') or totals_dict.get('netsales')),
+            'cancelled_sales': format_val_currency(totals_dict.get('cancelled_sales') if totals_dict.get('cancelled_sales') is not None else totals_dict.get('cancelledcansales', 0)),
             'mpfees': format_val_currency(totals_dict.get('estimatefees') if totals_dict.get('estimatefees') is not None else totals_dict.get('mpfees')),
             'shippingfees': format_val_currency(totals_dict.get('shipping') or totals_dict.get('shippingfees')),
             'mp_gst': format_val_currency(totals_dict.get('mp_gst')),
             'tcs': format_val_currency(totals_dict.get('tcs')),
+            'tds': format_val_currency(totals_dict.get('total_tds') if totals_dict.get('total_tds') is not None else totals_dict.get('tds')),
+            'other_expenses': format_val_currency(totals_dict.get('total_other_expenses') if totals_dict.get('total_other_expenses') is not None else totals_dict.get('other_expenses')),
+            'exp_settlement': format_val_currency(totals_dict.get('exp_settlement')),
             'ads': format_val_currency(totals_dict.get('adSpend') or totals_dict.get('ads')),
             'taxable_value': format_val_currency(totals_dict.get('taxable_value')),
             'gst_to_pay_amount': format_val_currency(totals_dict.get('gst_to_pay_amount')),
             'gst_to_pay_perc': str(totals_dict.get('gst_to_pay_perc') or '0%'),
             'claim_amount': format_val_currency(totals_dict.get('total_claim_amount') or totals_dict.get('claim_amount')),
-            'exp_settlement': format_val_currency(totals_dict.get('exp_settlement')),
             'stdcost': format_val_currency(totals_dict.get('cost') or totals_dict.get('stdcost')),
             'profit': format_val_currency(totals_dict.get('profit')),
             'grossprofitper': f"{totals_dict.get('totalprofitmargin') if totals_dict.get('totalprofitmargin') is not None else (totals_dict.get('grossprofitper') or 0)}%" if not str(totals_dict.get('totalprofitmargin') or totals_dict.get('grossprofitper') or '').endswith('%') else str(totals_dict.get('totalprofitmargin') or totals_dict.get('grossprofitper'))
         }
         
     return formatted_list, formatted_totals
-
-PARENT_COLUMNS = {
-    "child_sku": "Child SKU / Style Code",
-    **DETAILS_COLUMNS
-}
 
 SKU_REPORT_COLUMNS = {
     "order_id": "Order ID",
@@ -567,6 +584,7 @@ SKU_REPORT_COLUMNS = {
     "channel": "Channel",
     "grossqty": "Gross Qty",
     "final_net_qty": "Net Qty",
+    "cancelled_qty": "Cancelled Qty",
     "returnqty": "Return Qty",
     "courier_return_count": "Courier Return Count",
     "customer_return_count": "Customer Return Count",
@@ -574,16 +592,19 @@ SKU_REPORT_COLUMNS = {
     "promo_discount": "Promo Discount",
     "netsales": "Gross Sales",
     "final_net_sales": "Net Sales",
+    "cancelled_sales": "Cancelled Sales",
     "mpfees": "MP Fees",
     "shippingfees": "Shipping Fees",
     "mp_gst": "MP-GST",
     "tcs": "TCS",
+    "tds": "TDS",
+    "other_expenses": "Other Expenses",
+    "exp_settlement": "Expected Settlement",
     "ads": "Ad Spend",
     "taxable_value": "Taxable Value",
     "gst_to_pay_amount": "GST to Pay",
     "gst_to_pay_perc": "GST to Pay %",
     "claim_amount": "Claim Amount",
-    "exp_settlement": "Expected Settlement",
     "stdcost": "Product Cost",
     "profit": "Profit",
     "grossprofitper": "Profit %"

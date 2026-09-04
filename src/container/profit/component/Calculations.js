@@ -298,7 +298,7 @@ function CalculationModal({ open, onClose, type, data }) {
   };
 
   const renderProfitUI = () => {
-    const sellingPrice = parseFloat(String(data?.netsales || 0).replace(/[₹,]/g, ''));
+    const sellingPrice = parseFloat(String(data?.final_net_sales || data?.netsales || 0).replace(/[₹,]/g, ''));
 
     const marketplaceFees = parseFloat(String(data?.estimatefees || data?.mpfees || 0).replace(/[₹,]/g, ''));
 
@@ -309,6 +309,10 @@ function CalculationModal({ open, onClose, type, data }) {
     const adSpend = parseFloat(String(data?.adSpend || 0).replace(/[₹,]/g, ''));
 
     const tcs = parseFloat(String(data?.tcs || 0).replace(/[₹,]/g, ''));
+
+    const tds = parseFloat(String(data?.tds || 0).replace(/[₹,]/g, ''));
+
+    const otherExpenses = parseFloat(String(data?.other_expenses || 0).replace(/[₹,]/g, ''));
 
     const mpGst = parseFloat(String(data?.mp_gst || 0).replace(/[₹,]/g, ''));
 
@@ -356,10 +360,22 @@ function CalculationModal({ open, onClose, type, data }) {
         sign: '+',
       },
       {
+        label: '(+) TDS (ITC)',
+        value: tds,
+        color: 'text-green-600',
+        sign: '+',
+      },
+      {
         label: '(+) MP GST (ITC)',
         value: mpGst,
         color: 'text-green-600',
         sign: '+',
+      },
+      {
+        label: '(-) Other Expenses',
+        value: otherExpenses,
+        color: 'text-red-500',
+        sign: '-',
       },
       {
         label: '(-) GST to Pay',

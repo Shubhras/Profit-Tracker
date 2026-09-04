@@ -131,6 +131,20 @@ export default function ProfitDetailsView() {
     }
   }, [id, dateRange, globalChannel, pagination.current, pagination.pageSize, debouncedSearch, isReconcile]);
 
+  useEffect(() => {
+    const handleHeaderAction = (event) => {
+      if (event.detail === 'export') {
+        handleExport();
+      }
+    };
+
+    window.addEventListener('headerAction', handleHeaderAction);
+
+    return () => {
+      window.removeEventListener('headerAction', handleHeaderAction);
+    };
+  }, [id, dateRange, globalChannel, debouncedSearch, isReconcile, sku]);
+
   const dataSource =
     profitData?.response?.map((item, index) => ({
       key: index,

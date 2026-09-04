@@ -144,6 +144,20 @@ export default function ProfitViewSecondTable() {
     }
   }, [dispatch, pagination.current, pagination.pageSize, globalChannel, debouncedSearch, isReconcile, dateRange]);
 
+  useEffect(() => {
+    const handleHeaderAction = (event) => {
+      if (event.detail === 'export') {
+        handleExport();
+      }
+    };
+
+    window.addEventListener('headerAction', handleHeaderAction);
+
+    return () => {
+      window.removeEventListener('headerAction', handleHeaderAction);
+    };
+  }, [dateRange, globalChannel, asin, isReconcile]);
+
   // const PageRoutes = [
   //   { path: 'index', breadcrumbName: 'Profit' },
   //   { path: '', breadcrumbName: 'Profit Details' },

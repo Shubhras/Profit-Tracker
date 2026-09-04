@@ -124,6 +124,20 @@ export default function ProfitSKUIdPage() {
     }
   }, [dateRange, decodedChannel, pagination.current, pagination.pageSize, debouncedSearch, globalChannel, channels]);
 
+  useEffect(() => {
+    const handleHeaderAction = (event) => {
+      if (event.detail === 'export') {
+        handleExport();
+      }
+    };
+
+    window.addEventListener('headerAction', handleHeaderAction);
+
+    return () => {
+      window.removeEventListener('headerAction', handleHeaderAction);
+    };
+  }, [dateRange, globalChannel, debouncedSearch, decodedChannel, channels]);
+
   // const PageRoutes = [
   //   { path: 'index', breadcrumbName: 'Profit' },
   //   { path: '', breadcrumbName: 'Profit Details' },
@@ -142,23 +156,28 @@ export default function ProfitSKUIdPage() {
         asin: item.asin,
         redirecturl: item.redirecturl,
         netQty: item.netqty || 0,
+        final_net_qty: item.final_net_qty !== undefined ? item.final_net_qty : item.netqty || 0,
+        cancelled_qty: item.cancelled_qty !== undefined ? item.cancelled_qty : item.cancelledcanqty || 0,
         returnqty: item.returnqty || 0,
         settleAmount: item.exp_settlement,
         returnPercent: item.retpercent || 0,
 
-        netsales: item.netsales || 0,
+        netsales: item.netsales || item.grosssales || 0,
+        final_net_sales: item.final_net_sales !== undefined ? item.final_net_sales : item.netsales || 0,
+        cancelled_sales: item.cancelled_sales !== undefined ? item.cancelled_sales : item.cancelledcansales || 0,
         tcs: item.tcs || 0,
+        tds: item.tds || 0,
+        other_expenses: item.other_expenses !== undefined ? item.other_expenses : item.total_other_expenses || 0,
         mp_gst: item.mp_gst,
-        mpfees: item.estimatefees || 0,
+        mpfees: item.estimatefees || item.mpfees || 0,
         taxableValue: item.taxable_value || 0,
-        // netasp: Number(item.netasp) || 0,
-        // net_discount: Number(item.net_discount) || 0,
 
         stdcost: item.stdcost || 0,
         shipping: item.shippingfees || 0,
         adSpend: item.ads || 0,
         gst_to_pay_amount: item.gst_to_pay_amount || 0,
         gst_to_pay_perc: item.gst_to_pay_perc || 0,
+        claim_amount: item.claim_amount || 0,
         referral_fee: item.referral_fee || 0,
         closing_fee: item.closing_fee || 0,
         per_item_fee: item.per_item_fee || 0,
@@ -171,39 +190,9 @@ export default function ProfitSKUIdPage() {
         customer_return_count: item.customer_return_count,
         promo_discount: item.promo_discount || 0,
 
-        // grossprofit: Number(sitem.grossprofit) || 0,
         profit: item.profit || 0,
-        // profitPercent: Number(item.grossprofitper) || 0,
         profitPercent: Math.round(Number(item.grossprofitper)) || 0,
-
-        // settledamount: Number(item.profit_settled_amount) || 0,
       })) || [];
-
-    // const totalRow = {
-    //   key: 'total',
-    //   channel: 'Total',
-
-    //   view: Number(totals.view) || 0,
-    //   // qty: Number(totals.grossqty) || 0,
-    //   netQty: Number(totals.totalqty) || 0,
-    //   returnqty: Number(totals.totalreturn) || 0,
-    //   returnPercent: Number(totals.totalper) || 0,
-
-    //   netsales: Number(totals.netsales) || 0,
-    //   // netasp: 0,
-    //   // net_discount: 0,
-
-    //   mpfees: Number(totals.mpfees) || 0,
-    //   shipping: Number(totals.shippingfees) || 0,
-    //   adSpend: Number(totals.ads) || 0,
-    //   gst: Number(totals.gsttopay) || 0,
-
-    //   grossprofit: Number(totals.grossprofit) || 0,
-    //   profit: Number(totals.profit) || 0,
-    //   profitPercent: Math.round(Number(totals.grossprofitper)) || 0,
-
-    //   // settledamount: 0,
-    // };
 
     return rows;
   }, [getProfitSkuData]);
@@ -255,10 +244,6 @@ export default function ProfitSKUIdPage() {
       width: 70,
       fixed: 'left',
       render: (value) => {
-        // if (record.key === 'total') {
-        //   return <span>Total</span>;
-        // }
-
         const logo =
           channelLogoMap[value] ||
           (value && value.toLowerCase().includes('myntra')
@@ -270,7 +255,6 @@ export default function ProfitSKUIdPage() {
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {logo && <img src={logo} alt={value} style={{ width: 24, height: 24, objectFit: 'contain' }} />}
-            {/* <span>{value}</span> */}
           </div>
         );
       },
@@ -298,34 +282,29 @@ export default function ProfitSKUIdPage() {
         );
       },
     },
-    // {
-    //   title: 'Qty',
-    //   dataIndex: 'qty',
-    //   align: 'center',
-    //   sorter: (a, b) => a.qty - b.qty,
-    // },
-    // {
-    //   title: 'Gross Qty',
-    //   dataIndex: 'grossQty',
-    //   align: 'center',
-    //   sorter: (a, b) => a.grossqty - b.grossqty,
-    // },
     {
       title: 'Gross Qty',
       dataIndex: 'netQty',
       align: 'center',
-      // width: 70,
       width: 70,
       ellipsis: true,
       sorter: (a, b) => a.netQty - b.netQty,
     },
     {
       title: 'Net Qty',
-      dataIndex: 'netQty',
+      dataIndex: 'final_net_qty',
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => a.netQty - b.netQty,
+      sorter: (a, b) => a.final_net_qty - b.final_net_qty,
+    },
+    {
+      title: 'Cancelled Qty',
+      dataIndex: 'cancelled_qty',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => a.cancelled_qty - b.cancelled_qty,
     },
     {
       title: 'Return Qty',
@@ -339,7 +318,6 @@ export default function ProfitSKUIdPage() {
       title: 'Courier Return Count',
       dataIndex: 'courier_return_count',
       align: 'center',
-      // width: 70,
       width: 70,
       ellipsis: true,
       sorter: (a, b) => a.courier_return_count - b.courier_return_count,
@@ -348,7 +326,6 @@ export default function ProfitSKUIdPage() {
       title: 'Customer Return Count',
       dataIndex: 'customer_return_count',
       align: 'center',
-      // width: 70,
       width: 70,
       ellipsis: true,
       sorter: (a, b) => a.customer_return_count - b.customer_return_count,
@@ -366,7 +343,6 @@ export default function ProfitSKUIdPage() {
       title: 'Promo Discount',
       dataIndex: 'promo_discount',
       align: 'center',
-      // width: 70,
       width: 70,
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.promo_discount) - parseAmount(b.promo_discount),
@@ -375,36 +351,26 @@ export default function ProfitSKUIdPage() {
       title: 'Gross Sales',
       dataIndex: 'netsales',
       align: 'center',
-      // width: 70,
       width: 70,
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.netsales) - parseAmount(b.netsales),
     },
     {
       title: 'Net Sales',
-      dataIndex: 'netsales',
+      dataIndex: 'final_net_sales',
       align: 'center',
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => parseAmount(a.netsales) - parseAmount(b.netsales),
+      sorter: (a, b) => parseAmount(a.final_net_sales) - parseAmount(b.final_net_sales),
     },
-    // {
-    //   title: 'TCS-IGST',
-    //   dataIndex: 'tcs',
-    //   align: 'center',
-    //   sorter: (a, b) => a.tcs - b.tcs,
-    //   render: (v, record) => (
-    //     <button
-    //       type="button"
-    //       className="cursor-pointer bg-transparent border-none"
-    //       onClick={() =>
-    //         setDetailModal({ open: true, record, type: 'qty', modalLabel: 'ASIN', modalValue: record.asin })
-    //       }
-    //     >
-    //       {v}
-    //     </button>
-    //   ),
-    // },
+    {
+      title: 'Cancelled Sales',
+      dataIndex: 'cancelled_sales',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => parseAmount(a.cancelled_sales) - parseAmount(b.cancelled_sales),
+    },
     {
       title: 'MP fees',
       dataIndex: 'mpfees',
@@ -459,7 +425,6 @@ export default function ProfitSKUIdPage() {
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.mp_gst) - parseAmount(b.mp_gst),
     },
-
     {
       title: 'TCS',
       dataIndex: 'tcs',
@@ -468,19 +433,30 @@ export default function ProfitSKUIdPage() {
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.tcs) - parseAmount(b.tcs),
     },
-    // {
-    //   title: 'Net asp',
-    //   dataIndex: 'netasp',
-    //   align: 'center',
-    //   sorter: (a, b) => a.netasp - b.netasp,
-    // },
-    // {
-    //   title: 'Net discount',
-    //   dataIndex: 'net_discount',
-    //   align: 'center',
-    //   sorter: (a, b) => a.net_discount - b.net_discount,
-    // },
-
+    {
+      title: 'TDS',
+      dataIndex: 'tds',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => parseAmount(a.tds) - parseAmount(b.tds),
+    },
+    {
+      title: 'Other expenses',
+      dataIndex: 'other_expenses',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => parseAmount(a.other_expenses) - parseAmount(b.other_expenses),
+    },
+    {
+      title: 'Expected Settlement',
+      dataIndex: 'settleAmount',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => parseAmount(a.settleAmount) - parseAmount(b.settleAmount),
+    },
     {
       title: 'Ad Spend',
       dataIndex: 'adSpend',
@@ -489,7 +465,6 @@ export default function ProfitSKUIdPage() {
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.adSpend) - parseAmount(b.adSpend),
     },
-
     {
       title: 'Taxable Value',
       dataIndex: 'taxableValue',
@@ -498,7 +473,6 @@ export default function ProfitSKUIdPage() {
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.taxableValue) - parseAmount(b.taxableValue),
     },
-
     {
       title: 'GST to Pay',
       dataIndex: 'gst_to_pay_amount',
@@ -517,14 +491,6 @@ export default function ProfitSKUIdPage() {
       render: (v) => <span>{v}%</span>,
     },
     {
-      title: 'Expected Settlement',
-      dataIndex: 'settleAmount',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.settleAmount) - parseAmount(b.settleAmount),
-    },
-    {
       title: 'Product Cost',
       dataIndex: 'stdcost',
       align: 'center',
@@ -532,22 +498,6 @@ export default function ProfitSKUIdPage() {
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.stdcost) - parseAmount(b.stdcost),
     },
-
-    // {
-    //   title: 'Gross Profit',
-    //   dataIndex: 'grossprofit',
-    //   align: 'center',
-    //   sorter: (a, b) => a.grossprofit - b.grossprofit,
-    //   render: (v, record) => (
-    //     <button
-    //       type="button"
-    //       className="cursor-pointer bg-transparent border-none"
-    //       onClick={() => setDetailModal({ open: true, record, type: 'qty' })}
-    //     >
-    //       {v}
-    //     </button>
-    //   ),
-    // },
     {
       title: 'Profit',
       dataIndex: 'profit',
@@ -555,7 +505,6 @@ export default function ProfitSKUIdPage() {
       width: 100,
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.profit) - parseAmount(b.profit),
-      // render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>₹{v}</span>,
       render: (v, record) => (
         <button
           type="button"
@@ -595,13 +544,6 @@ export default function ProfitSKUIdPage() {
         );
       },
     },
-
-    // {
-    //   title: 'Settled amount',
-    //   dataIndex: 'settledamount',
-    //   align: 'center',
-    //   sorter: (a, b) => a.settledamount - b.settledamount,
-    // },
   ];
 
   return (
@@ -688,10 +630,16 @@ export default function ProfitSKUIdPage() {
                     {columns.map((col, index) => {
                       const keyMap = {
                         netQty: 'netqty',
+                        final_net_qty: 'total_final_net_qty',
+                        cancelled_qty: 'cancelled_qty',
                         returnqty: 'totalreturn',
                         returnPercent: 'totalreturnper',
-                        netsales: 'netsales',
+                        netsales: 'grosssales',
+                        final_net_sales: 'total_final_net_sales',
+                        cancelled_sales: 'cancelled_sales',
                         tcs: 'tcs',
+                        tds: 'tds',
+                        other_expenses: 'other_expenses',
                         mp_gst: 'mp_gst',
                         mpfees: 'estimatefees',
                         stdcost: 'stdcost',
@@ -703,15 +651,6 @@ export default function ProfitSKUIdPage() {
                         profitPercent: 'grossprofitper',
                         taxableValue: 'taxable_value',
                         settleAmount: 'exp_settlement',
-                        netmrp: 'netmrp',
-                        mrpNetDiscount: 'mrp_net_discount',
-                        mrpCustomerDiscount: 'mrpCustomerDiscount',
-                        accountCharges: 'account_charges',
-                        otherExpenses: 'other_expenses',
-                        tacos: 'tacos',
-                        grossProfitPercent: 'grossprofit_percent',
-                        percentOfSales: 'percent_of_sales',
-                        drr: 'drr',
                         courier_return_price: 'courier_return_price',
                         customer_return_price: 'customer_return_price',
                         courier_return_count: 'courier_return_count',

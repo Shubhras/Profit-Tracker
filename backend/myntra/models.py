@@ -662,3 +662,26 @@ class MyntraReportQueue(models.Model):
         return (
             f"{self.report_name} | {self.from_date} -> {self.to_date} ({self.status})"
         )
+
+
+class UploadedReportFile(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="uploaded_report_files",
+    )
+    marketplace = models.CharField(max_length=50, default="Myntra")
+    report_name = models.CharField(max_length=100)
+    report_type = models.CharField(max_length=100)
+    file_name = models.CharField(max_length=255)
+    file = models.FileField(upload_to="uploaded_reports/", null=True, blank=True)
+    status = models.CharField(max_length=50, default="Processed")
+    records = models.CharField(max_length=50, default="0")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.report_name} ({self.file_name})"
+
