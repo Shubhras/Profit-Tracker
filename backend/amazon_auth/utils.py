@@ -1100,21 +1100,35 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
 
         stdcost_missing_percentage = (missing_qty / gross_qty * 100) if gross_qty else 0
         
+        # exp_settlement = (
+        #     final_net_sales
+        #     + shipping_final
+        #     + ads
+        #     + tcs_total
+        #     - estimated_fees
+        #     - mp_gst
+        #     - promo_discount
+        #     - order_claim_amount
+        # )
+        
         exp_settlement = (
             final_net_sales
             + shipping_final
-            + ads
-            + tcs_total
+            # + ads                        remove this 
+            - tcs_total                    #substract now 
+            - tds_total                    #substract now 
             - estimated_fees
             - mp_gst
             - promo_discount
-            - order_claim_amount
+            + order_claim_amount            #add this one 
         )
+        
         profit = (
             final_net_sales
             + shipping_final
             + (ads if profit_setting.ad_spend else 0)
             + (tcs_total if profit_setting.tcs else 0)
+            + (tds_total if profit_setting.tds else 0)
             - estimated_fees
             - (mp_gst if profit_setting.input_gst_itc else 0)
             - (gst_to_pay_amount if profit_setting.output_gst else 0)

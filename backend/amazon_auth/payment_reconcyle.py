@@ -668,6 +668,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         promo_discount = float(str(row.get('promotion_discount') or 0))
         gst_rate = float(str(row.get("sku_gst_rate") or 0))
         tcs_rate = float(str(row.get("sku_tcs_rate") or 0))
+        tds_rate = float(str(row.get("sku_tds_rate") or 0))
         standard_cost = float(str(row.get("sku_standard_cost") or 0))
 
         tx_shipping_final = 0.0
@@ -825,6 +826,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             gst_to_pay_perc = 0.0
 
         tcs = taxable_value * ((tcs_rate or 1.0) / 100.0)
+        tds = taxable_value * ((tds_rate or 1.0) / 100.0)
         mp_gst = (-abs(estimated_fees) + shipping_price) * 0.18
 
         cost = total_cost
@@ -845,12 +847,15 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         exp_settlement = (
             final_net_sales
             + shipping_price
-            + ads
-            + tcs
+            # + ads
+            # + tcs
+            - tcs
+            - tds
             - estimated_fees
             - mp_gst
             - promo_discount
-            - order_claim_amount
+            # - order_claim_amount
+            + order_claim_amount
         )
 
         profit = (

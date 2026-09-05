@@ -6881,6 +6881,7 @@ def amazon_profitability_parent_transactions_shipping(request):
             + shipping_final
             + (ads if profit_setting.ad_spend else Decimal("0"))
             + (tcs_total if profit_setting.tcs else Decimal("0"))
+            + (tds_total if profit_setting.tds else Decimal("0"))
             - estimated_fees
             - (mp_gst if profit_setting.input_gst_itc else Decimal("0"))
             - (gst_to_pay_amount if profit_setting.output_gst else Decimal("0"))
@@ -6890,16 +6891,42 @@ def amazon_profitability_parent_transactions_shipping(request):
             - (row_other_expense if profit_setting.other_expense else Decimal("0"))
         )
 
+        # exp_settlement = (
+        #     final_net_sales
+        #     + shipping_final
+        #     + ads
+        #     + tcs_total
+        #     - estimated_fees
+        #     - mp_gst
+        #     - promo_discount
+        #     - Decimal(str(order_claim_amount))
+        # )
+        
         exp_settlement = (
             final_net_sales
             + shipping_final
-            + ads
-            + tcs_total
+            # + ads                    remove this 
+            - tcs_total                    #substract now 
+            - tds_total                    #substract now 
             - estimated_fees
             - mp_gst
             - promo_discount
-            - Decimal(str(order_claim_amount))
+            + Decimal(str(order_claim_amount))    #add this one 
         )
+        
+        
+        print("exp_settlement cccccccccccccccccccccccnewwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",exp_settlement)
+        print("final_net_sales****************",final_net_sales)
+        
+        print("shipping_final****************",shipping_final)
+        print("tcs_total>>>>>>>>>>>****************",tcs_total)
+        print("tds_total>>>>>>>>>>>****************",tds_total)
+        print("estimated_fees****************",estimated_fees)
+        print("promo_discount>>>>>>>>>>>****************",promo_discount)
+        print("mp_gst>>>>>>>>>>>****************",mp_gst)
+        print("ads****************",ads)
+        print("order_claim_amount****************",order_claim_amount)
+        
         profit_margin = (profit / net_sales * 100) if net_sales else 0
 
         tacos = (
@@ -9081,14 +9108,6 @@ def sku_profit_report_transactions_shipping(request):
         mp_gst = (-abs(estimated_fees) + shipping_final) * 0.18
 
         
-        # print("shipping_final****************",shipping_final)
-        # print("cost>>>>>>>>>>>****************",cost)
-        # print("gst_to_pay_amount>>>>>>>>>>>****************",gst_to_pay_amount)
-        # print("estimated_fees****************",estimated_fees)
-        # print("tcs>>>>>>>>>>>****************",tcs)
-        # print("mp_gst>>>>>>>>>>>****************",mp_gst)
-        # print("ads****************",ads)
-        
         row_other_expense = float(other_expenses_map.get(idx, 0))
 
         # profit = (
@@ -9104,12 +9123,23 @@ def sku_profit_report_transactions_shipping(request):
         #     - cost
         #     - row_other_expense
         # )
+        
+        # print("tcs cccccccccccccccccccccccnewwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",tcs)
+        
+        # print("shipping_final****************",shipping_final)
+        # print("cost>>>>>>>>>>>****************",cost)
+        # print("gst_to_pay_amount>>>>>>>>>>>****************",gst_to_pay_amount)
+        # print("estimated_fees****************",estimated_fees)
+        # print("tcs>>>>>>>>>>>****************",tcs)
+        # print("mp_gst>>>>>>>>>>>****************",mp_gst)
+        # print("ads****************",ads)
 
         profit = (
             final_net_sales
             + shipping_final
             + (ads if profit_setting.ad_spend else 0)
             + (tcs if profit_setting.tcs else 0)
+            + (tds if profit_setting.tds else 0)
             - estimated_fees
             - (mp_gst if profit_setting.input_gst_itc else 0)
             - (gst_to_pay_amount if profit_setting.output_gst else 0)
@@ -9119,16 +9149,32 @@ def sku_profit_report_transactions_shipping(request):
             - (row_other_expense if profit_setting.other_expense else 0)
         )
 
+        # exp_settlement = (    updated on 5 sep
+        #     final_net_sales
+        #     + shipping_final
+        #     + ads
+        #     + tcs
+        #     - estimated_fees
+        #     - mp_gst
+        #     - promo_discount
+        #     - order_claim_amount
+        # )
+        
+        # New exp_settlement 
+        
         exp_settlement = (
             final_net_sales
-            + shipping_final
-            + ads
-            + tcs
+            + shipping_final     
+            # + ads                    remove this 
+            - tcs                    #substract now 
+            - tds                    #substract now 
             - estimated_fees
             - mp_gst
             - promo_discount
-            - order_claim_amount
+            + order_claim_amount     #add this one      
         )
+        
+
 
 
         profit_margin = (profit / net_sales * 100) if net_sales else 0
@@ -9486,27 +9532,6 @@ def amazon_profitability_details_transactions_shipping(request):
 
     IST = ZoneInfo("Asia/Kolkata")
 
-    # def parse_dt(dt_str, is_end=False):
-    #     if not dt_str or not isinstance(dt_str, (str, bytes, date, datetime)) or len(str(dt_str)) < 10:
-    #         return None
-    #     try:
-    #         if isinstance(dt_str, (datetime, date)):
-    #             dt = dt_str
-    #         else:
-    #             clean_str = str(dt_str).split('T')[0]
-    #             dt = datetime.strptime(clean_str, '%Y-%m-%d')
-
-    #         if is_end:
-    #             dt = dt.replace(hour=23, minute=59, second=59)
-    #         else:
-    #             dt = dt.replace(hour=0, minute=0, second=0)
-
-    #         # Treat the incoming date as an IST calendar day, then convert to UTC
-    #         # for comparison against purchase_date / posted_date (stored in UTC)
-    #         dt_ist = dt.replace(tzinfo=IST)
-    #         return dt_ist.astimezone(ZoneInfo("UTC"))
-    #     except Exception:
-    #         return None
     
     
     def parse_dt(dt_str, is_end=False):
@@ -10565,15 +10590,27 @@ def amazon_profitability_details_transactions_shipping(request):
 
         stdcost_missing_percentage = (missing_qty / gross_qty * 100) if gross_qty else 0
 
+        # exp_settlement = (
+        #     final_net_sales
+        #     + shipping_final
+        #     + ads
+        #     + tcs_total
+        #     - estimated_fees
+        #     - mp_gst
+        #     - promo_discount
+        #     - order_claim_amount
+        # )
+        
         exp_settlement = (
             final_net_sales
             + shipping_final
-            + ads
-            + tcs_total
+            # + ads                        remove this 
+            - tcs_total                    #substract now 
+            - tds_total                    #substract now 
             - estimated_fees
             - mp_gst
             - promo_discount
-            - order_claim_amount
+            + order_claim_amount            #add this one 
         )
 
         
@@ -10582,6 +10619,7 @@ def amazon_profitability_details_transactions_shipping(request):
             + shipping_final
             + (ads if profit_setting.ad_spend else 0)
             + (tcs_total if profit_setting.tcs else 0)
+            + (tds_total if profit_setting.tds else 0)
             - estimated_fees
             - (mp_gst if profit_setting.input_gst_itc else 0)
             - (gst_to_pay_amount if profit_setting.output_gst else 0)
