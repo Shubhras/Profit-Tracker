@@ -216,6 +216,10 @@ export default function BusinessExpenses() {
   const handleSubmit = async (statusType = 'applied') => {
     try {
       const values = await form.validateFields();
+      if (!costType) {
+        message.warning('Please select a Cost Type.');
+        return;
+      }
       setSaving(true);
 
       const payload = {
@@ -459,13 +463,14 @@ export default function BusinessExpenses() {
               <Form.Item
                 name="marketplace"
                 label={<span className="text-[12px] font-medium text-[#374151]">Select Marketplace</span>}
+                rules={[{ required: true, message: 'Please select a marketplace' }]}
                 initialValue={connectedMarketplaces[0]?.name || 'Amazon'}
               >
-                <Select className="h-[36px]">
+                <Select className="h-[36px]" placeholder="Select Marketplace">
                   {connectedChannels.map((channel) => (
-                    <option key={channel} value={channel}>
+                    <Option key={channel} value={channel}>
                       {channel}
-                    </option>
+                    </Option>
                   ))}
                   {/* <Option value="All">All Connected Marketplaces</Option> */}
                 </Select>
@@ -507,6 +512,7 @@ export default function BusinessExpenses() {
               <Form.Item
                 name="date_range"
                 label={<span className="text-[12px] font-medium text-[#374151]">Duration</span>}
+                rules={[{ required: true, message: 'Duration is required' }]}
               >
                 <RangePicker className="w-full h-[36px]" />
               </Form.Item>
@@ -515,7 +521,10 @@ export default function BusinessExpenses() {
             {/* COST TYPE SELECTION CARDS */}
             <div className="mt-2 mb-4">
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-[12px] font-medium text-[#374151]">Cost Type</label>
+                <label className="block text-[12px] font-medium text-[#374151]">
+                  <span className="text-[#ff4d4f] mr-1 text-[14px] leading-none">*</span>
+                  Cost Type
+                </label>
                 {lockedCostTypeInfo?.isLocked && (
                   <Tag color="blue" className="m-0 text-[11px]">
                     🔒 Locked to {lockedCostTypeInfo.costType === 'per_sku' ? 'Per SKU' : 'Per Order'} for{' '}

@@ -106,10 +106,17 @@ export default function ProfitDetailsView() {
     };
   };
   useEffect(() => {
+    setPagination((prev) => ({
+      ...prev,
+      current: 1,
+    }));
+  }, [profitType]);
+
+  useEffect(() => {
     if (decodedChannel) {
       dispatch(getProfitDetails(buildPayload()));
     }
-  }, [dateRange, decodedChannel, globalChannel, pagination.current, pagination.pageSize, debouncedSearch]);
+  }, [dateRange, decodedChannel, globalChannel, pagination.current, pagination.pageSize, debouncedSearch, profitType]);
 
   const handleExport = async (format = 'xlsx') => {
     setExportLoading(true);

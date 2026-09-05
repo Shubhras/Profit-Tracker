@@ -119,10 +119,26 @@ export default function ProfitSKUIdPage() {
   ];
 
   useEffect(() => {
+    setPagination((prev) => ({
+      ...prev,
+      current: 1,
+    }));
+  }, [profitType]);
+
+  useEffect(() => {
     if (decodedChannel) {
       dispatch(getProfitSKUId(buildPayload()));
     }
-  }, [dateRange, decodedChannel, pagination.current, pagination.pageSize, debouncedSearch, globalChannel, channels]);
+  }, [
+    dateRange,
+    decodedChannel,
+    pagination.current,
+    pagination.pageSize,
+    debouncedSearch,
+    globalChannel,
+    channels,
+    profitType,
+  ]);
 
   useEffect(() => {
     const handleHeaderAction = (event) => {

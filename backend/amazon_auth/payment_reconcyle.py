@@ -302,7 +302,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
-        .values('asin', 'parent_asin', 'seller_sku', 'order__amazon_order_id', 'quantity_ordered', 'item_price', 'new_item_price', 'item_tax', 'promotion_discount')
+        .values('asin', 'parent_asin', 'seller_sku', 'order__amazon_order_id', 'order__purchase_date', 'quantity_ordered', 'item_price', 'new_item_price', 'item_tax', 'promotion_discount')
     )
 
     child_parent_map = {}
@@ -785,7 +785,9 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             final_net_sales += o_gross
             total_cost += o_cost
 
-        row_order_ids = [o['order__amazon_order_id'] for o in orders]
+        row_order_ids = [o['order__amazon_order_id'] for o in orders if o.get('order__amazon_order_id')]
+        row_first_order_id = row_order_ids[0] if row_order_ids else ""
+        row_first_date = str(orders[0].get('order__purchase_date')) if orders and orders[0].get('order__purchase_date') else ""
         order_return_amount = sum(refund_amount_by_order.get(oid, 0.0) for oid in row_order_ids)
         order_return_count = sum(refund_count_by_order.get(oid, 0) for oid in row_order_ids)
         order_has_return = any(oid in order_ids_with_refund for oid in row_order_ids)
@@ -904,7 +906,9 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             "parent_asin": parent_asin,
             "seller_sku": seller_sku,
             "child_sku": seller_sku or parent_asin,
-            "view": seller_sku or parent_asin,
+            "order_id": row_first_order_id,
+            "date": row_first_date,
+            "view": row_first_order_id or seller_sku or parent_asin,
             "name": row['title'],
             "image": row['image_url'],
             "image_url": row['image_url'],

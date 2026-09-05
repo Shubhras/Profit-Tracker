@@ -42,59 +42,7 @@ export default function FinanceConfiguration() {
 
   const fileInputRef = useRef(null);
 
-  const DEFAULT_RECENT_UPLOADS = [
-    {
-      reportName: 'Seller Orders Report',
-      reportType: 'Seller_Orders_Report',
-      fileName: 'myntra_orders_Aug.xlsx',
-      uploadedOn: '20 Aug 2026, 11:30 AM',
-      status: 'Processed',
-      records: '12,542',
-      marketplace: 'Myntra',
-    },
-    {
-      reportName: 'Seller Returns Report',
-      reportType: 'Seller_Returns_Report',
-      fileName: 'myntra_returns_Aug.xlsx',
-      uploadedOn: '20 Aug 2026, 10:15 AM',
-      status: 'Processed',
-      records: '8,765',
-      marketplace: 'Myntra',
-    },
-    {
-      reportName: 'Payments Report',
-      reportType: 'Payments',
-      fileName: 'myntra_payments_Aug.xlsx',
-      uploadedOn: '19 Aug 2026, 06:45 AM',
-      status: 'Processed',
-      records: '5,420',
-      marketplace: 'Myntra',
-    },
-  ];
-
-  const [recentUploads, setRecentUploads] = useState(() => {
-    try {
-      const saved = localStorage.getItem('recent_uploaded_reports');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
-      }
-    } catch (e) {
-      console.error('Failed to parse recent_uploaded_reports from localStorage:', e);
-    }
-    return DEFAULT_RECENT_UPLOADS;
-  });
-
-  useEffect(() => {
-    try {
-      const serializableUploads = recentUploads.map(({ file, ...item }) => item);
-      localStorage.setItem('recent_uploaded_reports', JSON.stringify(serializableUploads));
-    } catch (e) {
-      console.error('Failed to save recent_uploaded_reports to localStorage:', e);
-    }
-  }, [recentUploads]);
+  const [recentUploads, setRecentUploads] = useState([]);
 
   const marketplaceOptions = useMemo(() => {
     const defaultList = ['Amazon-India', 'Myntra'];
@@ -117,23 +65,23 @@ export default function FinanceConfiguration() {
     ];
   }, [selectedMarketplace]);
 
-  useEffect(() => {
-    const fetchUploadedReports = async () => {
-      try {
-        const res = await DataService.get('/myntra/reports/list/');
-        if (res?.data?.status && Array.isArray(res.data.data) && res.data.data.length > 0) {
-          setRecentUploads((prev) => {
-            const backendData = res.data.data;
-            const existingKeys = new Set(backendData.map((item) => `${item.reportType}_${item.fileName}`));
-            const prevFiltered = prev.filter((item) => !existingKeys.has(`${item.reportType}_${item.fileName}`));
-            return [...backendData, ...prevFiltered];
-          });
-        }
-      } catch (err) {
-        console.error('Error fetching uploaded reports:', err);
+  const fetchUploadedReports = async () => {
+    try {
+      const res = await DataService.get('/myntra/reports/list/');
+      if (res?.data?.status && Array.isArray(res.data.data)) {
+        setRecentUploads(res.data.data);
       }
-    };
+    } catch (err) {
+      console.error('Error fetching uploaded reports:', err);
+    }
+  };
 
+  useEffect(() => {
+    try {
+      localStorage.removeItem('recent_uploaded_reports');
+    } catch (e) {
+      // ignore
+    }
     fetchUploadedReports();
   }, []);
 
@@ -281,6 +229,7 @@ export default function FinanceConfiguration() {
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
+        fetchUploadedReports();
       } else {
         message.error(resData.message || resData.error || 'Upload failed.');
       }
@@ -610,9 +559,13 @@ export default function FinanceConfiguration() {
               </div>
 
               {/* TABLE ROWS */}
+              {recentUploads.length === 0 && (
+                <div className="py-8 text-center text-[12px] text-[#6B7280]">No uploaded reports found</div>
+              )}
+
               {recentUploads.map((item, index) => (
                 <div
-                  key={`${item.fileName}-${index}`}
+                  key={item.id ? `upload-${item.id}` : `${item.fileName}-${index}`}
                   className="grid grid-cols-[1.2fr_1fr_1.2fr_1.35fr_1.3fr_.9fr_.75fr_.65fr] min-h-[45px] items-center border-b border-[#F0F1F3] last:border-b-0 hover:bg-[#FAFCFB] transition-colors"
                 >
                   {/* REPORT NAME */}
