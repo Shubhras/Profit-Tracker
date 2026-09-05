@@ -1,4 +1,5 @@
 # subscription/views.py
+from django.db.models import Value
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -17,7 +18,7 @@ from django.db.models.functions import TruncDate
 from django.utils import timezone
 from datetime import timedelta
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
-
+from django.db.models import Case, When, Value, IntegerField
 class IsAdministrator(BasePermission):
     def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.is_staff
@@ -126,9 +127,19 @@ class SubscriptionPlanListView(APIView):
                 "-created_at"
             ]
 
-            queryset = queryset.order_by(
-                ordering if ordering in valid_ordering_fields else "-created_at"
-            )
+            ordering = ordering if ordering in valid_ordering_fields else "-created_at"
+
+            queryset = queryset.annotate(
+                is_starter=Case(
+                    When(slug="starter-plan", then=Value(0)),
+                    default=Value(1),
+                    output_field=IntegerField()
+                )
+            ).order_by("is_starter", ordering)
+
+            # queryset = queryset.order_by(
+            #     ordering if ordering in valid_ordering_fields else "-created_at"
+            # )
 
             paginator = CustomPagination()
 
