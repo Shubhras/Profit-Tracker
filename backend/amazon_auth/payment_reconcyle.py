@@ -1359,6 +1359,7 @@ def _payment_reconcile_order_level_logic(request):
     totals = data.get("totals", {})
 
     if not rows:
+        data["summary"] = _build_reconciliation_summary([])
         return res
 
     order_ids = [r.get("order_id") for r in rows if r.get("order_id")]
@@ -1526,6 +1527,7 @@ def _payment_reconcile_order_level_logic(request):
         "unsettled_not_paid": format_currency(tot_unsettled),
         "total_unsettled_not_paid": format_currency(tot_unsettled),
     })
+    data["summary"] = _build_reconciliation_summary(rows)
 
     return Response(data)
 
@@ -1582,7 +1584,12 @@ def combined_payment_reconcile_by_parentproductid(request):
     has_amazon = has_all or any("amazon" in ch for ch in channels_lower)
 
     if has_amazon and not has_myntra:
-        return _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False)
+        res = _payment_reconcile_order_level_logic(request)
+        if res.status_code == 200 and isinstance(res.data, dict) and "response" in res.data:
+            res.data["response"] = enrich_row_image_urls(res.data["response"], user)
+            if "summary" not in res.data:
+                res.data["summary"] = _build_reconciliation_summary(res.data.get("response", []))
+        return res
 
     amazon_rows = []
     myntra_rows = []
@@ -1590,7 +1597,7 @@ def combined_payment_reconcile_by_parentproductid(request):
     myntra_totals = {}
 
     if has_amazon:
-        amazon_res = _call_view_for_all_results(lambda req: _payment_reconcile_details_transactions_shipping_logic(req, by_sku=False), request)
+        amazon_res = _call_view_for_all_results(_payment_reconcile_order_level_logic, request)
         if amazon_res.status_code == 200 and isinstance(amazon_res.data, dict):
             amazon_rows = amazon_res.data.get("response", [])
             amazon_totals = amazon_res.data.get("totals", {})

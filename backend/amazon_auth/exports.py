@@ -949,9 +949,9 @@ RECONCILE_DETAILS_COLUMNS = {
     "gst_to_pay_perc": "GST to Pay %",
     "claim_amount": "Claim Amount",
     "exp_settlement": "Expected Settlement",
-    "stdcost": "Product Cost",
-    "profit": "Profit",
-    "grossprofitper": "Profit %"
+    # "stdcost": "Product Cost",
+    # "profit": "Profit",
+    # "grossprofitper": "Profit %"
 }
 
 RECONCILE_PARENT_COLUMNS = {
@@ -991,10 +991,7 @@ RECONCILE_ORDER_COLUMNS = {
     "gst_to_pay_amount": "GST to Pay",
     "gst_to_pay_perc": "GST to Pay %",
     "claim_amount": "Claim Amount",
-    "exp_settlement": "Expected Settlement",
-    "stdcost": "Product Cost",
-    "profit": "Profit",
-    "grossprofitper": "Profit %"
+    "exp_settlement": "Expected Settlement"
 }
 
 def format_reconcile_order_export(data_list, totals_dict=None):

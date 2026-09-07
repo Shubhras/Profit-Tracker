@@ -7972,7 +7972,7 @@ def sku_profit_report_transactions_shipping(request):
 
     user = get_effective_user(request.user)
     profit_setting, _ = ProfitCalculationSetting.objects.get_or_create(user=user)
-    data = request.data
+    data = getattr(request, "_full_data", None) or getattr(request, 'data', None) or {}
 
     # ---------------- GET ASIN ----------------
     filters = data.get("filters", {})
@@ -8147,6 +8147,7 @@ def sku_profit_report_transactions_shipping(request):
             title=Max('title'),
             image=Max('image_url'),
             asin=Max('asin'),
+            parent_asin=Max('parent_asin'),
 
             grossqty=Sum('quantity_ordered'),
             # grosssales=Sum('item_price'),
@@ -9197,6 +9198,10 @@ def sku_profit_report_transactions_shipping(request):
             "date": row['order__purchase_date'],
             "name": row['title'],
             "image": row['image'],
+            "asin": row.get('asin') or "-",
+            "parent_asin": row.get('parent_asin') or "-",
+            "seller_sku": row.get('seller_sku') or "",
+            "child_sku": row.get('seller_sku') or row.get('asin') or "",
 
             "channel": "Amazon-India",
             "channel1": "Amazon-India",
