@@ -260,8 +260,9 @@ const AuthInfo = React.memo(() => {
     dispatch(
       action.setDateRange({
         fromDate: moment().startOf('month').format('YYYY-MM-DD'),
-
         endDate: moment().endOf('month').format('YYYY-MM-DD'),
+        isInitial: true,
+        isUserSelected: false,
       }),
     );
   }, []);
@@ -419,6 +420,8 @@ const AuthInfo = React.memo(() => {
                       action.setDateRange({
                         fromDate: start.format('YYYY-MM-DD'),
                         endDate: end.format('YYYY-MM-DD'),
+                        isInitial: true,
+                        isUserSelected: false,
                       }),
                     );
                   }}
@@ -486,6 +489,8 @@ const AuthInfo = React.memo(() => {
                                   action.setDateRange({
                                     fromDate: start.format('YYYY-MM-DD'),
                                     endDate: end.format('YYYY-MM-DD'),
+                                    isUserSelected: true,
+                                    appliedAt: Date.now(),
                                   }),
                                 );
 
@@ -509,6 +514,8 @@ const AuthInfo = React.memo(() => {
                         action.setDateRange({
                           fromDate: moment(start).format('YYYY-MM-DD'),
                           endDate: moment(end).format('YYYY-MM-DD'),
+                          isUserSelected: true,
+                          appliedAt: Date.now(),
                         }),
                       );
 

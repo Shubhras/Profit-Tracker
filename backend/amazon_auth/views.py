@@ -7640,8 +7640,6 @@ def sku_profit_report(request):
 
         fee_data = estimated_fee_map.get(oid, {})
 
-        estimated_fees = fee_data.get("estimated_fees", 0)
-
         referral_fee = fee_data.get("referral_fee", 0)
         closing_fee = fee_data.get("closing_fee", 0)
         per_item_fee = fee_data.get("per_item_fee", 0)
@@ -7651,6 +7649,8 @@ def sku_profit_report(request):
         fba_weight_handling_fee = fee_data.get("fba_weight_handling_fee", 0)
 
         tax_amount = fee_data.get("tax_amount", 0)
+
+        estimated_fees = max(0.0, float(fee_data.get("estimated_fees", 0)) - float(fba_weight_handling_fee))
 
         # adjusted_gross_sales = gross_sales + item_tax - promo_discount
 
@@ -8879,8 +8879,6 @@ def sku_profit_report_transactions_shipping(request):
 
         fee_data = estimated_fee_map.get(oid, {})
 
-        estimated_fees = fee_data.get("estimated_fees", 0)
-
         referral_fee = fee_data.get("referral_fee", 0)
         closing_fee = fee_data.get("closing_fee", 0)
         per_item_fee = fee_data.get("per_item_fee", 0)
@@ -8890,6 +8888,8 @@ def sku_profit_report_transactions_shipping(request):
         fba_weight_handling_fee = fee_data.get("fba_weight_handling_fee", 0)
 
         tax_amount = fee_data.get("tax_amount", 0)
+
+        estimated_fees = max(0.0, float(fee_data.get("estimated_fees", 0)) - float(fba_weight_handling_fee))
 
         # ------------------------------------------------------------
         # SHIPPING — Direct sum of breakdowns for this order
@@ -10359,8 +10359,6 @@ def amazon_profitability_details_transactions_shipping(request):
 
         fee_data = estimated_fee_map.get(parent_asin, {})
 
-        estimated_fees = fee_data.get("estimated_fees", 0)
-
         referral_fee = fee_data.get("referral_fee", 0)
         closing_fee = fee_data.get("closing_fee", 0)
         per_item_fee = fee_data.get("per_item_fee", 0)
@@ -10370,6 +10368,8 @@ def amazon_profitability_details_transactions_shipping(request):
         fba_weight_handling_fee = fee_data.get("fba_weight_handling_fee", 0)
 
         tax_amount = fee_data.get("tax_amount", 0)
+
+        estimated_fees = max(0.0, float(fee_data.get("estimated_fees", 0)) - float(fba_weight_handling_fee))
 
         gross_qty = int(row['grossqty'] or 0)
         quantity_shipped = int(row['quantity_shipped'] or 0)
@@ -10646,10 +10646,10 @@ def amazon_profitability_details_transactions_shipping(request):
 
         row_customer_return_count += order_replacement_count
         order_return_count += order_replacement_count
-        final_net_qty = final_net_qty - order_return_count
+        final_net_qty = final_net_qty - order_return_count   
 
-        ret_percent = (order_return_count / final_net_qty * 100) if final_net_qty else 0
-
+        # ret_percent = (order_return_count / final_net_qty * 100) if final_net_qty else 0
+        ret_percent = (order_return_count / gross_qty * 100) if gross_qty else 0 
         results.append({
             # "asin": asin,
             "asin": parent_asin, 
@@ -10756,7 +10756,8 @@ def amazon_profitability_details_transactions_shipping(request):
         total_return_count += order_replacement_count
 
         customer_return_count += order_replacement_count
-        total_ret_percent = (total_return_count / total_final_net_qty * 100) if total_final_net_qty else 0
+        # total_ret_percent = (total_return_count / total_final_net_qty * 100) if total_final_net_qty else 0
+        total_ret_percent = (total_return_count / total_qty * 100) if total_qty else 0
     # ====== START: ADD ASINS WITH AD SPEND BUT NO ORDERS ======
     for p_asin, data in ads_by_parent.items():
         if p_asin in processed_parent_asins:

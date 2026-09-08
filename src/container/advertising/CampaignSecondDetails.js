@@ -189,7 +189,7 @@ function CampaignSecondDetails() {
       dataIndex: 'roas',
       align: 'center',
       width: 70,
-      render: (v) => v || '-',
+      render: (v) => (v != null ? Number(v).toFixed(2) : '-'),
       sorter: (a, b) => a.roas - b.roas,
     },
   ];

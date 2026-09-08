@@ -6,6 +6,8 @@ from amazon_auth.models import *
 
 class AmazonCatalogDetailsSerializer(serializers.ModelSerializer):
 
+    product_site_launch_date = serializers.SerializerMethodField()
+
     class Meta:
         model = AmazonCatalogDetails
 
@@ -23,10 +25,22 @@ class AmazonCatalogDetailsSerializer(serializers.ModelSerializer):
             "number_of_items","batteries_required",
             "care_instructions","special_features",
             "recommended_uses","sales_rank","sales_rank_category","display_group_rank","display_group_rank_title",
+            "product_site_launch_date",
 
             "created_at",
             "updated_at",
         ]
+
+    def get_product_site_launch_date(self, obj):
+        try:
+            if isinstance(obj.raw_response, dict):
+                attrs = obj.raw_response.get("attributes", {})
+                dates = attrs.get("product_site_launch_date", [])
+                if dates and isinstance(dates, list) and len(dates) > 0:
+                    return dates[0].get("value")
+        except Exception:
+            pass
+        return None
 
 
 class AmazonListingItemSerializer(serializers.ModelSerializer):

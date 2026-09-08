@@ -17,6 +17,7 @@ from .views import (
     sku_profitability_list_filtered,
     get_full_dashboard,
 )
+import re
 from .utils import format_currency
 
 def parse_currency_to_decimal(val):
@@ -29,6 +30,118 @@ def parse_currency_to_decimal(val):
         return Decimal(val_str)
     except Exception:
         return Decimal(0)
+
+
+def _is_nonzero_val(val):
+    if val is None:
+        return False
+    s = str(val).replace('₹', '').replace('-', '').replace(',', '').strip()
+    return s not in ('0', '0.0', '0.00', '', 'None', 'null')
+
+
+def _parse_dto_sort_val(val, reverse=False):
+    if val is None or str(val).strip() in ('', '-', 'None', 'null'):
+        return (2, 0) if not reverse else (-2, 0)
+    if isinstance(val, (int, float, Decimal)):
+        return (0, float(val))
+    s = str(val).strip()
+    cleaned = re.sub(r'[₹,\s%]', '', s)
+    try:
+        num = float(cleaned)
+        return (0, num)
+    except (ValueError, TypeError):
+        return (1, s.lower()) if not reverse else (-1, s.lower())
+
+
+DTO_FIELD_ALIAS_MAP = {
+    'view': 'asin',
+    'asin': 'asin',
+    'channel': 'channel',
+    'netqty': 'netqty',
+    'net_qty': 'netqty',
+    'grossqty': 'grossqty',
+    'final_net_qty': 'final_net_qty',
+    'cancelled_qty': 'cancelled_qty',
+    'returnqty': 'returnqty',
+    'courier_return_count': 'courier_return_count',
+    'customer_return_count': 'customer_return_count',
+    'returnpercent': 'retpercent',
+    'retpercent': 'retpercent',
+    'promo_discount': 'promo_discount',
+    'netsales': 'grosssales',
+    'grosssales': 'grosssales',
+    'final_net_sales': 'final_net_sales',
+    'cancelled_sales': 'cancelled_sales',
+    'mpfees': 'estimatefees',
+    'estimatefees': 'estimatefees',
+    'shipping': 'shippingfees',
+    'shippingfees': 'shippingfees',
+    'mp_gst': 'mp_gst',
+    'tcs': 'tcs',
+    'tds': 'tds',
+    'adspend': 'ads',
+    'ads': 'ads',
+    'taxablevalue': 'taxable_value',
+    'taxable_value': 'taxable_value',
+    'gst_to_pay_amount': 'gst_to_pay_amount',
+    'gst_to_pay_perc': 'gst_to_pay_perc',
+    'claim_amount': 'claim_amount',
+    'other_expenses': 'other_expenses',
+    'settleamount': 'exp_settlement',
+    'exp_settlement': 'exp_settlement',
+    'stdcost': 'stdcost',
+    'profit': 'profit',
+    'profitpercent': 'grossprofitper',
+    'grossprofitper': 'grossprofitper',
+}
+
+
+def sort_profitability_dtos(dto_rows, sort_by=None, sort_order=None):
+    if not dto_rows or not isinstance(dto_rows, list):
+        return dto_rows
+
+    if not sort_by:
+        dto_rows.sort(
+            key=lambda item: parse_currency_to_decimal(
+                getattr(item, 'grosssales', None) if not isinstance(item, dict) else item.get('grosssales', item.get('netsales', 0))
+            ),
+            reverse=True
+        )
+        return dto_rows
+
+    sort_by_lower = str(sort_by).lower().strip()
+    reverse = str(sort_order).lower().strip() in ['desc', 'descend']
+    target_field = DTO_FIELD_ALIAS_MAP.get(sort_by_lower, sort_by_lower)
+
+    def extract_val(item):
+        val = None
+        if not isinstance(item, dict):
+            val = getattr(item, target_field, None)
+            if val is None and hasattr(item, sort_by):
+                val = getattr(item, sort_by, None)
+        else:
+            val = item.get(target_field)
+            if val is None:
+                val = item.get(sort_by)
+
+        if target_field in ('estimatefees', 'mpfees'):
+            est = getattr(item, 'estimatefees', None) if not isinstance(item, dict) else item.get('estimatefees')
+            mp = getattr(item, 'mpfees', None) if not isinstance(item, dict) else item.get('mpfees')
+            if _is_nonzero_val(est):
+                val = est
+            elif _is_nonzero_val(mp):
+                val = mp
+            else:
+                val = est if est is not None else mp
+
+        return _parse_dto_sort_val(val, reverse=reverse)
+
+    try:
+        dto_rows.sort(key=extract_val, reverse=reverse)
+    except Exception as e:
+        print(f"Warning: sort_profitability_dtos failed ({e})")
+
+    return dto_rows
 
 
 def _extract_channels_and_flags(data, filters=None):
@@ -242,16 +355,26 @@ def _combine_totals(amazon_t, myntra_t, type="style"):
             "total_claim_amount": format_currency(get_sum("total_claim_amount")),
             "total_replacement_return_count": get_sum("total_replacement_return_count", is_currency=False),
 
-            "actual_fees": format_currency(get_sum("actual_fees")),
-            "fees_leaks": format_currency(get_sum("fees_leaks")),
-            "actual_shipping_charges": format_currency(get_sum("actual_shipping_charges")),
-            "shipping_leaks": format_currency(get_sum("shipping_leaks")),
-            "actual_mp_gst": format_currency(get_sum("actual_mp_gst")),
-            "actual_tcs": format_currency(get_sum("actual_tcs")),
-            "tcs_leaks": format_currency(get_sum("tcs_leaks")),
-            "expected_settlement": format_currency(get_sum("expected_settlement") or get_sum("exp_settlement")),
-            "settlement_paid_in_bank": format_currency(get_sum("settlement_paid_in_bank")),
-            "unsettled_not_paid": format_currency(get_sum("unsettled_not_paid")),
+            "actual_fees": format_currency(get_sum("actual_fees") or get_sum("total_actual_fees")),
+            "total_actual_fees": format_currency(get_sum("actual_fees") or get_sum("total_actual_fees")),
+            "fees_leaks": format_currency(get_sum("fees_leaks") or get_sum("total_fees_leaks")),
+            "total_fees_leaks": format_currency(get_sum("fees_leaks") or get_sum("total_fees_leaks")),
+            "actual_shipping_charges": format_currency(get_sum("actual_shipping_charges") or get_sum("total_actual_shipping")),
+            "total_actual_shipping": format_currency(get_sum("actual_shipping_charges") or get_sum("total_actual_shipping")),
+            "shipping_leaks": format_currency(get_sum("shipping_leaks") or get_sum("total_shipping_leaks")),
+            "total_shipping_leaks": format_currency(get_sum("shipping_leaks") or get_sum("total_shipping_leaks")),
+            "actual_mp_gst": format_currency(get_sum("actual_mp_gst") or get_sum("total_actual_mp_gst")),
+            "total_actual_mp_gst": format_currency(get_sum("actual_mp_gst") or get_sum("total_actual_mp_gst")),
+            "actual_tcs": format_currency(get_sum("actual_tcs") or get_sum("total_actual_tcs")),
+            "total_actual_tcs": format_currency(get_sum("actual_tcs") or get_sum("total_actual_tcs")),
+            "tcs_leaks": format_currency(get_sum("tcs_leaks") or get_sum("total_tcs_leaks")),
+            "total_tcs_leaks": format_currency(get_sum("tcs_leaks") or get_sum("total_tcs_leaks")),
+            "expected_settlement": format_currency(get_sum("expected_settlement") or get_sum("total_expected_settlement") or get_sum("exp_settlement")),
+            "total_expected_settlement": format_currency(get_sum("expected_settlement") or get_sum("total_expected_settlement") or get_sum("exp_settlement")),
+            "settlement_paid_in_bank": format_currency(get_sum("settlement_paid_in_bank") or get_sum("total_settlement_paid_in_bank")),
+            "total_settlement_paid_in_bank": format_currency(get_sum("settlement_paid_in_bank") or get_sum("total_settlement_paid_in_bank")),
+            "unsettled_not_paid": format_currency(get_sum("unsettled_not_paid") or get_sum("total_unsettled_not_paid")),
+            "total_unsettled_not_paid": format_currency(get_sum("unsettled_not_paid") or get_sum("total_unsettled_not_paid")),
         })
         
     return combined
@@ -868,6 +991,21 @@ def combined_profitability_details_transactions_shipping(request):
     from_date_str = filters.get('fromDate') or filters.get('start_date') or filters.get('from_date') or filters.get('startDate')
     to_date_str = filters.get('toDate') or filters.get('end_date') or filters.get('to_date') or filters.get('endDate')
     
+    sort_by = (
+        data.get("sort_by")
+        or (data.get("sort") or {}).get("field")
+        or filters.get("sort_by")
+        or (filters.get("sort") or {}).get("field")
+        or request.query_params.get("sort_by")
+    )
+    sort_order = (
+        data.get("sort_order")
+        or (data.get("sort") or {}).get("order")
+        or filters.get("sort_order")
+        or (filters.get("sort") or {}).get("order")
+        or request.query_params.get("sort_order")
+    )
+
     channels, has_amazon, has_myntra = _extract_channels_and_flags(data, filters)
     
     if has_amazon and not has_myntra:
@@ -875,6 +1013,8 @@ def combined_profitability_details_transactions_shipping(request):
         res = undecorated(request)
         if res.status_code == 200 and isinstance(res.data, dict) and "response" in res.data:
             res.data["response"] = enrich_row_image_urls(res.data["response"], user)
+            if sort_by and isinstance(res.data["response"], list):
+                res.data["response"] = sort_profitability_dtos(res.data["response"], sort_by=sort_by, sort_order=sort_order)
         return res
         
     amazon_rows = []
@@ -939,7 +1079,7 @@ def combined_profitability_details_transactions_shipping(request):
         dto_rows = amazon_dtos + myntra_dtos
 
     dto_rows = enrich_dto_image_urls(dto_rows, user)
-    dto_rows.sort(key=lambda item: parse_currency_to_decimal(item.grosssales), reverse=True)
+    dto_rows = sort_profitability_dtos(dto_rows, sort_by=sort_by, sort_order=sort_order)
     
     combined_totals = _combine_totals(amazon_totals, myntra_totals, type="style")
     total_count = len(dto_rows)
@@ -980,6 +1120,21 @@ def combined_profitability_parent_transactions_shipping(request):
     to_date_str = filters.get('toDate')
     parent_ids = filters.get("parentproductid", {}).get("IN", [])
     
+    sort_by = (
+        data.get("sort_by")
+        or (data.get("sort") or {}).get("field")
+        or filters.get("sort_by")
+        or (filters.get("sort") or {}).get("field")
+        or request.query_params.get("sort_by")
+    )
+    sort_order = (
+        data.get("sort_order")
+        or (data.get("sort") or {}).get("order")
+        or filters.get("sort_order")
+        or (filters.get("sort") or {}).get("order")
+        or request.query_params.get("sort_order")
+    )
+
     channels, has_amazon, has_myntra = _extract_channels_and_flags(data, filters)
     
     if has_amazon and not has_myntra:
@@ -987,6 +1142,8 @@ def combined_profitability_parent_transactions_shipping(request):
         res = undecorated(request)
         if res.status_code == 200 and isinstance(res.data, dict) and "response" in res.data:
             res.data["response"] = enrich_row_image_urls(res.data["response"], user)
+            if sort_by and isinstance(res.data["response"], list):
+                res.data["response"] = sort_profitability_dtos(res.data["response"], sort_by=sort_by, sort_order=sort_order)
         return res
         
     amazon_rows = []
@@ -1056,7 +1213,7 @@ def combined_profitability_parent_transactions_shipping(request):
         dto_rows = amazon_dtos + myntra_dtos
 
     dto_rows = enrich_dto_image_urls(dto_rows, user)
-    dto_rows.sort(key=lambda item: parse_currency_to_decimal(item.grosssales), reverse=True)
+    dto_rows = sort_profitability_dtos(dto_rows, sort_by=sort_by, sort_order=sort_order)
     
     combined_totals = _combine_totals(amazon_totals, myntra_totals, type="sku")
     total_count = len(dto_rows)
@@ -1104,11 +1261,28 @@ def combined_sku_profit_report_transactions_shipping(request):
     
     channels, has_amazon, has_myntra = _extract_channels_and_flags(data, filters)
     
+    sort_by = (
+        data.get("sort_by")
+        or (data.get("sort") or {}).get("field")
+        or filters.get("sort_by")
+        or (filters.get("sort") or {}).get("field")
+        or request.query_params.get("sort_by")
+    )
+    sort_order = (
+        data.get("sort_order")
+        or (data.get("sort") or {}).get("order")
+        or filters.get("sort_order")
+        or (filters.get("sort") or {}).get("order")
+        or request.query_params.get("sort_order")
+    )
+
     if has_amazon and not has_myntra:
         undecorated = get_undecorated_view(sku_profit_report_transactions_shipping)
         res = undecorated(request)
         if res.status_code == 200 and isinstance(res.data, dict) and "response" in res.data:
             res.data["response"] = enrich_row_image_urls(res.data["response"], user)
+            if sort_by and isinstance(res.data["response"], list):
+                res.data["response"] = sort_profitability_dtos(res.data["response"], sort_by=sort_by, sort_order=sort_order)
         return res
         
     amazon_rows = []
@@ -1177,7 +1351,7 @@ def combined_sku_profit_report_transactions_shipping(request):
         dto_rows = amazon_dtos + myntra_dtos
 
     dto_rows = enrich_dto_image_urls(dto_rows, user)
-    dto_rows.sort(key=lambda item: parse_currency_to_decimal(item.grosssales), reverse=True)
+    dto_rows = sort_profitability_dtos(dto_rows, sort_by=sort_by, sort_order=sort_order)
     
     combined_totals = _combine_totals(amazon_totals, myntra_totals, type="order")
     total_count = len(dto_rows)
@@ -2125,6 +2299,21 @@ def combined_sku_profitability_list_filtered(request):
     channels, has_amazon, has_myntra = _extract_channels_and_flags(data, filters)
     profit_filter = filters.get("profit_filter") or data.get("profit_filter")
 
+    sort_by = (
+        data.get("sort_by")
+        or (data.get("sort") or {}).get("field")
+        or filters.get("sort_by")
+        or (filters.get("sort") or {}).get("field")
+        or request.query_params.get("sort_by")
+    )
+    sort_order = (
+        data.get("sort_order")
+        or (data.get("sort") or {}).get("order")
+        or filters.get("sort_order")
+        or (filters.get("sort") or {}).get("order")
+        or request.query_params.get("sort_order")
+    )
+
     if has_amazon and not has_myntra:
         res = _call_view_for_all_results(sku_profitability_list_filtered, request)
         if res.status_code == 200 and isinstance(res.data, dict) and "response" in res.data:
@@ -2138,7 +2327,7 @@ def combined_sku_profitability_list_filtered(request):
                     rows = [r for r in rows if parse_currency_to_decimal(r.get("profit")) < 0]
                 elif pf_upper in ("EQ_0", "ZERO"):
                     rows = [r for r in rows if parse_currency_to_decimal(r.get("profit")) == 0]
-            rows.sort(key=lambda r: parse_currency_to_decimal(r.get("grosssales") or r.get("gross_sales")), reverse=True)
+            rows = sort_profitability_dtos(rows, sort_by=sort_by, sort_order=sort_order)
             res.data["pagination"]["count"] = len(rows)
             res.data["pagination"]["pageNo"] = page_no
             res.data["pagination"]["pageSize"] = page_size
@@ -2226,7 +2415,7 @@ def combined_sku_profitability_list_filtered(request):
             dto_rows = [item for item in dto_rows if parse_currency_to_decimal(item.profit) == 0]
 
     dto_rows = enrich_dto_image_urls(dto_rows, user)
-    dto_rows.sort(key=lambda item: parse_currency_to_decimal(item.grosssales), reverse=True)
+    dto_rows = sort_profitability_dtos(dto_rows, sort_by=sort_by, sort_order=sort_order)
 
     all_rows = [dto.to_dict() for dto in dto_rows]
     combined_totals = _recalculate_totals_from_rows(all_rows)

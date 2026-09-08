@@ -236,19 +236,22 @@ export default function ProfitDetailsView() {
       customer_return_count: 'customer_return_count',
       final_net_qty: 'total_final_net_qty',
       final_net_sales: 'total_final_net_sales',
-      actual_fees: 'total_actual_fees',
-      fees_leaks: 'total_fees_leaks',
-      actual_shipping_charges: 'total_actual_shipping',
-      shipping_leaks: 'total_shipping_leaks',
-      actual_mp_gst: 'total_actual_mp_gst',
-      actual_tcs: 'total_actual_tcs',
-      tcs_leaks: 'total_tcs_leaks',
-      expected_settlement: 'total_expected_settlement',
-      settlement_paid_in_bank: 'total_settlement_paid_in_bank',
-      unsettled_not_paid: 'total_unsettled_not_paid',
+      actual_fees: 'actual_fees',
+      fees_leaks: 'fees_leaks',
+      actual_shipping_charges: 'actual_shipping_charges',
+      shipping_leaks: 'shipping_leaks',
+      actual_mp_gst: 'actual_mp_gst',
+      actual_tcs: 'actual_tcs',
+      tcs_leaks: 'tcs_leaks',
+      expected_settlement: 'exp_settlement',
+      settlement_paid_in_bank: 'settlement_paid_in_bank',
+      unsettled_not_paid: 'unsettled_not_paid',
     };
 
-    const value = totals?.[keyMap[dataIndex]];
+    const value =
+      totals?.[keyMap[dataIndex]] ??
+      totals?.[dataIndex] ??
+      totals?.[`total_${dataIndex}`];
 
     if (value == null) return defaultWidth;
 
@@ -996,19 +999,22 @@ export default function ProfitDetailsView() {
                         customer_return_count: 'customer_return_count',
                         final_net_qty: 'total_final_net_qty',
                         final_net_sales: 'total_final_net_sales',
-                        actual_fees: 'total_actual_fees',
-                        fees_leaks: 'total_fees_leaks',
-                        actual_shipping_charges: 'total_actual_shipping',
-                        shipping_leaks: 'total_shipping_leaks',
-                        actual_mp_gst: 'total_actual_mp_gst',
-                        actual_tcs: 'total_actual_tcs',
-                        tcs_leaks: 'total_tcs_leaks',
-                        expected_settlement: 'total_expected_settlement',
-                        settlement_paid_in_bank: 'total_settlement_paid_in_bank',
-                        unsettled_not_paid: 'total_unsettled_not_paid',
+                        actual_fees: 'actual_fees',
+                        fees_leaks: 'fees_leaks',
+                        actual_shipping_charges: 'actual_shipping_charges',
+                        shipping_leaks: 'shipping_leaks',
+                        actual_mp_gst: 'actual_mp_gst',
+                        actual_tcs: 'actual_tcs',
+                        tcs_leaks: 'tcs_leaks',
+                        expected_settlement: 'exp_settlement',
+                        settlement_paid_in_bank: 'settlement_paid_in_bank',
+                        unsettled_not_paid: 'unsettled_not_paid',
                       };
 
-                      const value = totals?.[keyMap[col.dataIndex]];
+                      const value =
+                        totals?.[keyMap[col.dataIndex]] ??
+                        totals?.[col.dataIndex] ??
+                        totals?.[`total_${col.dataIndex}`];
 
                       const isPercent = ['profitPercent'].includes(col.dataIndex);
 
@@ -1035,9 +1041,9 @@ export default function ProfitDetailsView() {
                             <span
                               className={`text-[13px] font-semibold ${
                                 // className={`inline-block min-w-[90px] text-[13px] font-semibold ${
-                                Number(value) > 0 && ['profitPercent'].includes(col.dataIndex)
+                                parseAmount(value) > 0 && ['profitPercent'].includes(col.dataIndex)
                                   ? 'text-green-600'
-                                  : Number(value) < 0
+                                  : parseAmount(value) < 0
                                   ? 'text-red-600'
                                   : 'text-[#111827]'
                               }`}

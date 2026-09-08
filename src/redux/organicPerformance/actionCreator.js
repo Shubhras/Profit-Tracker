@@ -11,6 +11,20 @@ export const getProductRanking = (page = 1, pageSize = 10, payload = {}) => {
       if (payload?.search) {
         url += `&search=${encodeURIComponent(payload.search)}`;
       }
+      const fromDate = payload?.fromDate || payload?.from_date || payload?.startDate || payload?.start_date;
+      const toDate = payload?.toDate || payload?.to_date || payload?.endDate || payload?.end_date;
+      if (fromDate) {
+        url += `&from_date=${encodeURIComponent(fromDate)}&fromDate=${encodeURIComponent(fromDate)}`;
+      }
+      if (toDate) {
+        url += `&to_date=${encodeURIComponent(toDate)}&toDate=${encodeURIComponent(toDate)}`;
+      }
+      if (payload?.marketplace_id) {
+        url += `&marketplace_id=${encodeURIComponent(payload.marketplace_id)}`;
+      }
+      if (payload?.brand) {
+        url += `&brand=${encodeURIComponent(payload.brand)}`;
+      }
       const response = await DataService.get(url);
       if (response.data.status === 'success') {
         dispatch(productRankSuccess(response.data));
@@ -29,6 +43,20 @@ export const exportCatalogDetails = (payload = {}, format = 'xlsx') => {
       let url = `/amazon/catalog-list-details/export/?file_format=${format}`;
       if (payload?.search) {
         url += `&search=${encodeURIComponent(payload.search)}`;
+      }
+      const fromDate = payload?.fromDate || payload?.from_date || payload?.startDate || payload?.start_date;
+      const toDate = payload?.toDate || payload?.to_date || payload?.endDate || payload?.end_date;
+      if (fromDate) {
+        url += `&from_date=${encodeURIComponent(fromDate)}&fromDate=${encodeURIComponent(fromDate)}`;
+      }
+      if (toDate) {
+        url += `&to_date=${encodeURIComponent(toDate)}&toDate=${encodeURIComponent(toDate)}`;
+      }
+      if (payload?.marketplace_id) {
+        url += `&marketplace_id=${encodeURIComponent(payload.marketplace_id)}`;
+      }
+      if (payload?.brand) {
+        url += `&brand=${encodeURIComponent(payload.brand)}`;
       }
       const response = await DataService.get(url, {
         responseType: 'blob',

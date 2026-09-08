@@ -223,45 +223,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         )
     )
 
-    estimated_fee_qs = AmazonEstimatedFee.objects.filter(
-        order_item__order__user=user
-    ).exclude(order_item__order__order_status__icontains='Cancel')
 
-    if from_date:
-        estimated_fee_qs = estimated_fee_qs.filter(order_item__order__purchase_date__gte=from_date)
-    if to_date:
-        estimated_fee_qs = estimated_fee_qs.filter(order_item__order__purchase_date__lte=to_date)
-    if parent_ids:
-        estimated_fee_qs = estimated_fee_qs.filter(order_item__parent_asin__in=parent_ids)
-
-    estimated_fee_data = (
-        estimated_fee_qs
-        .values('asin')
-        .annotate(
-            estimated_fees=Sum('total_fees'),
-            referral_fee=Sum('referral_fee'),
-            closing_fee=Sum('closing_fee'),
-            per_item_fee=Sum('per_item_fee'),
-            fba_fee=Sum('fba_fee'),
-            fba_pick_pack_fee=Sum('fba_pick_pack_fee'),
-            fba_weight_handling_fee=Sum('fba_weight_handling_fee'),
-            tax_amount=Sum('tax_amount'),
-        )
-    )
-
-    estimated_fee_by_asin = {
-        row['asin']: {
-            "estimated_fees": float(row['estimated_fees'] or 0),
-            "referral_fee": float(row['referral_fee'] or 0),
-            "closing_fee": float(row['closing_fee'] or 0),
-            "per_item_fee": float(row['per_item_fee'] or 0),
-            "fba_fee": float(row['fba_fee'] or 0),
-            "fba_pick_pack_fee": float(row['fba_pick_pack_fee'] or 0),
-            "fba_weight_handling_fee": float(row['fba_weight_handling_fee'] or 0),
-            "tax_amount": float(row['tax_amount'] or 0),
-        }
-        for row in estimated_fee_data
-    }
 
     finances_qs = FinancialEvent.objects.filter(user=user)
 
@@ -312,19 +274,90 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         child_parent_map[row['asin']] = p_asin
         asin_map.setdefault(p_asin, []).append(row)
 
-    estimated_fee_map = {}
-    for asin, fee_data in estimated_fee_by_asin.items():
-        p_asin = child_parent_map.get(asin) or asin
-        if p_asin not in estimated_fee_map:
-            estimated_fee_map[p_asin] = {
-                "estimated_fees": 0.0, "referral_fee": 0.0, "closing_fee": 0.0,
-                "per_item_fee": 0.0, "fba_fee": 0.0, "fba_pick_pack_fee": 0.0,
-                "fba_weight_handling_fee": 0.0, "tax_amount": 0.0
-            }
-        for k, v in fee_data.items():
-            estimated_fee_map[p_asin][k] += v
-
     matching_order_ids = [row['order__amazon_order_id'] for row in asin_orders]
+
+    estimated_fee_qs = AmazonEstimatedFee.objects.filter(
+        order_item__order__user=user
+    ).exclude(order_item__order__order_status__icontains='Cancel')
+
+    if matching_order_ids:
+        estimated_fee_qs = estimated_fee_qs.filter(order_item__order__amazon_order_id__in=matching_order_ids)
+    else:
+        if from_date:
+            estimated_fee_qs = estimated_fee_qs.filter(order_item__order__purchase_date__gte=from_date)
+        if to_date:
+            estimated_fee_qs = estimated_fee_qs.filter(order_item__order__purchase_date__lte=to_date)
+        if parent_ids:
+            estimated_fee_qs = estimated_fee_qs.filter(
+                Q(order_item__parent_asin__in=parent_ids) | Q(order_item__asin__in=parent_ids)
+            )
+
+    estimated_fee_data = (
+        estimated_fee_qs
+        .values(
+            'order_item__order__amazon_order_id',
+            'order_item__seller_sku',
+            'order_item__asin',
+            'order_item__parent_asin',
+            'asin',
+            'seller_sku',
+        )
+        .annotate(
+            estimated_fees=Sum('total_fees'),
+            referral_fee=Sum('referral_fee'),
+            closing_fee=Sum('closing_fee'),
+            per_item_fee=Sum('per_item_fee'),
+            fba_fee=Sum('fba_fee'),
+            fba_pick_pack_fee=Sum('fba_pick_pack_fee'),
+            fba_weight_handling_fee=Sum('fba_weight_handling_fee'),
+            tax_amount=Sum('tax_amount'),
+        )
+    )
+
+    estimated_fee_by_order_sku = {}
+    estimated_fee_by_order = {}
+    estimated_fee_by_sku = {}
+    estimated_fee_by_asin = {}
+    estimated_fee_by_parent = {}
+
+    for fee_row in estimated_fee_data:
+        oid = fee_row.get('order_item__order__amazon_order_id')
+        sku_k = (fee_row.get('order_item__seller_sku') or fee_row.get('seller_sku') or '').strip()
+        asin_k = (fee_row.get('order_item__asin') or fee_row.get('asin') or '').strip()
+        p_asin_k = (fee_row.get('order_item__parent_asin') or '').strip()
+        if not p_asin_k and asin_k:
+            p_asin_k = child_parent_map.get(asin_k) or asin_k
+
+        item_fee = {
+            "estimated_fees": float(fee_row['estimated_fees'] or 0),
+            "referral_fee": float(fee_row['referral_fee'] or 0),
+            "closing_fee": float(fee_row['closing_fee'] or 0),
+            "per_item_fee": float(fee_row['per_item_fee'] or 0),
+            "fba_fee": float(fee_row['fba_fee'] or 0),
+            "fba_pick_pack_fee": float(fee_row['fba_pick_pack_fee'] or 0),
+            "fba_weight_handling_fee": float(fee_row['fba_weight_handling_fee'] or 0),
+            "tax_amount": float(fee_row['tax_amount'] or 0),
+        }
+
+        def _accumulate_fee(d, key):
+            if not key:
+                return
+            if key not in d:
+                d[key] = {k: 0.0 for k in item_fee}
+            for k, v in item_fee.items():
+                d[key][k] += v
+
+        if oid and sku_k:
+            _accumulate_fee(estimated_fee_by_order_sku, (oid, sku_k))
+        if oid:
+            _accumulate_fee(estimated_fee_by_order, oid)
+        if sku_k:
+            _accumulate_fee(estimated_fee_by_sku, sku_k)
+        if asin_k:
+            _accumulate_fee(estimated_fee_by_asin, asin_k)
+        if p_asin_k:
+            _accumulate_fee(estimated_fee_by_parent, p_asin_k)
+
     tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
         identifier_name="ORDER_ID",
         identifier_value__in=matching_order_ids
@@ -362,11 +395,13 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         .annotate(total=Sum("amount"))
     )
 
+    tx_fba_weight_fee_by_order = {}
     for bd in afn_breakdowns:
         order_id = tx_to_order.get(bd["transaction_id"])
         if not order_id:
             continue
         tx_shipping_map[order_id] = tx_shipping_map.get(order_id, 0.0) + float(bd["total"] or 0)
+        tx_fba_weight_fee_by_order[order_id] = tx_fba_weight_fee_by_order.get(order_id, 0.0) + abs(float(bd["total"] or 0))
 
     # 1. Actual TCS from Shipment DEFERRED (TaxCollectedAtSource breakdown)
     tcs_breakdowns = (
@@ -397,6 +432,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         oid = tx_to_order.get(bd["transaction_id"])
         if oid:
             tx_actual_fees_by_order[oid] = tx_actual_fees_by_order.get(oid, 0.0) + abs(float(bd["total"] or 0))
+            
 
     FULFILLMENT_FEE_REFUND_PATTERNS = ["FulfillmentFeeRefund"]
 
@@ -638,6 +674,9 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
     total_unsettled_not_paid = 0.0
     total_courier_return_count = 0
     total_customer_return_count = 0
+    total_claim_amount = 0.0
+    total_claim_count = 0
+    total_replacement_count = 0
 
     for row in items:
         if by_sku:
@@ -651,8 +690,42 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             asin_val = parent_asin
             orders = asin_map.get(parent_asin, [])
 
-        fee_data = estimated_fee_map.get(parent_asin, {})
-        estimated_fees = fee_data.get("estimated_fees", 0)
+        fee_data = {
+            "estimated_fees": 0.0,
+            "referral_fee": 0.0,
+            "closing_fee": 0.0,
+            "per_item_fee": 0.0,
+            "fba_fee": 0.0,
+            "fba_pick_pack_fee": 0.0,
+            "fba_weight_handling_fee": 0.0,
+            "tax_amount": 0.0,
+        }
+        fee_matched = False
+        for o in orders:
+            oid = o.get('order__amazon_order_id')
+            o_sku = (o.get('seller_sku') or '').strip()
+            f_item = None
+            if oid and o_sku and (oid, o_sku) in estimated_fee_by_order_sku:
+                f_item = estimated_fee_by_order_sku[(oid, o_sku)]
+            elif oid and oid in estimated_fee_by_order:
+                f_item = estimated_fee_by_order[oid]
+
+            if f_item:
+                fee_matched = True
+                for k in fee_data:
+                    fee_data[k] += f_item.get(k, 0.0)
+
+        if not fee_matched:
+            if by_sku:
+                fallback_fee = (
+                    estimated_fee_by_sku.get(seller_sku) or
+                    estimated_fee_by_asin.get(asin_val) or
+                    {}
+                )
+            else:
+                fallback_fee = estimated_fee_by_parent.get(parent_asin, {})
+            for k in fee_data:
+                fee_data[k] = fallback_fee.get(k, 0.0)
 
         referral_fee = fee_data.get("referral_fee", 0)
         closing_fee = fee_data.get("closing_fee", 0)
@@ -661,6 +734,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         fba_pick_pack_fee = fee_data.get("fba_pick_pack_fee", 0)
         fba_weight_handling_fee = fee_data.get("fba_weight_handling_fee", 0)
         tax_amount = fee_data.get("tax_amount", 0)
+        estimated_fees = max(0.0, float(fee_data.get("estimated_fees", 0)) - float(fba_weight_handling_fee))
 
         gross_qty = int(row['grossqty'] or 0)
         gross_sales = float(str(row['grosssales'] or 0))
@@ -733,6 +807,10 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
                     abs(float(f.get('fulfillment') or 0)) +
                     abs(float(f.get('other_fee') or 0))
                 )
+
+            o_act_fba_weight = tx_fba_weight_fee_by_order.get(oid, 0.0)
+            o_fee_refund = float(amazon_fee_refund_by_order.get(oid, 0.0))
+            o_act_fees = max(0.0, float(o_act_fees or 0) - o_act_fba_weight - o_fee_refund)
 
             o_act_ship = tx_shipping_map.get(oid)
             if o_act_ship is None:
@@ -938,12 +1016,12 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             "ads": format_currency(ads),
             "mpfees": round(mpfees, 2),
             "estimatefees": format_currency(mpfees),
-            "referral_fee": format_currency(-abs(referral_fee)),
-            "closing_fee": format_currency(-abs(closing_fee)),
-            "per_item_fee": format_currency(-abs(per_item_fee)),
-            "fba_fee": format_currency(-abs(fba_fee)),
-            "fba_pick_pack_fee": format_currency(-abs(fba_pick_pack_fee)),
-            "fba_weight_handling_fee": format_currency(-abs(fba_weight_handling_fee)),
+            "referral_fee": format_currency(referral_fee),
+            "closing_fee": format_currency(closing_fee),
+            "per_item_fee": format_currency(per_item_fee),
+            "fba_fee": format_currency(fba_fee),
+            "fba_pick_pack_fee": format_currency(fba_pick_pack_fee),
+            "fba_weight_handling_fee": format_currency(fba_weight_handling_fee),
             "tax_amount": format_currency(tax_amount),
 
             "shippingfees": format_currency(shipping_price),
@@ -1007,10 +1085,14 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         total_unsettled_not_paid += unsettled_not_paid
         total_courier_return_count += row_courier_return_count
         total_customer_return_count += row_customer_return_count
+        total_claim_amount += order_claim_amount
+        total_claim_count += order_claim_count
+        total_replacement_count += order_replacement_count
 
     total_net_sales = total_final_net_sales
     return_perc = (total_returns / total_qty * 100) if total_qty else 0.0
     overall_profit_margin = (total_profit / total_net_sales * 100) if total_net_sales else 0.0
+    overall_gst_perc = (total_gst_payable / total_taxable_value * 100) if total_taxable_value else 0.0
 
     totals = {
         "grosssales": format_currency(total_sales),
@@ -1044,6 +1126,14 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
 
         "taxable_value": format_currency(total_taxable_value),
         "gst_to_pay_amount": format_currency(total_gst_payable),
+        "gst_to_pay_perc": f"{round(overall_gst_perc, 2)}%",
+        "total_gst_to_pay_perc": f"{round(overall_gst_perc, 2)}%",
+        "claim_amount": format_currency(total_claim_amount),
+        "total_claim_amount": format_currency(total_claim_amount),
+        "claim_count": total_claim_count,
+        "total_claim_count": total_claim_count,
+        "replacement_return_count": total_replacement_count,
+        "total_replacement_return_count": total_replacement_count,
         "exp_settlement": format_currency(total_exp_settlement),
         "expected_settlement": format_currency(total_exp_settlement),
         "stdcost": format_currency(total_stdcost),
@@ -1053,14 +1143,23 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
 
         # RECONCILIATION TOTALS (YELLOW COLUMNS)
         "actual_fees": format_currency(total_actual_fees),
+        "total_actual_fees": format_currency(total_actual_fees),
         "fees_leaks": format_currency(total_fees_leaks),
+        "total_fees_leaks": format_currency(total_fees_leaks),
         "actual_shipping_charges": format_currency(total_actual_shipping),
+        "total_actual_shipping": format_currency(total_actual_shipping),
         "shipping_leaks": format_currency(total_shipping_leaks),
+        "total_shipping_leaks": format_currency(total_shipping_leaks),
         "actual_mp_gst": format_currency(total_actual_mp_gst),
+        "total_actual_mp_gst": format_currency(total_actual_mp_gst),
         "actual_tcs": format_currency(total_actual_tcs),
+        "total_actual_tcs": format_currency(total_actual_tcs),
         "tcs_leaks": format_currency(total_tcs_leaks),
+        "total_tcs_leaks": format_currency(total_tcs_leaks),
         "settlement_paid_in_bank": format_currency(total_settlement_paid),
+        "total_settlement_paid_in_bank": format_currency(total_settlement_paid),
         "unsettled_not_paid": format_currency(total_unsettled_not_paid),
+        "total_unsettled_not_paid": format_currency(total_unsettled_not_paid),
     }
 
     results = enrich_row_image_urls(results, user=request.user)
@@ -1349,8 +1448,12 @@ def _payment_reconcile_order_level_logic(request):
     - settlement_paid_in_bank
     - unsettled_not_paid
     """
-    undecorated = get_undecorated_view(sku_profit_report_transactions_shipping)
-    res = undecorated(request)
+    req_data = getattr(request, "_full_data", None) or getattr(request, 'data', None) or {}
+    pagination = req_data.get("pagination", {})
+    page_no = int(pagination.get("pageNo", 0))
+    page_size = int(pagination.get("pageSize", 25))
+
+    res = _call_view_for_all_results(sku_profit_report_transactions_shipping, request)
     if res.status_code != 200 or not isinstance(res.data, dict):
         return res
 
@@ -1360,12 +1463,18 @@ def _payment_reconcile_order_level_logic(request):
 
     if not rows:
         data["summary"] = _build_reconciliation_summary([])
+        data["pagination"] = {
+            "pageNo": page_no,
+            "pageSize": page_size,
+            "count": 0,
+        }
         return res
 
+    user = get_effective_user(request.user)
     order_ids = [r.get("order_id") for r in rows if r.get("order_id")]
 
     finance_data = (
-        FinancialEvent.objects.filter(user=request.user, amazon_order_id__in=order_ids)
+        FinancialEvent.objects.filter(user=user, amazon_order_id__in=order_ids)
         .values('amazon_order_id')
         .annotate(
             commission=Sum('commission_fee'),
@@ -1379,7 +1488,7 @@ def _payment_reconcile_order_level_logic(request):
     finance_map = {f['amazon_order_id']: f for f in finance_data}
 
     raw_map = (
-        FinancialEvent.objects.filter(user=request.user, amazon_order_id__in=order_ids)
+        FinancialEvent.objects.filter(user=user, amazon_order_id__in=order_ids)
         .exclude(raw_data=None)
         .values('amazon_order_id', 'raw_data')
     )
@@ -1438,6 +1547,40 @@ def _payment_reconcile_order_level_logic(request):
         if oid:
             tx_actual_fees_by_order[oid] = tx_actual_fees_by_order.get(oid, 0.0) + abs(float(bd["total"] or 0))
 
+    fba_weight_fee_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=shipment_deferred_tx_ids,
+            breakdown_type="FBAWeightBasedFee"
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+    tx_fba_weight_fee_by_order = {}
+    for bd in fba_weight_fee_breakdowns:
+        oid = tx_to_order.get(bd["transaction_id"])
+        if oid:
+            tx_fba_weight_fee_by_order[oid] = tx_fba_weight_fee_by_order.get(oid, 0.0) + abs(float(bd["total"] or 0))
+
+    refund_deferred_tx_ids = set(AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_type="Refund",
+        transaction_status__in=["DEFERRED", "DEFERRED_RELEASED"]
+    ).values_list("id", flat=True))
+
+    refund_fee_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=refund_deferred_tx_ids,
+            breakdown_type="AmazonFees"
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+    amazon_fee_refund_by_order = {}
+    for bd in refund_fee_breakdowns:
+        oid = tx_to_order.get(bd["transaction_id"])
+        if oid:
+            amazon_fee_refund_by_order[oid] = amazon_fee_refund_by_order.get(oid, 0.0) + float(bd["total"] or 0)
+
     mfn_postage_txns = AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
         transaction_type="ServiceFee",
@@ -1458,6 +1601,12 @@ def _payment_reconcile_order_level_logic(request):
         row_actual_fees = tx_actual_fees_by_order.get(oid)
         if row_actual_fees is None:
             row_actual_fees = abs(float(f.get('commission') or 0)) + abs(float(f.get('fulfillment') or 0)) + abs(float(f.get('other_fee') or 0))
+
+        actual_fba_weight_fee = tx_fba_weight_fee_by_order.get(oid)
+        if actual_fba_weight_fee is None:
+            actual_fba_weight_fee = abs(float(parse_currency_to_decimal(r.get("fba_weight_handling_fee")) or 0))
+        fee_refund = float(amazon_fee_refund_by_order.get(oid, 0.0))
+        row_actual_fees = max(0.0, float(row_actual_fees or 0) - actual_fba_weight_fee - fee_refund)
 
         row_actual_shipping = tx_actual_shipping_by_order.get(oid)
         if row_actual_shipping is None:
@@ -1482,7 +1631,6 @@ def _payment_reconcile_order_level_logic(request):
         shipping_leaks = round(shipping_num - row_actual_shipping, 2)
         tcs_leaks = round(tcs_num - row_actual_tcs, 2)
         unsettled_not_paid = round(exp_settlement_num - row_settlement_paid, 2)
-
 
         tot_act_fees += row_actual_fees
         tot_fee_leaks += fees_leaks
@@ -1528,6 +1676,16 @@ def _payment_reconcile_order_level_logic(request):
         "total_unsettled_not_paid": format_currency(tot_unsettled),
     })
     data["summary"] = _build_reconciliation_summary(rows)
+    data["totals"] = totals
+
+    total_count = len(rows)
+    paginated_rows = rows[page_no * page_size : (page_no + 1) * page_size]
+    data["pagination"] = {
+        "pageNo": page_no,
+        "pageSize": page_size,
+        "count": total_count,
+    }
+    data["response"] = paginated_rows
 
     return Response(data)
 

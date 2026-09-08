@@ -1,5 +1,7 @@
 import json
+import re
 import datetime
+from decimal import Decimal
 from django.http import HttpResponse, HttpRequest, Http404
 from django.core.files.base import ContentFile
 from rest_framework.decorators import api_view, permission_classes
@@ -114,15 +116,21 @@ def get_data_from_view(view_func_or_class, request, override_params=None):
         from_date_val = request.GET.get("fromDate") or request.GET.get("from_date") or request.GET.get("startDate") or request.GET.get("start_date")
         if from_date_val:
             filters["fromDate"] = from_date_val
+            filters["from_date"] = from_date_val
             filters["start_date"] = from_date_val
             post_data["start_date"] = from_date_val
+            post_data["from_date"] = from_date_val
+            post_data["fromDate"] = from_date_val
             
         to_date_val = request.GET.get("toDate") or request.GET.get("to_date") or request.GET.get("endDate") or request.GET.get("end_date")
         if to_date_val:
             filters["toDate"] = to_date_val
+            filters["to_date"] = to_date_val
             filters["endDate"] = to_date_val
             filters["end_date"] = to_date_val
             post_data["end_date"] = to_date_val
+            post_data["to_date"] = to_date_val
+            post_data["toDate"] = to_date_val
             
         targeting_type_val = request.GET.get("targeting_type") or request.GET.get("targetingType")
         if targeting_type_val:
@@ -143,6 +151,16 @@ def get_data_from_view(view_func_or_class, request, override_params=None):
         if search_val:
             filters["search"] = search_val
             post_data["search"] = search_val
+
+        sort_by_val = request.GET.get("sort_by") or request.GET.get("sort")
+        if sort_by_val:
+            filters["sort_by"] = sort_by_val
+            post_data["sort_by"] = sort_by_val
+
+        sort_order_val = request.GET.get("sort_order") or request.GET.get("order")
+        if sort_order_val:
+            filters["sort_order"] = sort_order_val
+            post_data["sort_order"] = sort_order_val
 
         if override_params and 'POST' in override_params:
             post_data.update(override_params['POST'])
@@ -266,6 +284,36 @@ def generic_export_view(request, view_func_or_class, column_mapping, filename_ba
                 data_list = []
             totals_dict = data.get(totals_key) if totals_key and isinstance(data, dict) else None
             
+        # Extract sort parameters from request
+        sort_by = None
+        sort_order = None
+        if request.method == 'POST':
+            req_data = getattr(request, 'data', None)
+            if not isinstance(req_data, dict) and getattr(request, 'body', None):
+                try:
+                    req_data = json.loads(request.body.decode('utf-8'))
+                except Exception:
+                    req_data = {}
+            if isinstance(req_data, dict):
+                sort_by = (
+                    req_data.get('sort_by')
+                    or (req_data.get('sort') or {}).get('field')
+                    or (req_data.get('filters') or {}).get('sort_by')
+                    or (req_data.get('filters') or {}).get('sort', {}).get('field')
+                )
+                sort_order = (
+                    req_data.get('sort_order')
+                    or (req_data.get('sort') or {}).get('order')
+                    or (req_data.get('filters') or {}).get('sort_order')
+                    or (req_data.get('filters') or {}).get('sort', {}).get('order')
+                )
+        if not sort_by and hasattr(request, 'GET') and request.GET:
+            sort_by = request.GET.get('sort_by') or request.GET.get('sort')
+            sort_order = request.GET.get('sort_order') or request.GET.get('order')
+
+        if sort_by and data_list and isinstance(data_list, list):
+            data_list = sort_export_data_list(data_list, sort_by=sort_by, sort_order=sort_order)
+
         headers = list(column_mapping.values())
         keys = list(column_mapping.keys())
         
@@ -339,6 +387,111 @@ DETAILS_COLUMNS = {
     "grossprofitper": "Profit %"
 }
 
+def is_nonzero_val(val):
+    if val is None:
+        return False
+    s = str(val).replace('₹', '').replace('-', '').replace(',', '').strip()
+    return s not in ('0', '0.0', '0.00', '', 'None', 'null')
+
+def get_mpfees_val(d):
+    if not isinstance(d, dict):
+        return '₹0.0'
+    est = d.get('estimatefees')
+    mp = d.get('mpfees')
+    if is_nonzero_val(est):
+        return est
+    if is_nonzero_val(mp):
+        return mp
+    return est if est is not None else (mp if mp is not None else '₹0.0')
+
+
+def parse_export_sort_val(val, reverse=False):
+    if val is None or str(val).strip() in ('', '-', 'None', 'null'):
+        return (2, 0) if not reverse else (-2, 0)
+    if isinstance(val, (int, float, Decimal)):
+        return (0, float(val))
+    s = str(val).strip()
+    cleaned = re.sub(r'[₹,\s%]', '', s)
+    try:
+        num = float(cleaned)
+        return (0, num)
+    except (ValueError, TypeError):
+        return (1, s.lower()) if not reverse else (-1, s.lower())
+
+
+EXPORT_FIELD_ALIAS_MAP = {
+    'view': ['asin', 'view', 'child_sku', 'seller_sku'],
+    'asin': ['asin', 'view', 'child_sku', 'seller_sku'],
+    'channel': ['channel'],
+    'netqty': ['netqty', 'netQty', 'grossqty', 'qty'],
+    'net_qty': ['netqty', 'netQty', 'grossqty', 'qty'],
+    'grossqty': ['grossqty', 'netqty', 'netQty', 'qty'],
+    'final_net_qty': ['final_net_qty', 'netqty', 'netQty'],
+    'cancelled_qty': ['cancelled_qty', 'cancelledcanqty'],
+    'returnqty': ['returnqty', 'totalreturn', 'return_count'],
+    'courier_return_count': ['courier_return_count'],
+    'customer_return_count': ['customer_return_count'],
+    'returnpercent': ['retpercent', 'returnPercent', 'totalreturnper'],
+    'retpercent': ['retpercent', 'returnPercent', 'totalreturnper'],
+    'promo_discount': ['promo_discount', 'promotions'],
+    'netsales': ['netsales', 'grosssales', 'gross_sales'],
+    'grosssales': ['grosssales', 'netsales', 'gross_sales'],
+    'final_net_sales': ['final_net_sales', 'netsales', 'net_sales'],
+    'cancelled_sales': ['cancelled_sales', 'cancelledcansales'],
+    'mpfees': ['mpfees', 'estimatefees', 'commission'],
+    'estimatefees': ['estimatefees', 'mpfees'],
+    'shipping': ['shippingfees', 'shipping', 'logistics_charge'],
+    'shippingfees': ['shippingfees', 'shipping', 'logistics_charge'],
+    'mp_gst': ['mp_gst'],
+    'tcs': ['tcs'],
+    'tds': ['tds'],
+    'adspend': ['ads', 'adSpend', 'ad_spend'],
+    'ads': ['ads', 'adSpend', 'ad_spend'],
+    'taxablevalue': ['taxable_value', 'taxableValue'],
+    'taxable_value': ['taxable_value', 'taxableValue'],
+    'gst_to_pay_amount': ['gst_to_pay_amount'],
+    'gst_to_pay_perc': ['gst_to_pay_perc'],
+    'claim_amount': ['claim_amount', 'total_claim_amount'],
+    'other_expenses': ['other_expenses', 'total_other_expenses'],
+    'settleamount': ['exp_settlement', 'settleAmount', 'expected_settlement'],
+    'exp_settlement': ['exp_settlement', 'settleAmount', 'expected_settlement'],
+    'stdcost': ['stdcost', 'cogs'],
+    'profit': ['profit'],
+    'profitpercent': ['grossprofitper', 'profitPercent', 'profitmargin'],
+    'grossprofitper': ['grossprofitper', 'profitPercent', 'profitmargin'],
+}
+
+
+def sort_export_data_list(data_list, sort_by=None, sort_order=None):
+    if not data_list or not isinstance(data_list, list) or not sort_by:
+        return data_list
+
+    sort_by_lower = str(sort_by).lower().strip()
+    reverse = str(sort_order).lower().strip() in ['desc', 'descend']
+    aliases = EXPORT_FIELD_ALIAS_MAP.get(sort_by_lower, [sort_by, sort_by_lower])
+
+    def get_sort_key(row):
+        if not isinstance(row, dict):
+            return (2, 0) if not reverse else (-2, 0)
+        
+        for k in aliases:
+            if k in row and row[k] is not None:
+                return parse_export_sort_val(row[k], reverse=reverse)
+        
+        for rk, rv in row.items():
+            if rk.lower() == sort_by_lower or rk.lower() in [a.lower() for a in aliases]:
+                if rv is not None:
+                    return parse_export_sort_val(rv, reverse=reverse)
+                    
+        return (2, 0) if not reverse else (-2, 0)
+
+    try:
+        data_list.sort(key=get_sort_key, reverse=reverse)
+    except Exception as e:
+        print(f"Warning: sort_export_data_list failed ({e})")
+
+    return data_list
+
 def format_details_export(data_list, totals_dict=None):
     if not isinstance(data_list, list):
         data_list = []
@@ -371,7 +524,7 @@ def format_details_export(data_list, totals_dict=None):
         row['final_net_sales'] = format_val_currency(item.get('final_net_sales') if item.get('final_net_sales') is not None else item.get('netsales', '₹0.0'))
         row['cancelled_sales'] = format_val_currency(item.get('cancelled_sales') if item.get('cancelled_sales') is not None else item.get('cancelledcansales', 0))
         
-        row['mpfees'] = format_val_currency(item.get('mpfees', '₹0.0'))
+        row['mpfees'] = format_val_currency(get_mpfees_val(item))
         row['shippingfees'] = format_val_currency(item.get('shippingfees') or item.get('shipping', '₹0.0'))
         row['mp_gst'] = format_val_currency(item.get('mp_gst', '₹0.0'))
         row['tcs'] = format_val_currency(item.get('tcs', '₹0.0'))
@@ -419,7 +572,7 @@ def format_details_export(data_list, totals_dict=None):
             'netsales': format_val_currency(totals_dict.get('netsales') if totals_dict.get('netsales') is not None else totals_dict.get('grosssales', '₹0.0')),
             'final_net_sales': format_val_currency(totals_dict.get('total_final_net_sales') or totals_dict.get('final_net_sales') or totals_dict.get('netsales', '₹0.0')),
             'cancelled_sales': format_val_currency(totals_dict.get('cancelled_sales') if totals_dict.get('cancelled_sales') is not None else totals_dict.get('cancelledcansales', 0)),
-            'mpfees': format_val_currency(totals_dict.get('mpfees', '₹0.0')),
+            'mpfees': format_val_currency(get_mpfees_val(totals_dict)),
             'shippingfees': format_val_currency(totals_dict.get('shippingfees') or totals_dict.get('shipping', '₹0.0')),
             'mp_gst': format_val_currency(totals_dict.get('mp_gst', '₹0.0')),
             'tcs': format_val_currency(totals_dict.get('tcs', '₹0.0')),
@@ -456,6 +609,20 @@ def format_val_currency(val):
         return f"₹{round(fval, 2)}"
     except (ValueError, TypeError):
         return val_str
+
+def _parse_clean_num(val):
+    if val is None:
+        return 0.0
+    if isinstance(val, (int, float, Decimal)):
+        return float(val)
+    s = str(val).strip()
+    if not s:
+        return 0.0
+    cleaned = re.sub(r'[₹,\s%]', '', s)
+    try:
+        return float(cleaned)
+    except (ValueError, TypeError):
+        return 0.0
 
 def format_sku_report_export(data_list, totals_dict=None):
     if not isinstance(data_list, list):
@@ -509,7 +676,7 @@ def format_sku_report_export(data_list, totals_dict=None):
         row['final_net_sales'] = format_val_currency(item.get('final_net_sales') if item.get('final_net_sales') is not None else item.get('netsales'))
         row['cancelled_sales'] = format_val_currency(item.get('cancelled_sales') if item.get('cancelled_sales') is not None else item.get('cancelledcansales', 0))
         
-        row['mpfees'] = format_val_currency(item.get('mpfees') if item.get('mpfees') is not None else item.get('estimatefees'))
+        row['mpfees'] = format_val_currency(get_mpfees_val(item))
         row['shippingfees'] = format_val_currency(item.get('shippingfees') or item.get('shipping'))
         row['mp_gst'] = format_val_currency(item.get('mp_gst'))
         row['tcs'] = format_val_currency(item.get('tcs'))
@@ -542,6 +709,28 @@ def format_sku_report_export(data_list, totals_dict=None):
         
     formatted_totals = None
     if isinstance(totals_dict, dict):
+        raw_gst_perc = totals_dict.get('gst_to_pay_perc')
+        if not raw_gst_perc or str(raw_gst_perc).strip() in ('0%', '0', '0.0', '0.0%'):
+            tax_num = _parse_clean_num(totals_dict.get('taxable_value'))
+            gst_num = _parse_clean_num(totals_dict.get('gst_to_pay_amount'))
+            if tax_num > 0:
+                gst_perc_out = f"{round((gst_num / tax_num * 100), 2)}%"
+            else:
+                gst_perc_out = str(raw_gst_perc or '0%')
+        else:
+            val_str = str(raw_gst_perc)
+            gst_perc_out = val_str if val_str.endswith('%') else f"{val_str}%"
+
+        raw_claim = totals_dict.get('total_claim_amount') or totals_dict.get('claim_amount')
+        if not raw_claim or str(raw_claim).strip() in ('₹0.0', '₹0', '0', '0.0'):
+            claims_sum = sum(_parse_clean_num(r.get('claim_amount')) for r in formatted_list if r.get('claim_amount'))
+            if claims_sum > 0:
+                claim_amount_out = format_val_currency(claims_sum)
+            else:
+                claim_amount_out = raw_claim or '₹0.0'
+        else:
+            claim_amount_out = format_val_currency(raw_claim)
+
         formatted_totals = {
             'order_id': 'Total',
             'date': '',
@@ -558,7 +747,7 @@ def format_sku_report_export(data_list, totals_dict=None):
             'netsales': format_val_currency(totals_dict.get('netsales') if totals_dict.get('netsales') is not None else totals_dict.get('grosssales')),
             'final_net_sales': format_val_currency(totals_dict.get('total_final_net_sales') or totals_dict.get('final_net_sales') or totals_dict.get('netsales')),
             'cancelled_sales': format_val_currency(totals_dict.get('cancelled_sales') if totals_dict.get('cancelled_sales') is not None else totals_dict.get('cancelledcansales', 0)),
-            'mpfees': format_val_currency(totals_dict.get('estimatefees') if totals_dict.get('estimatefees') is not None else totals_dict.get('mpfees')),
+            'mpfees': format_val_currency(get_mpfees_val(totals_dict)),
             'shippingfees': format_val_currency(totals_dict.get('shipping') or totals_dict.get('shippingfees')),
             'mp_gst': format_val_currency(totals_dict.get('mp_gst')),
             'tcs': format_val_currency(totals_dict.get('tcs')),
@@ -568,8 +757,8 @@ def format_sku_report_export(data_list, totals_dict=None):
             'ads': format_val_currency(totals_dict.get('adSpend') or totals_dict.get('ads')),
             'taxable_value': format_val_currency(totals_dict.get('taxable_value')),
             'gst_to_pay_amount': format_val_currency(totals_dict.get('gst_to_pay_amount')),
-            'gst_to_pay_perc': str(totals_dict.get('gst_to_pay_perc') or '0%'),
-            'claim_amount': format_val_currency(totals_dict.get('total_claim_amount') or totals_dict.get('claim_amount')),
+            'gst_to_pay_perc': gst_perc_out,
+            'claim_amount': claim_amount_out,
             'stdcost': format_val_currency(totals_dict.get('cost') or totals_dict.get('stdcost')),
             'profit': format_val_currency(totals_dict.get('profit')),
             'grossprofitper': f"{totals_dict.get('totalprofitmargin') if totals_dict.get('totalprofitmargin') is not None else (totals_dict.get('grossprofitper') or 0)}%" if not str(totals_dict.get('totalprofitmargin') or totals_dict.get('grossprofitper') or '').endswith('%') else str(totals_dict.get('totalprofitmargin') or totals_dict.get('grossprofitper'))
@@ -1052,7 +1241,7 @@ def format_reconcile_details_export(data_list, totals_dict=None):
         row['netsales'] = item.get('netsales') or item.get('grosssales', '₹0.0')
         row['final_net_sales'] = item.get('final_net_sales', '₹0.0')
         
-        row['mpfees'] = item.get('mpfees', '₹0.0')
+        row['mpfees'] = format_val_currency(get_mpfees_val(item))
         row['shippingfees'] = item.get('shippingfees') or item.get('shipping', '₹0.0')
         row['mp_gst'] = item.get('mp_gst', '₹0.0')
         row['tcs'] = item.get('tcs', '₹0.0')
@@ -1094,6 +1283,28 @@ def format_reconcile_details_export(data_list, totals_dict=None):
         
     formatted_totals = None
     if isinstance(totals_dict, dict):
+        raw_gst_perc = totals_dict.get('gst_to_pay_perc')
+        if not raw_gst_perc or str(raw_gst_perc).strip() in ('0%', '0', '0.0', '0.0%'):
+            tax_num = _parse_clean_num(totals_dict.get('taxable_value'))
+            gst_num = _parse_clean_num(totals_dict.get('gst_to_pay_amount'))
+            if tax_num > 0:
+                gst_perc_out = f"{round((gst_num / tax_num * 100), 2)}%"
+            else:
+                gst_perc_out = str(raw_gst_perc or '0%')
+        else:
+            val_str = str(raw_gst_perc)
+            gst_perc_out = val_str if val_str.endswith('%') else f"{val_str}%"
+
+        raw_claim = totals_dict.get('total_claim_amount') or totals_dict.get('claim_amount')
+        if not raw_claim or str(raw_claim).strip() in ('₹0.0', '₹0', '0', '0.0'):
+            claims_sum = sum(_parse_clean_num(r.get('claim_amount')) for r in formatted_list if r.get('claim_amount'))
+            if claims_sum > 0:
+                claim_amount_out = format_val_currency(claims_sum)
+            else:
+                claim_amount_out = raw_claim or '₹0.0'
+        else:
+            claim_amount_out = format_val_currency(raw_claim)
+
         formatted_totals = {
             'channel': 'Total',
             'asin': '',
@@ -1106,7 +1317,7 @@ def format_reconcile_details_export(data_list, totals_dict=None):
             'promo_discount': totals_dict.get('total_promo_discount') or totals_dict.get('promo_discount', '₹0.0'),
             'netsales': totals_dict.get('netsales') or totals_dict.get('grosssales', '₹0.0'),
             'final_net_sales': totals_dict.get('total_final_net_sales') or totals_dict.get('final_net_sales', '₹0.0'),
-            'mpfees': totals_dict.get('mpfees', '₹0.0'),
+            'mpfees': format_val_currency(get_mpfees_val(totals_dict)),
             'shippingfees': totals_dict.get('shippingfees') or totals_dict.get('shipping', '₹0.0'),
             'mp_gst': totals_dict.get('mp_gst', '₹0.0'),
             'tcs': totals_dict.get('tcs', '₹0.0'),
@@ -1122,8 +1333,8 @@ def format_reconcile_details_export(data_list, totals_dict=None):
             'ads': totals_dict.get('ads', '₹0.0'),
             'taxable_value': totals_dict.get('taxable_value', '₹0.0'),
             'gst_to_pay_amount': totals_dict.get('gst_to_pay_amount', '₹0.0'),
-            'gst_to_pay_perc': totals_dict.get('gst_to_pay_perc', '0%'),
-            'claim_amount': totals_dict.get('total_claim_amount') or totals_dict.get('claim_amount', '₹0.0'),
+            'gst_to_pay_perc': gst_perc_out,
+            'claim_amount': claim_amount_out,
             'exp_settlement': totals_dict.get('exp_settlement', '₹0.0'),
             'stdcost': totals_dict.get('stdcost', '₹0.0'),
             'profit': totals_dict.get('profit', '₹0.0'),
@@ -2154,10 +2365,11 @@ CATALOG_DETAILS_COLUMNS = {
     "asin": "ASIN",
     "brand": "Brand",
     "item_name": "Product Name",
+    "product_site_launch_date": "Product Launch Date",
     "sales_rank": "Product Category Rank",
     "display_group_rank": "Master Category Rank",
     "sales_rank_category": "Product Category",
-    "display_group_rank_title": "Group Category Rank",
+    "display_group_rank_title": "Master Category",
 }
 
 
@@ -2168,6 +2380,7 @@ def format_catalog_details_export(results, totals_dict=None):
             "asin": item.get("asin", ""),
             "brand": item.get("brand", ""),
             "item_name": item.get("item_name", ""),
+            "product_site_launch_date": item.get("product_site_launch_date", ""),
             "sales_rank": item.get("sales_rank", 0),
             "display_group_rank": item.get("display_group_rank", 0),
             "sales_rank_category": item.get("sales_rank_category", ""),

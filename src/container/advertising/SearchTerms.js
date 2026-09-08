@@ -357,6 +357,17 @@ function SearchTerms() {
       },
     },
 
+    {
+      title: 'ROAS',
+      dataIndex: 'roas',
+      align: 'center',
+      width: 70,
+      sorter: (a, b) => (a.roas || 0) - (b.roas || 0),
+      render: (v) => (
+        <span className="font-semibold text-[11px] text-[#111827]">{v != null ? Number(v).toFixed(2) : '-'}</span>
+      ),
+    },
+
     // {
     //   title: 'Actions',
     //   width: 80,

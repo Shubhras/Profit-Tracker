@@ -59,6 +59,10 @@ export default function ProfitViewSecondTable() {
     current: 1,
     pageSize: 10,
   });
+  const [sortState, setSortState] = React.useState({
+    field: null,
+    order: null,
+  });
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -95,6 +99,18 @@ export default function ProfitViewSecondTable() {
 
         fromDate: dateRange?.fromDate || null,
         toDate: dateRange?.endDate || null,
+        ...(sortState.field &&
+          sortState.order && {
+            sort_by: sortState.field,
+            sort_order: sortState.order === 'ascend' ? 'asc' : 'desc',
+          }),
+      },
+
+      sort_by: sortState.field || null,
+      sort_order: sortState.order ? (sortState.order === 'ascend' ? 'asc' : 'desc') : null,
+      sort: {
+        field: sortState.field || null,
+        order: sortState.order || null,
       },
 
       pagination: {
@@ -142,7 +158,17 @@ export default function ProfitViewSecondTable() {
     } else {
       dispatch(getSecondDetials(buildPayload()));
     }
-  }, [dispatch, pagination.current, pagination.pageSize, globalChannel, debouncedSearch, isReconcile, dateRange]);
+  }, [
+    dispatch,
+    pagination.current,
+    pagination.pageSize,
+    globalChannel,
+    debouncedSearch,
+    isReconcile,
+    dateRange,
+    sortState.field,
+    sortState.order,
+  ]);
 
   useEffect(() => {
     const handleHeaderAction = (event) => {
@@ -1110,11 +1136,31 @@ export default function ProfitViewSecondTable() {
               pageSizeOptions: ['10', '20', '50', '100'],
               showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
             }}
-            onChange={(pag) => {
-              setPagination({
-                current: pag.current,
-                pageSize: pag.pageSize,
-              });
+            onChange={(pag, filters, sorter, extra) => {
+              if (extra && extra.action === 'paginate') {
+                setPagination({
+                  current: pag.current,
+                  pageSize: pag.pageSize,
+                });
+              }
+              if (extra && extra.action === 'sort') {
+                const activeSorter = Array.isArray(sorter) ? sorter[0] : sorter;
+                const currentOrder = activeSorter?.order || null;
+                const currentField = currentOrder ? activeSorter?.field || activeSorter?.columnKey : null;
+                setSortState({
+                  field: currentField,
+                  order: currentOrder,
+                });
+                setPagination({
+                  current: 1,
+                  pageSize: pag.pageSize,
+                });
+              } else if (!extra) {
+                setPagination({
+                  current: pag.current,
+                  pageSize: pag.pageSize,
+                });
+              }
             }}
             size="small"
             scroll={{ x: 1800 }}

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import moment from 'moment';
 import { Button, Table, Tooltip, Tag, Dropdown, message } from 'antd';
 import {
   ExportOutlined,
@@ -29,10 +30,15 @@ function ProductRanking() {
 
   // const [selectedRowKeys, setSelectedRowKeys] = React.useState([]);
 
-  const { loading, productRankingData } = useSelector((state) => ({
+  const { loading, productRankingData, dateRange } = useSelector((state) => ({
     loading: state?.OrganicPerformance?.loading,
     productRankingData: state?.OrganicPerformance?.productRankingData,
+    dateRange: state?.dashboard?.dateRange,
   }));
+
+  const [isDateFilterActive, setIsDateFilterActive] = useState(false);
+  const isInitialMount = React.useRef(true);
+  const initialDateRangeRef = React.useRef(dateRange);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -43,13 +49,44 @@ function ProductRanking() {
   }, [searchText]);
 
   useEffect(() => {
-    dispatch(getProductRanking(pagination.current, pagination.pageSize, { search: debouncedSearch }));
-  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch]);
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      initialDateRangeRef.current = dateRange;
+      return;
+    }
+
+    if (
+      dateRange?.isUserSelected ||
+      (dateRange && dateRange !== initialDateRangeRef.current && !dateRange?.isInitial)
+    ) {
+      setIsDateFilterActive(true);
+      setPagination((prev) => (prev.current === 1 ? prev : { ...prev, current: 1 }));
+    } else if (dateRange?.isInitial && !dateRange?.isUserSelected) {
+      setIsDateFilterActive(false);
+      setPagination((prev) => (prev.current === 1 ? prev : { ...prev, current: 1 }));
+    }
+  }, [dateRange]);
+
+  useEffect(() => {
+    const payload = { search: debouncedSearch };
+    if (isDateFilterActive && dateRange?.fromDate) {
+      payload.fromDate = dateRange.fromDate;
+      payload.toDate = dateRange.endDate || dateRange.toDate;
+    }
+    dispatch(getProductRanking(pagination.current, pagination.pageSize, payload));
+  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch, isDateFilterActive, dateRange]);
 
   const handleExport = async (format = 'xlsx') => {
     setExportLoading(true);
     try {
-      const res = await dispatch(exportCatalogDetails({ search: debouncedSearch }, format));
+      const exportPayload = {
+        search: debouncedSearch,
+      };
+      if (isDateFilterActive && dateRange?.fromDate) {
+        exportPayload.fromDate = dateRange.fromDate;
+        exportPayload.toDate = dateRange.endDate || dateRange.toDate;
+      }
+      const res = await dispatch(exportCatalogDetails(exportPayload, format));
       if (res?.status) {
         message.success('Export report generated successfully!');
       } else {
@@ -90,6 +127,7 @@ function ProductRanking() {
       saleRankCategry: item.sales_rank_category,
       dispalyGroupRank: item.display_group_rank,
       groupRankTitle: item.display_group_rank_title,
+      productSiteLaunchDate: item.product_site_launch_date,
     })) || [];
 
   const columns = [
@@ -192,12 +230,30 @@ function ProductRanking() {
       ),
     },
     {
-      title: 'Master Category ',
+      title: 'Master Category',
       dataIndex: 'groupRankTitle',
       align: 'center',
       width: 70,
       ellipsis: true,
       render: (v) => <Tag className="!px-3 !py-[3px] !rounded-full text-[11px]">{v || '-'}</Tag>,
+    },
+    {
+      title: 'Product Launch Date',
+      dataIndex: 'productSiteLaunchDate',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => {
+        const dateA = a.productSiteLaunchDate ? new Date(a.productSiteLaunchDate).getTime() : 0;
+        const dateB = b.productSiteLaunchDate ? new Date(b.productSiteLaunchDate).getTime() : 0;
+        return dateA - dateB;
+      },
+      render: (v) => {
+        if (!v) return <span className="text-[#9ca3af] text-[11px]">-</span>;
+        const m = moment(v);
+        const formatted = m.isValid() ? m.format('DD/MM/YYYY') : String(v).slice(0, 10);
+        return <span className="text-[#374151] text-[11px]">{formatted}</span>;
+      },
     },
   ];
 
@@ -284,6 +340,23 @@ function ProductRanking() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* ACTIVE DATE FILTER TAG */}
+          {isDateFilterActive && dateRange?.fromDate && (
+            <Tag
+              closable
+              onClose={() => {
+                setIsDateFilterActive(false);
+                setPagination((prev) => (prev.current === 1 ? prev : { ...prev, current: 1 }));
+              }}
+              color="blue"
+              className="!h-[30px] !px-2.5 !py-0 !rounded-xl !text-[12px] flex items-center gap-1 cursor-pointer font-medium"
+            >
+              {`Launch Date: ${moment(dateRange.fromDate).format('DD/MM/YYYY')} - ${moment(
+                dateRange.endDate || dateRange.toDate,
+              ).format('DD/MM/YYYY')}`}
+            </Tag>
+          )}
+
           {/* SEARCH INPUT */}
           <div className="relative w-[260px]">
             <input

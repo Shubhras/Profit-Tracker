@@ -330,6 +330,19 @@ class AmazonCatalogDetailsAPIView(APIView):
         marketplace_id = request.GET.get("marketplace_id") or data.get("marketplace_id")
         search = request.GET.get("search") or data.get("search")
 
+        filters = data.get("filters", {}) if isinstance(data, dict) and isinstance(data.get("filters"), dict) else {}
+
+        from_date = (
+            request.GET.get("from_date") or request.GET.get("fromDate") or request.GET.get("start_date") or request.GET.get("startDate")
+            or data.get("from_date") or data.get("fromDate") or data.get("start_date") or data.get("startDate")
+            or filters.get("from_date") or filters.get("fromDate") or filters.get("start_date") or filters.get("startDate")
+        )
+        to_date = (
+            request.GET.get("to_date") or request.GET.get("toDate") or request.GET.get("end_date") or request.GET.get("endDate")
+            or data.get("to_date") or data.get("toDate") or data.get("end_date") or data.get("endDate")
+            or filters.get("to_date") or filters.get("toDate") or filters.get("end_date") or filters.get("endDate")
+        )
+
         page = request.GET.get("page") or data.get("page")
         page_size = request.GET.get("page_size") or data.get("page_size")
 
@@ -357,6 +370,25 @@ class AmazonCatalogDetailsAPIView(APIView):
         if marketplace_id:
             queryset = queryset.filter(
                 marketplace_id=marketplace_id
+            )
+
+        # DATE RANGE (Product Site Launch Date)
+        if from_date:
+            from_str = str(from_date).strip()
+            if len(from_str) == 10:
+                from_str = f"{from_str}T00:00:00.000Z"
+            queryset = queryset.filter(
+                raw_response__attributes__product_site_launch_date__0__value__gte=from_str
+            )
+
+        if to_date:
+            to_str = str(to_date).strip()
+            if len(to_str) == 10:
+                to_str = f"{to_str}T23:59:59.999Z"
+            elif "T00:00:00" in to_str:
+                to_str = to_str.replace("T00:00:00", "T23:59:59.999")
+            queryset = queryset.filter(
+                raw_response__attributes__product_site_launch_date__0__value__lte=to_str
             )
 
         # SEARCH
