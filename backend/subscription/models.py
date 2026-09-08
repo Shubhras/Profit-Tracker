@@ -133,6 +133,14 @@ class UserSubscription(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    @property
+    def is_trial(self):
+        if self.plan and "starter" in (self.plan.plan_name or "").lower():
+            return True
+        if self.amount == 0 and self.next_plan is not None:
+            return True
+        return False
+
     def __str__(self):
         email = getattr(self.user, 'email', str(self.user)) if self.user else "No User"
         plan_name = self.plan.plan_name if self.plan else "No Plan"

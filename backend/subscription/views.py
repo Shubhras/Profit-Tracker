@@ -213,28 +213,22 @@ class CreateSubscriptionAPIView(APIView):
                     import logging
                     logging.getLogger(__name__).warning(f"Razorpay subscription mandate creation fallback: {str(ex)}")
 
-            subscription = UserSubscription.objects.create(
-                user=user,
-                plan=plan,
-                next_plan=growth_plan,
-                billing_cycle=billing_cycle,
-                amount=0,
-                is_paid=True,
-                status="trial",
-                start_date=start_date,
-                end_date=end_date,
-                razorpay_subscription_id=rzp_sub_id
-            )
-
-            if hasattr(user, "profile") and user.profile:
-                user.profile.subscriptiontype = plan
-                user.profile.subscription_active = True
-                user.profile.subscription_status = "trial"
-                user.profile.trial_start_date = start_date
-                user.profile.trial_end_date = end_date
-                user.profile.save()
-
             if rzp_sub_id:
+                # Razorpay Mandate Authorization is required from the user
+                # The subscription is NOT paid yet until user authorizes on Razorpay!
+                subscription = UserSubscription.objects.create(
+                    user=user,
+                    plan=plan,
+                    next_plan=growth_plan,
+                    billing_cycle=billing_cycle,
+                    amount=0,
+                    is_paid=False,
+                    status="created",
+                    start_date=start_date,
+                    end_date=end_date,
+                    razorpay_subscription_id=rzp_sub_id
+                )
+                # User profile stays inactive until payment / mandate is verified!
                 return success_response(
                     message="Starter 7-Day Free Trial initiated with Auto-Pay Mandate.",
                     data={
@@ -250,12 +244,36 @@ class CreateSubscriptionAPIView(APIView):
                         "payment_required": True,
                         "isFreePlan": False,
                         "isTrial": True,
-                        "status": "trial",
+                        "is_trial": True,
+                        "is_paid": False,
+                        "status": "created",
+                        "subscription_status": "inactive",
                         "start_date": start_date,
                         "end_date": end_date
                     },
                     statusCode=200
                 )
+
+            # Fallback when no payment/mandate is required (true free plan)
+            subscription = UserSubscription.objects.create(
+                user=user,
+                plan=plan,
+                next_plan=growth_plan,
+                billing_cycle=billing_cycle,
+                amount=0,
+                is_paid=True,
+                status="active",
+                start_date=start_date,
+                end_date=end_date
+            )
+
+            if hasattr(user, "profile") and user.profile:
+                user.profile.subscriptiontype = plan
+                user.profile.subscription_active = True
+                user.profile.subscription_status = "active"
+                user.profile.trial_start_date = start_date
+                user.profile.trial_end_date = end_date
+                user.profile.save()
 
             return success_response(
                 message="Starter 7-Day Free Trial activated successfully. Your subscription moves to Growth plan after 7 days.",
@@ -270,7 +288,10 @@ class CreateSubscriptionAPIView(APIView):
                     "payment_required": False,
                     "isFreePlan": True,
                     "isTrial": True,
-                    "status": "trial",
+                    "is_trial": True,
+                    "is_paid": True,
+                    "status": "active",
+                    "subscription_status": "active",
                     "start_date": start_date,
                     "end_date": end_date
                 },
@@ -452,7 +473,12 @@ class MySubscriptionAPIView(APIView):
             user=request.user
         ).select_related("plan").order_by("-created_at")
 
-        if sub and sub.status == "trial" and sub.end_date and sub.end_date <= timezone.now() and sub.next_plan:
+        is_starter_or_trial = (
+            (sub.plan and "starter" in (sub.plan.plan_name or "").lower())
+            or sub.amount == 0
+            or getattr(sub, "status", None) == "trial"
+        )
+        if sub and is_starter_or_trial and sub.end_date and sub.end_date <= timezone.now() and sub.next_plan:
             sub.plan = sub.next_plan
             sub.next_plan = None
             sub.status = "active"
@@ -462,7 +488,7 @@ class MySubscriptionAPIView(APIView):
             sub.save()
             if hasattr(request.user, "profile") and request.user.profile:
                 request.user.profile.subscriptiontype = sub.plan
-                request.user.profile.subscription_status = "paid"
+                request.user.profile.subscription_status = "active"
                 request.user.profile.save()
 
         if not sub:
@@ -513,11 +539,20 @@ class MySubscriptionAPIView(APIView):
                     for invoice in invoices.get("items", [])
                 ]
 
+            is_sub_trial = (
+                (sub.plan and "starter" in (sub.plan.plan_name or "").lower())
+                or sub.amount == 0
+                or getattr(sub, "status", None) == "trial"
+                or bool(hasattr(request.user, "profile") and request.user.profile and request.user.profile.trial_end_date and request.user.profile.trial_end_date > timezone.now())
+            )
             return success_response(
                 message="Subscription fetched successfully",
                 data={
                     "active": sub.status == "active",
                     "status": sub.status,
+                    "subscription_status": sub.status,
+                    "isTrial": is_sub_trial,
+                    "is_trial": is_sub_trial,
 
                     "subscription_id": sub.id,
 
@@ -783,8 +818,10 @@ class VerifyPaymentAPIView(APIView):
         subscription.razorpay_signature = razorpay_signature
         subscription.is_paid = True
 
-        if subscription.status != "trial":
-            subscription.status = "active"
+        is_starter_sub = (subscription.plan and "starter" in (subscription.plan.plan_name or "").lower()) or subscription.amount == 0
+        subscription.status = "active"
+
+        if not is_starter_sub:
             subscription.start_date = timezone.now()
             from dateutil.relativedelta import relativedelta
             if subscription.billing_cycle == "monthly":
@@ -798,6 +835,12 @@ class VerifyPaymentAPIView(APIView):
 
         subscription.save()
 
+        if hasattr(request.user, "profile") and request.user.profile:
+            request.user.profile.subscriptiontype = subscription.plan
+            request.user.profile.subscription_active = True
+            request.user.profile.subscription_status = "active"
+            request.user.profile.save()
+
         return success_response(
             message="Payment verified successfully",
             data={
@@ -806,7 +849,10 @@ class VerifyPaymentAPIView(APIView):
                 "billing_cycle": subscription.billing_cycle,
                 "start_date": subscription.start_date,
                 "end_date": subscription.end_date,
-                "status": subscription.status
+                "status": subscription.status,
+                "subscription_status": subscription.status,
+                "isTrial": is_starter_sub,
+                "is_trial": is_starter_sub
             }
         )
 

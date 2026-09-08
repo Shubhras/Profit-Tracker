@@ -704,6 +704,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         for o in orders:
             oid = o.get('order__amazon_order_id')
             o_sku = (o.get('seller_sku') or '').strip()
+            o_qty = max(1, int(o.get('quantity_ordered') or 1))
             f_item = None
             if oid and o_sku and (oid, o_sku) in estimated_fee_by_order_sku:
                 f_item = estimated_fee_by_order_sku[(oid, o_sku)]
@@ -713,7 +714,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             if f_item:
                 fee_matched = True
                 for k in fee_data:
-                    fee_data[k] += f_item.get(k, 0.0)
+                    fee_data[k] += float(f_item.get(k, 0.0) or 0) * o_qty
 
         if not fee_matched:
             if by_sku:
@@ -724,8 +725,9 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
                 )
             else:
                 fallback_fee = estimated_fee_by_parent.get(parent_asin, {})
+            fee_multiplier = max(1, int(row.get('grossqty') or 1))
             for k in fee_data:
-                fee_data[k] = fallback_fee.get(k, 0.0)
+                fee_data[k] = float(fallback_fee.get(k, 0.0) or 0) * fee_multiplier
 
         referral_fee = fee_data.get("referral_fee", 0)
         closing_fee = fee_data.get("closing_fee", 0)

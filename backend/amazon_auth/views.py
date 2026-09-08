@@ -7639,18 +7639,19 @@ def sku_profit_report(request):
 
 
         fee_data = estimated_fee_map.get(oid, {})
+        fee_multiplier = max(1, gross_qty)
 
-        referral_fee = fee_data.get("referral_fee", 0)
-        closing_fee = fee_data.get("closing_fee", 0)
-        per_item_fee = fee_data.get("per_item_fee", 0)
+        referral_fee = float(fee_data.get("referral_fee", 0) or 0) * fee_multiplier
+        closing_fee = float(fee_data.get("closing_fee", 0) or 0) * fee_multiplier
+        per_item_fee = float(fee_data.get("per_item_fee", 0) or 0) * fee_multiplier
 
-        fba_fee = fee_data.get("fba_fee", 0)
-        fba_pick_pack_fee = fee_data.get("fba_pick_pack_fee", 0)
-        fba_weight_handling_fee = fee_data.get("fba_weight_handling_fee", 0)
+        fba_fee = float(fee_data.get("fba_fee", 0) or 0) * fee_multiplier
+        fba_pick_pack_fee = float(fee_data.get("fba_pick_pack_fee", 0) or 0) * fee_multiplier
+        fba_weight_handling_fee = float(fee_data.get("fba_weight_handling_fee", 0) or 0) * fee_multiplier
 
-        tax_amount = fee_data.get("tax_amount", 0)
+        tax_amount = float(fee_data.get("tax_amount", 0) or 0) * fee_multiplier
 
-        estimated_fees = max(0.0, float(fee_data.get("estimated_fees", 0)) - float(fba_weight_handling_fee))
+        estimated_fees = max(0.0, float(fee_data.get("estimated_fees", 0) or 0) - float(fee_data.get("fba_weight_handling_fee", 0) or 0)) * fee_multiplier
 
         # adjusted_gross_sales = gross_sales + item_tax - promo_discount
 
@@ -8878,18 +8879,19 @@ def sku_profit_report_transactions_shipping(request):
         promo_discount = float(row.get('promotion_discount') or 0)
 
         fee_data = estimated_fee_map.get(oid, {})
+        fee_multiplier = max(1, gross_qty)
 
-        referral_fee = fee_data.get("referral_fee", 0)
-        closing_fee = fee_data.get("closing_fee", 0)
-        per_item_fee = fee_data.get("per_item_fee", 0)
+        referral_fee = float(fee_data.get("referral_fee", 0) or 0) * fee_multiplier
+        closing_fee = float(fee_data.get("closing_fee", 0) or 0) * fee_multiplier
+        per_item_fee = float(fee_data.get("per_item_fee", 0) or 0) * fee_multiplier
 
-        fba_fee = fee_data.get("fba_fee", 0)
-        fba_pick_pack_fee = fee_data.get("fba_pick_pack_fee", 0)
-        fba_weight_handling_fee = fee_data.get("fba_weight_handling_fee", 0)
+        fba_fee = float(fee_data.get("fba_fee", 0) or 0) * fee_multiplier
+        fba_pick_pack_fee = float(fee_data.get("fba_pick_pack_fee", 0) or 0) * fee_multiplier
+        fba_weight_handling_fee = float(fee_data.get("fba_weight_handling_fee", 0) or 0) * fee_multiplier
 
-        tax_amount = fee_data.get("tax_amount", 0)
+        tax_amount = float(fee_data.get("tax_amount", 0) or 0) * fee_multiplier
 
-        estimated_fees = max(0.0, float(fee_data.get("estimated_fees", 0)) - float(fba_weight_handling_fee))
+        estimated_fees = max(0.0, float(fee_data.get("estimated_fees", 0) or 0) - float(fee_data.get("fba_weight_handling_fee", 0) or 0)) * fee_multiplier
 
         # ------------------------------------------------------------
         # SHIPPING — Direct sum of breakdowns for this order

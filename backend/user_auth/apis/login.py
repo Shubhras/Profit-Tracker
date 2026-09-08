@@ -4,6 +4,7 @@ from rest_framework import status
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.utils import timezone
 
 from subscription.models import UserSubscription
 from user_auth.models import SubUser, AdminSubUser, UserModulePermission
@@ -86,18 +87,29 @@ class UserLoginAPI(APIView):
         if is_admin_user:
             has_subscription = True
             subscription_status = "active"
+            is_trial = False
             subscription_data = None
         else:
             subscription_user = subuser_obj.parent if (subuser_obj and subuser_obj.parent) else user
-            # Prioritize active and paid subscription first
-            sub = (
+            # Prioritize active and paid subscription first (excluding subscriptions with unauthorized pending mandates)
+            active_subs = (
                 UserSubscription.objects
                 .select_related("plan")
                 .prefetch_related("plan__modules", "plan__submodules__module")
                 .filter(user=subscription_user, status="active", is_paid=True)
                 .order_by("-created_at")
-                .first()
             )
+            sub = None
+            for s in active_subs:
+                # If mandate/order was initiated, verify that payment_id or signature is present
+                is_pending = bool(
+                    (s.razorpay_subscription_id or s.razorpay_order_id)
+                    and not (s.razorpay_payment_id or s.razorpay_signature)
+                )
+                if not is_pending:
+                    sub = s
+                    break
+
             if not sub:
                 sub = (
                     UserSubscription.objects
@@ -108,8 +120,25 @@ class UserLoginAPI(APIView):
                     .first()
                 )
 
-            has_subscription = sub is not None and sub.status == "active" and sub.is_paid
-            subscription_status = sub.status if sub else "no_subscription"
+            # A subscription is only truly paid/active if:
+            # 1. sub.is_paid is True
+            # 2. sub.status == "active"
+            # 3. If mandate or order was created, it MUST be authorized (payment_id or signature present)
+            has_pending_rzp = bool(
+                sub and (sub.razorpay_subscription_id or sub.razorpay_order_id)
+                and not (sub.razorpay_payment_id or sub.razorpay_signature)
+            )
+            is_paid_sub = bool(sub and sub.is_paid and not has_pending_rzp and sub.status in ["active", "trial"])
+            has_subscription = bool(sub and sub.status in ["active", "trial"] and is_paid_sub)
+            subscription_status = "active" if has_subscription else (sub.status if sub else "no_subscription")
+            is_trial = bool(
+                sub and (
+                    (sub.plan and "starter" in (sub.plan.plan_name or "").lower())
+                    or sub.amount == 0
+                    or getattr(sub, "status", None) == "trial"
+                    or (hasattr(subscription_user, "profile") and subscription_user.profile and subscription_user.profile.trial_end_date and subscription_user.profile.trial_end_date > timezone.now())
+                )
+            )
             subscription_data = None
 
             if sub and sub.plan:
@@ -167,8 +196,8 @@ class UserLoginAPI(APIView):
                     "plan_name": sub.plan.plan_name if sub.plan else None,
                     "slug": sub.plan.slug if sub.plan else None,
                     "billing_cycle": sub.billing_cycle,
-                    "status": sub.status,
-                    "is_paid": sub.is_paid,
+                    "status": "active" if has_subscription else sub.status,
+                    "is_paid": is_paid_sub,
                     "start_date": sub.start_date,
                     "end_date": sub.end_date,
                     "amount": sub.amount,
@@ -207,6 +236,8 @@ class UserLoginAPI(APIView):
                 # Subscription details
                 "has_subscription": has_subscription,
                 "subscription_status": subscription_status,
+                "is_trial": is_trial,
+                "isTrial": is_trial,
                 "subscription": subscription_data
             }
         }, status=status.HTTP_200_OK)

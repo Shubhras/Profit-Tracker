@@ -28,6 +28,7 @@ class UserAuthToken(models.Model):
 class UserProfile(models.Model):
     SUBSCRIPTION_STATUS_CHOICES = [
         ('inactive', 'Inactive - No plan chosen'),
+        ('active', 'Active'),
         ('trial', 'Free Trial Active'),
         ('paid', 'Paid Subscription Active'),
     ]
@@ -55,6 +56,14 @@ class UserProfile(models.Model):
     trial_end_date = models.DateTimeField(null=True, blank=True)# Free trial start date
     is_paid_subscription_active=models.BooleanField(default=False,null=True, blank=True,)
     subscription_status=models.CharField(max_length=50,choices=SUBSCRIPTION_STATUS_CHOICES,default='inactive')
+
+    @property
+    def is_trial(self):
+        if self.trial_end_date and self.trial_end_date > timezone.now():
+            return True
+        if self.subscriptiontype and "starter" in (self.subscriptiontype.plan_name or "").lower():
+            return True
+        return False
 
     def __str__(self):
         return self.name

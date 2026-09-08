@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated, BasePermission
 from django.db import models, transaction
 from django.core.mail import send_mail
 from django.conf import settings
+from django.utils import timezone
 
 from user_auth.models import SubUser, AdminSubUser, UserProfile, UserModulePermission, Module, SubModule
 from user_auth.serializers import SubUserSerializer, AdminSubUserSerializer, SubUserPermissionInputSerializer
@@ -590,15 +591,33 @@ class SubUserLoginAPIView(APIView):
         target_user = subuser.user
         refresh = RefreshToken.for_user(target_user)
 
-        # Get parent's active subscription
-        sub = (
+        # Get parent's active subscription (excluding subscriptions with unauthorized pending mandates)
+        active_subs = (
             UserSubscription.objects
             .select_related("plan")
             .prefetch_related("plan__modules", "plan__submodules__module")
             .filter(user=request.user, status="active", is_paid=True)
             .order_by("-created_at")
-            .first()
         )
+        sub = None
+        for s in active_subs:
+            is_pending = bool(
+                (s.razorpay_subscription_id or s.razorpay_order_id)
+                and not (s.razorpay_payment_id or s.razorpay_signature)
+            )
+            if not is_pending:
+                sub = s
+                break
+
+        if not sub:
+            sub = (
+                UserSubscription.objects
+                .select_related("plan")
+                .prefetch_related("plan__modules", "plan__submodules__module")
+                .filter(user=request.user)
+                .order_by("-created_at")
+                .first()
+            )
 
         # Filter modules and submodules according to sub-user's permissions
         user_perms = UserModulePermission.objects.filter(user=target_user, can_view=True)
@@ -606,8 +625,21 @@ class SubUserLoginAPIView(APIView):
         allowed_submod_ids = set(user_perms.filter(submodule__isnull=False).values_list("submodule_id", flat=True))
         module_level_mod_ids = set(user_perms.filter(submodule__isnull=True).values_list("module_id", flat=True))
 
-        has_subscription = sub is not None and sub.status == "active"
+        has_pending_rzp = bool(
+            sub and (sub.razorpay_subscription_id or sub.razorpay_order_id)
+            and not (sub.razorpay_payment_id or sub.razorpay_signature)
+        )
+        is_paid_sub = bool(sub and sub.is_paid and not has_pending_rzp and sub.status in ["active", "trial"])
+        has_subscription = bool(sub and sub.status in ["active", "trial"] and is_paid_sub)
         subscription_data = None
+        is_trial = bool(
+            sub and (
+                (sub.plan and "starter" in (sub.plan.plan_name or "").lower())
+                or sub.amount == 0
+                or getattr(sub, "status", None) == "trial"
+                or (hasattr(target_user, "profile") and target_user.profile and target_user.profile.trial_end_date and target_user.profile.trial_end_date > timezone.now())
+            )
+        )
 
         if sub and sub.plan:
             modules_data = []
@@ -637,10 +669,13 @@ class SubUserLoginAPIView(APIView):
                 "plan_name": sub.plan.plan_name,
                 "slug": sub.plan.slug,
                 "billing_cycle": sub.billing_cycle,
-                "status": sub.status,
+                "status": "active" if has_subscription else sub.status,
+                "is_paid": is_paid_sub,
                 "start_date": sub.start_date,
                 "end_date": sub.end_date,
                 "amount": sub.amount,
+                "is_trial": is_trial,
+                "isTrial": is_trial,
                 "modules": modules_data,
                 "submodules": submodules_data
             }
@@ -662,7 +697,9 @@ class SubUserLoginAPIView(APIView):
                 "is_sub_user": True,
                 "role": subuser.role or "Staff",
                 "has_subscription": has_subscription,
-                "subscription_status": sub.status if sub else "no_subscription",
+                "subscription_status": "active" if (sub and sub.status in ["active", "trial"]) else (sub.status if sub else "no_subscription"),
+                "is_trial": is_trial,
+                "isTrial": is_trial,
                 "subscription": subscription_data
             }
         }, status=status.HTTP_200_OK)
