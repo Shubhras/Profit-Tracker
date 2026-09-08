@@ -28,7 +28,7 @@ function ProfitRoutes() {
       <Route
         path="summary"
         element={
-          <SubscriptionGate allowFree>
+          <SubscriptionGate>
             <Summary />
           </SubscriptionGate>
         }

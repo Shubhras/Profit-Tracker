@@ -70,7 +70,8 @@ const Admin = React.memo(() => {
           index
           path="/*"
           element={
-            <SubscriptionGate allowFree>
+            // <SubscriptionGate allowFree>
+            <SubscriptionGate>
               <Dashboard />
             </SubscriptionGate>
           }
@@ -78,7 +79,7 @@ const Admin = React.memo(() => {
         <Route
           path="profit/*"
           element={
-            <SubscriptionGate allowFree>
+            <SubscriptionGate>
               <ProfitRoutes />
             </SubscriptionGate>
           }
@@ -94,7 +95,7 @@ const Admin = React.memo(() => {
         <Route
           path="advertising/*"
           element={
-            <SubscriptionGate allowFree>
+            <SubscriptionGate>
               <AdvertisingRoutes />
             </SubscriptionGate>
           }
@@ -102,7 +103,8 @@ const Admin = React.memo(() => {
         <Route
           path="valueadded/*"
           element={
-            <SubscriptionGate allowFree>
+            // <SubscriptionGate allowFree>
+            <SubscriptionGate>
               <ValueAddedRoutes />
             </SubscriptionGate>
           }
@@ -110,7 +112,7 @@ const Admin = React.memo(() => {
         <Route
           path="organicperformace/*"
           element={
-            <SubscriptionGate allowFree>
+            <SubscriptionGate>
               <OrganicPerformRoutes />
             </SubscriptionGate>
           }
@@ -119,7 +121,7 @@ const Admin = React.memo(() => {
         <Route
           path="operations/*"
           element={
-            <SubscriptionGate allowFree>
+            <SubscriptionGate>
               <OperationsRoutes />
             </SubscriptionGate>
           }
@@ -127,7 +129,8 @@ const Admin = React.memo(() => {
         <Route
           path="settings/*"
           element={
-            <SubscriptionGate allowFree>
+            // <SubscriptionGate allowFree>
+            <SubscriptionGate>
               <SettingsRoutes />
             </SubscriptionGate>
           }

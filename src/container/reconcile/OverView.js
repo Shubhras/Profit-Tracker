@@ -248,10 +248,7 @@ export default function ProfitDetailsView() {
       unsettled_not_paid: 'unsettled_not_paid',
     };
 
-    const value =
-      totals?.[keyMap[dataIndex]] ??
-      totals?.[dataIndex] ??
-      totals?.[`total_${dataIndex}`];
+    const value = totals?.[keyMap[dataIndex]] ?? totals?.[dataIndex] ?? totals?.[`total_${dataIndex}`];
 
     if (value == null) return defaultWidth;
 
