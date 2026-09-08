@@ -6,7 +6,6 @@ import {
   FileDoneOutlined,
   FileExclamationOutlined,
   NotificationOutlined,
-  FileTextOutlined,
   InboxOutlined,
   ReloadOutlined,
   CarOutlined,
@@ -16,8 +15,49 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } fro
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { amazonAction } from '../../redux/amazonAPI/actionCreator';
-// import { PageHeader } from '../../components/page-headers/page-headers';
 import { getDashboard } from '../../redux/dashboard/actionCreator';
+
+const parseOverviewCurrency = (val) => {
+  if (val === null || val === undefined || val === '') return 0;
+  if (typeof val === 'number') return val;
+  const cleaned = String(val).replace(/[^0-9.-]/g, '');
+  const num = parseFloat(cleaned);
+  return Number.isNaN(num) ? 0 : num;
+};
+
+const formatSalesOverviewUnits = (qty, mode) => {
+  const num = Math.abs(parseInt(qty, 10) || 0);
+  if (mode === 'negative') {
+    return `-${num}`;
+  }
+  if (mode === 'positive_sign') {
+    return `+${num}`;
+  }
+  return `${num}`;
+};
+
+const formatSalesOverviewAmount = (val, mode) => {
+  const num = parseOverviewCurrency(val);
+  const absNum = Math.abs(num);
+  const formattedAbs = absNum === 0 ? '0.0' : absNum.toFixed(2);
+
+  if (mode === 'negative') {
+    return `-₹${formattedAbs}`;
+  }
+  if (mode === 'positive_sign') {
+    return `+₹${formattedAbs}`;
+  }
+  if (mode === 'net') {
+    return num < 0 ? `-₹${formattedAbs}` : `₹${formattedAbs}`;
+  }
+  return `₹${formattedAbs}`;
+};
+
+const formatCirclePercent = (val) => {
+  if (val === null || val === undefined || Number.isNaN(val) || val === 0) return '0%';
+  if (val === 100) return '100%';
+  return `${val.toFixed(2)}%`;
+};
 
 export default function Summary() {
   // const path = '/admin';
@@ -808,84 +848,115 @@ export default function Summary() {
               </Row>
             </Col>
 
-            <Col xs={24} lg={10}>
-              <div className="bg-white rounded-[20px] border border-[#edf0f7] shadow-sm p-2 h-full">
-                {/* HEADER */}
-                <div className="flex items-center gap-2 mb-[2px]">
-                  <div className="w-6 h-6 rounded-xl bg-[#ede9fe] flex items-center justify-center text-[#7c3aed] mb-1">
-                    <FileTextOutlined />
-                  </div>
-
-                  <h3 className="text-[17px] font-semibold text-[#111827]">Sales Details</h3>
-                </div>
-
-                {/* SINGLE TABLE */}
+            <Col xs={24} lg={10} className="flex flex-col">
+              <div className="bg-white rounded-[22px] border border-[#edf0f7] shadow-sm p-3.5 sm:p-4 h-full flex flex-col justify-between">
                 <div>
-                  <div className="grid grid-cols-3 bg-[#f8fafc] rounded-xl px-4 py-1 text-[12px] font-bold text-[#374151] mb-2">
-                    <span>Item</span>
-                    <span className="text-center">Qty</span>
-                    <span className="text-right">Sales</span>
+                  {/* HEADER */}
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="w-8 h-8 rounded-lg bg-[#ede9fe] flex items-center justify-center text-[#7c3aed] shrink-0">
+                      <svg
+                        width="17"
+                        height="17"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#7c3aed"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                        <polyline points="10 9 9 9 8 9" />
+                      </svg>
+                    </div>
+
+                    <h3 className="text-[17px] font-bold text-[#111827] tracking-tight mb-0">Sales Overview</h3>
                   </div>
 
-                  {[
-                    {
-                      label: 'Gross',
-                      qty: dashboardData?.breakdown_table?.gross?.qty || 0,
-                      sales: dashboardData?.breakdown_table?.gross?.amount || 0,
-                    },
-                    {
-                      label: 'Cancelled',
-                      qty: dashboardData?.breakdown_table?.cancelled?.qty || 0,
-                      sales: dashboardData?.breakdown_table?.cancelled?.amount || 0,
-                      red: true,
-                    },
-                    {
-                      label: 'Returned(RTO)',
-                      qty: dashboardData?.breakdown_table?.returned_courier?.qty || 0,
-                      sales: dashboardData?.breakdown_table?.returned_courier?.amount || 0,
-                      red: true,
-                    },
-                    // {
-                    //   label: 'Cancelled(RTO)',
-                    //   qty: dashboardData?.breakdown_table?.cancelledrtosummaryqty?.qty || 0,
-                    //   sales: dashboardData?.breakdown_table?.cancelledrtosummarysales?.amount || 0,
-                    // },
-                    {
-                      label: 'Returned(CReF)',
-                      qty: dashboardData?.breakdown_table?.returned_customer?.qty || 0,
-                      sales: dashboardData?.breakdown_table?.returned_customer?.amount || 0,
-                    },
-                    {
-                      label: 'Claimed',
-                      qty: dashboardData?.breakdown_table?.claim?.qty || 0,
-                      sales: dashboardData?.breakdown_table?.claim?.amount || 0,
-                    },
-                    // {
-                    //   label: 'Standard Cost',
-                    //   qty: dashboardData?.breakdown_table?.claimqty?.qty || 0,
-                    //   sales: dashboardData?.breakdown_table?.claimsales?.amount || 0,
-                    // },
-                  ].map((row) => (
-                    <div key={row.label} className="grid grid-cols-3 px-4 py-1 text-[12px] border-b border-[#f1f5f9]">
-                      <span className="text-[#374151] font-semibold">{row.label}</span>
+                  {/* SINGLE TABLE */}
+                  <div>
+                    <div className="grid grid-cols-12 bg-[#f8fafc] rounded-xl px-3.5 py-1.5 text-[12px] font-bold text-[#111827] mb-1">
+                      <span className="col-span-6">Category</span>
+                      <span className="col-span-3 text-center">Units</span>
+                      <span className="col-span-3 text-right">Amount</span>
+                    </div>
 
-                      <span className={`text-center font-medium ${row.red ? 'text-[#ef4444]' : 'text-[#111827]'}`}>
-                        {row.qty}
+                    {[
+                      {
+                        label: 'Total Sales (Gross)',
+                        qty: dashboardData?.breakdown_table?.gross?.qty,
+                        amount: dashboardData?.breakdown_table?.gross?.amount,
+                        mode: 'gross',
+                      },
+                      {
+                        label: 'Order Cancellations',
+                        qty: dashboardData?.breakdown_table?.cancelled?.qty,
+                        amount: dashboardData?.breakdown_table?.cancelled?.amount,
+                        mode: 'negative',
+                      },
+                      {
+                        label: 'Courier Returns (RTO)',
+                        qty:
+                          dashboardData?.breakdown_table?.returned_courier?.qty ??
+                          dashboardData?.breakdown_table?.['returned(RTO)']?.qty,
+                        amount:
+                          dashboardData?.breakdown_table?.returned_courier?.amount ??
+                          dashboardData?.breakdown_table?.['returned(RTO)']?.amount,
+                        mode: 'negative',
+                      },
+                      {
+                        label: 'Refund & Replacement',
+                        subLabel: '(Customer Returns)',
+                        qty:
+                          dashboardData?.breakdown_table?.returned_customer?.qty ??
+                          dashboardData?.breakdown_table?.['returned(CRef)']?.qty,
+                        amount:
+                          dashboardData?.breakdown_table?.returned_customer?.amount ??
+                          dashboardData?.breakdown_table?.['returned(CRef)']?.amount,
+                        mode: 'negative',
+                      },
+                      {
+                        label: 'Claims Processed',
+                        qty: dashboardData?.breakdown_table?.claim?.qty,
+                        amount: dashboardData?.breakdown_table?.claim?.amount,
+                        mode: 'positive_sign',
+                      },
+                    ].map((row) => (
+                      <div
+                        key={row.label}
+                        className="grid grid-cols-12 px-3.5 py-[6px] text-[12px] border-b border-[#f3f4f6] items-center"
+                      >
+                        <span className="col-span-6 font-medium text-[#111827] leading-snug">
+                          <div>{row.label}</div>
+                          {row.subLabel && (
+                            <div className="text-[10.5px] text-[#4b5563] leading-none mt-[1px]">{row.subLabel}</div>
+                          )}
+                        </span>
+
+                        <span className="col-span-3 text-center font-medium text-[#111827]">
+                          {formatSalesOverviewUnits(row.qty, row.mode)}
+                        </span>
+
+                        <span className="col-span-3 text-right font-medium text-[#111827]">
+                          {formatSalesOverviewAmount(row.amount, row.mode)}
+                        </span>
+                      </div>
+                    ))}
+
+                    {/* NET */}
+                    <div className="grid grid-cols-12 px-3.5 py-2 mt-1.5 bg-[#f0fdf4] rounded-xl text-[13px] font-bold text-[#15803d] items-center">
+                      <span className="col-span-6">Net Sales (Total)</span>
+
+                      <span className="col-span-3 text-center">
+                        {formatSalesOverviewUnits(dashboardData?.breakdown_table?.net?.qty, 'gross')}
                       </span>
 
-                      <span className={`text-right font-medium ${row.red ? 'text-[#ef4444]' : 'text-[#111827]'}`}>
-                        {row.sales}
+                      <span className="col-span-3 text-right">
+                        {formatSalesOverviewAmount(dashboardData?.breakdown_table?.net?.amount, 'net')}
                       </span>
                     </div>
-                  ))}
-
-                  {/* NET */}
-                  <div className="grid grid-cols-3 px-4 py-1 mt-1 bg-[#f5f3ff] rounded-xl text-[14px] font-bold text-[#16a34a]">
-                    <span>Net</span>
-
-                    <span className="text-center">{dashboardData?.breakdown_table?.net?.qty || 0}</span>
-
-                    <span className="text-right">{dashboardData?.breakdown_table?.net?.amount || 0}</span>
                   </div>
                 </div>
               </div>
@@ -933,84 +1004,108 @@ export default function Summary() {
           {/* ================= RIGHT 4 CHARTS ================= */}
           <Col xs={24} lg={14}>
             <Row gutter={[12, 12]}>
-              {[
-                {
-                  title: 'Quantity',
-                  color: '#3b82f6',
-                  value: dashboardData?.breakdown_table?.net?.qty || 0,
-                  icon: <InboxOutlined />,
-                  label: 'Total Quantity',
-                },
-                {
-                  title: 'Return',
-                  color: '#ef4444',
-                  value: dashboardData?.header_metrics?.total_return_count || 0,
-                  icon: <ReloadOutlined />,
-                  label: 'Total Return',
-                },
-                {
-                  title: 'Shipping',
-                  color: '#f59e0b',
-                  value: dashboardData?.header_metrics?.shipping || 0,
-                  icon: <CarOutlined />,
-                  label: 'Total Shipping',
-                },
-                {
-                  title: 'Profit',
-                  color: '#67c96d',
-                  value: dashboardData?.header_metrics?.profit || 0,
-                  icon: <BarChartOutlined />,
-                  label: 'Total Profit',
-                },
-              ].map((item) => (
-                <Col xs={24} sm={12} key={item.title}>
-                  <div className="bg-white rounded-[18px] border border-[#edf0f7] shadow-sm p-2">
-                    {/* HEADER */}
-                    <div className="flex items-center gap-2 mb-1">
-                      <div
-                        className="w-8 h-8 rounded-xl flex items-center justify-center text-[15px]"
-                        style={{
-                          background: `${item.color}15`,
-                          color: item.color,
-                        }}
-                      >
-                        {item.icon}
-                      </div>
+              {(() => {
+                const netQty = Number(dashboardData?.breakdown_table?.net?.qty) || 0;
+                const grossQty = Number(dashboardData?.breakdown_table?.gross?.qty) || 0;
+                const totalReturnCount = Number(dashboardData?.header_metrics?.total_return_count) || 0;
+                const totalProfitNum = parseOverviewCurrency(dashboardData?.header_metrics?.profit);
+                const netSalesNum =
+                  parseOverviewCurrency(dashboardData?.header_metrics?.sales) ||
+                  parseOverviewCurrency(dashboardData?.breakdown_table?.net?.amount) ||
+                  0;
+                const shippingNum = Math.abs(parseOverviewCurrency(dashboardData?.header_metrics?.shipping));
 
-                      <h3 className="text-[15px] font-semibold text-[#111827]">{item.title}</h3>
-                    </div>
+                const qtyPerc = grossQty > 0 ? (netQty / grossQty) * 100 : 0;
+                const returnPerc = grossQty > 0 ? (totalReturnCount / grossQty) * 100 : 0;
+                const profitPerc = netSalesNum > 0 ? (totalProfitNum / netSalesNum) * 100 : 0;
+                const shippingPerc = netSalesNum > 0 ? (shippingNum / netSalesNum) * 100 : 0;
 
-                    {/* CIRCLE */}
-                    <div className="flex justify-center">
-                      <div className="relative w-[68px] h-[68px]">
-                        <div
-                          className="w-full h-full rounded-full"
-                          style={{
-                            background: `conic-gradient(${item.color} 0% 72%, #eef2f7 72% 100%)`,
-                          }}
-                        >
-                          {/* <div className="absolute inset-[10px] bg-white rounded-full flex flex-col items-center justify-center">
-                            <h2 className="text-[15px] font-bold text-[#111827] leading-none">{item.value}</h2>
+                return [
+                  {
+                    title: 'Quantity',
+                    color: '#3b82f6',
+                    value: netQty,
+                    percentage: qtyPerc,
+                    percentageStr: formatCirclePercent(qtyPerc),
+                    icon: <InboxOutlined />,
+                    label: 'Total Quantity',
+                  },
+                  {
+                    title: 'Return',
+                    color: '#ef4444',
+                    value: totalReturnCount,
+                    percentage: returnPerc,
+                    percentageStr: formatCirclePercent(returnPerc),
+                    icon: <ReloadOutlined />,
+                    label: 'Total Return',
+                  },
+                  {
+                    title: 'Shipping',
+                    color: '#f59e0b',
+                    value: dashboardData?.header_metrics?.shipping || 0,
+                    percentage: shippingPerc,
+                    percentageStr: formatCirclePercent(shippingPerc),
+                    icon: <CarOutlined />,
+                    label: 'Total Shipping',
+                  },
+                  {
+                    title: 'Profit',
+                    color: '#67c96d',
+                    value: dashboardData?.header_metrics?.profit || 0,
+                    percentage: profitPerc,
+                    percentageStr: formatCirclePercent(profitPerc),
+                    icon: <BarChartOutlined />,
+                    label: 'Total Profit',
+                  },
+                ].map((item) => {
+                  const circlePct = Math.min(Math.max(item.percentage, 0), 100);
+                  return (
+                    <Col xs={24} sm={12} key={item.title}>
+                      <div className="bg-white rounded-[18px] border border-[#edf0f7] shadow-sm p-2">
+                        {/* HEADER */}
+                        <div className="flex items-center gap-2 mb-1">
+                          <div
+                            className="w-8 h-8 rounded-xl flex items-center justify-center text-[15px]"
+                            style={{
+                              background: `${item.color}15`,
+                              color: item.color,
+                            }}
+                          >
+                            {item.icon}
+                          </div>
 
-                            <p className="text-[11px] text-[#6b7280] mt-2">100%</p>
-                          </div> */}
+                          <h3 className="text-[15px] font-semibold text-[#111827]">{item.title}</h3>
+                        </div>
+
+                        {/* CIRCLE */}
+                        <div className="flex justify-center">
+                          <div className="relative w-[68px] h-[68px]">
+                            <div
+                              className="w-full h-full rounded-full"
+                              style={{
+                                background: `conic-gradient(${item.color} 0% ${circlePct}%, #eef2f7 ${circlePct}% 100%)`,
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* FOOTER */}
+                        <div className="mt-4 text-center">
+                          <div className="flex items-center justify-center gap-2 text-[12px] text-[#6b7280]">
+                            <span className="w-2.5 h-2.5 rounded-full" style={{ background: item.color }} />
+
+                            {item.label}
+                          </div>
+
+                          <p className="text-[14px] font-semibold text-[#111827] mt-2">
+                            {item.value} ({item.percentageStr})
+                          </p>
                         </div>
                       </div>
-                    </div>
-
-                    {/* FOOTER */}
-                    <div className="mt-4 text-center">
-                      <div className="flex items-center justify-center gap-2 text-[12px] text-[#6b7280]">
-                        <span className="w-2.5 h-2.5 rounded-full" style={{ background: item.color }} />
-
-                        {item.label}
-                      </div>
-
-                      <p className="text-[14px] font-semibold text-[#111827] mt-2">{item.value} (100%)</p>
-                    </div>
-                  </div>
-                </Col>
-              ))}
+                    </Col>
+                  );
+                });
+              })()}
             </Row>
           </Col>
         </Row>

@@ -91,25 +91,15 @@ class UserLoginAPI(APIView):
             subscription_data = None
         else:
             subscription_user = subuser_obj.parent if (subuser_obj and subuser_obj.parent) else user
-            # Prioritize active and paid subscription first (excluding subscriptions with unauthorized pending mandates)
-            active_subs = (
+            # Prioritize active and paid subscription first
+            sub = (
                 UserSubscription.objects
                 .select_related("plan")
                 .prefetch_related("plan__modules", "plan__submodules__module")
                 .filter(user=subscription_user, status="active", is_paid=True)
                 .order_by("-created_at")
+                .first()
             )
-            sub = None
-            for s in active_subs:
-                # If mandate/order was initiated, verify that payment_id or signature is present
-                is_pending = bool(
-                    (s.razorpay_subscription_id or s.razorpay_order_id)
-                    and not (s.razorpay_payment_id or s.razorpay_signature)
-                )
-                if not is_pending:
-                    sub = s
-                    break
-
             if not sub:
                 sub = (
                     UserSubscription.objects
@@ -120,16 +110,7 @@ class UserLoginAPI(APIView):
                     .first()
                 )
 
-            # A subscription is only truly paid/active if:
-            # 1. sub.is_paid is True
-            # 2. sub.status == "active"
-            # 3. If mandate or order was created, it MUST be authorized (payment_id or signature present)
-            has_pending_rzp = bool(
-                sub and (sub.razorpay_subscription_id or sub.razorpay_order_id)
-                and not (sub.razorpay_payment_id or sub.razorpay_signature)
-            )
-            is_paid_sub = bool(sub and sub.is_paid and not has_pending_rzp and sub.status in ["active", "trial"])
-            has_subscription = bool(sub and sub.status in ["active", "trial"] and is_paid_sub)
+            has_subscription = bool(sub and sub.status == "active" and sub.is_paid)
             subscription_status = "active" if has_subscription else (sub.status if sub else "no_subscription")
             is_trial = bool(
                 sub and (
@@ -196,8 +177,8 @@ class UserLoginAPI(APIView):
                     "plan_name": sub.plan.plan_name if sub.plan else None,
                     "slug": sub.plan.slug if sub.plan else None,
                     "billing_cycle": sub.billing_cycle,
-                    "status": "active" if has_subscription else sub.status,
-                    "is_paid": is_paid_sub,
+                    "status": sub.status,
+                    "is_paid": sub.is_paid,
                     "start_date": sub.start_date,
                     "end_date": sub.end_date,
                     "amount": sub.amount,

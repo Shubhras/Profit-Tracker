@@ -312,7 +312,7 @@ class ChannelProductConfigItemsView(APIView):
                         "asin": item.asin or "-",
                         "sku": item.sku or "-",
                         "item_name": item.item_name or "-",
-                        "image_url": item.image_url or "",
+                        "image_url": "" if item.image_url == "__NONE__" else (item.image_url or ""),
                         "standard_cost": float(item.standard_cost or 0),
                         "gst_rate": float(item.gst_rate or 0),
                         "tds": float(getattr(item, 'tds', 0) or 0),
@@ -341,21 +341,24 @@ class ChannelProductConfigItemsView(APIView):
 
                     for item in myntra_qs:
                         raw = item.raw_data if isinstance(item.raw_data, dict) else {}
-                        img_url = (
-                            item.image_url or
-                            raw.get("image_url") or
-                            raw.get("imageUrl") or
-                            raw.get("style_image") or
-                            raw.get("styleImage") or
-                            raw.get("default_image_url") or
-                            raw.get("defaultImageUrl") or
-                            raw.get("image") or
-                            raw.get("style_image_url") or
-                            raw.get("styleImageUrl") or
-                            ""
-                        )
-                        if not img_url and isinstance(raw.get("images"), list) and len(raw["images"]) > 0:
-                            img_url = str(raw["images"][0])
+                        if item.image_url == "__NONE__":
+                            img_url = ""
+                        else:
+                            img_url = (
+                                item.image_url or
+                                raw.get("image_url") or
+                                raw.get("imageUrl") or
+                                raw.get("style_image") or
+                                raw.get("styleImage") or
+                                raw.get("default_image_url") or
+                                raw.get("defaultImageUrl") or
+                                raw.get("image") or
+                                raw.get("style_image_url") or
+                                raw.get("styleImageUrl") or
+                                ""
+                            )
+                            if not img_url and isinstance(raw.get("images"), list) and len(raw["images"]) > 0:
+                                img_url = str(raw["images"][0])
                         items_list.append({
                             "id": f"myntra_{item.id}",
                             "key": f"myntra_{item.id}",
@@ -419,9 +422,22 @@ def update_channel_product_config_item(request):
         tds = data.get("tds")
         tcs = data.get("tcs")
         image_url = data.get("image_url", data.get("image"))
+        uploaded_image = request.FILES.get("image") or request.FILES.get("file") or request.FILES.get("image_file")
+        if uploaded_image:
+            import time
+            from django.core.files.storage import default_storage
+            from django.conf import settings
+            safe_name = f"product_images/{user.id}_{int(time.time())}_{uploaded_image.name.replace(' ', '_')}"
+            saved_path = default_storage.save(safe_name, uploaded_image)
+            image_url = request.build_absolute_uri(settings.MEDIA_URL + saved_path)
 
         item_str = str(item_id)
         updated = False
+        clear_image = (
+            data.get("clear_image") is True or
+            str(data.get("clear_image", "")).lower() in ("true", "1") or
+            (image_url is not None and str(image_url).strip() == "__NONE__")
+        )
 
         if item_str.startswith("amazon_"):
             real_id = item_str.replace("amazon_", "")
@@ -437,7 +453,9 @@ def update_channel_product_config_item(request):
                 a_item.tds = float(tds or 0)
             if tcs is not None:
                 a_item.tcs = float(tcs or 0)
-            if image_url is not None and str(image_url).strip() != "":
+            if clear_image:
+                a_item.image_url = "__NONE__"
+            elif image_url is not None and str(image_url).strip() != "":
                 a_item.image_url = str(image_url).strip()
 
             a_item.save()
@@ -458,7 +476,9 @@ def update_channel_product_config_item(request):
                 m_item.tds = float(tds or 0)
             if tcs is not None:
                 m_item.tcs = float(tcs or 0)
-            if image_url is not None and str(image_url).strip() != "":
+            if clear_image:
+                m_item.image_url = "__NONE__"
+            elif image_url is not None and str(image_url).strip() != "":
                 m_item.image_url = str(image_url).strip()
 
             m_item.save()
@@ -474,7 +494,9 @@ def update_channel_product_config_item(request):
                     a_item.tds = float(tds or 0)
                 if tcs is not None:
                     a_item.tcs = float(tcs or 0)
-                if image_url is not None and str(image_url).strip() != "":
+                if clear_image:
+                    a_item.image_url = "__NONE__"
+                elif image_url is not None and str(image_url).strip() != "":
                     a_item.image_url = str(image_url).strip()
                 a_item.save()
                 updated = True
@@ -490,7 +512,9 @@ def update_channel_product_config_item(request):
                         m_item.tds = float(tds or 0)
                     if tcs is not None:
                         m_item.tcs = float(tcs or 0)
-                    if image_url is not None and str(image_url).strip() != "":
+                    if clear_image:
+                        m_item.image_url = "__NONE__"
+                    elif image_url is not None and str(image_url).strip() != "":
                         m_item.image_url = str(image_url).strip()
                     m_item.save()
                     updated = True
@@ -532,7 +556,11 @@ def upload_channel_product_config_excel(request):
             )
 
         headers = [str(cell.value or '').strip() for cell in sheet[1]]
-        has_image_col = any(h.lower() in ["image", "image url", "image_url"] for h in headers)
+        image_headers = [
+            "image", "image url", "image_url", "image link", "image_link",
+            "imageurl", "img url", "img_url", "photo", "product image", "product_image"
+        ]
+        has_image_col = any(h.lower() in image_headers for h in headers)
 
         def get_cell(row, possible_names):
             for name in possible_names:
@@ -565,7 +593,10 @@ def upload_channel_product_config_excel(request):
                     gst_rate = get_cell(row, ["GST Rate (%)", "GST Rate%", "GST Rate", "gst_rate", "GST%"])
                     tds = get_cell(row, ["TDS (%)", "TDS%", "TDS", "tds", "TDS Rate"])
                     tcs = get_cell(row, ["TCS (%)", "TCS%", "TCS", "tcs"])
-                    image_url = get_cell(row, ["Image", "Image URL", "image_url"])
+                    image_url = get_cell(row, [
+                        "Image URL", "Image", "image_url", "Image Link", "image_link",
+                        "ImageURL", "img_url", "img url", "Product Image", "Photo"
+                    ])
 
                     matched = False
 
@@ -595,8 +626,9 @@ def upload_channel_product_config_excel(request):
                             if tcs is not None and str(tcs).strip() != "":
                                 a_item.tcs = float(tcs or 0)
                             if has_image_col:
-                                img_val = str(image_url).strip() if image_url and str(image_url).strip() not in ("None", "nan") else ""
-                                a_item.image_url = img_val
+                                img_val = str(image_url).strip() if image_url and str(image_url).strip() not in ("None", "nan", "") else ""
+                                if img_val:
+                                    a_item.image_url = img_val
                             a_item.save()
                             matched = True
 
@@ -630,8 +662,9 @@ def upload_channel_product_config_excel(request):
                                 if tcs is not None and str(tcs).strip() != "":
                                     m_item.tcs = float(tcs or 0)
                                 if has_image_col:
-                                    img_val = str(image_url).strip() if image_url and str(image_url).strip() not in ("None", "nan") else ""
-                                    m_item.image_url = img_val
+                                    img_val = str(image_url).strip() if image_url and str(image_url).strip() not in ("None", "nan", "") else ""
+                                    if img_val:
+                                        m_item.image_url = img_val
                                 m_item.save()
                                 matched = True
                         except Exception as m_err:
@@ -684,7 +717,7 @@ def export_channel_product_config_excel(request):
 
     headers = [
         "Channel",
-        "Image",
+        "Image URL",
         "Product ID",
         "SKU",
         "Product Cost (₹)",

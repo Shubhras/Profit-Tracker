@@ -1436,8 +1436,9 @@ def get_myntra_dashboard_stats(user, from_date_str, to_date_str):
     customer_return_count = 0
     claim_count = 0
     claim_amount = Decimal(0)
-    customer_return_amount = Decimal(0)
     courier_return_amount = Decimal(0)
+    customer_return_amount = Decimal(0)
+    promo_discount = Decimal(0)
     
     for idx, r in enumerate(myntra_raw_rows):
         g_sales = Decimal(str(r.get("gross_sales") or 0))
@@ -1445,6 +1446,7 @@ def get_myntra_dashboard_stats(user, from_date_str, to_date_str):
         gross_sales += g_sales
         net_sales += g_sales
         final_net_sales += n_sales
+        promo_discount += Decimal(str(r.get("promo_discount") or 0))
 
         row_profit = Decimal(str(r.get("profit") or 0))
         if profit_setting.other_expense:
@@ -1484,6 +1486,7 @@ def get_myntra_dashboard_stats(user, from_date_str, to_date_str):
     ).order_by('date')
 
     final_net_qty = net_qty - (courier_return_count + customer_return_count + claim_count)
+    return_qty = courier_return_count + customer_return_count
     
     margin_factor = float(profit / net_sales) if net_sales else 0.0
     
@@ -1556,6 +1559,7 @@ def get_myntra_dashboard_stats(user, from_date_str, to_date_str):
         "customer_return_amount": customer_return_amount,
         "claim_count": claim_count,
         "claim_amount": claim_amount,
+        "promo_discount": promo_discount,
         "trends": trends_data,
         "skus": top_skus_mapped
     }
@@ -1595,9 +1599,9 @@ def _combine_dashboard_stats(amazon_data, myntra_data):
     roi_str = am_header.get("roi") or "0%"
     combined_tacos = (abs(combined_ads) / combined_sales * 100) if combined_sales else Decimal(0)
     
-    combined_return_count = int(am_header.get("total_return_count") or 0) + m_return_count
     combined_courier_return = int(am_header.get("courier_return_count") or 0) + m_courier_return
     combined_customer_return = int(am_header.get("customer_return_count") or 0) + m_customer_return
+    combined_return_count = combined_courier_return + combined_customer_return
     
     combined_return_amount = parse_currency_to_decimal(am_header.get("return_amount"))
     combined_courier_amount = parse_currency_to_decimal(am_header.get("courier_return_amount"))
@@ -1605,6 +1609,14 @@ def _combine_dashboard_stats(amazon_data, myntra_data):
     
     combined_claim_count = int(am_header.get("total_claim_count") or 0) + m_claim_count
     combined_claim_amount = parse_currency_to_decimal(am_header.get("claim_amount")) + m_claim_amount
+    
+    am_promo_val = (
+        am_header.get("total_promo_discount")
+        or am_header.get("promo_discount")
+        or amazon_data.get("total_promo_discount")
+        or amazon_data.get("breakdown_table", {}).get("promotion", {}).get("amount")
+    )
+    combined_promo_amount = parse_currency_to_decimal(am_promo_val) + myntra_data.get("promo_discount", Decimal(0))
     
     header_metrics = {
         "sales": round(float(combined_sales), 2),
@@ -1623,6 +1635,8 @@ def _combine_dashboard_stats(amazon_data, myntra_data):
         "customer_return_amount": format_currency(combined_customer_amount),
         "total_claim_count": combined_claim_count,
         "claim_amount": format_currency(combined_claim_amount),
+        "promo_discount": format_currency(combined_promo_amount),
+        "total_promo_discount": format_currency(combined_promo_amount),
     }
     
     # Breakdown Table
@@ -1645,6 +1659,7 @@ def _combine_dashboard_stats(amazon_data, myntra_data):
     net = parse_table_row(am_table.get("net"))
     ret_courier = parse_table_row(am_table.get("returned_courier"))
     ret_customer = parse_table_row(am_table.get("returned_customer"))
+    promo = parse_table_row(am_table.get("promotion"))
     
     fees_amount = Decimal(str(am_table.get("fees", {}).get("amount") or 0))
     
@@ -1680,6 +1695,7 @@ def _combine_dashboard_stats(amazon_data, myntra_data):
         "net": {"qty": net["qty"], "amount": format_currency(net["amount"])},
         "returned_courier": {"qty": ret_courier["qty"], "amount": format_currency(ret_courier["amount"])},
         "returned_customer": {"qty": ret_customer["qty"], "amount": format_currency(ret_customer["amount"])},
+        "promotion": {"qty": promo["qty"], "amount": format_currency(combined_promo_amount)},
     }
     
     # Trends
@@ -1780,6 +1796,7 @@ def _combine_dashboard_stats(amazon_data, myntra_data):
         "endDate": amazon_data.get("endDate"),
         "header_metrics": header_metrics,
         "breakdown_table": breakdown_table,
+        "total_promo_discount": format_currency(combined_promo_amount),
         "trends": trends_list,
         "top_orders": top_orders,
         "warnings": amazon_data.get("warnings", [])

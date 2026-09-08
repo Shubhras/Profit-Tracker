@@ -599,10 +599,21 @@ class CancelSubscriptionAPIView(APIView):
             return error_response("No subscription found", 404)
 
         try:
-            client.subscription.cancel(sub.razorpay_subscription_id)
+            if sub.razorpay_subscription_id:
+                try:
+                    client.subscription.cancel(sub.razorpay_subscription_id)
+                except Exception as rzp_ex:
+                    import logging
+                    logging.getLogger(__name__).warning(f"Razorpay cancel error: {str(rzp_ex)}")
 
             sub.status = "cancelled"
+            sub.auto_renew = False
             sub.save()
+
+            if hasattr(request.user, "profile") and request.user.profile:
+                request.user.profile.subscription_active = False
+                request.user.profile.subscription_status = "inactive"
+                request.user.profile.save()
 
             return success_response(
                 message="Subscription cancelled successfully",
@@ -654,6 +665,11 @@ class RazorpayWebhookAPIView(APIView):
                     sub.reminder_1day_sent = False
                     sub.expired_email_sent = False
                     sub.save()
+                    if hasattr(sub.user, "profile") and sub.user.profile:
+                        sub.user.profile.subscriptiontype = sub.plan
+                        sub.user.profile.subscription_active = True
+                        sub.user.profile.subscription_status = "active"
+                        sub.user.profile.save()
                     send_auto_renewal_success_notice(sub)
 
         elif event in ["subscription.cancelled", "subscription.halted"]:
@@ -663,7 +679,12 @@ class RazorpayWebhookAPIView(APIView):
                 subscriptions = UserSubscription.objects.filter(razorpay_subscription_id=sub_id)
                 for sub in subscriptions:
                     sub.status = "expired" if event == "subscription.halted" else "cancelled"
+                    sub.auto_renew = False
                     sub.save()
+                    if hasattr(sub.user, "profile") and sub.user.profile:
+                        sub.user.profile.subscription_active = False
+                        sub.user.profile.subscription_status = "inactive"
+                        sub.user.profile.save()
                     send_subscription_expired_notice(sub)
 
         return success_response(

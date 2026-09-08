@@ -491,7 +491,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             id__in=tx_to_order.keys(),
             transaction_type="ServiceFee",
             transaction_status__in=["DEFERRED", "DEFERRED_RELEASED"],
-            description__icontains="EasyshipFulfillmentFeeRefund",
+            description__icontains="FulfillmentFeeRefund",
         )
         .values("id", "total_amount")
     )
@@ -759,7 +759,10 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             fulfillment_fee_refund_total += float(fulfillment_fee_refund_by_order.get(oid, 0.0))
             refunded_sales_total += float(refunded_sales_by_order.get(oid, 0.0))
 
-        shipping_price = tx_shipping_final
+        if tx_shipping_final < 0:
+            shipping_price = -max(0.0, abs(tx_shipping_final) - abs(fulfillment_fee_refund_total))
+        else:
+            shipping_price = max(0.0, tx_shipping_final - abs(fulfillment_fee_refund_total))
         estimated_fees -= amazon_fee_refund_total
 
         parent_ad_data = ads_by_parent.get(parent_asin, {})
@@ -819,6 +822,9 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
                 o_act_ship = abs(float(f.get('shipping_fee') or 0))
             else:
                 o_act_ship = abs(float(o_act_ship))
+
+            o_ship_refund = abs(float(fulfillment_fee_refund_by_order.get(oid, 0.0)))
+            o_act_ship = max(0.0, round(o_act_ship - o_ship_refund, 2))
 
             o_act_gst = abs(float(f.get('gst') or 0))
             o_act_settled = float(f.get('total_settled') or 0)
@@ -1583,18 +1589,62 @@ def _payment_reconcile_order_level_logic(request):
         if oid:
             amazon_fee_refund_by_order[oid] = amazon_fee_refund_by_order.get(oid, 0.0) + float(bd["total"] or 0)
 
+    STATUS_PRIORITY = {
+        "DEFERRED": 3,
+        "DEFERRED_RELEASED": 2,
+        "RELEASED": 1,
+    }
+
     mfn_postage_txns = AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
         transaction_type="ServiceFee",
-        transaction_status="DEFERRED",
+        transaction_status__in=["DEFERRED", "DEFERRED_RELEASED", "RELEASED"],
         description__icontains="MfnPostageFee",
-    ).values("id", "total_amount")
+    ).values("id", "total_amount", "transaction_status")
 
-    tx_actual_shipping_by_order = {}
+    mfn_by_order_status = {}
     for txn in mfn_postage_txns:
         oid = tx_to_order.get(txn["id"])
-        if oid:
-            tx_actual_shipping_by_order[oid] = tx_actual_shipping_by_order.get(oid, 0.0) + abs(float(txn["total_amount"] or 0))
+        if not oid:
+            continue
+        status = txn.get("transaction_status")
+        amount = abs(float(txn.get("total_amount") or 0))
+        mfn_by_order_status.setdefault(oid, {})
+        mfn_by_order_status[oid][status] = (
+            mfn_by_order_status[oid].get(status, 0.0) + amount
+        )
+
+    tx_actual_shipping_by_order = {}
+    for oid, status_amounts in mfn_by_order_status.items():
+        best_status = max(status_amounts.keys(), key=lambda s: STATUS_PRIORITY.get(s, 0))
+        tx_actual_shipping_by_order[oid] = status_amounts[best_status]
+
+    fulfillment_fee_refund_breakdowns = (
+        AmazonTransaction.objects.filter(
+            id__in=tx_to_order.keys(),
+            transaction_type="ServiceFee",
+            transaction_status__in=["DEFERRED", "DEFERRED_RELEASED", "RELEASED"],
+            description__icontains="FulfillmentFeeRefund",
+        )
+        .values("id", "total_amount", "transaction_status")
+    )
+
+    refund_by_order_status = {}
+    for txn in fulfillment_fee_refund_breakdowns:
+        oid = tx_to_order.get(txn["id"])
+        if not oid:
+            continue
+        status = txn.get("transaction_status")
+        amount = abs(float(txn.get("total_amount") or 0))
+        refund_by_order_status.setdefault(oid, {})
+        refund_by_order_status[oid][status] = (
+            refund_by_order_status[oid].get(status, 0.0) + amount
+        )
+
+    tx_fulfillment_fee_refund_by_order = {}
+    for oid, status_amounts in refund_by_order_status.items():
+        best_status = max(status_amounts.keys(), key=lambda s: STATUS_PRIORITY.get(s, 0))
+        tx_fulfillment_fee_refund_by_order[oid] = status_amounts[best_status]
 
     for r in rows:
         oid = r.get("order_id")
@@ -1615,6 +1665,9 @@ def _payment_reconcile_order_level_logic(request):
             row_actual_shipping = abs(float(f.get('shipping_fee') or 0))
         else:
             row_actual_shipping = abs(float(row_actual_shipping))
+
+        ship_fee_refund = float(tx_fulfillment_fee_refund_by_order.get(oid, 0.0))
+        row_actual_shipping = max(0.0, round(row_actual_shipping - ship_fee_refund, 2))
 
         row_actual_mp_gst = abs(float(f.get('gst') or 0))
         row_settlement_paid = float(f.get('total_settled') or 0)

@@ -150,9 +150,13 @@ export default function ProductConfiguration() {
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-[18px] font-semibold">Upload File</h2>
 
-          <a href="#" className="text-blue-600 text-sm underline">
+          <button
+            type="button"
+            onClick={() => dispatch(exportProductConfiguration(globalChannel, search))}
+            className="text-blue-600 text-sm underline hover:text-blue-800 bg-transparent border-0 cursor-pointer p-0"
+          >
             Download Sample File Here
-          </a>
+          </button>
         </div>
 
         <input

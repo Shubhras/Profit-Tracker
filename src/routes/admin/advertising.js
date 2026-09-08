@@ -29,7 +29,7 @@ function AdvertisingRoutes() {
       <Route
         path="overview"
         element={
-          <SubscriptionGate allowFree>
+          <SubscriptionGate>
             <Overview />
           </SubscriptionGate>
         }
@@ -37,7 +37,7 @@ function AdvertisingRoutes() {
       <Route
         path="create-campaign"
         element={
-          <SubscriptionGate allowFree>
+          <SubscriptionGate>
             <CreateCampaign />
           </SubscriptionGate>
         }
@@ -45,7 +45,7 @@ function AdvertisingRoutes() {
       <Route
         path="campaigns"
         element={
-          <SubscriptionGate allowFree>
+          <SubscriptionGate>
             <Campaigns />
           </SubscriptionGate>
         }
@@ -54,7 +54,7 @@ function AdvertisingRoutes() {
       <Route
         path="adsgroup"
         element={
-          <SubscriptionGate allowFree>
+          <SubscriptionGate>
             <AdGroups />
           </SubscriptionGate>
         }
@@ -63,7 +63,7 @@ function AdvertisingRoutes() {
       <Route
         path="searchTerms"
         element={
-          <SubscriptionGate allowFree>
+          <SubscriptionGate>
             <SearchTerms />
           </SubscriptionGate>
         }
@@ -72,7 +72,7 @@ function AdvertisingRoutes() {
       <Route
         path="keywords"
         element={
-          <SubscriptionGate allowFree>
+          <SubscriptionGate>
             <Keywords />
           </SubscriptionGate>
         }
@@ -81,7 +81,7 @@ function AdvertisingRoutes() {
       <Route
         path="placements"
         element={
-          <SubscriptionGate allowFree>
+          <SubscriptionGate>
             <Placements />
           </SubscriptionGate>
         }
@@ -90,7 +90,7 @@ function AdvertisingRoutes() {
       <Route
         path="negativeKey"
         element={
-          <SubscriptionGate allowFree>
+          <SubscriptionGate>
             <NegativeKey />
           </SubscriptionGate>
         }
@@ -99,7 +99,7 @@ function AdvertisingRoutes() {
       <Route
         path="targets"
         element={
-          <SubscriptionGate allowFree>
+          <SubscriptionGate>
             <Targets />
           </SubscriptionGate>
         }
@@ -108,7 +108,7 @@ function AdvertisingRoutes() {
       <Route
         path="rulesAuto"
         element={
-          <SubscriptionGate allowFree>
+          <SubscriptionGate>
             <RulesAutomationPage />
           </SubscriptionGate>
         }
@@ -117,7 +117,7 @@ function AdvertisingRoutes() {
       <Route
         path="AdProducts"
         element={
-          <SubscriptionGate allowFree>
+          <SubscriptionGate>
             <AdProducts />
           </SubscriptionGate>
         }
@@ -126,7 +126,7 @@ function AdvertisingRoutes() {
       <Route
         path="campaign-details/:id"
         element={
-          <SubscriptionGate allowFree>
+          <SubscriptionGate>
             <CampaignDetails />
           </SubscriptionGate>
         }
@@ -134,7 +134,7 @@ function AdvertisingRoutes() {
       <Route
         path="campaign-second-details/:id"
         element={
-          <SubscriptionGate allowFree>
+          <SubscriptionGate>
             <CampaignSecondDetails />
           </SubscriptionGate>
         }
@@ -143,7 +143,7 @@ function AdvertisingRoutes() {
       <Route
         path="AdProduct-Details/:sku"
         element={
-          <SubscriptionGate allowFree>
+          <SubscriptionGate>
             <AdProductsSecond />
           </SubscriptionGate>
         }
@@ -152,7 +152,7 @@ function AdvertisingRoutes() {
       <Route
         path="AdsProducts/:id"
         element={
-          <SubscriptionGate allowFree>
+          <SubscriptionGate>
             <AdsProductsThird />
           </SubscriptionGate>
         }
@@ -161,7 +161,7 @@ function AdvertisingRoutes() {
       <Route
         path="dashboard"
         element={
-          <SubscriptionGate allowFree>
+          <SubscriptionGate>
             <AdvertisingDashboard />
           </SubscriptionGate>
         }

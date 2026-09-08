@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Table, Button, Tooltip, Modal, message, Input } from 'antd';
-import { UploadOutlined, ExportOutlined, EditOutlined } from '@ant-design/icons';
+import {
+  UploadOutlined,
+  ExportOutlined,
+  EditOutlined,
+  PictureOutlined,
+  CloseCircleOutlined,
+  DownloadOutlined,
+  CloudUploadOutlined,
+  DeleteOutlined,
+  UndoOutlined,
+} from '@ant-design/icons';
 import { PageHeader } from '../../../../components/page-headers/page-headers';
 import {
   exportProductConfiguration,
@@ -35,16 +45,27 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
     gst_rate: 0,
     tds: 0,
     tcs: 0,
+    image_url: '',
   });
+  const [selectedImageFile, setSelectedImageFile] = useState(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState('');
+  const [imageInputMode, setImageInputMode] = useState('url'); // 'url' or 'upload'
+  const [isImageCleared, setIsImageCleared] = useState(false);
 
   const handleOpenEditModal = (record) => {
     setEditingRecord(record);
+    const currentImg = record.image || '';
     setEditForm({
       standard_cost: record.productcost ?? 0,
       gst_rate: record.gstrate ?? 0,
       tds: record.tds ?? 0,
       tcs: record.tcs ?? 0,
+      image_url: currentImg,
     });
+    setSelectedImageFile(null);
+    setImagePreviewUrl(currentImg);
+    setIsImageCleared(false);
+    setImageInputMode('url');
     setIsEditModalOpen(true);
   };
 
@@ -52,18 +73,34 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
     if (!editingRecord) return;
     setEditLoading(true);
     try {
-      const payload = {
-        id: editingRecord.key,
-        standard_cost: parseFloat(editForm.standard_cost) || 0,
-        gst_rate: parseFloat(editForm.gst_rate) || 0,
-        tds: parseFloat(editForm.tds) || 0,
-        tcs: parseFloat(editForm.tcs) || 0,
-      };
+      let payload;
+      const shouldClearImage = isImageCleared || (!selectedImageFile && !editForm.image_url.trim());
+      if (selectedImageFile) {
+        payload = new FormData();
+        payload.append('id', editingRecord.key);
+        payload.append('standard_cost', parseFloat(editForm.standard_cost) || 0);
+        payload.append('gst_rate', parseFloat(editForm.gst_rate) || 0);
+        payload.append('tds', parseFloat(editForm.tds) || 0);
+        payload.append('tcs', parseFloat(editForm.tcs) || 0);
+        payload.append('image', selectedImageFile);
+      } else {
+        payload = {
+          id: editingRecord.key,
+          standard_cost: parseFloat(editForm.standard_cost) || 0,
+          gst_rate: parseFloat(editForm.gst_rate) || 0,
+          tds: parseFloat(editForm.tds) || 0,
+          tcs: parseFloat(editForm.tcs) || 0,
+          image_url: shouldClearImage ? '__NONE__' : editForm.image_url.trim(),
+          clear_image: shouldClearImage,
+        };
+      }
       const res = await dispatch(updateProductConfiguration(payload));
       if (res?.status !== false) {
         message.success('Listing item updated successfully');
         setIsEditModalOpen(false);
         setEditingRecord(null);
+        setSelectedImageFile(null);
+        setIsImageCleared(false);
         // Refresh product configuration list
         dispatch(
           getProductConfiguration(pagination.current, pagination.pageSize, {
@@ -305,68 +342,113 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
 
       {/* Upload Modal */}
       <Modal
-        title="Upload Excel File"
+        title="Upload Product Configuration Excel"
         open={isFieldModalOpen}
         onCancel={() => {
           setIsFieldModalOpen(false);
           setSelectedFile(null);
         }}
         footer={null}
-        width={500}
+        width={520}
         centered
       >
         <div className="flex flex-col gap-4">
-          <input
-            type="file"
-            accept=".xlsx,.xls"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
+          <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-xs text-blue-900 leading-relaxed">
+            <div className="flex justify-between items-start mb-1">
+              <span className="font-semibold text-blue-800">Bulk Update Product Configuration & Images</span>
+              <Button
+                type="link"
+                size="small"
+                icon={<DownloadOutlined />}
+                className="!p-0 !h-auto !text-xs !text-blue-600 hover:!text-blue-800 !font-semibold"
+                onClick={() => dispatch(exportProductConfiguration(globalChannel, search))}
+              >
+                Download Template
+              </Button>
+            </div>
+            <p className="text-blue-700 mb-0">
+              You can add or update product image URLs in bulk using the <strong>Image URL</strong> (or{' '}
+              <strong>Image</strong>) column alongside <strong>SKU</strong> or <strong>Product ID</strong>.
+            </p>
+          </div>
 
-              if (!file) return;
+          <label className="cursor-pointer border-2 border-dashed border-gray-300 hover:border-blue-500 rounded-lg p-6 flex flex-col items-center justify-center bg-gray-50/50 hover:bg-blue-50/30 transition-all">
+            <CloudUploadOutlined className="text-3xl text-blue-600 mb-2" />
+            <span className="text-sm font-semibold text-gray-700 mb-1">
+              {selectedFile ? selectedFile.name : 'Click to browse or drag Excel file here'}
+            </span>
+            <span className="text-xs text-gray-400">Supports .xlsx and .xls formats</span>
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
 
-              const validTypes = [
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'application/vnd.ms-excel',
-              ];
+                const validTypes = [
+                  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                  'application/vnd.ms-excel',
+                ];
 
-              if (!validTypes.includes(file.type)) {
-                message.error('Only Excel files are allowed');
-                return;
-              }
+                if (!validTypes.includes(file.type) && !file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+                  message.error('Only Excel files (.xlsx, .xls) are allowed');
+                  return;
+                }
 
-              setSelectedFile(file);
-            }}
-          />
+                setSelectedFile(file);
+              }}
+            />
+          </label>
 
           {selectedFile && (
-            <div className="text-sm text-[#374151]">
-              Selected File:
-              <span className="font-semibold ml-1">{selectedFile.name}</span>
+            <div className="flex items-center justify-between bg-gray-100 px-3 py-2 rounded text-xs">
+              <span className="text-gray-700 font-medium truncate max-w-[360px]">{selectedFile.name}</span>
+              <button
+                type="button"
+                onClick={() => setSelectedFile(null)}
+                className="text-red-500 hover:text-red-700 ml-2"
+              >
+                <CloseCircleOutlined />
+              </button>
             </div>
           )}
 
-          <Button
-            type="primary"
-            loading={uploadLoading}
-            disabled={!selectedFile}
-            onClick={async () => {
-              try {
-                await dispatch(uploadProductConfiguration(selectedFile));
-
-                message.success('Excel uploaded successfully');
-
+          <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+            <Button
+              onClick={() => {
                 setIsFieldModalOpen(false);
-
                 setSelectedFile(null);
-
-                window.location.reload();
-              } catch (err) {
-                message.error('Upload failed');
-              }
-            }}
-          >
-            Upload File
-          </Button>
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="primary"
+              loading={uploadLoading}
+              disabled={!selectedFile}
+              onClick={async () => {
+                try {
+                  const res = await dispatch(uploadProductConfiguration(selectedFile));
+                  message.success(res?.message || 'Excel uploaded successfully');
+                  setIsFieldModalOpen(false);
+                  setSelectedFile(null);
+                  dispatch(
+                    getProductConfiguration(pagination.current, pagination.pageSize, {
+                      search: search || '',
+                      channels: globalChannel,
+                      marketplace_id: '',
+                      product_type: '',
+                    }),
+                  );
+                } catch (err) {
+                  message.error('Upload failed');
+                }
+              }}
+            >
+              Upload & Update
+            </Button>
+          </div>
         </div>
       </Modal>
 
@@ -377,12 +459,13 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
         onCancel={() => {
           setIsEditModalOpen(false);
           setEditingRecord(null);
+          setSelectedImageFile(null);
         }}
         onOk={handleSaveEdit}
         confirmLoading={editLoading}
         okText="Save Changes"
         centered
-        width={480}
+        width={500}
       >
         {editingRecord && (
           <div className="flex flex-col gap-4 py-2">
@@ -401,7 +484,164 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
               </div>
             </div>
 
-            <div className="flex flex-col gap-3">
+            {/* Product Image Section */}
+            <div className="border border-gray-200 rounded-lg p-3 bg-gray-50/50">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
+                  <PictureOutlined className="text-blue-600" />
+                  Product Image
+                </label>
+                <div className="flex items-center gap-2">
+                  {(imagePreviewUrl || editForm.image_url || selectedImageFile) && !isImageCleared && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsImageCleared(true);
+                        setImagePreviewUrl('');
+                        setEditForm({ ...editForm, image_url: '' });
+                        setSelectedImageFile(null);
+                      }}
+                      className="text-[11px] text-red-500 hover:text-red-700 flex items-center gap-1 bg-red-50 hover:bg-red-100 px-2 py-0.5 rounded font-medium transition-all"
+                    >
+                      <DeleteOutlined /> Remove Image
+                    </button>
+                  )}
+                  <div className="flex items-center gap-1 bg-gray-200/70 p-0.5 rounded">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImageInputMode('url');
+                        setSelectedImageFile(null);
+                        setImagePreviewUrl(editForm.image_url);
+                      }}
+                      className={`text-[11px] px-2.5 py-0.5 rounded font-medium transition-all ${
+                        imageInputMode === 'url'
+                          ? 'bg-white text-blue-600 shadow-xs'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      Image URL
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImageInputMode('upload');
+                      }}
+                      className={`text-[11px] px-2.5 py-0.5 rounded font-medium transition-all ${
+                        imageInputMode === 'upload'
+                          ? 'bg-white text-blue-600 shadow-xs'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      Upload File
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {isImageCleared && (
+                <div className="flex items-center justify-between bg-amber-50 border border-amber-200 text-amber-800 px-2.5 py-1.5 rounded text-xs mb-2.5">
+                  <span>Image will be removed upon saving</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsImageCleared(false);
+                      const orig = editingRecord?.image || '';
+                      setEditForm({ ...editForm, image_url: orig });
+                      setImagePreviewUrl(orig);
+                    }}
+                    className="text-blue-600 hover:underline flex items-center gap-1 font-semibold"
+                  >
+                    <UndoOutlined /> Undo
+                  </button>
+                </div>
+              )}
+
+              <div className="flex gap-3 items-center">
+                {/* Thumbnail Preview */}
+                <div className="w-14 h-14 rounded-md border border-gray-200 bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+                  {imagePreviewUrl ? (
+                    <img
+                      src={imagePreviewUrl}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                      onError={() => setImagePreviewUrl('')}
+                    />
+                  ) : (
+                    <PictureOutlined className="text-2xl text-gray-300" />
+                  )}
+                </div>
+
+                {/* URL or Upload Input */}
+                <div className="flex-1">
+                  {imageInputMode === 'url' ? (
+                    <div>
+                      <Input
+                        placeholder="https://example.com/product-image.jpg"
+                        value={editForm.image_url}
+                        allowClear
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setEditForm({ ...editForm, image_url: val });
+                          setImagePreviewUrl(val.trim());
+                          if (val.trim()) {
+                            setIsImageCleared(false);
+                          }
+                        }}
+                        className="text-xs"
+                      />
+                      <span className="text-[10px] text-gray-400 mt-1 block">
+                        Leave blank and save to clear image, or paste a new image URL
+                      </span>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="cursor-pointer border border-dashed border-blue-400 hover:border-blue-600 bg-white rounded-md px-3 py-2 flex items-center justify-center gap-2 text-xs text-blue-600 hover:bg-blue-50/50 transition-all">
+                        <UploadOutlined />
+                        <span className="truncate max-w-[200px]">
+                          {selectedImageFile ? selectedImageFile.name : 'Choose image file (.jpg, .png, .webp)'}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              if (!file.type.startsWith('image/')) {
+                                message.error('Please select an image file');
+                                return;
+                              }
+                              setSelectedImageFile(file);
+                              setIsImageCleared(false);
+                              const preview = URL.createObjectURL(file);
+                              setImagePreviewUrl(preview);
+                            }
+                          }}
+                        />
+                      </label>
+                      {selectedImageFile && (
+                        <div className="flex items-center justify-between text-[11px] text-gray-500 mt-1">
+                          <span>{(selectedImageFile.size / 1024).toFixed(1)} KB</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedImageFile(null);
+                              setImagePreviewUrl(editForm.image_url);
+                            }}
+                            className="text-red-500 hover:text-red-700 flex items-center gap-0.5"
+                          >
+                            <CloseCircleOutlined /> Remove file
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-semibold text-gray-700 block mb-1">Product Cost (₹)</label>
                 <Input
