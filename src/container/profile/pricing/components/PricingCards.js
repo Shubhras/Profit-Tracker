@@ -462,7 +462,7 @@ function PricingCards() {
           />
         </div>
 
-        <p className="text-[12px] text-[#98A2B3] mt-3">
+        <p className="text-[13px] text-[#98A2B3] mt-3">
           Every plan runs on autopay and renews automatically. Switch to yearly any time.
         </p>
       </div>
@@ -498,7 +498,11 @@ function PricingCards() {
           <button
             type="button"
             onClick={() => {
-              navigate('/contact');
+              navigate('/contact', {
+                state: {
+                  message: 'I want a custom plan',
+                },
+              });
             }}
             className="shrink-0 h-[44px] px-6 rounded-[12px] font-bold text-[14px] border-none cursor-pointer text-white bg-[#0C8B5E] hover:bg-[#0A7A52] transition-colors"
           >

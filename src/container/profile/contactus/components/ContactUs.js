@@ -10,6 +10,7 @@ import {
   ReloadOutlined,
   SafetyCertificateOutlined,
 } from '@ant-design/icons';
+import { useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import Navbar from '../../home/components/Navbar';
 import Footer from '../../home/components/Footer';
@@ -23,6 +24,14 @@ const { TextArea } = Input;
 function ContactUs() {
   const dispatch = useDispatch();
   const [form] = Form.useForm();
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.message) {
+      form.setFieldsValue({
+        message: location.state.message,
+      });
+    }
+  }, [location.state, form]);
 
   const { privacypolicyData } = useSelector((state) => state.AdminDashboard);
   const [submitting, setSubmitting] = useState(false);
