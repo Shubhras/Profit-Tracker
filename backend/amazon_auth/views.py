@@ -6660,14 +6660,13 @@ def amazon_profitability_parent_transactions_shipping(request):
             fulfillment_fee_refund_total += Decimal(str(fulfillment_fee_refund_by_order.get(oid, 0.0)))
             refunded_sales_total += Decimal(str(refunded_sales_by_order.get(oid, 0.0)))
             
-        shipping_price = tx_shipping_final
+        if tx_shipping_final < 0:
+            shipping_price = -max(Decimal("0"), abs(tx_shipping_final) - abs(fulfillment_fee_refund_total))
+        else:
+            shipping_price = max(Decimal("0"), tx_shipping_final - abs(fulfillment_fee_refund_total))
         print("estimated_fees before++++++++++++============",estimated_fees)
         estimated_fees -= amazon_fee_refund_total
         print("estimated_fees afetr >>>>>>>+++++++++++============",estimated_fees)
-        
-        
-        
-        shipping_price = tx_shipping_final
         
         # ------------------------------------------------------------
         # RETURN / CLAIM — aggregated across all orders for this parent_asin row
@@ -10407,7 +10406,10 @@ def amazon_profitability_details_transactions_shipping(request):
             fulfillment_fee_refund_total += float(fulfillment_fee_refund_by_order.get(oid, 0.0))
             refunded_sales_total += float(refunded_sales_by_order.get(oid, 0.0))
             
-        shipping_price = tx_shipping_final
+        if tx_shipping_final < 0:
+            shipping_price = -max(0.0, abs(tx_shipping_final) - abs(fulfillment_fee_refund_total))
+        else:
+            shipping_price = max(0.0, tx_shipping_final - abs(fulfillment_fee_refund_total))
         estimated_fees -= amazon_fee_refund_total
 
         # ==========================================================

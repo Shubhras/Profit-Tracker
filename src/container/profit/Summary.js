@@ -6,7 +6,6 @@ import {
   FileDoneOutlined,
   FileExclamationOutlined,
   NotificationOutlined,
-  FileTextOutlined,
   InboxOutlined,
   ReloadOutlined,
   CarOutlined,
@@ -931,7 +930,9 @@ export default function Summary() {
                       >
                         <span className="col-span-6 font-medium text-[#111827] leading-snug">
                           <div>{row.label}</div>
-                          {row.subLabel && <div className="text-[10.5px] text-[#4b5563] leading-none mt-[1px]">{row.subLabel}</div>}
+                          {row.subLabel && (
+                            <div className="text-[10.5px] text-[#4b5563] leading-none mt-[1px]">{row.subLabel}</div>
+                          )}
                         </span>
 
                         <span className="col-span-3 text-center font-medium text-[#111827]">
@@ -1015,7 +1016,7 @@ export default function Summary() {
                 const shippingNum = Math.abs(parseOverviewCurrency(dashboardData?.header_metrics?.shipping));
 
                 const qtyPerc = grossQty > 0 ? (netQty / grossQty) * 100 : 0;
-                const returnPerc = netQty > 0 ? (totalReturnCount / netQty) * 100 : 0;
+                const returnPerc = grossQty > 0 ? (totalReturnCount / grossQty) * 100 : 0;
                 const profitPerc = netSalesNum > 0 ? (totalProfitNum / netSalesNum) * 100 : 0;
                 const shippingPerc = netSalesNum > 0 ? (shippingNum / netSalesNum) * 100 : 0;
 
