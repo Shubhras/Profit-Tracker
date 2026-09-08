@@ -2393,6 +2393,7 @@ def get_full_dashboard(request):
             )
         ),
         item_tax_total=Sum('item_tax'),
+        total_promo_discount=Sum('promotion_discount'),
     )
 
     accurate_net_sales = (
@@ -2437,7 +2438,8 @@ def get_full_dashboard(request):
     fulfillment = float(finance_totals['fulfillment'] or 0)
     other_fees = float(finance_totals['other'] or 0)
 
-    promotion_discount = float(finance_totals['promotion'] or 0)
+    items_promo = float(net_sales_agg.get('total_promo_discount') or 0)
+    promotion_discount = items_promo if items_promo > 0 else float(finance_totals['promotion'] or 0)
     refund_amount = float(finance_totals['refund'] or 0)
 
     total_qty = int(finance_totals['qty'] or 0)
@@ -2704,8 +2706,7 @@ def get_full_dashboard(request):
             "ad_spend": format_currency(ads_amount),
             "tacos": f"{round(tacos)}%",
             "shipping": format_currency(total_shipping_final),
-            
-            # "total_return_count": total_return_count_dashboard,
+            "total_return_count": courier_return_count_dashboard + customer_return_count_dashboard,
             "courier_return_count": courier_return_count_dashboard,
             "customer_return_count": customer_return_count_dashboard,
             "return_amount": format_currency(total_return_amount_dashboard),
@@ -2715,6 +2716,8 @@ def get_full_dashboard(request):
 
             "total_claim_count": total_claim_count_dashboard,
             "claim_amount": format_currency(total_claim_amount_dashboard),
+            "promo_discount": format_currency(promotion_discount),
+            "total_promo_discount": format_currency(promotion_discount),
         },
         "breakdown_table": {
             "gross": {"qty": total_q, "amount": format_currency(total_gross)}, 
@@ -2746,6 +2749,10 @@ def get_full_dashboard(request):
             "returned_customer": {
                 "qty": customer_return_count_dashboard,
                 "amount": format_currency(customer_return_amount_dashboard)
+            },
+            "promotion": {
+                "qty": 0,
+                "amount": format_currency(promotion_discount)
             },
         },
         "trends": trends_data,
