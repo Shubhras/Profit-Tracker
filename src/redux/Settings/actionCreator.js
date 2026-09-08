@@ -373,7 +373,9 @@ export const uploadProductConfiguration = (file) => {
 
 export const updateProductConfiguration = (payload) => {
   return async () => {
-    const response = await DataService.post('/amazon/update-channel-product-config-item/', payload);
+    const isFormData = typeof FormData !== 'undefined' && payload instanceof FormData;
+    const config = isFormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {};
+    const response = await DataService.post('/amazon/update-channel-product-config-item/', payload, config);
 
     return response.data;
   };
