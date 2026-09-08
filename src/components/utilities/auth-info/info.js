@@ -195,6 +195,8 @@ const AuthInfo = React.memo(() => {
     '/reconcile/return/summary',
     '/profit/profitTableView/third/',
     '/profit/profitTableView/second/',
+    'reconcile/second/',
+    'reconcile/third/',
   ];
 
   const hideCalendar = HIDE_CALENDAR.some((route) => location.pathname.includes(route));
