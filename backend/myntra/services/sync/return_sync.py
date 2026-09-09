@@ -6,6 +6,9 @@ from myntra.parsers.return_parser import ReturnParser
 from myntra.services.sync.base_sync import BaseSyncService
 
 
+from subscription.utils.sync_limit import get_user_sync_cutoff_date
+
+
 class ReturnSyncService(BaseSyncService):
     REPORT_NAME = MyntraReports.RETURNS
 
@@ -18,19 +21,47 @@ class ReturnSyncService(BaseSyncService):
         Process a Returns CSV uploaded manually by the user.
 
         Uses the same parser/build/save pipeline
-        as the normal Myntra report sync.
+        as the normal Myntra report sync, but enforces subscription sync duration:
+        returns dated before (user registration date - plan.initial_sync_duration)
+        are skipped from being uploaded or updated.
         """
 
         rows = self.parser.parse(csv_bytes)
 
-        returns = [self._build(row) for row in rows]
+        cutoff_date, sync_days, reg_date = get_user_sync_cutoff_date(self.connection.user)
 
-        created, updated = self._save(returns)
+        valid_returns = []
+        skipped_count = 0
+
+        for row in rows:
+            ret = self._build(row)
+
+            ret_date = (
+                ret.return_created_date
+                or ret.order_created_date
+                or ret.refunded_date
+                or ret.order_rto_date
+                or ret.order_delivered_date
+                or ret.inscanned_on
+                or ret.fmpu_date
+            )
+
+            if ret_date and ret_date < cutoff_date:
+                skipped_count += 1
+                continue
+
+            valid_returns.append(ret)
+
+        created, updated = self._save(valid_returns)
 
         return {
             "rows": len(rows),
             "created": created,
             "updated": updated,
+            "skipped": skipped_count,
+            "cutoff_date": cutoff_date.strftime("%Y-%m-%d"),
+            "sync_days": sync_days,
+            "registration_date": reg_date.strftime("%Y-%m-%d"),
         }
 
     def _build(self, row):

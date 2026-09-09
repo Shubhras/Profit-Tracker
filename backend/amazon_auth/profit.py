@@ -454,6 +454,7 @@ class ProfitabilityItemDTO:
     asin: str = "-"
     parent_asin: str = "-"
     name: str = "-"
+    article_type: str = ""
     channel: str = "-"
     image_url: str = ""
     grossqty: int = 0
@@ -526,6 +527,7 @@ class ProfitabilityDTOAdapter:
         asin = _safe_str(row.get("asin") or row.get("style_id") or row.get("sku") or row.get("seller_sku") or "-")
         parent_asin = _safe_str(row.get("parent_asin") or row.get("parent_style_id") or row.get("parentproductid") or "-")
         name = _safe_str(row.get("name") or row.get("title") or row.get("style_name") or "-")
+        article_type = _safe_str(row.get("article_type") or "")
         image_url = _safe_str(row.get("image_url") or row.get("image") or "")
         redirecturl = _safe_str(row.get("redirecturl") or "")
         child_sku = _safe_str(row.get("child_sku") or row.get("seller_sku") or row.get("sku") or "")
@@ -553,7 +555,15 @@ class ProfitabilityDTOAdapter:
         promo_discount = _format_curr(row.get("promo_discount") if row.get("promo_discount") is not None else row.get("promotions"))
 
         mpfees = _format_curr(row.get("mpfees") if row.get("mpfees") is not None else (row.get("estimatefees") or row.get("commission")))
-        estimatefees = _format_curr(row.get("estimatefees") if row.get("estimatefees") is not None else (row.get("mpfees") or mpfees))
+        raw_est = row.get("estimatefees")
+        if raw_est is not None:
+            est_dec = parse_currency_to_decimal(raw_est)
+            if est_dec != Decimal(0):
+                estimatefees = f"-₹{abs(round(float(est_dec), 2))}"
+            else:
+                estimatefees = "₹0.00"
+        else:
+            estimatefees = "₹0.00"
         other_expenses = _format_curr(row.get("other_expenses") if row.get("other_expenses") is not None else row.get("total_other_expenses"))
         referral_fee = _format_curr(row.get("referral_fee"))
         closing_fee = _format_curr(row.get("closing_fee"))
@@ -594,6 +604,7 @@ class ProfitabilityDTOAdapter:
             asin=asin,
             parent_asin=parent_asin,
             name=name,
+            article_type=article_type,
             channel=channel,
             image_url=image_url,
             grossqty=grossqty,

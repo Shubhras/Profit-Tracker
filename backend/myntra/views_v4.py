@@ -130,15 +130,7 @@ class SyncMyntraDetailsView(APIView):
         to_str_dmy = to_date.strftime("%d-%m-%Y")
 
         # Initialize the client
-        # Use access_token if present, else basic token.
-        basic_token = None
-        if connection.merchant_id and connection.secret_key:
-            basic_token = MyntraClientV4.build_basic_token(connection.merchant_id, connection.secret_key)
-
-        client = MyntraClientV4(
-            basic_token=basic_token,
-            access_token=connection.access_token
-        )
+        client = MyntraClientV4(connection=connection)
 
         orders_synced = 0
         returns_synced = 0
@@ -474,7 +466,12 @@ def _format_sync_result(result):
     if isinstance(result, dict):
         created = result.get("created", 0)
         updated = result.get("updated", 0)
-        records_val = result.get("rows", created + updated)
+        skipped = result.get("skipped", 0)
+        imported = created + updated
+        if skipped > 0:
+            records_val = f"{imported:,} ({skipped:,} skipped)"
+        else:
+            records_val = result.get("rows", imported)
         data_dict = dict(result)
     elif isinstance(result, (list, tuple)):
         created = result[0] if len(result) > 0 else 0
@@ -579,10 +576,18 @@ class UploadMyntraOrderReportAPIView(APIView):
                 "records": report_obj.records,
             })
 
+            msg = "Myntra Orders report imported successfully."
+            skipped = result.get("skipped", 0) if isinstance(result, dict) else 0
+            if skipped > 0:
+                if result.get("created", 0) == 0 and result.get("updated", 0) == 0:
+                    msg = f"0 records imported. All {skipped} records were skipped because they are older than {result.get('cutoff_date')} (plan limit: {result.get('sync_days')} days)."
+                else:
+                    msg = f"Orders imported ({result.get('created', 0)} created, {result.get('updated', 0)} updated). {skipped} records older than {result.get('cutoff_date')} were skipped (plan limit: {result.get('sync_days')} days)."
+
             return Response(
                 {
                     "status": True,
-                    "message": "Myntra Orders report imported successfully.",
+                    "message": msg,
                     "data": data_dict,
                 },
                 status=200,
@@ -657,10 +662,18 @@ class UploadMyntraReturnReportAPIView(APIView):
                 "records": report_obj.records,
             })
 
+            msg = "Myntra Returns report imported successfully."
+            skipped = result.get("skipped", 0) if isinstance(result, dict) else 0
+            if skipped > 0:
+                if result.get("created", 0) == 0 and result.get("updated", 0) == 0:
+                    msg = f"0 records imported. All {skipped} records were skipped because they are older than {result.get('cutoff_date')} (plan limit: {result.get('sync_days')} days)."
+                else:
+                    msg = f"Returns imported ({result.get('created', 0)} created, {result.get('updated', 0)} updated). {skipped} records older than {result.get('cutoff_date')} were skipped (plan limit: {result.get('sync_days')} days)."
+
             return Response(
                 {
                     "status": True,
-                    "message": "Myntra Returns report imported successfully.",
+                    "message": msg,
                     "data": data_dict,
                 },
                 status=200,
@@ -747,10 +760,18 @@ class UploadMyntraPaymentReportAPIView(APIView):
                 "records": report_obj.records,
             })
 
+            msg = "Myntra Payment report imported successfully."
+            skipped = result.get("skipped", 0) if isinstance(result, dict) else 0
+            if skipped > 0:
+                if result.get("created", 0) == 0 and result.get("updated", 0) == 0:
+                    msg = f"0 records imported. All {skipped} records were skipped because they are older than {result.get('cutoff_date')} (plan limit: {result.get('sync_days')} days)."
+                else:
+                    msg = f"Payments imported ({result.get('created', 0)} created, {result.get('updated', 0)} updated). {skipped} records older than {result.get('cutoff_date')} were skipped (plan limit: {result.get('sync_days')} days)."
+
             return Response(
                 {
                     "status": True,
-                    "message": "Myntra Payment report imported successfully.",
+                    "message": msg,
                     "data": data_dict,
                 },
                 status=200,

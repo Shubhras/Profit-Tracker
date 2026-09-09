@@ -127,6 +127,7 @@ urlpatterns = [
     path('payment-reconcile/details/by-parentproductid/export/', exports.export_payment_reconcile_by_parentproductid, name='export_payment_reconcile_by_parentproductid'),
     path('payment-reconcile/all-leaks/export/', exports.export_discrepancy_all_leaks, name='export_discrepancy_all_leaks'),
     path('payment-reconcile/details-old/', payment_reconcyle.payment_reconcile_details_transactions_shipping, name='payment_reconcile_details_old'),
+    path('orders-profit-report-transactions-shipping/', views.orders_profit_report_transactions_shipping, name='orders_profit_report_transactions_shipping'),
 
 
 

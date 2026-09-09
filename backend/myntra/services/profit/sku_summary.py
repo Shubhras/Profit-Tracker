@@ -1,5 +1,9 @@
 from collections import defaultdict
 from decimal import Decimal
+from myntra.services.profit.myntra_fee_calculator import (
+    get_myntra_fee_rules,
+    calculate_myntra_estimated_fees,
+)
 
 
 class SKUSummary:
@@ -83,6 +87,8 @@ class SKUSummary:
         """
 
         response = []
+        fee_rules = get_myntra_fee_rules(self.calculator.user)
+        article_type_map = self.calculator.build_article_type_map()
 
         for seller_sku, sku_orders in sku_map.items():
             first_order = sku_orders[0]
@@ -228,6 +234,73 @@ class SKUSummary:
             ) or Decimal(0)
 
             mp_fees = self.calculator.calculate_mp_fees(sku_payments) or Decimal(0)
+
+            # ==========================================
+            # ESTIMATED MARKETPLACE FEES (RATE CARDS)
+            # ==========================================
+            sku_estimated_fees = Decimal(0)
+            sku_estimated_commission = Decimal(0)
+            sku_estimated_fixed_fee = Decimal(0)
+            sku_has_rules = False
+
+            for order in sku_orders:
+                order_returns = return_map.get(order.order_line_id, [])
+                order_return_qty = sum((item.quantity or 0) for item in order_returns)
+                order_is_return = order_return_qty > 0
+
+                order_courier_return_count = 0
+                order_customer_return_count = 0
+                for return_item in order_returns:
+                    ret_cat = self.calculator.classify_return(return_item)
+                    qty = return_item.quantity or 0
+                    if ret_cat == "COURIER_RETURN":
+                        order_courier_return_count += qty
+                    elif ret_cat == "CUSTOMER_RETURN":
+                        order_customer_return_count += qty
+
+                order_is_courier_return = (
+                    order_courier_return_count > 0 and order_customer_return_count == 0
+                )
+                order_is_customer_return = order_customer_return_count > 0
+
+                order_gross_sales = self.calculator.calculate_gross_sales([order]) or Decimal(0)
+
+                order_article_type = (getattr(order, "article_type", "") or "").strip()
+                if not order_article_type:
+                    order_article_type = (
+                        article_type_map.get(str(order.seller_sku_code))
+                        or article_type_map.get(str(order.style_id))
+                        or ""
+                    )
+
+                est = calculate_myntra_estimated_fees(
+                    gross_sales=order_gross_sales,
+                    gross_qty=1,
+                    article_type=order_article_type,
+                    style_name=getattr(order, "style_name", "") or "",
+                    is_return=order_is_return,
+                    return_qty=order_return_qty,
+                    is_courier_return=order_is_courier_return,
+                    is_customer_return=order_is_customer_return,
+                    rules=fee_rules,
+                )
+                if est is not None:
+                    sku_has_rules = True
+                    sku_estimated_fees += est["total_estimated_fees"]
+                    sku_estimated_commission += est["estimated_commission"]
+                    sku_estimated_fixed_fee += est["estimated_fixed_fee"]
+
+            if not sku_has_rules:
+                sku_estimated_fees = Decimal(0)
+                sku_estimated_commission = Decimal(0)
+                sku_estimated_fixed_fee = Decimal(0)
+
+            if finance_data_available:
+                actual_fees = mp_fees
+                fees_leaks = max(Decimal(0), actual_fees - sku_estimated_fees)
+            else:
+                actual_fees = Decimal(0)
+                fees_leaks = Decimal(0)
 
             # ==========================================
             # SHIPPING
@@ -530,6 +603,11 @@ class SKUSummary:
                     "fixed_fee": fixed_fee,
                     "pick_and_pack_fee": pick_and_pack_fee,
                     "payment_gateway_fee": payment_gateway_fee,
+                    "estimated_fees": sku_estimated_fees,
+                    "estimated_commission": sku_estimated_commission,
+                    "estimated_fixed_fee": sku_estimated_fixed_fee,
+                    "actual_fees": actual_fees,
+                    "fees_leaks": fees_leaks,
                     # ----------------------------------
                     # SHIPPING
                     # ----------------------------------

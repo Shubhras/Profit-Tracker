@@ -199,6 +199,26 @@ class MyntraProfitCalculator:
 
         return return_map
 
+    def build_article_type_map(self):
+        """
+        Builds a lookup mapping seller_sku_code and style_id to article_type
+        from MyntraListing as a fallback when MyntraOrder.article_type is empty.
+        """
+        article_map = {}
+        try:
+            for item in self.get_listings().values("seller_sku_code", "style_id", "article_type"):
+                art = (item.get("article_type") or "").strip()
+                if art:
+                    sku = item.get("seller_sku_code")
+                    if sku:
+                        article_map[str(sku)] = art
+                    sid = item.get("style_id")
+                    if sid:
+                        article_map[str(sid)] = art
+        except Exception:
+            pass
+        return article_map
+
     # =====================================================
     # ORDER / SALES CALCULATIONS
     # =====================================================

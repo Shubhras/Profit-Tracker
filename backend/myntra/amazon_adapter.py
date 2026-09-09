@@ -36,7 +36,20 @@ class MyntraAmazonProfitAdapter:
         # ₹0.0
         # ₹7680.0
         # ₹7480.0
+        if value < 0:
+            return f"-₹{abs(round(value, 2))}"
         return f"₹{round(value, 2)}"
+
+    @classmethod
+    def _money_negative(cls, value):
+        """
+        Formats fee/expense as negative currency string, e.g. -₹159.96.
+        Returns ₹0.00 if zero.
+        """
+        dec = cls._decimal(value)
+        if dec != Decimal(0):
+            return f"-₹{abs(round(dec, 2))}"
+        return "₹0.00"
 
     @staticmethod
     def _number(value, default=0):
@@ -93,6 +106,7 @@ class MyntraAmazonProfitAdapter:
             "id": style_id,
             "name": row.get("style_name") or "",
             "brand": row.get("brand") or "",
+            "article_type": row.get("article_type") or "",
             "image_url": image_url or None,
             "channel": cls.CHANNEL,
             "channel1": cls.CHANNEL,
@@ -136,8 +150,7 @@ class MyntraAmazonProfitAdapter:
             # -------------------------------------------------
             "mpfees": cls._money(row.get("mp_fees")),
             # Frontend actually reads estimatefees for MP Fees.
-            # Therefore expose the same Myntra value here too.
-            "estimatefees": cls._money(row.get("mp_fees")),
+            "estimatefees": cls._money_negative(row.get("estimated_fees") or 0),
             "new_mpfees": cls._money(row.get("mp_fees")),
             "commission": cls._money(row.get("commission")),
             "fixed_fee": cls._money(row.get("fixed_fee")),
@@ -146,8 +159,8 @@ class MyntraAmazonProfitAdapter:
             # Amazon-specific fee fields.
             # Keep them present so existing frontend/modal code
             # doesn't have to care which marketplace is active.
-            "referral_fee": cls._money(row.get("commission")),
-            "closing_fee": cls._money(row.get("fixed_fee")),
+            "referral_fee": cls._money(row.get("estimated_commission") or 0),
+            "closing_fee": cls._money(row.get("estimated_fixed_fee") or 0),
             "per_item_fee": cls._money(0),
             "fba_fee": cls._money(0),
             "fba_pick_pack_fee": cls._money(row.get("pick_and_pack_fee")),
@@ -211,6 +224,8 @@ class MyntraAmazonProfitAdapter:
             # when debugging Myntra.
             "seller_sku_count": cls._number(row.get("seller_sku_count")),
             "finance_data_available": bool(row.get("finance_data_available")),
+            "actual_fees": cls._money(row.get("actual_fees") if row.get("actual_fees") is not None else (row.get("mp_fees") if row.get("finance_data_available") else 0)),
+            "fees_leaks": cls._money(row.get("fees_leaks") if row.get("fees_leaks") is not None else 0),
         }
 
     # =========================================================
@@ -244,6 +259,7 @@ class MyntraAmazonProfitAdapter:
             "id": seller_sku,
             "name": row.get("style_name") or "",
             "brand": row.get("brand") or "",
+            "article_type": row.get("article_type") or "",
             "image_url": image_url or None,
             "channel": cls.CHANNEL,
             "channel1": cls.CHANNEL,
@@ -279,14 +295,14 @@ class MyntraAmazonProfitAdapter:
             # MARKETPLACE FEES
             # ==========================================
             "mpfees": cls._money(row.get("mp_fees")),
-            "estimatefees": cls._money(row.get("mp_fees")),
+            "estimatefees": cls._money_negative(row.get("estimated_fees") or 0),
             "new_mpfees": cls._money(row.get("mp_fees")),
             "commission": cls._money(row.get("commission")),
             "fixed_fee": cls._money(row.get("fixed_fee")),
             "pick_and_pack_fee": cls._money(row.get("pick_and_pack_fee")),
             "payment_gateway_fee": cls._money(row.get("payment_gateway_fee")),
-            "referral_fee": cls._money(row.get("commission")),
-            "closing_fee": cls._money(row.get("fixed_fee")),
+            "referral_fee": cls._money(row.get("estimated_commission") or 0),
+            "closing_fee": cls._money(row.get("estimated_fixed_fee") or 0),
             "per_item_fee": cls._money(0),
             "fba_fee": cls._money(0),
             "fba_pick_pack_fee": cls._money(row.get("pick_and_pack_fee")),
@@ -347,6 +363,8 @@ class MyntraAmazonProfitAdapter:
             # MYNTRA DEBUG METADATA
             # ==========================================
             "finance_data_available": bool(row.get("finance_data_available")),
+            "actual_fees": cls._money(row.get("actual_fees") if row.get("actual_fees") is not None else (row.get("mp_fees") if row.get("finance_data_available") else 0)),
+            "fees_leaks": cls._money(row.get("fees_leaks") if row.get("fees_leaks") is not None else 0),
         }
 
     # =========================================================
@@ -382,6 +400,7 @@ class MyntraAmazonProfitAdapter:
             "parent_asin": style_id,
             "name": row.get("style_name") or "",
             "brand": row.get("brand") or "",
+            "article_type": row.get("article_type") or "",
             "image_url": image_url or None,
             "channel": cls.CHANNEL,
             "channel1": cls.CHANNEL,
@@ -418,12 +437,12 @@ class MyntraAmazonProfitAdapter:
             # FEES
             # ==========================================
             "mpfees": cls._money(row.get("mp_fees")),
-            "estimatefees": cls._money(row.get("mp_fees")),
+            "estimatefees": cls._money_negative(row.get("estimated_fees") or 0),
             "new_mpfees": cls._money(row.get("mp_fees")),
             "commission": cls._money(row.get("commission")),
-            "referral_fee": cls._money(row.get("commission")),
+            "referral_fee": cls._money(row.get("estimated_commission") or 0),
             "fixed_fee": cls._money(row.get("fixed_fee")),
-            "closing_fee": cls._money(row.get("fixed_fee")),
+            "closing_fee": cls._money(row.get("estimated_fixed_fee") or 0),
             "pick_and_pack_fee": cls._money(row.get("pick_and_pack_fee")),
             "fba_pick_pack_fee": cls._money(row.get("pick_and_pack_fee")),
             "payment_gateway_fee": cls._money(row.get("payment_gateway_fee")),
@@ -548,6 +567,19 @@ class MyntraAmazonProfitAdapter:
             else "0%"
         )
 
+        total_estimatefees = sum(
+            cls._decimal(row.get("estimated_fees") or 0)
+            for row in rows
+        )
+        total_actual_fees = sum(
+            cls._decimal(row.get("actual_fees") if row.get("actual_fees") is not None else (row.get("mp_fees") if row.get("finance_data_available") else 0))
+            for row in rows
+        )
+        total_fees_leaks = sum(
+            cls._decimal(row.get("fees_leaks") or 0)
+            for row in rows
+        )
+
         return {
             "ads": cls._money(total("ads")),
             # Current frontend uses netqty for Gross Qty.
@@ -562,8 +594,12 @@ class MyntraAmazonProfitAdapter:
             "profit": cls._money(profit),
             "grossprofitper": float(round(profit_percentage, 2)),
             "mpfees": cls._money(total("mp_fees")),
-            "estimatefees": cls._money(total("mp_fees")),
+            "estimatefees": cls._money_negative(total_estimatefees),
             "total_new_mpfees": cls._money(total("mp_fees")),
+            "actual_fees": cls._money(total_actual_fees),
+            "total_actual_fees": cls._money(total_actual_fees),
+            "fees_leaks": cls._money(total_fees_leaks),
+            "total_fees_leaks": cls._money(total_fees_leaks),
             "mp_gst": cls._money(total("mp_gst")),
             "shippingfees": cls._money(total("shipping_fees")),
             "stdcost": cls._money(total("product_cost")),
@@ -634,6 +670,19 @@ class MyntraAmazonProfitAdapter:
             else "0%"
         )
 
+        total_estimatefees = sum(
+            cls._decimal(row.get("estimated_fees") or 0)
+            for row in rows
+        )
+        total_actual_fees = sum(
+            cls._decimal(row.get("actual_fees") if row.get("actual_fees") is not None else (row.get("mp_fees") if row.get("finance_data_available") else 0))
+            for row in rows
+        )
+        total_fees_leaks = sum(
+            cls._decimal(row.get("fees_leaks") or 0)
+            for row in rows
+        )
+
         return {
             "grosssales": float(round(gross_sales, 2)),
             "netsales": cls._money(net_sales),
@@ -651,8 +700,12 @@ class MyntraAmazonProfitAdapter:
             "adSpend": cls._money(total("ads")),
             "mpfees": float(round(total("mp_fees"), 2)),
             "mp_gst": cls._money(total("mp_gst")),
-            "estimatefees": cls._money(-abs(total("mp_fees"))),
+            "estimatefees": cls._money_negative(total_estimatefees),
             "total_new_mpfees": cls._money(total("mp_fees")),
+            "actual_fees": cls._money(total_actual_fees),
+            "total_actual_fees": cls._money(total_actual_fees),
+            "fees_leaks": cls._money(total_fees_leaks),
+            "total_fees_leaks": cls._money(total_fees_leaks),
             "shipping": cls._money(total("shipping_fees")),
             "gst": cls._money(0),
             "tcs": cls._money(total("tcs")),

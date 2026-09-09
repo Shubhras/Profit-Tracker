@@ -222,6 +222,16 @@ class AmazonAdsCallbackView(APIView):
                     }
                 )
             )
+            saved_profiles.append({
+                "profile_id":
+                profile["profileId"],
+
+                "country":
+                profile.get("countryCode"),
+
+                "created":
+                created
+            })
 
             if created:
                 account.initial_sync_required = True
@@ -259,16 +269,16 @@ class AmazonAdsCallbackView(APIView):
                 except Exception as e:
                     print(f"FAILED TO DISPATCH CELERY INITIAL ADS SYNC: {account.profile_id} - {e}")
 
-            saved_profiles.append({
-                "profile_id":
-                profile["profileId"],
+            # saved_profiles.append({
+            #     "profile_id":
+            #     profile["profileId"],
 
-                "country":
-                profile.get("countryCode"),
+            #     "country":
+            #     profile.get("countryCode"),
 
-                "created":
-                created
-            })
+            #     "created":
+            #     created
+            # })
 
         return Response({
             "status": True,

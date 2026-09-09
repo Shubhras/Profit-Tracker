@@ -25,8 +25,8 @@ class MyntraSyncTestCase(APITestCase):
 
         self.sync_url = reverse("myntra-sync-details")
 
-    @patch("myntra.services.myntra_client_v4.requests.get")
-    @patch("myntra.services.myntra_client_v4.requests.post")
+    @patch("myntra.services.myntra_client.requests.get")
+    @patch("myntra.services.myntra_client.requests.post")
     def test_sync_myntra_details(self, mock_post, mock_get):
         # 1. Mock getOrderList response
         mock_order_list_res = {
@@ -98,7 +98,6 @@ class MyntraSyncTestCase(APITestCase):
         mock_return_detail_res = {
             "statusCode": 1007,
             "statusMessage": "Returns retrieved successfully",
-            "statusType": "SUCCESS",
             "totalCount": 1,
             "data": [
                 {
@@ -144,10 +143,12 @@ class MyntraSyncTestCase(APITestCase):
 
         # Define mock behavior
         class MockResponse:
-            def __init__(self, json_data, status_code=200):
+            def __init__(self, json_data, status_code=200, headers=None):
                 self.json_data = json_data
                 self.status_code = status_code
                 self.text = str(json_data)
+                self.headers = headers or {}
+                self.ok = status_code < 400
 
             def json(self):
                 return self.json_data
@@ -199,3 +200,87 @@ class MyntraSyncTestCase(APITestCase):
         pay = MyntraPaymentTransaction.objects.filter(neft_ref="NFT-300600960GN00047XXXXXXX").first()
         self.assertIsNotNone(pay)
         self.assertEqual(float(pay.settled_amount), 1495.26)
+
+    @patch("myntra.services.myntra_client.requests.post")
+    def test_auto_refresh_on_477_expired_token(self, mock_post):
+        """
+        Verify that when an API call returns HTTP 477 (access_token has expired),
+        the client automatically refreshes/regenerates the token and retries the request once.
+        """
+        from myntra.services.myntra_client_v4 import MyntraClientV4
+
+        class MockResponse:
+            def __init__(self, json_data, status_code=200, headers=None):
+                self.json_data = json_data
+                self.status_code = status_code
+                self.text = str(json_data)
+                self.headers = headers or {}
+                self.ok = status_code < 400
+
+            def json(self):
+                return self.json_data
+
+        expired_477_res = MockResponse(
+            {
+                "statusCode": 477,
+                "statusType": "ERROR",
+                "statusMessage": "access_token has expired",
+                "error_code": "expired_access_token"
+            },
+            status_code=477
+        )
+
+        token_gen_res = MockResponse(
+            {"status": "SUCCESS"},
+            status_code=200,
+            headers={
+                "access_token": "brand_new_access_token_999",
+                "refresh_token": "brand_new_refresh_token_888"
+            }
+        )
+
+        schedule_success_res = MockResponse(
+            {
+                "statusCode": 202400,
+                "statusMessage": "Report job scheduled successfully",
+                "statusType": "SUCCESS",
+                "jobId": 7777777
+            },
+            status_code=200
+        )
+
+        call_count = {"schedule": 0}
+
+        def side_effect_post(url, *args, **kwargs):
+            if "generate_token" in url:
+                return token_gen_res
+            if "Seller_Orders_Report" in url:
+                call_count["schedule"] += 1
+                if call_count["schedule"] == 1:
+                    # First attempt fails with HTTP 477
+                    return expired_477_res
+                else:
+                    # Second attempt after token refresh succeeds
+                    return schedule_success_res
+            return MockResponse({"error": "unknown"}, status_code=400)
+
+        mock_post.side_effect = side_effect_post
+
+        client = MyntraClientV4(connection=self.connection)
+        result = client.schedule_report(
+            report_name="Seller_Orders_Report",
+            partner_type="PPMP",
+            from_date="2026-08-20",
+            to_date="2026-09-04"
+        )
+
+        # Verification
+        self.assertEqual(result.get("statusType"), "SUCCESS")
+        self.assertEqual(result.get("jobId"), 7777777)
+        self.assertEqual(call_count["schedule"], 2)
+
+        # Verify connection updated in database with fresh token
+        self.connection.refresh_from_db()
+        self.assertEqual(self.connection.access_token, "brand_new_access_token_999")
+        self.assertEqual(self.connection.refresh_token, "brand_new_refresh_token_888")
+        self.assertTrue(self.connection.access_token_is_valid())

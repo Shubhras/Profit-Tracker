@@ -20,7 +20,10 @@ from amazon_auth.profit import (
     get_undecorated_view, format_currency, parse_currency_to_decimal,
     enrich_dto_image_urls, enrich_row_image_urls
 )
-from amazon_auth.views import sku_profit_report_transactions_shipping
+from amazon_auth.views import (
+    sku_profit_report_transactions_shipping,
+    orders_profit_report_transactions_shipping,
+)
 
 
 IST = ZoneInfo("Asia/Kolkata")
@@ -825,6 +828,8 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
 
             o_ship_refund = abs(float(fulfillment_fee_refund_by_order.get(oid, 0.0)))
             o_act_ship = max(0.0, round(o_act_ship - o_ship_refund, 2))
+            if o_act_ship == 0.0 and o_act_fba_weight > 0.0:
+                o_act_ship = max(0.0, round(o_act_fba_weight - o_ship_refund, 2))
 
             o_act_gst = abs(float(f.get('gst') or 0))
             o_act_settled = float(f.get('total_settled') or 0)
@@ -1461,7 +1466,7 @@ def _payment_reconcile_order_level_logic(request):
     page_no = int(pagination.get("pageNo", 0))
     page_size = int(pagination.get("pageSize", 25))
 
-    res = _call_view_for_all_results(sku_profit_report_transactions_shipping, request)
+    res = _call_view_for_all_results(orders_profit_report_transactions_shipping, request)
     if res.status_code != 200 or not isinstance(res.data, dict):
         return res
 
@@ -1668,6 +1673,8 @@ def _payment_reconcile_order_level_logic(request):
 
         ship_fee_refund = float(tx_fulfillment_fee_refund_by_order.get(oid, 0.0))
         row_actual_shipping = max(0.0, round(row_actual_shipping - ship_fee_refund, 2))
+        if row_actual_shipping == 0.0 and actual_fba_weight_fee > 0.0:
+            row_actual_shipping = max(0.0, round(actual_fba_weight_fee - ship_fee_refund, 2))
 
         row_actual_mp_gst = abs(float(f.get('gst') or 0))
         row_settlement_paid = float(f.get('total_settled') or 0)

@@ -40,7 +40,7 @@ class MyntraClientV4(MyntraClient):
             params["statusCode"] = status_code
 
         try:
-            response = requests.get(url, headers=self.headers(), params=params, timeout=15)
+            response = self._execute_request("GET", url, params=params, timeout=15)
             self._log_call("/partner/v4/order/getOrderList", status="SUCCESS" if response.status_code == 200 else f"HTTP_{response.status_code}")
             if response.status_code == 200:
                 return response.json()
@@ -54,7 +54,7 @@ class MyntraClientV4(MyntraClient):
         endpoint = f"/partner/v4/order/{seller_order_id}"
         url = f"{self.api_base_url}{endpoint}"
         try:
-            response = requests.get(url, headers=self.headers(), timeout=15)
+            response = self._execute_request("GET", url, timeout=15)
             self._log_call("/partner/v4/order/{seller_order_id}", status="SUCCESS" if response.status_code == 200 else f"HTTP_{response.status_code}")
             if response.status_code == 200:
                 return response.json()
@@ -76,7 +76,7 @@ class MyntraClientV4(MyntraClient):
             payload["destinationWarehouseIds"] = destination_warehouse_ids
 
         try:
-            response = requests.post(url, headers=self.headers(), json=payload, timeout=15)
+            response = self._execute_request("POST", url, json=payload, timeout=15)
             self._log_call("/partner/v4/returns/returnRecon", status="SUCCESS" if response.status_code == 200 else f"HTTP_{response.status_code}")
             if response.status_code == 200:
                 return response.json()
@@ -95,7 +95,7 @@ class MyntraClientV4(MyntraClient):
             "pageSize": page_size
         }
         try:
-            response = requests.get(url, headers=self.headers(), params=params, timeout=15)
+            response = self._execute_request("GET", url, params=params, timeout=15)
             self._log_call(f"/partner/v4/payments/history/{payment_method}", status="SUCCESS" if response.status_code == 200 else f"HTTP_{response.status_code}")
             if response.status_code == 200:
                 return response.json()
@@ -108,7 +108,7 @@ class MyntraClientV4(MyntraClient):
     def get_return_details(self, return_id):
         url = f"{self.api_base_url}/partner/v4/returns/returnRecon"
         try:
-            response = requests.post(url, headers=self.headers(), json={"id": return_id}, timeout=15)
+            response = self._execute_request("POST", url, json={"id": return_id}, timeout=15)
             self._log_call("/partner/v4/returns/returnRecon", status="SUCCESS" if response.status_code == 200 else f"HTTP_{response.status_code}")
             if response.status_code == 200:
                 return response.json()
@@ -122,8 +122,10 @@ class MyntraClientV4(MyntraClient):
         self, report_name, partner_type=None, from_date=None, to_date=None
     ):
         url = f"{self.api_base_url}/partner/v4/portal/report/{report_name}"
-        partner_type = partner_type or self.connection.partner_type
-        payload = {"partnerType": partner_type}
+        partner_type = partner_type or (self.connection.partner_type if self.connection else None)
+        payload = {}
+        if partner_type:
+            payload["partnerType"] = partner_type
 
         if from_date:
             payload["fromDate"] = from_date
@@ -134,8 +136,8 @@ class MyntraClientV4(MyntraClient):
         try:
             print("URL:", url)
             print("Payload:", payload)
-            response = requests.post(
-                url, headers=self.headers(), json=payload, timeout=15
+            response = self._execute_request(
+                "POST", url, json=payload, timeout=15
             )
             self._log_call(f"/partner/v4/portal/report/{report_name}", status="SUCCESS" if response.status_code == 200 else f"HTTP_{response.status_code}")
 

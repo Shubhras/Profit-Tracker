@@ -8,6 +8,7 @@ from django.db import transaction
 from myntra.models import MyntraPaymentTransaction
 from myntra.parsers.payment_parser import PaymentParser
 
+from subscription.utils.sync_limit import get_user_sync_cutoff_date
 from ..myntra_client_v4 import MyntraClientV4
 
 
@@ -86,7 +87,12 @@ class PaymentSyncService:
             transaction_key=self._transaction_key(row),
             payment_method=payment_method,
             neft_ref=row.get("neft_ref"),
-            payment_date=self._date(row.get("payment_date")),
+            payment_date=self._date(
+                row.get("payment_date")
+                or row.get("neft_date")
+                or row.get("settlement_date")
+                or row.get("neft_payment_date")
+            ),
             order_line_id=row.get("order_line_id"),
             seller_order_id=row.get("seller_order_id"),
             store_order_id=row.get("store_order_id"),
@@ -289,19 +295,38 @@ class PaymentSyncService:
 
         rows = self.parser.parse(csv_bytes)
 
+        cutoff_date, sync_days, reg_date = get_user_sync_cutoff_date(self.connection.user)
+
         if not rows:
             return {
                 "rows": 0,
                 "created": 0,
                 "updated": 0,
+                "skipped": 0,
+                "cutoff_date": cutoff_date.strftime("%Y-%m-%d"),
+                "sync_days": sync_days,
+                "registration_date": reg_date.strftime("%Y-%m-%d"),
             }
 
-        transactions = [self._build(row, payment_method) for row in rows]
+        valid_transactions = []
+        skipped_count = 0
 
-        created, updated = self._save(transactions)
+        for row in rows:
+            txn = self._build(row, payment_method)
+            if txn.payment_date and txn.payment_date < cutoff_date:
+                skipped_count += 1
+                continue
+
+            valid_transactions.append(txn)
+
+        created, updated = self._save(valid_transactions)
 
         return {
             "rows": len(rows),
             "created": created,
             "updated": updated,
+            "skipped": skipped_count,
+            "cutoff_date": cutoff_date.strftime("%Y-%m-%d"),
+            "sync_days": sync_days,
+            "registration_date": reg_date.strftime("%Y-%m-%d"),
         }

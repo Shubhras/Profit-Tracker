@@ -1,4 +1,8 @@
 from decimal import Decimal
+from myntra.services.profit.myntra_fee_calculator import (
+    get_myntra_fee_rules,
+    calculate_myntra_estimated_fees,
+)
 
 
 class OrderSummary:
@@ -59,6 +63,8 @@ class OrderSummary:
         """
 
         response = []
+        fee_rules = get_myntra_fee_rules(self.calculator.user)
+        article_type_map = self.calculator.build_article_type_map()
 
         for order in orders:
             # ==========================================
@@ -193,6 +199,46 @@ class OrderSummary:
             ) or Decimal(0)
 
             mp_fees = self.calculator.calculate_mp_fees(order_payments) or Decimal(0)
+
+            # ==========================================
+            # ESTIMATED MARKETPLACE FEES (RATE CARD RULES)
+            # ==========================================
+            # Resolve article_type from MyntraOrder, with fallback to MyntraListing
+            order_article_type = (getattr(order, "article_type", "") or "").strip()
+            if not order_article_type:
+                order_article_type = (
+                    article_type_map.get(str(order.seller_sku_code))
+                    or article_type_map.get(str(order.style_id))
+                    or ""
+                )
+
+            estimated_breakdown = calculate_myntra_estimated_fees(
+                gross_sales=gross_sales,
+                gross_qty=gross_qty,
+                article_type=order_article_type,
+                style_name=getattr(order, "style_name", "") or "",
+                is_return=is_return,
+                return_qty=return_qty,
+                is_courier_return=is_courier_return,
+                is_customer_return=(customer_return_count > 0),
+                rules=fee_rules,
+            )
+
+            if estimated_breakdown is not None:
+                estimated_fees = estimated_breakdown["total_estimated_fees"]
+                estimated_commission = estimated_breakdown["estimated_commission"]
+                estimated_fixed_fee = estimated_breakdown["estimated_fixed_fee"]
+            else:
+                estimated_fees = Decimal(0)
+                estimated_commission = Decimal(0)
+                estimated_fixed_fee = Decimal(0)
+
+            if finance_data_available:
+                actual_fees = mp_fees
+                fees_leaks = max(Decimal(0), actual_fees - estimated_fees)
+            else:
+                actual_fees = Decimal(0)
+                fees_leaks = Decimal(0)
 
             # ==========================================
             # SHIPPING
@@ -381,6 +427,12 @@ class OrderSummary:
                     "fixed_fee": fixed_fee,
                     "pick_and_pack_fee": pick_and_pack_fee,
                     "payment_gateway_fee": payment_gateway_fee,
+                    "estimated_fees": estimated_fees,
+                    "estimated_commission": estimated_commission,
+                    "estimated_fixed_fee": estimated_fixed_fee,
+                    "actual_fees": actual_fees,
+                    "fees_leaks": fees_leaks,
+                    "article_type": order_article_type,
                     # ----------------------------------
                     # SHIPPING
                     # ----------------------------------

@@ -7,6 +7,9 @@ from myntra.parsers.order_parser import OrderParser
 from myntra.services.sync.base_sync import BaseSyncService
 
 
+from subscription.utils.sync_limit import get_user_sync_cutoff_date
+
+
 class OrderSyncService(BaseSyncService):
     REPORT_NAME = MyntraReports.ORDERS
 
@@ -17,25 +20,54 @@ class OrderSyncService(BaseSyncService):
     def process_uploaded_file(self, csv_bytes):
         """
         Process an Orders CSV uploaded manually by the user.
-    
+
         Uses the exact same:
         - OrderParser
         - _build()
         - _save()
-    
-        as the normal Myntra report sync.
+
+        as the normal Myntra report sync, but enforces subscription sync duration:
+        orders dated before (user registration date - plan.initial_sync_duration)
+        are skipped from being uploaded or updated.
         """
-    
+
         rows = self.parser.parse(csv_bytes)
-    
-        orders = [
-            self._build(row)
-            for row in rows
-        ]
-    
-        result = self._save(orders)
-    
-        return result
+
+        cutoff_date, sync_days, reg_date = get_user_sync_cutoff_date(self.connection.user)
+
+        valid_orders = []
+        skipped_count = 0
+
+        for row in rows:
+            order = self._build(row)
+
+            order_date = None
+            if order.created_on:
+                order_date = order.created_on.date() if hasattr(order.created_on, "date") else order.created_on
+            elif order.packed_on:
+                order_date = order.packed_on.date() if hasattr(order.packed_on, "date") else order.packed_on
+            elif order.shipped_on:
+                order_date = order.shipped_on.date() if hasattr(order.shipped_on, "date") else order.shipped_on
+            elif order.delivered_on:
+                order_date = order.delivered_on.date() if hasattr(order.delivered_on, "date") else order.delivered_on
+
+            if order_date and order_date < cutoff_date:
+                skipped_count += 1
+                continue
+
+            valid_orders.append(order)
+
+        created, updated = self._save(valid_orders)
+
+        return {
+            "rows": len(rows),
+            "created": created,
+            "updated": updated,
+            "skipped": skipped_count,
+            "cutoff_date": cutoff_date.strftime("%Y-%m-%d"),
+            "sync_days": sync_days,
+            "registration_date": reg_date.strftime("%Y-%m-%d"),
+        }
 
 
     def _build(self, row):

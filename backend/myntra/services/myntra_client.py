@@ -360,6 +360,117 @@ class MyntraClient:
 
         return access_token
 
+    def is_token_expired_response(self, response):
+        """
+        Check if Myntra response indicates an expired or invalid access token.
+        Myntra commonly returns HTTP 477 with {"statusCode": 477, "error_code": "expired_access_token"}
+        or standard HTTP 401 Unauthorized.
+        """
+        if response is None:
+            return False
+
+        if response.status_code in (401, 477):
+            return True
+
+        try:
+            data = response.json()
+            if isinstance(data, dict):
+                error_code = str(data.get("error_code") or data.get("errorCode") or "").lower()
+                status_code = data.get("statusCode")
+                msg = str(data.get("statusMessage") or data.get("message") or "").lower()
+                if status_code in (401, 477):
+                    return True
+                if "expired_access_token" in error_code or "invalid_access_token" in error_code:
+                    return True
+                if "expired access token" in msg or "access_token has expired" in msg:
+                    return True
+        except Exception:
+            pass
+
+        return False
+
+    def force_refresh_token(self):
+        """
+        Forces token refresh or re-generation.
+        If refresh_token is missing or fails, automatically falls back to generate_access_token.
+        """
+        if not self.connection:
+            return self.access_token
+
+        # Reset in-memory expiry so cached check doesn't bypass refresh
+        self.connection.access_token_expires_at = None
+
+        if self.connection.refresh_token:
+            try:
+                logger.info(f"Attempting to refresh Myntra token for {self.connection}")
+                return self.refresh_access_token()
+            except Exception as e:
+                logger.warning(
+                    f"Myntra refresh_access_token failed for {self.connection}: {e}. "
+                    "Falling back to generate_access_token()."
+                )
+
+        if self.connection.merchant_id and self.connection.secret_key:
+            logger.info(f"Generating new Myntra token for {self.connection}")
+            return self.generate_access_token()
+
+        raise RuntimeError(
+            f"Cannot refresh or generate token for {self.connection}: missing merchant_id or secret_key."
+        )
+
+    def _execute_request(self, method, url, ensure_token=True, **kwargs):
+        """
+        Execute an HTTP request with automatic token expiration detection and retry.
+        If Myntra returns HTTP 477 or 401, token is refreshed/regenerated and the request is retried once.
+        """
+        headers = kwargs.pop("headers", None)
+        if headers is None:
+            headers = self.headers(ensure_token=ensure_token)
+        else:
+            # Merge base headers with provided headers
+            base_headers = self.headers(ensure_token=ensure_token)
+            base_headers.update(headers)
+            headers = base_headers
+
+        kwargs["headers"] = headers
+
+        method_upper = method.upper()
+        if method_upper == "GET":
+            response = requests.get(url, **kwargs)
+        elif method_upper == "POST":
+            response = requests.post(url, **kwargs)
+        else:
+            response = requests.request(method, url, **kwargs)
+
+        if self.is_token_expired_response(response) and self.connection:
+            logger.warning(
+                f"Myntra token expired for {self.connection} during {method} {url} "
+                f"(Status: {response.status_code}). Refreshing token and retrying request..."
+            )
+            try:
+                self.force_refresh_token()
+
+                # Rebuild headers with new token while preserving custom headers (e.g. x-partner-store)
+                new_headers = self.headers(ensure_token=True)
+                headers.update(new_headers)
+                kwargs["headers"] = headers
+
+                # Retry request once
+                if method_upper == "GET":
+                    response = requests.get(url, **kwargs)
+                elif method_upper == "POST":
+                    response = requests.post(url, **kwargs)
+                else:
+                    response = requests.request(method, url, **kwargs)
+
+                logger.info(
+                    f"Retried {method} {url} after token refresh, new status: {response.status_code}"
+                )
+            except Exception as exc:
+                logger.error(f"Failed to refresh Myntra token or retry request: {exc}")
+
+        return response
+
     def ensure_valid_token(self):
         """
         Return a valid Myntra access token.
@@ -382,10 +493,7 @@ class MyntraClient:
             self.access_token = self.connection.access_token
             return self.access_token
 
-        if self.connection.refresh_token:
-            return self.refresh_access_token()
-
-        return self.generate_access_token()
+        return self.force_refresh_token()
 
     def schedule_orders_report(self, from_date=None, to_date=None, partner_type=None):
 
@@ -405,8 +513,8 @@ class MyntraClient:
         last_error = None
         for attempt in range(3):
             try:
-                response = requests.post(
-                    url, json=payload, headers=self.headers(), timeout=10
+                response = self._execute_request(
+                    "POST", url, json=payload, timeout=10
                 )
 
                 try:
@@ -434,7 +542,7 @@ class MyntraClient:
         headers["x-partner-store"] = "omni"
 
         try:
-            response = requests.get(url, headers=headers, timeout=10)
+            response = self._execute_request("GET", url, headers=headers, timeout=10)
             return response.json()
         except Exception as e:
             return {"error": str(e)}
@@ -469,9 +577,9 @@ class MyntraClient:
             params["sellerApprovalStatus"] = seller_approval_status
 
         try:
-            response = requests.get(
+            response = self._execute_request(
+                "GET",
                 url,
-                headers=self.headers(),
                 params=params,
                 timeout=15,
             )
