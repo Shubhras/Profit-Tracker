@@ -534,14 +534,14 @@ function RulesAutomation() {
           <div className="flex items-center gap-2 sm:w-full sm:flex-wrap">
             {' '}
             {/* ACTIVITY LOG */}
-            <Button className="!h-[32px] !px-3 !rounded-l !border-[#dbe1e8] !shadow-none">
+            <Button className="!h-[32px] !px-3 !rounded-lg !border-[#dbe1e8] !shadow-none">
               <span className="text-[12px] font-medium leading-none">Activity Log</span>
             </Button>
             {/* CREATE RULE */}
             <Button
               type="primary"
               onClick={() => setOpenRuleModal(true)}
-              className="flex items-center justify-center gap-0 h-[30px] px-2 rounded-l text-white font-bold text-[12px] transition-all w-full min-sm:w-auto"
+              className="flex items-center justify-center gap-0 h-[30px] px-2 rounded-lg text-white font-bold text-[12px] transition-all w-full min-sm:w-auto"
             >
               <PlusOutlined />
               <span className="font-bold leading-none text-[12px]">Create Rule</span>

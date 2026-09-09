@@ -395,7 +395,7 @@ function ApiCallLogs() {
             icon={<ReloadOutlined />}
             onClick={fetchData}
             loading={loading}
-            className="h-[32px] text-[12px] font-medium rounded-lg"
+            className="h-[32px] text-[13px] font-medium rounded-lg flex items-center gap-0"
           >
             Refresh Logs
           </Button>
@@ -405,7 +405,7 @@ function ApiCallLogs() {
         <div className="p-4 bg-slate-50/50 border-b border-gray-100">
           <Row gutter={[16, 16]}>
             <Col xs={24} sm={12} md={6}>
-              <div className="bg-white p-4 rounded-xl border border-gray-200/80 shadow-xs flex items-center justify-between h-full">
+              <div className="bg-white p-4 rounded-xl border border-gray-200/80 shadow-md hover:shadow-lg transition-all flex items-center justify-between h-full">
                 <div>
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 block mb-1">
                     Total Users
@@ -419,7 +419,7 @@ function ApiCallLogs() {
             </Col>
 
             <Col xs={24} sm={12} md={6}>
-              <div className="bg-white p-4 rounded-xl border border-gray-200/80 shadow-xs flex items-center justify-between h-full">
+              <div className="bg-white p-4 rounded-xl border border-gray-200/80 shadow-md hover:shadow-lg transition-all flex items-center justify-between h-full">
                 <div>
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 block mb-1">
                     Connected Accounts
@@ -433,7 +433,7 @@ function ApiCallLogs() {
             </Col>
 
             <Col xs={24} sm={12} md={6}>
-              <div className="bg-white p-4 rounded-xl border border-gray-200/80 shadow-xs flex items-center justify-between h-full">
+              <div className="bg-white p-4 rounded-xl border border-gray-200/80 shadow-md hover:shadow-lg transition-all flex items-center justify-between h-full">
                 <div>
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 block mb-1">
                     Total Orders Tracked
@@ -447,7 +447,7 @@ function ApiCallLogs() {
             </Col>
 
             <Col xs={24} sm={12} md={6}>
-              <div className="bg-white p-4 rounded-xl border border-gray-200/80 shadow-xs flex items-center justify-between h-full">
+              <div className="bg-white p-4 rounded-xl border border-gray-200/80 shadow-md hover:shadow-lg transition-all flex items-center justify-between h-full">
                 <div>
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 block mb-1">
                     Total API Calls Logged

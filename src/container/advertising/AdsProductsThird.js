@@ -332,7 +332,7 @@ function AdProductsThird() {
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
                   placeholder="Search ad products..."
-                  className="w-full h-[30px] rounded-xl border bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm transition-all duration-200 focus:border-[#dbe1e8]"
+                  className="w-full h-[30px] rounded-lg border bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm transition-all duration-200 focus:border-[#dbe1e8]"
                 />
 
                 <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
@@ -345,7 +345,7 @@ function AdProductsThird() {
                     type="primary"
                     loading={exportLoading}
                     icon={<ExportOutlined />}
-                    className="!h-[30px] text-[13px] !px-3 !rounded-xl !bg-[#2563eb] !border-[#2563eb] !font-semibold !flex !items-center !justify-center gap-1 cursor-pointer"
+                    className="!h-[30px] text-[13px] !px-3 !rounded-lg !bg-[#2563eb] !border-[#2563eb] !font-semibold !flex !items-center !justify-center gap-1 cursor-pointer"
                   >
                     Export <DownOutlined className="text-[10px]" />
                   </Button>

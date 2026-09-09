@@ -222,7 +222,7 @@ function SubModule() {
         <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
           <div className="mb-5">
             <div className="flex items-center justify-between">
-              <h2 className="text-[23px] font-semibold text-gray-800">Sub Modules</h2>
+              <h2 className="text-[20px] font-semibold text-gray-800">Sub Modules</h2>
 
               <Button
                 type="primary"

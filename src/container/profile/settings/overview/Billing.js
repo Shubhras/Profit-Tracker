@@ -323,6 +323,9 @@ function Billing() {
                       <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                         Status
                       </th>
+                      <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Date
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-white/5">
@@ -357,6 +360,12 @@ function Billing() {
                               />
                               {invoice.status || 'Pending'}
                             </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300 font-medium">
+                            <div className="flex flex-col gap-1">
+                              <span>{formatDate(invoice.start_date)}</span>
+                              <span className="text-xs text-slate-400">to {formatDate(invoice.end_date)}</span>
+                            </div>
                           </td>
                         </tr>
                       ))

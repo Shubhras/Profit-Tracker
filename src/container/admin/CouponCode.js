@@ -221,7 +221,7 @@ function CouponCode() {
 
   return (
     <>
-      <div className="min-h-screen py-3 px-3">
+      <div className="min-h-screen p-4">
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm w-full overflow-hidden">
           {/* Header */}
           <div className="flex justify-between items-center border-b px-4 py-3 md:flex-col md:items-start md:gap-3">

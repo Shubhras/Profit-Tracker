@@ -295,7 +295,7 @@ function NegativeKey() {
             type="primary"
             loading={exportLoading}
             icon={<ExportOutlined />}
-            className="!h-[30px] text-[13px] !px-3 !rounded-xl !bg-[#2563eb] !border-[#2563eb] !font-semibold !shadow-sm flex items-center gap-1 cursor-pointer"
+            className="!h-[30px] text-[13px] !px-3 !rounded-lg !bg-[#2563eb] !border-[#2563eb] !font-semibold !shadow-sm flex items-center gap-1 cursor-pointer"
           >
             Export <DownOutlined className="text-[10px]" />
           </Button>

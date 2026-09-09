@@ -432,7 +432,7 @@ export default function ProfitCalculationSettings() {
             <Button
               onClick={handleResetDefault}
               icon={<ReloadOutlined />}
-              className="h-[38px] px-4 rounded-[9px] text-[13.5px] font-semibold border-[#E5E7EB] text-[#374151] hover:bg-[#F1F2F4]"
+              className="h-[38px] px-4 rounded-[9px] text-[13.5px] font-semibold border-[#E5E7EB] text-[#374151] hover:bg-[#F1F2F4] flex items-center gap-0"
             >
               Reset to Default
             </Button>
@@ -441,7 +441,7 @@ export default function ProfitCalculationSettings() {
               onClick={handleSaveSettings}
               loading={saving}
               icon={<SaveOutlined />}
-              className="h-[38px] px-5 rounded-[9px] text-[13.5px] font-semibold bg-[#16A34A] hover:bg-[#15803D] border-none text-white shadow-sm"
+              className="h-[38px] px-5 rounded-[9px] text-[13.5px] font-semibold bg-[#16A34A] hover:bg-[#15803D] border-none text-white shadow-sm flex items-center gap-0"
             >
               Save Settings
             </Button>

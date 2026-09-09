@@ -196,7 +196,7 @@ function CampaignSecondDetails() {
 
   return (
     <>
-      <div className="p-2">
+      <div className="p-2 px-4">
         <div className="mt-2 mb-3 rounded-lg border border-[#e5e7eb] bg-white shadow-sm overflow-hidden">
           <div className="border-b border-[#edf0f2] px-4 py-3">
             {/* Top Row */}
@@ -231,7 +231,7 @@ function CampaignSecondDetails() {
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
                   placeholder="Search ad groups..."
-                  className="w-full h-[30px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm focus:border-[#2563eb]"
+                  className="w-full h-[30px] rounded-lg border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm focus:border-[#2563eb]"
                 />
 
                 <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
@@ -242,7 +242,7 @@ function CampaignSecondDetails() {
                   type="primary"
                   icon={<ExportOutlined />}
                   loading={exportLoading}
-                  className="!h-[30px] text-[13px] !rounded-xl !bg-[#2563eb] !font-semibold !flex !items-center !justify-center"
+                  className="!h-[30px] text-[13px] !rounded-lg !bg-[#2563eb] !font-semibold !flex !items-center !justify-center"
                 >
                   Export <DownOutlined className="text-[10px] ml-1" />
                 </Button>

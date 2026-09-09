@@ -446,7 +446,7 @@ function SearchTerms() {
               type="primary"
               icon={<ExportOutlined />}
               loading={exportLoading}
-              className="!h-[30px] text-[13px] !rounded-xl !bg-[#2563eb] !font-semibold !flex !items-center !justify-center"
+              className="!h-[30px] text-[13px] !rounded-lg !bg-[#2563eb] !font-semibold !flex !items-center !justify-center"
             >
               Export <DownOutlined className="text-[10px] ml-1" />
             </Button>
