@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Typography } from 'antd';
-import { CrownOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
@@ -24,7 +23,7 @@ function PricingBanner() {
           className="inline-block mb-6"
         >
           <span className="px-4 py-2 rounded-full bg-emerald-50 text-emerald-700 font-semibold text-sm border border-emerald-100 flex items-center gap-2 shadow-sm">
-            <CrownOutlined /> Flexible Pricing for Everyone
+            Built for online sales · 7-day free trial, no restrictions
           </span>
         </motion.div>
 
@@ -34,17 +33,15 @@ function PricingBanner() {
             level={1}
             className="text-4xl min-md:text-5xl !font-extrabold !text-gray-900 !leading-[1.1] !mb-6 tracking-tight"
           >
-            Simple plans that grow <br className="hidden md:block" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">
-              with your business
-            </span>
+            Try it free for 7 days. Then see your real profit every month. <br className="hidden md:block" />
           </Title>
         </motion.div>
 
         {/* Subtitle */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
           <Text className="block text-lg min-md:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed mb-10">
-            Choose the perfect plan for your needs. Always know what you&apos;ll pay. No hidden fees, ever.
+            Every plan is priced on the orders you actually do. Pick the volume that matches your month; taxes are
+            calculated at checkout.
           </Text>
         </motion.div>
 

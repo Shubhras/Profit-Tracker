@@ -136,9 +136,13 @@ function HeroSection() {
               <div className="absolute -inset-4 bg-gradient-to-r from-emerald-300/30 via-teal-300/30 to-blue-300/30 rounded-3xl blur-2xl opacity-60" />
 
               {/* Dashboard Image */}
-              <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200/50 p-2 overflow-hidden">
-                <img src="/home/banner3.png" alt="Profit Tracker Dashboard" className="w-full h-auto rounded-xl" />
-              </div>
+              {/* <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200/50 p-2 overflow-hidden"> */}
+              <img
+                src="/home/shared7_cropped.png"
+                alt="Profit Tracker Dashboard"
+                className="w-full h-auto rounded-xl"
+              />
+              {/* </div> */}
 
               {/* Floating Stats Cards */}
               <motion.div
@@ -147,9 +151,9 @@ function HeroSection() {
                 transition={{ delay: 0.8, duration: 0.6 }}
                 className="absolute -bottom-6 -left-6 lg:-left-12 bg-white rounded-xl shadow-xl border border-gray-100 p-3 hidden min-md:block"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-lg bg-emerald-100 flex items-center justify-center">
-                    <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -169,7 +173,7 @@ function HeroSection() {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1, duration: 0.6 }}
-                className="absolute -top-6 -right-6 lg:-right-12 bg-white rounded-xl shadow-xl border border-gray-100 p-3 hidden min-md:block"
+                className="absolute top-[62%] -translate-y-1/2 -right-6 lg:-right-12 bg-white rounded-xl shadow-xl border border-gray-100 p-3 hidden min-md:block"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-lg bg-teal-100 flex items-center justify-center">
