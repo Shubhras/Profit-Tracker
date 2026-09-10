@@ -5,7 +5,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from django.db.models import Q, Sum, Avg, Max, Case, When, F, DecimalField, OuterRef, Subquery
+from django.db.models import Q, Sum, Avg, Max, Case, When, F, DecimalField, OuterRef, Subquery, Value, IntegerField
 
 from amazon_auth.models import (
     OrderItem, AmazonListingItem, AmazonEstimatedFee,
@@ -435,7 +435,52 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         oid = tx_to_order.get(bd["transaction_id"])
         if oid:
             tx_actual_fees_by_order[oid] = tx_actual_fees_by_order.get(oid, 0.0) + abs(float(bd["total"] or 0))
-            
+
+    # 3. Actual TDS from Shipment transactions (TaxDeductedAtSource breakdown)
+    shipment_all_tx_ids = set(AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_type="Shipment",
+    ).values_list("id", flat=True))
+
+    tds_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=shipment_all_tx_ids,
+            breakdown_type="TaxDeductedAtSource"
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+    tx_actual_tds_by_order = {}
+    for bd in tds_breakdowns:
+        oid = tx_to_order.get(bd["transaction_id"])
+        if oid:
+            tx_actual_tds_by_order[oid] = tx_actual_tds_by_order.get(oid, 0.0) + abs(float(bd["total"] or 0))
+
+    # 4. Release Transaction Date from ServiceFee DEFERRED transactions
+    service_fee_txns = (
+        AmazonTransaction.objects.filter(
+            id__in=tx_to_order.keys(),
+            transaction_type="ServiceFee",
+            transaction_status__in=["DEFERRED", "DEFERRED_RELEASED", "RELEASED"]
+        )
+        .order_by(
+            Case(
+                When(transaction_status="DEFERRED", then=Value(1)),
+                When(transaction_status="DEFERRED_RELEASED", then=Value(2)),
+                default=Value(3),
+                output_field=IntegerField(),
+            ),
+            "-posted_date"
+        )
+        .values("id", "posted_date", "transaction_status")
+    )
+    tx_release_date_by_order = {}
+    for txn in service_fee_txns:
+        oid = tx_to_order.get(txn["id"])
+        if oid and oid not in tx_release_date_by_order:
+            p_date = txn.get("posted_date")
+            if p_date:
+                tx_release_date_by_order[oid] = p_date.strftime("%Y-%m-%d") if hasattr(p_date, "strftime") else str(p_date)[:10]
 
     FULFILLMENT_FEE_REFUND_PATTERNS = ["FulfillmentFeeRefund"]
 
@@ -660,6 +705,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
     total_estimatefees = 0
     total_mp_gst = 0
     total_tcs = 0
+    total_tds = 0
     total_taxable_value = 0
     total_gst_payable = 0
     total_exp_settlement = 0
@@ -673,6 +719,12 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
     total_actual_mp_gst = 0.0
     total_actual_tcs = 0.0
     total_tcs_leaks = 0.0
+    total_actual_tds = 0.0
+    total_tds_leaks = 0.0
+    total_mp_gst_leaks = 0.0
+    total_settlement_leak = 0.0
+    total_cancelled_qty = 0
+    total_cancelled_sales = 0.0
     total_settlement_paid = 0.0
     total_unsettled_not_paid = 0.0
     total_courier_return_count = 0
@@ -975,6 +1027,15 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         tcs_leaks = round(abs(tcs) - row_actual_tcs, 2)
         unsettled_not_paid = round(exp_settlement - row_settlement_paid, 2)
 
+        row_actual_tds = round(sum(tx_actual_tds_by_order.get(o['order__amazon_order_id'], 0.0) for o in orders), 2)
+        tds_leaks = round(abs(tds) - row_actual_tds, 2)
+        mp_gst_leaks = round(abs(mp_gst) - row_actual_mp_gst, 2)
+        settlement_leak = round(exp_settlement - unsettled_not_paid - row_settlement_paid, 2)
+        release_date = next((tx_release_date_by_order[o['order__amazon_order_id']] for o in orders if o['order__amazon_order_id'] in tx_release_date_by_order), "-")
+
+        row_cancelled_qty = sum(int(o.get('cancelled_qty', 0) or 0) for o in orders) if by_sku else 0
+        row_cancelled_sales = sum(float(parse_currency_to_decimal(o.get('cancelled_sales', 0)) or 0) for o in orders) if by_sku else 0.0
+
         results.append({
             "asin": asin_val,
             "parent_asin": parent_asin,
@@ -1028,6 +1089,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             "gst_to_pay_amount": format_currency(gst_to_pay_amount),
             "gst_to_pay_perc": round(gst_to_pay_perc, 2),
             "tcs": format_currency(tcs),
+            "tds": format_currency(tds),
 
             "claim_amount": format_currency(order_claim_amount),
             "claim_count": order_claim_count,
@@ -1050,6 +1112,14 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             "tcs_leaks": format_currency(tcs_leaks),
             "settlement_paid_in_bank": format_currency(row_settlement_paid),
             "unsettled_not_paid": format_currency(unsettled_not_paid),
+
+            "cancelled_qty": row_cancelled_qty,
+            "cancelled_sales": format_currency(row_cancelled_sales),
+            "mp_gst_leaks": format_currency(mp_gst_leaks),
+            "actual_tds": format_currency(row_actual_tds),
+            "tds_leaks": format_currency(tds_leaks),
+            "settlement_leak": format_currency(settlement_leak),
+            "release_transaction_date": release_date,
         })
 
         total_sales += gross_sales
@@ -1063,6 +1133,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         total_estimatefees += mpfees
         total_mp_gst += mp_gst
         total_tcs += tcs
+        total_tds += tds
         total_taxable_value += taxable_value
         total_gst_payable += gst_to_pay_amount
         total_exp_settlement += exp_settlement
@@ -1078,6 +1149,12 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         total_actual_mp_gst += row_actual_mp_gst
         total_actual_tcs += row_actual_tcs
         total_tcs_leaks += tcs_leaks
+        total_actual_tds += row_actual_tds
+        total_tds_leaks += tds_leaks
+        total_mp_gst_leaks += mp_gst_leaks
+        total_settlement_leak += settlement_leak
+        total_cancelled_qty += row_cancelled_qty
+        total_cancelled_sales += row_cancelled_sales
         total_settlement_paid += row_settlement_paid
         total_unsettled_not_paid += unsettled_not_paid
         total_courier_return_count += row_courier_return_count
@@ -1119,6 +1196,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         "shippingfees": format_currency(total_shipping),
         "mp_gst": format_currency(total_mp_gst),
         "tcs": format_currency(total_tcs),
+        "tds": format_currency(total_tds),
 
         "taxable_value": format_currency(total_taxable_value),
         "gst_to_pay_amount": format_currency(total_gst_payable),
@@ -1156,6 +1234,22 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         "total_settlement_paid_in_bank": format_currency(total_settlement_paid),
         "unsettled_not_paid": format_currency(total_unsettled_not_paid),
         "total_unsettled_not_paid": format_currency(total_unsettled_not_paid),
+
+        "cancelled_qty": total_cancelled_qty,
+        "total_cancelled_qty": total_cancelled_qty,
+        "cancelled_sales": format_currency(total_cancelled_sales),
+        "total_cancelled_sales": format_currency(total_cancelled_sales),
+        "actual_tds": format_currency(total_actual_tds),
+        "total_actual_tds": format_currency(total_actual_tds),
+        "tds_leaks": format_currency(total_tds_leaks),
+        "total_tds_leaks": format_currency(total_tds_leaks),
+        "mp_gst_leaks": format_currency(total_mp_gst_leaks),
+        "total_mp_gst_leaks": format_currency(total_mp_gst_leaks),
+        "mp_gst_leaks ": format_currency(total_mp_gst_leaks),
+        "settlement_leak": format_currency(total_settlement_leak),
+        "total_settlement_leak": format_currency(total_settlement_leak),
+        "settlement_leak ": format_currency(total_settlement_leak),
+        "release_transaction_date": "-",
     }
 
     results = enrich_row_image_urls(results, user=request.user)
@@ -1499,6 +1593,12 @@ def _payment_reconcile_order_level_logic(request):
     tot_act_gst = 0.0
     tot_act_tcs = 0.0
     tot_tcs_leaks = 0.0
+    tot_act_tds = 0.0
+    tot_tds_leaks = 0.0
+    tot_mp_gst_leaks = 0.0
+    tot_settlement_leak = 0.0
+    tot_cancelled_qty = 0
+    tot_cancelled_sales = 0.0
     tot_settled_paid = 0.0
     tot_unsettled = 0.0
 
@@ -1508,6 +1608,50 @@ def _payment_reconcile_order_level_logic(request):
     ).values("transaction_id", "identifier_value")
 
     tx_to_order = {row["transaction_id"]: row["identifier_value"] for row in tx_identifiers}
+
+    shipment_all_tx_ids = set(AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_type="Shipment",
+    ).values_list("id", flat=True))
+
+    tds_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=shipment_all_tx_ids,
+            breakdown_type="TaxDeductedAtSource"
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+    tx_actual_tds_by_order = {}
+    for bd in tds_breakdowns:
+        oid = tx_to_order.get(bd["transaction_id"])
+        if oid:
+            tx_actual_tds_by_order[oid] = tx_actual_tds_by_order.get(oid, 0.0) + abs(float(bd["total"] or 0))
+
+    service_fee_txns = (
+        AmazonTransaction.objects.filter(
+            id__in=tx_to_order.keys(),
+            transaction_type="ServiceFee",
+            transaction_status__in=["DEFERRED", "DEFERRED_RELEASED", "RELEASED"]
+        )
+        .order_by(
+            Case(
+                When(transaction_status="DEFERRED", then=Value(1)),
+                When(transaction_status="DEFERRED_RELEASED", then=Value(2)),
+                default=Value(3),
+                output_field=IntegerField(),
+            ),
+            "-posted_date"
+        )
+        .values("id", "posted_date", "transaction_status")
+    )
+    tx_release_date_by_order = {}
+    for txn in service_fee_txns:
+        oid = tx_to_order.get(txn["id"])
+        if oid and oid not in tx_release_date_by_order:
+            p_date = txn.get("posted_date")
+            if p_date:
+                tx_release_date_by_order[oid] = p_date.strftime("%Y-%m-%d") if hasattr(p_date, "strftime") else str(p_date)[:10]
 
     shipment_deferred_tx_ids = set(AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
@@ -1677,6 +1821,19 @@ def _payment_reconcile_order_level_logic(request):
         tcs_leaks = round(tcs_num - row_actual_tcs, 2)
         unsettled_not_paid = round(exp_settlement_num - row_settlement_paid, 2)
 
+        row_cancelled_qty = int(r.get("cancelled_qty") or 0)
+        row_cancelled_sales = float(parse_currency_to_decimal(r.get("cancelled_sales") or 0))
+
+        row_actual_tds = round(float(tx_actual_tds_by_order.get(oid, 0.0)), 2)
+        tds_num = abs(float(parse_currency_to_decimal(r.get("tds")) or 0))
+        tds_leaks = round(tds_num - row_actual_tds, 2)
+
+        mp_gst_num = abs(float(parse_currency_to_decimal(r.get("mp_gst")) or 0))
+        mp_gst_leaks = round(mp_gst_num - row_actual_mp_gst, 2)
+
+        row_settlement_leak = round(exp_settlement_num - unsettled_not_paid - row_settlement_paid, 2)
+        row_release_date = tx_release_date_by_order.get(oid, "-")
+
         tot_act_fees += row_actual_fees
         tot_fee_leaks += fees_leaks
         tot_act_ship += row_actual_shipping
@@ -1686,8 +1843,22 @@ def _payment_reconcile_order_level_logic(request):
         tot_tcs_leaks += tcs_leaks
         tot_settled_paid += row_settlement_paid
         tot_unsettled += unsettled_not_paid
+        tot_act_tds += row_actual_tds
+        tot_tds_leaks += tds_leaks
+        tot_mp_gst_leaks += mp_gst_leaks
+        tot_settlement_leak += row_settlement_leak
+        tot_cancelled_qty += row_cancelled_qty
+        tot_cancelled_sales += row_cancelled_sales
 
         r.update({
+            "cancelled_qty": row_cancelled_qty,
+            "cancelled_sales": format_currency(row_cancelled_sales),
+            "mp_gst_leaks": format_currency(mp_gst_leaks),
+            "tds": format_currency(tds_num),
+            "actual_tds": format_currency(row_actual_tds),
+            "tds_leaks": format_currency(tds_leaks),
+            "settlement_leak": format_currency(row_settlement_leak),
+            "release_transaction_date": row_release_date,
             "actual_fees": format_currency(row_actual_fees),
             "fees_leaks": format_currency(fees_leaks),
             "actual_shipping_charges": format_currency(row_actual_shipping),
@@ -1719,6 +1890,21 @@ def _payment_reconcile_order_level_logic(request):
         "total_settlement_paid_in_bank": format_currency(tot_settled_paid),
         "unsettled_not_paid": format_currency(tot_unsettled),
         "total_unsettled_not_paid": format_currency(tot_unsettled),
+        "cancelled_qty": tot_cancelled_qty,
+        "total_cancelled_qty": tot_cancelled_qty,
+        "cancelled_sales": format_currency(tot_cancelled_sales),
+        "total_cancelled_sales": format_currency(tot_cancelled_sales),
+        "actual_tds": format_currency(tot_act_tds),
+        "total_actual_tds": format_currency(tot_act_tds),
+        "tds_leaks": format_currency(tot_tds_leaks),
+        "total_tds_leaks": format_currency(tot_tds_leaks),
+        "mp_gst_leaks": format_currency(tot_mp_gst_leaks),
+        "total_mp_gst_leaks": format_currency(tot_mp_gst_leaks),
+        "mp_gst_leaks ": format_currency(tot_mp_gst_leaks),
+        "settlement_leak": format_currency(tot_settlement_leak),
+        "total_settlement_leak": format_currency(tot_settlement_leak),
+        "settlement_leak ": format_currency(tot_settlement_leak),
+        "release_transaction_date": "-",
     })
     data["summary"] = _build_reconciliation_summary(rows)
     data["totals"] = totals

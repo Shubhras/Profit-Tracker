@@ -1155,6 +1155,8 @@ RECONCILE_ORDER_COLUMNS = {
     "channel": "Channel",
     "grossqty": "Gross Qty",
     "final_net_qty": "Net Qty",
+    "cancelled_qty": "Cancelled Qty",
+    "cancelled_sales": "Cancelled Sales",
     "returnqty": "Return Qty",
     "courier_return_count": "Courier Return Count",
     "customer_return_count": "Customer Return Count",
@@ -1166,15 +1168,21 @@ RECONCILE_ORDER_COLUMNS = {
     "shippingfees": "Shipping Fees",
     "mp_gst": "MP-GST",
     "tcs": "TCS",
+    "tds": "TDS",
     "actual_fees": "Actual MP Fees",
     "fees_leaks": "Fee Leaks",
     "actual_shipping_charges": "Actual Shipping",
     "shipping_leaks": "Shipping Leaks",
     "actual_mp_gst": "Actual MP-GST",
+    "mp_gst_leaks": "MP-GST Leaks",
     "actual_tcs": "Actual TCS",
     "tcs_leaks": "TCS Leaks",
+    "actual_tds": "Actual TDS",
+    "tds_leaks": "TDS Leaks",
     "settlement_paid_in_bank": "Bank Settled Amount",
     "unsettled_not_paid": "Unsettled Amount",
+    "settlement_leak": "Settlement Leak",
+    "release_transaction_date": "Release Transaction Date",
     "ads": "Ad Spend",
     "taxable_value": "Taxable Value",
     "gst_to_pay_amount": "GST to Pay",
@@ -1189,26 +1197,42 @@ def format_reconcile_order_export(data_list, totals_dict=None):
     if isinstance(data_list, list):
         for idx, item in enumerate(data_list):
             if idx < len(formatted_list) and isinstance(item, dict):
+                formatted_list[idx]['cancelled_qty'] = item.get('cancelled_qty', 0)
+                formatted_list[idx]['cancelled_sales'] = format_val_currency(item.get('cancelled_sales'))
                 formatted_list[idx]['actual_fees'] = format_val_currency(item.get('actual_fees'))
                 formatted_list[idx]['fees_leaks'] = format_val_currency(item.get('fees_leaks'))
                 formatted_list[idx]['actual_shipping_charges'] = format_val_currency(item.get('actual_shipping_charges'))
                 formatted_list[idx]['shipping_leaks'] = format_val_currency(item.get('shipping_leaks'))
                 formatted_list[idx]['actual_mp_gst'] = format_val_currency(item.get('actual_mp_gst'))
+                formatted_list[idx]['mp_gst_leaks'] = format_val_currency(item.get('mp_gst_leaks'))
                 formatted_list[idx]['actual_tcs'] = format_val_currency(item.get('actual_tcs'))
                 formatted_list[idx]['tcs_leaks'] = format_val_currency(item.get('tcs_leaks'))
+                formatted_list[idx]['tds'] = format_val_currency(item.get('tds'))
+                formatted_list[idx]['actual_tds'] = format_val_currency(item.get('actual_tds'))
+                formatted_list[idx]['tds_leaks'] = format_val_currency(item.get('tds_leaks'))
                 formatted_list[idx]['settlement_paid_in_bank'] = format_val_currency(item.get('settlement_paid_in_bank'))
                 formatted_list[idx]['unsettled_not_paid'] = format_val_currency(item.get('unsettled_not_paid'))
+                formatted_list[idx]['settlement_leak'] = format_val_currency(item.get('settlement_leak'))
+                formatted_list[idx]['release_transaction_date'] = item.get('release_transaction_date', '-')
                 
     if isinstance(formatted_totals, dict) and isinstance(totals_dict, dict):
+        formatted_totals['cancelled_qty'] = totals_dict.get('total_cancelled_qty') or totals_dict.get('cancelled_qty', 0)
+        formatted_totals['cancelled_sales'] = format_val_currency(totals_dict.get('total_cancelled_sales') or totals_dict.get('cancelled_sales'))
         formatted_totals['actual_fees'] = format_val_currency(totals_dict.get('total_actual_fees') or totals_dict.get('actual_fees'))
         formatted_totals['fees_leaks'] = format_val_currency(totals_dict.get('total_fees_leaks') or totals_dict.get('fees_leaks'))
         formatted_totals['actual_shipping_charges'] = format_val_currency(totals_dict.get('total_actual_shipping') or totals_dict.get('actual_shipping_charges'))
         formatted_totals['shipping_leaks'] = format_val_currency(totals_dict.get('total_shipping_leaks') or totals_dict.get('shipping_leaks'))
         formatted_totals['actual_mp_gst'] = format_val_currency(totals_dict.get('total_actual_mp_gst') or totals_dict.get('actual_mp_gst'))
+        formatted_totals['mp_gst_leaks'] = format_val_currency(totals_dict.get('total_mp_gst_leaks') or totals_dict.get('mp_gst_leaks'))
         formatted_totals['actual_tcs'] = format_val_currency(totals_dict.get('total_actual_tcs') or totals_dict.get('actual_tcs'))
         formatted_totals['tcs_leaks'] = format_val_currency(totals_dict.get('total_tcs_leaks') or totals_dict.get('tcs_leaks'))
+        formatted_totals['tds'] = format_val_currency(totals_dict.get('tds'))
+        formatted_totals['actual_tds'] = format_val_currency(totals_dict.get('total_actual_tds') or totals_dict.get('actual_tds'))
+        formatted_totals['tds_leaks'] = format_val_currency(totals_dict.get('total_tds_leaks') or totals_dict.get('tds_leaks'))
         formatted_totals['settlement_paid_in_bank'] = format_val_currency(totals_dict.get('total_settlement_paid_in_bank') or totals_dict.get('settlement_paid_in_bank'))
         formatted_totals['unsettled_not_paid'] = format_val_currency(totals_dict.get('total_unsettled_not_paid') or totals_dict.get('unsettled_not_paid'))
+        formatted_totals['settlement_leak'] = format_val_currency(totals_dict.get('total_settlement_leak') or totals_dict.get('settlement_leak'))
+        formatted_totals['release_transaction_date'] = '-'
         
     return formatted_list, formatted_totals
 
