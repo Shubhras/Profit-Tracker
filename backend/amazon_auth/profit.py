@@ -93,6 +93,11 @@ DTO_FIELD_ALIAS_MAP = {
     'profit': 'profit',
     'profitpercent': 'grossprofitper',
     'grossprofitper': 'grossprofitper',
+    'actual_tds': 'actual_tds',
+    'tds_leaks': 'tds_leaks',
+    'mp_gst_leaks': 'mp_gst_leaks',
+    'settlement_leak': 'settlement_leak',
+    'release_transaction_date': 'release_transaction_date',
 }
 
 
@@ -281,6 +286,17 @@ def _combine_totals(amazon_t, myntra_t, type="style"):
             "tcs_leaks": format_currency(get_sum("tcs_leaks") or get_sum("total_tcs_leaks")),
             "settlement_paid_in_bank": format_currency(get_sum("settlement_paid_in_bank") or get_sum("total_settlement_paid_in_bank")),
             "unsettled_not_paid": format_currency(get_sum("unsettled_not_paid") or get_sum("total_unsettled_not_paid")),
+            "total_actual_tds": format_currency(get_sum("actual_tds") or get_sum("total_actual_tds")),
+            "total_tds_leaks": format_currency(get_sum("tds_leaks") or get_sum("total_tds_leaks")),
+            "total_mp_gst_leaks": format_currency(get_sum("mp_gst_leaks") or get_sum("total_mp_gst_leaks")),
+            "total_settlement_leak": format_currency(get_sum("settlement_leak") or get_sum("total_settlement_leak")),
+            "actual_tds": format_currency(get_sum("actual_tds") or get_sum("total_actual_tds")),
+            "tds_leaks": format_currency(get_sum("tds_leaks") or get_sum("total_tds_leaks")),
+            "mp_gst_leaks": format_currency(get_sum("mp_gst_leaks") or get_sum("total_mp_gst_leaks")),
+            "mp_gst_leaks ": format_currency(get_sum("mp_gst_leaks") or get_sum("total_mp_gst_leaks")),
+            "settlement_leak": format_currency(get_sum("settlement_leak") or get_sum("total_settlement_leak")),
+            "settlement_leak ": format_currency(get_sum("settlement_leak") or get_sum("total_settlement_leak")),
+            "release_transaction_date": "-",
         })
         
     elif type == "order":
@@ -375,6 +391,21 @@ def _combine_totals(amazon_t, myntra_t, type="style"):
             "total_settlement_paid_in_bank": format_currency(get_sum("settlement_paid_in_bank") or get_sum("total_settlement_paid_in_bank")),
             "unsettled_not_paid": format_currency(get_sum("unsettled_not_paid") or get_sum("total_unsettled_not_paid")),
             "total_unsettled_not_paid": format_currency(get_sum("unsettled_not_paid") or get_sum("total_unsettled_not_paid")),
+            "total_cancelled_qty": get_sum("total_cancelled_qty", is_currency=False) or get_sum("cancelled_qty", is_currency=False),
+            "cancelled_qty": get_sum("total_cancelled_qty", is_currency=False) or get_sum("cancelled_qty", is_currency=False),
+            "total_cancelled_sales": format_currency(get_sum("total_cancelled_sales") or get_sum("cancelled_sales")),
+            "cancelled_sales": format_currency(get_sum("total_cancelled_sales") or get_sum("cancelled_sales")),
+            "total_actual_tds": format_currency(get_sum("actual_tds") or get_sum("total_actual_tds")),
+            "total_tds_leaks": format_currency(get_sum("tds_leaks") or get_sum("total_tds_leaks")),
+            "total_mp_gst_leaks": format_currency(get_sum("mp_gst_leaks") or get_sum("total_mp_gst_leaks")),
+            "total_settlement_leak": format_currency(get_sum("settlement_leak") or get_sum("total_settlement_leak")),
+            "actual_tds": format_currency(get_sum("actual_tds") or get_sum("total_actual_tds")),
+            "tds_leaks": format_currency(get_sum("tds_leaks") or get_sum("total_tds_leaks")),
+            "mp_gst_leaks": format_currency(get_sum("mp_gst_leaks") or get_sum("total_mp_gst_leaks")),
+            "mp_gst_leaks ": format_currency(get_sum("mp_gst_leaks") or get_sum("total_mp_gst_leaks")),
+            "settlement_leak": format_currency(get_sum("settlement_leak") or get_sum("total_settlement_leak")),
+            "settlement_leak ": format_currency(get_sum("settlement_leak") or get_sum("total_settlement_leak")),
+            "release_transaction_date": "-",
         })
         
     return combined
@@ -518,6 +549,14 @@ class ProfitabilityItemDTO:
     settlement_paid_in_bank: Any = "₹0.0"
     unsettled_not_paid: Any = "₹0.0"
 
+    cancelled_qty: int = 0
+    cancelled_sales: Any = "₹0.0"
+    mp_gst_leaks: Any = "₹0.0"
+    actual_tds: Any = "₹0.0"
+    tds_leaks: Any = "₹0.0"
+    settlement_leak: Any = "₹0.0"
+    release_transaction_date: str = "-"
+
     def to_dict(self) -> dict:
         return asdict(self)
 
@@ -612,6 +651,14 @@ class ProfitabilityDTOAdapter:
         settlement_paid_in_bank = _format_curr(row.get("settlement_paid_in_bank"))
         unsettled_not_paid = _format_curr(row.get("unsettled_not_paid"))
 
+        cancelled_qty = _safe_int(row.get("cancelled_qty") if row.get("cancelled_qty") is not None else row.get("cancelledcanqty"))
+        cancelled_sales = _format_curr(row.get("cancelled_sales") if row.get("cancelled_sales") is not None else row.get("cancelledcansales"))
+        mp_gst_leaks = _format_curr(row.get("mp_gst_leaks"))
+        actual_tds = _format_curr(row.get("actual_tds"))
+        tds_leaks = _format_curr(row.get("tds_leaks"))
+        settlement_leak = _format_curr(row.get("settlement_leak"))
+        release_transaction_date = _safe_str(row.get("release_transaction_date") or "-")
+
         return ProfitabilityItemDTO(
             asin=asin,
             parent_asin=parent_asin,
@@ -678,6 +725,13 @@ class ProfitabilityDTOAdapter:
             expected_settlement=expected_settlement,
             settlement_paid_in_bank=settlement_paid_in_bank,
             unsettled_not_paid=unsettled_not_paid,
+            cancelled_qty=cancelled_qty,
+            cancelled_sales=cancelled_sales,
+            mp_gst_leaks=mp_gst_leaks,
+            actual_tds=actual_tds,
+            tds_leaks=tds_leaks,
+            settlement_leak=settlement_leak,
+            release_transaction_date=release_transaction_date,
         )
 
 
