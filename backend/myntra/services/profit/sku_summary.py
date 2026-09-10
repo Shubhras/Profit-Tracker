@@ -241,6 +241,10 @@ class SKUSummary:
             sku_estimated_fees = Decimal(0)
             sku_estimated_commission = Decimal(0)
             sku_estimated_fixed_fee = Decimal(0)
+            sku_estimated_return_fee = Decimal(0)
+            sku_estimated_marketing_fee = Decimal(0)
+            sku_estimated_shipping_fee = Decimal(0)
+            sku_other_estimated_fees = Decimal(0)
             sku_has_rules = False
 
             for order in sku_orders:
@@ -289,11 +293,19 @@ class SKUSummary:
                     sku_estimated_fees += est["total_estimated_fees"]
                     sku_estimated_commission += est["estimated_commission"]
                     sku_estimated_fixed_fee += est["estimated_fixed_fee"]
+                    sku_estimated_return_fee += est.get("estimated_return_fee", Decimal(0))
+                    sku_estimated_marketing_fee += est.get("estimated_marketing_fee", Decimal(0))
+                    sku_estimated_shipping_fee += est.get("estimated_shipping_fee", Decimal(0))
+                    sku_other_estimated_fees += est.get("other_estimated_fees", Decimal(0))
 
             if not sku_has_rules:
                 sku_estimated_fees = Decimal(0)
                 sku_estimated_commission = Decimal(0)
                 sku_estimated_fixed_fee = Decimal(0)
+                sku_estimated_return_fee = Decimal(0)
+                sku_estimated_marketing_fee = Decimal(0)
+                sku_estimated_shipping_fee = Decimal(0)
+                sku_other_estimated_fees = Decimal(0)
 
             if finance_data_available:
                 actual_fees = mp_fees
@@ -606,6 +618,10 @@ class SKUSummary:
                     "estimated_fees": sku_estimated_fees,
                     "estimated_commission": sku_estimated_commission,
                     "estimated_fixed_fee": sku_estimated_fixed_fee,
+                    "estimated_return_fee": sku_estimated_return_fee,
+                    "estimated_marketing_fee": sku_estimated_marketing_fee,
+                    "estimated_shipping_fee": sku_estimated_shipping_fee,
+                    "other_estimated_fees": sku_other_estimated_fees,
                     "actual_fees": actual_fees,
                     "fees_leaks": fees_leaks,
                     # ----------------------------------

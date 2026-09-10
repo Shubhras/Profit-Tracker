@@ -228,10 +228,18 @@ class OrderSummary:
                 estimated_fees = estimated_breakdown["total_estimated_fees"]
                 estimated_commission = estimated_breakdown["estimated_commission"]
                 estimated_fixed_fee = estimated_breakdown["estimated_fixed_fee"]
+                estimated_return_fee = estimated_breakdown.get("estimated_return_fee", Decimal(0))
+                estimated_marketing_fee = estimated_breakdown.get("estimated_marketing_fee", Decimal(0))
+                estimated_shipping_fee = estimated_breakdown.get("estimated_shipping_fee", Decimal(0))
+                other_estimated_fees = estimated_breakdown.get("other_estimated_fees", Decimal(0))
             else:
                 estimated_fees = Decimal(0)
                 estimated_commission = Decimal(0)
                 estimated_fixed_fee = Decimal(0)
+                estimated_return_fee = Decimal(0)
+                estimated_marketing_fee = Decimal(0)
+                estimated_shipping_fee = Decimal(0)
+                other_estimated_fees = Decimal(0)
 
             if finance_data_available:
                 actual_fees = mp_fees
@@ -430,6 +438,10 @@ class OrderSummary:
                     "estimated_fees": estimated_fees,
                     "estimated_commission": estimated_commission,
                     "estimated_fixed_fee": estimated_fixed_fee,
+                    "estimated_return_fee": estimated_return_fee,
+                    "estimated_marketing_fee": estimated_marketing_fee,
+                    "estimated_shipping_fee": estimated_shipping_fee,
+                    "other_estimated_fees": other_estimated_fees,
                     "actual_fees": actual_fees,
                     "fees_leaks": fees_leaks,
                     "article_type": order_article_type,

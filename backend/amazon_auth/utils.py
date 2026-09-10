@@ -1043,6 +1043,8 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
         order_replacement_count = sum(replacement_count_by_order.get(oid, 0) for oid in row_order_ids)
         order_is_replacement = any(oid in order_ids_with_replacement for oid in row_order_ids)
 
+        final_net_sales = max(0.0, final_net_sales - promo_discount)
+
         # ------------------------------------------------------------
         # TAXABLE VALUE
         # ------------------------------------------------------------
@@ -1087,7 +1089,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
         
         shipping_final = ( shipping_price + order_fulfillment_fee_refund ) 
 
-        mp_gst = (-abs(estimated_fees) + shipping_final) * 0.18
+        mp_gst = (-abs(estimated_fees) + shipping_final) * (18 / 118)
 
         stdcost = total_cost
         stdcost_per_unit = (total_cost / gross_qty) if gross_qty else 0
@@ -1100,27 +1102,13 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
 
         stdcost_missing_percentage = (missing_qty / gross_qty * 100) if gross_qty else 0
         
-        # exp_settlement = (
-        #     final_net_sales
-        #     + shipping_final
-        #     + ads
-        #     + tcs_total
-        #     - estimated_fees
-        #     - mp_gst
-        #     - promo_discount
-        #     - order_claim_amount
-        # )
-        
         exp_settlement = (
             final_net_sales
-            + shipping_final
-            # + ads                        remove this 
-            - tcs_total                    #substract now 
-            - tds_total                    #substract now 
             - estimated_fees
-            - mp_gst
-            - promo_discount
-            + order_claim_amount            #add this one 
+            + shipping_final
+            - tcs_total
+            - tds_total
+            + order_claim_amount
         )
         
         profit = (

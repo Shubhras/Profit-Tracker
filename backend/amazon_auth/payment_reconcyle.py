@@ -904,7 +904,8 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         order_claim_count = sum(claim_count_by_order.get(oid, 0) for oid in row_order_ids)
         order_replacement_count = sum(replacement_count_by_order.get(oid, 0) for oid in row_order_ids)
 
-        net_sales = final_net_sales
+        final_net_sales = max(0.0, final_net_sales - promo_discount)
+        net_sales = gross_sales + item_tax
         adjusted_gross_sales_val = gross_sales + item_tax
 
         mpfees = -abs(estimated_fees)
@@ -920,34 +921,16 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
 
         tcs = taxable_value * ((tcs_rate or 1.0) / 100.0)
         tds = taxable_value * ((tds_rate or 1.0) / 100.0)
-        mp_gst = (-abs(estimated_fees) + shipping_price) * 0.18
+        mp_gst = (-abs(estimated_fees) + shipping_price) * (18 / 118)
 
         cost = total_cost
 
-        # profit = (
-        #     final_net_sales
-        #     + shipping_price
-        #     + ads 
-        #     + tcs 
-        #     - estimated_fees
-        #     - mp_gst
-        #     - gst_to_pay_amount
-        #     - promo_discount
-        #     - order_claim_amount
-        #     - cost
-        # )
-
         exp_settlement = (
             final_net_sales
+            - estimated_fees
             + shipping_price
-            # + ads
-            # + tcs
             - tcs
             - tds
-            - estimated_fees
-            - mp_gst
-            - promo_discount
-            # - order_claim_amount
             + order_claim_amount
         )
 
@@ -1070,6 +1053,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         })
 
         total_sales += gross_sales
+        total_net_sales += net_sales
         total_final_net_sales += final_net_sales
         total_qty += gross_qty
         total_final_net_qty += final_net_qty
@@ -1102,7 +1086,6 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         total_claim_count += order_claim_count
         total_replacement_count += order_replacement_count
 
-    total_net_sales = total_final_net_sales
     return_perc = (total_returns / total_qty * 100) if total_qty else 0.0
     overall_profit_margin = (total_profit / total_net_sales * 100) if total_net_sales else 0.0
     overall_gst_perc = (total_gst_payable / total_taxable_value * 100) if total_taxable_value else 0.0

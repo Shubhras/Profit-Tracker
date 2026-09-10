@@ -252,6 +252,10 @@ class StyleSummary:
             style_estimated_fees = Decimal(0)
             style_estimated_commission = Decimal(0)
             style_estimated_fixed_fee = Decimal(0)
+            style_estimated_return_fee = Decimal(0)
+            style_estimated_marketing_fee = Decimal(0)
+            style_estimated_shipping_fee = Decimal(0)
+            style_other_estimated_fees = Decimal(0)
             style_has_rules = False
 
             for order in style_orders:
@@ -300,11 +304,19 @@ class StyleSummary:
                     style_estimated_fees += est["total_estimated_fees"]
                     style_estimated_commission += est["estimated_commission"]
                     style_estimated_fixed_fee += est["estimated_fixed_fee"]
+                    style_estimated_return_fee += est.get("estimated_return_fee", Decimal(0))
+                    style_estimated_marketing_fee += est.get("estimated_marketing_fee", Decimal(0))
+                    style_estimated_shipping_fee += est.get("estimated_shipping_fee", Decimal(0))
+                    style_other_estimated_fees += est.get("other_estimated_fees", Decimal(0))
 
             if not style_has_rules:
                 style_estimated_fees = Decimal(0)
                 style_estimated_commission = Decimal(0)
                 style_estimated_fixed_fee = Decimal(0)
+                style_estimated_return_fee = Decimal(0)
+                style_estimated_marketing_fee = Decimal(0)
+                style_estimated_shipping_fee = Decimal(0)
+                style_other_estimated_fees = Decimal(0)
 
             if finance_data_available:
                 actual_fees = mp_fees
@@ -659,6 +671,10 @@ class StyleSummary:
                     "estimated_fees": style_estimated_fees,
                     "estimated_commission": style_estimated_commission,
                     "estimated_fixed_fee": style_estimated_fixed_fee,
+                    "estimated_return_fee": style_estimated_return_fee,
+                    "estimated_marketing_fee": style_estimated_marketing_fee,
+                    "estimated_shipping_fee": style_estimated_shipping_fee,
+                    "other_estimated_fees": style_other_estimated_fees,
                     "actual_fees": actual_fees,
                     "fees_leaks": fees_leaks,
                     # ----------------------------------

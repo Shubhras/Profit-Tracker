@@ -139,20 +139,54 @@ class GrowthOpportunitiesAPIView(APIView):
                 logger.error(f"Error calculating SKU profitability in GrowthOpportunitiesAPIView: {str(e)}")
 
             # ---------------------------------------------------------
-            # Step C: Payment Leaks Total Difference
+            # Step C: Payment Leaks Total Recoverable Discrepancies
             # ---------------------------------------------------------
             payment_leaks_amount = 0.0
             try:
-                from amazon_auth.payment_reconcyle import _payment_reconcile_details_transactions_shipping_logic
-                recon_res = _payment_reconcile_details_transactions_shipping_logic(req_to_pass, by_sku=False)
-                if recon_res.status_code == 200 and isinstance(recon_res.data, dict):
-                    totals = recon_res.data.get("totals", {})
-                    fees_leaks = _parse_num_safe(totals.get("fees_leaks"))
-                    shipping_leaks = _parse_num_safe(totals.get("shipping_leaks"))
-                    tcs_leaks = _parse_num_safe(totals.get("tcs_leaks"))
-                    unsettled_not_paid = _parse_num_safe(totals.get("unsettled_not_paid"))
+                from amazon_auth.payment_reconcyle import combined_payment_reconcile_by_parentproductid
+                from_date_val = filters.get("fromDate") or data.get("fromDate")
+                to_date_val = filters.get("toDate") or data.get("toDate") or filters.get("endDate") or data.get("endDate")
+                channel_list = channels if channels else ["Amazon-India"]
 
-                    payment_leaks_amount = fees_leaks + shipping_leaks + tcs_leaks + unsettled_not_paid
+                recon_payload = {
+                    "filters": {
+                        "channel": {"IN": channel_list},
+                        "fromDate": from_date_val,
+                        "toDate": to_date_val,
+                    },
+                    "pagination": {
+                        "pageNo": 0,
+                        "pageSize": 10000,
+                    }
+                }
+                recon_req = getattr(request, '_request', request)
+                recon_req._body = json.dumps(recon_payload).encode('utf-8')
+                recon_req.data = recon_payload
+                recon_res = combined_payment_reconcile_by_parentproductid(recon_req)
+                if recon_res.status_code == 200 and isinstance(recon_res.data, dict):
+                    rows = recon_res.data.get("response", [])
+                    for r in rows:
+                        f_leak = _parse_num_safe(r.get("fees_leaks"))
+                        s_leak = _parse_num_safe(r.get("shipping_leaks"))
+                        t_leak = _parse_num_safe(r.get("tcs_leaks"))
+                        u_leak = _parse_num_safe(r.get("unsettled_not_paid"))
+
+                        act_gst = _parse_num_safe(r.get("actual_mp_gst"))
+                        est_gst = _parse_num_safe(r.get("mp_gst"))
+                        gst_leak = _parse_num_safe(r.get("mp_gst_leaks")) or (
+                            abs(act_gst - est_gst) if (act_gst > 0 and act_gst != est_gst) else 0.0
+                        )
+
+                        if f_leak > 0:
+                            payment_leaks_amount += f_leak
+                        if s_leak > 0:
+                            payment_leaks_amount += s_leak
+                        if gst_leak > 0:
+                            payment_leaks_amount += gst_leak
+                        if t_leak > 0:
+                            payment_leaks_amount += t_leak
+                        if u_leak > 0:
+                            payment_leaks_amount += u_leak
             except Exception as e:
                 logger.error(f"Error fetching payment reconcile details in GrowthOpportunitiesAPIView: {str(e)}")
 

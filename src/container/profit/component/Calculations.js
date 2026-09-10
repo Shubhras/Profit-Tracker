@@ -155,7 +155,71 @@ function CalculationModal({ open, onClose, type, data }) {
   };
 
   const renderMpFeesUI = () => {
+    const channelStr = String(data?.channel || data?.channel1 || data?.marketplace || '').toLowerCase();
+    const isMyntra = channelStr.includes('myntra') && !channelStr.includes('amazon');
+
     const totalFees = parseFloat(String(data?.mpfees || data?.estimatefees || 0).replace(/[₹,]/g, ''));
+
+    const myntraRows = [
+      {
+        label: 'Estimated Commission',
+        value: data?.estimated_commission || 0,
+      },
+      {
+        label: 'Estimated Fixed Fee',
+        value: data?.estimated_fixed_fee || 0,
+      },
+      {
+        label: 'Estimated Return Fee',
+        value: data?.estimated_return_fee || 0,
+      },
+      {
+        label: 'Estimated Marketing Fee',
+        value: data?.estimated_marketing_fee || 0,
+      },
+      {
+        label: 'Estimated Shipping Fee',
+        value: data?.estimated_shipping_fee || 0,
+      },
+      {
+        label: 'Other Estimated Fees',
+        value: data?.other_estimated_fees || 0,
+      },
+    ];
+
+    const amazonRows = [
+      {
+        label: 'Referral Fee',
+        value: data?.referral_fee || 0,
+      },
+      {
+        label: 'Variable Closing Fee',
+        value: data?.closing_fee || 0,
+      },
+      {
+        label: 'Per Item Fee',
+        value: data?.per_item_fee || 0,
+      },
+      {
+        label: 'FBA Pick And Pack',
+        value: data?.fba_pick_pack_fee || 0,
+      },
+      ...(parseFloat(String(data?.fba_fee || 0).replace(/[₹,]/g, '')) > 0 &&
+      !parseFloat(String(data?.fba_pick_pack_fee || 0).replace(/[₹,]/g, ''))
+        ? [
+            {
+              label: 'FBA Fee',
+              value: data?.fba_fee || 0,
+            },
+          ]
+        : []),
+      {
+        label: 'Other charges',
+        value: data?.other_charges || 0,
+      },
+    ];
+
+    const feeRows = isMyntra ? myntraRows : amazonRows;
 
     return (
       <div className="rounded-2xl overflow-hidden bg-white max-h-[85vh] overflow-y-auto">
@@ -217,42 +281,14 @@ function CalculationModal({ open, onClose, type, data }) {
             </div>
 
             {/* Rows */}
-            {[
-              {
-                label: 'Referral Fee',
-                value: data?.referral_fee || 0,
-              },
-              {
-                label: 'Variable Closing Fee',
-                value: data?.closing_fee || 0,
-              },
-              {
-                label: 'Per Item Fee',
-                value: data?.per_item_fee || 0,
-              },
-              {
-                label: 'FBA Pick And Pack',
-                value: data?.fba_pick_pack_fee || 0,
-              },
-              ...(parseFloat(String(data?.fba_fee || 0).replace(/[₹,]/g, '')) > 0 &&
-              !parseFloat(String(data?.fba_pick_pack_fee || 0).replace(/[₹,]/g, ''))
-                ? [
-                    {
-                      label: 'FBA Fee',
-                      value: data?.fba_fee || 0,
-                    },
-                  ]
-                : []),
-              {
-                label: 'Other charges',
-                value: data?.other_charges || 0,
-              },
-            ].map((item, index) => (
+            {feeRows.map((item, index) => (
               <div key={index} className="grid grid-cols-2 border-b last:border-b-0 border-[#e5e7eb]">
                 <div className="px-4 py-3 text-[14px] text-[#111827] border-r flex items-center gap-2 font-semibold">
                   {item.label}
 
-                  {item.label === 'Other charges' && <InfoCircleOutlined className="text-gray-500 text-[13px]" />}
+                  {(item.label === 'Other charges' || item.label.includes('Other')) && (
+                    <InfoCircleOutlined className="text-gray-500 text-[13px]" />
+                  )}
                 </div>
 
                 <div className="px-4 py-3 text-right text-[13px] text-[#111827] font-medium">
