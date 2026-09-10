@@ -379,7 +379,7 @@ function AdminUsers() {
                 setCreateModal(true);
               }}
             >
-              + Create Admin User
+              Create Admin User
             </Button>
           </div>
 

@@ -191,7 +191,7 @@ function PricingCard({ plan, index, onSelect, selectedPlanId, setSelectedPlanId,
               </button>
             </motion.div>
             <p className="text-center text-[11px] text-[#98A2B3] mt-2">
-              ₹1 refundable charge to verify your payment method
+              ₹5 refundable charge to verify your payment method
             </p>
           </div>
         )}
@@ -351,17 +351,49 @@ function PricingCards() {
     dispatch(getSubscriptionList());
   }, [dispatch]);
 
+  // const handlePlanSelect = (plan) => {
+  //   dispatch(selectPlan(plan));
+  //   const growthPlan = pricingPlans.find((item) => item.slug === 'growth-plan');
+
+  //   if (isLoggedIn) {
+  //     navigate('/checkout', { state: { plan, growthPlan } });
+  //   } else {
+  //     sessionStorage.setItem('selectedPlan', JSON.stringify({ ...plan, growthPlan }));
+  //     navigate('/auth/login', { state: { redirectTo: '/checkout', plan } });
+  //   }
+  // };
   const handlePlanSelect = (plan) => {
-    dispatch(selectPlan(plan));
+    const selectedPlan = {
+      ...plan,
+      selectedType,
+      selectedPrice: selectedType === 'monthly' ? plan.monthly_price : plan.annual_price,
+    };
+
+    dispatch(selectPlan(selectedPlan));
+
+    const growthPlan = pricingPlans.find((item) => item.slug === 'growth-plan');
+
+    const checkoutData = {
+      plan: selectedPlan,
+      growthPlan,
+      selectedType,
+    };
 
     if (isLoggedIn) {
-      navigate('/checkout', { state: { plan } });
+      navigate('/checkout', {
+        state: checkoutData,
+      });
     } else {
-      sessionStorage.setItem('selectedPlan', JSON.stringify(plan));
-      navigate('/auth/login', { state: { redirectTo: '/checkout', plan } });
+      sessionStorage.setItem('selectedPlan', JSON.stringify(checkoutData));
+
+      navigate('/auth/login', {
+        state: {
+          redirectTo: '/checkout',
+          ...checkoutData,
+        },
+      });
     }
   };
-
   const mapApiPlanToComponent = (plan) => {
     // Optional statement-style spec rows (Order volume / Data export / Data
     // sync / Integration limit) shown in the reference design. Only rendered

@@ -364,7 +364,7 @@ function ProductRanking() {
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               placeholder="Search products, ASIN..."
-              className="w-full h-[30px] rounded-xl border bg-white pl-9 pr-3 text-[13px] text-[#111827] outline-none shadow-sm transition-all duration-200 focus:border-[#dbe1e8]"
+              className="w-full h-[30px] rounded-lg border bg-white pl-9 pr-3 text-[13px] text-[#111827] outline-none shadow-sm transition-all duration-200 focus:border-[#dbe1e8]"
             />
             <SearchOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[14px]" />
           </div>
@@ -375,7 +375,7 @@ function ProductRanking() {
               type="primary"
               loading={exportLoading}
               icon={<ExportOutlined />}
-              className="!h-[30px] text-[13px] !px-3 !rounded-xl !bg-[#16a34a] !border-[#16a34a] !font-semibold !flex !items-center !justify-center gap-1 cursor-pointer"
+              className="!h-[30px] text-[13px] !px-3 !rounded-lg !bg-[#16a34a] !border-[#16a34a] !font-semibold !flex !items-center !justify-center gap-1 cursor-pointer"
             >
               Export <DownOutlined className="text-[10px]" />
             </Button>

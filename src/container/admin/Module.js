@@ -220,7 +220,7 @@ function Module() {
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-[22px] font-semibold text-[#111827] mb-1">Modules</h2>
+                <h2 className="text-[20px] font-semibold text-[#111827] mb-1">Modules</h2>
               </div>
 
               <Button

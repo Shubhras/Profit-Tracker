@@ -372,7 +372,7 @@ const AuthInfo = React.memo(() => {
 
   return (
     <div className="flex items-center justify-end flex-auto">
-      <div className="md:hidden flex items-center gap-3">
+      <div className="flex items-center gap-3">
         {actions.map((btn) => (
           <HeaderButton
             key={btn}

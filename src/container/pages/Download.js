@@ -313,22 +313,24 @@ export default function Download() {
         className="flex justify-between items-center px-4 xl:px-[15px] pt-2 pb-3 sm:pb-[30px] bg-transparent  sm:flex-col sm:items-start"
       />
 
-      <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-4 xl:px-[15px] pb-[30px] bg-transparent">
+      <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-4 xl:px-[15px] pb-[30px] bg-transparent w-full min-w-0">
+        {' '}
         <Spin spinning={loading} size="large">
-          <div className="bg-white dark:bg-white10 rounded-[10px] p-[20px] shadow-sm">
+          <div className="bg-white dark:bg-white10 rounded-[10px] p-[20px] shadow-sm w-full min-w-0 sm:p-4">
+            {' '}
             {/* Header Controls */}
-            <div className="flex justify-between items-center mb-3 flex-wrap gap-3">
+            <div className="flex justify-between items-center mb-3 flex-wrap gap-3 lg:items-start">
               <span className="text-[14px] font-semibold text-gray-700">Export History & Generated Reports</span>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-wrap sm:w-full">
                 {/* Search Bar */}
-                <div className="relative w-[260px]">
+                <div className="relative w-[260px] max-w-full sm:w-full">
                   <input
                     type="text"
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
                     placeholder="Search by report type, file..."
-                    className="w-full h-[30px] rounded-xl border bg-white pl-9 pr-3 text-[13px] text-[#111827] outline-none shadow-sm transition-all duration-200 focus:border-[#dbe1e8]"
+                    className="w-full h-[35px] rounded-lg border bg-white pl-9 pr-3 text-[13px] text-[#111827] outline-none shadow-sm transition-all duration-200 focus:border-[#dbe1e8]"
                   />
                   <SearchOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[14px]" />
                 </div>
@@ -339,14 +341,13 @@ export default function Download() {
                   onClick={confirmDeleteAll}
                   loading={deletingAll}
                   disabled={reports.length === 0}
-                  className="bg-red-50 text-red-600 hover:bg-red-100 rounded-md inline-flex items-center gap-1 border-none shadow-none text-[12px] font-medium px-3 h-[30px]"
+                  className="bg-red-50 text-red-600 rounded-md inline-flex items-center gap-0 border-none shadow-none text-[13px] font-medium px-3 h-[35px]"
                 >
-                  <DeleteOutlined />
+                  <DeleteOutlined style={{ fontSize: 14 }} />
                   Delete All
                 </Button>
               </div>
             </div>
-
             {/* Table / Skeleton */}
             {loading && reports.length === 0 ? (
               <Skeleton active paragraph={{ rows: 6 }} />

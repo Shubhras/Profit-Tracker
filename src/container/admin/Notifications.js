@@ -177,7 +177,7 @@ function Notifications() {
           ].map((item) => (
             <div
               key={item.title}
-              className="bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-lg hover:shadow-md transition-all duration-300 text-center"
+              className="bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-md hover:shadow-lg transition-all duration-300 text-center"
             >
               <p className="text-[14px] mb-0 text-gray-500 font-medium truncate">{item.title}</p>
 

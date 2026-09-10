@@ -277,6 +277,11 @@ export default function ProfitViewSecondTable() {
         cancelled_sales: item.cancelled_sales || 0,
         tds: item.tds || 0,
         other_expenses: item.other_expenses || 0,
+        mp_gst_leaks: item.mp_gst_leaks || 0,
+        actual_tds: item.actual_tds || 0,
+        tds_leaks: item.tds_leaks || 0,
+        settlement_leak: item.settlement_leak || 0,
+        release_transaction_date: item.release_transaction_date || 0,
 
         // settledamount: Number(item.profit_settled_amount) || 0,
       })) || [];
@@ -520,14 +525,6 @@ export default function ProfitViewSecondTable() {
       render: (value) => `${Number(value || 0).toFixed(2)}%`,
     },
     {
-      title: 'Promo Discount',
-      dataIndex: 'promo_discount',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.promo_discount) - parseAmount(b.promo_discount),
-    },
-    {
       title: 'Gross Sales',
       dataIndex: 'netsales',
       align: 'center',
@@ -535,6 +532,15 @@ export default function ProfitViewSecondTable() {
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.netsales) - parseAmount(b.netsales),
     },
+    {
+      title: 'Promo Discount',
+      dataIndex: 'promo_discount',
+      align: 'center',
+      width: 70,
+      ellipsis: true,
+      sorter: (a, b) => parseAmount(a.promo_discount) - parseAmount(b.promo_discount),
+    },
+
     {
       title: 'Net Sales',
       dataIndex: 'final_net_sales',
@@ -660,6 +666,14 @@ export default function ProfitViewSecondTable() {
             ellipsis: true,
             sorter: (a, b) => parseAmount(a.actual_mp_gst) - parseAmount(b.actual_mp_gst),
           },
+          {
+            title: 'MP-GST Leaks',
+            dataIndex: 'mp_gst_leaks',
+            align: 'center',
+            width: 80,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.mp_gst_leaks) - parseAmount(b.mp_gst_leaks),
+          },
         ]
       : []),
 
@@ -670,15 +684,6 @@ export default function ProfitViewSecondTable() {
       width: 70,
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.tcs) - parseAmount(b.tcs),
-    },
-    {
-      title: 'TDS',
-      dataIndex: 'tds',
-      align: 'center',
-      // width: 100,
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.tds) - parseAmount(b.tds),
     },
 
     ...(isReconcile
@@ -691,6 +696,11 @@ export default function ProfitViewSecondTable() {
             ellipsis: true,
             sorter: (a, b) => parseAmount(a.actual_tcs) - parseAmount(b.actual_tcs),
           },
+        ]
+      : []),
+
+    ...(isReconcile
+      ? [
           {
             title: 'TCS Leaks',
             dataIndex: 'tcs_leaks',
@@ -704,14 +714,48 @@ export default function ProfitViewSecondTable() {
       : []),
 
     {
-      title: 'Other expenses',
-      dataIndex: 'other_expenses',
+      title: 'TDS',
+      dataIndex: 'tds',
       align: 'center',
-      // width: 70,
+      // width: 100,
       width: 70,
       ellipsis: true,
-      sorter: (a, b) => parseAmount(a.other_expenses) - parseAmount(b.other_expenses),
+      sorter: (a, b) => parseAmount(a.tds) - parseAmount(b.tds),
     },
+
+    ...(isReconcile
+      ? [
+          {
+            title: 'Actual TDS',
+            dataIndex: 'actual_tds',
+            align: 'center',
+            width: 80,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.actual_tds) - parseAmount(b.actual_tds),
+          },
+          {
+            title: 'TDS Leaks',
+            dataIndex: 'tds_leaks',
+            align: 'center',
+            width: 80,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.tds_leaks) - parseAmount(b.tds_leaks),
+          },
+        ]
+      : []),
+
+    ...(!isReconcile
+      ? [
+          {
+            title: 'Other expenses',
+            dataIndex: 'other_expenses',
+            align: 'center',
+            width: 70,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.other_expenses) - parseAmount(b.other_expenses),
+          },
+        ]
+      : []),
     {
       title: 'Expected Settlement',
       dataIndex: 'settleAmount',
@@ -740,17 +784,33 @@ export default function ProfitViewSecondTable() {
             sorter: (a, b) => parseAmount(a.unsettled_not_paid) - parseAmount(b.unsettled_not_paid),
             render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
           },
+          {
+            title: 'Settlement Leak',
+            dataIndex: 'settlement_leak',
+            align: 'center',
+            ellipsis: true,
+            width: 70,
+            sorter: (a, b) => parseAmount(a.settlement_leak) - parseAmount(b.settlement_leak),
+          },
+          {
+            title: 'Release Transaction date',
+            dataIndex: 'release_transaction_date',
+            align: 'center',
+            ellipsis: true,
+            width: 70,
+            sorter: (a, b) => parseAmount(a.release_transaction_date) - parseAmount(b.release_transaction_date),
+          },
         ]
       : []),
 
-    {
-      title: 'Ad Spend',
-      dataIndex: 'adSpend',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.adSpend) - parseAmount(b.adSpend),
-    },
+    // {
+    //   title: 'Ad Spend',
+    //   dataIndex: 'adSpend',
+    //   align: 'center',
+    //   width: 70,
+    //   ellipsis: true,
+    //   sorter: (a, b) => parseAmount(a.adSpend) - parseAmount(b.adSpend),
+    // },
     // {
     //   title: 'Net asp',
     //   dataIndex: 'netasp',
@@ -764,40 +824,44 @@ export default function ProfitViewSecondTable() {
     //   sorter: (a, b) => a.net_discount - b.net_discount,
     // },
 
-    {
-      title: 'Taxable Value',
-      dataIndex: 'taxableValue',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.taxableValue) - parseAmount(b.taxableValue),
-    },
+    ...(!isReconcile
+      ? [
+          {
+            title: 'Taxable Value',
+            dataIndex: 'taxableValue',
+            align: 'center',
+            width: 70,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.taxableValue) - parseAmount(b.taxableValue),
+          },
 
-    {
-      title: 'GST to Pay',
-      dataIndex: 'gst_to_pay_amount',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.gst_to_pay_amount) - parseAmount(b.gst_to_pay_amount),
-    },
-    {
-      title: 'GST to Pay %',
-      dataIndex: 'gst_to_pay_perc',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.gst_to_pay_perc) - parseAmount(b.gst_to_pay_perc),
-      render: (v) => <span>{v}%</span>,
-    },
-    {
-      title: 'Claim Amount',
-      dataIndex: 'claim_amount',
-      align: 'center',
-      width: 70,
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.claim_amount) - parseAmount(b.claim_amount),
-    },
+          {
+            title: 'GST to Pay',
+            dataIndex: 'gst_to_pay_amount',
+            align: 'center',
+            width: 70,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.gst_to_pay_amount) - parseAmount(b.gst_to_pay_amount),
+          },
+          {
+            title: 'GST to Pay %',
+            dataIndex: 'gst_to_pay_perc',
+            align: 'center',
+            width: 70,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.gst_to_pay_perc) - parseAmount(b.gst_to_pay_perc),
+            render: (v) => <span>{v}%</span>,
+          },
+          {
+            title: 'Claim Amount',
+            dataIndex: 'claim_amount',
+            align: 'center',
+            width: 70,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.claim_amount) - parseAmount(b.claim_amount),
+          },
+        ]
+      : []),
     ...(isReconcile
       ? []
       : [
@@ -1169,7 +1233,7 @@ export default function ProfitViewSecondTable() {
               }
             }}
             size="small"
-            scroll={{ x: 1800 }}
+            scroll={{ x: 2200 }}
             className="
     [&_.ant-table-thead>tr>th]:!text-[12px]
     [&_.ant-table-thead>tr>th]:!font-semibold
@@ -1238,6 +1302,11 @@ export default function ProfitViewSecondTable() {
                       cancelled_sales: 'total_cancelled_sales',
                       tds: 'tds',
                       other_expenses: 'total_other_expenses',
+                      mp_gst_leaks: 'mp_gst_leaks',
+                      actual_tds: 'actual_tds',
+                      tds_leaks: 'tds_leaks',
+                      settlement_leak: 'settlement_leak',
+                      release_transaction_date: 'release_transaction_date',
                     };
 
                     const totalKey = keyMap[col.dataIndex] || col.dataIndex;

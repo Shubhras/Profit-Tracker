@@ -968,7 +968,7 @@ export default function Summary() {
         <Row gutter={[16, 16]} className="mt-2">
           <Col xs={24} lg={10}>
             <div
-              className="bg-white rounded-[24px] border border-[#edf0f7] shadow-sm p-3"
+              className="bg-white rounded-[24px] border border-[#edf0f7] shadow-sm p-3 sm:p-4"
               style={{
                 height: '415px',
               }}
@@ -1061,7 +1061,7 @@ export default function Summary() {
                   const circlePct = Math.min(Math.max(item.percentage, 0), 100);
                   return (
                     <Col xs={24} sm={12} key={item.title}>
-                      <div className="bg-white rounded-[18px] border border-[#edf0f7] shadow-sm p-2">
+                      <div className="bg-white rounded-[18px] border border-[#edf0f7] shadow-sm p-2 sm:p-4">
                         {/* HEADER */}
                         <div className="flex items-center gap-2 mb-1">
                           <div

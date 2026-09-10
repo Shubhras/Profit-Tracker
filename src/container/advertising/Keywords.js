@@ -580,7 +580,7 @@ function Keywords() {
                   placeholder="Search keywords..."
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
-                  className="w-full h-[30px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm"
+                  className="w-full h-[30px] rounded-lg border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm"
                 />
 
                 <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
@@ -593,7 +593,7 @@ function Keywords() {
                 <select
                   value={selectedCampaign}
                   onChange={(e) => setSelectedCampaign(e.target.value)}
-                  className="h-[30px] w-[150px] md:flex-1 md:min-w-[140px]  px-2 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none"
+                  className="h-[30px] w-[150px] md:flex-1 md:min-w-[140px]  px-2 rounded-lg border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none"
                 >
                   <option value="">All Campaigns</option>
 
@@ -607,7 +607,7 @@ function Keywords() {
                 <select
                   value={stateFilter}
                   onChange={(e) => setStateFilter(e.target.value)}
-                  className="h-[30px] px-2 pr-6 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
+                  className="h-[30px] px-2 pr-6 rounded-lg border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
                 >
                   <option value="">All State</option>
                   <option value="ENABLED">Enabled</option>
@@ -617,7 +617,7 @@ function Keywords() {
                 <select
                   value={matchType}
                   onChange={(e) => setMatchType(e.target.value)}
-                  className="h-[30px] px-2 pr-4 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none"
+                  className="h-[30px] px-2 pr-4 rounded-lg border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none"
                 >
                   <option value="">All Match Type</option>
                   <option value="BROAD">Broad</option>
@@ -629,7 +629,7 @@ function Keywords() {
                 <select
                   value={selectedAdGroup}
                   onChange={(e) => setSelectedAdGroup(e.target.value)}
-                  className="h-[30px] w-[150px] md:flex-1 md:min-w-[140px] px-2 pr-4 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer truncate"
+                  className="h-[30px] w-[150px] md:flex-1 md:min-w-[140px] px-2 pr-4 rounded-lg border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer truncate"
                 >
                   <option value="">All Ad Groups</option>
 
@@ -646,7 +646,7 @@ function Keywords() {
                     type="primary"
                     loading={exportLoading}
                     icon={<ExportOutlined />}
-                    className="!h-[30px] text-[13px] !px-3 !rounded-xl !bg-[#2563eb] !border-[#2563eb] !font-semibold !shadow-sm flex items-center gap-1 cursor-pointer"
+                    className="!h-[30px] text-[13px] !px-3 !rounded-lg !bg-[#2563eb] !border-[#2563eb] !font-semibold !shadow-sm flex items-center gap-1 cursor-pointer"
                   >
                     Export <DownOutlined className="text-[10px]" />
                   </Button>

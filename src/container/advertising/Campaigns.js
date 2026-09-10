@@ -911,7 +911,7 @@ function Campaigns() {
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
                   placeholder="Search campaigns..."
-                  className="w-full h-[30px] rounded-xl border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none"
+                  className="w-full h-[30px] rounded-lg border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none"
                 />
 
                 <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
@@ -922,7 +922,7 @@ function Campaigns() {
                 <select
                   value={stateFilter}
                   onChange={(e) => setStateFilter(e.target.value)}
-                  className="h-[30px] px-2 pr-4 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
+                  className="h-[30px] px-2 pr-4 rounded-lg border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
                 >
                   <option value="">All State</option>
                   <option value="ENABLED">Enabled</option>
@@ -933,14 +933,14 @@ function Campaigns() {
                 <select
                   value={targetinType}
                   onChange={(e) => settargetingType(e.target.value)}
-                  className="h-[30px] px-2 pr-4 rounded-xl border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
+                  className="h-[30px] px-2 pr-4 rounded-lg border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
                 >
                   <option value="">All Targeting Type</option>
                   <option value="MANUAL">Manual</option>
                   <option value="AUTO">Auto</option>
                 </select>
 
-                <div className="flex items-center gap-1 border border-[#dbe1e8] rounded-xl px-2.5 py-0.5 bg-white text-[12px] h-[30px]">
+                <div className="flex items-center gap-1 border border-[#dbe1e8] rounded-lg px-2.5 py-0.5 bg-white text-[12px] h-[30px]">
                   <span className="text-[#6b7280] font-medium text-[11px]">Start:</span>
                   <input
                     type="date"
@@ -950,7 +950,7 @@ function Campaigns() {
                   />
                 </div>
 
-                <div className="flex items-center gap-1 border border-[#dbe1e8] rounded-xl px-2.5 py-0.5 bg-white text-[12px] h-[30px]">
+                <div className="flex items-center gap-1 border border-[#dbe1e8] rounded-lg px-2.5 py-0.5 bg-white text-[12px] h-[30px]">
                   <span className="text-[#6b7280] font-medium text-[11px]">End:</span>
                   <input
                     type="date"
@@ -963,7 +963,7 @@ function Campaigns() {
                 <Dropdown trigger={['click']} dropdownRender={() => manageColumnsDropdown} placement="bottomRight">
                   <Button
                     icon={<SettingOutlined />}
-                    className="!h-[30px] px-2 !flex !items-center !justify-center gap-0 text-[13px] !rounded-xl !border-[#dbe1e8] !text-[#374151] !font-medium"
+                    className="!h-[30px] px-2 !flex !items-center !justify-center gap-0 text-[13px] !rounded-lg !border-[#dbe1e8] !text-[#374151] !font-medium"
                   >
                     Manage Columns
                   </Button>
@@ -973,7 +973,7 @@ function Campaigns() {
                     type="primary"
                     icon={<ExportOutlined />}
                     loading={exportLoading}
-                    className="!h-[30px] text-[13px] !rounded-xl !bg-[#2563eb] !font-semibold !flex !items-center !justify-center"
+                    className="!h-[30px] text-[13px] !rounded-lg !bg-[#2563eb] !font-semibold !flex !items-center !justify-center"
                   >
                     Export <DownOutlined className="text-[10px] ml-1" />
                   </Button>
@@ -1078,7 +1078,7 @@ function Campaigns() {
                 setSelectedBudget(null);
                 setBudgetValue('');
               }}
-              className="h-[40px] px-4 rounded-xl border border-[#e2e8f0] text-[#475569] text-[14px] font-medium hover:bg-[#f8fafc] transition-all"
+              className="h-[40px] px-4 rounded-lg border border-[#e2e8f0] text-[#475569] text-[14px] font-medium hover:bg-[#f8fafc] transition-all"
             >
               Cancel
             </button>
@@ -1086,7 +1086,7 @@ function Campaigns() {
             <Button
               type="primary"
               onClick={handleUpdateBudget}
-              className="h-[40px] px-3 rounded-xl text-white text-[14px] font-semibold shadow-md transition-all"
+              className="h-[40px] px-3 rounded-lg text-white text-[14px] font-semibold shadow-md transition-all"
             >
               Update Budget
             </Button>

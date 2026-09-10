@@ -45,6 +45,8 @@ const login = (values, callback) => {
         // Dispatch login success and subscription status
         dispatch(loginSuccess(true));
         dispatch(actions.setUserProfile(response.data.data));
+        console.log('USER DATA STORED IN REDUX:', response.data.data);
+
         dispatch(actions.setHasSubscription(hasSubscription));
 
         // callback(hasSubscription);

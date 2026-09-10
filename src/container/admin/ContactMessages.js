@@ -248,9 +248,9 @@ function ContactMessages() {
   ];
 
   return (
-    <div className="min-h-screen p-6 bg-[#f8fafc]">
+    <div className="min-h-screen bg-[#f8fafc] p-4">
       <div className="mb-6">
-        <h1 className="text-[22px] font-bold text-[#0f172a] mb-1">Contact Messages</h1>
+        <h1 className="text-[20px] font-bold text-[#0f172a] mb-1">Contact Messages</h1>
         <p className="text-[13px] text-[#64748b]">
           Manage and respond to website user inquiries, lead requests, and contact messages.
         </p>
@@ -259,56 +259,56 @@ function ContactMessages() {
       {/* 4 Cards in Single Horizontal Row with Square Icon Boxes */}
       <Row gutter={[16, 16]} className="mb-6">
         <Col xs={24} sm={12} md={6}>
-          <Card className="rounded-2xl border border-[#e2e8f0] shadow-sm hover:shadow-md transition-all bg-white">
+          <Card className="rounded-2xl border border-[#e2e8f0] shadow-md hover:shadow-lg transition-all bg-white">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wider">Total Messages</div>
-                <div className="text-[24px] font-bold text-[#0f172a] mt-1">{totalCount}</div>
+                <div className="text-[13px] text-[#64748b]">Total Messages</div>
+                <div className="text-[23px] font-bold text-[#0f172a] mt-1">{totalCount}</div>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-[#eff6ff] flex items-center justify-center text-[#2563eb] border border-[#dbeafe]">
-                <MailOutlined className="text-[20px]" />
+              <div className="w-9 h-9 rounded-xl bg-[#eff6ff] flex items-center justify-center text-[#2563eb] border border-[#dbeafe]">
+                <MailOutlined className="text-[17px]" />
               </div>
             </div>
           </Card>
         </Col>
 
         <Col xs={24} sm={12} md={6}>
-          <Card className="rounded-2xl border border-[#e2e8f0] shadow-sm hover:shadow-md transition-all bg-white">
+          <Card className="rounded-2xl border border-[#e2e8f0] shadow-md hover:shadow-lg transition-all bg-white">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wider">New Inquiries</div>
-                <div className="text-[24px] font-bold text-[#d97706] mt-1">{newCount}</div>
+                <div className="text-[13px] text-[#64748b]">New Inquiries</div>
+                <div className="text-[23px] font-bold text-[#d97706] mt-1">{newCount}</div>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-[#fffbeb] flex items-center justify-center text-[#d97706] border border-[#fef3c7]">
-                <ClockCircleOutlined className="text-[20px]" />
+              <div className="w-9 h-9 rounded-xl bg-[#fffbeb] flex items-center justify-center text-[#d97706] border border-[#fef3c7]">
+                <ClockCircleOutlined className="text-[17px]" />
               </div>
             </div>
           </Card>
         </Col>
 
         <Col xs={24} sm={12} md={6}>
-          <Card className="rounded-2xl border border-[#e2e8f0] shadow-sm hover:shadow-md transition-all bg-white">
+          <Card className="rounded-2xl border border-[#e2e8f0] shadow-md hover:shadow-lg transition-all bg-white">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wider">Contacted</div>
-                <div className="text-[24px] font-bold text-[#2563eb] mt-1">{contactedCount}</div>
+                <div className="text-[13px] text-[#64748b]">Contacted</div>
+                <div className="text-[23px] font-bold text-[#2563eb] mt-1">{contactedCount}</div>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-[#eff6ff] flex items-center justify-center text-[#2563eb] border border-[#dbeafe]">
-                <PhoneOutlined className="text-[20px]" />
+              <div className="w-9 h-9 rounded-xl bg-[#eff6ff] flex items-center justify-center text-[#2563eb] border border-[#dbeafe]">
+                <PhoneOutlined className="text-[17px]" />
               </div>
             </div>
           </Card>
         </Col>
 
         <Col xs={24} sm={12} md={6}>
-          <Card className="rounded-2xl border border-[#e2e8f0] shadow-sm hover:shadow-md transition-all bg-white">
+          <Card className="rounded-2xl border border-[#e2e8f0] shadow-md hover:shadow-lg transition-all bg-white">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wider">Resolved</div>
-                <div className="text-[24px] font-bold text-[#059669] mt-1">{resolvedCount}</div>
+                <div className="text-[13px] text-[#64748b]">Resolved</div>
+                <div className="text-[23px] font-bold text-[#059669] mt-1">{resolvedCount}</div>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-[#ecfdf5] flex items-center justify-center text-[#059669] border border-[#a7f3d0]">
-                <CheckCircleOutlined className="text-[20px]" />
+              <div className="w-9 h-9 rounded-xl bg-[#ecfdf5] flex items-center justify-center text-[#059669] border border-[#a7f3d0]">
+                <CheckCircleOutlined className="text-[17px]" />
               </div>
             </div>
           </Card>

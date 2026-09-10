@@ -279,7 +279,7 @@ export default function ProductConfigTab({ pagination, setPagination, search, on
               placeholder="Search by ASIN / ID, SKU"
               allowClear
               onChange={(e) => onSearch(e.target.value)}
-              className="w-full !h-[30px]"
+              className="w-full !h-[30px] rounded-lg"
             />{' '}
           </div>
           <div className="flex gap-2 shrink-0 md:w-full md:justify-end sm:w-full sm:justify-start sm:flex-1">

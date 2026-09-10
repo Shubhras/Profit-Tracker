@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Spin, Modal, Result } from 'antd';
-import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, CloseCircleOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { DataService } from '../../config/dataService/dataService';
 import {
   createSubscription,
@@ -230,8 +230,9 @@ function Checkout() {
   const location = useLocation();
 
   const isLoggedIn = useSelector((state) => state.auth.login);
-  const userObj = useSelector((state) => state.auth.user);
+  const userObj = useSelector((state) => state.auth.profile);
   const planFromState = location.state?.plan;
+  const growthPlanFromState = location.state?.growthPlan;
   const { selectedPlan, loading, error } = useSelector((state) => state.subscription);
 
   const planFromSession = React.useMemo(() => {
@@ -244,11 +245,20 @@ function Checkout() {
   }, []);
 
   const plan = planFromState || selectedPlan || planFromSession;
+  const growthPlan = growthPlanFromState || plan?.growthPlan;
+  const selectedBillingCycle =
+    planFromState?.selectedType || location.state?.selectedType || plan?.selectedType || 'monthly';
 
+  const growthPrice =
+    selectedBillingCycle === 'annual' ? Number(growthPlan?.annual_price || 0) : Number(growthPlan?.monthly_price || 0);
+
+  const growthTotal = +(growthPrice * (1 + GST_RATE)).toFixed(2);
   const [activeTab, setActiveTab] = useState('upi');
-  const [email, setEmail] = useState(userObj?.email || 'letstalk@trackmyprofit.com');
-  const [businessName, setBusinessName] = useState(userObj?.name || 'Artisian Roots');
-  const [stateOfSupply, setStateOfSupply] = useState('Maharashtra');
+  // const [email, setEmail] = useState(userObj?.email || 'letstalk@trackmyprofit.com');
+  // const [businessName, setBusinessName] = useState(userObj?.name || 'Artisian Roots');
+  const [email, setEmail] = useState('');
+  const [businessName, setBusinessName] = useState('');
+  const [stateOfSupply, setStateOfSupply] = useState('Madhya Pradesh');
   const [gstin, setGstin] = useState('23AABCU9603R1ZX');
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState('');
@@ -256,7 +266,32 @@ function Checkout() {
 
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
+  const [confirmSubscriptionVisible, setConfirmSubscriptionVisible] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
+  const [currentPlanName, setCurrentPlanName] = useState('');
+  useEffect(() => {
+    if (userObj) {
+      setEmail(userObj.email || '');
+      setBusinessName(userObj.name || '');
+    }
+  }, [userObj]);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const fetchCurrentSubscription = async () => {
+      try {
+        const response = await DataService.get('/my-subscription/');
+        const subscription = response?.data?.data;
+        setCurrentPlanName(subscription?.plan?.plan_name || '');
+      } catch (err) {
+        // A user without an active subscription can continue with a new plan.
+        setCurrentPlanName('');
+      }
+    };
+
+    fetchCurrentSubscription();
+  }, [isLoggedIn]);
 
   useEffect(() => {
     if (!plan) {
@@ -291,6 +326,7 @@ function Checkout() {
   const planLineName = rawPlanName.toLowerCase().includes('plan') ? rawPlanName : `${rawPlanName} plan`;
 
   const basePrice = isStarter ? 0 : plan?.selectedPrice || plan?.monthly_price || 0;
+
   const quote = calculateQuote(basePrice, appliedCoupon, stateOfSupply);
 
   const loadRazorpayScript = () => {
@@ -366,9 +402,14 @@ function Checkout() {
   };
 
   const handleSubscribe = () => {
+    setConfirmSubscriptionVisible(true);
+  };
+
+  const handleConfirmSubscription = () => {
     if (!plan?.id) {
       return;
     }
+    setConfirmSubscriptionVisible(false);
     setProcessingPayment(true);
     const couponCodeStr = appliedCoupon
       ? typeof appliedCoupon === 'object'
@@ -442,7 +483,7 @@ function Checkout() {
 
   const handleRetryPayment = () => {
     setCancelModalVisible(false);
-    handleSubscribe();
+    handleConfirmSubscription();
   };
 
   const handleBackToPricing = () => {
@@ -460,384 +501,28 @@ function Checkout() {
 
   return (
     <>
-      <style>{`
-        .checkout-container {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          min-height: 100vh;
-          background: #ffffff;
-          color: #0D0F0E;
-          font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-          font-size: 15px;
-          line-height: 1.55;
-        }
-        .checkout-split-l {
-          background: #F6F7F6;
-          border-right: 1px solid #E3E6E4;
-          display: flex;
-          justify-content: flex-end;
-          padding-right: 48px;
-        }
-        .checkout-split-r {
-          display: flex;
-          justify-content: flex-start;
-          background: #ffffff;
-          padding-left: 48px;
-        }
-        .checkout-pane {
-          width: 100%;
-          max-width: 660px;
-          padding: 48px 0 64px;
-          box-sizing: border-box;
-        }
-        @media (max-width: 1200px) {
-          .checkout-split-l {
-            padding-right: 24px;
-          }
-          .checkout-split-r {
-            padding-left: 24px;
-          }
-          .checkout-pane {
-            max-width: 580px;
-          }
-        }
-        @media (max-width: 940px) {
-          .checkout-container {
-            grid-template-columns: 1fr;
-            min-height: 0;
-          }
-          .checkout-split-l {
-            border-right: 0;
-            border-bottom: 1px solid #E3E6E4;
-            justify-content: center;
-            padding-right: 0;
-          }
-          .checkout-split-r {
-            justify-content: center;
-            padding-left: 0;
-          }
-          .checkout-pane {
-            max-width: 600px;
-            padding: 32px 24px 40px;
-          }
-        }
-        .checkout-crumb {
-          background: #F0FDF4;
-          border: 1.5px solid #BBF7D0;
-          border-radius: 24px;
-          padding: 8px 18px;
-          cursor: pointer;
-          color: #15803D;
-          font-size: 15px;
-          font-weight: 700;
-          display: inline-flex;
-          gap: 9px;
-          align-items: center;
-          margin-bottom: 28px;
-          transition: all 0.2s ease;
-          box-shadow: 0 2px 8px rgba(34, 197, 94, 0.12);
-        }
-        .checkout-crumb:hover {
-          background: #22C55E;
-          color: #ffffff;
-          border-color: #22C55E;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
-        }
-        .checkout-crumb .arrow {
-          font-size: 16px;
-          font-weight: 800;
-        }
-        .checkout-crumb .brand-name {
-          font-weight: 800;
-          letter-spacing: -0.01em;
-        }
-        .checkout-kicker {
-          margin: 0;
-          color: #5E6461;
-          font-size: 15px;
-        }
-        .checkout-bigprice {
-          display: flex;
-          align-items: baseline;
-          gap: 10px;
-          margin: 6px 0 30px;
-          font-family: "Instrument Sans", Inter, sans-serif;
-          font-size: 40px;
-          font-weight: 700;
-          letter-spacing: -0.035em;
-        }
-        .checkout-bigprice em {
-          font-style: normal;
-          font-family: Inter, sans-serif;
-          font-size: 14.5px;
-          font-weight: 500;
-          letter-spacing: 0;
-          color: #5E6461;
-        }
-        .checkout-lines {
-          display: grid;
-        }
-        .checkout-lines .ln {
-          display: flex;
-          justify-content: space-between;
-          gap: 16px;
-          padding: 13px 0;
-          font-size: 14.5px;
-          align-items: baseline;
-        }
-        .checkout-lines .ln + .ln {
-          border-top: 1px solid #E3E6E4;
-        }
-        .checkout-lines .ln .k {
-          color: #5E6461;
-        }
-        .checkout-lines .ln .k b {
-          color: #0D0F0E;
-          font-weight: 600;
-          display: block;
-          font-size: 15px;
-        }
-        .checkout-lines .ln .k small {
-          display: block;
-          color: #8A908C;
-          font-size: 12.5px;
-          margin-top: 2px;
-        }
-        .checkout-lines .ln.indent .k {
-          padding-left: 14px;
-          font-size: 13px;
-        }
-        .checkout-lines .ln.credit .v {
-          color: #00784D;
-        }
-        .checkout-lines .ln.grand {
-          border-top: 1.5px solid #0D0F0E;
-          padding-top: 16px;
-          margin-top: 4px;
-        }
-        .checkout-lines .ln.grand .k {
-          color: #0D0F0E;
-          font-weight: 600;
-          font-size: 15.5px;
-        }
-        .checkout-lines .ln.grand .v {
-          font-family: "Instrument Sans", Inter, sans-serif;
-          font-size: 21px;
-          font-weight: 700;
-          letter-spacing: -0.025em;
-        }
-        .checkout-coupon {
-          display: flex;
-          gap: 10px;
-          margin-top: 24px;
-        }
-        .checkout-coupon input {
-          flex: 1;
-          border: 1px solid #C8CDC9;
-          background: #ffffff;
-          color: #0D0F0E;
-          border-radius: 10px;
-          padding: 11px 14px;
-          font-size: 14px;
-          box-sizing: border-box;
-        }
-        .checkout-coupon button {
-          border: 1px solid #C8CDC9;
-          background: transparent;
-          border-radius: 10px;
-          padding: 0 20px;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          color: #5E6461;
-          transition: all 0.15s ease;
-        }
-        .checkout-coupon button:hover {
-          color: #0D0F0E;
-          border-color: #0D0F0E;
-        }
-        .checkout-rollover-co {
-          margin-top: 18px;
-          background: #FBF3E3;
-          color: #7A5514;
-          border-radius: 12px;
-          padding: 14px 16px;
-          font-size: 13.5px;
-          line-height: 1.6;
-        }
-        .checkout-rollover-co b {
-          font-weight: 700;
-        }
-        .checkout-micro {
-          font-size: 12.5px;
-          color: #8A908C;
-          line-height: 1.65;
-          margin: 28px 0 0;
-          padding-top: 20px;
-          border-top: 1px solid #E3E6E4;
-        }
-        .checkout-sect-h {
-          font-size: 15px;
-          font-weight: 700;
-          margin: 0 0 14px;
-          color: #0D0F0E;
-        }
-        .checkout-sect-h.mt {
-          margin-top: 30px;
-        }
-        .checkout-tabs {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 10px;
-        }
-        @media (max-width: 440px) {
-          .checkout-tabs {
-            grid-template-columns: repeat(2, 1fr);
-          }
-        }
-        .checkout-tab {
-          border: 1px solid #C8CDC9;
-          background: #ffffff;
-          border-radius: 12px;
-          padding: 13px 8px 11px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 7px;
-          cursor: pointer;
-          color: #5E6461;
-          font-size: 12px;
-          font-weight: 600;
-          line-height: 1.25;
-          text-align: center;
-          transition: all 0.13s ease;
-        }
-        .checkout-tab:hover {
-          border-color: #2A2F2C;
-          color: #0D0F0E;
-        }
-        .checkout-tab[aria-pressed="true"] {
-          border-color: #22C55E;
-          color: #15803D;
-          box-shadow: 0 0 0 1.5px #22C55E inset;
-          background: #F0FDF4;
-        }
-        .checkout-stack {
-          display: grid;
-          gap: 14px;
-        }
-        .checkout-grid2 {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 14px;
-        }
-        @media (max-width: 440px) {
-          .checkout-grid2 {
-            grid-template-columns: 1fr;
-          }
-        }
-        .checkout-field {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-        }
-        .checkout-field label {
-          font-size: 13px;
-          font-weight: 600;
-          color: #5E6461;
-        }
-        .checkout-field .opt {
-          font-weight: 400;
-          color: #8A908C;
-        }
-        .checkout-field input,
-        .checkout-field select {
-          border: 1px solid #C8CDC9;
-          background: #ffffff;
-          color: #0D0F0E;
-          border-radius: 10px;
-          padding: 12px 14px;
-          font-size: 14.5px;
-          width: 100%;
-          box-sizing: border-box;
-          transition: border-color 0.15s ease;
-        }
-        .checkout-field input:focus,
-        .checkout-field select:focus {
-          outline: none;
-          border-color: #22C55E;
-          box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
-        }
-        .checkout-hint {
-          font-size: 12px;
-          color: #8A908C;
-          line-height: 1.5;
-          margin: 0;
-        }
-        .checkout-subscribe {
-          margin-top: 30px;
-          width: 100%;
-          border: 0;
-          border-radius: 12px;
-          padding: 15px 20px;
-          font-size: 16px;
-          font-weight: 700;
-          cursor: pointer;
-          background: #0D0F0E;
-          color: #ffffff;
-          transition: all 0.15s ease;
-          box-shadow: 0 4px 12px rgba(13, 15, 14, 0.15);
-        }
-        .checkout-subscribe.starter-btn {
-          background: #00BA70;
-          color: #0D0F0E;
-          border-radius: 14px;
-          box-shadow: 0 4px 14px rgba(0, 186, 112, 0.25);
-        }
-        .checkout-subscribe.starter-btn:hover {
-          background: #00A362;
-          color: #0D0F0E;
-          transform: translateY(-1px);
-          box-shadow: 0 6px 18px rgba(0, 186, 112, 0.35);
-        }
-        .checkout-subscribe:hover {
-          background: #1F2421;
-          transform: translateY(-1px);
-          box-shadow: 0 6px 16px rgba(13, 15, 14, 0.25);
-        }
-        .checkout-subscribe[disabled] {
-          opacity: 0.55;
-          cursor: default;
-          transform: none;
-          box-shadow: none;
-        }
-        .checkout-legal {
-          font-size: 12px;
-          color: #8A908C;
-          line-height: 1.65;
-          margin: 14px 0 0;
-        }
-      `}</style>
-
-      <div className="checkout-container">
+      <div className="grid grid-cols-2 min-h-screen bg-white text-[#0D0F0E] [font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe_UI',Roboto,sans-serif] text-[15px] leading-[1.55] lg:grid-cols-1 lg:min-h-0">
         {/* Left Section */}
-        <section className="checkout-split-l">
-          <div className="checkout-pane">
+        <section className="bg-[#F6F7F6] border-r border-[#E3E6E4] flex justify-end pr-[14px] xl:pr-6 lg:border-r-0 lg:border-b lg:justify-center lg:pr-0">
+          <div className="w-full max-w-[660px] pt-12 pb-16 box-border xl:max-w-[580px] lg:max-w-[600px] lg:pt-8 lg:px-6 lg:pb-10 xs:px-4">
             {/* Back Crumb with Highlighted Brand */}
-            <button type="button" className="checkout-crumb" onClick={handleBackToPricing}>
-              <span className="arrow">←</span>
-              <span className="brand-name">TrackMyProfit</span>
+            <button
+              type="button"
+              className="bg-[#F0FDF4] border-[1.5px] border-[#BBF7D0] rounded-[24px] px-[18px] py-2 cursor-pointer text-[#15803D] text-[15px] font-bold inline-flex gap-[9px] items-center mb-7 transition-all duration-200 shadow-[0_2px_8px_rgba(34,197,94,0.12)] hover:border-[#22C55E] hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(34,197,94,0.25)]"
+              onClick={handleBackToPricing}
+            >
+              <ArrowLeftOutlined className="text-base font-extrabold" />
+              <span className="font-extrabold tracking-[-0.01em]">TrackMyProfit</span>
             </button>
 
-            <p className="checkout-kicker">
-              Subscribe to <strong style={{ color: '#0D0F0E', fontWeight: 700 }}>TrackMyProfit {planTitle}</strong>
+            <p className="m-0 text-[#5E6461] text-[15px]">
+              Subscribe to <strong className="text-[#0D0F0E] font-bold">TrackMyProfit {planTitle}</strong>
             </p>
 
             {/* Big Price */}
-            <div className="checkout-bigprice">
+            <div className="flex flex-wrap items-baseline gap-[10px] mt-[6px] mb-[30px] [font-family:'Instrument_Sans',Inter,sans-serif] text-[40px] font-bold tracking-[-0.035em] sm:text-[32px] xs:text-[26px]">
               <span>{formatINR(quote.total)}</span>
-              <em>
+              <em className="not-italic [font-family:Inter,sans-serif] text-[14.5px] font-medium tracking-normal text-[#5E6461]">
                 {isStarter
                   ? 'total for 7 days of access, taxes included'
                   : plan.selectedType === 'annual'
@@ -847,11 +532,11 @@ function Checkout() {
             </div>
 
             {/* Order Lines */}
-            <div className="checkout-lines">
-              <div className="ln">
-                <span className="k">
-                  <b>{planLineName}</b>
-                  <small>
+            <div className="grid">
+              <div className="flex justify-between gap-4 py-[13px] text-[14.5px] items-baseline">
+                <span className="text-[#5E6461]">
+                  <b className="text-[#0D0F0E] font-semibold block text-[15px]">{planLineName}</b>
+                  <small className="block text-[#8A908C] text-[12.5px] mt-0.5">
                     {isStarter
                       ? '30-day term · Unlimited orders'
                       : plan.selectedType === 'annual'
@@ -859,72 +544,70 @@ function Checkout() {
                       : 'Billed monthly'}
                   </small>
                 </span>
-                <span className="v num">{formatINR(quote.list)}</span>
+                <span className="font-semibold">{formatINR(quote.list)}</span>
               </div>
 
               {quote.discount > 0 && (
-                <div className="ln credit">
-                  <span className="k">{quote.couponLabel}</span>
-                  <span className="v num">−{formatINR(quote.discount)}</span>
+                <div className="flex justify-between gap-4 py-[13px] text-[14.5px] items-baseline border-t border-[#E3E6E4]">
+                  <span className="text-[#5E6461]">{quote.couponLabel}</span>
+                  <span className="text-[#00784D]">−{formatINR(quote.discount)}</span>
                 </div>
               )}
 
-              <div className="ln">
-                <span className="k">Subtotal</span>
-                <span className="v num">{formatINR(quote.taxable)}</span>
+              <div className="flex justify-between gap-4 py-[13px] text-[14.5px] items-baseline border-t border-[#E3E6E4]">
+                <span className="text-[#5E6461]">Subtotal</span>
+                <span className="font-semibold">{formatINR(quote.taxable)}</span>
               </div>
 
               {quote.isIntra ? (
                 <>
-                  <div className="ln">
-                    <span className="k">GST 18%</span>
-                    <span className="v num">{formatINR(quote.gst)}</span>
+                  <div className="flex justify-between gap-4 py-[13px] text-[14.5px] items-baseline border-t border-[#E3E6E4]">
+                    <span className="text-[#5E6461]">GST 18%</span>
+                    <span className="font-semibold">{formatINR(quote.gst)}</span>
                   </div>
-                  <div className="ln indent">
-                    <span className="k">CGST 9%</span>
-                    <span className="v num">{formatINR(quote.cgst)}</span>
+                  <div className="flex justify-between gap-4 py-[13px] text-[14.5px] items-baseline border-t border-[#E3E6E4]">
+                    <span className="text-[#5E6461] pl-[14px] text-[13px]">CGST 9%</span>
+                    <span className="font-semibold">{formatINR(quote.cgst)}</span>
                   </div>
-                  <div className="ln indent">
-                    <span className="k">SGST 9%</span>
-                    <span className="v num">{formatINR(quote.sgst)}</span>
+                  <div className="flex justify-between gap-4 py-[13px] text-[14.5px] items-baseline border-t border-[#E3E6E4]">
+                    <span className="text-[#5E6461] pl-[14px] text-[13px]">SGST 9%</span>
+                    <span className="font-semibold">{formatINR(quote.sgst)}</span>
                   </div>
                 </>
               ) : (
-                <div className="ln">
-                  <span className="k">IGST 18%</span>
-                  <span className="v num">{formatINR(quote.gst)}</span>
+                <div className="flex justify-between gap-4 py-[13px] text-[14.5px] items-baseline border-t border-[#E3E6E4]">
+                  <span className="text-[#5E6461]">IGST 18%</span>
+                  <span className="font-semibold">{formatINR(quote.gst)}</span>
                 </div>
               )}
 
-              <div className="ln grand">
-                <span className="k">
-                  Total due today
-                  <small style={{ fontWeight: 400, color: '#8A908C' }}>Plan price plus tax</small>
+              <div className="flex justify-between gap-4 text-[14.5px] items-baseline border-t-[1.5px] border-[#0D0F0E] pt-4 pb-[13px] mt-1">
+                <span className="text-[#0D0F0E] font-semibold text-[15.5px]">
+                  Total due today <small className="font-normal text-[#8A908C]">Plan price plus tax</small>
                 </span>
-                <span className="v num">{formatINR(quote.total)}</span>
+                <span className="font-bold text-[22px]">{formatINR(quote.total)}</span>
               </div>
             </div>
 
             {/* Coupon Box */}
-            <div className="checkout-coupon">
+            <div className="flex gap-[10px] mt-6 xs:flex-col">
               <input
+                className="flex-1 border border-[#C8CDC9] bg-white text-[#0D0F0E] rounded-[10px] px-[14px] py-[11px] text-sm box-border xs:w-full"
                 placeholder="Add promotion code"
                 aria-label="Promotion code"
                 value={couponCode}
                 onChange={(e) => setCouponCode(e.target.value)}
               />
-              <button type="button" onClick={handleApplyCoupon}>
+              <button
+                type="button"
+                className="border border-[#C8CDC9] bg-transparent rounded-[10px] px-5 text-sm font-semibold cursor-pointer text-[#5E6461] transition-all duration-150 hover:text-[#0D0F0E] hover:border-[#0D0F0E] xs:w-full xs:py-[11px]"
+                onClick={handleApplyCoupon}
+              >
                 Apply
               </button>
             </div>
             {couponMsg && (
-              <p
-                style={{
-                  fontSize: '12px',
-                  marginTop: '8px',
-                  color: couponMsg.type === 'success' ? '#00784D' : '#B3372A',
-                }}
-              >
+              <p className={`text-xs mt-2 ${couponMsg.type === 'success' ? 'text-[#00784D]' : 'text-[#B3372A]'}`}>
                 {couponMsg.text}
               </p>
             )}
@@ -932,23 +615,16 @@ function Checkout() {
             {/* Rollover Box */}
             {isStarter && (
               <>
-                <div className="checkout-rollover-co">
-                  On <b>{formatAddDays(7)}</b> your subscription moves to <b>Growth</b> — ₹9,999 plus tax,{' '}
-                  <b>₹11,798.82 a month</b> in total, charged automatically. We email you 3 days before the due date and
-                  again 1 day before. Cancel before that date and nothing further is taken.
+                <div className="mt-[18px] bg-[#FBF3E3] text-[#7A5514] rounded-xl px-4 py-[14px] text-[13.5px] leading-[1.6]">
+                  On <b>{formatAddDays(7)}</b> your subscription moves to <b>Growth</b> — {formatINR(growthPrice)} plus
+                  tax,{' '}
+                  <b>
+                    {formatINR(growthTotal)} {selectedBillingCycle === 'annual' ? 'a year' : 'a month'} in total
+                  </b>{' '}
+                  , charged automatically. We email you 3 days before the due date and again 1 day before. Cancel before
+                  that date and nothing further is taken.
                 </div>
-                <div
-                  style={{
-                    fontSize: '12px',
-                    color: '#00784D',
-                    marginTop: '10px',
-                    background: '#F0FDF4',
-                    padding: '10px 12px',
-                    borderRadius: '8px',
-                    border: '1px solid #DCFCE7',
-                    lineHeight: 1.5,
-                  }}
-                >
+                <div className="text-xs text-[#00784D] mt-[10px] bg-[#F0FDF4] px-3 py-[10px] rounded-lg border border-[#DCFCE7] leading-[1.5]">
                   💡 <b>UPI Autopay Tip:</b> If scanning the QR code displays an error in your UPI app, enter your{' '}
                   <b>UPI ID</b> (e.g. <code>name@upi</code>) directly or select <b>Cards</b> inside the payment window
                   to receive the Autopay approval request.
@@ -957,42 +633,36 @@ function Checkout() {
             )}
 
             {/* Micro text */}
-            <p className="checkout-micro">
+            <p className="text-[12.5px] text-[#8A908C] leading-[1.65] mt-7 pt-5 border-t border-[#E3E6E4]">
               {isStarter
-                ? 'No historical backfill on this plan — tracking starts today. Covers 100 orders across the 30 days on one Amazon integration, and data export stays off until you move to Growth.'
+                ? ''
                 : 'Renews automatically at the end of each term. We email you 3 days before each charge and again 1 day before.'}
             </p>
           </div>
         </section>
 
         {/* Right Section */}
-        <section className="checkout-split-r">
-          <div className="checkout-pane">
+        <section className="flex justify-start bg-white pl-[22px] xl:pl-6 lg:justify-center lg:pl-0">
+          <div className="w-full max-w-[660px] pt-12 pb-16 box-border xl:max-w-[580px] lg:max-w-[600px] lg:pt-8 lg:px-6 lg:pb-10 xs:px-4">
             {error && (
-              <div
-                style={{
-                  marginBottom: '16px',
-                  padding: '12px 14px',
-                  backgroundColor: '#FFF2F0',
-                  border: '1px solid #FFCCC7',
-                  borderRadius: '10px',
-                  color: '#B3372A',
-                  fontSize: '13px',
-                }}
-              >
+              <div className="mb-4 py-3 px-[14px] bg-[#FFF2F0] border border-[#FFCCC7] rounded-[10px] text-[#B3372A] text-[13px]">
                 {error}
               </div>
             )}
 
-            <h2 className="checkout-sect-h">Pay with</h2>
+            <h2 className="text-[15px] font-bold mb-[14px] text-[#0D0F0E]">Pay with</h2>
 
             {/* Payment Method Tabs */}
-            <div className="checkout-tabs" role="group" aria-label="Payment method">
+            <div
+              className="grid grid-cols-3 gap-[10px] ssm:grid-cols-2 xs:grid-cols-1"
+              role="group"
+              aria-label="Payment method"
+            >
               {METHODS.map((m) => (
                 <button
                   key={m.id}
                   type="button"
-                  className="checkout-tab"
+                  className="border border-[#C8CDC9] bg-white rounded-xl px-2 pt-[13px] pb-[11px] flex flex-col items-center gap-[7px] cursor-pointer text-[#5E6461] text-xs font-semibold leading-[1.25] text-center transition-all duration-[130ms] hover:border-[#2A2F2C] hover:text-[#0D0F0E] aria-pressed:border-[#22C55E] aria-pressed:text-[#15803D] aria-pressed:shadow-[0_0_0_1.5px_#22C55E_inset] aria-pressed:bg-[#F0FDF4]"
                   aria-pressed={m.id === activeTab}
                   onClick={() => setActiveTab(m.id)}
                 >
@@ -1003,12 +673,15 @@ function Checkout() {
             </div>
 
             {/* Billing Details */}
-            <h2 className="checkout-sect-h mt">Billing details</h2>
+            <h2 className="text-[15px] font-bold mb-[14px] text-[#0D0F0E] mt-[30px]">Billing details</h2>
 
-            <div className="checkout-stack">
-              <div className="checkout-field">
-                <label htmlFor="f-email">Email</label>
+            <div className="grid gap-[14px]">
+              <div className="flex flex-col gap-[6px]">
+                <label className="text-[13px] font-semibold text-[#5E6461]" htmlFor="f-email">
+                  Email
+                </label>
                 <input
+                  className="border border-[#C8CDC9] bg-white text-[#0D0F0E] rounded-[10px] px-[14px] py-3 text-[14.5px] w-full box-border transition-colors duration-150 focus:outline-none focus:border-[#22C55E] focus:shadow-[0_0_0_3px_rgba(34,197,94,0.15)]"
                   id="f-email"
                   type="email"
                   value={email}
@@ -1017,9 +690,12 @@ function Checkout() {
                 />
               </div>
 
-              <div className="checkout-field">
-                <label htmlFor="f-name">Business name</label>
+              <div className="flex flex-col gap-[6px]">
+                <label className="text-[13px] font-semibold text-[#5E6461]" htmlFor="f-name">
+                  Business name
+                </label>
                 <input
+                  className="border border-[#C8CDC9] bg-white text-[#0D0F0E] rounded-[10px] px-[14px] py-3 text-[14.5px] w-full box-border transition-colors duration-150 focus:outline-none focus:border-[#22C55E] focus:shadow-[0_0_0_3px_rgba(34,197,94,0.15)]"
                   id="f-name"
                   value={businessName}
                   onChange={(e) => setBusinessName(e.target.value)}
@@ -1027,10 +703,17 @@ function Checkout() {
                 />
               </div>
 
-              <div className="checkout-grid2">
-                <div className="checkout-field">
-                  <label htmlFor="f-state">State of supply</label>
-                  <select id="f-state" value={stateOfSupply} onChange={(e) => setStateOfSupply(e.target.value)}>
+              <div className="grid grid-cols-2 gap-[14px] ssm:grid-cols-1">
+                <div className="flex flex-col gap-[6px]">
+                  <label className="text-[13px] font-semibold text-[#5E6461]" htmlFor="f-state">
+                    State of supply
+                  </label>
+                  <select
+                    className="border border-[#C8CDC9] bg-white text-[#0D0F0E] rounded-[10px] px-[14px] py-3 text-[14.5px] w-full box-border transition-colors duration-150 focus:outline-none focus:border-[#22C55E] focus:shadow-[0_0_0_3px_rgba(34,197,94,0.15)]"
+                    id="f-state"
+                    value={stateOfSupply}
+                    onChange={(e) => setStateOfSupply(e.target.value)}
+                  >
                     {STATES.map((s) => (
                       <option key={s} value={s}>
                         {s}
@@ -1039,11 +722,12 @@ function Checkout() {
                   </select>
                 </div>
 
-                <div className="checkout-field">
-                  <label htmlFor="f-gstin">
-                    GSTIN <span className="opt">optional</span>
+                <div className="flex flex-col gap-[6px]">
+                  <label className="text-[13px] font-semibold text-[#5E6461]" htmlFor="f-gstin">
+                    GSTIN <span className="font-normal text-[#8A908C]">optional</span>
                   </label>
                   <input
+                    className="border border-[#C8CDC9] bg-white text-[#0D0F0E] rounded-[10px] px-[14px] py-3 text-[14.5px] w-full box-border transition-colors duration-150 focus:outline-none focus:border-[#22C55E] focus:shadow-[0_0_0_3px_rgba(34,197,94,0.15)]"
                     id="f-gstin"
                     placeholder="23AABCU9603R1ZX"
                     maxLength={15}
@@ -1053,7 +737,7 @@ function Checkout() {
                 </div>
               </div>
 
-              <p className="checkout-hint">
+              <p className="text-xs text-[#8A908C] leading-[1.5] m-0">
                 Add your GSTIN and the 18% GST on this invoice becomes claimable input credit.
               </p>
             </div>
@@ -1061,7 +745,11 @@ function Checkout() {
             {/* Subscribe CTA */}
             <button
               type="button"
-              className={`checkout-subscribe ${isStarter ? 'starter-btn' : ''}`}
+              className={`mt-[30px] w-full border-0 px-5 py-[15px] text-base font-bold cursor-pointer transition-all duration-150 hover:-translate-y-px disabled:opacity-[0.55] disabled:cursor-default disabled:translate-y-0 disabled:shadow-none ${
+                isStarter
+                  ? 'rounded-[14px] bg-[#00BA70] text-white shadow-[0_4px_14px_rgba(0,186,112,0.25)] hover:bg-[#00A362] hover:text-[#0D0F0E] hover:shadow-[0_6px_18px_rgba(0,186,112,0.35)]'
+                  : 'rounded-xl bg-[#0D0F0E] text-white shadow-[0_4px_12px_rgba(13,15,14,0.15)] hover:shadow-[0_6px_16px_rgba(13,15,14,0.25)]'
+              }`}
               onClick={handleSubscribe}
               disabled={loading || processingPayment}
             >
@@ -1073,11 +761,13 @@ function Checkout() {
             </button>
 
             {/* Legal Notice */}
-            <p className="checkout-legal">
+            <p className="text-xs text-[#8A908C] leading-[1.65] mt-[14px]">
               {isStarter
-                ? `By subscribing you authorise Apro Store to charge ₹0.00 today and, from ${formatAddDays(
-                    7,
-                  )}, ₹11,798.82 every month to the same UPI ID, until you cancel. Cancel any time in Settings > Billing.`
+                ? `By subscribing you authorise Apro Store to charge ${formatINR(
+                    growthPrice,
+                  )} today and, from ${formatAddDays(7)}, ${formatINR(growthTotal)} every ${
+                    selectedBillingCycle === 'annual' ? 'year' : 'month'
+                  } to the same UPI ID, until you cancel. Cancel any time in Settings > Billing.`
                 : `By subscribing you authorise Apro Store to charge ${formatINR(quote.total)} today and ${formatINR(
                     quote.total,
                   )} every ${
@@ -1088,7 +778,47 @@ function Checkout() {
         </section>
       </div>
 
-      {/* Success & Cancel Modals */}
+      {/* Subscription confirmation, success & cancel modals */}
+      <Modal
+        open={confirmSubscriptionVisible}
+        onCancel={() => setConfirmSubscriptionVisible(false)}
+        footer={null}
+        centered
+        width={480}
+      >
+        <div className="px-2 py-4">
+          <h2 className="m-0 text-xl font-bold text-[#0D0F0E]">Confirm subscription change</h2>
+          <p className="mt-3 mb-0 text-sm leading-6 text-[#5E6461]">
+            Are you sure you want to change from your subscription
+            <span className="font-bold text-[#5E6461]"> {currentPlanName || 'No active plan'} Plan </span>
+            to
+            <span className="font-bold text-[#5E6461]"> {planTitle} </span>?
+          </p>
+          {/* <p className="mt-2 mb-0 text-sm leading-6 text-[#5E6461]">
+            Current plan: <span className="font-semibold text-[#0D0F0E]">{currentPlanName || 'No active plan'}</span>
+          </p> */}
+          <p className="mt-2 mb-0 text-sm leading-6 text-[#8A4B00]">
+            Your current subscription will be made inactive after this change.
+          </p>
+          <div className="mt-6 flex justify-end gap-3">
+            <button
+              type="button"
+              className="rounded-[10px] border border-[#C8CDC9] bg-white px-4 py-2.5 text-sm font-semibold text-[#0D0F0E] cursor-pointer"
+              onClick={() => setConfirmSubscriptionVisible(false)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="rounded-[10px] border-0 bg-[#00A76B] px-4 py-2.5 text-sm font-bold text-white cursor-pointer hover:bg-[#00784D]"
+              onClick={handleConfirmSubscription}
+            >
+              Yes, confirm
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       <Modal open={successModalVisible} onCancel={handleSuccessClose} footer={null} centered width={480}>
         <Result
           status="success"

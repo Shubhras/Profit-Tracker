@@ -69,9 +69,9 @@ function SubscriptionTable() {
 
   return (
     <>
-      <div className="px-3 p-5 bg-[#f7f7f7] min-h-screen">
+      <div className="p-4 bg-[#f7f7f7] min-h-screen">
         {/* Header */}
-        <div className="mb-9 flex items-center justify-between">
+        <div className="mb-7 flex items-center justify-between">
           <h2 className="mb-0 text-[20px] font-semibold">Subscription Management</h2>
 
           <Button

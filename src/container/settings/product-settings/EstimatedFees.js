@@ -8,7 +8,6 @@ import {
   EditOutlined,
   CloseOutlined,
 } from '@ant-design/icons';
-import { PageHeader } from '../../../components/page-headers/page-headers';
 import { DataService } from '../../../config/dataService/dataService';
 
 const { Option } = Select;
@@ -493,90 +492,103 @@ export default function EstimatedFees() {
   return (
     <>
       {/* PAGE HEADER */}
-      <div className="px-6 pt-3 pb-5">
-        <div className="flex items-start justify-between gap-6 lg:flex-col lg:gap-4">
-          <div>
-            <PageHeader title="Estimated Fees" className="p-0 bg-transparent" />
-            <p className="text-[13px] text-[#6B7280] mt-[-8px] max-w-[540px] leading-[20px]">
-              Tell us what each marketplace charges you. We&apos;ll then show the fees on every order right away —
-              without waiting for the settlement report.
-            </p>
-          </div>
+      <div className="p-2 px-3 bg-[#f8fafc] min-h-screen">
+        <div className="px-3 pt-3 pb-5 sm:px-4 sm:pt-2 sm:pb-4">
+          <div className="flex items-start justify-between gap-6 lg:flex-col lg:gap-4">
+            <div className="text-left">
+              <h1 className="text-[24px] font-semibold text-[#1F2937] m-0">Estimated Fees</h1>
 
-          {/* GREEN RATE CARD BANNER */}
-          <div className="w-[460px] bg-[#ECFDF5] border border-[#A7F3D0] rounded-[10px] p-4 flex items-start gap-3 lg:w-full">
-            <div className="text-[24px] leading-none shrink-0">📄</div>
-            <div className="flex-1">
-              <h4 className="text-[14px] font-semibold text-[#111827] m-0 mb-1">
-                Have your rate card? Let us fill this in.
-              </h4>
-              <p className="text-[12.5px] text-[#374151] leading-[18px] m-0">
-                Upload the fee agreement your marketplace sent you — Myntra&apos;s CTA PDF, Amazon&apos;s fee sheet,
-                Flipkart&apos;s rate card. We&apos;ll read the tables and fill everything in. You just check the
-                numbers.
+              <p className="text-[13px] text-[#6B7280] mt-1 max-w-[540px] leading-[20px]">
+                Tell us what each marketplace charges you. We&apos;ll then show the fees on every order right away —
+                without waiting for the settlement report.
               </p>
-              <div className="flex items-center gap-2 mt-3 flex-wrap">
-                <Upload
-                  showUploadList={false}
-                  beforeUpload={(file) => {
-                    handleUploadExcel(file);
-                    return false;
-                  }}
-                  accept=".xlsx,.xls,.csv"
-                >
-                  <Button
-                    type="primary"
-                    icon={<UploadOutlined />}
-                    size="small"
-                    loading={uploading}
-                    className="bg-[#16A34A] hover:bg-[#15803D] border-none text-[12.5px] h-[32px] rounded-[6px]"
+            </div>
+
+            {/* GREEN RATE CARD BANNER */}
+            <div className="w-[460px] max-w-full bg-[#ECFDF5] border border-[#A7F3D0] rounded-[10px] p-4 flex items-start gap-3 lg:w-full sm:p-3">
+              {' '}
+              <div className="text-[24px] leading-none shrink-0">📄</div>
+              <div className="flex-1">
+                <h4 className="text-[14px] font-semibold text-[#111827] m-0 mb-1">
+                  Have your rate card? Let us fill this in.
+                </h4>
+                <p className="text-[12.5px] text-[#374151] leading-[18px] m-0">
+                  Upload the fee agreement your marketplace sent you — Myntra&apos;s CTA PDF, Amazon&apos;s fee sheet,
+                  Flipkart&apos;s rate card. We&apos;ll read the tables and fill everything in. You just check the
+                  numbers.
+                </p>
+                <div className="flex items-center gap-2 mt-3 flex-wrap">
+                  <Upload
+                    showUploadList={false}
+                    beforeUpload={(file) => {
+                      handleUploadExcel(file);
+                      return false;
+                    }}
+                    accept=".xlsx,.xls,.csv"
                   >
-                    Upload rate card
+                    <Button
+                      type="primary"
+                      icon={<UploadOutlined />}
+                      size="small"
+                      loading={uploading}
+                      className="bg-[#16A34A] hover:bg-[#15803D] border-none text-[12.5px] h-[32px] rounded-[6px]"
+                    >
+                      Upload rate card
+                    </Button>
+                  </Upload>
+                  <Button
+                    size="small"
+                    icon={<DownloadOutlined />}
+                    onClick={handleDownloadSample}
+                    className="bg-white border-[#16A34A] text-[#16A34A] hover:bg-[#ECFDF5] text-[12.5px] h-[32px] rounded-[6px]"
+                  >
+                    Download sample template
                   </Button>
-                </Upload>
-                <Button
-                  size="small"
-                  icon={<DownloadOutlined />}
-                  onClick={handleDownloadSample}
-                  className="bg-white border-[#16A34A] text-[#16A34A] hover:bg-[#ECFDF5] text-[12.5px] h-[32px] rounded-[6px]"
-                >
-                  Download sample template
-                </Button>
-                <Button
-                  size="small"
-                  onClick={() => openModal()}
-                  className="bg-white border-[#E5E7EB] text-[#374151] hover:bg-[#F9FAFB] text-[12.5px] h-[32px] rounded-[6px]"
-                >
-                  Enter manually
-                </Button>
+                  <Button
+                    size="small"
+                    onClick={() => openModal()}
+                    className="bg-white border-[#E5E7EB] text-[#374151] hover:bg-[#F9FAFB] text-[12.5px] h-[32px] rounded-[6px]"
+                  >
+                    Enter manually
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <main className="px-6 pb-10">
-        {/* MARKETPLACE SELECTOR & ADD FEE */}
-        <div className="flex items-start gap-3 mb-5 flex-wrap">
-          <div className="w-[300px] max-w-full">
-            <label className="block text-[13px] font-semibold text-[#374151] mb-1.5">Select Marketplace</label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[15px] z-10 pointer-events-none">🏬</span>
-              <Select
-                value={selectedMarketplace}
-                onChange={(val) => setSelectedMarketplace(val)}
-                className="w-full h-[44px] custom-mp-select"
-                style={{ paddingLeft: '32px' }}
+        <main className="px-3 pb-10 sm:px-4 sm:pb-6">
+          {/* MARKETPLACE SELECTOR & ADD FEE */}
+          <div className="mb-5">
+            <div className="flex items-end gap-3 flex-wrap">
+              <div className="w-[300px] max-w-full">
+                <label className="block text-[15px] font-semibold text-[#374151] mb-1.5">Select Marketplace</label>
+                <div className="relative">
+                  <Select
+                    value={selectedMarketplace}
+                    onChange={(val) => setSelectedMarketplace(val)}
+                    className="w-full h-[45px] custom-mp-select [&_.ant-select-selector]:!h-[40px] [&_.ant-select-selection-item]:!leading-[38px]"
+                  >
+                    <Option value="Myntra">Myntra</Option>
+                    <Option value="Amazon">Amazon</Option>
+                    <Option value="Flipkart">Flipkart</Option>
+                    <Option value="Meesho">Meesho</Option>
+                    <Option value="Blinkit">Blinkit</Option>
+                    <Option value="Zepto">Zepto</Option>
+                    <Option value="Swiggy Instamart">Swiggy Instamart</Option>
+                    <Option value="Nykaa">Nykaa</Option>
+                  </Select>
+                </div>
+              </div>
+
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => openModal()}
+                className="bg-[#16A34A] hover:bg-[#15803D] border-none text-[13px] font-semibold h-[35px] px-5 rounded-[8px] flex items-center"
               >
-                <Option value="Myntra">Myntra</Option>
-                <Option value="Amazon">Amazon</Option>
-                <Option value="Flipkart">Flipkart</Option>
-                <Option value="Meesho">Meesho</Option>
-                <Option value="Blinkit">Blinkit</Option>
-                <Option value="Zepto">Zepto</Option>
-                <Option value="Swiggy Instamart">Swiggy Instamart</Option>
-                <Option value="Nykaa">Nykaa</Option>
-              </Select>
+                Add fee
+              </Button>
             </div>
             <div className="flex items-center gap-1.5 text-[12px] text-[#6B7280] mt-2">
               <span className="w-2 h-2 rounded-full bg-[#16A34A]" />
@@ -584,352 +596,347 @@ export default function EstimatedFees() {
             </div>
           </div>
 
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => openModal()}
-            className="bg-[#16A34A] hover:bg-[#15803D] border-none text-[13.5px] font-semibold h-[44px] px-5 mt-[26px] rounded-[8px] flex items-center"
-          >
-            Add fee
-          </Button>
-        </div>
-
-        {/* FEE TABLE CARD */}
-        <div className="bg-white border border-[#E5E7EB] rounded-[10px] shadow-[0_1px_2px_rgba(16,24,40,0.05)] overflow-hidden mb-5">
-          <Spin spinning={loading}>
-            <Table
-              dataSource={fees}
-              rowKey={(record) => record.id || record.name}
-              pagination={false}
-              columns={[
-                {
-                  title: 'Fee',
-                  dataIndex: 'name',
-                  key: 'name',
-                  width: '28%',
-                  render: (text, record) => (
-                    <div className={record.on ? '' : 'opacity-60'}>
-                      <div className="font-semibold text-[#111827] text-[14px]">{text}</div>
-                      <div className="text-[12px] text-[#9CA3AF] mt-0.5">{record.desc}</div>
-                    </div>
-                  ),
-                },
-                {
-                  title: "What you're charged",
-                  key: 'charged',
-                  width: '44%',
-                  render: (_, record, index) => {
-                    const s = getSummary(record);
-                    const editable = record.how.includes('slab') || record.how === 'weight';
-                    return (
+          {/* FEE TABLE CARD */}
+          <div className="w-full bg-white border border-[#E5E7EB] rounded-[10px] shadow-[0_1px_2px_rgba(16,24,40,0.05)] overflow-hidden mb-5">
+            {' '}
+            <Spin spinning={loading}>
+              <Table
+                dataSource={fees}
+                rowKey={(record) => record.id || record.name}
+                pagination={false}
+                scroll={{ x: 1000 }}
+                columns={[
+                  {
+                    title: 'Fee',
+                    dataIndex: 'name',
+                    key: 'name',
+                    width: '28%',
+                    render: (text, record) => (
                       <div className={record.on ? '' : 'opacity-60'}>
-                        <div className="font-semibold text-[#111827] text-[14px]">{s.main}</div>
-                        {s.sub && (
-                          <div className="text-[12px] text-[#9CA3AF] mt-1 whitespace-pre-line leading-relaxed">
-                            {s.sub}
-                          </div>
-                        )}
-                        {editable && (
-                          <button
-                            type="button"
-                            onClick={() => openModal(index)}
-                            className="mt-1 text-[12.5px] font-semibold text-[#2563EB] hover:underline bg-transparent border-none p-0 cursor-pointer"
-                          >
-                            View / edit table
-                          </button>
-                        )}
+                        <div className="font-semibold text-[#111827] text-[14px]">{text}</div>
+                        <div className="text-[12px] text-[#9CA3AF] mt-0.5">{record.desc}</div>
                       </div>
-                    );
+                    ),
                   },
-                },
-                {
-                  title: 'On',
-                  key: 'on',
-                  width: '16%',
-                  render: (_, record, index) => (
-                    <Switch
-                      checked={record.on}
-                      onChange={() => toggleFeeStatus(index)}
-                      className={record.on ? 'bg-[#16A34A]' : ''}
-                    />
-                  ),
-                },
-                {
-                  title: 'Edit',
-                  key: 'actions',
-                  width: '12%',
-                  render: (_, record, index) => (
-                    <div className="flex items-center gap-1">
-                      <Button
-                        type="text"
-                        icon={<EditOutlined className="text-[#9CA3AF] hover:text-[#374151] text-[15px]" />}
-                        onClick={() => openModal(index)}
+                  {
+                    title: "What you're charged",
+                    key: 'charged',
+                    width: '44%',
+                    render: (_, record, index) => {
+                      const s = getSummary(record);
+                      const editable = record.how.includes('slab') || record.how === 'weight';
+                      return (
+                        <div className={record.on ? '' : 'opacity-60'}>
+                          <div className="font-semibold text-[#111827] text-[14px]">{s.main}</div>
+                          {s.sub && (
+                            <div className="text-[12px] text-[#9CA3AF] mt-1 whitespace-pre-line leading-relaxed">
+                              {s.sub}
+                            </div>
+                          )}
+                          {editable && (
+                            <button
+                              type="button"
+                              onClick={() => openModal(index)}
+                              className="mt-1 text-[12.5px] font-semibold text-[#2563EB] hover:underline bg-transparent border-none p-0 cursor-pointer"
+                            >
+                              View / edit table
+                            </button>
+                          )}
+                        </div>
+                      );
+                    },
+                  },
+                  {
+                    title: 'On',
+                    key: 'on',
+                    width: '16%',
+                    render: (_, record, index) => (
+                      <Switch
+                        checked={record.on}
+                        onChange={() => toggleFeeStatus(index)}
+                        className={record.on ? 'bg-[#16A34A]' : ''}
                       />
-                      <Button
-                        type="text"
-                        icon={<DeleteOutlined className="text-[#9CA3AF] hover:text-[#DC2626] text-[15px]" />}
-                        onClick={() => confirmDeleteFee(record)}
-                      />
-                    </div>
-                  ),
-                },
-              ]}
-            />
-          </Spin>
-        </div>
-
-        {/* REAL ORDER CALCULATION PREVIEW */}
-        <div className="bg-white border border-[#E5E7EB] rounded-[10px] shadow-[0_1px_2px_rgba(16,24,40,0.05)] p-5 flex items-center gap-6 flex-wrap mb-4">
-          <div>
-            <div className="text-[13px] text-[#6B7280] font-medium mb-2">See it on a real order</div>
-            <Select
-              value={selectedSampleItem}
-              onChange={(val) => setSelectedSampleItem(val)}
-              className="w-[300px] h-[40px]"
-            >
-              <Option value="top">Women&apos;s Top — sold at ₹899</Option>
-              <Option value="dress">Women&apos;s Dress — sold at ₹1,650</Option>
-            </Select>
-          </div>
-
-          <div className="text-[14.5px] text-[#374151] leading-[1.9] pt-2">
-            Sale <b className="text-[#111827]">₹{orderCalculation.price}</b>{' '}
-            <span className="text-[#DC2626]">
-              − commission ₹{orderCalculation.commAmt.toFixed(2)}{' '}
-              <small className="text-[#9CA3AF]">({orderCalculation.commRate}% slab)</small>
-            </span>{' '}
-            <span className="text-[#DC2626]">− fixed fee ₹{orderCalculation.fixedAmt}</span> ={' '}
-            <span className="text-[#15803D] font-bold">₹{orderCalculation.net.toFixed(2)} after fees</span>
-          </div>
-        </div>
-
-        <p className="text-[12.5px] text-[#9CA3AF] text-center mt-3">
-          These estimates show on every order in Profit. When the settlement report comes in, the real charge replaces
-          the estimate automatically.
-        </p>
-      </main>
-
-      {/* ================= ADD / EDIT FEE MODAL ================= */}
-      <Modal
-        open={isModalOpen}
-        onCancel={closeModal}
-        footer={null}
-        width={660}
-        centered
-        className="estimated-fee-modal"
-        title={
-          <div className="text-[16.5px] font-bold text-[#111827]">
-            {editingIndex === null
-              ? `Add a fee — ${selectedMarketplace}`
-              : `Edit ${curFee?.name ? curFee.name.toLowerCase() : 'fee'} — ${selectedMarketplace}`}
-          </div>
-        }
-      >
-        {curFee && (
-          <div className="pt-2">
-            {/* What is the fee called? */}
-            <div className="mb-4">
-              <label className="block text-[13px] font-semibold text-[#374151] mb-1.5">What is the fee called?</label>
-              <Select
-                value={curFee.name}
-                onChange={(val) => setCurFee((prev) => ({ ...prev, name: val }))}
-                className="w-full h-[42px]"
-              >
-                <Option value="Commission">Commission</Option>
-                <Option value="Fixed fee">Fixed fee</Option>
-                <Option value="Shipping fee">Shipping fee</Option>
-                <Option value="Return fee">Return fee</Option>
-                <Option value="Storage fee">Storage fee</Option>
-                <Option value="Something else…">Something else…</Option>
-              </Select>
-            </div>
-
-            {/* How much do they charge? */}
-            <div className="mb-4">
-              <label className="block text-[13px] font-semibold text-[#374151] mb-1.5">How much do they charge?</label>
-              <Select
-                value={curFee.how}
-                onChange={(val) => setCurFee((prev) => ({ ...prev, how: val }))}
-                className="w-full h-[42px]"
-              >
-                <Option value="pct">A percentage of the sale price</Option>
-                <Option value="flat">A fixed rupee amount</Option>
-                <Option value="pct-slab">A percentage that changes with the price</Option>
-                <Option value="flat-slab">A fixed amount that changes with the price</Option>
-                <Option value="weight">A fixed amount that changes with weight</Option>
-              </Select>
-              <div className="text-[12px] text-[#9CA3AF] mt-1.5">
-                {['pct', 'flat'].includes(curFee.how)
-                  ? 'Same rate on every order.'
-                  : curFee.how === 'weight'
-                  ? 'Set an amount for each weight range.'
-                  : 'Set the rate for each price range, exactly as it appears on your rate card.'}
-              </div>
-            </div>
-
-            {/* SIMPLE TYPES (PCT / FLAT) */}
-            {['pct', 'flat'].includes(curFee.how) && (
-              <div className="mb-4">
-                <label className="block text-[13px] font-semibold text-[#374151] mb-1.5">
-                  {curFee.how === 'pct' ? 'Percentage' : 'Amount'}
-                </label>
-                <div className="flex items-center gap-3">
-                  <InputNumber
-                    value={curFee.value}
-                    onChange={(val) => setCurFee((prev) => ({ ...prev, value: val }))}
-                    className="flex-1 h-[42px] flex items-center"
-                  />
-                  <span className="text-[14px] text-[#6B7280] font-semibold">
-                    {curFee.how === 'pct' ? '% of sale price' : '₹ per order'}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/* SLAB TYPES (PCT-SLAB / FLAT-SLAB / WEIGHT) */}
-            {!['pct', 'flat'].includes(curFee.how) && (
-              <div className="mb-4">
-                <div className="mb-3">
-                  <Checkbox
-                    checked={curFee.by_cat || curFee.byCat}
-                    onChange={(e) =>
-                      setCurFee((prev) => ({ ...prev, by_cat: e.target.checked, byCat: e.target.checked }))
-                    }
-                    className="text-[13.5px] font-medium text-[#374151]"
-                  >
-                    The rate is different for each product type
-                  </Checkbox>
-                </div>
-
-                {/* GROUPS */}
-                {(curFee.by_cat || curFee.byCat
-                  ? curFee.groups
-                  : [curFee.groups[0] || { label: 'All products', slabs: [[0, '', '']] }]
-                ).map((g, gi) => (
-                  <div key={gi} className="border border-[#E5E7EB] rounded-[9px] mb-3 overflow-hidden">
-                    <div className="flex items-center justify-between gap-3 p-3 bg-[#FAFBFC] border-b border-[#E5E7EB]">
-                      <div className="flex-1">
-                        {curFee.by_cat || curFee.byCat ? (
-                          <Input
-                            value={g.label}
-                            onChange={(e) => updateGroupLabel(gi, e.target.value)}
-                            className="h-[34px] font-semibold text-[13px]"
-                          />
-                        ) : (
-                          <div>
-                            <span className="font-semibold text-[13px] text-[#111827]">All products</span>
-                            <span className="block text-[11.5px] text-[#9CA3AF]">
-                              Same rate for everything you sell here
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      {(curFee.by_cat || curFee.byCat) && curFee.groups.length > 1 && (
+                    ),
+                  },
+                  {
+                    title: 'Edit',
+                    key: 'actions',
+                    width: '12%',
+                    render: (_, record, index) => (
+                      <div className="flex items-center gap-1">
                         <Button
                           type="text"
-                          icon={<DeleteOutlined className="text-[#9CA3AF] hover:text-[#DC2626]" />}
-                          onClick={() => deleteGroup(gi)}
+                          icon={<EditOutlined className="text-[#9CA3AF] hover:text-[#374151] text-[15px]" />}
+                          onClick={() => openModal(index)}
                         />
-                      )}
-                    </div>
-
-                    <div className="p-3">
-                      <div className="grid grid-cols-[1fr_1fr_1fr_30px] gap-2 mb-2 text-[11px] font-semibold uppercase text-[#6B7280] tracking-wider">
-                        <div>{curFee.how === 'weight' ? 'Weight from' : 'Price from'}</div>
-                        <div>{curFee.how === 'weight' ? 'Weight to' : 'Price to'}</div>
-                        <div>Rate ({curFee.how === 'pct-slab' ? '%' : '₹'})</div>
-                        <div />
+                        <Button
+                          type="text"
+                          icon={<DeleteOutlined className="text-[#9CA3AF] hover:text-[#DC2626] text-[15px]" />}
+                          onClick={() => confirmDeleteFee(record)}
+                        />
                       </div>
+                    ),
+                  },
+                ]}
+              />
+            </Spin>
+          </div>
 
-                      {(g.slabs || []).map((s, si) => (
-                        <div key={si} className="grid grid-cols-[1fr_1fr_1fr_30px] gap-2 items-center mb-2">
-                          <Input
-                            type="number"
-                            value={s[0]}
-                            onChange={(e) => updateSlabValue(gi, si, 0, e.target.value)}
-                            className="h-[36px] text-[13.5px]"
-                          />
-                          <Input
-                            type="number"
-                            value={s[1]}
-                            placeholder="no limit"
-                            onChange={(e) => updateSlabValue(gi, si, 1, e.target.value)}
-                            className="h-[36px] text-[13.5px]"
-                          />
-                          <Input
-                            type="number"
-                            value={s[2]}
-                            onChange={(e) => updateSlabValue(gi, si, 2, e.target.value)}
-                            className="h-[36px] text-[13.5px]"
-                          />
-                          <Button
-                            type="text"
-                            icon={<CloseOutlined className="text-[#9CA3AF] hover:text-[#DC2626]" />}
-                            onClick={() => deleteSlab(gi, si)}
-                          />
-                        </div>
-                      ))}
-
-                      <button
-                        type="button"
-                        onClick={() => addSlab(gi)}
-                        className="mt-1 text-[13px] font-semibold text-[#2563EB] hover:underline bg-transparent border-none p-0 cursor-pointer"
-                      >
-                        ＋ Add price range
-                      </button>
-                    </div>
-                  </div>
-                ))}
-
-                {(curFee.by_cat || curFee.byCat) && (
-                  <button
-                    type="button"
-                    onClick={addGroup}
-                    className="mt-1 text-[13px] font-semibold text-[#2563EB] hover:underline bg-transparent border-none p-0 cursor-pointer"
-                  >
-                    ＋ Add another product type
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* LIVE BOX EXAMPLE */}
-            {modalLiveText && (
-              <div className="bg-[#ECFDF5] border border-[#A7F3D0] rounded-[9px] p-3.5 text-[13px] text-[#15803D] leading-relaxed mb-4">
-                {modalLiveText}
-              </div>
-            )}
-
-            {/* MODAL FOOTER */}
-            <div className="flex items-center justify-between pt-3 border-t border-[#E5E7EB]">
-              {editingIndex !== null ? (
-                <button
-                  type="button"
-                  onClick={() => confirmDeleteFee(curFee)}
-                  className="text-[#DC2626] hover:underline text-[13px] font-semibold bg-transparent border-none p-0 cursor-pointer"
-                >
-                  Delete this fee
-                </button>
-              ) : (
-                <span />
-              )}
-
-              <div className="flex items-center gap-2">
-                <Button onClick={closeModal} className="h-[38px] px-4 rounded-[8px]">
-                  Cancel
-                </Button>
-                <Button
-                  type="primary"
-                  onClick={handleSaveFee}
-                  className="bg-[#16A34A] hover:bg-[#15803D] border-none text-[13.5px] font-semibold h-[38px] px-4 rounded-[8px]"
-                >
-                  Save fee
-                </Button>
-              </div>
+          {/* REAL ORDER CALCULATION PREVIEW */}
+          <div className="w-full bg-white border border-[#E5E7EB] rounded-[10px] shadow-[0_1px_2px_rgba(16,24,40,0.05)] p-5 flex items-center gap-6 flex-wrap mb-4 sm:p-4 sm:gap-4">
+            {' '}
+            <div>
+              <div className="text-[13px] text-[#6B7280] font-medium mb-2">See it on a real order</div>
+              <Select
+                value={selectedSampleItem}
+                onChange={(val) => setSelectedSampleItem(val)}
+                className="w-[300px] max-w-full h-[40px] sm:w-full"
+              >
+                <Option value="top">Women&apos;s Top — sold at ₹899</Option>
+                <Option value="dress">Women&apos;s Dress — sold at ₹1,650</Option>
+              </Select>
+            </div>
+            <div className="text-[14.5px] text-[#374151] leading-[1.9] pt-2 max-w-full">
+              {' '}
+              Sale <b className="text-[#111827]">₹{orderCalculation.price}</b>{' '}
+              <span className="text-[#DC2626]">
+                − commission ₹{orderCalculation.commAmt.toFixed(2)}{' '}
+                <small className="text-[#9CA3AF]">({orderCalculation.commRate}% slab)</small>
+              </span>{' '}
+              <span className="text-[#DC2626]">− fixed fee ₹{orderCalculation.fixedAmt}</span> ={' '}
+              <span className="text-[#15803D] font-bold">₹{orderCalculation.net.toFixed(2)} after fees</span>
             </div>
           </div>
-        )}
-      </Modal>
+
+          <p className="text-[12.5px] text-[#9CA3AF] text-center mt-3">
+            These estimates show on every order in Profit. When the settlement report comes in, the real charge replaces
+            the estimate automatically.
+          </p>
+        </main>
+
+        {/* ================= ADD / EDIT FEE MODAL ================= */}
+        <Modal
+          open={isModalOpen}
+          onCancel={closeModal}
+          footer={null}
+          width={660}
+          centered
+          className="estimated-fee-modal"
+          title={
+            <div className="text-[16.5px] font-bold text-[#111827]">
+              {editingIndex === null
+                ? `Add a fee — ${selectedMarketplace}`
+                : `Edit ${curFee?.name ? curFee.name.toLowerCase() : 'fee'} — ${selectedMarketplace}`}
+            </div>
+          }
+        >
+          {curFee && (
+            <div className="pt-2">
+              {/* What is the fee called? */}
+              <div className="mb-4">
+                <label className="block text-[13px] font-semibold text-[#374151] mb-1.5">What is the fee called?</label>
+                <Select
+                  value={curFee.name}
+                  onChange={(val) => setCurFee((prev) => ({ ...prev, name: val }))}
+                  className="w-full h-[42px]"
+                >
+                  <Option value="Commission">Commission</Option>
+                  <Option value="Fixed fee">Fixed fee</Option>
+                  <Option value="Shipping fee">Shipping fee</Option>
+                  <Option value="Return fee">Return fee</Option>
+                  <Option value="Storage fee">Storage fee</Option>
+                  <Option value="Something else…">Other fees</Option>
+                </Select>
+              </div>
+
+              {/* How much do they charge? */}
+              <div className="mb-4">
+                <label className="block text-[13px] font-semibold text-[#374151] mb-1.5">
+                  How much do they charge?
+                </label>
+                <Select
+                  value={curFee.how}
+                  onChange={(val) => setCurFee((prev) => ({ ...prev, how: val }))}
+                  className="w-full h-[42px]"
+                >
+                  <Option value="flat">A fixed rupee amount</Option>
+                  <Option value="pct-slab">A percentage that changes with the sales</Option>
+                  <Option value="flat-slab">A fixed amount that changes with the sales</Option>
+                  <Option value="weight">A fixed amount that changes with weight</Option>
+                </Select>
+                <div className="text-[12px] text-[#9CA3AF] mt-1.5">
+                  {['pct', 'flat'].includes(curFee.how)
+                    ? 'Same rate on every order.'
+                    : curFee.how === 'weight'
+                    ? 'Set an amount for each weight range.'
+                    : 'Set the rate for each price range, exactly as it appears on your rate card.'}
+                </div>
+              </div>
+
+              {/* SIMPLE TYPES (PCT / FLAT) */}
+              {['pct', 'flat'].includes(curFee.how) && (
+                <div className="mb-4">
+                  <label className="block text-[13px] font-semibold text-[#374151] mb-1.5">
+                    {curFee.how === 'pct' ? 'Percentage' : 'Amount'}
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <InputNumber
+                      value={curFee.value}
+                      onChange={(val) => setCurFee((prev) => ({ ...prev, value: val }))}
+                      className="flex-1 h-[42px] flex items-center"
+                    />
+                    <span className="text-[14px] text-[#6B7280] font-semibold">
+                      {curFee.how === 'pct' ? '% of sale price' : '₹ per order'}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* SLAB TYPES (PCT-SLAB / FLAT-SLAB / WEIGHT) */}
+              {!['pct', 'flat'].includes(curFee.how) && (
+                <div className="mb-4">
+                  <div className="mb-3">
+                    <Checkbox
+                      checked={curFee.by_cat || curFee.byCat}
+                      onChange={(e) =>
+                        setCurFee((prev) => ({ ...prev, by_cat: e.target.checked, byCat: e.target.checked }))
+                      }
+                      className="text-[13.5px] font-medium text-[#374151]"
+                    >
+                      The rate is different for each product type
+                    </Checkbox>
+                  </div>
+
+                  {/* GROUPS */}
+                  {(curFee.by_cat || curFee.byCat
+                    ? curFee.groups
+                    : [curFee.groups[0] || { label: 'All products', slabs: [[0, '', '']] }]
+                  ).map((g, gi) => (
+                    <div key={gi} className="border border-[#E5E7EB] rounded-[9px] mb-3 overflow-hidden">
+                      <div className="flex items-center justify-between gap-3 p-3 bg-[#FAFBFC] border-b border-[#E5E7EB]">
+                        <div className="flex-1">
+                          {curFee.by_cat || curFee.byCat ? (
+                            <Input
+                              value={g.label}
+                              onChange={(e) => updateGroupLabel(gi, e.target.value)}
+                              className="h-[34px] font-semibold text-[13px]"
+                            />
+                          ) : (
+                            <div>
+                              <span className="font-semibold text-[13px] text-[#111827]">All products</span>
+                              <span className="block text-[11.5px] text-[#9CA3AF]">
+                                Same rate for everything you sell here
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        {(curFee.by_cat || curFee.byCat) && curFee.groups.length > 1 && (
+                          <Button
+                            type="text"
+                            icon={<DeleteOutlined className="text-[#9CA3AF] hover:text-[#DC2626]" />}
+                            onClick={() => deleteGroup(gi)}
+                          />
+                        )}
+                      </div>
+
+                      <div className="p-3">
+                        <div className="grid grid-cols-[1fr_1fr_1fr_30px] gap-2 mb-2 text-[11px] font-semibold uppercase text-[#6B7280] tracking-wider">
+                          <div>{curFee.how === 'weight' ? 'Weight from' : 'Price from'}</div>
+                          <div>{curFee.how === 'weight' ? 'Weight to' : 'Price to'}</div>
+                          <div>Rate ({curFee.how === 'pct-slab' ? '%' : '₹'})</div>
+                          <div />
+                        </div>
+
+                        {(g.slabs || []).map((s, si) => (
+                          <div key={si} className="grid grid-cols-[1fr_1fr_1fr_30px] gap-2 items-center mb-2">
+                            <Input
+                              type="number"
+                              value={s[0]}
+                              onChange={(e) => updateSlabValue(gi, si, 0, e.target.value)}
+                              className="h-[36px] text-[13.5px]"
+                            />
+                            <Input
+                              type="number"
+                              value={s[1]}
+                              placeholder="no limit"
+                              onChange={(e) => updateSlabValue(gi, si, 1, e.target.value)}
+                              className="h-[36px] text-[13.5px]"
+                            />
+                            <Input
+                              type="number"
+                              value={s[2]}
+                              onChange={(e) => updateSlabValue(gi, si, 2, e.target.value)}
+                              className="h-[36px] text-[13.5px]"
+                            />
+                            <Button
+                              type="text"
+                              icon={<CloseOutlined className="text-[#9CA3AF] hover:text-[#DC2626]" />}
+                              onClick={() => deleteSlab(gi, si)}
+                            />
+                          </div>
+                        ))}
+
+                        <button
+                          type="button"
+                          onClick={() => addSlab(gi)}
+                          className="mt-1 text-[13px] font-semibold text-[#2563EB] hover:underline bg-transparent border-none p-0 cursor-pointer"
+                        >
+                          ＋ Add price range
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {(curFee.by_cat || curFee.byCat) && (
+                    <button
+                      type="button"
+                      onClick={addGroup}
+                      className="mt-1 text-[13px] font-semibold text-[#2563EB] hover:underline bg-transparent border-none p-0 cursor-pointer"
+                    >
+                      ＋ Add another product type
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* LIVE BOX EXAMPLE */}
+              {modalLiveText && (
+                <div className="bg-[#ECFDF5] border border-[#A7F3D0] rounded-[9px] p-3.5 text-[13px] text-[#15803D] leading-relaxed mb-4">
+                  {modalLiveText}
+                </div>
+              )}
+
+              {/* MODAL FOOTER */}
+              <div className="flex items-center justify-between pt-3 border-t border-[#E5E7EB]">
+                {editingIndex !== null ? (
+                  <button
+                    type="button"
+                    onClick={() => confirmDeleteFee(curFee)}
+                    className="text-[#DC2626] hover:underline text-[13px] font-semibold bg-transparent border-none p-0 cursor-pointer"
+                  >
+                    Delete this fee
+                  </button>
+                ) : (
+                  <span />
+                )}
+
+                <div className="flex items-center gap-2">
+                  <Button onClick={closeModal} className="h-[38px] px-4 rounded-[8px]">
+                    Cancel
+                  </Button>
+                  <Button
+                    type="primary"
+                    onClick={handleSaveFee}
+                    className="bg-[#16A34A] hover:bg-[#15803D] border-none text-[13.5px] font-semibold h-[38px] px-4 rounded-[8px]"
+                  >
+                    Save fee
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </Modal>
+      </div>
     </>
   );
 }
