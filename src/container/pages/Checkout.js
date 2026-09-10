@@ -272,7 +272,7 @@ function Checkout() {
   useEffect(() => {
     if (userObj) {
       setEmail(userObj.email || '');
-      setBusinessName(userObj.name || '');
+      setBusinessName(userObj.business_name || '');
     }
   }, [userObj]);
 
