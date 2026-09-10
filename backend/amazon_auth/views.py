@@ -5905,62 +5905,7 @@ def amazon_profitability_parent_transactions_shipping(request):
     )
 
 
-    # ---------------- ESTIMATED FEES ----------------
-    estimated_fee_qs = AmazonEstimatedFee.objects.filter(
-        order_item__order__user=user
-    ).exclude(order_item__order__order_status__icontains='Cancel')
-
-    if from_date:
-        estimated_fee_qs = estimated_fee_qs.filter(
-            order_item__order__purchase_date__gte=from_date
-        )
-
-    if to_date:
-        estimated_fee_qs = estimated_fee_qs.filter(
-            order_item__order__purchase_date__lte=to_date
-        )
-
-    if channels:
-        estimated_fee_qs = estimated_fee_qs.filter(
-            order_item__order__marketplace_id__in=marketplace_ids
-        )
-
-
-    estimated_fee_data = (
-        estimated_fee_qs
-        .values('asin')
-        .annotate(
-            estimated_fees=Sum('total_fees'),
-
-            referral_fee=Sum('referral_fee'),
-            closing_fee=Sum('closing_fee'),
-            per_item_fee=Sum('per_item_fee'),
-
-            fba_fee=Sum('fba_fee'),
-            fba_pick_pack_fee=Sum('fba_pick_pack_fee'),
-            fba_weight_handling_fee=Sum('fba_weight_handling_fee'),
-
-            tax_amount=Sum('tax_amount'),
-        )
-    )
-
-
-    estimated_fee_map = {
-        row['asin']: {
-            "estimated_fees": Decimal(str(row['estimated_fees'] or 0)),
-
-            "referral_fee": Decimal(str(row['referral_fee'] or 0)),
-            "closing_fee": Decimal(str(row['closing_fee'] or 0)),
-            "per_item_fee": Decimal(str(row['per_item_fee'] or 0)),
-
-            "fba_fee": Decimal(str(row['fba_fee'] or 0)),
-            "fba_pick_pack_fee": Decimal(str(row['fba_pick_pack_fee'] or 0)),
-            "fba_weight_handling_fee": Decimal(str(row['fba_weight_handling_fee'] or 0)),
-
-            "tax_amount": Decimal(str(row['tax_amount'] or 0)),
-        }
-        for row in estimated_fee_data
-    }
+    # (Estimated fees query moved below matching_order_ids)
 
     # ---------------- FINANCE ----------------
     finances_qs = FinancialEvent.objects.filter(user=user)
@@ -6127,6 +6072,100 @@ def amazon_profitability_parent_transactions_shipping(request):
     # ---------------- TRANSACTION SHIPPING FEES ----------------
     
     matching_order_ids = [row['order__amazon_order_id'] for row in asin_orders]
+
+    # ---------------- ESTIMATED FEES ----------------
+    estimated_fee_qs = AmazonEstimatedFee.objects.filter(
+        order_item__order__user=user
+    ).exclude(order_item__order__order_status__icontains='Cancel')
+
+    if matching_order_ids:
+        estimated_fee_qs = estimated_fee_qs.filter(order_item__order__amazon_order_id__in=matching_order_ids)
+    else:
+        if from_date:
+            estimated_fee_qs = estimated_fee_qs.filter(
+                order_item__order__purchase_date__gte=from_date
+            )
+        if to_date:
+            estimated_fee_qs = estimated_fee_qs.filter(
+                order_item__order__purchase_date__lte=to_date
+            )
+        if channels:
+            estimated_fee_qs = estimated_fee_qs.filter(
+                order_item__order__marketplace_id__in=marketplace_ids
+            )
+
+    estimated_fee_data = (
+        estimated_fee_qs
+        .values(
+            'order_item__order__amazon_order_id',
+            'order_item__seller_sku',
+            'order_item__asin',
+            'order_item__parent_asin',
+            'asin',
+            'seller_sku',
+        )
+        .annotate(
+            estimated_fees=Sum('total_fees'),
+            referral_fee=Sum('referral_fee'),
+            closing_fee=Sum('closing_fee'),
+            per_item_fee=Sum('per_item_fee'),
+            fba_fee=Sum('fba_fee'),
+            fba_pick_pack_fee=Sum('fba_pick_pack_fee'),
+            fba_weight_handling_fee=Sum('fba_weight_handling_fee'),
+            tax_amount=Sum('tax_amount'),
+        )
+    )
+
+    estimated_fee_by_order_sku = {}
+    estimated_fee_by_order = {}
+    estimated_fee_by_sku = {}
+    estimated_fee_by_asin = {}
+    estimated_fee_by_parent = {}
+    unit_fee_by_sku = {}
+    unit_fee_by_asin = {}
+    unit_fee_by_parent = {}
+
+    def _accumulate_fee_row(d, key, item_fee):
+        if not key:
+            return
+        if key not in d:
+            d[key] = {k: Decimal("0") for k in item_fee}
+        for k, v in item_fee.items():
+            d[key][k] += v
+
+    for fee_row in estimated_fee_data:
+        oid = fee_row.get('order_item__order__amazon_order_id')
+        sku_k = (fee_row.get('order_item__seller_sku') or fee_row.get('seller_sku') or '').strip()
+        asin_k = (fee_row.get('order_item__asin') or fee_row.get('asin') or '').strip()
+        p_asin_k = (fee_row.get('order_item__parent_asin') or '').strip()
+
+        item_fee = {
+            "estimated_fees": Decimal(str(fee_row['estimated_fees'] or 0)),
+            "referral_fee": Decimal(str(fee_row['referral_fee'] or 0)),
+            "closing_fee": Decimal(str(fee_row['closing_fee'] or 0)),
+            "per_item_fee": Decimal(str(fee_row['per_item_fee'] or 0)),
+            "fba_fee": Decimal(str(fee_row['fba_fee'] or 0)),
+            "fba_pick_pack_fee": Decimal(str(fee_row['fba_pick_pack_fee'] or 0)),
+            "fba_weight_handling_fee": Decimal(str(fee_row['fba_weight_handling_fee'] or 0)),
+            "tax_amount": Decimal(str(fee_row['tax_amount'] or 0)),
+        }
+
+        if oid and sku_k:
+            _accumulate_fee_row(estimated_fee_by_order_sku, (oid, sku_k), item_fee)
+        if oid:
+            _accumulate_fee_row(estimated_fee_by_order, oid, item_fee)
+        if sku_k:
+            _accumulate_fee_row(estimated_fee_by_sku, sku_k, item_fee)
+            if sku_k not in unit_fee_by_sku:
+                unit_fee_by_sku[sku_k] = item_fee
+        if asin_k:
+            _accumulate_fee_row(estimated_fee_by_asin, asin_k, item_fee)
+            if asin_k not in unit_fee_by_asin:
+                unit_fee_by_asin[asin_k] = item_fee
+        if p_asin_k:
+            _accumulate_fee_row(estimated_fee_by_parent, p_asin_k, item_fee)
+            if p_asin_k not in unit_fee_by_parent:
+                unit_fee_by_parent[p_asin_k] = item_fee
     tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
         identifier_name="ORDER_ID",
         identifier_value__in=matching_order_ids
@@ -6624,21 +6663,53 @@ def amazon_profitability_parent_transactions_shipping(request):
         # orders = asin_map.get(asin, [])
         orders = asin_map.get((asin, child_sku), [])
         
-        # estimated_fees = estimated_fee_map.get(asin, Decimal("0"))
+        fee_data = {
+            "estimated_fees": Decimal("0"),
+            "referral_fee": Decimal("0"),
+            "closing_fee": Decimal("0"),
+            "per_item_fee": Decimal("0"),
+            "fba_fee": Decimal("0"),
+            "fba_pick_pack_fee": Decimal("0"),
+            "fba_weight_handling_fee": Decimal("0"),
+            "tax_amount": Decimal("0"),
+        }
+        fee_matched = False
+        for o in orders:
+            oid = o.get('order__amazon_order_id')
+            o_sku = (o.get('seller_sku') or child_sku or '').strip()
+            o_qty = max(Decimal("1"), Decimal(str(o.get('quantity_ordered') or 1)))
+            f_item = None
+            if oid and o_sku and (oid, o_sku) in estimated_fee_by_order_sku:
+                f_item = estimated_fee_by_order_sku[(oid, o_sku)]
+            elif oid and oid in estimated_fee_by_order:
+                f_item = estimated_fee_by_order[oid]
 
-        fee_data = estimated_fee_map.get(asin, {})
+            if f_item:
+                fee_matched = True
+                for k in fee_data:
+                    fee_data[k] += f_item.get(k, Decimal("0")) * o_qty
 
-        estimated_fees = fee_data.get("estimated_fees", Decimal("0"))
+        if not fee_matched:
+            fallback_fee = (
+                unit_fee_by_sku.get(child_sku) or
+                unit_fee_by_asin.get(asin) or
+                unit_fee_by_parent.get(parent_asin) or
+                estimated_fee_by_sku.get(child_sku) or
+                estimated_fee_by_asin.get(asin) or
+                estimated_fee_by_parent.get(parent_asin, {})
+            )
+            fee_multiplier = max(Decimal("1"), Decimal(str(row.get('grossqty') or 1)))
+            for k in fee_data:
+                fee_data[k] = fallback_fee.get(k, Decimal("0")) * fee_multiplier
 
         referral_fee = fee_data.get("referral_fee", Decimal("0"))
         closing_fee = fee_data.get("closing_fee", Decimal("0"))
         per_item_fee = fee_data.get("per_item_fee", Decimal("0"))
-
         fba_fee = fee_data.get("fba_fee", Decimal("0"))
         fba_pick_pack_fee = fee_data.get("fba_pick_pack_fee", Decimal("0"))
         fba_weight_handling_fee = fee_data.get("fba_weight_handling_fee", Decimal("0"))
-
         tax_amount = fee_data.get("tax_amount", Decimal("0"))
+        estimated_fees = max(Decimal("0"), fee_data.get("estimated_fees", Decimal("0")) - fba_weight_handling_fee)
 
         gross_qty = Decimal(row['grossqty'] or 0)
         gross_sales = Decimal(row['grosssales'] or 0)
@@ -6826,6 +6897,7 @@ def amazon_profitability_parent_transactions_shipping(request):
             final_net_sales += o_gross
             total_cost += o_cost
             
+        final_net_sales = max(Decimal("0"), final_net_sales - promo_discount)
 
         # ------------------------------------------------------------
         # TAXABLE VALUE
@@ -6878,7 +6950,7 @@ def amazon_profitability_parent_transactions_shipping(request):
         net_sales = adjusted_gross_sales
         shipping_final = shipping_price + fulfillment_fee_refund_total
 
-        mp_gst = (-abs(estimated_fees) + shipping_final) * Decimal("0.18")
+        mp_gst = (-abs(estimated_fees) + shipping_final) * (Decimal("18") / Decimal("118"))
         
         row_other_expense = Decimal(str(other_expenses_map.get(idx, 0)))
 
@@ -6897,27 +6969,13 @@ def amazon_profitability_parent_transactions_shipping(request):
             - (row_other_expense if profit_setting.other_expense else Decimal("0"))
         )
 
-        # exp_settlement = (
-        #     final_net_sales
-        #     + shipping_final
-        #     + ads
-        #     + tcs_total
-        #     - estimated_fees
-        #     - mp_gst
-        #     - promo_discount
-        #     - Decimal(str(order_claim_amount))
-        # )
-        
         exp_settlement = (
             final_net_sales
-            + shipping_final
-            # + ads                    remove this 
-            - tcs_total                    #substract now 
-            - tds_total                    #substract now 
             - estimated_fees
-            - mp_gst
-            - promo_discount
-            + Decimal(str(order_claim_amount))    #add this one 
+            + shipping_final
+            - tcs_total
+            - tds_total
+            + Decimal(str(order_claim_amount))
         )
         
         
@@ -9027,6 +9085,8 @@ def sku_profit_report_transactions_shipping(request):
             cost = 0
             promo_discount = 0
 
+        final_net_sales = max(0.0, final_net_sales - promo_discount)
+
         if gst_rate > 0:
 
             taxable_value = (
@@ -9114,34 +9174,10 @@ def sku_profit_report_transactions_shipping(request):
         )
         # print("shipping_final>>>>>>>>>>>>>>>>",shipping_final)
 
-        mp_gst = (-abs(estimated_fees) + shipping_final) * 0.18
+        mp_gst = (-abs(estimated_fees) + shipping_final) * (18 / 118)
 
         
         row_other_expense = float(other_expenses_map.get(idx, 0))
-
-        # profit = (
-        #     final_net_sales
-        #     + shipping_final
-        #     + ads
-        #     + tcs
-        #     - estimated_fees
-        #     - mp_gst
-        #     - gst_to_pay_amount
-        #     - promo_discount
-        #     - order_claim_amount
-        #     - cost
-        #     - row_other_expense
-        # )
-        
-        # print("tcs cccccccccccccccccccccccnewwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",tcs)
-        
-        # print("shipping_final****************",shipping_final)
-        # print("cost>>>>>>>>>>>****************",cost)
-        # print("gst_to_pay_amount>>>>>>>>>>>****************",gst_to_pay_amount)
-        # print("estimated_fees****************",estimated_fees)
-        # print("tcs>>>>>>>>>>>****************",tcs)
-        # print("mp_gst>>>>>>>>>>>****************",mp_gst)
-        # print("ads****************",ads)
 
         profit = (
             final_net_sales
@@ -9158,29 +9194,13 @@ def sku_profit_report_transactions_shipping(request):
             - (row_other_expense if profit_setting.other_expense else 0)
         )
 
-        # exp_settlement = (    updated on 5 sep
-        #     final_net_sales
-        #     + shipping_final
-        #     + ads
-        #     + tcs
-        #     - estimated_fees
-        #     - mp_gst
-        #     - promo_discount
-        #     - order_claim_amount
-        # )
-        
-        # New exp_settlement 
-        
         exp_settlement = (
             final_net_sales
-            + shipping_final     
-            # + ads                    remove this 
-            - tcs                    #substract now 
-            - tds                    #substract now 
             - estimated_fees
-            - mp_gst
-            - promo_discount
-            + order_claim_amount     #add this one      
+            + shipping_final     
+            - tcs
+            - tds
+            + order_claim_amount
         )
         
 
@@ -10336,6 +10356,8 @@ def orders_profit_report_transactions_shipping(request):
             cost = 0
             promo_discount = 0
 
+        final_net_sales = max(0.0, final_net_sales - promo_discount)
+
         if gst_rate > 0:
 
             taxable_value = (
@@ -10421,7 +10443,7 @@ def orders_profit_report_transactions_shipping(request):
             + fulfillment_fee_refund_by_order.get(oid, 0.0)
         )
 
-        mp_gst = (-abs(estimated_fees) + shipping_final) * 0.18
+        mp_gst = (-abs(estimated_fees) + shipping_final) * (18 / 118)
 
         row_other_expense = float(other_expenses_map.get(idx, 0))
 
@@ -10442,12 +10464,10 @@ def orders_profit_report_transactions_shipping(request):
 
         exp_settlement = (
             final_net_sales
+            - estimated_fees
             + shipping_final     
             - tcs
             - tds
-            - estimated_fees
-            - mp_gst
-            - promo_discount
             + order_claim_amount
         )
 
@@ -10955,60 +10975,6 @@ def amazon_profitability_details_transactions_shipping(request):
         )
     )
 
-    # ---------------- ESTIMATED FEES ----------------
-    estimated_fee_qs = AmazonEstimatedFee.objects.filter(
-        order_item__order__user=user
-    ).exclude(order_item__order__order_status__icontains='Cancel')
-
-    # apply same date filter
-    if from_date:
-        estimated_fee_qs = estimated_fee_qs.filter(
-            order_item__order__purchase_date__gte=from_date
-        )
-
-    if to_date:
-        estimated_fee_qs = estimated_fee_qs.filter(
-            order_item__order__purchase_date__lte=to_date
-        )
-
-    # apply same parent filter
-    if parent_ids:
-        estimated_fee_qs = estimated_fee_qs.filter(
-            order_item__parent_asin__in=parent_ids
-        )
-
-    estimated_fee_data = (
-        estimated_fee_qs
-        .values('asin')
-        .annotate(
-            estimated_fees=Sum('total_fees'),
-
-            referral_fee=Sum('referral_fee'),
-            closing_fee=Sum('closing_fee'),
-            per_item_fee=Sum('per_item_fee'),
-
-            fba_fee=Sum('fba_fee'),
-            fba_pick_pack_fee=Sum('fba_pick_pack_fee'),
-            fba_weight_handling_fee=Sum('fba_weight_handling_fee'),
-
-            tax_amount=Sum('tax_amount'),
-        )
-    )
-
-    estimated_fee_by_asin = {
-        row['asin']: {
-            "estimated_fees": float(row['estimated_fees'] or 0),
-            "referral_fee": float(row['referral_fee'] or 0),
-            "closing_fee": float(row['closing_fee'] or 0),
-            "per_item_fee": float(row['per_item_fee'] or 0),
-            "fba_fee": float(row['fba_fee'] or 0),
-            "fba_pick_pack_fee": float(row['fba_pick_pack_fee'] or 0),
-            "fba_weight_handling_fee": float(row['fba_weight_handling_fee'] or 0),
-            "tax_amount": float(row['tax_amount'] or 0),
-        }
-        for row in estimated_fee_data
-    }
-
     # ---------------- FINANCIAL EVENTS ----------------
     finances_qs = FinancialEvent.objects.filter(user=user)
 
@@ -11060,18 +11026,6 @@ def amazon_profitability_details_transactions_shipping(request):
         child_parent_map[row['asin']] = p_asin
         asin_map.setdefault(p_asin, []).append(row)
 
-    estimated_fee_map = {}
-    for asin, fee_data in estimated_fee_by_asin.items():
-        p_asin = child_parent_map.get(asin) or asin
-        if p_asin not in estimated_fee_map:
-            estimated_fee_map[p_asin] = {
-                "estimated_fees": 0.0, "referral_fee": 0.0, "closing_fee": 0.0,
-                "per_item_fee": 0.0, "fba_fee": 0.0, "fba_pick_pack_fee": 0.0,
-                "fba_weight_handling_fee": 0.0, "tax_amount": 0.0
-            }
-        for k, v in fee_data.items():
-            estimated_fee_map[p_asin][k] += v
-
     # ---------------- TRANSACTION SHIPPING FEES — MFN POSTAGE FEE ONLY ----------------  
     
     matching_order_ids = [row['order__amazon_order_id'] for row in asin_orders]
@@ -11084,6 +11038,104 @@ def amazon_profitability_details_transactions_shipping(request):
         row["transaction_id"]: row["identifier_value"]
         for row in tx_identifiers
     }
+
+    # ---------------- ESTIMATED FEES ----------------
+    estimated_fee_qs = AmazonEstimatedFee.objects.filter(
+        order_item__order__user=user
+    ).exclude(order_item__order__order_status__icontains='Cancel')
+
+    if matching_order_ids:
+        estimated_fee_qs = estimated_fee_qs.filter(order_item__order__amazon_order_id__in=matching_order_ids)
+    else:
+        if from_date:
+            estimated_fee_qs = estimated_fee_qs.filter(
+                order_item__order__purchase_date__gte=from_date
+            )
+        if to_date:
+            estimated_fee_qs = estimated_fee_qs.filter(
+                order_item__order__purchase_date__lte=to_date
+            )
+        if channels:
+            estimated_fee_qs = estimated_fee_qs.filter(
+                order_item__order__marketplace_id__in=marketplace_ids
+            )
+        if parent_ids:
+            estimated_fee_qs = estimated_fee_qs.filter(
+                order_item__parent_asin__in=parent_ids
+            )
+
+    estimated_fee_data = (
+        estimated_fee_qs
+        .values(
+            'order_item__order__amazon_order_id',
+            'order_item__seller_sku',
+            'order_item__asin',
+            'order_item__parent_asin',
+            'asin',
+            'seller_sku',
+        )
+        .annotate(
+            estimated_fees=Sum('total_fees'),
+            referral_fee=Sum('referral_fee'),
+            closing_fee=Sum('closing_fee'),
+            per_item_fee=Sum('per_item_fee'),
+            fba_fee=Sum('fba_fee'),
+            fba_pick_pack_fee=Sum('fba_pick_pack_fee'),
+            fba_weight_handling_fee=Sum('fba_weight_handling_fee'),
+            tax_amount=Sum('tax_amount'),
+        )
+    )
+
+    estimated_fee_by_order_sku = {}
+    estimated_fee_by_order = {}
+    estimated_fee_by_sku = {}
+    estimated_fee_by_asin = {}
+    estimated_fee_by_parent = {}
+    unit_fee_by_sku = {}
+    unit_fee_by_asin = {}
+    unit_fee_by_parent = {}
+
+    def _accumulate_fee_row_details(d, key, item_fee):
+        if not key:
+            return
+        if key not in d:
+            d[key] = {k: 0.0 for k in item_fee}
+        for k, v in item_fee.items():
+            d[key][k] += v
+
+    for fee_row in estimated_fee_data:
+        oid = fee_row.get('order_item__order__amazon_order_id')
+        sku_k = (fee_row.get('order_item__seller_sku') or fee_row.get('seller_sku') or '').strip()
+        asin_k = (fee_row.get('order_item__asin') or fee_row.get('asin') or '').strip()
+        p_asin_k = (fee_row.get('order_item__parent_asin') or '').strip()
+
+        item_fee = {
+            "estimated_fees": float(fee_row['estimated_fees'] or 0),
+            "referral_fee": float(fee_row['referral_fee'] or 0),
+            "closing_fee": float(fee_row['closing_fee'] or 0),
+            "per_item_fee": float(fee_row['per_item_fee'] or 0),
+            "fba_fee": float(fee_row['fba_fee'] or 0),
+            "fba_pick_pack_fee": float(fee_row['fba_pick_pack_fee'] or 0),
+            "fba_weight_handling_fee": float(fee_row['fba_weight_handling_fee'] or 0),
+            "tax_amount": float(fee_row['tax_amount'] or 0),
+        }
+
+        if oid and sku_k:
+            _accumulate_fee_row_details(estimated_fee_by_order_sku, (oid, sku_k), item_fee)
+        if oid:
+            _accumulate_fee_row_details(estimated_fee_by_order, oid, item_fee)
+        if sku_k:
+            _accumulate_fee_row_details(estimated_fee_by_sku, sku_k, item_fee)
+            if sku_k not in unit_fee_by_sku:
+                unit_fee_by_sku[sku_k] = item_fee
+        if asin_k:
+            _accumulate_fee_row_details(estimated_fee_by_asin, asin_k, item_fee)
+            if asin_k not in unit_fee_by_asin:
+                unit_fee_by_asin[asin_k] = item_fee
+        if p_asin_k:
+            _accumulate_fee_row_details(estimated_fee_by_parent, p_asin_k, item_fee)
+            if p_asin_k not in unit_fee_by_parent:
+                unit_fee_by_parent[p_asin_k] = item_fee
 
     # ============================================================
     # SHIPPING STATUS PRIORITY
@@ -11627,22 +11679,6 @@ def amazon_profitability_details_transactions_shipping(request):
         # asin = row['asin']
         parent_asin = row['parent_asin']
         processed_parent_asins.add(parent_asin)
-        # estimated_fees = estimated_fee_map.get(parent_asin, 0)
-
-        fee_data = estimated_fee_map.get(parent_asin, {})
-
-        referral_fee = fee_data.get("referral_fee", 0)
-        closing_fee = fee_data.get("closing_fee", 0)
-        per_item_fee = fee_data.get("per_item_fee", 0)
-
-        fba_fee = fee_data.get("fba_fee", 0)
-        fba_pick_pack_fee = fee_data.get("fba_pick_pack_fee", 0)
-        fba_weight_handling_fee = fee_data.get("fba_weight_handling_fee", 0)
-
-        tax_amount = fee_data.get("tax_amount", 0)
-
-        estimated_fees = max(0.0, float(fee_data.get("estimated_fees", 0)) - float(fba_weight_handling_fee))
-
         gross_qty = int(row['grossqty'] or 0)
         quantity_shipped = int(row['quantity_shipped'] or 0)
 
@@ -11656,7 +11692,56 @@ def amazon_profitability_details_transactions_shipping(request):
         standard_cost = float(str(row.get("sku_standard_cost") or 0))
         print("row", row["sku_tds_rate"])
 
-        orders = asin_map.get(parent_asin, [])
+        orders = asin_map.get(parent_asin, []) or (asin_map.get(row.get('asin'), []) if row.get('asin') else [])
+
+        fee_data = {
+            "estimated_fees": 0.0,
+            "referral_fee": 0.0,
+            "closing_fee": 0.0,
+            "per_item_fee": 0.0,
+            "fba_fee": 0.0,
+            "fba_pick_pack_fee": 0.0,
+            "fba_weight_handling_fee": 0.0,
+            "tax_amount": 0.0,
+        }
+        fee_matched = False
+        for o in orders:
+            oid = o.get('order__amazon_order_id')
+            o_sku = (o.get('seller_sku') or '').strip()
+            o_qty = max(1.0, float(o.get('quantity_ordered') or 1))
+            f_item = None
+            if oid and o_sku and (oid, o_sku) in estimated_fee_by_order_sku:
+                f_item = estimated_fee_by_order_sku[(oid, o_sku)]
+            elif oid and oid in estimated_fee_by_order:
+                f_item = estimated_fee_by_order[oid]
+
+            if f_item:
+                fee_matched = True
+                for k in fee_data:
+                    fee_data[k] += float(f_item.get(k, 0.0)) * o_qty
+
+        if not fee_matched:
+            fallback_fee = (
+                unit_fee_by_parent.get(parent_asin) or
+                unit_fee_by_asin.get(parent_asin) or
+                estimated_fee_by_parent.get(parent_asin) or
+                estimated_fee_by_asin.get(parent_asin, {})
+            )
+            fee_multiplier = max(1.0, float(gross_qty or 1))
+            for k in fee_data:
+                fee_data[k] = float(fallback_fee.get(k, 0.0)) * fee_multiplier
+
+        referral_fee = fee_data.get("referral_fee", 0.0)
+        closing_fee = fee_data.get("closing_fee", 0.0)
+        per_item_fee = fee_data.get("per_item_fee", 0.0)
+
+        fba_fee = fee_data.get("fba_fee", 0.0)
+        fba_pick_pack_fee = fee_data.get("fba_pick_pack_fee", 0.0)
+        fba_weight_handling_fee = fee_data.get("fba_weight_handling_fee", 0.0)
+
+        tax_amount = fee_data.get("tax_amount", 0.0)
+
+        estimated_fees = max(0.0, float(fee_data.get("estimated_fees", 0.0)) - float(fba_weight_handling_fee))
 
         tx_shipping_final = 0.0
         amazon_fee_refund_total = 0.0
@@ -11811,6 +11896,8 @@ def amazon_profitability_details_transactions_shipping(request):
         # ------------------------------------------------------------
         print("final_net_sales first>>>>>>>>>>>>>>>>",final_net_sales)
         
+        final_net_sales = max(0.0, final_net_sales - promo_discount)
+
         if gst_rate > 0:
             taxable_value = (
                 final_net_sales / (1 + (gst_rate / 100.0))
@@ -11855,7 +11942,7 @@ def amazon_profitability_details_transactions_shipping(request):
         
         shipping_final = ( shipping_price + order_fulfillment_fee_refund ) 
 
-        mp_gst = (-abs(estimated_fees) + shipping_final) * 0.18
+        mp_gst = (-abs(estimated_fees) + shipping_final) * (18 / 118)
 
         row_other_expense = float(other_expenses_map.get(idx, 0))
 
@@ -11870,27 +11957,13 @@ def amazon_profitability_details_transactions_shipping(request):
 
         stdcost_missing_percentage = (missing_qty / gross_qty * 100) if gross_qty else 0
 
-        # exp_settlement = (
-        #     final_net_sales
-        #     + shipping_final
-        #     + ads
-        #     + tcs_total
-        #     - estimated_fees
-        #     - mp_gst
-        #     - promo_discount
-        #     - order_claim_amount
-        # )
-        
         exp_settlement = (
             final_net_sales
-            + shipping_final
-            # + ads                        remove this 
-            - tcs_total                    #substract now 
-            - tds_total                    #substract now 
             - estimated_fees
-            - mp_gst
-            - promo_discount
-            + order_claim_amount            #add this one 
+            + shipping_final
+            - tcs_total
+            - tds_total
+            + order_claim_amount
         )
 
         

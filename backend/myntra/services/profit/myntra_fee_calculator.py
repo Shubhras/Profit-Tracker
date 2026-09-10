@@ -205,20 +205,21 @@ def calculate_myntra_estimated_fees(
         groups = getattr(rule, "groups", []) or []
         how = getattr(rule, "how", "pct")
 
+        has_cat_slabs = bool(getattr(rule, "by_cat", False) and groups and any(g.get("slabs") for g in groups if isinstance(g, dict)))
+
         if how == "pct":
             val = Decimal(str(getattr(rule, "value", 0) or 0))
             fee_amount = (gross_sales_dec * val) / Decimal("100")
 
-        elif how == "flat":
-            val = Decimal(str(getattr(rule, "value", 0) or 0))
-            multiplier = int(return_qty or 1) if "return" in rule_name else gross_qty_int
-            fee_amount = val * Decimal(multiplier)
-
-        elif how == "pct-slab":
+        elif how == "pct-slab" or (has_cat_slabs and how != "flat-slab"):
             group = _match_group(groups, article_type, style_name) if getattr(rule, "by_cat", False) else (groups[0] if groups else None)
             if group:
                 rate = _evaluate_slabs(group.get("slabs", []), unit_price)
                 fee_amount = (gross_sales_dec * rate) / Decimal("100")
+            elif how == "flat":
+                val = Decimal(str(getattr(rule, "value", 0) or 0))
+                multiplier = int(return_qty or 1) if "return" in rule_name else gross_qty_int
+                fee_amount = val * Decimal(multiplier)
 
         elif how == "flat-slab":
             group = _match_group(groups, article_type, style_name) if getattr(rule, "by_cat", False) else (groups[0] if groups else None)
@@ -226,6 +227,11 @@ def calculate_myntra_estimated_fees(
                 flat_amt = _evaluate_slabs(group.get("slabs", []), unit_price)
                 multiplier = int(return_qty or 1) if "return" in rule_name else gross_qty_int
                 fee_amount = flat_amt * Decimal(multiplier)
+
+        elif how == "flat":
+            val = Decimal(str(getattr(rule, "value", 0) or 0))
+            multiplier = int(return_qty or 1) if "return" in rule_name else gross_qty_int
+            fee_amount = val * Decimal(multiplier)
 
         elif how == "weight":
             group = groups[0] if groups else None
@@ -247,11 +253,13 @@ def calculate_myntra_estimated_fees(
         else:
             other_estimated_fees += fee_amount
 
+    # Sum ALL configured and enabled fees into total_estimated
     total_estimated = (
         estimated_commission
         + estimated_fixed_fee
         + estimated_return_fee
         + estimated_marketing_fee
+        + estimated_shipping_fee
         + other_estimated_fees
     )
 

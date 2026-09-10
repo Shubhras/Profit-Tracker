@@ -1288,6 +1288,12 @@ def process_reports():
 
             print(str(e))
 
+            try:
+                report.status = "FAILED"
+                report.save(update_fields=["status"])
+            except Exception:
+                pass
+
             continue
 
     print("\nALL REPORTS PROCESSED")
