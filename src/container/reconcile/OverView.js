@@ -213,6 +213,14 @@ export default function ProfitDetailsView() {
         expected_settlement: item.expected_settlement || item.exp_settlement || '₹0.0',
         settlement_paid_in_bank: item.settlement_paid_in_bank || '₹0.0',
         unsettled_not_paid: item.unsettled_not_paid || '₹0.0',
+
+        cancelled_qty: item.cancelled_qty || 0,
+        cancelled_sales: item.cancelled_sales || 0,
+        mp_gst_leaks: item.mp_gst_leaks || 0,
+        tds: item.tds || 0,
+        actual_tds: item.actual_tds || 0,
+        tds_leaks: item.tds_leaks || 0,
+        settlement_leak: item.settlement_leak || 0,
       })) || [];
 
     return rows;
@@ -252,6 +260,13 @@ export default function ProfitDetailsView() {
       expected_settlement: 'exp_settlement',
       settlement_paid_in_bank: 'settlement_paid_in_bank',
       unsettled_not_paid: 'unsettled_not_paid',
+      cancelled_qty: 'cancelled_qty',
+      cancelled_sales: 'cancelled_sales',
+      mp_gst_leaks: 'mp_gst_leaks',
+      tds: 'tds',
+      actual_tds: 'actual_tds',
+      tds_leaks: 'tds_leaks',
+      settlement_leak: 'settlement_leak',
     };
 
     const value = totals?.[keyMap[dataIndex]] ?? totals?.[dataIndex] ?? totals?.[`total_${dataIndex}`];
@@ -403,6 +418,15 @@ export default function ProfitDetailsView() {
       sorter: (a, b) => a.final_net_qty - b.final_net_qty,
     },
     {
+      title: 'Cancelled Qty',
+      dataIndex: 'cancelled_qty',
+      align: 'center',
+      // width: 70,
+      width: getDynamicWidth('cancelled_qty', 70),
+      ellipsis: true,
+      sorter: (a, b) => a.cancelled_qty - b.cancelled_qty,
+    },
+    {
       title: 'Return Qty',
       dataIndex: 'returnqty',
       align: 'center',
@@ -457,15 +481,6 @@ export default function ProfitDetailsView() {
       render: (v) => <span>{v}%</span>,
     },
     {
-      title: 'Promo Discount',
-      dataIndex: 'promo_discount',
-      align: 'center',
-      // width: 70,
-      width: getDynamicWidth('promo_discount', 70),
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.promo_discount) - parseAmount(b.promo_discount),
-    },
-    {
       title: 'Gross Sales',
       dataIndex: 'netsales',
       align: 'center',
@@ -473,6 +488,15 @@ export default function ProfitDetailsView() {
       width: getDynamicWidth('netsales', 70),
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.netsales) - parseAmount(b.netsales),
+    },
+    {
+      title: 'Promo Discount',
+      dataIndex: 'promo_discount',
+      align: 'center',
+      // width: 70,
+      width: getDynamicWidth('promo_discount', 70),
+      ellipsis: true,
+      sorter: (a, b) => parseAmount(a.promo_discount) - parseAmount(b.promo_discount),
     },
     {
       title: 'Net Sales',
@@ -500,6 +524,15 @@ export default function ProfitDetailsView() {
     //     </button>
     //   ),
     // },
+    {
+      title: 'Cancelled Sales',
+      dataIndex: 'cancelled_sales',
+      align: 'center',
+      // width: 70,
+      width: getDynamicWidth('cancelled_sales', 70),
+      ellipsis: true,
+      sorter: (a, b) => parseAmount(a.cancelled_sales) - parseAmount(b.cancelled_sales),
+    },
     {
       title: 'MP fees',
       dataIndex: 'mpfees',
@@ -601,6 +634,15 @@ export default function ProfitDetailsView() {
     },
 
     {
+      title: 'MP-GST Leaks',
+      dataIndex: 'mp_gst_leaks',
+      align: 'center',
+      width: getDynamicWidth('mp_gst_leaks', 80),
+      ellipsis: true,
+      sorter: (a, b) => parseAmount(a.mp_gst_leaks) - parseAmount(b.mp_gst_leaks),
+    },
+
+    {
       title: 'TCS',
       dataIndex: 'tcs',
       align: 'center',
@@ -625,6 +667,33 @@ export default function ProfitDetailsView() {
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.tcs_leaks) - parseAmount(b.tcs_leaks),
       render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+    },
+    {
+      title: 'TDS',
+      dataIndex: 'tds',
+      align: 'center',
+      // width: 100,
+      width: getDynamicWidth('tds', 70),
+      ellipsis: true,
+      sorter: (a, b) => parseAmount(a.tds) - parseAmount(b.tds),
+    },
+    {
+      title: 'Actual TDS',
+      dataIndex: 'actual_tds',
+      align: 'center',
+      // width: 100,
+      width: getDynamicWidth('actual_tds', 70),
+      ellipsis: true,
+      sorter: (a, b) => parseAmount(a.actual_tds) - parseAmount(b.actual_tds),
+    },
+    {
+      title: 'TDS Leaks',
+      dataIndex: 'tds_leaks',
+      align: 'center',
+      // width: 100,
+      width: getDynamicWidth('tds_leaks', 70),
+      ellipsis: true,
+      sorter: (a, b) => parseAmount(a.tds_leaks) - parseAmount(b.tds_leaks),
     },
     {
       title: 'Expected Settlement',
@@ -655,53 +724,62 @@ export default function ProfitDetailsView() {
     },
 
     {
-      title: 'Ad Spend',
-      dataIndex: 'adSpend',
+      title: 'Settlement Leak',
+      dataIndex: 'settlement_leak',
       align: 'center',
-      // width: 70,
-      width: getDynamicWidth('adSpend', 70),
+      width: getDynamicWidth('settlement_leak', 100),
       ellipsis: true,
-      sorter: (a, b) => parseAmount(a.adSpend) - parseAmount(b.adSpend),
+      sorter: (a, b) => parseAmount(a.settlement_leak) - parseAmount(b.settlement_leak),
     },
 
-    {
-      title: 'Taxable Value',
-      dataIndex: 'taxableValue',
-      align: 'center',
-      // width: 70,
-      width: getDynamicWidth('taxableValue', 70),
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.taxableValue) - parseAmount(b.taxableValue),
-    },
+    // {
+    //   title: 'Ad Spend',
+    //   dataIndex: 'adSpend',
+    //   align: 'center',
+    //   // width: 70,
+    //   width: getDynamicWidth('adSpend', 70),
+    //   ellipsis: true,
+    //   sorter: (a, b) => parseAmount(a.adSpend) - parseAmount(b.adSpend),
+    // },
 
-    {
-      title: 'GST to Pay',
-      dataIndex: 'gst_to_pay_amount',
-      align: 'center',
-      // width: 70,
-      width: getDynamicWidth('gst_to_pay_amount', 70),
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.gst_to_pay_amount) - parseAmount(b.gst_to_pay_amount),
-    },
-    {
-      title: 'GST to Pay %',
-      dataIndex: 'gst_to_pay_perc',
-      align: 'center',
-      // width: 70,
-      width: getDynamicWidth('gst_to_pay_perc', 70),
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.gst_to_pay_perc) - parseAmount(b.gst_to_pay_perc),
-      render: (v) => <span>{v}%</span>,
-    },
-    {
-      title: 'Claim Amount',
-      dataIndex: 'claim_amount',
-      align: 'center',
-      // width: 70,
-      width: getDynamicWidth('claim_amount', 70),
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.claim_amount) - parseAmount(b.claim_amount),
-    },
+    // {
+    //   title: 'Taxable Value',
+    //   dataIndex: 'taxableValue',
+    //   align: 'center',
+    //   // width: 70,
+    //   width: getDynamicWidth('taxableValue', 70),
+    //   ellipsis: true,
+    //   sorter: (a, b) => parseAmount(a.taxableValue) - parseAmount(b.taxableValue),
+    // },
+
+    // {
+    //   title: 'GST to Pay',
+    //   dataIndex: 'gst_to_pay_amount',
+    //   align: 'center',
+    //   // width: 70,
+    //   width: getDynamicWidth('gst_to_pay_amount', 70),
+    //   ellipsis: true,
+    //   sorter: (a, b) => parseAmount(a.gst_to_pay_amount) - parseAmount(b.gst_to_pay_amount),
+    // },
+    // {
+    //   title: 'GST to Pay %',
+    //   dataIndex: 'gst_to_pay_perc',
+    //   align: 'center',
+    //   // width: 70,
+    //   width: getDynamicWidth('gst_to_pay_perc', 70),
+    //   ellipsis: true,
+    //   sorter: (a, b) => parseAmount(a.gst_to_pay_perc) - parseAmount(b.gst_to_pay_perc),
+    //   render: (v) => <span>{v}%</span>,
+    // },
+    // {
+    //   title: 'Claim Amount',
+    //   dataIndex: 'claim_amount',
+    //   align: 'center',
+    //   // width: 70,
+    //   width: getDynamicWidth('claim_amount', 70),
+    //   ellipsis: true,
+    //   sorter: (a, b) => parseAmount(a.claim_amount) - parseAmount(b.claim_amount),
+    // },
 
     // {
     //   title: 'Gross Profit',
@@ -1012,6 +1090,13 @@ export default function ProfitDetailsView() {
                         expected_settlement: 'exp_settlement',
                         settlement_paid_in_bank: 'settlement_paid_in_bank',
                         unsettled_not_paid: 'unsettled_not_paid',
+                        cancelled_qty: 'cancelled_qty',
+                        cancelled_sales: 'cancelled_sales',
+                        mp_gst_leaks: 'mp_gst_leaks',
+                        tds: 'tds',
+                        actual_tds: 'actual_tds',
+                        tds_leaks: 'tds_leaks',
+                        settlement_leak: 'settlement_leak',
                       };
 
                       const value =
