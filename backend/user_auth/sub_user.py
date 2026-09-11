@@ -667,6 +667,13 @@ class SubUserLoginAPIView(APIView):
                 "submodules": submodules_data
             }
 
+        parent_profile = getattr(request.user, 'profile', None)
+        target_profile = getattr(target_user, 'profile', None)
+        business_name = (
+            (target_profile.business_name if target_profile and target_profile.business_name else None)
+            or (parent_profile.business_name if parent_profile and parent_profile.business_name else "")
+        )
+
         return Response({
             "statusCode": 200,
             "status": True,
@@ -674,6 +681,7 @@ class SubUserLoginAPIView(APIView):
             "data": {
                 "user_id": target_user.id,
                 "email": target_user.email,
+                "business_name": business_name,
                 "name": subuser.name,
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),

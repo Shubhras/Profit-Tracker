@@ -202,25 +202,69 @@ class GrowthOpportunitiesAPIView(APIView):
                 from django.db.models import Sum, Q, FloatField, F
                 from django.db.models.functions import Coalesce, Cast
 
-                sku_ads_qs = AdsProductAd.objects.filter(
-                    amazon_account__user=user,
-                    amazon_account__is_primary=True
-                ).values("sku", "asin", "state").annotate(
-                    cost=Coalesce(Cast(Sum("productadmetric__cost"), FloatField()), 0.0),
-                    sales=Coalesce(Cast(Sum("productadmetric__sales"), FloatField()), 0.0)
-                )
+                include_amazon_ads = True
+                if channels:
+                    include_amazon_ads = any("amazon" in str(ch).lower() for ch in channels)
 
-                high_roi_count = sku_ads_qs.filter(
-                    Q(cost__gt=0, sales__gte=F("cost") * 2.0) | Q(cost=0, sales__gt=0) | Q(cost__isnull=True, sales__gt=0)
-                ).count()
+                if include_amazon_ads:
+                    from_date_val = (
+                        filters.get("fromDate")
+                        or data.get("fromDate")
+                        or filters.get("start_date")
+                        or data.get("start_date")
+                        or filters.get("from_date")
+                        or data.get("from_date")
+                        or getattr(request, "query_params", {}).get("fromDate")
+                        or getattr(request, "query_params", {}).get("start_date")
+                        or getattr(request, "query_params", {}).get("from_date")
+                    )
+                    to_date_val = (
+                        filters.get("toDate")
+                        or data.get("toDate")
+                        or filters.get("endDate")
+                        or data.get("endDate")
+                        or filters.get("end_date")
+                        or data.get("end_date")
+                        or filters.get("to_date")
+                        or data.get("to_date")
+                        or getattr(request, "query_params", {}).get("toDate")
+                        or getattr(request, "query_params", {}).get("endDate")
+                        or getattr(request, "query_params", {}).get("end_date")
+                        or getattr(request, "query_params", {}).get("to_date")
+                    )
 
-                low_roi_count = sku_ads_qs.filter(
-                    cost__gt=0, sales__lt=F("cost") * 2.0
-                ).count()
+                    metric_filter = Q()
+                    ads_filter = Q(
+                        amazon_account__user=user,
+                        amazon_account__is_primary=True
+                    )
 
-                no_sales_ad_spend_count = sku_ads_qs.filter(
-                    cost__gt=0, sales=0
-                ).count()
+                    if from_date_val and to_date_val:
+                        metric_filter = Q(productadmetric__report_date__range=[from_date_val, to_date_val])
+                        ads_filter &= metric_filter
+                    elif from_date_val:
+                        metric_filter = Q(productadmetric__report_date__gte=from_date_val)
+                        ads_filter &= metric_filter
+                    elif to_date_val:
+                        metric_filter = Q(productadmetric__report_date__lte=to_date_val)
+                        ads_filter &= metric_filter
+
+                    sku_ads_qs = AdsProductAd.objects.filter(ads_filter).values("sku", "asin", "state").annotate(
+                        cost=Coalesce(Cast(Sum("productadmetric__cost", filter=metric_filter if metric_filter else None), FloatField()), 0.0),
+                        sales=Coalesce(Cast(Sum("productadmetric__sales", filter=metric_filter if metric_filter else None), FloatField()), 0.0)
+                    )
+
+                    high_roi_count = sku_ads_qs.filter(
+                        Q(cost__gt=0, sales__gte=F("cost") * 2.0) | Q(cost=0, sales__gt=0) | Q(cost__isnull=True, sales__gt=0)
+                    ).count()
+
+                    low_roi_count = sku_ads_qs.filter(
+                        cost__gt=0, sales__lt=F("cost") * 2.0
+                    ).count()
+
+                    no_sales_ad_spend_count = sku_ads_qs.filter(
+                        cost__gt=0, sales=0
+                    ).count()
 
             except Exception as e:
                 logger.error(f"Error fetching Amazon Ads metrics in GrowthOpportunitiesAPIView: {str(e)}")

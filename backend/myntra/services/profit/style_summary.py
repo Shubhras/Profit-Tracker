@@ -83,6 +83,8 @@ class StyleSummary:
         response = []
         fee_rules = get_myntra_fee_rules(self.calculator.user)
         article_type_map = self.calculator.build_article_type_map()
+        listing_tds_map = self.calculator.build_listing_tds_map()
+        listing_tcs_map = self.calculator.build_listing_tcs_map()
 
         for style_id, style_orders in style_map.items():
             first_order = style_orders[0]
@@ -362,13 +364,13 @@ class StyleSummary:
             # TCS / TDS
             # ==========================================
 
-            tcs = self.calculator.calculate_tcs(style_payments) or Decimal(0)
+            actual_tcs = (
+                self.calculator.calculate_tcs(style_payments) or Decimal(0)
+            ) if finance_data_available else Decimal(0)
 
-            tds = self.calculator.calculate_tds(style_payments) or Decimal(0)
-
-            # ==========================================
-            # TAXABLE VALUE / GST TO PAY
-            # ==========================================
+            actual_tds = (
+                self.calculator.calculate_tds(style_payments) or Decimal(0)
+            ) if finance_data_available else Decimal(0)
 
             taxable_value = self.calculator.calculate_taxable_value(
                 style_payments
@@ -377,6 +379,46 @@ class StyleSummary:
             gst_to_pay_amount = self.calculator.calculate_gst_to_pay(
                 style_payments
             ) or Decimal(0)
+
+            # ------------------------------------------
+            # EXPECTED TCS / TDS & LEAKS
+            # ------------------------------------------
+            tds_rate = listing_tds_map.get(str(style_id))
+            if not tds_rate and seller_skus:
+                for sku in seller_skus:
+                    if str(sku) in listing_tds_map:
+                        tds_rate = listing_tds_map[str(sku)]
+                        break
+            tds_rate = tds_rate or Decimal(0)
+
+            tcs_rate = listing_tcs_map.get(str(style_id))
+            if not tcs_rate and seller_skus:
+                for sku in seller_skus:
+                    if str(sku) in listing_tcs_map:
+                        tcs_rate = listing_tcs_map[str(sku)]
+                        break
+            tcs_rate = tcs_rate or Decimal(0)
+
+            effective_taxable = taxable_value
+            if effective_taxable <= Decimal(0) and net_sales > Decimal(0):
+                effective_taxable = net_sales
+
+            if net_qty > 0 and effective_taxable > Decimal(0):
+                if tds_rate > Decimal(0):
+                    tds = round(effective_taxable * (tds_rate / Decimal("100")), 2)
+                else:
+                    tds = Decimal(0)
+
+                if tcs_rate > Decimal(0):
+                    tcs = round(effective_taxable * (tcs_rate / Decimal("100")), 2)
+                else:
+                    tcs = Decimal(0)
+            else:
+                tds = Decimal(0)
+                tcs = Decimal(0)
+
+            tcs_leaks = round(tcs - actual_tcs, 2)
+            tds_leaks = round(tds - actual_tds, 2)
 
             # ==========================================
             # GST %
@@ -690,7 +732,11 @@ class StyleSummary:
                     # ----------------------------------
                     "mp_gst": mp_gst,
                     "tcs": tcs,
+                    "actual_tcs": actual_tcs,
+                    "tcs_leaks": tcs_leaks,
                     "tds": tds,
+                    "actual_tds": actual_tds,
+                    "tds_leaks": tds_leaks,
                     "taxable_value": taxable_value,
                     "gst_to_pay_amount": gst_to_pay_amount,
                     "gst_to_pay_perc": gst_to_pay_perc,

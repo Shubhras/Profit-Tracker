@@ -232,6 +232,16 @@ class MyntraAmazonProfitAdapter:
             "finance_data_available": bool(row.get("finance_data_available")),
             "actual_fees": cls._money(row.get("actual_fees") if row.get("actual_fees") is not None else (row.get("mp_fees") if row.get("finance_data_available") else 0)),
             "fees_leaks": cls._money(row.get("fees_leaks") if row.get("fees_leaks") is not None else 0),
+            "actual_shipping_charges": cls._money(row.get("actual_shipping_charges") if row.get("actual_shipping_charges") is not None else (row.get("shipping_fees") if row.get("finance_data_available") else 0)),
+            "shipping_leaks": cls._money(row.get("shipping_leaks") if row.get("shipping_leaks") is not None else 0),
+            "actual_mp_gst": cls._money(row.get("actual_mp_gst") if row.get("actual_mp_gst") is not None else (row.get("mp_gst") if row.get("finance_data_available") else 0)),
+            "mp_gst_leaks": cls._money(row.get("mp_gst_leaks") if row.get("mp_gst_leaks") is not None else 0),
+            "actual_tcs": cls._money(row.get("actual_tcs") if row.get("actual_tcs") is not None else (row.get("tcs") if row.get("finance_data_available") else 0)),
+            "tcs_leaks": cls._money(row.get("tcs_leaks") if row.get("tcs_leaks") is not None else 0),
+            "actual_tds": cls._money(row.get("actual_tds") if row.get("actual_tds") is not None else (row.get("tds") if row.get("finance_data_available") else 0)),
+            "tds_leaks": cls._money(row.get("tds_leaks") if row.get("tds_leaks") is not None else 0),
+            "settlement_paid_in_bank": cls._money(row.get("settlement_paid_in_bank") if row.get("settlement_paid_in_bank") is not None else (row.get("final_net_sales") if row.get("finance_data_available") else 0)),
+            "unsettled_not_paid": cls._money(row.get("unsettled_not_paid") if row.get("unsettled_not_paid") is not None else (row.get("expected_settlement") if not row.get("finance_data_available") else 0)),
         }
 
     # =========================================================
@@ -377,6 +387,16 @@ class MyntraAmazonProfitAdapter:
             "finance_data_available": bool(row.get("finance_data_available")),
             "actual_fees": cls._money(row.get("actual_fees") if row.get("actual_fees") is not None else (row.get("mp_fees") if row.get("finance_data_available") else 0)),
             "fees_leaks": cls._money(row.get("fees_leaks") if row.get("fees_leaks") is not None else 0),
+            "actual_shipping_charges": cls._money(row.get("actual_shipping_charges") if row.get("actual_shipping_charges") is not None else (row.get("shipping_fees") if row.get("finance_data_available") else 0)),
+            "shipping_leaks": cls._money(row.get("shipping_leaks") if row.get("shipping_leaks") is not None else 0),
+            "actual_mp_gst": cls._money(row.get("actual_mp_gst") if row.get("actual_mp_gst") is not None else (row.get("mp_gst") if row.get("finance_data_available") else 0)),
+            "mp_gst_leaks": cls._money(row.get("mp_gst_leaks") if row.get("mp_gst_leaks") is not None else 0),
+            "actual_tcs": cls._money(row.get("actual_tcs") if row.get("actual_tcs") is not None else (row.get("tcs") if row.get("finance_data_available") else 0)),
+            "tcs_leaks": cls._money(row.get("tcs_leaks") if row.get("tcs_leaks") is not None else 0),
+            "actual_tds": cls._money(row.get("actual_tds") if row.get("actual_tds") is not None else (row.get("tds") if row.get("finance_data_available") else 0)),
+            "tds_leaks": cls._money(row.get("tds_leaks") if row.get("tds_leaks") is not None else 0),
+            "settlement_paid_in_bank": cls._money(row.get("settlement_paid_in_bank") if row.get("settlement_paid_in_bank") is not None else (row.get("final_net_sales") if row.get("finance_data_available") else 0)),
+            "unsettled_not_paid": cls._money(row.get("unsettled_not_paid") if row.get("unsettled_not_paid") is not None else (row.get("expected_settlement") if not row.get("finance_data_available") else 0)),
         }
 
     # =========================================================
@@ -417,6 +437,8 @@ class MyntraAmazonProfitAdapter:
             "channel": cls.CHANNEL,
             "channel1": cls.CHANNEL,
             "redirecturl": f"https://myntra.com/{style_id}",
+            "date": str(row.get("date") or (row.get("created_on").date() if hasattr(row.get("created_on"), "date") else str(row.get("created_on") or "")) or ""),
+            "release_transaction_date": str(row.get("release_transaction_date") or "-"),
 
             # ==========================================
             # QUANTITY
@@ -529,6 +551,8 @@ class MyntraAmazonProfitAdapter:
             "mp_gst_leaks": cls._money(row.get("mp_gst_leaks") if row.get("mp_gst_leaks") is not None else 0),
             "actual_tcs": cls._money(row.get("actual_tcs") if row.get("actual_tcs") is not None else (row.get("tcs") if row.get("finance_data_available") else 0)),
             "tcs_leaks": cls._money(row.get("tcs_leaks") if row.get("tcs_leaks") is not None else 0),
+            "actual_tds": cls._money(row.get("actual_tds") if row.get("actual_tds") is not None else (row.get("tds") if row.get("finance_data_available") else 0)),
+            "tds_leaks": cls._money(row.get("tds_leaks") if row.get("tds_leaks") is not None else 0),
             "settlement_paid_in_bank": cls._money(row.get("settlement_paid_in_bank") if row.get("settlement_paid_in_bank") is not None else (row.get("final_net_sales") if row.get("finance_data_available") else 0)),
             "unsettled_not_paid": cls._money(row.get("unsettled_not_paid") if row.get("unsettled_not_paid") is not None else (row.get("expected_settlement") if not row.get("finance_data_available") else 0)),
         }
@@ -597,6 +621,46 @@ class MyntraAmazonProfitAdapter:
             cls._decimal(row.get("fees_leaks") or 0)
             for row in rows
         )
+        total_actual_shipping = sum(
+            cls._decimal(row.get("actual_shipping_charges") if row.get("actual_shipping_charges") is not None else (row.get("shipping_fees") if row.get("finance_data_available") else 0))
+            for row in rows
+        )
+        total_shipping_leaks = sum(
+            cls._decimal(row.get("shipping_leaks") if row.get("shipping_leaks") is not None else 0)
+            for row in rows
+        )
+        total_actual_mp_gst = sum(
+            cls._decimal(row.get("actual_mp_gst") if row.get("actual_mp_gst") is not None else (row.get("mp_gst") if row.get("finance_data_available") else 0))
+            for row in rows
+        )
+        total_mp_gst_leaks = sum(
+            cls._decimal(row.get("mp_gst_leaks") if row.get("mp_gst_leaks") is not None else 0)
+            for row in rows
+        )
+        total_actual_tcs = sum(
+            cls._decimal(row.get("actual_tcs") if row.get("actual_tcs") is not None else (row.get("tcs") if row.get("finance_data_available") else 0))
+            for row in rows
+        )
+        total_tcs_leaks = sum(
+            cls._decimal(row.get("tcs_leaks") if row.get("tcs_leaks") is not None else 0)
+            for row in rows
+        )
+        total_actual_tds = sum(
+            cls._decimal(row.get("actual_tds") if row.get("actual_tds") is not None else (row.get("tds") if row.get("finance_data_available") else 0))
+            for row in rows
+        )
+        total_tds_leaks = sum(
+            cls._decimal(row.get("tds_leaks") if row.get("tds_leaks") is not None else 0)
+            for row in rows
+        )
+        total_settlement_paid_in_bank = sum(
+            cls._decimal(row.get("settlement_paid_in_bank") if row.get("settlement_paid_in_bank") is not None else (row.get("final_net_sales") if row.get("finance_data_available") else 0))
+            for row in rows
+        )
+        total_unsettled_not_paid = sum(
+            cls._decimal(row.get("unsettled_not_paid") if row.get("unsettled_not_paid") is not None else (row.get("expected_settlement") if not row.get("finance_data_available") else 0))
+            for row in rows
+        )
 
         return {
             "ads": cls._money(total("ads")),
@@ -618,6 +682,26 @@ class MyntraAmazonProfitAdapter:
             "total_actual_fees": cls._money(total_actual_fees),
             "fees_leaks": cls._money(total_fees_leaks),
             "total_fees_leaks": cls._money(total_fees_leaks),
+            "actual_shipping_charges": cls._money(total_actual_shipping),
+            "total_actual_shipping": cls._money(total_actual_shipping),
+            "shipping_leaks": cls._money(total_shipping_leaks),
+            "total_shipping_leaks": cls._money(total_shipping_leaks),
+            "actual_mp_gst": cls._money(total_actual_mp_gst),
+            "total_actual_mp_gst": cls._money(total_actual_mp_gst),
+            "mp_gst_leaks": cls._money(total_mp_gst_leaks),
+            "total_mp_gst_leaks": cls._money(total_mp_gst_leaks),
+            "actual_tcs": cls._money(total_actual_tcs),
+            "total_actual_tcs": cls._money(total_actual_tcs),
+            "tcs_leaks": cls._money(total_tcs_leaks),
+            "total_tcs_leaks": cls._money(total_tcs_leaks),
+            "actual_tds": cls._money(total_actual_tds),
+            "total_actual_tds": cls._money(total_actual_tds),
+            "tds_leaks": cls._money(total_tds_leaks),
+            "total_tds_leaks": cls._money(total_tds_leaks),
+            "settlement_paid_in_bank": cls._money(total_settlement_paid_in_bank),
+            "total_settlement_paid_in_bank": cls._money(total_settlement_paid_in_bank),
+            "unsettled_not_paid": cls._money(total_unsettled_not_paid),
+            "total_unsettled_not_paid": cls._money(total_unsettled_not_paid),
             "mp_gst": cls._money(total("mp_gst")),
             "shippingfees": cls._money(total("shipping_fees")),
             "stdcost": cls._money(total("product_cost")),
@@ -700,6 +784,46 @@ class MyntraAmazonProfitAdapter:
             cls._decimal(row.get("fees_leaks") or 0)
             for row in rows
         )
+        total_actual_shipping = sum(
+            cls._decimal(row.get("actual_shipping_charges") if row.get("actual_shipping_charges") is not None else (row.get("shipping_fees") if row.get("finance_data_available") else 0))
+            for row in rows
+        )
+        total_shipping_leaks = sum(
+            cls._decimal(row.get("shipping_leaks") if row.get("shipping_leaks") is not None else 0)
+            for row in rows
+        )
+        total_actual_mp_gst = sum(
+            cls._decimal(row.get("actual_mp_gst") if row.get("actual_mp_gst") is not None else (row.get("mp_gst") if row.get("finance_data_available") else 0))
+            for row in rows
+        )
+        total_mp_gst_leaks = sum(
+            cls._decimal(row.get("mp_gst_leaks") if row.get("mp_gst_leaks") is not None else 0)
+            for row in rows
+        )
+        total_actual_tcs = sum(
+            cls._decimal(row.get("actual_tcs") if row.get("actual_tcs") is not None else (row.get("tcs") if row.get("finance_data_available") else 0))
+            for row in rows
+        )
+        total_tcs_leaks = sum(
+            cls._decimal(row.get("tcs_leaks") if row.get("tcs_leaks") is not None else 0)
+            for row in rows
+        )
+        total_actual_tds = sum(
+            cls._decimal(row.get("actual_tds") if row.get("actual_tds") is not None else (row.get("tds") if row.get("finance_data_available") else 0))
+            for row in rows
+        )
+        total_tds_leaks = sum(
+            cls._decimal(row.get("tds_leaks") if row.get("tds_leaks") is not None else 0)
+            for row in rows
+        )
+        total_settlement_paid_in_bank = sum(
+            cls._decimal(row.get("settlement_paid_in_bank") if row.get("settlement_paid_in_bank") is not None else (row.get("final_net_sales") if row.get("finance_data_available") else 0))
+            for row in rows
+        )
+        total_unsettled_not_paid = sum(
+            cls._decimal(row.get("unsettled_not_paid") if row.get("unsettled_not_paid") is not None else (row.get("expected_settlement") if not row.get("finance_data_available") else 0))
+            for row in rows
+        )
 
         return {
             "grosssales": float(round(gross_sales, 2)),
@@ -724,6 +848,26 @@ class MyntraAmazonProfitAdapter:
             "total_actual_fees": cls._money(total_actual_fees),
             "fees_leaks": cls._money(total_fees_leaks),
             "total_fees_leaks": cls._money(total_fees_leaks),
+            "actual_shipping_charges": cls._money(total_actual_shipping),
+            "total_actual_shipping": cls._money(total_actual_shipping),
+            "shipping_leaks": cls._money(total_shipping_leaks),
+            "total_shipping_leaks": cls._money(total_shipping_leaks),
+            "actual_mp_gst": cls._money(total_actual_mp_gst),
+            "total_actual_mp_gst": cls._money(total_actual_mp_gst),
+            "mp_gst_leaks": cls._money(total_mp_gst_leaks),
+            "total_mp_gst_leaks": cls._money(total_mp_gst_leaks),
+            "actual_tcs": cls._money(total_actual_tcs),
+            "total_actual_tcs": cls._money(total_actual_tcs),
+            "tcs_leaks": cls._money(total_tcs_leaks),
+            "total_tcs_leaks": cls._money(total_tcs_leaks),
+            "actual_tds": cls._money(total_actual_tds),
+            "total_actual_tds": cls._money(total_actual_tds),
+            "tds_leaks": cls._money(total_tds_leaks),
+            "total_tds_leaks": cls._money(total_tds_leaks),
+            "settlement_paid_in_bank": cls._money(total_settlement_paid_in_bank),
+            "total_settlement_paid_in_bank": cls._money(total_settlement_paid_in_bank),
+            "unsettled_not_paid": cls._money(total_unsettled_not_paid),
+            "total_unsettled_not_paid": cls._money(total_unsettled_not_paid),
             "shipping": cls._money(total("shipping_fees")),
             "gst": cls._money(0),
             "tcs": cls._money(total("tcs")),
@@ -733,6 +877,8 @@ class MyntraAmazonProfitAdapter:
             "gst_to_pay_amount": cls._money(gst_pay_amt),
             "gst_to_pay_perc": gst_pay_perc,
             "exp_settlement": cls._money(total("expected_settlement")),
+            "expected_settlement": cls._money(total("expected_settlement")),
+            "total_expected_settlement": cls._money(total("expected_settlement")),
             "total_promo_discount": cls._money(total("promo_discount")),
             "total_return_count": return_qty,
             "courier_return_count": sum(int(row.get("courier_return_count") or 0) for row in rows),

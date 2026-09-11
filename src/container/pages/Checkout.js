@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Spin, Modal, Result } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import Cookies from 'js-cookie';
 import { DataService } from '../../config/dataService/dataService';
 import {
   createSubscription,
@@ -10,6 +11,7 @@ import {
   clearPlan,
   resetSubscription,
 } from '../../redux/subscription/actionCreator';
+import { getProfile } from '../../redux/authentication/actionCreator';
 
 const GST_RATE = 0.18;
 const HOME_STATE = 'Madhya Pradesh';
@@ -254,12 +256,10 @@ function Checkout() {
 
   const growthTotal = +(growthPrice * (1 + GST_RATE)).toFixed(2);
   const [activeTab, setActiveTab] = useState('upi');
-  // const [email, setEmail] = useState(userObj?.email || 'letstalk@trackmyprofit.com');
-  // const [businessName, setBusinessName] = useState(userObj?.name || 'Artisian Roots');
-  const [email, setEmail] = useState('');
-  const [businessName, setBusinessName] = useState('');
-  const [stateOfSupply, setStateOfSupply] = useState('Madhya Pradesh');
-  const [gstin, setGstin] = useState('23AABCU9603R1ZX');
+  const [email, setEmail] = useState(userObj?.email || Cookies.get('userEmail') || '');
+  const [businessName, setBusinessName] = useState(userObj?.business_name || userObj?.name || '');
+  const [stateOfSupply, setStateOfSupply] = useState(userObj?.state || 'Madhya Pradesh');
+  const [gstin, setGstin] = useState('');
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState('');
   const [couponMsg, setCouponMsg] = useState(null);
@@ -269,10 +269,22 @@ function Checkout() {
   const [confirmSubscriptionVisible, setConfirmSubscriptionVisible] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [currentPlanName, setCurrentPlanName] = useState('');
+
+  useEffect(() => {
+    if (isLoggedIn && !userObj) {
+      dispatch(getProfile());
+    }
+  }, [isLoggedIn, userObj, dispatch]);
+
   useEffect(() => {
     if (userObj) {
-      setEmail(userObj.email || '');
-      setBusinessName(userObj.business_name || '');
+      // setEmail(userObj.email || '')
+      // setBusinessName(userObj.business_name || '');
+      setEmail(userObj.email || Cookies.get('userEmail') || '');
+      setBusinessName(userObj.business_name || userObj.name || '');
+      if (userObj.state) {
+        setStateOfSupply(userObj.state);
+      }
     }
   }, [userObj]);
 

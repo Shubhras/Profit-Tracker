@@ -65,6 +65,8 @@ class OrderSummary:
         response = []
         fee_rules = get_myntra_fee_rules(self.calculator.user)
         article_type_map = self.calculator.build_article_type_map()
+        listing_tds_map = self.calculator.build_listing_tds_map()
+        listing_tcs_map = self.calculator.build_listing_tcs_map()
 
         for order in orders:
             # ==========================================
@@ -285,9 +287,13 @@ class OrderSummary:
             # TCS / TDS
             # ==========================================
 
-            tcs = self.calculator.calculate_tcs(order_payments) or Decimal(0)
+            actual_tcs = (
+                self.calculator.calculate_tcs(order_payments) or Decimal(0)
+            ) if finance_data_available else Decimal(0)
 
-            tds = self.calculator.calculate_tds(order_payments) or Decimal(0)
+            actual_tds = (
+                self.calculator.calculate_tds(order_payments) or Decimal(0)
+            ) if finance_data_available else Decimal(0)
 
             # ==========================================
             # TAXABLE VALUE / GST TO PAY
@@ -304,6 +310,41 @@ class OrderSummary:
             gst_to_pay_perc = self.calculator.calculate_gst_percentage(
                 order_payments
             ) or Decimal(0)
+
+            # ------------------------------------------
+            # EXPECTED TCS / TDS & LEAKS
+            # ------------------------------------------
+            tds_rate = (
+                listing_tds_map.get(str(order.seller_sku_code))
+                or listing_tds_map.get(str(order.style_id))
+                or Decimal(0)
+            )
+            tcs_rate = (
+                listing_tcs_map.get(str(order.seller_sku_code))
+                or listing_tcs_map.get(str(order.style_id))
+                or Decimal(0)
+            )
+
+            effective_taxable = taxable_value
+            if effective_taxable <= Decimal(0) and net_sales > Decimal(0):
+                effective_taxable = net_sales
+
+            if not is_courier_return and net_qty > 0 and effective_taxable > Decimal(0):
+                if tds_rate > Decimal(0):
+                    tds = round(effective_taxable * (tds_rate / Decimal("100")), 2)
+                else:
+                    tds = Decimal(0)
+
+                if tcs_rate > Decimal(0):
+                    tcs = round(effective_taxable * (tcs_rate / Decimal("100")), 2)
+                else:
+                    tcs = Decimal(0)
+            else:
+                tds = Decimal(0)
+                tcs = Decimal(0)
+
+            tcs_leaks = round(tcs - actual_tcs, 2)
+            tds_leaks = round(tds - actual_tds, 2)
 
             # ==========================================
             # CLAIMS
@@ -382,6 +423,13 @@ class OrderSummary:
                     gross_sales=gross_sales,
                 ) or Decimal(0)
 
+            # Payment Release Date from payment transactions
+            payment_dates = [
+                p.payment_date for p in order_payments
+                if getattr(p, "payment_date", None)
+            ]
+            release_transaction_date = str(max(payment_dates)) if payment_dates else "-"
+
             # ==========================================
             # RESPONSE
             # ==========================================
@@ -399,6 +447,8 @@ class OrderSummary:
                     "brand": order.brand,
                     "status": order.order_status,
                     "created_on": order.created_on,
+                    "date": str(order.created_on.date()) if getattr(order, "created_on", None) else "",
+                    "release_transaction_date": release_transaction_date,
                     # ----------------------------------
                     # DATA AVAILABILITY
                     # ----------------------------------
@@ -458,7 +508,11 @@ class OrderSummary:
                     # ----------------------------------
                     "mp_gst": mp_gst,
                     "tcs": tcs,
+                    "actual_tcs": actual_tcs,
+                    "tcs_leaks": tcs_leaks,
                     "tds": tds,
+                    "actual_tds": actual_tds,
+                    "tds_leaks": tds_leaks,
                     "taxable_value": taxable_value,
                     "gst_to_pay_amount": gst_to_pay_amount,
                     "gst_to_pay_perc": gst_to_pay_perc,

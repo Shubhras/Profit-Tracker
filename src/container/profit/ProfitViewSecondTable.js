@@ -101,9 +101,9 @@ export default function ProfitViewSecondTable() {
         toDate: dateRange?.endDate || null,
         ...(sortState.field &&
           sortState.order && {
-          sort_by: sortState.field,
-          sort_order: sortState.order === 'ascend' ? 'asc' : 'desc',
-        }),
+            sort_by: sortState.field,
+            sort_order: sortState.order === 'ascend' ? 'asc' : 'desc',
+          }),
       },
 
       sort_by: sortState.field || null,
@@ -384,8 +384,8 @@ export default function ProfitViewSecondTable() {
           (value && value.toLowerCase().includes('myntra')
             ? '/icons/myntraLogo.jpg'
             : value && value.toLowerCase().includes('amazon')
-              ? '/icons/amazon.svg'
-              : null);
+            ? '/icons/amazon.svg'
+            : null);
 
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -583,24 +583,24 @@ export default function ProfitViewSecondTable() {
     },
     ...(isReconcile
       ? [
-        {
-          title: 'Actual MP Fees',
-          dataIndex: 'actual_fees',
-          align: 'center',
-          width: 90,
-          ellipsis: true,
-          sorter: (a, b) => parseAmount(a.actual_fees) - parseAmount(b.actual_fees),
-        },
-        {
-          title: 'Fee Leaks',
-          dataIndex: 'fees_leaks',
-          align: 'center',
-          width: 80,
-          ellipsis: true,
-          sorter: (a, b) => parseAmount(a.fees_leaks) - parseAmount(b.fees_leaks),
-          render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
-        },
-      ]
+          {
+            title: 'Actual MP Fees',
+            dataIndex: 'actual_fees',
+            align: 'center',
+            width: 90,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.actual_fees) - parseAmount(b.actual_fees),
+          },
+          {
+            title: 'Fee Leaks',
+            dataIndex: 'fees_leaks',
+            align: 'center',
+            width: 80,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.fees_leaks) - parseAmount(b.fees_leaks),
+            render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+          },
+        ]
       : []),
     {
       title: 'Shipping',
@@ -628,24 +628,24 @@ export default function ProfitViewSecondTable() {
 
     ...(isReconcile
       ? [
-        {
-          title: 'Actual Shipping',
-          dataIndex: 'actual_shipping_charges',
-          align: 'center',
-          width: 90,
-          ellipsis: true,
-          sorter: (a, b) => parseAmount(a.actual_shipping_charges) - parseAmount(b.actual_shipping_charges),
-        },
-        {
-          title: 'Shipping Leaks',
-          dataIndex: 'shipping_leaks',
-          align: 'center',
-          width: 80,
-          ellipsis: true,
-          sorter: (a, b) => parseAmount(a.shipping_leaks) - parseAmount(b.shipping_leaks),
-          render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
-        },
-      ]
+          {
+            title: 'Actual Shipping',
+            dataIndex: 'actual_shipping_charges',
+            align: 'center',
+            width: 90,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.actual_shipping_charges) - parseAmount(b.actual_shipping_charges),
+          },
+          {
+            title: 'Shipping Leaks',
+            dataIndex: 'shipping_leaks',
+            align: 'center',
+            width: 80,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.shipping_leaks) - parseAmount(b.shipping_leaks),
+            render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+          },
+        ]
       : []),
 
     {
@@ -658,23 +658,23 @@ export default function ProfitViewSecondTable() {
     },
     ...(isReconcile
       ? [
-        {
-          title: 'Actual MP-GST',
-          dataIndex: 'actual_mp_gst',
-          align: 'center',
-          width: 80,
-          ellipsis: true,
-          sorter: (a, b) => parseAmount(a.actual_mp_gst) - parseAmount(b.actual_mp_gst),
-        },
-        {
-          title: 'MP-GST Leaks',
-          dataIndex: 'mp_gst_leaks',
-          align: 'center',
-          width: 80,
-          ellipsis: true,
-          sorter: (a, b) => parseAmount(a.mp_gst_leaks) - parseAmount(b.mp_gst_leaks),
-        },
-      ]
+          {
+            title: 'Actual MP-GST',
+            dataIndex: 'actual_mp_gst',
+            align: 'center',
+            width: 80,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.actual_mp_gst) - parseAmount(b.actual_mp_gst),
+          },
+          {
+            title: 'MP-GST Leaks',
+            dataIndex: 'mp_gst_leaks',
+            align: 'center',
+            width: 80,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.mp_gst_leaks) - parseAmount(b.mp_gst_leaks),
+          },
+        ]
       : []),
 
     {
@@ -688,29 +688,29 @@ export default function ProfitViewSecondTable() {
 
     ...(isReconcile
       ? [
-        {
-          title: 'Actual TCS',
-          dataIndex: 'actual_tcs',
-          align: 'center',
-          width: 80,
-          ellipsis: true,
-          sorter: (a, b) => parseAmount(a.actual_tcs) - parseAmount(b.actual_tcs),
-        },
-      ]
+          {
+            title: 'Actual TCS',
+            dataIndex: 'actual_tcs',
+            align: 'center',
+            width: 80,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.actual_tcs) - parseAmount(b.actual_tcs),
+          },
+        ]
       : []),
 
     ...(isReconcile
       ? [
-        {
-          title: 'TCS Leaks',
-          dataIndex: 'tcs_leaks',
-          align: 'center',
-          width: 80,
-          ellipsis: true,
-          sorter: (a, b) => parseAmount(a.tcs_leaks) - parseAmount(b.tcs_leaks),
-          render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
-        },
-      ]
+          {
+            title: 'TCS Leaks',
+            dataIndex: 'tcs_leaks',
+            align: 'center',
+            width: 80,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.tcs_leaks) - parseAmount(b.tcs_leaks),
+            render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+          },
+        ]
       : []),
 
     {
@@ -725,36 +725,36 @@ export default function ProfitViewSecondTable() {
 
     ...(isReconcile
       ? [
-        {
-          title: 'Actual TDS',
-          dataIndex: 'actual_tds',
-          align: 'center',
-          width: 80,
-          ellipsis: true,
-          sorter: (a, b) => parseAmount(a.actual_tds) - parseAmount(b.actual_tds),
-        },
-        {
-          title: 'TDS Leaks',
-          dataIndex: 'tds_leaks',
-          align: 'center',
-          width: 80,
-          ellipsis: true,
-          sorter: (a, b) => parseAmount(a.tds_leaks) - parseAmount(b.tds_leaks),
-        },
-      ]
+          {
+            title: 'Actual TDS',
+            dataIndex: 'actual_tds',
+            align: 'center',
+            width: 80,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.actual_tds) - parseAmount(b.actual_tds),
+          },
+          {
+            title: 'TDS Leaks',
+            dataIndex: 'tds_leaks',
+            align: 'center',
+            width: 80,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.tds_leaks) - parseAmount(b.tds_leaks),
+          },
+        ]
       : []),
 
     ...(!isReconcile
       ? [
-        {
-          title: 'Other expenses',
-          dataIndex: 'other_expenses',
-          align: 'center',
-          width: 70,
-          ellipsis: true,
-          sorter: (a, b) => parseAmount(a.other_expenses) - parseAmount(b.other_expenses),
-        },
-      ]
+          {
+            title: 'Other expenses',
+            dataIndex: 'other_expenses',
+            align: 'center',
+            width: 70,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.other_expenses) - parseAmount(b.other_expenses),
+          },
+        ]
       : []),
     {
       title: 'Expected Settlement',
@@ -767,105 +767,92 @@ export default function ProfitViewSecondTable() {
 
     ...(isReconcile
       ? [
-        {
-          title: 'Bank Settled Amount',
-          dataIndex: 'settlement_paid_in_bank',
-          align: 'center',
-          width: 100,
-          ellipsis: true,
-          sorter: (a, b) => parseAmount(a.settlement_paid_in_bank) - parseAmount(b.settlement_paid_in_bank),
-        },
-        {
-          title: 'Unsettled Amount',
-          dataIndex: 'unsettled_not_paid',
-          align: 'center',
-          width: 100,
-          ellipsis: true,
-          sorter: (a, b) => parseAmount(a.unsettled_not_paid) - parseAmount(b.unsettled_not_paid),
-          render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
-        },
-        {
-          title: 'Settlement Leak',
-          dataIndex: 'settlement_leak',
-          align: 'center',
-          ellipsis: true,
-          width: 70,
-          sorter: (a, b) => parseAmount(a.settlement_leak) - parseAmount(b.settlement_leak),
-        },
-      ]
+          {
+            title: 'Bank Settled Amount',
+            dataIndex: 'settlement_paid_in_bank',
+            align: 'center',
+            width: 100,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.settlement_paid_in_bank) - parseAmount(b.settlement_paid_in_bank),
+          },
+          {
+            title: 'Unsettled Amount',
+            dataIndex: 'unsettled_not_paid',
+            align: 'center',
+            width: 100,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.unsettled_not_paid) - parseAmount(b.unsettled_not_paid),
+            render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+          },
+          {
+            title: 'Settlement Leak',
+            dataIndex: 'settlement_leak',
+            align: 'center',
+            ellipsis: true,
+            width: 70,
+            sorter: (a, b) => parseAmount(a.settlement_leak) - parseAmount(b.settlement_leak),
+          },
+        ]
       : []),
-
-    // {
-    //   title: 'Ad Spend',
-    //   dataIndex: 'adSpend',
-    //   align: 'center',
-    //   width: 70,
-    //   ellipsis: true,
-    //   sorter: (a, b) => parseAmount(a.adSpend) - parseAmount(b.adSpend),
-    // },
-    // {
-    //   title: 'Net asp',
-    //   dataIndex: 'netasp',
-    //   align: 'center',
-    //   sorter: (a, b) => a.netasp - b.netasp,
-    // },
-    // {
-    //   title: 'Net discount',
-    //   dataIndex: 'net_discount',
-    //   align: 'center',
-    //   sorter: (a, b) => a.net_discount - b.net_discount,
-    // },
 
     ...(!isReconcile
       ? [
-        {
-          title: 'Taxable Value',
-          dataIndex: 'taxableValue',
-          align: 'center',
-          width: 70,
-          ellipsis: true,
-          sorter: (a, b) => parseAmount(a.taxableValue) - parseAmount(b.taxableValue),
-        },
+          {
+            title: 'Ad Spend',
+            dataIndex: 'adSpend',
+            align: 'center',
+            width: 70,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.adSpend) - parseAmount(b.adSpend),
+          },
+          {
+            title: 'Taxable Value',
+            dataIndex: 'taxableValue',
+            align: 'center',
+            width: 70,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.taxableValue) - parseAmount(b.taxableValue),
+          },
 
-        {
-          title: 'GST to Pay',
-          dataIndex: 'gst_to_pay_amount',
-          align: 'center',
-          width: 70,
-          ellipsis: true,
-          sorter: (a, b) => parseAmount(a.gst_to_pay_amount) - parseAmount(b.gst_to_pay_amount),
-        },
-        {
-          title: 'GST to Pay %',
-          dataIndex: 'gst_to_pay_perc',
-          align: 'center',
-          width: 70,
-          ellipsis: true,
-          sorter: (a, b) => parseAmount(a.gst_to_pay_perc) - parseAmount(b.gst_to_pay_perc),
-          render: (v) => <span>{v}%</span>,
-        },
-        {
-          title: 'Claim Amount',
-          dataIndex: 'claim_amount',
-          align: 'center',
-          width: 70,
-          ellipsis: true,
-          sorter: (a, b) => parseAmount(a.claim_amount) - parseAmount(b.claim_amount),
-        },
-      ]
+          {
+            title: 'GST to Pay',
+            dataIndex: 'gst_to_pay_amount',
+            align: 'center',
+            width: 70,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.gst_to_pay_amount) - parseAmount(b.gst_to_pay_amount),
+          },
+          {
+            title: 'GST to Pay %',
+            dataIndex: 'gst_to_pay_perc',
+            align: 'center',
+            width: 70,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.gst_to_pay_perc) - parseAmount(b.gst_to_pay_perc),
+            render: (v) => <span>{v}%</span>,
+          },
+          {
+            title: 'Claim Amount',
+            dataIndex: 'claim_amount',
+            align: 'center',
+            width: 70,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.claim_amount) - parseAmount(b.claim_amount),
+          },
+        ]
       : []),
     ...(isReconcile
       ? []
       : [
-        {
-          title: 'Product Cost',
-          dataIndex: 'stdcost',
-          align: 'center',
-          width: 70,
-          ellipsis: true,
-          sorter: (a, b) => parseAmount(a.stdcost) - parseAmount(b.stdcost),
-        },
-      ]),
+          {
+            title: 'Product Cost',
+            dataIndex: 'stdcost',
+            align: 'center',
+            width: 70,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.stdcost) - parseAmount(b.stdcost),
+          },
+        ]),
 
     // {
     //   title: 'Gross Profit',
@@ -885,56 +872,53 @@ export default function ProfitViewSecondTable() {
     ...(isReconcile
       ? []
       : [
-        {
-          title: 'Profit',
-          dataIndex: 'profit',
-          align: 'center',
-          width: 70,
-          ellipsis: true,
-          sorter: (a, b) => parseAmount(a.profit) - parseAmount(b.profit),
-          // render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>₹{v}</span>,
-          render: (v, record) => (
-            <button
-              type="button"
-              onClick={() =>
-                setCalculationModal({
-                  open: true,
-                  type: 'profit',
-                  record,
-                })
-              }
-              className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none"
-
-            // className={`font-medium underline cursor-pointer bg-transparent border-none ${
-            //   String(v).includes('-') ? 'text-red-500' : 'text-green-600'
-            // }`}
-            >
-              {v}
-            </button>
-          ),
-        },
-      ]),
+          {
+            title: 'Profit',
+            dataIndex: 'profit',
+            align: 'center',
+            width: 70,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.profit) - parseAmount(b.profit),
+            // render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>₹{v}</span>,
+            render: (v, record) => (
+              <button
+                type="button"
+                onClick={() =>
+                  setCalculationModal({
+                    open: true,
+                    type: 'profit',
+                    record,
+                  })
+                }
+                className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none"
+              >
+                {v}
+              </button>
+            ),
+          },
+        ]),
 
     ...(isReconcile
       ? []
       : [
-        {
-          title: 'Profit %',
-          dataIndex: 'profitPercent',
-          align: 'center',
-          width: 70,
-          ellipsis: true,
-          sorter: (a, b) => parseAmount(a.profitPercent) - parseAmount(b.profitPercent),
-          render: (value) => (
-            <span
-              className={`font-semibold ${Number(value) > 0 ? 'text-green-600' : Number(value) < 0 ? 'text-red-600' : 'text-gray-600'
+          {
+            title: 'Profit %',
+            dataIndex: 'profitPercent',
+            align: 'center',
+            width: 70,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.profitPercent) - parseAmount(b.profitPercent),
+            render: (value) => (
+              <span
+                className={`font-semibold ${
+                  Number(value) > 0 ? 'text-green-600' : Number(value) < 0 ? 'text-red-600' : 'text-gray-600'
                 }`}
-            >
-              {Number(value || 0).toFixed(2)}%
-            </span>
-          ),
-        },
-      ]),
+              >
+                {Number(value || 0).toFixed(2)}%
+              </span>
+            ),
+          },
+        ]),
 
     // {
     //   title: 'Settled amount',
@@ -1319,12 +1303,13 @@ export default function ProfitViewSecondTable() {
                         ) : (
                           // <span>{value ?? 0}</span>
                           <span
-                            className={`text-[13px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis ${Number(value) > 0 && ['profitPercent'].includes(col.dataIndex)
+                            className={`text-[13px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis ${
+                              Number(value) > 0 && ['profitPercent'].includes(col.dataIndex)
                                 ? 'text-green-600'
                                 : Number(value) < 0
-                                  ? 'text-red-600'
-                                  : 'text-[#111827]'
-                              }`}
+                                ? 'text-red-600'
+                                : 'text-[#111827]'
+                            }`}
                           >
                             {value ?? 0}
                             {['profitPercent'].includes(col.dataIndex) ? '%' : ''}

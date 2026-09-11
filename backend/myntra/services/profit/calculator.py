@@ -219,6 +219,48 @@ class MyntraProfitCalculator:
             pass
         return article_map
 
+    def build_listing_tds_map(self):
+        """
+        Builds a lookup mapping seller_sku_code and style_id to tds rate (Decimal)
+        from MyntraListing.
+        """
+        tds_map = {}
+        try:
+            for item in self.get_listings().values("seller_sku_code", "style_id", "tds"):
+                raw_tds = item.get("tds")
+                if raw_tds is not None and str(raw_tds).strip() != "":
+                    tds_val = Decimal(str(raw_tds))
+                    sku = item.get("seller_sku_code")
+                    if sku:
+                        tds_map[str(sku)] = tds_val
+                    sid = item.get("style_id")
+                    if sid:
+                        tds_map[str(sid)] = tds_val
+        except Exception:
+            pass
+        return tds_map
+
+    def build_listing_tcs_map(self):
+        """
+        Builds a lookup mapping seller_sku_code and style_id to tcs rate (Decimal)
+        from MyntraListing.
+        """
+        tcs_map = {}
+        try:
+            for item in self.get_listings().values("seller_sku_code", "style_id", "tcs"):
+                raw_tcs = item.get("tcs")
+                if raw_tcs is not None and str(raw_tcs).strip() != "":
+                    tcs_val = Decimal(str(raw_tcs))
+                    sku = item.get("seller_sku_code")
+                    if sku:
+                        tcs_map[str(sku)] = tcs_val
+                    sid = item.get("style_id")
+                    if sid:
+                        tcs_map[str(sid)] = tcs_val
+        except Exception:
+            pass
+        return tcs_map
+
     # =====================================================
     # ORDER / SALES CALCULATIONS
     # =====================================================

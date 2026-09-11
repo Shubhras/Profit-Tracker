@@ -1240,32 +1240,41 @@ class ProductSKUReportView(APIView):
 
         user = request.user
 
-        data = request.data
+        data = request.data or {}
 
-        search = data.get("search")
+        search = data.get("search") or getattr(request, "query_params", {}).get("search")
 
-        state = data.get("state")
+        state = data.get("state") or getattr(request, "query_params", {}).get("state")
 
         campaign_id = data.get(
             "campaign_id"
-        )
+        ) or getattr(request, "query_params", {}).get("campaign_id")
 
         ad_group_id = data.get(
             "ad_group_id"
+        ) or getattr(request, "query_params", {}).get("ad_group_id")
+
+        start_date = (
+            data.get("start_date")
+            or data.get("from_date")
+            or data.get("fromDate")
+            or getattr(request, "query_params", {}).get("start_date")
+            or getattr(request, "query_params", {}).get("from_date")
+            or getattr(request, "query_params", {}).get("fromDate")
         )
 
-        start_date = data.get(
-            "start_date"
-        )
-
-        end_date = data.get(
-            "end_date"
+        end_date = (
+            data.get("end_date")
+            or data.get("to_date")
+            or data.get("toDate")
+            or getattr(request, "query_params", {}).get("end_date")
+            or getattr(request, "query_params", {}).get("to_date")
+            or getattr(request, "query_params", {}).get("toDate")
         )
 
         ordering = data.get(
-            "ordering",
-            "-sales"
-        )
+            "ordering"
+        ) or getattr(request, "query_params", {}).get("ordering") or "-sales"
 
         queryset = AdsProductAd.objects.filter(
             amazon_account__user=user,
@@ -1304,14 +1313,16 @@ class ProductSKUReportView(APIView):
             )
 
         # DATE FILTER
+        metric_filter = Q()
         if start_date and end_date:
-
-            queryset = queryset.filter(
-                productadmetric__report_date__range=[
-                    start_date,
-                    end_date
-                ]
-            )
+            metric_filter = Q(productadmetric__report_date__range=[start_date, end_date])
+            queryset = queryset.filter(metric_filter)
+        elif start_date:
+            metric_filter = Q(productadmetric__report_date__gte=start_date)
+            queryset = queryset.filter(metric_filter)
+        elif end_date:
+            metric_filter = Q(productadmetric__report_date__lte=end_date)
+            queryset = queryset.filter(metric_filter)
 
         # =====================================================
         # AMAZON LISTING SUBQUERY
@@ -1345,28 +1356,42 @@ class ProductSKUReportView(APIView):
             ),
 
             impressions=Sum(
-                "productadmetric__impressions"
+                "productadmetric__impressions",
+                filter=metric_filter if metric_filter else None
             ),
 
             clicks=Sum(
-                "productadmetric__clicks"
+                "productadmetric__clicks",
+                filter=metric_filter if metric_filter else None
             ),
 
             cost=Sum(
-                "productadmetric__cost"
+                "productadmetric__cost",
+                filter=metric_filter if metric_filter else None
             ),
 
             sales=Sum(
-                "productadmetric__sales"
+                "productadmetric__sales",
+                filter=metric_filter if metric_filter else None
             ),
 
             orders=Sum(
-                "productadmetric__orders"
+                "productadmetric__orders",
+                filter=metric_filter if metric_filter else None
             )
 
         )
 
-        roi_type = data.get("roi_type") or data.get("roi_filter")
+        roi_type = (
+            data.get("roi_type")
+            or data.get("roiType")
+            or data.get("roi_filter")
+            or data.get("roiFilter")
+            or getattr(request, "query_params", {}).get("roi_type")
+            or getattr(request, "query_params", {}).get("roiType")
+            or getattr(request, "query_params", {}).get("roi_filter")
+            or getattr(request, "query_params", {}).get("roiFilter")
+        )
         if roi_type:
             roi_str = str(roi_type).lower().strip()
             if roi_str in ("high", "high_roi", "high_roi_products", "gt_2", "gte_2"):
@@ -1376,6 +1401,10 @@ class ProductSKUReportView(APIView):
             elif roi_str in ("low", "low_roi", "low_roi_products", "lt_2"):
                 queryset = queryset.filter(
                     cost__gt=0, sales__lt=F("cost") * 2.0
+                )
+            elif roi_str in ("no_sales", "no_sales_ad_spend", "zero_sales"):
+                queryset = queryset.filter(
+                    cost__gt=0, sales=0
                 )
 
         queryset = queryset.order_by(

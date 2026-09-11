@@ -95,6 +95,8 @@ DTO_FIELD_ALIAS_MAP = {
     'grossprofitper': 'grossprofitper',
     'actual_tds': 'actual_tds',
     'tds_leaks': 'tds_leaks',
+    'actual_tcs': 'actual_tcs',
+    'tcs_leaks': 'tcs_leaks',
     'mp_gst_leaks': 'mp_gst_leaks',
     'settlement_leak': 'settlement_leak',
     'release_transaction_date': 'release_transaction_date',
