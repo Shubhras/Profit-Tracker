@@ -10,12 +10,13 @@ import {
   FileTextOutlined,
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { getAdProducts, exportAdProducts } from '../../redux/advertising/actionCreator';
 
 function AdProducts() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchText, setSearchText] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [exportLoading, setExportLoading] = useState(false);
@@ -28,6 +29,15 @@ function AdProducts() {
   const [selectedRowKeys, setSelectedRowKeys] = React.useState([]);
   const [visibleColumns, setVisibleColumns] = React.useState(null);
   const [stateFilter, setStateFilter] = useState('');
+  const [roiFilter, setRoiFilter] = useState(location.state?.roiType || location.state?.roi_type || '');
+
+  useEffect(() => {
+    const navRoi = location.state?.roiType || location.state?.roi_type;
+    if (navRoi !== undefined) {
+      setRoiFilter(navRoi || '');
+      setPagination((prev) => ({ ...prev, current: 1 }));
+    }
+  }, [location.state]);
 
   const { loading, adsProductsData } = useSelector((state) => ({
     loading: state.advertising.loading,
@@ -41,6 +51,7 @@ function AdProducts() {
       const payload = {
         search: debouncedSearch,
         state: stateFilter,
+        ...(roiFilter && { roi_type: roiFilter }),
         ...(dateRange?.fromDate && { from_date: dateRange.fromDate, start_date: dateRange.fromDate }),
         ...(dateRange?.endDate && { to_date: dateRange.endDate, end_date: dateRange.endDate }),
       };
@@ -78,11 +89,12 @@ function AdProducts() {
       getAdProducts(pagination.current, pagination.pageSize, {
         search: debouncedSearch,
         state: stateFilter,
+        ...(roiFilter && { roi_type: roiFilter }),
         ...(dateRange?.fromDate && { from_date: dateRange.fromDate, start_date: dateRange.fromDate }),
         ...(dateRange?.endDate && { to_date: dateRange.endDate, end_date: dateRange.endDate }),
       }),
     );
-  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch, stateFilter, dateRange]);
+  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch, stateFilter, roiFilter, dateRange]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -493,15 +505,33 @@ function AdProducts() {
               {/* RIGHT SIDE BUTTONS */}
               {/* <div className="flex items-center gap-3"> */}
               <div className="flex items-center gap-3 flex-wrap lg:w-full">
-                {/* FILTER */}
+                {/* STATE FILTER */}
                 <select
                   value={stateFilter}
-                  onChange={(e) => setStateFilter(e.target.value)}
+                  onChange={(e) => {
+                    setStateFilter(e.target.value);
+                    setPagination((prev) => ({ ...prev, current: 1 }));
+                  }}
                   className="h-[30px] px-3 pr-6 rounded-lg border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
                 >
                   <option value="">All State</option>
                   <option value="ENABLED">Enabled</option>
                   <option value="PAUSED">Paused</option>
+                </select>
+
+                {/* ROI FILTER */}
+                <select
+                  value={roiFilter}
+                  onChange={(e) => {
+                    setRoiFilter(e.target.value);
+                    setPagination((prev) => ({ ...prev, current: 1 }));
+                  }}
+                  className="h-[30px] px-3 pr-6 rounded-lg border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
+                >
+                  <option value="">All ROI</option>
+                  <option value="high">High ROI (ROAS ≥ 2.0)</option>
+                  <option value="low">Low ROI (ROAS &lt; 2.0)</option>
+                  <option value="zero_sales">Zero Sales</option>
                 </select>
 
                 <Dropdown trigger={['click']} dropdownRender={() => manageColumnsDropdown} placement="bottomRight">

@@ -341,11 +341,18 @@ function PricingCards() {
   const { getsubscriptionData, loading } = useSelector((state) => state.AdminDashboard);
   const pricingPlans = getsubscriptionData?.results?.data || [];
   const averageDiscount =
-    pricingPlans.length > 0
+    pricingPlans.length > 1
       ? Math.round(
-          pricingPlans.reduce((sum, plan) => sum + Number(plan.average_discount || 0), 0) / pricingPlans.length,
+          pricingPlans.reduce((sum, plan) => sum + Number(plan.average_discount || 0), 0) / (pricingPlans.length - 1),
         )
       : 0;
+
+  // const averageDiscount =
+  //   pricingPlans.length > 0
+  //     ? Math.round(
+  //         pricingPlans.reduce((sum, plan) => sum + Number(plan.average_discount || 0), 0) / pricingPlans.length,
+  //       )
+  //     : 0;
 
   useEffect(() => {
     dispatch(getSubscriptionList());

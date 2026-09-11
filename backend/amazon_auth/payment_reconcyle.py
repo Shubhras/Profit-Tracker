@@ -2135,16 +2135,19 @@ def _build_reconciliation_summary(dto_rows):
         ship = parse_val(row_dict.get("shippingfees") or row_dict.get("actual_shipping_charges"))
         gst = parse_val(row_dict.get("mp_gst") or row_dict.get("actual_mp_gst"))
         tcs = parse_val(row_dict.get("tcs") or row_dict.get("actual_tcs"))
-        ded = fee + ship + gst + tcs
+        tds = parse_val(row_dict.get("tds") or row_dict.get("actual_tds"))
+        ded = fee + ship + gst + tcs + tds
 
         rec = parse_val(row_dict.get("settlement_paid_in_bank") or row_dict.get("settled_amount"))
         exp = parse_val(row_dict.get("exp_settlement") or row_dict.get("expected_settlement")) or (ns - ded)
 
         fee_leak = parse_val(row_dict.get("fees_leaks"))
         ship_leak = parse_val(row_dict.get("shipping_leaks"))
+        gst_leak = parse_val(row_dict.get("mp_gst_leaks"))
         tcs_leak = parse_val(row_dict.get("tcs_leaks"))
+        tds_leak = parse_val(row_dict.get("tds_leaks"))
         uns_leak = parse_val(row_dict.get("unsettled_not_paid"))
-        tot_leak = fee_leak + ship_leak + tcs_leak + uns_leak
+        tot_leak = fee_leak + ship_leak + gst_leak + tcs_leak + tds_leak + uns_leak
         if tot_leak <= 0 and exp > rec:
             tot_leak = round(exp - rec, 2)
 

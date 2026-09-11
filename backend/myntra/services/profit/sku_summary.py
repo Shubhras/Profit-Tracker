@@ -88,6 +88,8 @@ class SKUSummary:
 
         response = []
         fee_rules = get_myntra_fee_rules(self.calculator.user)
+        listing_tds_map = self.calculator.build_listing_tds_map()
+        listing_tcs_map = self.calculator.build_listing_tcs_map()
         article_type_map = self.calculator.build_article_type_map()
 
         for seller_sku, sku_orders in sku_map.items():
@@ -347,9 +349,13 @@ class SKUSummary:
                 shipping_fees,
             ) or Decimal(0)
 
-            tcs = self.calculator.calculate_tcs(sku_payments) or Decimal(0)
+            actual_tcs = (
+                self.calculator.calculate_tcs(sku_payments) or Decimal(0)
+            ) if finance_data_available else Decimal(0)
 
-            tds = self.calculator.calculate_tds(sku_payments) or Decimal(0)
+            actual_tds = (
+                self.calculator.calculate_tds(sku_payments) or Decimal(0)
+            ) if finance_data_available else Decimal(0)
 
             taxable_value = self.calculator.calculate_taxable_value(
                 sku_payments
@@ -358,6 +364,42 @@ class SKUSummary:
             gst_to_pay_amount = self.calculator.calculate_gst_to_pay(
                 sku_payments
             ) or Decimal(0)
+
+            # ------------------------------------------
+            # EXPECTED TCS / TDS & LEAKS
+            # ------------------------------------------
+            sku_style_id = getattr(first_order, "style_id", None)
+            tds_rate = (
+                listing_tds_map.get(str(seller_sku))
+                or (listing_tds_map.get(str(sku_style_id)) if sku_style_id else None)
+                or Decimal(0)
+            )
+            tcs_rate = (
+                listing_tcs_map.get(str(seller_sku))
+                or (listing_tcs_map.get(str(sku_style_id)) if sku_style_id else None)
+                or Decimal(0)
+            )
+
+            effective_taxable = taxable_value
+            if effective_taxable <= Decimal(0) and net_sales > Decimal(0):
+                effective_taxable = net_sales
+
+            if net_qty > 0 and effective_taxable > Decimal(0):
+                if tds_rate > Decimal(0):
+                    tds = round(effective_taxable * (tds_rate / Decimal("100")), 2)
+                else:
+                    tds = Decimal(0)
+
+                if tcs_rate > Decimal(0):
+                    tcs = round(effective_taxable * (tcs_rate / Decimal("100")), 2)
+                else:
+                    tcs = Decimal(0)
+            else:
+                tds = Decimal(0)
+                tcs = Decimal(0)
+
+            tcs_leaks = round(tcs - actual_tcs, 2)
+            tds_leaks = round(tds - actual_tds, 2)
 
             # ==========================================
             # GST %
@@ -637,7 +679,11 @@ class SKUSummary:
                     # ----------------------------------
                     "mp_gst": mp_gst,
                     "tcs": tcs,
+                    "actual_tcs": actual_tcs,
+                    "tcs_leaks": tcs_leaks,
                     "tds": tds,
+                    "actual_tds": actual_tds,
+                    "tds_leaks": tds_leaks,
                     "taxable_value": taxable_value,
                     "gst_to_pay_amount": (gst_to_pay_amount),
                     "gst_to_pay_perc": (gst_to_pay_perc),
