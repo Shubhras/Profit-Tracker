@@ -278,6 +278,8 @@ function Checkout() {
 
   useEffect(() => {
     if (userObj) {
+      // setEmail(userObj.email || '')
+      // setBusinessName(userObj.business_name || '');
       setEmail(userObj.email || Cookies.get('userEmail') || '');
       setBusinessName(userObj.business_name || userObj.name || '');
       if (userObj.state) {
