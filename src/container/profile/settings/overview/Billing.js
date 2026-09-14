@@ -265,6 +265,16 @@ function Billing() {
                     <span>Created</span>
                     <span>{formatDate(subscription?.created_at)}</span>
                   </div>
+
+                  <div className="flex justify-between">
+                    <span>Start At</span>
+                    <span>{formatDate(subscription?.start_date)}</span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span>Expire At</span>
+                    <span>{formatDate(subscription?.end_date)}</span>
+                  </div>
                 </div>
               </div>
 
