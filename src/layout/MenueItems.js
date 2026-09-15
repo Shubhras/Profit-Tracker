@@ -577,10 +577,10 @@ function MenuItems({ toggleCollapsed }) {
         [
           hasSubmodule('summary-reconcile') &&
             getItem(
-              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/summary`}>
+              <NavLink onClick={toggleCollapsed} to={`${path}/reconcile/reconcile-summary`}>
                 Summary
               </NavLink>,
-              'summary',
+              'reconcile-summary',
             ),
 
           hasSubmodule('reconcile') &&

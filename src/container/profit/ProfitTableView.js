@@ -1,6 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Modal, Checkbox, Dropdown, Menu, Button, Row, Col } from 'antd';
-import { RightOutlined, DownOutlined, DownloadOutlined, FileExcelOutlined, FileTextOutlined } from '@ant-design/icons';
+import {
+  RightOutlined,
+  DownOutlined,
+  DownloadOutlined,
+  FileExcelOutlined,
+  FileTextOutlined,
+  BarChartOutlined,
+  ShoppingOutlined,
+  WalletOutlined,
+  PercentageOutlined,
+} from '@ant-design/icons';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -160,6 +170,7 @@ export default function ProfitTableView() {
       dataIndex: 'channel',
       key: 'channel',
       width: 150,
+      ellipsis: true,
       sorter: (a, b) => (a.channel || '').localeCompare(b.channel || ''),
       render: (value) => {
         const logo = getLogo(value);
@@ -193,86 +204,111 @@ export default function ProfitTableView() {
       dataIndex: 'grossqty',
       key: 'grossqty',
       align: 'center',
-      width: 85,
+      ellipsis: true,
+      width: 70,
       sorter: (a, b) => (Number(a.grossqty) || 0) - (Number(b.grossqty) || 0),
-      render: (v) => <span className="text-[13px] text-[#374151]">{v ?? 0}</span>,
+      render: (v) => <span className="text-[13px] text-[#374151] whitespace-nowrap">{v ?? 0}</span>,
     },
     {
       title: 'Net Qty',
       dataIndex: 'netQty',
       key: 'netQty',
       align: 'center',
-      width: 85,
+      ellipsis: true,
+      width: 70,
       sorter: (a, b) => (Number(a.netQty) || 0) - (Number(b.netQty) || 0),
-      render: (v) => <span className="text-[13px] text-[#374151]">{v ?? 0}</span>,
+      render: (v) => <span className="text-[13px] text-[#374151] whitespace-nowrap">{v ?? 0}</span>,
     },
     {
       title: 'Return Qty',
       dataIndex: 'returnqty',
       key: 'returnqty',
+      ellipsis: true,
       align: 'center',
-      width: 85,
+      width: 70,
       sorter: (a, b) => (Number(a.returnqty) || 0) - (Number(b.returnqty) || 0),
-      render: (v) => <span className="text-[13px] text-[#374151]">{v ?? 0}</span>,
+      render: (v) => <span className="text-[13px] text-[#374151] whitespace-nowrap">{v ?? 0}</span>,
     },
     {
       title: 'Return %',
       dataIndex: 'returnPercent',
       key: 'returnPercent',
       align: 'center',
-      width: 85,
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => (Number(a.returnPercent) || 0) - (Number(b.returnPercent) || 0),
-      render: (v) => <span className="text-[13px] text-[#374151]">{v != null ? `${v}%` : '0%'}</span>,
+      render: (v) => <span className="text-[13px] text-[#374151] whitespace-nowrap">{v != null ? `${v}%` : '0%'}</span>,
     },
     {
       title: 'Net Sales',
       dataIndex: 'netsales',
       key: 'netsales',
       align: 'center',
-      width: 110,
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => (Number(a.netsales) || 0) - (Number(b.netsales) || 0),
-      render: (v) => <span className="text-[13px] text-[#374151] font-medium">{renderCurrencyCell(v)}</span>,
+      render: (v) => (
+        <span className="text-[13px] text-[#374151] font-medium whitespace-nowrap">{renderCurrencyCell(v)}</span>
+      ),
     },
     {
       title: 'MP fees',
       dataIndex: 'mpfees',
       key: 'mpfees',
       align: 'center',
-      width: 100,
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => (Number(a.mpfees) || 0) - (Number(b.mpfees) || 0),
-      render: (v) => <span className="text-[13px] text-[#374151]">{renderCurrencyCell(v)}</span>,
+      render: (v) => <span className="text-[13px] text-[#374151] whitespace-nowrap">{renderCurrencyCell(v)}</span>,
     },
     {
       title: 'Shipping',
       dataIndex: 'shipping',
       key: 'shipping',
       align: 'center',
-      width: 100,
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => (Number(a.shipping) || 0) - (Number(b.shipping) || 0),
-      render: (v) => <span className="text-[13px] text-[#374151]">{renderCurrencyCell(v)}</span>,
+      render: (v) => <span className="text-[13px] text-[#374151] whitespace-nowrap">{renderCurrencyCell(v)}</span>,
     },
     {
       title: 'Profit',
       dataIndex: 'profit',
       key: 'profit',
       align: 'center',
-      width: 100,
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => (Number(a.profit) || 0) - (Number(b.profit) || 0),
-      render: (v) => <span className="text-[13px] text-[#374151]">{renderCurrencyCell(v)}</span>,
+      render: (v) => {
+        const num = typeof v === 'string' ? parseFloat(v.replace(/[^0-9.-]+/g, '')) : Number(v);
+        const isNegative = num < 0;
+        return (
+          <span
+            className={`text-[13px] font-medium whitespace-nowrap ${isNegative ? 'text-[#ef4444]' : 'text-[#374151]'}`}
+          >
+            {renderCurrencyCell(v)}
+          </span>
+        );
+      },
     },
     {
       title: 'Profit %',
       dataIndex: 'profitPercent',
       key: 'profitPercent',
       align: 'center',
-      width: 95,
+      width: 70,
+      ellipsis: true,
       sorter: (a, b) => (Number(a.profitPercent) || 0) - (Number(b.profitPercent) || 0),
       render: (v) => {
         const num = Number(v) || 0;
         const isPositive = num >= 0;
         return (
-          <span className={`font-semibold text-[13px] ${isPositive ? 'text-[#10b981]' : 'text-[#ef4444]'}`}>
-            {num > 0 ? `${num.toFixed(2)}%` : `${num.toFixed(2)}%`}
+          <span
+            className={`font-semibold text-[13px] whitespace-nowrap ${
+              isPositive ? 'text-[#10b981]' : 'text-[#ef4444]'
+            }`}
+          >
+            {num.toFixed(2)}%
           </span>
         );
       },
@@ -350,33 +386,29 @@ export default function ProfitTableView() {
   });
 
   return (
-    <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-4 py-4 xl:px-6 pb-6 bg-[#f8fafc]">
+    <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-4 py-3 xl:px-6 pb-6 bg-[#f8fafc]">
       {/* Top Header / Breadcrumb area */}
-      <div className="mb-5">
-        <div className="flex items-center gap-2 text-[12px] text-[#6b7280] mb-1 font-medium">
-          <span>Profit</span>
-          <span>&gt;</span>
-          <span className="text-[#374151]">Channel Wise Profit</span>
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-[22px] font-bold text-[#111827] tracking-tight m-0">Channel Wise Profit</h1>
-            <p className="text-[13px] text-[#6b7280] mt-0.5 mb-0">
+      <div className="mb-3">
+        <div className="flex w-full items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-[22px] font-bold text-[#111827] mb-0">Channel Wise Profit</h1>
+            <p className="text-[13px] text-[#6b7280]">
               Compare sales, fees, costs and profit across all your sales channels
             </p>
           </div>
 
-          <Dropdown overlay={exportMenu} trigger={['click']} placement="bottomRight">
-            <Button
-              loading={exportLoading}
-              className="flex items-center gap-2 border border-gray-200 bg-white hover:bg-gray-50 text-[#374151] font-medium px-3.5 py-1.5 h-[36px] rounded-lg shadow-sm"
-            >
-              <DownloadOutlined style={{ fontSize: 13, color: '#10b981' }} />
-              <span className="text-[13px]">Export</span>
-              <DownOutlined style={{ fontSize: 10, color: '#9ca3af' }} />
-            </Button>
-          </Dropdown>
+          <div className="ml-auto shrink-0">
+            <Dropdown overlay={exportMenu} trigger={['click']} placement="bottomRight">
+              <Button
+                loading={exportLoading}
+                className="flex items-center gap-2 border border-gray-200 bg-white hover:bg-gray-50 text-[#374151] font-medium px-3.5 py-1.5 h-[36px] rounded-lg shadow-sm"
+              >
+                <DownloadOutlined style={{ fontSize: 13, color: '#10b981' }} />
+                <span className="text-[13px]">Export</span>
+                <DownOutlined style={{ fontSize: 10, color: '#9ca3af' }} />
+              </Button>
+            </Dropdown>
+          </div>
         </div>
       </div>
 
@@ -385,21 +417,8 @@ export default function ProfitTableView() {
         {/* Card 1: Total Net Sales */}
         <Col xs={24} sm={12} md={12} lg={6} xl={6}>
           <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow duration-200 h-full">
-            <div className="w-12 h-12 rounded-xl bg-[#ecfdf5] flex items-center justify-center shrink-0">
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#10b981"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="18" y1="20" x2="18" y2="10" />
-                <line x1="12" y1="20" x2="12" y2="4" />
-                <line x1="6" y1="20" x2="6" y2="14" />
-              </svg>
+            <div className="w-10 h-10 rounded-xl bg-[#ecfdf5] flex items-center justify-center shrink-0">
+              <BarChartOutlined className="text-[18px] text-[#10b981]" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-[13px] font-medium text-[#6b7280]">Total Net Sales</div>
@@ -417,21 +436,8 @@ export default function ProfitTableView() {
         {/* Card 2: Total Units Sold */}
         <Col xs={24} sm={12} md={12} lg={6} xl={6}>
           <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow duration-200 h-full">
-            <div className="w-12 h-12 rounded-xl bg-[#eff6ff] flex items-center justify-center shrink-0">
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#3b82f6"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                <line x1="12" y1="22.08" x2="12" y2="12" />
-              </svg>
+            <div className="w-10 h-10 rounded-xl bg-[#eff6ff] flex items-center justify-center shrink-0">
+              <ShoppingOutlined className="text-[18px] text-[#3b82f6]" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-[13px] font-medium text-[#6b7280]">Total Units Sold</div>
@@ -449,21 +455,8 @@ export default function ProfitTableView() {
         {/* Card 3: Total Profit */}
         <Col xs={24} sm={12} md={12} lg={6} xl={6}>
           <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow duration-200 h-full">
-            <div className="w-12 h-12 rounded-xl bg-[#ecfdf5] flex items-center justify-center shrink-0">
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#10b981"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4" />
-                <path d="M4 6v12a2 2 0 0 0 2 2h14v-4" />
-                <path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z" />
-              </svg>
+            <div className="w-10 h-10 rounded-xl bg-[#ecfdf5] flex items-center justify-center shrink-0">
+              <WalletOutlined className="text-[18px] text-[#10b981]" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-[13px] font-medium text-[#6b7280]">Total Profit</div>
@@ -481,8 +474,8 @@ export default function ProfitTableView() {
         {/* Card 4: Overall Profit % */}
         <Col xs={24} sm={12} md={12} lg={6} xl={6}>
           <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow duration-200 h-full">
-            <div className="w-12 h-12 rounded-xl bg-[#f3e8ff] flex items-center justify-center shrink-0">
-              <span className="text-[22px] font-bold text-[#8b5cf6]">%</span>
+            <div className="w-10 h-10 rounded-xl bg-[#f3e8ff] flex items-center justify-center shrink-0">
+              <PercentageOutlined className="text-[18px] text-[#8b5cf6]" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-[13px] font-medium text-[#6b7280]">Overall Profit %</div>
@@ -504,7 +497,7 @@ export default function ProfitTableView() {
         <Col xs={24} sm={24} md={24} lg={16} xl={17}>
           <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-[16px] font-bold text-[#111827] m-0">Channel Performance</h2>
+              <h3 className="text-[15px] font-bold text-[#111827] m-0">Channel Performance</h3>
             </div>
 
             <Table
@@ -527,53 +520,72 @@ export default function ProfitTableView() {
               size="middle"
               scroll={{ x: 900 }}
               className="
-                [&_.ant-table]:!bg-transparent
-                [&_.ant-table-thead>tr>th]:!bg-[#f9fafb]
-                [&_.ant-table-thead>tr>th]:!text-[12px]
-                [&_.ant-table-thead>tr>th]:!font-semibold
-                [&_.ant-table-thead>tr>th]:!text-[#4b5563]
-                [&_.ant-table-thead>tr>th]:!border-b
-                [&_.ant-table-thead>tr>th]:!border-[#f1f5f9]
-                [&_.ant-table-tbody>tr>td]:!text-[13px]
-                [&_.ant-table-tbody>tr>td]:!border-b
-                [&_.ant-table-tbody>tr>td]:!border-[#f8fafc]
-                [&_.ant-table-tbody>tr:hover>td]:!bg-[#f8fafc]
-                [&_.ant-table-cell]:!px-2.5
-                [&_.ant-table-cell]:!py-3.5
-              "
+            [&_.ant-table-thead>tr>th]:!bg-[#f9fafb]
+            [&_.ant-table-thead>tr>th]:!text-[12px]
+            [&_.ant-table-thead>tr>th]:!font-semibold
+            [&_.ant-table-tbody>tr>td]:!text-[12px]
+          "
               summary={() => (
                 <Table.Summary.Row className="bg-[#f9fafb] font-bold border-t border-gray-200">
-                  <Table.Summary.Cell index={0} className="font-bold text-[13px] text-[#111827]">
-                    Total
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={1} align="center" className="font-bold text-[13px] text-[#111827]">
-                    {totals.grossqty ?? 0}
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={2} align="center" className="font-bold text-[13px] text-[#111827]">
-                    {totals.netqty ?? 0}
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={3} align="center" className="font-bold text-[13px] text-[#111827]">
-                    {totals.returnqty ?? 0}
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={4} align="center" className="font-bold text-[13px] text-[#111827]">
-                    {totals.retpercent != null ? `${totals.retpercent}%` : '0%'}
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={5} align="center" className="font-bold text-[13px] text-[#111827]">
-                    {renderCurrencyCell(totals.netsales)}
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={6} align="center" className="font-bold text-[13px] text-[#111827]">
-                    {renderCurrencyCell(totals.mpfees)}
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={7} align="center" className="font-bold text-[13px] text-[#111827]">
-                    {renderCurrencyCell(totals.shippingfees ?? totals.shipping)}
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={8} align="center" className="font-bold text-[13px] text-[#111827]">
-                    {renderCurrencyCell(totals.profit)}
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={9} align="center" className="font-bold text-[13px] text-[#10b981]">
-                    {totals.profitmargin ?? totals.grossprofitper ?? 0}%
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={10} align="center" />
+                  {filteredColumns.map((col, index) => {
+                    const key = col.key || col.dataIndex;
+                    if (key === 'channel') {
+                      return (
+                        <Table.Summary.Cell
+                          key={key}
+                          index={index}
+                          className="font-bold text-[13px] text-[#111827] whitespace-nowrap"
+                        >
+                          Total
+                        </Table.Summary.Cell>
+                      );
+                    }
+                    if (key === 'action') {
+                      return <Table.Summary.Cell key={key} index={index} align="center" />;
+                    }
+
+                    let content = null;
+                    let textColor = 'text-[#111827]';
+
+                    if (key === 'grossqty') {
+                      content = totals.grossqty ?? 0;
+                    } else if (key === 'netQty') {
+                      content = totals.netqty ?? 0;
+                    } else if (key === 'returnqty') {
+                      content = totals.returnqty ?? 0;
+                    } else if (key === 'returnPercent') {
+                      content = totals.retpercent != null ? `${totals.retpercent}%` : '0%';
+                    } else if (key === 'netsales') {
+                      content = renderCurrencyCell(totals.netsales);
+                    } else if (key === 'mpfees') {
+                      content = renderCurrencyCell(totals.mpfees);
+                    } else if (key === 'shipping') {
+                      content = renderCurrencyCell(totals.shippingfees ?? totals.shipping);
+                    } else if (key === 'profit') {
+                      content = renderCurrencyCell(totals.profit);
+                      const profitVal =
+                        typeof totals.profit === 'string'
+                          ? parseFloat(totals.profit.replace(/[^0-9.-]+/g, ''))
+                          : Number(totals.profit);
+                      if (profitVal < 0) textColor = 'text-[#ef4444]';
+                      else if (profitVal > 0) textColor = 'text-[#10b981]';
+                    } else if (key === 'profitPercent') {
+                      const pctVal = Number(totals.profitmargin ?? totals.grossprofitper ?? 0);
+                      content = `${pctVal.toFixed(2)}%`;
+                      if (pctVal < 0) textColor = 'text-[#ef4444]';
+                      else if (pctVal > 0) textColor = 'text-[#10b981]';
+                    }
+
+                    return (
+                      <Table.Summary.Cell key={key} index={index} align="center">
+                        <span
+                          className={`font-semibold text-[13px] whitespace-nowrap overflow-hidden text-ellipsis ${textColor}`}
+                        >
+                          {content}
+                        </span>
+                      </Table.Summary.Cell>
+                    );
+                  })}
                 </Table.Summary.Row>
               )}
             />
@@ -583,7 +595,7 @@ export default function ProfitTableView() {
         {/* Right Column: Net Sales Contribution Donut Chart */}
         <Col xs={24} sm={24} md={24} lg={8} xl={7}>
           <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-            <h2 className="text-[16px] font-bold text-[#111827] mb-2">Net Sales Contribution</h2>
+            <h3 className="text-[15px] font-bold text-[#111827] mb-2">Net Sales Contribution</h3>
 
             {/* Donut Chart */}
             <div className="relative w-full h-[220px] flex items-center justify-center my-3">
