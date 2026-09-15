@@ -206,15 +206,42 @@ class UserNotificationListAPIView(APIView):
 
     def get(self, request):
 
-        # Mark all unread notifications as read
-        UserNotification.objects.filter(
-            user=request.user,
-            is_read=False
-        ).update(is_read=True)
+        user_registered_at = (
+            getattr(request.user, "date_joined", None)
+            or getattr(getattr(request.user, "profile", None), "created_at", None)
+            or getattr(request.user, "created_at", None)
+        )
 
         notifications = Notification.objects.filter(
             is_active=True
-        ).order_by("-created_at")
+        )
+
+        if user_registered_at:
+            notifications = notifications.filter(created_at__gte=user_registered_at)
+
+        notifications = notifications.order_by("-created_at")
+
+        # Ensure UserNotification records exist for this user for eligible notifications
+        existing_notif_ids = set(
+            UserNotification.objects.filter(
+                user=request.user,
+                notification__in=notifications
+            ).values_list("notification_id", flat=True)
+        )
+        missing_user_notifications = [
+            UserNotification(user=request.user, notification=notif, is_read=False)
+            for notif in notifications
+            if notif.id not in existing_notif_ids
+        ]
+        if missing_user_notifications:
+            UserNotification.objects.bulk_create(missing_user_notifications, ignore_conflicts=True)
+
+        # Mark all unread notifications as read
+        UserNotification.objects.filter(
+            user=request.user,
+            notification__in=notifications,
+            is_read=False
+        ).update(is_read=True)
 
         serializer = NotificationSerializer(
             notifications,
@@ -222,12 +249,11 @@ class UserNotificationListAPIView(APIView):
             context={"request": request}
         )
 
-        total_notifications = UserNotification.objects.filter(
-            user=request.user
-        ).count()
+        total_notifications = notifications.count()
 
         unread_count = UserNotification.objects.filter(
             user=request.user,
+            notification__in=notifications,
             is_read=False
         ).count()
 

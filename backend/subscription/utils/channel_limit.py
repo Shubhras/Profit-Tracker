@@ -1,3 +1,4 @@
+from django.utils import timezone
 from subscription.models import UserSubscription
 from amazon_auth.models import AmazonAccount
 
@@ -10,6 +11,7 @@ def check_user_channel_connection_limit(user):
     Returns:
         tuple: (is_allowed: bool, max_allowed: int, current_count: int, error_message: str or None)
     """
+    now = timezone.now()
     subscription = (
         UserSubscription.objects.filter(
             user=user,
@@ -19,6 +21,17 @@ def check_user_channel_connection_limit(user):
         .select_related("plan")
         .first()
     )
+    if not subscription:
+        subscription = (
+            UserSubscription.objects.filter(
+                user=user,
+                status="cancelled",
+                is_paid=True,
+                end_date__gt=now,
+            )
+            .select_related("plan")
+            .first()
+        )
 
     if subscription and subscription.plan:
         max_allowed = getattr(subscription.plan, "max_channel_connection", 1)

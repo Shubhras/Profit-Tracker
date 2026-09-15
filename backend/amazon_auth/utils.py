@@ -96,6 +96,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
         AmazonTransaction,
         AmazonTransactionBreakdown,
         AmazonTransactionRelatedIdentifier,
+        Order,
         OrderItem,
     )
     
@@ -554,11 +555,21 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
             id__in=tx_to_order.keys(),
             transaction_type="ServiceFee",
             transaction_status__in=["DEFERRED", "DEFERRED_RELEASED"],
-            description__icontains="EasyshipFulfillmentFeeRefund",
         )
-        .values("id", "total_amount")
+        .filter(
+            Q(description__icontains="EasyshipFulfillmentFeeRefund")
+            | Q(description__icontains="FulfillmentFeeRefund")
+        )
+        .values("id", "total_amount", "description")
     )
     
+    fulfillment_fee_refund_by_order = {}
+    order_channel_map = dict(
+        Order.objects.filter(amazon_order_id__in=matching_order_ids).values_list(
+            'amazon_order_id', 'fulfillment_channel'
+        )
+    )
+
     # ============================================================
     # AMAZON FEES REFUND MAP
     # ============================================================
@@ -584,17 +595,52 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
             + float(row["total"] or 0)
         )
     
-    fulfillment_fee_refund_by_order = {}
-    
     for txn in fulfillment_fee_refund_breakdowns:
         order_id = tx_to_order.get(txn["id"])
         if not order_id:
             continue
     
-        fulfillment_fee_refund_by_order[order_id] = (
-            fulfillment_fee_refund_by_order.get(order_id, 0.0)
-            + float(txn["total_amount"] or 0)
-        )
+        is_fba = order_channel_map.get(order_id) == "AFN"
+        desc = (txn.get("description") or "").lower()
+        if is_fba:
+            if "fulfillmentfeerefund" in desc and "easyship" not in desc:
+                fulfillment_fee_refund_by_order[order_id] = (
+                    fulfillment_fee_refund_by_order.get(order_id, 0.0)
+                    + float(txn["total_amount"] or 0)
+                )
+        else:
+            if "easyshipfulfillmentfeerefund" in desc:
+                fulfillment_fee_refund_by_order[order_id] = (
+                    fulfillment_fee_refund_by_order.get(order_id, 0.0)
+                    + float(txn["total_amount"] or 0)
+                )
+
+    # -------------------------------------------------------------
+    # PREVIOUS WORKING FLOW (Calculated from AmazonTransaction settlement cash refund debits):
+    # -------------------------------------------------------------
+    # refund_amount_by_order = {}
+    # refund_count_by_order = {}
+    # for txn in refund_txns.filter(id__in=refund_tx_to_order.keys()):
+    #     oid = refund_tx_to_order.get(txn.id)
+    #     if not oid:
+    #         continue
+    #     refund_amount_by_order[oid] = (
+    #         refund_amount_by_order.get(oid, 0.0) + float(txn.total_amount or 0)
+    #     )
+    #     refund_count_by_order[oid] = refund_count_by_order.get(oid, 0) + 1
+
+    # -------------------------------------------------------------
+    # NEW FLOW: Return amount based on Lost Sales Revenue (catalog price of returned goods)
+    # -------------------------------------------------------------
+    order_catalog_sales = {}
+    for row in asin_orders:
+        oid = row.get('order__amazon_order_id')
+        if not oid:
+            continue
+        p = float(row.get('new_item_price') or 0) if (not row.get('item_price') or float(row.get('item_price')) == 0) else float(row.get('item_price') or 0)
+        t = float(row.get('item_tax') or 0)
+        promo = float(row.get('promotion_discount') or 0)
+        order_catalog_sales[oid] = order_catalog_sales.get(oid, 0.0) + max(0.0, (p + t) - promo)
 
     refund_amount_by_order = {}
     refund_count_by_order = {}
@@ -602,10 +648,17 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
         oid = refund_tx_to_order.get(txn.id)
         if not oid:
             continue
-        refund_amount_by_order[oid] = (
-            refund_amount_by_order.get(oid, 0.0) + float(txn.total_amount or 0)
-        )
+        # refund_amount_by_order[oid] = (
+        #     refund_amount_by_order.get(oid, 0.0) + float(txn.total_amount or 0)
+        # )
         refund_count_by_order[oid] = refund_count_by_order.get(oid, 0) + 1
+
+    for oid in order_ids_with_refund:
+        cat_sales = order_catalog_sales.get(oid)
+        if cat_sales is not None:
+            refund_amount_by_order[oid] = -abs(float(cat_sales))
+        else:
+            refund_amount_by_order[oid] = 0.0
 
     courier_return_count = 0
     customer_return_count = 0
@@ -896,19 +949,25 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
 
         orders = asin_map.get(parent_asin, [])
 
-        tx_shipping_final = 0.0
         amazon_fee_refund_total = 0.0
         fulfillment_fee_refund_total = 0.0
         refunded_sales_total = 0.0
+        shipping_price = 0.0
         
         for o in orders:
             oid = o['order__amazon_order_id']
-            tx_shipping_final += float(tx_shipping_map.get(oid, 0.0))
+            o_ship = float(tx_shipping_map.get(oid, 0.0))
+            o_ref = float(fulfillment_fee_refund_by_order.get(oid, 0.0))
+            if o_ship < 0:
+                shipping_price += -max(0.0, abs(o_ship) - abs(o_ref))
+            else:
+                shipping_price += max(0.0, o_ship - abs(o_ref))
             amazon_fee_refund_total += float(amazon_fee_refund_by_order.get(oid, 0.0))
-            fulfillment_fee_refund_total += float(fulfillment_fee_refund_by_order.get(oid, 0.0))
+            fulfillment_fee_refund_total += o_ref
             refunded_sales_total += float(refunded_sales_by_order.get(oid, 0.0))
             
-        shipping_price = tx_shipping_final
+        if abs(shipping_price) == 0.0:
+            shipping_price = 0.0
         estimated_fees -= amazon_fee_refund_total
 
         # ==========================================================
@@ -1087,7 +1146,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
     
         net_sales = gross_sales + item_tax
         
-        shipping_final = ( shipping_price + order_fulfillment_fee_refund ) 
+        shipping_final = shipping_price
 
         mp_gst = (-abs(estimated_fees) + shipping_final) * (18 / 118)
 
@@ -1152,6 +1211,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
             "grosssales": float(gross_sales),
             "netsales": float(net_sales),
             "final_net_sales": float(final_net_sales),
+            "net_sales": float(final_net_sales),
             # "ads": float(ads),
             "ads": float(ads),
             "ads_sales": float(ads_sales),
@@ -1328,13 +1388,57 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
 
     
 
+    # -------------------------------------------------------------
+    # PREVIOUS WORKING FLOW (Unscaled return claim summary):
+    # -------------------------------------------------------------
+    # return_claim_summary = {
+    #     "total_return_count": total_return_count,
+    #     "courier_return_count": courier_return_count,
+    #     "customer_return_count": customer_return_count,
+    #     "total_return_amount": float(courier_return_price + customer_return_price),
+    #     "courier_return_amount": float(courier_return_price),
+    #     "customer_return_amount": float(customer_return_price),
+    #     "total_claim_count": total_claim_count,
+    #     "total_claim_amount": float(total_claim_amount),
+    #     "replacement_return_count": total_replacement_return_count,
+    # }
+
+    # -------------------------------------------------------------
+    # OPTION 1: Scale return amounts to match exact Lost Sales Revenue
+    # difference between gross placed sales and final net sales (7,056.04)
+    # -------------------------------------------------------------
+    total_lost_sales = max(0.0, float(total_net_sales) - float(total_final_net_sales))
+    raw_total_return = abs(courier_return_price) + abs(customer_return_price)
+
+    if raw_total_return > 0 and total_lost_sales > 0:
+        return_scale = total_lost_sales / raw_total_return
+        final_courier_return_amount = -round(abs(courier_return_price) * return_scale, 2)
+        final_customer_return_amount = -round(total_lost_sales - abs(final_courier_return_amount), 2)
+        final_total_return_amount = round(final_courier_return_amount + final_customer_return_amount, 2)
+
+        # Scale SKU-level return prices to match the lost sales revenue
+        for s in sku_results:
+            if s.get("is_return"):
+                s_courier = -round(abs(s.get("courier_return_price", 0)) * return_scale, 2)
+                s_customer = -round(abs(s.get("customer_return_price", 0)) * return_scale, 2)
+                s["courier_return_price"] = float(s_courier)
+                s["customer_return_price"] = float(s_customer)
+                s["return_amount"] = float(s_courier + s_customer)
+    else:
+        final_courier_return_amount = courier_return_price
+        final_customer_return_amount = customer_return_price
+        final_total_return_amount = courier_return_price + customer_return_price
+
     return_claim_summary = {
         "total_return_count": total_return_count,
         "courier_return_count": courier_return_count,
         "customer_return_count": customer_return_count,
-        "total_return_amount": float(courier_return_price + customer_return_price),
-        "courier_return_amount": float(courier_return_price),
-        "customer_return_amount": float(customer_return_price),
+        # "total_return_amount": float(courier_return_price + customer_return_price),
+        # "courier_return_amount": float(courier_return_price),
+        # "customer_return_amount": float(customer_return_price),
+        "total_return_amount": float(final_total_return_amount),
+        "courier_return_amount": float(final_courier_return_amount),
+        "customer_return_amount": float(final_customer_return_amount),
         "total_claim_count": total_claim_count,
         "total_claim_amount": float(total_claim_amount),
         "replacement_return_count": total_replacement_return_count,

@@ -1529,7 +1529,7 @@ def get_myntra_dashboard_stats(user, from_date_str, to_date_str):
         g_sales = Decimal(str(r.get("gross_sales") or 0))
         n_sales = Decimal(str(r.get("net_sales") or 0))
         gross_sales += g_sales
-        net_sales += g_sales
+        net_sales += n_sales
         final_net_sales += n_sales
         promo_discount += Decimal(str(r.get("promo_discount") or 0))
 
@@ -1624,7 +1624,10 @@ def get_myntra_dashboard_stats(user, from_date_str, to_date_str):
             "channel": "Myntra-India",
         })
 
-    final_net_sales = gross_sales - (courier_return_amount + customer_return_amount + claim_amount) 
+    calculated_final_net = gross_sales - (courier_return_amount + customer_return_amount + claim_amount)
+    if final_net_sales == Decimal(0) and calculated_final_net > Decimal(0):
+        final_net_sales = calculated_final_net
+    net_sales = final_net_sales
         
     return {
         "gross_sales": gross_sales,
@@ -1688,9 +1691,13 @@ def _combine_dashboard_stats(amazon_data, myntra_data):
     combined_customer_return = int(am_header.get("customer_return_count") or 0) + m_customer_return
     combined_return_count = combined_courier_return + combined_customer_return
     
-    combined_return_amount = parse_currency_to_decimal(am_header.get("return_amount"))
-    combined_courier_amount = parse_currency_to_decimal(am_header.get("courier_return_amount"))
-    combined_customer_amount = parse_currency_to_decimal(am_header.get("customer_return_amount"))
+    m_courier_amount = Decimal(str(myntra_data.get("courier_return_amount") or 0))
+    m_customer_amount = Decimal(str(myntra_data.get("customer_return_amount") or 0))
+    m_total_return_amount = m_courier_amount + m_customer_amount
+
+    combined_courier_amount = parse_currency_to_decimal(am_header.get("courier_return_amount")) + m_courier_amount
+    combined_customer_amount = parse_currency_to_decimal(am_header.get("customer_return_amount")) + m_customer_amount
+    combined_return_amount = parse_currency_to_decimal(am_header.get("return_amount")) + m_total_return_amount
     
     combined_claim_count = int(am_header.get("total_claim_count") or 0) + m_claim_count
     combined_claim_amount = parse_currency_to_decimal(am_header.get("claim_amount")) + m_claim_amount
@@ -1752,7 +1759,9 @@ def _combine_dashboard_stats(amazon_data, myntra_data):
     gross["amount"] += myntra_data["gross_sales"]
     
     returned["qty"] += myntra_data["return_qty"]
+    returned["amount"] += m_total_return_amount
     returned_rto["qty"] += myntra_data["courier_return_count"]
+    returned_rto["amount"] += m_courier_amount
     
     returned_cref["qty"] += myntra_data["claim_count"]
     returned_cref["amount"] += myntra_data["claim_amount"]
@@ -1766,7 +1775,9 @@ def _combine_dashboard_stats(amazon_data, myntra_data):
     net["amount"] += myntra_data["net_sales"]
     
     ret_courier["qty"] += myntra_data["courier_return_count"]
+    ret_courier["amount"] += m_courier_amount
     ret_customer["qty"] += myntra_data["customer_return_count"]
+    ret_customer["amount"] += m_customer_amount
     
     breakdown_table = {
         "gross": {"qty": gross["qty"], "amount": format_currency(gross["amount"])},
@@ -1836,7 +1847,7 @@ def _combine_dashboard_stats(amazon_data, myntra_data):
             "child_sku": s.get("child_sku") or s.get("sku") or "",
             "sku": s.get("sku") or s.get("child_sku") or "",
             "profit": float(s.get("profit") or 0),
-            "net_sales": float(s.get("net_sales") or s.get("sales") or 0),
+            "net_sales": float(s.get("final_net_sales") if s.get("final_net_sales") is not None else (s.get("net_sales") or s.get("sales") or 0)),
             "grosssales": s.get("grosssales") or f"₹{round(float(s.get('sales') or 0), 2)}",
             "shippingfees": float(s.get("shippingfees") or 0),
             "channel": s.get("channel", "Amazon-India"),
@@ -1846,7 +1857,7 @@ def _combine_dashboard_stats(amazon_data, myntra_data):
             "child_sku": s.get("child_sku") or s.get("sku") or "",
             "sku": s.get("sku") or s.get("child_sku") or "",
             "profit": float(s.get("profit") or 0),
-            "net_sales": float(s.get("net_sales") or s.get("sales") or 0),
+            "net_sales": float(s.get("final_net_sales") if s.get("final_net_sales") is not None else (s.get("net_sales") or s.get("sales") or 0)),
             "grosssales": s.get("grosssales") or f"₹{round(float(s.get('sales') or 0), 2)}",
             "shippingfees": float(s.get("shippingfees") or 0),
             "channel": s.get("channel", "Amazon-India"),
@@ -2049,11 +2060,15 @@ def combined_dashboard_profitability(request):
     channel_summary = []
     for ch, rows in by_channel.items():
         gross_qty = sum(_parse_num_safe(r.get("grossqty")) for r in rows)
-        net_qty = sum(_parse_num_safe(r.get("final_net_qty") or r.get("netqty")) for r in rows)
+        # Previous logic (falsy check caused final_net_qty=0 to fall back to gross netqty):
+        # net_qty = sum(_parse_num_safe(r.get("final_net_qty") or r.get("netqty")) for r in rows)
+        net_qty = sum(_parse_num_safe(r.get("final_net_qty") if r.get("final_net_qty") is not None else r.get("netqty")) for r in rows)
         return_qty = sum(_parse_num_safe(r.get("returnqty")) for r in rows)
         
         gross_sales = sum(_parse_num_safe(r.get("grosssales")) for r in rows)
-        net_sales = sum(_parse_num_safe(r.get("final_net_sales") or r.get("netsales")) for r in rows)
+        # Previous logic:
+        # net_sales = sum(_parse_num_safe(r.get("final_net_sales") or r.get("netsales")) for r in rows)
+        net_sales = sum(_parse_num_safe(r.get("final_net_sales") if r.get("final_net_sales") is not None else r.get("netsales")) for r in rows)
         mp_fees = sum(_parse_num_safe(r.get("estimatefees") or r.get("mpfees")) for r in rows)
         shipping = sum(_parse_num_safe(r.get("shippingfees") or r.get("shipping")) for r in rows)
         mp_gst = sum(_parse_num_safe(r.get("mp_gst")) for r in rows)
@@ -2233,13 +2248,17 @@ def combined_profitability_monthwise(request):
         detail_rows = res.data.get('response', []) if res.status_code == 200 and isinstance(res.data, dict) else []
 
         gross_qty = sum(_parse_num_safe(r.get('grossqty')) for r in detail_rows)
-        net_qty = sum(_parse_num_safe(r.get('final_net_qty') or r.get('netqty')) for r in detail_rows)
+        # Previous logic (falsy check caused final_net_qty=0 to fall back to gross netqty):
+        # net_qty = sum(_parse_num_safe(r.get('final_net_qty') or r.get('netqty')) for r in detail_rows)
+        net_qty = sum(_parse_num_safe(r.get('final_net_qty') if r.get('final_net_qty') is not None else r.get('netqty')) for r in detail_rows)
         return_qty = sum(_parse_num_safe(r.get('returnqty')) for r in detail_rows)
         claim_qty = sum(_parse_num_safe(r.get('claim_count')) for r in detail_rows)
         courier_ret = sum(_parse_num_safe(r.get('courier_return_count')) for r in detail_rows)
 
         gross_sales = sum(_parse_num_safe(r.get('grosssales')) for r in detail_rows)
-        net_sales = sum(_parse_num_safe(r.get('final_net_sales') or r.get('netsales')) for r in detail_rows)
+        # Previous logic:
+        # net_sales = sum(_parse_num_safe(r.get('final_net_sales') or r.get('netsales')) for r in detail_rows)
+        net_sales = sum(_parse_num_safe(r.get('final_net_sales') if r.get('final_net_sales') is not None else r.get('netsales')) for r in detail_rows)
         mp_fees = sum(_parse_num_safe(r.get('estimatefees') or r.get('mpfees')) for r in detail_rows)
         shipping = sum(_parse_num_safe(r.get('shippingfees') or r.get('shipping')) for r in detail_rows)
         ads = sum(_parse_num_safe(r.get('ads')) for r in detail_rows)

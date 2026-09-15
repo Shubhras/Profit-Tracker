@@ -176,6 +176,9 @@ class StyleSummary:
                 # RETURN CLASSIFICATION
                 # --------------------------------------
 
+                order_courier_return_count = 0
+                order_customer_return_count = 0
+
                 for return_item in order_returns:
                     qty = return_item.quantity or 0
 
@@ -183,22 +186,21 @@ class StyleSummary:
 
                     if return_category == "COURIER_RETURN":
                         courier_return_count += qty
-                        print("courier_return_count myntraaaaaaa ", courier_return_count)
-                        courier_return_amount = self.calculator.calculate_gross_sales(
-                            [order]
-                        ) or Decimal(0)
-                        print("courier_return_amount myntraaaaaaa ", courier_return_amount)
+                        order_courier_return_count += qty
 
                     elif return_category == "CUSTOMER_RETURN":
                         customer_return_count += qty
-                        print("customer_return_count myntraaaaaaa ", customer_return_count)
-                        customer_return_amount = self.calculator.calculate_gross_sales(
-                            [order]
-                        ) or Decimal(0)
-                        print("customer_return_amount myntraaaaaaa ", customer_return_amount)
+                        order_customer_return_count += qty
 
                     if return_item.type:
                         return_types.add(return_item.type)
+
+                if order_courier_return_count > 0 and order_customer_return_count == 0:
+                    courier_return_amount += order_gross_sales
+                elif order_customer_return_count > 0:
+                    customer_return_amount += order_gross_sales
+                elif order_return_qty > 0:
+                    customer_return_amount += order_gross_sales
 
             # ==========================================
             # NET QTY

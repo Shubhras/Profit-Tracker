@@ -121,6 +121,8 @@ class SKUSummary:
 
             courier_return_count = 0
             customer_return_count = 0
+            courier_return_amount = Decimal(0)
+            customer_return_amount = Decimal(0)
 
             return_types = set()
 
@@ -177,6 +179,9 @@ class SKUSummary:
                 # RETURN TYPES
                 # --------------------------------------
 
+                order_courier_return_count = 0
+                order_customer_return_count = 0
+
                 for return_item in order_returns:
                     qty = return_item.quantity or 0
 
@@ -184,12 +189,21 @@ class SKUSummary:
 
                     if return_category == "COURIER_RETURN":
                         courier_return_count += qty
+                        order_courier_return_count += qty
 
                     elif return_category == "CUSTOMER_RETURN":
                         customer_return_count += qty
+                        order_customer_return_count += qty
 
                     if return_item.type:
                         return_types.add(return_item.type)
+
+                if order_courier_return_count > 0 and order_customer_return_count == 0:
+                    courier_return_amount += order_gross_sales
+                elif order_customer_return_count > 0:
+                    customer_return_amount += order_gross_sales
+                elif order_return_qty > 0:
+                    customer_return_amount += order_gross_sales
 
             # ==========================================
             # NET QTY
@@ -642,6 +656,8 @@ class SKUSummary:
                     ),
                     "courier_return_count": (courier_return_count),
                     "customer_return_count": (customer_return_count),
+                    "courier_return_amount": (courier_return_amount),
+                    "customer_return_amount": (customer_return_amount),
                     # ----------------------------------
                     # SALES
                     # ----------------------------------

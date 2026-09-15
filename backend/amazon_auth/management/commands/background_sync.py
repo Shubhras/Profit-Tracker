@@ -27,26 +27,26 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         logger.info("CRON STARTED")
         print("CRON STARTED")  # temp debug
-        accounts = AmazonAccount.objects.all()
+        # accounts = AmazonAccount.objects.all()
 
-        # now = timezone.now()
-        # # 1. Fetch only users with an active, paid, non-expired subscription
-        # active_user_ids = (
-        #     UserSubscription.objects.filter(
-        #         status="active",
-        #         is_paid=True,
-        #     )
-        #     .filter(Q(end_date__gt=now) | Q(end_date__isnull=True))
-        #     .values_list("user_id", flat=True)
-        #     .distinct()
-        # )
-        # accounts = AmazonAccount.objects.filter(
-        #     user_id__in=active_user_ids
-        # ).select_related("user")
+        now = timezone.now()
+        # 1. Fetch only users with an active, paid, non-expired subscription
+        active_user_ids = (
+            UserSubscription.objects.filter(
+                status="active",
+                is_paid=True,
+            )
+            .filter(Q(end_date__gt=now) | Q(end_date__isnull=True))
+            .values_list("user_id", flat=True)
+            .distinct()
+        )
+        accounts = AmazonAccount.objects.filter(
+            user_id__in=active_user_ids
+        ).select_related("user")
 
-        # if not accounts.exists():
-        #     self.stdout.write(self.style.WARNING("No Amazon accounts found with an active, paid subscription."))
-        #     return
+        if not accounts.exists():
+            self.stdout.write(self.style.WARNING("No Amazon accounts found with an active, paid subscription."))
+            return
         self.stdout.write(f"Starting background sync for {accounts.count()} accounts...")
 
         factory = RequestFactory()
