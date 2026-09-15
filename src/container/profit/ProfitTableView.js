@@ -411,49 +411,6 @@ export default function ProfitTableView() {
           >
             <RightOutlined style={{ fontSize: 10 }} />
           </button>
-          {/* <button
-            type="button"
-            onClick={() => {
-              const payload = {
-                filters: {
-                  channel: { IN: globalChannel },
-                  fromDate: dateRange?.fromDate || null,
-                  toDate: dateRange?.endDate || null,
-                },
-                metric: {
-                  expense: 'withExpense',
-                  ads: 'withAds',
-                  account_charges: 'withAccountCharges',
-                  gst: 'withGst',
-                  payment: 'withEstimate',
-                  summarymetric: 'channel',
-                },
-                pagination: {
-                  pageNo: 0,
-                  pageSize: 25,
-                },
-                expand: 'channel',
-                expandValue: 'Amazon-India',
-                tab_name: 'summary',
-              };
-              dispatch(getProfitModalApi(payload));
-
-              setDetailModal({
-                open: true,
-                record,
-                type: 'qty',
-                modalLabel: 'Channel',
-                modalValue: record.channel,
-              });
-            }}
-            style={{
-              border: '1px solid #ffc0cb',
-              background: '#ffe4e9',
-            }}
-            className="w-[30px] h-[30px] rounded-[4px] cursor-pointer flex-items-center justify-center mx-auto"
-          >
-            <BarChartOutlined style={{ fontSize: 14, color: '#ff4d6d' }} />
-          </button> */}
         </div>
       ),
     },
@@ -504,64 +461,14 @@ export default function ProfitTableView() {
   const filteredColumns = columns.filter(
     (col) => col.dataIndex === 'channel' || col.key === 'action' || visibleColumns.includes(col.dataIndex),
   );
-  // const handleChange = (key, value) => {
-  //   setFilters((prev) => ({
-  //     ...prev,
-  //     [key]: value,
-  //   }));
-  // };
 
-  // const handleApply = () => {
-  //   const payload = buildPayload();
-  //   dispatch(getProfitData(payload));
-  //   setShowFilters(false);
-  // };
-
-  // const handleClear = () => {
-  //   setFilters({
-  //     channel: '',
-  //     sku: '',
-  //     productId: '',
-  //     parentId: '',
-  //     mkt: '',
-
-  //     ads: 'without',
-  //     gst: 'without',
-  //     estimate: 'with',
-  //     expenses: 'with',
-  //     accountCharges: 'with',
-  //   });
-  // };
   return (
     <>
-      {/* <PageHeader
-        routes={PageRoutes}
-        title="Profit Table"
-        className="flex  justify-between items-center px-8 xl:px-[15px] pt-2 pb-6 sm:pb-[30px] bg-transparent sm:flex-col"
-      /> */}
       <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-4 py-3 xl:px-[15px] pb-[10px] bg-transparent">
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-[20px] font-semibold text-[#111827]">Sales Details</h1>
-          {/* <Dropdown menu={{ items: exportMenuItems }} trigger={['click']} placement="bottomRight">
-            <Button
-              type="primary"
-              icon={<ExportOutlined />}
-              loading={exportLoading}
-              className="bg-[#10b981] hover:bg-[#059669] border-none text-white font-medium px-4 h-[35px] rounded-lg flex items-center gap-1.5 shadow-sm"
-            >
-              Export <DownOutlined style={{ fontSize: 10 }} />
-            </Button>
-          </Dropdown> */}
         </div>
         <Card bordered={false} className="sales-table-wrapper">
-          {/* <ProfitFilterBar
-            filters={filters}
-            setFilters={setFilters}
-            handleApply={handleApply}
-            handleClear={handleClear}
-            showFilters={showFilters}
-            setShowFilters={setShowFilters}
-          /> */}
           <Table
             bordered
             columns={filteredColumns}
@@ -706,14 +613,6 @@ export default function ProfitTableView() {
           </div>
         </Modal>
       </main>
-      {/* <ProfitModal
-        open={detailModal.open}
-        record={detailModal.record}
-        type={detailModal.type}
-        modalLabel={detailModal.modalLabel}
-        modalValue={detailModal.modalValue}
-        onClose={() => setDetailModal({ open: false, record: null, type: '' })}
-      /> */}
     </>
   );
 }

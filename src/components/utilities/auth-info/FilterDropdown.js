@@ -110,14 +110,13 @@ function FilterDropdown() {
                 dispatch(actions.setChannel(tempSelected));
                 setOpen(false);
               }}
-              className={`text-white text-sm px-4 py-1.5 rounded-md ${
-                connectedChannels.length === 0 ? 'bg-gray-300 cursor-not-allowed' : 'cursor-pointer'
-              }`}
+              className={`text-white text-sm px-4 py-1.5 rounded-md ${connectedChannels.length === 0 ? 'bg-gray-300 cursor-not-allowed' : 'cursor-pointer'
+                }`}
               style={
                 connectedChannels.length > 0
                   ? {
-                      background: 'linear-gradient(135deg, rgb(16, 185, 129) 0%, rgb(15, 118, 110) 100%)',
-                    }
+                    background: 'linear-gradient(135deg, rgb(16, 185, 129) 0%, rgb(15, 118, 110) 100%)',
+                  }
                   : undefined
               }
             >

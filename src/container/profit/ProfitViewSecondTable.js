@@ -776,7 +776,7 @@ export default function ProfitViewSecondTable() {
             sorter: (a, b) => parseAmount(a.settlement_paid_in_bank) - parseAmount(b.settlement_paid_in_bank),
           },
           {
-            title: 'Unsettled Amount',
+            title: 'Settlement Hold',
             dataIndex: 'unsettled_not_paid',
             align: 'center',
             width: 100,
@@ -784,14 +784,14 @@ export default function ProfitViewSecondTable() {
             sorter: (a, b) => parseAmount(a.unsettled_not_paid) - parseAmount(b.unsettled_not_paid),
             render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
           },
-          {
-            title: 'Settlement Leak',
-            dataIndex: 'settlement_leak',
-            align: 'center',
-            ellipsis: true,
-            width: 70,
-            sorter: (a, b) => parseAmount(a.settlement_leak) - parseAmount(b.settlement_leak),
-          },
+          // {
+          //   title: 'Settlement Leak',
+          //   dataIndex: 'settlement_leak',
+          //   align: 'center',
+          //   ellipsis: true,
+          //   width: 70,
+          //   sorter: (a, b) => parseAmount(a.settlement_leak) - parseAmount(b.settlement_leak),
+          // },
         ]
       : []),
 

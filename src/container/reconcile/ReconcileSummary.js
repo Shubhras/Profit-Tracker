@@ -398,7 +398,7 @@ export default function ReconcileSummary() {
               </div>
               <div className="h-[52px] flex w-full">
                 <div
-                  className="bg-blue-600 rounded-xl h-full flex items-center justify-end px-4 transition-all duration-700 ease-out"
+                  className="bg-blue-600 rounded-lg h-[35px] flex items-center justify-end px-4 transition-all duration-700 ease-out"
                   style={{ width: '100%' }}
                 >
                   <b className="text-white text-base font-bold tracking-tight">
@@ -416,7 +416,7 @@ export default function ReconcileSummary() {
               </div>
               <div className="h-[52px] flex gap-1 w-full">
                 <div
-                  className="bg-emerald-600 rounded-xl h-full flex items-center justify-end px-4 transition-all duration-700 ease-out overflow-hidden min-w-[40px]"
+                  className="bg-emerald-600 rounded-lg h-[35px] flex items-center justify-end px-4 transition-all duration-700 ease-out overflow-hidden min-w-[40px]"
                   style={{ width: `${recPct}%` }}
                 >
                   <b className="text-white text-base font-bold tracking-tight">
@@ -425,7 +425,7 @@ export default function ReconcileSummary() {
                 </div>
                 {!clean && (
                   <div
-                    className="bg-rose-500 rounded-xl h-full flex items-center justify-center px-3 transition-all duration-700 ease-out min-w-[50px]"
+                    className="bg-rose-500 rounded-lg h-[35px] flex items-center justify-center px-3 transition-all duration-700 ease-out min-w-[50px]"
                     style={{ width: `${missPct}%` }}
                   >
                     <b className="text-white text-sm font-bold tracking-tight">
