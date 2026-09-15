@@ -2525,7 +2525,7 @@ def get_full_dashboard(request):
         from_date_ist=from_date_ist, to_date_ist=to_date_ist
     )
     profit = sum(s['profit'] for s in sku_profits)
-    total_final_net_sales = sum(s.get('net_sales', 0) for s in sku_profits)
+    total_final_net_sales = sum(float(s.get('final_net_sales') if s.get('final_net_sales') is not None else (s.get('net_sales') or 0)) for s in sku_profits)
 
     # ---------------- METRICS ----------------
     # margin = (profit / total_final_net_sales * 100) if total_final_net_sales else 0  by final sales 
@@ -2676,11 +2676,12 @@ def get_full_dashboard(request):
 
     
     total_gross = (
-        accurate_net_sales
+        # accurate_net_sales
+        total_final_net_sales
         # - rto_amount
         # - returns_amount
-        - cancelled_amount
-        - total_claim_amount_dashboard
+        # - cancelled_amount
+        # - total_claim_amount_dashboard
         - courier_return_amount_dashboard
         - customer_return_amount_dashboard
     )
@@ -2721,6 +2722,7 @@ def get_full_dashboard(request):
         },
         "breakdown_table": {
             "gross": {"qty": total_q, "amount": format_currency(total_gross)}, 
+            # "gross": {"qty": total_q, "amount": format_currency(accurate_net_sales)}, 
             # "gross": {"qty": total_q, "amount": format_currency(accurate_net_sales)}, #new chnages on 24Augst
             # "cancelled": {"qty": -abs(cancelled_qs.count()), "amount": format_currency(cancelled_amount)},
             "cancelled": {"qty": -abs(cancelled_qty), "amount": format_currency(cancelled_amount)},
@@ -2736,7 +2738,8 @@ def get_full_dashboard(request):
             "claim": {"qty": total_claim_count_dashboard, "amount": format_currency(total_claim_amount_dashboard)},
             "fees": {"amount": round(total_fees, 2), "method": "calculated"},
             # "net": {"qty": net_gross_item_qty, "amount": format_currency(net_gross_sales)},
-            "net": {"qty": net_gross_item_qty, "amount": format_currency(accurate_net_sales)},
+            # "net": {"qty": net_gross_item_qty, "amount": format_currency(accurate_net_sales)},
+            "net": {"qty": net_gross_item_qty, "amount": format_currency(total_final_net_sales)},
             
             # "claim": {
             #     "qty": total_claim_count_dashboard,
@@ -6411,12 +6414,20 @@ def amazon_profitability_parent_transactions_shipping(request):
             id__in=tx_to_order.keys(),
             transaction_type="ServiceFee",
             transaction_status__in=["DEFERRED", "DEFERRED_RELEASED"],
-            description__icontains="EasyshipFulfillmentFeeRefund",
         )
-        .values("id", "total_amount")
+        .filter(
+            Q(description__icontains="EasyshipFulfillmentFeeRefund")
+            | Q(description__icontains="FulfillmentFeeRefund")
+        )
+        .values("id", "total_amount", "description")
     )
     
     fulfillment_fee_refund_by_order = {}
+    order_channel_map = dict(
+        Order.objects.filter(amazon_order_id__in=matching_order_ids).values_list(
+            'amazon_order_id', 'fulfillment_channel'
+        )
+    )
     # ============================================================
     # AMAZON FEES REFUND MAP
     # ============================================================
@@ -6447,10 +6458,20 @@ def amazon_profitability_parent_transactions_shipping(request):
         if not order_id:
             continue
     
-        fulfillment_fee_refund_by_order[order_id] = (
-            fulfillment_fee_refund_by_order.get(order_id, 0.0)
-            + float(txn["total_amount"] or 0)
-        )
+        is_fba = order_channel_map.get(order_id) == "AFN"
+        desc = (txn.get("description") or "").lower()
+        if is_fba:
+            if "fulfillmentfeerefund" in desc and "easyship" not in desc:
+                fulfillment_fee_refund_by_order[order_id] = (
+                    fulfillment_fee_refund_by_order.get(order_id, 0.0)
+                    + float(txn["total_amount"] or 0)
+                )
+        else:
+            if "easyshipfulfillmentfeerefund" in desc:
+                fulfillment_fee_refund_by_order[order_id] = (
+                    fulfillment_fee_refund_by_order.get(order_id, 0.0)
+                    + float(txn["total_amount"] or 0)
+                )
 
     refund_amount_by_order = {}
     refund_count_by_order = {}
@@ -6717,24 +6738,25 @@ def amazon_profitability_parent_transactions_shipping(request):
         item_tax = Decimal(row.get('item_tax') or 0)
         promo_discount = Decimal(row.get('promotion_discount') or 0)
 
-        tx_shipping_final = Decimal("0")
         amazon_fee_refund_total = Decimal("0")
         fulfillment_fee_refund_total = Decimal("0")
         refunded_sales_total = Decimal("0")
+        shipping_price = Decimal("0")
         
         for o in orders:
             oid = o['order__amazon_order_id']
-            tx_shipping_final += tx_shipping_map.get(oid, Decimal("0"))
-            # amazon_fee_refund_total += Decimal(str(amazon_fee_refund_by_order.get(oid, 0.0)))
-            amazon_fee_refund_total += Decimal((amazon_fee_refund_by_order.get(oid, 0.0)))
-            print("amazon_fee_refund_total++++++++++++============",amazon_fee_refund_total)
-            fulfillment_fee_refund_total += Decimal(str(fulfillment_fee_refund_by_order.get(oid, 0.0)))
+            o_ship = tx_shipping_map.get(oid, Decimal("0"))
+            o_ref = Decimal(str(fulfillment_fee_refund_by_order.get(oid, 0.0)))
+            if o_ship < 0:
+                shipping_price += -max(Decimal("0"), abs(o_ship) - abs(o_ref))
+            else:
+                shipping_price += max(Decimal("0"), o_ship - abs(o_ref))
+            amazon_fee_refund_total += Decimal(str(amazon_fee_refund_by_order.get(oid, 0.0)))
+            fulfillment_fee_refund_total += o_ref
             refunded_sales_total += Decimal(str(refunded_sales_by_order.get(oid, 0.0)))
             
-        if tx_shipping_final < 0:
-            shipping_price = -max(Decimal("0"), abs(tx_shipping_final) - abs(fulfillment_fee_refund_total))
-        else:
-            shipping_price = max(Decimal("0"), tx_shipping_final - abs(fulfillment_fee_refund_total))
+        if abs(shipping_price) == Decimal("0"):
+            shipping_price = Decimal("0")
         print("estimated_fees before++++++++++++============",estimated_fees)
         estimated_fees -= amazon_fee_refund_total
         print("estimated_fees afetr >>>>>>>+++++++++++============",estimated_fees)
@@ -6948,7 +6970,7 @@ def amazon_profitability_parent_transactions_shipping(request):
         final_net_qty = max(gross_qty, 0)
         
         net_sales = adjusted_gross_sales
-        shipping_final = shipping_price + fulfillment_fee_refund_total
+        shipping_final = shipping_price
 
         mp_gst = (-abs(estimated_fees) + shipping_final) * (Decimal("18") / Decimal("118"))
         
@@ -8193,7 +8215,7 @@ def sku_profit_report_transactions_shipping(request):
             'order__purchase_date',
             'seller_sku',
 
-            # ⚠️ CONFIRM THIS FIELD NAME — see note at bottom of file.
+            # CONFIRM THIS FIELD NAME — see note at bottom of file.
             # This must be whatever field on Order/OrderItem tells you
             # AFN (FBA) vs MFN (FBM). Replace 'order__fulfillment_channel'
             # with your actual field.
@@ -8666,12 +8688,20 @@ def sku_profit_report_transactions_shipping(request):
             id__in=tx_to_order.keys(),
             transaction_type="ServiceFee",
             transaction_status__in=["DEFERRED", "DEFERRED_RELEASED"],
-            description__icontains="EasyshipFulfillmentFeeRefund",
         )
-        .values("id", "total_amount")
+        .filter(
+            Q(description__icontains="EasyshipFulfillmentFeeRefund")
+            | Q(description__icontains="FulfillmentFeeRefund")
+        )
+        .values("id", "total_amount", "description")
     )
     
     fulfillment_fee_refund_by_order = {}
+    order_channel_map = dict(
+        Order.objects.filter(amazon_order_id__in=matching_order_ids).values_list(
+            'amazon_order_id', 'fulfillment_channel'
+        )
+    )
     # ============================================================
     # AMAZON FEES REFUND MAP
     # ============================================================
@@ -8702,10 +8732,20 @@ def sku_profit_report_transactions_shipping(request):
         if not order_id:
             continue
     
-        fulfillment_fee_refund_by_order[order_id] = (
-            fulfillment_fee_refund_by_order.get(order_id, 0.0)
-            + float(txn["total_amount"] or 0)
-        )
+        is_fba = order_channel_map.get(order_id) == "AFN"
+        desc = (txn.get("description") or "").lower()
+        if is_fba:
+            if "fulfillmentfeerefund" in desc and "easyship" not in desc:
+                fulfillment_fee_refund_by_order[order_id] = (
+                    fulfillment_fee_refund_by_order.get(order_id, 0.0)
+                    + float(txn["total_amount"] or 0)
+                )
+        else:
+            if "easyshipfulfillmentfeerefund" in desc:
+                fulfillment_fee_refund_by_order[order_id] = (
+                    fulfillment_fee_refund_by_order.get(order_id, 0.0)
+                    + float(txn["total_amount"] or 0)
+                )
     # Map order_id -> total refund amount (for courier/customer price split)
     # Map order_id -> total refund amount AND count of refund transactions
     # (an order can have more than one Refund transaction, e.g. partial refunds)
@@ -9168,10 +9208,13 @@ def sku_profit_report_transactions_shipping(request):
         net_sales = adjusted_gross_sales
         
 
-        shipping_final = (
-            shipping_income
-            + fulfillment_fee_refund_by_order.get(oid, 0.0)
-        )
+        ship_refund = float(fulfillment_fee_refund_by_order.get(oid, 0.0))
+        if shipping_income < 0:
+            shipping_final = -max(0.0, abs(shipping_income) - abs(ship_refund))
+        else:
+            shipping_final = max(0.0, shipping_income - abs(ship_refund))
+        if abs(shipping_final) == 0:
+            shipping_final = 0.0
         # print("shipping_final>>>>>>>>>>>>>>>>",shipping_final)
 
         mp_gst = (-abs(estimated_fees) + shipping_final) * (18 / 118)
@@ -9992,12 +10035,20 @@ def orders_profit_report_transactions_shipping(request):
             id__in=tx_to_order.keys(),
             transaction_type="ServiceFee",
             transaction_status__in=["DEFERRED", "DEFERRED_RELEASED"],
-            description__icontains="EasyshipFulfillmentFeeRefund",
         )
-        .values("id", "total_amount")
+        .filter(
+            Q(description__icontains="EasyshipFulfillmentFeeRefund")
+            | Q(description__icontains="FulfillmentFeeRefund")
+        )
+        .values("id", "total_amount", "description")
     )
     
     fulfillment_fee_refund_by_order = {}
+    order_channel_map = dict(
+        Order.objects.filter(amazon_order_id__in=matching_order_ids).values_list(
+            'amazon_order_id', 'fulfillment_channel'
+        )
+    )
 
     # ============================================================
     # AMAZON FEES REFUND MAP
@@ -10029,10 +10080,20 @@ def orders_profit_report_transactions_shipping(request):
         if not order_id:
             continue
     
-        fulfillment_fee_refund_by_order[order_id] = (
-            fulfillment_fee_refund_by_order.get(order_id, 0.0)
-            + float(txn["total_amount"] or 0)
-        )
+        is_fba = order_channel_map.get(order_id) == "AFN"
+        desc = (txn.get("description") or "").lower()
+        if is_fba:
+            if "fulfillmentfeerefund" in desc and "easyship" not in desc:
+                fulfillment_fee_refund_by_order[order_id] = (
+                    fulfillment_fee_refund_by_order.get(order_id, 0.0)
+                    + float(txn["total_amount"] or 0)
+                )
+        else:
+            if "easyshipfulfillmentfeerefund" in desc:
+                fulfillment_fee_refund_by_order[order_id] = (
+                    fulfillment_fee_refund_by_order.get(order_id, 0.0)
+                    + float(txn["total_amount"] or 0)
+                )
 
     refund_amount_by_order = {}
     refund_count_by_order = {}
@@ -10438,10 +10499,13 @@ def orders_profit_report_transactions_shipping(request):
         # ---------------- CALCULATIONS ----------------
         net_sales = adjusted_gross_sales
 
-        shipping_final = (
-            shipping_income
-            + fulfillment_fee_refund_by_order.get(oid, 0.0)
-        )
+        ship_refund = float(fulfillment_fee_refund_by_order.get(oid, 0.0))
+        if shipping_income < 0:
+            shipping_final = -max(0.0, abs(shipping_income) - abs(ship_refund))
+        else:
+            shipping_final = max(0.0, shipping_income - abs(ship_refund))
+        if abs(shipping_final) == 0:
+            shipping_final = 0.0
 
         mp_gst = (-abs(estimated_fees) + shipping_final) * (18 / 118)
 
@@ -10490,7 +10554,7 @@ def orders_profit_report_transactions_shipping(request):
             "order_id": oid,
             "date": row['order__purchase_date'],
             "name": row['title'],
-            "image": row['image'],
+            "image": row['image'],  
             "asin": row.get('asin') or "-",
             "parent_asin": row.get('parent_asin') or "-",
             "seller_sku": row.get('seller_sku') or "",
@@ -11340,11 +11404,21 @@ def amazon_profitability_details_transactions_shipping(request):
             id__in=tx_to_order.keys(),
             transaction_type="ServiceFee",
             transaction_status__in=["DEFERRED", "DEFERRED_RELEASED"],
-            description__icontains="EasyshipFulfillmentFeeRefund",
         )
-        .values("id", "total_amount")
+        .filter(
+            Q(description__icontains="EasyshipFulfillmentFeeRefund")
+            | Q(description__icontains="FulfillmentFeeRefund")
+        )
+        .values("id", "total_amount", "description")
     )
     
+    fulfillment_fee_refund_by_order = {}
+    order_channel_map = dict(
+        Order.objects.filter(amazon_order_id__in=matching_order_ids).values_list(
+            'amazon_order_id', 'fulfillment_channel'
+        )
+    )
+
     # ============================================================
     # AMAZON FEES REFUND MAP
     # ============================================================
@@ -11370,17 +11444,25 @@ def amazon_profitability_details_transactions_shipping(request):
             + float(row["total"] or 0)
         )
     
-    fulfillment_fee_refund_by_order = {}
-    
     for txn in fulfillment_fee_refund_breakdowns:
         order_id = tx_to_order.get(txn["id"])
         if not order_id:
             continue
     
-        fulfillment_fee_refund_by_order[order_id] = (
-            fulfillment_fee_refund_by_order.get(order_id, 0.0)
-            + float(txn["total_amount"] or 0)
-        )
+        is_fba = order_channel_map.get(order_id) == "AFN"
+        desc = (txn.get("description") or "").lower()
+        if is_fba:
+            if "fulfillmentfeerefund" in desc and "easyship" not in desc:
+                fulfillment_fee_refund_by_order[order_id] = (
+                    fulfillment_fee_refund_by_order.get(order_id, 0.0)
+                    + float(txn["total_amount"] or 0)
+                )
+        else:
+            if "easyshipfulfillmentfeerefund" in desc:
+                fulfillment_fee_refund_by_order[order_id] = (
+                    fulfillment_fee_refund_by_order.get(order_id, 0.0)
+                    + float(txn["total_amount"] or 0)
+                )
 
     refund_amount_by_order = {}
     refund_count_by_order = {}
@@ -11743,22 +11825,25 @@ def amazon_profitability_details_transactions_shipping(request):
 
         estimated_fees = max(0.0, float(fee_data.get("estimated_fees", 0.0)) - float(fba_weight_handling_fee))
 
-        tx_shipping_final = 0.0
         amazon_fee_refund_total = 0.0
         fulfillment_fee_refund_total = 0.0
         refunded_sales_total = 0.0
+        shipping_price = 0.0
         
         for o in orders:
             oid = o['order__amazon_order_id']
-            tx_shipping_final += float(tx_shipping_map.get(oid, 0.0))
+            o_ship = float(tx_shipping_map.get(oid, 0.0))
+            o_ref = float(fulfillment_fee_refund_by_order.get(oid, 0.0))
+            if o_ship < 0:
+                shipping_price += -max(0.0, abs(o_ship) - abs(o_ref))
+            else:
+                shipping_price += max(0.0, o_ship - abs(o_ref))
             amazon_fee_refund_total += float(amazon_fee_refund_by_order.get(oid, 0.0))
-            fulfillment_fee_refund_total += float(fulfillment_fee_refund_by_order.get(oid, 0.0))
+            fulfillment_fee_refund_total += o_ref
             refunded_sales_total += float(refunded_sales_by_order.get(oid, 0.0))
             
-        if tx_shipping_final < 0:
-            shipping_price = -max(0.0, abs(tx_shipping_final) - abs(fulfillment_fee_refund_total))
-        else:
-            shipping_price = max(0.0, tx_shipping_final - abs(fulfillment_fee_refund_total))
+        if abs(shipping_price) == 0.0:
+            shipping_price = 0.0
         estimated_fees -= amazon_fee_refund_total
 
         # ==========================================================
@@ -11940,7 +12025,7 @@ def amazon_profitability_details_transactions_shipping(request):
     
         net_sales = gross_sales + item_tax
         
-        shipping_final = ( shipping_price + order_fulfillment_fee_refund ) 
+        shipping_final = shipping_price 
 
         mp_gst = (-abs(estimated_fees) + shipping_final) * (18 / 118)
 

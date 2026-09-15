@@ -8,7 +8,7 @@ from rest_framework import status
 from django.db.models import Q, Sum, Avg, Max, Case, When, F, DecimalField, OuterRef, Subquery, Value, IntegerField
 
 from amazon_auth.models import (
-    OrderItem, AmazonListingItem, AmazonEstimatedFee,
+    OrderItem, Order, AmazonListingItem, AmazonEstimatedFee,
     FinancialEvent, AmazonTransaction, AmazonTransactionRelatedIdentifier,
     AmazonTransactionBreakdown, ProductMapping
 )
@@ -539,9 +539,19 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             id__in=tx_to_order.keys(),
             transaction_type="ServiceFee",
             transaction_status__in=["DEFERRED", "DEFERRED_RELEASED"],
-            description__icontains="FulfillmentFeeRefund",
         )
-        .values("id", "total_amount")
+        .filter(
+            Q(description__icontains="EasyshipFulfillmentFeeRefund")
+            | Q(description__icontains="FulfillmentFeeRefund")
+        )
+        .values("id", "total_amount", "description")
+    )
+    
+    fulfillment_fee_refund_by_order = {}
+    order_channel_map = dict(
+        Order.objects.filter(amazon_order_id__in=matching_order_ids).values_list(
+            'amazon_order_id', 'fulfillment_channel'
+        )
     )
 
     amazon_fee_breakdowns = (
@@ -560,12 +570,24 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             continue
         amazon_fee_refund_by_order[order_id] = amazon_fee_refund_by_order.get(order_id, 0.0) + float(row["total"] or 0)
 
-    fulfillment_fee_refund_by_order = {}
     for txn in fulfillment_fee_refund_breakdowns:
         order_id = tx_to_order.get(txn["id"])
         if not order_id:
             continue
-        fulfillment_fee_refund_by_order[order_id] = fulfillment_fee_refund_by_order.get(order_id, 0.0) + float(txn["total_amount"] or 0)
+        is_fba = order_channel_map.get(order_id) == "AFN"
+        desc = (txn.get("description") or "").lower()
+        if is_fba:
+            if "fulfillmentfeerefund" in desc and "easyship" not in desc:
+                fulfillment_fee_refund_by_order[order_id] = (
+                    fulfillment_fee_refund_by_order.get(order_id, 0.0)
+                    + float(txn["total_amount"] or 0)
+                )
+        else:
+            if "easyshipfulfillmentfeerefund" in desc:
+                fulfillment_fee_refund_by_order[order_id] = (
+                    fulfillment_fee_refund_by_order.get(order_id, 0.0)
+                    + float(txn["total_amount"] or 0)
+                )
 
     refund_amount_by_order = {}
     refund_count_by_order = {}
@@ -802,22 +824,25 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         tds_rate = float(str(row.get("sku_tds_rate") or 0))
         standard_cost = float(str(row.get("sku_standard_cost") or 0))
 
-        tx_shipping_final = 0.0
         amazon_fee_refund_total = 0.0
         fulfillment_fee_refund_total = 0.0
         refunded_sales_total = 0.0
+        shipping_price = 0.0
 
         for o in orders:
             oid = o['order__amazon_order_id']
-            tx_shipping_final += float(tx_shipping_map.get(oid, 0.0))
+            o_ship = float(tx_shipping_map.get(oid, 0.0))
+            o_ref = float(fulfillment_fee_refund_by_order.get(oid, 0.0))
+            if o_ship < 0:
+                shipping_price += -max(0.0, abs(o_ship) - abs(o_ref))
+            else:
+                shipping_price += max(0.0, o_ship - abs(o_ref))
             amazon_fee_refund_total += float(amazon_fee_refund_by_order.get(oid, 0.0))
-            fulfillment_fee_refund_total += float(fulfillment_fee_refund_by_order.get(oid, 0.0))
+            fulfillment_fee_refund_total += o_ref
             refunded_sales_total += float(refunded_sales_by_order.get(oid, 0.0))
 
-        if tx_shipping_final < 0:
-            shipping_price = -max(0.0, abs(tx_shipping_final) - abs(fulfillment_fee_refund_total))
-        else:
-            shipping_price = max(0.0, tx_shipping_final - abs(fulfillment_fee_refund_total))
+        if abs(shipping_price) == 0.0:
+            shipping_price = 0.0
         estimated_fees -= amazon_fee_refund_total
 
         parent_ad_data = ads_by_parent.get(parent_asin, {})

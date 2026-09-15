@@ -593,6 +593,7 @@ class SubUserLoginAPIView(APIView):
 
         # Get parent's active subscription (excluding subscriptions with unauthorized pending mandates)
         # Get parent's active subscription
+        now = timezone.now()
         sub = (
             UserSubscription.objects
             .select_related("plan")
@@ -601,6 +602,20 @@ class SubUserLoginAPIView(APIView):
             .order_by("-created_at")
             .first()
         )
+        if not sub:
+            sub = (
+                UserSubscription.objects
+                .select_related("plan")
+                .prefetch_related("plan__modules", "plan__submodules__module")
+                .filter(
+                    user=request.user,
+                    status="cancelled",
+                    is_paid=True,
+                    end_date__gt=now
+                )
+                .order_by("-created_at")
+                .first()
+            )
         if not sub:
             sub = (
                 UserSubscription.objects
@@ -617,14 +632,23 @@ class SubUserLoginAPIView(APIView):
         allowed_submod_ids = set(user_perms.filter(submodule__isnull=False).values_list("submodule_id", flat=True))
         module_level_mod_ids = set(user_perms.filter(submodule__isnull=True).values_list("module_id", flat=True))
 
-        has_subscription = bool(sub and sub.status == "active" and sub.is_paid)
+        is_cancelled_active = bool(
+            sub
+            and sub.status == "cancelled"
+            and sub.is_paid
+            and sub.end_date
+            and sub.end_date > now
+        )
+        has_subscription = bool(
+            sub and ((sub.status == "active" and sub.is_paid) or is_cancelled_active)
+        )
         subscription_data = None
         is_trial = bool(
             sub and (
                 (sub.plan and "starter" in (sub.plan.plan_name or "").lower())
                 or sub.amount == 0
                 or getattr(sub, "status", None) == "trial"
-                or (hasattr(target_user, "profile") and target_user.profile and target_user.profile.trial_end_date and target_user.profile.trial_end_date > timezone.now())
+                or (hasattr(target_user, "profile") and target_user.profile and target_user.profile.trial_end_date and target_user.profile.trial_end_date > now)
             )
         )
 

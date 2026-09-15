@@ -470,6 +470,8 @@ class OrderSummary:
                     "return_type": return_type,
                     "courier_return_count": courier_return_count,
                     "customer_return_count": customer_return_count,
+                    "courier_return_amount": gross_sales if is_courier_return else Decimal(0),
+                    "customer_return_amount": gross_sales if (customer_return_count > 0 or (is_return and not is_courier_return)) else Decimal(0),
                     # ----------------------------------
                     # SALES
                     # ----------------------------------

@@ -140,11 +140,14 @@ class MyntraAmazonProfitAdapter:
             "return_type": row.get("return_type"),
             "is_return": bool(row.get("is_return")),
             "return_count": return_qty,
-            "return_amount": cls._money(0),
+            "return_amount": cls._money(
+                cls._decimal(row.get("courier_return_amount"))
+                + cls._decimal(row.get("customer_return_amount"))
+            ),
             "courier_return_count": cls._number(row.get("courier_return_count")),
             "customer_return_count": cls._number(row.get("customer_return_count")),
-            "courier_return_price": cls._money(0),
-            "customer_return_price": cls._money(0),
+            "courier_return_price": cls._money(row.get("courier_return_amount")),
+            "customer_return_price": cls._money(row.get("customer_return_amount")),
             # -------------------------------------------------
             # MARKETPLACE FEES
             # -------------------------------------------------
@@ -302,11 +305,14 @@ class MyntraAmazonProfitAdapter:
             "return_type": row.get("return_type"),
             "is_return": bool(row.get("is_return")),
             "return_count": return_qty,
-            "return_amount": cls._money(0),
+            "return_amount": cls._money(
+                cls._decimal(row.get("courier_return_amount"))
+                + cls._decimal(row.get("customer_return_amount"))
+            ),
             "courier_return_count": cls._number(row.get("courier_return_count")),
             "customer_return_count": cls._number(row.get("customer_return_count")),
-            "courier_return_price": cls._money(0),
-            "customer_return_price": cls._money(0),
+            "courier_return_price": cls._money(row.get("courier_return_amount")),
+            "customer_return_price": cls._money(row.get("customer_return_amount")),
             # ==========================================
             # MARKETPLACE FEES
             # ==========================================
@@ -464,9 +470,12 @@ class MyntraAmazonProfitAdapter:
             "return_count": return_qty,
             "courier_return_count": cls._number(row.get("courier_return_count")),
             "customer_return_count": cls._number(row.get("customer_return_count")),
-            "return_amount": cls._money(0),
-            "courier_return_price": cls._money(0),
-            "customer_return_price": cls._money(0),
+            "return_amount": cls._money(
+                cls._decimal(row.get("courier_return_amount"))
+                + cls._decimal(row.get("customer_return_amount"))
+            ),
+            "courier_return_price": cls._money(row.get("courier_return_amount")),
+            "customer_return_price": cls._money(row.get("customer_return_amount")),
             # ==========================================
             # FEES
             # ==========================================
@@ -577,10 +586,7 @@ class MyntraAmazonProfitAdapter:
 
         gross_sales = total("gross_sales")
         net_sales = total("net_sales")
-        final_net_sales = sum(
-            (cls._decimal(row.get("final_net_sales") if row.get("final_net_sales") else row.get("net_sales")) for row in rows),
-            Decimal(0),
-        )
+        final_net_sales = net_sales
 
         profit = total("profit")
 
@@ -588,8 +594,6 @@ class MyntraAmazonProfitAdapter:
         # summing row percentages.
         if final_net_sales > Decimal(0):
             profit_percentage = (profit / final_net_sales) * Decimal(100)
-        elif net_sales > Decimal(0):
-            profit_percentage = (profit / net_sales) * Decimal(100)
         elif gross_sales > Decimal(0):
             profit_percentage = (profit / gross_sales) * Decimal(100)
         else:
@@ -719,8 +723,19 @@ class MyntraAmazonProfitAdapter:
             "customer_return_count": sum(
                 int(row.get("customer_return_count") or 0) for row in rows
             ),
-            "courier_return_price": cls._money(0),
-            "customer_return_price": cls._money(0),
+            "courier_return_price": cls._money(
+                sum(cls._decimal(row.get("courier_return_amount") or 0) for row in rows)
+            ),
+            "customer_return_price": cls._money(
+                sum(cls._decimal(row.get("customer_return_amount") or 0) for row in rows)
+            ),
+            "return_amount": cls._money(
+                sum(
+                    cls._decimal(row.get("courier_return_amount") or 0)
+                    + cls._decimal(row.get("customer_return_amount") or 0)
+                    for row in rows
+                )
+            ),
             "total_claim_count": sum(int(row.get("claim_count") or 0) for row in rows),
             "total_claim_amount": cls._money(total("claim_amount")),
             "total_replacement_return_count": 0,
@@ -742,17 +757,12 @@ class MyntraAmazonProfitAdapter:
 
         gross_sales = total("gross_sales")
         net_sales = total("net_sales")
-        final_net_sales = sum(
-            (cls._decimal(row.get("final_net_sales") if row.get("final_net_sales") else row.get("net_sales")) for row in rows),
-            Decimal(0),
-        )
+        final_net_sales = net_sales
 
         profit = total("profit")
 
         if final_net_sales > Decimal(0):
             profit_percentage = (profit / final_net_sales) * Decimal(100)
-        elif net_sales > Decimal(0):
-            profit_percentage = (profit / net_sales) * Decimal(100)
         elif gross_sales > Decimal(0):
             profit_percentage = (profit / gross_sales) * Decimal(100)
         else:
@@ -826,8 +836,8 @@ class MyntraAmazonProfitAdapter:
         )
 
         return {
-            "grosssales": float(round(gross_sales, 2)),
-            "netsales": cls._money(net_sales),
+            "grosssales": cls._money(gross_sales),
+            "netsales": cls._money(gross_sales),
             "total_net_sales": cls._money(net_sales),
             "total_final_net_sales": cls._money(final_net_sales),
             "netqty": gross_qty,
@@ -883,8 +893,19 @@ class MyntraAmazonProfitAdapter:
             "total_return_count": return_qty,
             "courier_return_count": sum(int(row.get("courier_return_count") or 0) for row in rows),
             "customer_return_count": sum(int(row.get("customer_return_count") or 0) for row in rows),
-            "courier_return_price": cls._money(0),
-            "customer_return_price": cls._money(0),
+            "courier_return_price": cls._money(
+                sum(cls._decimal(row.get("courier_return_amount") or 0) for row in rows)
+            ),
+            "customer_return_price": cls._money(
+                sum(cls._decimal(row.get("customer_return_amount") or 0) for row in rows)
+            ),
+            "return_amount": cls._money(
+                sum(
+                    cls._decimal(row.get("courier_return_amount") or 0)
+                    + cls._decimal(row.get("customer_return_amount") or 0)
+                    for row in rows
+                )
+            ),
             "total_claim_count": sum(int(row.get("claim_count") or 0) for row in rows),
             "total_claim_amount": cls._money(total("claim_amount")),
             "total_replacement_return_count": 0,

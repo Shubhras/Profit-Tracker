@@ -656,6 +656,7 @@ class AmazonTransactionAdmin(admin.ModelAdmin):
         "transaction_id",
         "transaction_type",
         "transaction_status",
+        "description",
         "total_amount",
         "currency_code",
         "posted_date",
