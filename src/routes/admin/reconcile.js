@@ -43,7 +43,7 @@ function ReconcileRoutes() {
       <Route path="settlementdetails" element={<SettlementDetails />} />
       <Route path="paymentReconcileDetials" element={<PaymentReconcileDetails />} />
 
-      <Route path="summary" element={<ReconcileSummary />} />
+      <Route path="reconcile-summary" element={<ReconcileSummary />} />
       <Route path="ordersettlement" element={<OrderSettlement />} />
       <Route path="marketPayment" element={<MarketPayment />} />
       <Route path="returnsAdjust" element={<ReturnAdjust />} />

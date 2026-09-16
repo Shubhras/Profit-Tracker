@@ -1,86 +1,81 @@
-import React from 'react';
-import { Table } from 'antd';
+import React, { useState } from 'react';
+import { Table, DatePicker, Input, Button, Breadcrumb } from 'antd';
 import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Legend,
-} from 'recharts';
+  DownloadOutlined,
+  SearchOutlined,
+  ReloadOutlined,
+  FilterOutlined,
+  InboxOutlined,
+  GiftOutlined,
+  SyncOutlined,
+  CalendarOutlined,
+} from '@ant-design/icons';
+
+const { RangePicker } = DatePicker;
 
 function ReturnRefundFees() {
+  const [search, setSearch] = useState('');
+  const [marketplace, setMarketplace] = useState('amazon');
+  const [status, setStatus] = useState('all');
+  const [type, setType] = useState('all');
+
+  /* ---------------- Stat cards ---------------- */
   const cards = [
     {
-      title: 'Total Order',
-      value: '12,456',
-      growth: '+5.32%',
-      //   line: 'bg-green-500',
-    },
-    {
-      title: 'Total Order Return',
+      title: 'Total Returned Orders',
       value: '48',
-      growth: '+1.25%',
-    },
-    {
-      title: 'Refund Amount',
-      value: '4,567',
-      growth: '+8.35%',
-    },
-    {
-      title: 'Percentage',
-      value: '78%',
       growth: '+5.32%',
+      trend: 'up',
+      icon: <InboxOutlined />,
+      bg: 'bg-[#f3f8ff]',
+      border: 'border-[#dbe9ff]',
+      iconBg: 'bg-[#e2edff]',
+      iconColor: 'text-[#2f6fed]',
+    },
+    {
+      title: 'Courier Returns',
+      value: '62',
+      growth: '+8.70%',
+      trend: 'up',
+      icon: <GiftOutlined />,
+      bg: 'bg-[#f2fbf6]',
+      border: 'border-[#d6f2e2]',
+      iconBg: 'bg-[#dcf5e7]',
+      iconColor: 'text-[#17a562]',
+    },
+    {
+      title: 'Customer Return Refund',
+      value: '₹4,567',
+      growth: '+8.35%',
+      trend: 'up',
+      icon: <span className="text-[16px] font-semibold leading-none">₹</span>,
+      bg: 'bg-[#fff5f3]',
+      border: 'border-[#ffdfd8]',
+      iconBg: 'bg-[#ffe5df]',
+      iconColor: 'text-[#f2612c]',
+    },
+    {
+      title: 'Customer Return Replacement',
+      value: '12',
+      growth: '-0.12%',
+      trend: 'down',
+      icon: <SyncOutlined />,
+      bg: 'bg-[#f7f5ff]',
+      border: 'border-[#e5e0ff]',
+      iconBg: 'bg-[#ebe6ff]',
+      iconColor: 'text-[#6d4aff]',
     },
   ];
 
+  /* ---------------- Table ---------------- */
   const columns = [
-    {
-      title: 'OrderId',
-      dataIndex: 'orderId',
-      key: 'orderId',
-    },
-    {
-      title: 'Transaction Id',
-      dataIndex: 'transactionId',
-      key: 'transactionId',
-      align: 'center',
-    },
-    {
-      title: 'Return Amount',
-      dataIndex: 'returnAmount',
-      key: 'returnAmount',
-      align: 'center',
-    },
-    {
-      title: 'Return Items',
-      dataIndex: 'returnItems',
-      key: 'returnItems',
-      align: 'center',
-    },
-    {
-      title: 'Item Qty',
-      dataIndex: 'itemQty',
-      key: 'itemQty',
-      align: 'center',
-    },
-    {
-      title: 'Tax',
-      dataIndex: 'tax',
-      key: 'tax',
-      align: 'center',
-    },
-    {
-      title: 'Shipping',
-      dataIndex: 'shipping',
-      key: 'shipping',
-      align: 'center',
-    },
+    { title: 'OrderId', dataIndex: 'orderId', key: 'orderId' },
+    { title: 'Transaction Id', dataIndex: 'transactionId', key: 'transactionId', align: 'center' },
+    { title: 'Return Amount', dataIndex: 'returnAmount', key: 'returnAmount', align: 'center' },
+    { title: 'Return Items', dataIndex: 'returnItems', key: 'returnItems', align: 'center' },
+    { title: 'Item Qty', dataIndex: 'itemQty', key: 'itemQty', align: 'center' },
+    { title: 'Tax', dataIndex: 'tax', key: 'tax', align: 'center' },
+    { title: 'Shipping', dataIndex: 'shipping', key: 'shipping', align: 'center' },
   ];
 
   const dataSource = [
@@ -125,112 +120,151 @@ function ReturnRefundFees() {
       shipping: '₹100',
     },
   ];
-
-  const pieData = [
-    { name: 'Returned Orders', value: 48 },
-    { name: 'Completed Orders', value: 12408 },
-  ];
-
-  const lineData = [
-    { month: 'Jan', returns: 12 },
-    { month: 'Feb', returns: 18 },
-    { month: 'Mar', returns: 24 },
-    { month: 'Apr', returns: 15 },
-    { month: 'May', returns: 32 },
-    { month: 'Jun', returns: 48 },
-  ];
-
-  const COLORS = ['#ff7875', '#52c41a'];
+  const handleReset = () => {
+    setSearch('');
+    setMarketplace('amazon');
+    setStatus('all');
+    setType('all');
+  };
 
   return (
     <div className="min-h-screen bg-[#f5f7fb] p-3 px-4">
-      {/* Header */}
-      <div className="mb-2 flex flex-col gap-3 min-lg:flex-row min-lg:items-start min-lg:justify-between">
-        <div className="flex-1 min-w-0">
-          <h1 className="mb-0 text-[20px] font-semibold text-[#111827]">Return-Aware Profit Analytics</h1>
+      {/* Breadcrumb + Title + Export */}
+      <div className="mb-3 flex flex-col gap-3 min-lg:flex-row min-lg:items-start min-lg:justify-between">
+        <div className="min-w-0 flex-1">
+          <Breadcrumb
+            className="mb-1 [&_*]:!text-[11px]"
+            items={[{ title: 'Profit' }, { title: <span className="text-[#111827]">Return Tracker</span> }]}
+          />
+          <h1 className="mb-0 text-[20px] font-semibold leading-tight text-[#111827]">Return Tracker</h1>
+          <p className="mt-1 mb-0 text-[12px] text-[#6b7280]">
+            Track and manage all returned orders with complete details.
+          </p>
         </div>
+
+        <Button
+          icon={<DownloadOutlined style={{ fontSize: 14 }} />}
+          className="!h-[34px] !rounded-lg !border-[#e5e7eb] !text-[12px] !font-medium !text-[#374151] !shadow-sm"
+        >
+          Export
+          {/* <DownOutlined style={{ fontSize: 9 }} /> */}
+        </Button>
       </div>
 
-      {/* Top Cards */}
-      <div className="grid grid-cols-4 xl:grid-cols-4 lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1 gap-3">
-        {' '}
+      {/* Stat Cards */}
+      <div className="grid grid-cols-4 gap-3 lg:grid-cols-2 sm:grid-cols-1">
         {cards.map((item, index) => (
-          <div key={index} className="rounded-2xl border border-[#e5e7eb] bg-white px-3 py-3 shadow-md">
-            {/* Top */}
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-[12px] font-semibold text-gray-600">{item.title}</h3>
+          <div
+            key={index}
+            className={`flex items-center gap-3 rounded-2xl border-4 border-white ${item.bg} px-3 py-3 shadow-sm`}
+          >
+            <div
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${item.iconBg} ${item.iconColor} text-[18px]`}
+            >
+              {item.icon}
             </div>
 
-            {/* Value */}
-            <h2 className="text-[20px] font-bold leading-none tracking-tight text-[#111827]">{item.value}</h2>
-
-            {/* Growth */}
-            <p className="mt-2 text-[10px] font-medium text-green-600">↑ {item.growth} vs 07 Apr - 30 Apr</p>
-
-            {/* Mini Graph */}
-            {/* <div className="mt-4 flex items-end gap-[3px]">
-              {[20, 12, 18, 15, 25, 22, 32, 18, 28, 20].map((h, i) => (
-                <div
-                  key={i}
-                  className={`w-full rounded-full ${item.line}`}
-                  style={{
-                    height: `${h}px`,
-                    opacity: 0.8,
-                  }}
-                />
-              ))}
-            </div> */}
+            <div className="min-w-0">
+              <h3 className="mb-1 truncate text-[12px] font-medium text-[#6b7280]">{item.title}</h3>
+              <h2 className="mb-0 text-[20px] font-bold leading-none tracking-tight text-[#111827]">{item.value}</h2>
+              <p
+                className={`mt-1.5 mb-0 text-[10px] font-semibold ${
+                  item.trend === 'up' ? 'text-[#ef4444]' : 'text-[#16a34a]'
+                }`}
+              >
+                {item.trend === 'up' ? '↑' : '↓'} {item.growth}
+                <span className="ml-1 font-normal text-[#9ca3af]">vs previous period</span>
+              </p>
+            </div>
           </div>
         ))}
       </div>
 
-      <div className="flex gap-4 mt-4 lg:flex-col">
-        {/* Pie Chart */}
-        <div className="w-1/3 lg:w-full bg-white rounded-2xl border border-[#e5e7eb] p-3 shadow-md">
-          <h3 className="text-[15px] font-semibold mb-4">Return Distribution</h3>
+      {/* Filter Bar */}
+      <div className="mt-3 rounded-lg border border-[#e5e7eb] bg-white px-3 py-3 shadow-sm">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex w-[230px] flex-col gap-1 sm:w-full">
+            <label className="text-[12px] font-medium text-[#111827]">Return Date</label>
 
-          <div className="h-[250px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={pieData} dataKey="value" nameKey="name" outerRadius={100} label={{ fontSize: 11 }}>
-                  {pieData.map((entry, index) => (
-                    <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-
-                <Tooltip />
-                <Legend
-                  wrapperStyle={{
-                    fontSize: '13px',
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <RangePicker
+              format="DD/MM/YYYY"
+              suffixIcon={<CalendarOutlined className="!text-[#2f6fed]" />}
+              className="!h-[34px] !w-full !rounded-lg !border-[#e5e7eb] !text-[12px]"
+            />
           </div>
-        </div>
 
-        {/* Line Chart */}
-        <div className="w-2/3 lg:w-full bg-white rounded-2xl border border-[#e5e7eb] p-3 shadow-md">
-          <h3 className="text-[15px] font-semibold mb-4">Monthly Return Trend</h3>
+          <div className="flex w-[150px] flex-col gap-1 sm:w-full">
+            <label className="text-[12px] font-medium text-[#111827]">Marketplace</label>
+            <select
+              value={marketplace}
+              onChange={(event) => setMarketplace(event.target.value)}
+              className="h-[34px] w-full rounded-lg border border-[#e5e7eb] bg-white px-3 text-[12px] text-[#374151] outline-none"
+            >
+              <option value="amazon">Amazon</option>
+              <option value="flipkart">Flipkart</option>
+              <option value="meesho">Meesho</option>
+            </select>
+          </div>
 
-          <div className="h-[250px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={lineData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
+          <div className="flex w-[150px] flex-col gap-1 sm:w-full">
+            <label className="text-[12px] font-medium text-[#111827]">Return Status</label>
+            <select
+              value={status}
+              onChange={(event) => setStatus(event.target.value)}
+              className="h-[34px] w-full rounded-lg border border-[#e5e7eb] bg-white px-3 text-[12px] text-[#374151] outline-none"
+            >
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="received">Received</option>
+              <option value="refunded">Refunded</option>
+            </select>
+          </div>
 
-                <Line type="monotone" dataKey="returns" stroke="#1677ff" strokeWidth={3} />
-              </LineChart>
-            </ResponsiveContainer>
+          <div className="flex w-[150px] flex-col gap-1 sm:w-full">
+            <label className="text-[12px] font-medium text-[#111827]">Return Type</label>
+            <select
+              value={type}
+              onChange={(event) => setType(event.target.value)}
+              className="h-[34px] w-full rounded-lg border border-[#e5e7eb] bg-white px-3 text-[12px] text-[#374151] outline-none"
+            >
+              <option value="all">All Types</option>
+              <option value="customer">Customer Return</option>
+              <option value="courier">Courier Return</option>
+            </select>
+          </div>
+          <div className="min-w-[220px] flex-1 sm:w-full">
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              prefix={<SearchOutlined className="!text-[#9ca3af]" />}
+              placeholder="Search by Order ID, Product ID or SKU..."
+              className="!h-[34px] !rounded-lg !border-[#e5e7eb] !text-[12px]"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 sm:w-full">
+            <Button
+              onClick={handleReset}
+              icon={<ReloadOutlined style={{ fontSize: 14 }} />}
+              className="!h-[34px] !rounded-lg !border-[#e5e7eb] !text-[12px] !font-medium !text-[#374151] flex items-center"
+            >
+              Reset
+            </Button>
+
+            <Button
+              type="primary"
+              icon={<FilterOutlined style={{ fontSize: 14 }} />}
+              className="flex items-center !h-[34px] !rounded-lg !border-none !bg-gradient-to-r !from-[#16a34a] !to-[#0d9488] !text-[12px] !font-medium !shadow-sm"
+            >
+              Apply
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Table Section */}
-      <div className="mt-4 rounded-2xl border border-[#e5e7eb] bg-white p-3">
+      {/* Table */}
+      <div className="mt-4 rounded-2xl border border-[#e5e7eb] bg-white p-3 shadow-sm">
+        <h2 className="mb-3 text-[14px] font-semibold text-[#111827]">Recent Orders</h2>
         <Table
           columns={columns}
           dataSource={dataSource}
@@ -239,10 +273,11 @@ function ReturnRefundFees() {
           pagination={{ pageSize: 5 }}
           scroll={{ x: 900 }}
           className="
-      [&_.ant-table-thead>tr>th]:!text-[12px]
-      [&_.ant-table-thead>tr>th]:!font-semibold
-      [&_.ant-table-tbody>tr>td]:!text-[12px]
-    "
+            [&_.ant-table-thead>tr>th]:!bg-[#f9fafb]
+            [&_.ant-table-thead>tr>th]:!text-[12px]
+            [&_.ant-table-thead>tr>th]:!font-semibold
+            [&_.ant-table-tbody>tr>td]:!text-[12px]
+          "
         />
       </div>
     </div>

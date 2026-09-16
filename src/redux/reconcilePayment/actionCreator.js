@@ -32,11 +32,11 @@ export const getReconcilePaymentSummary = (payload) => {
   return async (dispatch) => {
     dispatch(reconcilePaymentBegin());
     try {
-      const response = await DataService.post('/amazon/reconcile-paymentsummary/', payload);
-      if (response.data.status === 'success') {
+      const response = await DataService.post('/amazon/payment-reconcile/summary/', payload);
+      if (response.data?.status === 'success' || response.data?.status === true) {
         dispatch(reconcilePaymentSuccess(response.data));
       } else {
-        dispatch(reconcilePaymentErr(response.data.message || 'Something went wrong'));
+        dispatch(reconcilePaymentErr(response.data?.message || 'Something went wrong'));
       }
     } catch (err) {
       dispatch(reconcilePaymentErr(err.response?.data?.message || err.message));
