@@ -28,24 +28,24 @@ class Command(BaseCommand):
             )
         )
 
-        accounts = AmazonAccount.objects.all()
-        # now = timezone.now()
-        # # 1. Fetch only users with an active, paid, non-expired subscription
-        # active_user_ids = (
-        #     UserSubscription.objects.filter(
-        #         status="active",
-        #         is_paid=True,
-        #     )
-        #     .filter(Q(end_date__gt=now) | Q(end_date__isnull=True))
-        #     .values_list("user_id", flat=True)
-        #     .distinct()
-        # )
-        # accounts = AmazonAccount.objects.filter(
-        #     user_id__in=active_user_ids
-        # ).select_related("user")
-        # if not accounts.exists():
-        #     self.stdout.write(self.style.WARNING("No Amazon accounts found with an active, paid subscription."))
-        #     return
+        # accounts = AmazonAccount.objects.all()
+        now = timezone.now()
+        # 1. Fetch only users with an active, paid, non-expired subscription
+        active_user_ids = (
+            UserSubscription.objects.filter(is_paid=True)
+            .filter(
+                (Q(status="active") & (Q(end_date__gt=now) | Q(end_date__isnull=True)))
+                | (Q(status="cancelled") & Q(end_date__gt=now))
+            )
+            .values_list("user_id", flat=True)
+            .distinct()
+        )
+        accounts = AmazonAccount.objects.filter(
+            user_id__in=active_user_ids
+        ).select_related("user")
+        if not accounts.exists():
+            self.stdout.write(self.style.WARNING("No Amazon accounts found with an active, paid subscription."))
+            return
 
         total_synced = 0
         total_skipped = 0

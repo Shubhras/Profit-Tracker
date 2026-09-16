@@ -643,6 +643,20 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             continue
         replacement_count_by_order[oid] = replacement_count_by_order.get(oid, 0) + 1
 
+    tx_released_txns = (
+        AmazonTransaction.objects.filter(
+            id__in=tx_to_order.keys(),
+            transaction_status="RELEASED",
+        )
+        .values("id", "total_amount")
+    )
+    tx_settlement_paid_by_order = {}
+    order_ids_with_tx = set(tx_to_order.values())
+    for txn in tx_released_txns:
+        oid = tx_to_order.get(txn["id"])
+        if oid:
+            tx_settlement_paid_by_order[oid] = tx_settlement_paid_by_order.get(oid, 0.0) + float(txn.get("total_amount") or 0)
+
     sku_asin_map = {
         normalize_sku(k): v
         for k, v in OrderItem.objects
@@ -909,7 +923,12 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
                 o_act_ship = max(0.0, round(o_act_fba_weight - o_ship_refund, 2))
 
             o_act_gst = abs(float(f.get('gst') or 0))
-            o_act_settled = float(f.get('total_settled') or 0)
+            if oid in tx_settlement_paid_by_order:
+                o_act_settled = round(tx_settlement_paid_by_order[oid], 2)
+            elif oid in order_ids_with_tx:
+                o_act_settled = 0.0
+            else:
+                o_act_settled = float(f.get('total_settled') or 0)
 
             row_actual_fees += o_act_fees
             row_actual_shipping += o_act_ship
@@ -1803,6 +1822,20 @@ def _payment_reconcile_order_level_logic(request):
         best_status = max(status_amounts.keys(), key=lambda s: STATUS_PRIORITY.get(s, 0))
         tx_fulfillment_fee_refund_by_order[oid] = status_amounts[best_status]
 
+    tx_released_txns_order_level = (
+        AmazonTransaction.objects.filter(
+            id__in=tx_to_order.keys(),
+            transaction_status="RELEASED",
+        )
+        .values("id", "total_amount")
+    )
+    tx_settlement_paid_order_level = {}
+    order_ids_with_tx_order_level = set(tx_to_order.values())
+    for txn in tx_released_txns_order_level:
+        oid = tx_to_order.get(txn["id"])
+        if oid:
+            tx_settlement_paid_order_level[oid] = tx_settlement_paid_order_level.get(oid, 0.0) + float(txn.get("total_amount") or 0)
+
     for r in rows:
         oid = r.get("order_id")
         f = finance_map.get(oid, {})
@@ -1829,7 +1862,12 @@ def _payment_reconcile_order_level_logic(request):
             row_actual_shipping = max(0.0, round(actual_fba_weight_fee - ship_fee_refund, 2))
 
         row_actual_mp_gst = abs(float(f.get('gst') or 0))
-        row_settlement_paid = float(f.get('total_settled') or 0)
+        if oid in tx_settlement_paid_order_level:
+            row_settlement_paid = round(tx_settlement_paid_order_level[oid], 2)
+        elif oid in order_ids_with_tx_order_level:
+            row_settlement_paid = 0.0
+        else:
+            row_settlement_paid = float(f.get('total_settled') or 0)
 
         row_actual_tcs = tx_actual_tcs_by_order.get(oid)
         if row_actual_tcs is None:

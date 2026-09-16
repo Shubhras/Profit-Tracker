@@ -2669,6 +2669,7 @@ def get_full_dashboard(request):
     print("net total_return_countcustomer_return_count_dashboard_dashboard",customer_return_count_dashboard)        
   
     print("gross_sales>>>>>",gross_sales)
+    cancelled_amount = 0    #in caseof amazon we not include cancelled amount 
     net_gross_sales = gross_sales + cancelled_amount
     
     print("net_gross_sales>>>>>",net_gross_sales)
@@ -9102,8 +9103,12 @@ def sku_profit_report_transactions_shipping(request):
         amazon_fee_refund = amazon_fee_refund_by_order.get(oid, 0.0)
         
         print("amazon_fee_refund_total>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>",amazon_fee_refund)
+        print("estimated_fees beforeee  refund fee >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>",estimated_fees)
         
         estimated_fees -= amazon_fee_refund
+        
+        print("estimated_feesafter >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>",estimated_fees)
+        
 
         shipping_fee = float(f.get('shipping_fee') or 0)
 
