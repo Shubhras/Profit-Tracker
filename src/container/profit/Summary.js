@@ -733,10 +733,6 @@ export default function Summary() {
                           <div className="inline-flex items-center px-2 py-[2px] rounded-lg bg-[#dcfce780] border border-[#bbf7d0] text-[#166534] text-[10px] font-semibold whitespace-nowrap">
                             Margin: {dashboardData?.header_metrics?.margin || '0%'}
                           </div>
-
-                          <div className="inline-flex items-center px-2 py-[2px] rounded-lg bg-[#dcfce780] border border-[#bbf7d0] text-[#166534] text-[10px] font-semibold whitespace-nowrap">
-                            ROI: {dashboardData?.header_metrics?.roi || '0%'}
-                          </div>
                         </div>
                       </div>
                     </div>
@@ -919,7 +915,8 @@ export default function Summary() {
                       },
                       {
                         label: 'Claims Processed',
-                        qty: dashboardData?.breakdown_table?.claim?.qty,
+                        // qty: dashboardData?.breakdown_table?.claim?.qty,
+                        qty: 0,
                         amount: dashboardData?.breakdown_table?.claim?.amount,
                         mode: 'positive_sign',
                       },

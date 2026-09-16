@@ -714,7 +714,7 @@ export default function ProfitDetailsView() {
       sorter: (a, b) => parseAmount(a.settlement_paid_in_bank) - parseAmount(b.settlement_paid_in_bank),
     },
     {
-      title: 'Unsettled Amount',
+      title: 'Settlement Hold',
       dataIndex: 'unsettled_not_paid',
       align: 'center',
       width: getDynamicWidth('unsettled_not_paid', 100),
@@ -723,14 +723,14 @@ export default function ProfitDetailsView() {
       render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
     },
 
-    {
-      title: 'Settlement Leak',
-      dataIndex: 'settlement_leak',
-      align: 'center',
-      width: getDynamicWidth('settlement_leak', 100),
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.settlement_leak) - parseAmount(b.settlement_leak),
-    },
+    // {
+    //   title: 'Settlement Leak',
+    //   dataIndex: 'settlement_leak',
+    //   align: 'center',
+    //   width: getDynamicWidth('settlement_leak', 100),
+    //   ellipsis: true,
+    //   sorter: (a, b) => parseAmount(a.settlement_leak) - parseAmount(b.settlement_leak),
+    // },
 
     // {
     //   title: 'Ad Spend',

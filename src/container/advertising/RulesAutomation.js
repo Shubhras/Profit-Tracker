@@ -5,8 +5,6 @@ import {
   EditOutlined,
   DeleteOutlined,
   PlusOutlined,
-  SettingOutlined,
-  DollarCircleOutlined,
   // DownOutlined,
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -33,7 +31,7 @@ function RulesAutomation() {
   const [deleteRuleId, setDeleteRuleId] = useState(null);
   const [editRuleId, setEditRuleId] = useState(null);
   const [selectedRuleData, setSelectedRuleData] = useState(null);
-  const [activeTab, setActiveTab] = useState('Budget Rules');
+  // const [activeTab, setActiveTab] = useState('Budget Rules');
   const initialRuleForm = {
     adType: undefined,
     name: '',
@@ -549,7 +547,7 @@ function RulesAutomation() {
           </div>
         </div>
 
-        <div className="inline-flex items-center bg-[#f8fafc] border border-[#e5e7eb] rounded-xl p-1 mb-2 overflow-x-auto">
+        {/* <div className="inline-flex items-center bg-[#f8fafc] border border-[#e5e7eb] rounded-xl p-1 mb-2 overflow-x-auto">
           {' '}
           {['Budget Rules', 'Bids'].map((tab) => {
             const active = activeTab === tab;
@@ -574,9 +572,9 @@ function RulesAutomation() {
               </button>
             );
           })}
-        </div>
+        </div> */}
 
-        <div className="border border-[#edf0f2] rounded-lg px-3 pt-2 pb-0 mb-2 bg-white">
+        {/* <div className="border border-[#edf0f2] rounded-lg px-3 pt-2 pb-0 mb-2 bg-white">
           <div className="flex items-center gap-5 overflow-x-auto scrollbar-hide">
             {[
               { label: 'Overview', count: rules?.count || 0 },
@@ -606,14 +604,13 @@ function RulesAutomation() {
                     </div>
                   )}
 
-                  {/* ACTIVE LINE */}
 
                   {active && <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#16a34a] rounded-full" />}
                 </div>
               );
             })}
           </div>
-        </div>
+        </div> */}
 
         {/* ================= MAIN CONTENT ================= */}
 
@@ -624,13 +621,10 @@ function RulesAutomation() {
             <div className="bg-white border border-[#edf0f2] rounded-lg shadow-sm overflow-hidden p-2">
               {/* HEADER */}
 
-              <div className="flex items-center justify-between px-3 py-2 border-b border-[#edf0f2] md:flex-col md:items-start md:gap-2">
-                {' '}
-                <div>
-                  <h2 className="text-[15px] font-semibold text-[#111827] mb-0">Pending Execution Rules</h2>
+              <div className="flex items-center justify-between px-3 py-2 border-b border-[#edf0f2] md:flex-col md:items-start md:gap-2 mb-2">
+                <h2 className="text-[15px] font-semibold text-[#111827] mb-0">Pending Execution Budget Rules</h2>
 
-                  {/* <p className="text-[12px] text-[#6b7280] mb-1">Rules waiting to execute.</p> */}
-                </div>
+                {/* <p className="text-[12px] text-[#6b7280] mb-1">Rules waiting to execute.</p> */}
                 <div className="flex items-center gap-3">
                   {/* <Button type="primary" className="!h-[30px] text-[13px] !rounded-l !bg-[#2563eb]">
                     <span className="font-semibold">Run All Rules</span>
@@ -693,9 +687,8 @@ function RulesAutomation() {
           {/* ================= HEADER ================= */}
 
           <div className="mb-3">
-            <h2 className="text-[20px] font-bold text-[#111827] mb-1">Create Budget Rule</h2>
-
-            <p className="text-[#6b7280] text-[13px] mt-1">Configure automation rules for your advertising campaigns</p>
+            <h2 className="text-[20px] font-bold text-[#111827] mb-0">Create Budget Rule</h2>
+            <p className="text-[#6b7280] text-[13px]">Configure automation rules for your advertising campaigns</p>
           </div>
 
           {/* ================= BODY ================= */}
@@ -778,7 +771,7 @@ function RulesAutomation() {
                     name: e.target.value,
                   })
                 }
-                className="!h-[44px] !rounded-xl !text-[13px]"
+                className="!h-[35px] !rounded-l !text-[13px]"
               />
             </div>
 
@@ -790,7 +783,7 @@ function RulesAutomation() {
 
                 <DatePicker
                   value={ruleForm.startDate}
-                  className="w-full !h-[44px] !rounded-xl"
+                  className="w-full !h-[35px] !rounded-l"
                   size="small"
                   onChange={(date, dateString) =>
                     setRuleForm({
@@ -808,7 +801,7 @@ function RulesAutomation() {
                 <DatePicker
                   value={ruleForm.endDate}
                   size="small"
-                  className="w-full !h-[44px] !rounded-xl"
+                  className="w-full !h-[35px] !rounded-l"
                   onChange={(date, dateString) =>
                     setRuleForm({
                       ...ruleForm,
@@ -975,7 +968,7 @@ function RulesAutomation() {
               <label className="text-[14px] font-medium text-[#374151] block mb-1">Increase Value</label>
 
               <InputNumber
-                className="w-full !h-[44px]"
+                className="w-full !h-[35px]"
                 placeholder="20"
                 size="small"
                 value={ruleForm.increaseValue}
@@ -987,8 +980,6 @@ function RulesAutomation() {
                 }
               />
             </div>
-            {/* ================= CAMPAIGNS ================= */}
-
             {/* ================= CAMPAIGNS ================= */}
 
             <div>
@@ -1004,7 +995,7 @@ function RulesAutomation() {
                 maxTagCount="responsive"
                 className="
     w-full text-[12px]
-    [&_.ant-select-selector]:min-h-[42px]
+    [&_.ant-select-selector]:min-h-[35px]
     [&_.ant-select-selector]:py-[4px]
     [&_.ant-select-selection-item]:h-[24px]
     [&_.ant-select-selection-item]:rounded-md
