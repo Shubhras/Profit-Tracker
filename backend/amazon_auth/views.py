@@ -2528,8 +2528,7 @@ def get_full_dashboard(request):
     total_final_net_sales = sum(float(s.get('final_net_sales') if s.get('final_net_sales') is not None else (s.get('net_sales') or 0)) for s in sku_profits)
 
     # ---------------- METRICS ----------------
-    # margin = (profit / total_final_net_sales * 100) if total_final_net_sales else 0  by final sales 
-    margin = (profit / accurate_net_sales * 100) if accurate_net_sales else 0    #by accureate sale 
+    margin = (profit / total_final_net_sales * 100) if total_final_net_sales else 0 
     roi = (ads_sales / abs(ads_amount) * 100) if ads_amount else 0
     
     tacos = (abs(ads_amount) / accurate_net_sales * 100) if accurate_net_sales else 0
@@ -2669,6 +2668,7 @@ def get_full_dashboard(request):
     print("net total_return_countcustomer_return_count_dashboard_dashboard",customer_return_count_dashboard)        
   
     print("gross_sales>>>>>",gross_sales)
+    cancelled_amount = 0    #in caseof amazon we not include cancelled amount 
     net_gross_sales = gross_sales + cancelled_amount
     
     print("net_gross_sales>>>>>",net_gross_sales)
@@ -5726,6 +5726,17 @@ def amazon_profitability_parent_transactions_shipping(request):
 
     user = get_effective_user(request.user)
     profit_setting, _ = ProfitCalculationSetting.objects.get_or_create(user=user)
+    profit_settings_dict = {
+        "tcs": profit_setting.tcs,
+        "tds": profit_setting.tds,
+        "gst_treatment": profit_setting.gst_treatment,
+        "input_gst_itc": profit_setting.input_gst_itc,
+        "output_gst": profit_setting.output_gst,
+        "claim": profit_setting.claim,
+        "product_cost": profit_setting.product_cost,
+        "ad_spend": profit_setting.ad_spend,
+        "other_expense": profit_setting.other_expense,
+    }
     data = request.data
 
     filters = data.get("filters", {})
@@ -7116,6 +7127,7 @@ def amazon_profitability_parent_transactions_shipping(request):
             
             "is_replacement_return": order_is_replacement,
             "replacement_return_count": order_replacement_count,
+            "profit_settings": profit_settings_dict,
         })
 
 
@@ -7226,6 +7238,7 @@ def amazon_profitability_parent_transactions_shipping(request):
             "claim_amount": format_currency(0),
             "is_replacement_return": False,
             "replacement_return_count": 0,
+            "profit_settings": profit_settings_dict,
         })
         
         total_ads += ads_cost
@@ -7240,7 +7253,9 @@ def amazon_profitability_parent_transactions_shipping(request):
             "pageSize": page_size,
             "count": len(results)
         },
+        "profit_settings": profit_settings_dict,
         "totals": {
+            "profit_settings": profit_settings_dict,
             "ads": format_currency(total_ads),
             "netqty": total_qty,
             "total_final_net_qty":total_final_net_qty,
@@ -7273,7 +7288,7 @@ def amazon_profitability_parent_transactions_shipping(request):
             "taxable_value": format_currency(total_taxable_value),
 
             "gst_to_pay_amount": format_currency(total_gst_payable),
-            "gst_to_pay_perc":f"{round((total_gst_payable / total_taxable_value * 100),2) if total_taxable_value else 0}%",
+            "gst_to_pay_perc": f"{round((total_gst_payable / total_taxable_value * 100), 2) if total_taxable_value else 1}%",
 
             "exp_settlement": format_currency(total_exp_settlement),
             
@@ -7645,9 +7660,7 @@ def sku_profit_report(request):
             row["product_ad__asin"] or ""
         ).strip()
 
-        sku_key = normalize_sku(
-            row["product_ad__sku"] or ""
-        )
+        sku_key = (row["product_ad__sku"] or "").strip()
 
         cost = float(
             str(row["total_ads_cost"] or 0)
@@ -7752,18 +7765,14 @@ def sku_profit_report(request):
 
         child_sku = row.get("seller_sku")
 
-        # BY ASIN
+        # BY ASIN / SKU
         # ads_row = ads_map.get(asin)
-        ads_row = ads_map.get(
-            normalize_sku(sku)
-        )
+        ads_row = ads_map.get(str(sku or "").strip())
 
         # FALLBACK BY SKU
         if not ads_row and child_sku:
 
-            ads_row = ads_map.get(
-                normalize_sku(child_sku)
-            )
+            ads_row = ads_map.get(str(child_sku or "").strip())
 
         if ads_row:
 
@@ -8059,6 +8068,17 @@ def sku_profit_report_transactions_shipping(request):
 
     user = get_effective_user(request.user)
     profit_setting, _ = ProfitCalculationSetting.objects.get_or_create(user=user)
+    profit_settings_dict = {
+        "tcs": profit_setting.tcs,
+        "tds": profit_setting.tds,
+        "gst_treatment": profit_setting.gst_treatment,
+        "input_gst_itc": profit_setting.input_gst_itc,
+        "output_gst": profit_setting.output_gst,
+        "claim": profit_setting.claim,
+        "product_cost": profit_setting.product_cost,
+        "ad_spend": profit_setting.ad_spend,
+        "other_expense": profit_setting.other_expense,
+    }
     data = getattr(request, "_full_data", None) or getattr(request, 'data', None) or {}
 
     # ---------------- GET ASIN ----------------
@@ -8363,7 +8383,7 @@ def sku_profit_report_transactions_shipping(request):
     )
 
     normalized_skus = [
-        normalize_sku(sku)
+        str(sku or "").strip()
         for sku in sku_list
     ]
 
@@ -8410,9 +8430,7 @@ def sku_profit_report_transactions_shipping(request):
             row["product_ad__asin"] or ""
         ).strip()
 
-        sku_key = normalize_sku(
-            row["product_ad__sku"] or ""
-        )
+        sku_key = (row["product_ad__sku"] or "").strip()
 
         cost = float(
             str(row["total_ads_cost"] or 0)
@@ -8460,7 +8478,8 @@ def sku_profit_report_transactions_shipping(request):
     # TOTAL ADS SPEND & ADS PER UNIT
     # ============================================================
 
-    ads_row = ads_map.get(normalize_sku(sku), {})
+    target_sku = str(sku or "").strip()
+    ads_row = ads_map.get(target_sku, {})
 
     total_ads_cost = abs(
         float(str(ads_row.get("cost") or 0))
@@ -9102,8 +9121,12 @@ def sku_profit_report_transactions_shipping(request):
         amazon_fee_refund = amazon_fee_refund_by_order.get(oid, 0.0)
         
         print("amazon_fee_refund_total>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>",amazon_fee_refund)
+        print("estimated_fees beforeee  refund fee >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>",estimated_fees)
         
         estimated_fees -= amazon_fee_refund
+        
+        print("estimated_feesafter >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>",estimated_fees)
+        
 
         shipping_fee = float(f.get('shipping_fee') or 0)
 
@@ -9346,6 +9369,7 @@ def sku_profit_report_transactions_shipping(request):
             
             "is_replacement_return": order_is_replacement,
             "replacement_return_count": order_replacement_count,
+            "profit_settings": profit_settings_dict,
         
         })
 
@@ -9385,7 +9409,9 @@ def sku_profit_report_transactions_shipping(request):
             "pageSize": page_size,
             "count": len(results)
         },
+        "profit_settings": profit_settings_dict,
         "totals": {
+            "profit_settings": profit_settings_dict,
             "grosssales": round(total_sales, 2),
             "netsales": format_currency(total_net_sales),
             "total_net_sales": format_currency(total_net_sales),
@@ -9443,6 +9469,17 @@ def orders_profit_report_transactions_shipping(request):
 
     user = get_effective_user(request.user)
     profit_setting, _ = ProfitCalculationSetting.objects.get_or_create(user=user)
+    profit_settings_dict = {
+        "tcs": profit_setting.tcs,
+        "tds": profit_setting.tds,
+        "gst_treatment": profit_setting.gst_treatment,
+        "input_gst_itc": profit_setting.input_gst_itc,
+        "output_gst": profit_setting.output_gst,
+        "claim": profit_setting.claim,
+        "product_cost": profit_setting.product_cost,
+        "ad_spend": profit_setting.ad_spend,
+        "other_expense": profit_setting.other_expense,
+    }
     data = getattr(request, "_full_data", None) or getattr(request, 'data', None) or {}
 
     # ---------------- GET ASIN / SKU (OPTIONAL) ----------------
@@ -9736,7 +9773,7 @@ def orders_profit_report_transactions_shipping(request):
     )
 
     normalized_skus = [
-        normalize_sku(s)
+        str(s or "").strip()
         for s in sku_list
     ]
 
@@ -9769,9 +9806,7 @@ def orders_profit_report_transactions_shipping(request):
             row["product_ad__asin"] or ""
         ).strip()
 
-        sku_key = normalize_sku(
-            row["product_ad__sku"] or ""
-        )
+        sku_key = (row["product_ad__sku"] or "").strip()
 
         cost = float(
             str(row["total_ads_cost"] or 0)
@@ -9820,7 +9855,8 @@ def orders_profit_report_transactions_shipping(request):
     # ============================================================
 
     if sku:
-        ads_row = ads_map.get(normalize_sku(sku), {})
+        target_sku = str(sku or "").strip()
+        ads_row = ads_map.get(target_sku, {})
         total_ads_cost = abs(
             float(str(ads_row.get("cost") or 0))
         )
@@ -10632,6 +10668,7 @@ def orders_profit_report_transactions_shipping(request):
             
             "is_replacement_return": order_is_replacement,
             "replacement_return_count": order_replacement_count,
+            "profit_settings": profit_settings_dict,
         })
 
         # ---------------- TOTALS ----------------
@@ -10670,7 +10707,9 @@ def orders_profit_report_transactions_shipping(request):
             "pageSize": page_size,
             "count": len(results)
         },
+        "profit_settings": profit_settings_dict,
         "totals": {
+            "profit_settings": profit_settings_dict,
             "grosssales": round(total_sales, 2),
             "netsales": format_currency(total_net_sales),
             "total_net_sales": format_currency(total_net_sales),
@@ -10819,6 +10858,17 @@ def amazon_profitability_details_transactions_shipping(request):
 
     user = get_effective_user(request.user)
     profit_setting, _ = ProfitCalculationSetting.objects.get_or_create(user=user)
+    profit_settings_dict = {
+        "tcs": profit_setting.tcs,
+        "tds": profit_setting.tds,
+        "gst_treatment": profit_setting.gst_treatment,
+        "input_gst_itc": profit_setting.input_gst_itc,
+        "output_gst": profit_setting.output_gst,
+        "claim": profit_setting.claim,
+        "product_cost": profit_setting.product_cost,
+        "ad_spend": profit_setting.ad_spend,
+        "other_expense": profit_setting.other_expense,
+    }
     data_source_raw = getattr(request, 'data', None) or (request.POST if request.method == 'POST' else request.GET)
     
     data_source = {}
@@ -12159,6 +12209,7 @@ def amazon_profitability_details_transactions_shipping(request):
             
             "is_replacement_return": order_is_replacement,
             "replacement_return_count": order_replacement_count,
+            "profit_settings": profit_settings_dict,
         })
 
         # -------- TOTALS --------
@@ -12276,6 +12327,7 @@ def amazon_profitability_details_transactions_shipping(request):
             "claim_amount": format_currency(0),
             "is_replacement_return": False,
             "replacement_return_count": 0,
+            "profit_settings": profit_settings_dict,
         })
 
         total_ads += ads_cost
@@ -12299,7 +12351,9 @@ def amazon_profitability_details_transactions_shipping(request):
             "pageSize": page_size,
             "count": len(results)
         },
+        "profit_settings": profit_settings_dict,
         "totals": {
+            "profit_settings": profit_settings_dict,
             "ads": format_currency(total_ads),
             "netqty": total_qty,
             "total_final_net_qty":total_final_net_qty,

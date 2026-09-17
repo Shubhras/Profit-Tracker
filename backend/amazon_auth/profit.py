@@ -1682,7 +1682,7 @@ def _combine_dashboard_stats(amazon_data, myntra_data):
     combined_shipping = am_shipping + m_shipping
     combined_ads = am_ads + m_ads
     
-    combined_margin = (combined_profit / combined_sales * 100) if combined_sales else Decimal(0)
+    combined_margin = (combined_profit / combined_final_net_sales * 100) if combined_final_net_sales else ((combined_profit / combined_sales * 100) if combined_sales else Decimal(0))
     
     roi_str = am_header.get("roi") or "0%"
     combined_tacos = (abs(combined_ads) / combined_sales * 100) if combined_sales else Decimal(0)

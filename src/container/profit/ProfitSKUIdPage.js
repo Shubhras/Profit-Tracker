@@ -180,7 +180,9 @@ export default function ProfitSKUIdPage() {
   const dataSource = React.useMemo(() => {
     const rows =
       getProfitSkuData?.response?.map((item, index) => ({
+        ...item,
         key: index,
+        profit_settings: item.profit_settings || getProfitSkuData?.profit_settings,
 
         channel: item.channel || '-',
         image: item.image_url,
@@ -207,6 +209,8 @@ export default function ProfitSKUIdPage() {
         taxableValue: item.taxable_value || 0,
 
         stdcost: item.stdcost || 0,
+        cost: item.stdcost || 0,
+        std: item.stdcost || 0,
         shipping: item.shippingfees || 0,
         adSpend: item.ads || 0,
         gst_to_pay_amount: item.gst_to_pay_amount || 0,
@@ -454,7 +458,7 @@ export default function ProfitSKUIdPage() {
       title: 'MP fees',
       dataIndex: 'mpfees',
       align: 'center',
-      width: getDynamicWidth('mpfees', 70),
+      width: getDynamicWidth('mpfees', 85),
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.mpfees) - parseAmount(b.mpfees),
       render: (v, record) => (
@@ -467,7 +471,7 @@ export default function ProfitSKUIdPage() {
               record,
             })
           }
-          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none"
+          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none whitespace-nowrap inline-block"
         >
           {v}
         </button>
@@ -477,7 +481,7 @@ export default function ProfitSKUIdPage() {
       title: 'Shipping',
       dataIndex: 'shipping',
       align: 'center',
-      width: getDynamicWidth('shipping', 50),
+      width: getDynamicWidth('shipping', 85),
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.shipping) - parseAmount(b.shipping),
       render: (v, record) => (
@@ -490,7 +494,7 @@ export default function ProfitSKUIdPage() {
               record,
             })
           }
-          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none"
+          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none whitespace-nowrap inline-block"
         >
           {v}
         </button>
@@ -594,7 +598,7 @@ export default function ProfitSKUIdPage() {
               record,
             })
           }
-          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none"
+          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none whitespace-nowrap inline-block"
         >
           {v}
         </button>

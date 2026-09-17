@@ -147,7 +147,9 @@ export default function ProfitDetailsView() {
 
   const dataSource =
     profitData?.response?.map((item, index) => ({
+      ...item,
       key: index,
+      profit_settings: item.profit_settings || profitData?.profit_settings,
       channel: item.channel,
       image: item.image || item.image_url,
       view: item.order_id,
@@ -164,6 +166,8 @@ export default function ProfitDetailsView() {
       taxableValue: item.taxable_value,
       gst_to_pay_perc: item.gst_to_pay_perc || 0,
       std: item.stdcost,
+      stdcost: item.stdcost,
+      cost: item.stdcost,
       profit: item.profit,
       profitPercent: item.grossprofitper || 0,
       grossqty: item.grossqty || 0,
@@ -414,7 +418,7 @@ export default function ProfitDetailsView() {
       title: 'MP fees',
       dataIndex: 'mpfees',
       align: 'center',
-      width: 70,
+      width: 85,
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.mpfees) - parseAmount(b.mpfees),
       render: (v, record) => (
@@ -427,7 +431,7 @@ export default function ProfitDetailsView() {
               record,
             })
           }
-          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none"
+          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none whitespace-nowrap inline-block"
         >
           {v}
         </button>
@@ -469,7 +473,7 @@ export default function ProfitDetailsView() {
       title: 'Shipping',
       dataIndex: 'shipping',
       align: 'center',
-      width: 70,
+      width: 85,
       sorter: (a, b) => parseAmount(a.shipping) - parseAmount(b.shipping),
       render: (v, record) => (
         <button
@@ -481,7 +485,7 @@ export default function ProfitDetailsView() {
               record,
             })
           }
-          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none"
+          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none whitespace-nowrap inline-block"
         >
           {v}
         </button>
@@ -722,7 +726,7 @@ export default function ProfitDetailsView() {
             title: 'Profit',
             dataIndex: 'profit',
             align: 'center',
-            width: 70,
+            width: 95,
             sorter: (a, b) => parseAmount(a.profit) - parseAmount(b.profit),
             render: (v, record) => (
               <button
@@ -734,7 +738,7 @@ export default function ProfitDetailsView() {
                     record,
                   })
                 }
-                className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none"
+                className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none whitespace-nowrap inline-block"
               >
                 {v}
               </button>

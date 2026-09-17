@@ -16,7 +16,7 @@ class UserSupportTicketCreateAPIView(APIView):
 
     def post(self, request):
         try:
-            serializer = SupportTicketSerializer(data=request.data)
+            serializer = SupportTicketSerializer(data=request.data, context={"request": request})
 
             if serializer.is_valid():
                 serializer.save(user=request.user)
@@ -65,7 +65,12 @@ class UserSupportTicketListAPIView(APIView):
 
             paginator = CustomPagination()
             paginated_queryset = paginator.paginate_queryset(queryset, request, view=self)
-            serializer = SupportTicketSerializer(paginated_queryset, many=True)
+            # serializer = SupportTicketSerializer(paginated_queryset, many=True)
+            serializer = SupportTicketSerializer(
+                paginated_queryset,
+                many=True,
+                context={"request": request}
+            )
             return paginator.get_paginated_response({
                 "statusCode": 200,
                 "status": True,
@@ -86,7 +91,7 @@ class UserSupportTicketDetailAPIView(APIView):
     def get(self, request, pk):
         try:
             ticket = SupportTicket.objects.get(pk=pk, user=request.user)
-            serializer = SupportTicketSerializer(ticket)
+            serializer = SupportTicketSerializer(ticket, context={"request": request})
             return Response({
                 "statusCode": 200,
                 "status": True,
@@ -129,7 +134,7 @@ class AdminSupportTicketListAPIView(APIView):
 
             paginator = CustomPagination()
             paginated_queryset = paginator.paginate_queryset(queryset, request, view=self)
-            serializer = SupportTicketSerializer(paginated_queryset, many=True)
+            serializer = SupportTicketSerializer(paginated_queryset, many=True, context={"request": request})
             return paginator.get_paginated_response({
                 "statusCode": 200,
                 "status": True,
@@ -174,7 +179,7 @@ class AdminSupportTicketUpdateAPIView(APIView):
                 ticket.admin_note = admin_note_val
 
             ticket.save()
-            serializer = SupportTicketSerializer(ticket)
+            serializer = SupportTicketSerializer(ticket, context={"request": request})
             return Response({
                 "statusCode": 200,
                 "status": True,

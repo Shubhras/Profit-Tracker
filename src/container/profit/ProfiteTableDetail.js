@@ -192,7 +192,9 @@ export default function ProfitDetailsView() {
   const dataSource = React.useMemo(() => {
     const rows =
       profitData?.response?.map((item, index) => ({
+        ...item,
         key: index,
+        profit_settings: item.profit_settings || profitData?.profit_settings,
 
         channel: item.channel || '-',
         image: item.image_url,
@@ -217,6 +219,8 @@ export default function ProfitDetailsView() {
         // net_discount: Number(item.net_discount) || 0,
 
         stdcost: item.stdcost || 0,
+        cost: item.stdcost || 0,
+        std: item.stdcost || 0,
         shipping: item.shippingfees || 0,
         adSpend: item.ads || 0,
         gst_to_pay_amount: item.gst_to_pay_amount || 0,
@@ -551,7 +555,7 @@ export default function ProfitDetailsView() {
       dataIndex: 'mpfees',
       align: 'center',
       // width: 70,
-      width: getDynamicWidth('mpfees', 70),
+      width: getDynamicWidth('mpfees', 85),
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.mpfees) - parseAmount(b.mpfees),
       render: (v, record) => (
@@ -564,7 +568,7 @@ export default function ProfitDetailsView() {
               record,
             })
           }
-          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none"
+          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none whitespace-nowrap inline-block"
         >
           {v}
         </button>
@@ -575,7 +579,7 @@ export default function ProfitDetailsView() {
       dataIndex: 'shipping',
       align: 'center',
       // width: 70,
-      width: getDynamicWidth('shipping', 70),
+      width: getDynamicWidth('shipping', 85),
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.shipping) - parseAmount(b.shipping),
       render: (v, record) => (
@@ -588,7 +592,7 @@ export default function ProfitDetailsView() {
               record,
             })
           }
-          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none"
+          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none whitespace-nowrap inline-block"
         >
           {v}
         </button>
@@ -732,7 +736,7 @@ export default function ProfitDetailsView() {
       dataIndex: 'profit',
       align: 'center',
       // width: 100,
-      width: getDynamicWidth('profit', 70),
+      width: getDynamicWidth('profit', 95),
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.profit) - parseAmount(b.profit),
       // render: (v) => <span style={{ color: v < 0 ? 'red' : 'green' }}>₹{v}</span>,
@@ -746,7 +750,7 @@ export default function ProfitDetailsView() {
               record,
             })
           }
-          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none"
+          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none whitespace-nowrap inline-block"
         >
           {v}
         </button>

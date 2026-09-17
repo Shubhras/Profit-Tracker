@@ -19,6 +19,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.utils import timezone 
 from django.utils.timezone import timedelta
+from django.db.models import Q
 from user_auth.models import SubscriptionPlan
 from dateutil.relativedelta import relativedelta
 
@@ -455,19 +456,92 @@ class SubscriptionPlansAPIView(APIView):
             statusCode=200
         )
 
+def get_current_user_subscription(user):
+    """
+    Returns the user's current effective subscription, prioritizing:
+    1. Active & paid subscription whose end_date has not passed (or null).
+    2. Cancelled & paid subscription within grace period (end_date > now).
+    3. Most recently expired paid subscription (so user sees their expired plan rather than an uncompleted checkout attempt).
+    4. Fallback to latest subscription record (e.g. pending/created initial orders).
+    """
+    now = timezone.now()
+
+    # 1. Active & paid subscription (not expired)
+    sub = (
+        UserSubscription.objects
+        .select_related("plan")
+        .filter(
+            Q(end_date__gt=now) | Q(end_date__isnull=True),
+            user=user,
+            status="active",
+            is_paid=True
+        )
+        .order_by("-created_at")
+        .first()
+    )
+    if sub:
+        return sub
+
+    # 2. Cancelled & paid subscription within grace period (end_date > now)
+    sub = (
+        UserSubscription.objects
+        .select_related("plan")
+        .filter(
+            user=user,
+            status="cancelled",
+            is_paid=True,
+            end_date__gt=now
+        )
+        .order_by("-created_at")
+        .first()
+    )
+    if sub:
+        return sub
+
+    # 3. Most recently expired paid subscription
+    sub = (
+        UserSubscription.objects
+        .select_related("plan")
+        .filter(
+            user=user,
+            is_paid=True
+        )
+        .order_by("-created_at")
+        .first()
+    )
+    if sub:
+        return sub
+
+    # 4. Fallback to latest record (e.g. created/unpaid initial attempt)
+    return (
+        UserSubscription.objects
+        .select_related("plan")
+        .filter(user=user)
+        .order_by("-created_at")
+        .first()
+    )
+
+
 class MySubscriptionAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(tags=["Subscription"])
+    
     def get(self, request):
 
-        sub = UserSubscription.objects.filter(
-            user=request.user
-        ).select_related("plan").order_by("-created_at").first()
-        
-        current_subscription = UserSubscription.objects.filter(
-            user=request.user
-        ).select_related("plan").order_by("-created_at").first()
+        sub = get_current_user_subscription(request.user)
+
+        if not sub:
+            return success_response(
+                message="No subscription found",
+                data={
+                    "active": False,
+                    "status": "no_subscription",
+                    "plan_name": None,
+                    "price": 0,
+                    "history": []
+                }
+            )
 
         all_subscriptions = UserSubscription.objects.filter(
             user=request.user
@@ -478,18 +552,80 @@ class MySubscriptionAPIView(APIView):
             or sub.amount == 0
             or getattr(sub, "status", None) == "trial"
         )
-        if sub and is_starter_or_trial and sub.end_date and sub.end_date <= timezone.now() and sub.next_plan:
+
+        if (
+            is_starter_or_trial
+            and sub.end_date
+            and sub.end_date <= timezone.now()
+            and sub.next_plan
+        ):
             sub.plan = sub.next_plan
             sub.next_plan = None
             sub.status = "active"
             sub.start_date = timezone.now()
-            sub.end_date = timezone.now() + relativedelta(months=1) if sub.billing_cycle == "monthly" else timezone.now() + relativedelta(years=1)
-            sub.amount = sub.plan.monthly_price if sub.billing_cycle == "monthly" else sub.plan.annual_price
+
+            sub.end_date = (
+                timezone.now() + relativedelta(months=1)
+                if sub.billing_cycle == "monthly"
+                else timezone.now() + relativedelta(years=1)
+            )
+
+            sub.amount = (
+                sub.plan.monthly_price
+                if sub.billing_cycle == "monthly"
+                else sub.plan.annual_price
+            )
+
             sub.save()
+
             if hasattr(request.user, "profile") and request.user.profile:
                 request.user.profile.subscriptiontype = sub.plan
                 request.user.profile.subscription_status = "active"
                 request.user.profile.save()
+
+        elif (
+            sub.status in ["active", "cancelled"]
+            and sub.end_date
+            and sub.end_date <= timezone.now()
+        ):
+            sub.status = "expired"
+            sub.save(update_fields=["status"])
+
+            if hasattr(request.user, "profile") and request.user.profile:
+                request.user.profile.subscription_active = False
+                request.user.profile.subscription_status = "expired"
+                request.user.profile.save(update_fields=["subscription_active", "subscription_status"])
+    # def get(self, request):
+
+    #     sub = UserSubscription.objects.filter(
+    #         user=request.user
+    #     ).select_related("plan").order_by("-created_at").first()
+        
+    #     current_subscription = UserSubscription.objects.filter(
+    #         user=request.user
+    #     ).select_related("plan").order_by("-created_at").first()
+
+    #     all_subscriptions = UserSubscription.objects.filter(
+    #         user=request.user
+    #     ).select_related("plan").order_by("-created_at")
+
+    #     is_starter_or_trial = (
+    #         (sub.plan and "starter" in (sub.plan.plan_name or "").lower())
+    #         or sub.amount == 0
+    #         or getattr(sub, "status", None) == "trial"
+    #     )
+    #     if sub and is_starter_or_trial and sub.end_date and sub.end_date <= timezone.now() and sub.next_plan:
+    #         sub.plan = sub.next_plan
+    #         sub.next_plan = None
+    #         sub.status = "active"
+    #         sub.start_date = timezone.now()
+    #         sub.end_date = timezone.now() + relativedelta(months=1) if sub.billing_cycle == "monthly" else timezone.now() + relativedelta(years=1)
+    #         sub.amount = sub.plan.monthly_price if sub.billing_cycle == "monthly" else sub.plan.annual_price
+    #         sub.save()
+    #         if hasattr(request.user, "profile") and request.user.profile:
+    #             request.user.profile.subscriptiontype = sub.plan
+    #             request.user.profile.subscription_status = "active"
+    #             request.user.profile.save()
 
         if not sub:
             return success_response(
@@ -545,14 +681,34 @@ class MySubscriptionAPIView(APIView):
                 or getattr(sub, "status", None) == "trial"
                 or bool(hasattr(request.user, "profile") and request.user.profile and request.user.profile.trial_end_date and request.user.profile.trial_end_date > timezone.now())
             )
+            now = timezone.now()
+            is_cancelled_active = bool(
+                sub.status == "cancelled"
+                and sub.is_paid
+                and sub.end_date
+                and sub.end_date > now
+            )
+            is_active_valid = bool(
+                sub.status == "active"
+                and (not sub.end_date or sub.end_date > now)
+            )
+            has_access = bool(is_active_valid or is_cancelled_active)
+            is_expired = bool(
+                sub.status == "expired"
+                or (sub.end_date and sub.end_date <= now)
+            )
+
             return success_response(
                 message="Subscription fetched successfully",
                 data={
-                    "active": sub.status == "active",
+                    "active": has_access,
+                    "has_subscription": has_access,
+                    "is_cancelled_active": is_cancelled_active,
                     "status": sub.status,
-                    "subscription_status": sub.status,
+                    "subscription_status": "active" if has_access else sub.status,
                     "isTrial": is_sub_trial,
                     "is_trial": is_sub_trial,
+                    "is_expired": is_expired,
 
                     "subscription_id": sub.id,
 
@@ -593,7 +749,7 @@ class CancelSubscriptionAPIView(APIView):
     permission_classes = [IsAuthenticated]
     @swagger_auto_schema(tags=["Subscription"])
     def post(self, request):
-        sub = UserSubscription.objects.filter(user=request.user).order_by("-created_at").first()
+        sub = get_current_user_subscription(request.user)
 
         if not sub:
             return error_response("No subscription found", 404)
@@ -610,14 +766,29 @@ class CancelSubscriptionAPIView(APIView):
             sub.auto_renew = False
             sub.save()
 
+            now = timezone.now()
+            has_access_until_end = bool(sub.is_paid and sub.end_date and sub.end_date > now)
+
             if hasattr(request.user, "profile") and request.user.profile:
-                request.user.profile.subscription_active = False
-                request.user.profile.subscription_status = "inactive"
+                request.user.profile.subscription_active = has_access_until_end
+                request.user.profile.subscription_status = "cancelled" if has_access_until_end else "inactive"
                 request.user.profile.save()
 
+            formatted_end_date = sub.end_date.strftime("%B %d, %Y") if sub.end_date else "the end of your billing cycle"
+            msg = (
+                f"Subscription cancelled successfully. You will continue to have access to all features until {formatted_end_date}."
+                if has_access_until_end
+                else "Subscription cancelled successfully."
+            )
+
             return success_response(
-                message="Subscription cancelled successfully",
-                data={"status": sub.status},
+                message=msg,
+                data={
+                    "status": sub.status,
+                    "has_subscription": has_access_until_end,
+                    "is_cancelled_active": has_access_until_end,
+                    "end_date": sub.end_date,
+                },
                 statusCode=200
             )
 
@@ -703,7 +874,7 @@ class ToggleAutoRenewAPIView(APIView):
         if auto_renew is None:
             return error_response("auto_renew field (boolean) is required.", 400)
 
-        sub = UserSubscription.objects.filter(user=user).order_by("-created_at").first()
+        sub = get_current_user_subscription(user)
         if not sub:
             return error_response("No subscription found.", 404)
 
@@ -824,7 +995,7 @@ class VerifyPaymentAPIView(APIView):
 
         UserSubscription.objects.filter(
             user=request.user,
-            status__in=["active", "trial"]
+            status__in=["active", "trial", "cancelled"]
         ).exclude(
             id=subscription.id
         ).update(

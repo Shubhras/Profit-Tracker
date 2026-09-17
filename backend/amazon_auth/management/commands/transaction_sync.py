@@ -17,11 +17,11 @@ class Command(BaseCommand):
         now = timezone.now()
         # 1. Fetch only users with an active, paid, non-expired subscription
         active_user_ids = (
-            UserSubscription.objects.filter(
-                status="active",
-                is_paid=True,
+            UserSubscription.objects.filter(is_paid=True)
+            .filter(
+                (Q(status="active") & (Q(end_date__gt=now) | Q(end_date__isnull=True)))
+                | (Q(status="cancelled") & Q(end_date__gt=now))
             )
-            .filter(Q(end_date__gt=now) | Q(end_date__isnull=True))
             .values_list("user_id", flat=True)
             .distinct()
         )

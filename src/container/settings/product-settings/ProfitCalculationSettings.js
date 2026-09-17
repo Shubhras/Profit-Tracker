@@ -52,6 +52,11 @@ export default function ProfitCalculationSettings() {
       const response = await DataService.get('/amazon/profit-calculation-settings/');
       if (response.data && response.data.settings) {
         const s = response.data.settings;
+        try {
+          localStorage.setItem('profit_calculation_settings', JSON.stringify(s));
+        } catch (e) {
+          // ignore
+        }
         setSettings({
           ...DEFAULT_SETTINGS,
           ...s,
@@ -86,6 +91,11 @@ export default function ProfitCalculationSettings() {
         message.success('Profit Calculation Settings saved successfully!');
         if (response.data.settings) {
           const s = response.data.settings;
+          try {
+            localStorage.setItem('profit_calculation_settings', JSON.stringify(s));
+          } catch (e) {
+            // ignore
+          }
           setSettings(s);
           if (s.preview_output_gst_rate !== undefined) setPreviewOutputGstRate(s.preview_output_gst_rate);
           if (s.preview_input_gst_rate !== undefined) setPreviewInputGstRate(s.preview_input_gst_rate);
@@ -104,6 +114,11 @@ export default function ProfitCalculationSettings() {
   // Reset settings to default
   const handleResetDefault = () => {
     setSettings(DEFAULT_SETTINGS);
+    try {
+      localStorage.setItem('profit_calculation_settings', JSON.stringify(DEFAULT_SETTINGS));
+    } catch (e) {
+      // ignore
+    }
     setPreviewNetSales(1000);
     setPreviewOutputGstRate(0.05);
     setPreviewInputGstRate(0.18);

@@ -592,17 +592,34 @@ class UserListAPIView(APIView):
 
             for profile in page_obj:
 
+                now = timezone.now()
                 active_subscription = (
                     UserSubscription.objects
                     .filter(
-                        user=profile.user,
-                        status="active",
-                        is_paid=True
+                        Q(user=profile.user) &
+                        Q(is_paid=True) &
+                        (
+                            Q(status="active", end_date__isnull=True) |
+                            Q(status="active", end_date__gt=now) |
+                            Q(status="cancelled", end_date__gt=now)
+                        )
                     )
                     .select_related("plan")
                     .order_by("-created_at")
                     .first()
                 )
+
+                if not active_subscription:
+                    active_subscription = (
+                        UserSubscription.objects
+                        .filter(
+                            user=profile.user,
+                            is_paid=True
+                        )
+                        .select_related("plan")
+                        .order_by("-created_at")
+                        .first()
+                    )
 
                 subscription_data = None
 

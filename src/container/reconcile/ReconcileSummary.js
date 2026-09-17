@@ -14,11 +14,12 @@ import {
 import { getReconcilePaymentSummary } from '../../redux/reconcilePayment/actionCreator';
 
 const formatCurrency = (val) => {
-  if (val === undefined || val === null || (typeof val === 'number' && Number.isNaN(val))) return '₹0';
+  if (val === undefined || val === null || (typeof val === 'number' && Number.isNaN(val))) return '₹0.00';
   const num = typeof val === 'string' ? parseFloat(val.replace(/[^0-9.-]+/g, '')) || 0 : val;
   const isNegative = num < 0;
   const absFormatted = new Intl.NumberFormat('en-IN', {
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(Math.abs(num));
   return isNegative ? `-₹${absFormatted}` : `₹${absFormatted}`;
 };
@@ -78,11 +79,13 @@ export default function ReconcileSummary() {
     const payload = {
       filters: {
         fromDate: dateRange?.fromDate || null,
-        toDate: dateRange?.endDate || null,
+        toDate: dateRange?.endDate || dateRange?.toDate || null,
+        endDate: dateRange?.endDate || dateRange?.toDate || null,
+        ...(globalChannel && globalChannel.length > 0 ? { channel: { IN: globalChannel } } : {}),
       },
     };
     dispatch(getReconcilePaymentSummary(payload));
-  }, [dispatch, dateRange]);
+  }, [dispatch, dateRange, globalChannel]);
 
   const stats = useMemo(() => {
     if (!summaryData) {
@@ -107,28 +110,40 @@ export default function ReconcileSummary() {
     }
 
     const expected = mpStat
-      ? mpStat.expected_settlement ?? (mpStat.net_sales ? mpStat.net_sales - (mpStat.deductions || 0) : undefined)
+      ? mpStat.expected_settlement ?? mpStat.expected_payout ?? (mpStat.net_sales ? mpStat.net_sales - (mpStat.deductions || 0) : undefined)
       : summaryData.expected_settlement ??
         summaryData.expected_payout ??
+        summaryData.exp_settlement ??
+        summaryData.total_expected_settlement ??
         (summaryData.net_sales ? summaryData.net_sales - (summaryData.deductions || 0) : 62043);
 
     const settled = mpStat
-      ? mpStat.bank_settled ?? mpStat.received
-      : summaryData.bank_settled ?? summaryData.received_payout ?? summaryData.settlement_paid_in_bank ?? -3499;
+      ? mpStat.bank_settled ?? mpStat.received_payout ?? mpStat.received
+      : summaryData.bank_settled ??
+        summaryData.received_payout ??
+        summaryData.settlement_paid_in_bank ??
+        summaryData.total_settlement_paid_in_bank ??
+        -3499;
 
     const hold = mpStat
-      ? mpStat.settlement_hold ?? mpStat.discrepancy
+      ? mpStat.settlement_hold ?? mpStat.settlement_on_hold ?? mpStat.total_unsettled_not_paid ?? mpStat.unsettled_not_paid ?? mpStat.discrepancy
       : summaryData.settlement_on_hold ??
         summaryData.settlement_hold ??
-        summaryData.total_discrepancy ??
+        summaryData.settlement_on_hold_leaks ??
+        summaryData.total_unsettled_not_paid ??
         summaryData.unsettled_not_paid ??
+        summaryData.total_discrepancy ??
         99;
 
-    const expChart = summaryData.expected_payout_chart ?? summaryData.expected_payout ?? expected ?? 65542;
-    const settledChart =
-      summaryData.bank_settled_chart ?? summaryData.received_payout ?? summaryData.settlement_paid_in_bank ?? 58791;
-    const shortVal =
-      summaryData.shortage ?? summaryData.total_discrepancy ?? Math.abs(expChart - settledChart) ?? 58791;
+    const expChart = mpStat
+      ? mpStat.expected_settlement ?? mpStat.expected_payout ?? expected
+      : summaryData.expected_settlement_chart ?? summaryData.expected_payout_chart ?? summaryData.expected_settlement ?? summaryData.expected_payout ?? expected ?? 65542;
+    const settledChart = mpStat
+      ? mpStat.bank_settled ?? mpStat.received_payout ?? mpStat.received
+      : summaryData.bank_settled_chart ?? summaryData.received_payout ?? summaryData.settlement_paid_in_bank ?? 58791;
+    const shortVal = mpStat
+      ? Math.abs((expChart || 0) - (settledChart || 0))
+      : summaryData.shortage ?? summaryData.total_unsettled_not_paid ?? summaryData.unsettled_not_paid ?? summaryData.total_discrepancy ?? Math.abs((expChart || 0) - (settledChart || 0)) ?? 58791;
 
     return {
       expectedSettlement: expected ?? 62043,
@@ -333,7 +348,7 @@ export default function ReconcileSummary() {
                     {formatCurrency(stats.settlementHold)}
                   </div>
                   <div className="text-[13px] font-semibold text-[#10b981] flex items-center gap-1 mt-1">
-                    <span>↓</span>
+                    <span>↑</span>
                     <span>{stats.settlementHoldChange}</span>
                   </div>
                 </div>

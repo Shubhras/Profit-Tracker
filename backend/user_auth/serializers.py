@@ -1,4 +1,6 @@
 from django.contrib.auth.models import User
+from django.utils import timezone
+from django.db.models import Q
 from rest_framework import serializers
 from user_auth.models import *
 from subscription.models import UserSubscription
@@ -369,8 +371,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
                 "plan__submodules__module"
             )
             .filter(
+                Q(status="active") | (Q(status="cancelled") & Q(end_date__gt=timezone.now())),
                 user=target_user,
-                status="active",
                 is_paid=True
             )
             .order_by("-created_at")
@@ -391,6 +393,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
             )
 
         if not subscription:
+            return None
+
+        # If subscription has expired, inactive, or unpaid created (and not trial), do not grant active subscription modules/access
+        is_sub_trial = getattr(subscription, "is_trial", False)
+        if subscription.status in ["expired", "inactive", "created"] or (not subscription.is_paid and not is_sub_trial) or (subscription.end_date and subscription.end_date <= timezone.now()):
             return None
 
         if subuser:
@@ -787,6 +794,9 @@ class NotificationSerializer(serializers.ModelSerializer):
         ).exists()
 
 
+import os
+
+
 class SupportTicketSerializer(serializers.ModelSerializer):
     user_email = serializers.EmailField(source="user.email", read_only=True)
     user_name = serializers.CharField(source="user.profile.name", read_only=True)
@@ -809,6 +819,26 @@ class SupportTicketSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["ticket_id", "created_at", "updated_at"]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.document:
+            try:
+                doc_url = instance.document.url
+                request = self.context.get("request")
+                if request:
+                    data["document"] = request.build_absolute_uri(doc_url)
+                elif doc_url.startswith("http://") or doc_url.startswith("https://"):
+                    data["document"] = doc_url
+                else:
+                    backend_url = getattr(settings, "BACKEND_URL", None) or os.getenv("BACKEND_URL", "")
+                    if backend_url:
+                        data["document"] = f"{backend_url.rstrip('/')}{doc_url}"
+                    else:
+                        data["document"] = doc_url
+            except Exception:
+                pass
+        return data
 
 
 class SubUserPermissionInputSerializer(serializers.Serializer):
