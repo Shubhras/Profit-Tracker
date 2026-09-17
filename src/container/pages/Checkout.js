@@ -800,23 +800,31 @@ function Checkout() {
         width={480}
       >
         <div className="px-2 py-4">
-          <h2 className="m-0 text-xl font-bold text-[#0D0F0E]">Confirm subscription change</h2>
+          <h2 className="m-0 text-xl font-bold text-[#0D0F0E]">
+            {currentPlanName && currentPlanName.trim() ? 'Confirm subscription change' : 'Confirm subscription'}
+          </h2>
           <p className="mt-3 mb-0 text-sm leading-6 text-[#5E6461]">
-            Are you sure you want to change from your subscription
-            <span className="font-bold text-[#5E6461]"> {currentPlanName || 'No active plan'} Plan </span>
-            to
-            <span className="font-bold text-[#5E6461]"> {planTitle} </span>?
+            {currentPlanName && currentPlanName.trim() ? (
+              <>
+                Are you sure you want to change from your subscription{' '}
+                <span className="font-bold text-[#0D0F0E]">{currentPlanName} Plan</span> to{' '}
+                <span className="font-bold text-[#0D0F0E]">{planTitle}</span>?
+              </>
+            ) : (
+              <>
+                Are you sure you want to subscribe to <span className="font-bold text-[#0D0F0E]">{planTitle}</span>?
+              </>
+            )}
           </p>
-          {/* <p className="mt-2 mb-0 text-sm leading-6 text-[#5E6461]">
-            Current plan: <span className="font-semibold text-[#0D0F0E]">{currentPlanName || 'No active plan'}</span>
-          </p> */}
-          <p className="mt-2 mb-0 text-sm leading-6 text-[#8A4B00]">
-            Your current subscription will be made inactive after this change.
-          </p>
+          {currentPlanName && currentPlanName.trim() ? (
+            <p className="mt-2 mb-0 text-sm leading-6 text-[#8A4B00]">
+              Your current subscription will be made inactive after this change.
+            </p>
+          ) : null}
           <div className="mt-6 flex justify-end gap-3">
             <button
               type="button"
-              className="rounded-[10px] border border-[#C8CDC9] bg-white px-4 py-2.5 text-sm font-semibold text-[#0D0F0E] cursor-pointer"
+              className="rounded-[10px] border border-[#C8CDC9] bg-white px-4 py-2.5 text-sm font-semibold text-[#0D0F0E] cursor-pointer hover:border-[#0D0F0E]"
               onClick={() => setConfirmSubscriptionVisible(false)}
             >
               Cancel

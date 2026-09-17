@@ -183,7 +183,24 @@ function Billing() {
         </div>
 
         {/* No Subscription State */}
-        {!subscription ? (
+        {subscription?.status === 'no_subscription' ? (
+          <div className="p-12 flex flex-col items-center justify-center text-center">
+            <div className="w-20 h-20 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mb-6">
+              <UilBill className="w-10 h-10 text-slate-300" />
+            </div>
+
+            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">No Billing Information</h3>
+
+            <Button
+              type="primary"
+              size="large"
+              onClick={handleUpgrade}
+              className="h-10 px-7 rounded-lg font-bold bg-primary shadow-lg shadow-primary/30 border-0 text-[14px]"
+            >
+              View Pricing Plans
+            </Button>
+          </div>
+        ) : !subscription ? (
           <div className="p-12 flex flex-col items-center justify-center text-center">
             <div className="w-20 h-20 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mb-6">
               <UilBill className="w-10 h-10 text-slate-300" />

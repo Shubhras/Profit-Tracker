@@ -8,6 +8,7 @@ import {
   EditOutlined,
   CloseOutlined,
 } from '@ant-design/icons';
+import { useSelector } from 'react-redux';
 import { DataService } from '../../../config/dataService/dataService';
 
 const { Option } = Select;
@@ -114,12 +115,17 @@ const INITIAL_FEES = [
 ];
 
 export default function EstimatedFees() {
+  const profile = useSelector((state) => state.auth.profile);
+  const connectedChannels = profile?.connected_channels || [];
   const [fees, setFees] = useState(INITIAL_FEES);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [selectedMarketplace, setSelectedMarketplace] = useState('Myntra');
+  const [selectedMarketplace, setSelectedMarketplace] = useState('Select');
   const [selectedSampleItem, setSelectedSampleItem] = useState('top');
 
+  const marketplaceOptions = useMemo(() => {
+    return connectedChannels;
+  }, [connectedChannels]);
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
@@ -565,18 +571,16 @@ export default function EstimatedFees() {
                 <label className="block text-[15px] font-semibold text-[#374151] mb-1.5">Select Marketplace</label>
                 <div className="relative">
                   <Select
-                    value={selectedMarketplace}
+                    value={selectedMarketplace || undefined}
+                    placeholder="Select Marketplace"
                     onChange={(val) => setSelectedMarketplace(val)}
                     className="w-full h-[45px] custom-mp-select [&_.ant-select-selector]:!h-[40px] [&_.ant-select-selection-item]:!leading-[38px]"
                   >
-                    <Option value="Myntra">Myntra</Option>
-                    <Option value="Amazon">Amazon</Option>
-                    <Option value="Flipkart">Flipkart</Option>
-                    <Option value="Meesho">Meesho</Option>
-                    <Option value="Blinkit">Blinkit</Option>
-                    <Option value="Zepto">Zepto</Option>
-                    <Option value="Swiggy Instamart">Swiggy Instamart</Option>
-                    <Option value="Nykaa">Nykaa</Option>
+                    {marketplaceOptions.map((channel) => (
+                      <Option key={channel} value={channel}>
+                        {channel}
+                      </Option>
+                    ))}
                   </Select>
                 </div>
               </div>

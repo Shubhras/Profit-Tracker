@@ -45,10 +45,8 @@ export default function FinanceConfiguration() {
   const [recentUploads, setRecentUploads] = useState([]);
 
   const marketplaceOptions = useMemo(() => {
-    const defaultList = ['Amazon-India', 'Myntra'];
-    return Array.from(new Set([...connectedChannels, ...defaultList]));
+    return connectedChannels;
   }, [connectedChannels]);
-
   const reportTypeOptions = useMemo(() => {
     if (selectedMarketplace && selectedMarketplace.toLowerCase().includes('myntra')) {
       return [

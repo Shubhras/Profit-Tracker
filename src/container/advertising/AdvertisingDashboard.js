@@ -152,10 +152,10 @@ function AdvertisingDashboard() {
     <div className="min-h-screen bg-[#f8fafc] p-4 md:p-6">
       <Spin spinning={loading}>
         {/* Title */}
-        <h1 className="text-2xl font-bold text-[#111827] mb-4">Advertising dashboard</h1>
+        <h1 className="text-2xl font-semibold text-[#111827] mb-4">Advertising dashboard</h1>
 
         {/* Filters Box */}
-        <div className="mb-6 rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-sm">
+        <div className="mb-3 rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-sm">
           <div className="flex flex-wrap items-center gap-6">
             {/* Marketplace Select */}
             <div>
@@ -217,17 +217,17 @@ function AdvertisingDashboard() {
         </div>
 
         {/* KPI Metrics Cards (Grid of 6) */}
-        <div className="grid grid-cols-6 lg:grid-cols-3 sm:grid-cols-2 xs:grid-cols-1 gap-4 mb-6">
+        <div className="grid grid-cols-6 lg:grid-cols-3 sm:grid-cols-2 xs:grid-cols-1 gap-4 mb-3">
           {/* 1. Ad Spend */}
           <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-sm flex flex-col justify-between">
             <div className="flex items-center gap-2 mb-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#10b981] text-white">
-                <WalletOutlined className="text-lg" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#10b981] text-white">
+                <WalletOutlined className="text-sm" />
               </div>
               <span className="text-[13px] font-semibold text-gray-600">Ad Spend</span>
             </div>
             <div>
-              <h2 className="text-xl font-extrabold text-[#111827]">{formatCurrency(summary.ad_spend?.value)}</h2>
+              <h2 className="text-xl font-bold text-[#111827]">{formatCurrency(summary.ad_spend?.value)}</h2>
               <p
                 className={`mt-1 text-[11px] font-medium ${
                   (summary.ad_spend?.change?.pct ?? 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'
@@ -241,13 +241,13 @@ function AdvertisingDashboard() {
           {/* 2. Ad Sales */}
           <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-sm flex flex-col justify-between">
             <div className="flex items-center gap-2 mb-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#3b82f6] text-white">
-                <ShoppingCartOutlined className="text-lg" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#3b82f6] text-white">
+                <ShoppingCartOutlined className="text-sm" />
               </div>
               <span className="text-[13px] font-semibold text-gray-600">Ad Sales</span>
             </div>
             <div>
-              <h2 className="text-xl font-extrabold text-[#111827]">{formatCurrency(summary.sales_from_ads?.value)}</h2>
+              <h2 className="text-xl font-bold text-[#111827]">{formatCurrency(summary.sales_from_ads?.value)}</h2>
               <p
                 className={`mt-1 text-[11px] font-medium ${
                   (summary.sales_from_ads?.change?.pct ?? 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'
@@ -261,13 +261,13 @@ function AdvertisingDashboard() {
           {/* 3. ROI */}
           <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-sm flex flex-col justify-between">
             <div className="flex items-center gap-2 mb-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#8b5cf6] text-white">
-                <RiseOutlined className="text-lg" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#8b5cf6] text-white">
+                <RiseOutlined className="text-sm" />
               </div>
               <span className="text-[13px] font-semibold text-gray-600">ROI</span>
             </div>
             <div>
-              <h2 className="text-xl font-extrabold text-[#111827]">{summary.roas?.value ?? 0}</h2>
+              <h2 className="text-xl font-bold text-[#111827]">{summary.roas?.value ?? 0}</h2>
               <p
                 className={`mt-1 text-[11px] font-medium ${
                   (summary.roas?.change?.pct ?? 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'
@@ -281,13 +281,13 @@ function AdvertisingDashboard() {
           {/* 4. ACOS */}
           <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-sm flex flex-col justify-between">
             <div className="flex items-center gap-2 mb-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f97316] text-white">
-                <PercentageOutlined className="text-lg" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f97316] text-white">
+                <PercentageOutlined className="text-sm" />
               </div>
               <span className="text-[13px] font-semibold text-gray-600">ACOS</span>
             </div>
             <div>
-              <h2 className="text-xl font-extrabold text-[#111827]">{summary.acos?.value ?? 0}%</h2>
+              <h2 className="text-xl font-bold text-[#111827]">{summary.acos?.value ?? 0}%</h2>
               <p
                 className={`mt-1 text-[11px] font-medium ${
                   (summary.acos?.change?.pct ?? 0) <= 0 ? 'text-emerald-600' : 'text-rose-600'
@@ -301,13 +301,13 @@ function AdvertisingDashboard() {
           {/* 5. Clicks */}
           <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-sm flex flex-col justify-between">
             <div className="flex items-center gap-2 mb-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#06b6d4] text-white">
-                <AimOutlined className="text-lg" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#06b6d4] text-white">
+                <AimOutlined className="text-sm" />
               </div>
               <span className="text-[13px] font-semibold text-gray-600">Clicks</span>
             </div>
             <div>
-              <h2 className="text-xl font-extrabold text-[#111827]">{formatNumber(summary.clicks?.value)}</h2>
+              <h2 className="text-xl font-bold text-[#111827]">{formatNumber(summary.clicks?.value)}</h2>
               <p
                 className={`mt-1 text-[11px] font-medium ${
                   (summary.clicks?.change?.pct ?? 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'
@@ -321,13 +321,13 @@ function AdvertisingDashboard() {
           {/* 6. Impressions */}
           <div className="rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-sm flex flex-col justify-between">
             <div className="flex items-center gap-2 mb-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#ec4899] text-white">
-                <EyeOutlined className="text-lg" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#ec4899] text-white">
+                <EyeOutlined className="text-sm" />
               </div>
               <span className="text-[13px] font-semibold text-gray-600">Impressions</span>
             </div>
             <div>
-              <h2 className="text-xl font-extrabold text-[#111827]">{formatNumber(summary.impressions?.value)}</h2>
+              <h2 className="text-xl font-bold text-[#111827]">{formatNumber(summary.impressions?.value)}</h2>
               <p
                 className={`mt-1 text-[11px] font-medium ${
                   (summary.impressions?.change?.pct ?? 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'
@@ -340,11 +340,11 @@ function AdvertisingDashboard() {
         </div>
 
         {/* Side-by-Side Tables */}
-        <div className="grid grid-cols-12 gap-6 mb-6">
+        <div className="grid grid-cols-12 gap-4 mb-2">
           {/* Top Performing Campaigns */}
           <div className="col-span-6 xl:col-span-12 rounded-2xl border border-[#e5e7eb] bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-[#111827]">Top Performing Campaigns</h2>
+              <h2 className="text-base font-semibold text-[#111827]">Top Performing Campaigns</h2>
               <Link to="/admin/advertising/campaigns" className="text-xs font-semibold text-[#0d9488] hover:underline">
                 View all
               </Link>
@@ -401,7 +401,7 @@ function AdvertisingDashboard() {
           {/* Top Performing Products */}
           <div className="col-span-6 xl:col-span-12 rounded-2xl border border-[#e5e7eb] bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-[#111827]">Top Performing Products</h2>
+              <h2 className="text-base font-semibold text-[#111827]">Top Performing Products</h2>
               <Link to="/admin/advertising/AdProducts" className="text-xs font-semibold text-[#0d9488] hover:underline">
                 View all
               </Link>
@@ -464,11 +464,6 @@ function AdvertisingDashboard() {
             </div>
           </div>
         </div>
-
-        {/* Footer Disclaimer */}
-        <p className="text-center text-xs text-gray-400">
-          All values are approximate and based on selected date range.
-        </p>
       </Spin>
     </div>
   );

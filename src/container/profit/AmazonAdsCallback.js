@@ -31,8 +31,7 @@ function AmazonAdsCallback() {
           () => {
             message.success('Amazon Ads connected successfully');
 
-            navigate('/admin/advertising/overview');
-            // navigate('/admin/profit/summary');
+            navigate('/admin/advertising/dashboard');
           },
         ),
       );

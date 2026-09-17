@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Empty, Modal, Form, Input, Upload, message, Tag, Avatar, Spin } from 'antd';
+import { Card, Button, Empty, Modal, Form, Input, Upload, message, Tag, Avatar, Spin, Image } from 'antd';
 import { useLocation } from 'react-router-dom';
 
 import {
@@ -46,15 +46,15 @@ function SupportTicket() {
 
     formData.append('title', values.title);
     formData.append('description', values.description);
-
-    if (values.document?.file) {
-      formData.append('document', values.document.file.originFileObj);
+    if (values.image?.originFileObj) {
+      formData.append('document', values.image.originFileObj);
     }
 
     try {
       await dispatch(createSupportTickets(formData));
 
       message.success('Support ticket created successfully');
+      await dispatch(getSupportTickets());
 
       form.resetFields();
       setOpenModal(false);
@@ -209,15 +209,15 @@ function SupportTicket() {
           </Form.Item>
 
           <Form.Item
-            label="Attachment"
-            name="document"
+            label="Image"
+            name="image"
             valuePropName="file"
             getValueFromEvent={(e) => {
               if (Array.isArray(e)) return e;
-              return e && e.fileList[0];
+              return e?.fileList?.[0];
             }}
           >
-            <Upload.Dragger beforeUpload={() => false} maxCount={1} accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+            <Upload.Dragger beforeUpload={() => false} maxCount={1} accept=".jpg,.jpeg,.png,.doc,.docx">
               <p className="ant-upload-drag-icon">
                 <InboxOutlined
                   style={{
@@ -227,9 +227,8 @@ function SupportTicket() {
                 />
               </p>
 
-              <p className="font-semibold">Click or Drag file here</p>
-
-              <p className="text-gray-400">JPG, PNG, PDF, DOC, DOCX</p>
+              <p className="font-semibold">Select file here</p>
+              <p className="text-gray-500 text-sm">Images, PDF, Word, Excel and other files are supported</p>
             </Upload.Dragger>
           </Form.Item>
 
@@ -325,14 +324,27 @@ function SupportTicket() {
 
             {ticketDetails.document && (
               <div>
-                <h3 className="font-semibold mb-2">Attachment</h3>
+                <h3 className="font-semibold text-gray-700 mb-2">Attachment</h3>
 
-                <Button type="link" href={ticketDetails.document} target="_blank" icon={<PaperClipOutlined />}>
-                  View Attachment
-                </Button>
+                <div className="border border-gray-200 rounded-xl bg-gray-50 p-3">
+                  <div className="flex items-center gap-3 mb-3">
+                    <PaperClipOutlined className="text-blue-500" />
+                    <span className="text-sm text-gray-600 font-medium">Attached Image</span>
+                  </div>
+
+                  <div className="flex justify-center items-center bg-white rounded-lg border border-gray-100 p-2 min-h-[180px]">
+                    <Image
+                      src={ticketDetails.document}
+                      alt="Ticket Attachment"
+                      className="max-h-[280px] max-w-full object-contain rounded-lg"
+                      preview={{
+                        mask: 'View Image',
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
             )}
-
             {/* Admin Note */}
 
             {/* {ticketDetails.admin_note && (

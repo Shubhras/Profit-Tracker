@@ -176,7 +176,7 @@ export default function MarketPlaceSettings() {
                         key={market.id}
                         market={market}
                         iconMap={iconMap}
-                        // onManage={handleConnect}
+                        onRegenerate={handleConnect}
                       />
                     ))}
                   </div>
@@ -283,7 +283,7 @@ export default function MarketPlaceSettings() {
                         key={market.id}
                         market={market}
                         iconMap={iconMap}
-                        // onManage={handleConnect}
+                        onRegenerate={handleConnect}
                       />
                     ))}
                   </div>
@@ -401,14 +401,21 @@ function ConnectedMarketplaceCard({ market, iconMap }) {
 
       {/* Actions */}
 
-      <div className="mt-auto pt-2.5">
+      <div className="mt-auto flex gap-2 pt-2.5">
         <button
           type="button"
-          // onClick={() => onManage(market)}
-          className="w-full h-[25px] rounded-[5px] border border-[#15956D] bg-white text-[#087A5A] text-[11px] font-semibold transition-colors"
+          className="flex-1 h-[25px] rounded-[5px] border border-[#15956D] bg-white text-[#087A5A] text-[11px] font-semibold transition-colors"
         >
           Connected
         </button>
+
+        {/* <button
+          type="button"
+          onClick={() => onRegenerate(market)}
+          className="flex-1 h-[25px] rounded-[5px] bg-[#087A5A] text-white text-[11px] font-semibold transition-colors hover:bg-[#056347]"
+        >
+          Regenerate
+        </button> */}
       </div>
     </div>
   );
