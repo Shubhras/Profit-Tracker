@@ -1,17 +1,63 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from 'antd';
 import { CloseOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { DataService } from '../../../config/dataService/dataService';
+
+const getStoredProfitSettings = () => {
+  try {
+    const s = localStorage.getItem('profit_calculation_settings');
+    return s ? JSON.parse(s) : null;
+  } catch (e) {
+    return null;
+  }
+};
+
+let memoryCachedSettings = getStoredProfitSettings();
 
 function CalculationModal({ open, onClose, type, data }) {
+  const [profitSettings, setProfitSettings] = useState(
+    data?.profit_settings || memoryCachedSettings || getStoredProfitSettings(),
+  );
+
+  useEffect(() => {
+    const latestStored = getStoredProfitSettings();
+    if (latestStored) {
+      setProfitSettings(latestStored);
+    }
+    if (data?.profit_settings) {
+      setProfitSettings(data.profit_settings);
+      memoryCachedSettings = data.profit_settings;
+      try {
+        localStorage.setItem('profit_calculation_settings', JSON.stringify(data.profit_settings));
+      } catch (e) {
+        // ignore
+      }
+      return;
+    }
+
+    if (open) {
+      DataService.get('/amazon/profit-calculation-settings/')
+        .then((res) => {
+          if (res?.data?.settings) {
+            setProfitSettings(res.data.settings);
+            memoryCachedSettings = res.data.settings;
+            try {
+              localStorage.setItem('profit_calculation_settings', JSON.stringify(res.data.settings));
+            } catch (e) {
+              // ignore
+            }
+          }
+        })
+        .catch(() => {});
+    }
+  }, [open, data]);
+
   // const formatCurrency = (value) => {
   //   if (!value) return '₹0.00';
-
   //   const stringValue = String(value).trim();
-
   //   if (stringValue.includes('₹')) {
   //     return stringValue;
   //   }
-
   //   return `₹${Number(stringValue).toFixed(2)}`;
   // };
   const renderShippingUI = () => {
@@ -335,29 +381,72 @@ function CalculationModal({ open, onClose, type, data }) {
   };
 
   const renderProfitUI = () => {
-    const sellingPrice = parseFloat(String(data?.final_net_sales || data?.netsales || 0).replace(/[₹,]/g, ''));
+    const activeSettings = data?.profit_settings || profitSettings || getStoredProfitSettings();
+
+    const isProductCostEnabled = activeSettings ? activeSettings.product_cost !== false : true;
+    const isAdSpendEnabled = activeSettings ? activeSettings.ad_spend !== false : true;
+    const isTcsEnabled = activeSettings ? activeSettings.tcs !== false : true;
+    const isTdsEnabled = activeSettings ? activeSettings.tds !== false : true;
+    const isInputGstItcEnabled = activeSettings ? activeSettings.input_gst_itc !== false : true;
+    const isOtherExpenseEnabled = activeSettings ? activeSettings.other_expense !== false : true;
+    const isOutputGstEnabled = activeSettings ? activeSettings.output_gst !== false : true;
+    const isClaimEnabled = activeSettings ? activeSettings.claim !== false : true;
+
+    const sellingPrice = parseFloat(
+      String(
+        data?.final_net_sales || data?.total_final_net_sales || data?.netsales || data?.total_net_sales || 0,
+      ).replace(/[₹,]/g, ''),
+    );
 
     const marketplaceFees = parseFloat(String(data?.estimatefees || data?.mpfees || 0).replace(/[₹,]/g, ''));
 
-    const productCost = parseFloat(String(data?.stdcost || 0).replace(/[₹,]/g, ''));
+    const rawCost =
+      data?.stdcost !== undefined && data?.stdcost !== null && data?.stdcost !== ''
+        ? data.stdcost
+        : data?.cost !== undefined && data?.cost !== null && data?.cost !== ''
+        ? data.cost
+        : data?.std !== undefined && data?.std !== null && data?.std !== ''
+        ? data.std
+        : data?.product_cost !== undefined && data?.product_cost !== null && data?.product_cost !== ''
+        ? data.product_cost
+        : 0;
 
-    const shippingCost = parseFloat(String(data?.shipping || 0).replace(/[₹,]/g, ''));
+    const productCost = !isProductCostEnabled
+      ? 0
+      : parseFloat(String(rawCost).replace(/[₹,]/g, '')) || 0;
 
-    const adSpend = parseFloat(String(data?.adSpend || 0).replace(/[₹,]/g, ''));
+    const shippingCost = parseFloat(String(data?.shipping || data?.shippingfees || 0).replace(/[₹,]/g, ''));
 
-    const tcs = parseFloat(String(data?.tcs || 0).replace(/[₹,]/g, ''));
+    const adSpend = !isAdSpendEnabled ? 0 : parseFloat(String(data?.adSpend || data?.ads || 0).replace(/[₹,]/g, ''));
 
-    const tds = parseFloat(String(data?.tds || 0).replace(/[₹,]/g, ''));
+    const tcs = !isTcsEnabled ? 0 : parseFloat(String(data?.tcs || 0).replace(/[₹,]/g, ''));
 
-    const otherExpenses = parseFloat(String(data?.other_expenses || 0).replace(/[₹,]/g, ''));
+    const tds = !isTdsEnabled ? 0 : parseFloat(String(data?.tds || 0).replace(/[₹,]/g, ''));
 
-    const mpGst = parseFloat(String(data?.mp_gst || 0).replace(/[₹,]/g, ''));
+    const otherExpenses = !isOtherExpenseEnabled
+      ? 0
+      : parseFloat(String(data?.other_expenses || data?.total_other_expenses || 0).replace(/[₹,]/g, ''));
 
-    const gstToPay = parseFloat(String(data?.gst_to_pay_amount || 0).replace(/[₹,]/g, ''));
+    const mpGst = !isInputGstItcEnabled ? 0 : parseFloat(String(data?.mp_gst || 0).replace(/[₹,]/g, ''));
+
+    const gstToPay = !isOutputGstEnabled ? 0 : parseFloat(String(data?.gst_to_pay_amount || 0).replace(/[₹,]/g, ''));
+
+    const rawClaim =
+      data?.claim_amount !== undefined && data?.claim_amount !== null && data?.claim_amount !== ''
+        ? data.claim_amount
+        : data?.claim !== undefined && data?.claim !== null && data?.claim !== ''
+        ? data.claim
+        : data?.total_claim_amount !== undefined && data?.total_claim_amount !== null && data?.total_claim_amount !== ''
+        ? data.total_claim_amount
+        : 0;
+
+    const claim = !isClaimEnabled
+      ? 0
+      : parseFloat(String(rawClaim).replace(/[₹,]/g, '')) || 0;
 
     const profit = parseFloat(String(data?.profit || 0).replace(/[₹,]/g, ''));
 
-    const profitPercent = Number(data?.profitPercent || 0);
+    const profitPercent = Number(data?.profitPercent || data?.grossprofitper || data?.totalprofitmargin || 0);
 
     const rows = [
       {
@@ -409,6 +498,12 @@ function CalculationModal({ open, onClose, type, data }) {
         sign: '+',
       },
       {
+        label: '(+) Claim',
+        value: claim,
+        color: 'text-green-600',
+        sign: '+',
+      },
+      {
         label: '(-) Other Expenses',
         value: otherExpenses,
         color: 'text-red-500',
@@ -430,17 +525,22 @@ function CalculationModal({ open, onClose, type, data }) {
             <h2 className="text-[22px] font-semibold text-[#059669]">Profit Breakdown</h2>
 
             <div className="flex items-center gap-3 mt-4">
-              <img src={data?.image} alt="" className="w-[58px] h-[58px] rounded-lg object-cover border" />
+              <img
+                src={data?.image || data?.image_url}
+                alt=""
+                className="w-[58px] h-[58px] rounded-lg object-cover border"
+              />
 
               <div>
                 <p className="text-[14px] font-semibold text-[#111827] line-clamp-2 mb-1">
-                  {data?.name || 'Product Name'}
+                  {data?.name || data?.title || 'Product Name'}
                 </p>
 
                 <p className="text-[12px] text-[#6b7280] mt-1">
-                  {/* ASIN: {data?.asin || '000'} */}
                   <span>
-                    {data?.asin ? `ASIN: ${data.asin}` : `Order ID: ${data?.view || data?.order_id || '000'}`}
+                    {data?.asin && data?.asin !== '-'
+                      ? `ASIN: ${data.asin}`
+                      : `Order ID: ${data?.view || data?.order_id || '000'}`}
                   </span>
                 </p>
               </div>
@@ -486,7 +586,7 @@ function CalculationModal({ open, onClose, type, data }) {
                   profit < 0 ? 'text-red-500' : 'text-green-600'
                 }`}
               >
-                ₹{Math.abs(profit).toFixed(2)}
+                {profit < 0 ? '-' : ''}₹{Math.abs(profit).toFixed(2)}
               </div>
             </div>
 
@@ -499,7 +599,7 @@ function CalculationModal({ open, onClose, type, data }) {
                   profitPercent < 0 ? 'text-red-500' : 'text-green-600'
                 }`}
               >
-                {profitPercent}%
+                {profitPercent.toFixed(2)}%
               </div>
             </div>
           </div>

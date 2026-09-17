@@ -215,6 +215,17 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
     user = get_effective_user(request.user)
     from amazon_auth.models import ProfitCalculationSetting
     profit_setting, _ = ProfitCalculationSetting.objects.get_or_create(user=user)
+    profit_settings_dict = {
+        "tcs": profit_setting.tcs,
+        "tds": profit_setting.tds,
+        "gst_treatment": profit_setting.gst_treatment,
+        "input_gst_itc": profit_setting.input_gst_itc,
+        "output_gst": profit_setting.output_gst,
+        "claim": profit_setting.claim,
+        "product_cost": profit_setting.product_cost,
+        "ad_spend": profit_setting.ad_spend,
+        "other_expense": profit_setting.other_expense,
+    }
     data_source_raw = request.data if hasattr(request, 'data') and request.data else (request.GET if hasattr(request, 'GET') else {})
 
     data_source = {}
@@ -1303,6 +1314,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             "tds_leaks": format_currency(tds_leaks),
             "settlement_leak": format_currency(settlement_leak),
             "release_transaction_date": release_date,
+            "profit_settings": profit_settings_dict,
         })
 
         total_sales += gross_sales
@@ -1351,6 +1363,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
     overall_gst_perc = (total_gst_payable / total_taxable_value * 100) if total_taxable_value else 0.0
 
     totals = {
+        "profit_settings": profit_settings_dict,
         "grosssales": format_currency(total_sales),
         "netsales": format_currency(total_net_sales),
         "final_net_sales": format_currency(total_final_net_sales),
@@ -1444,6 +1457,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
     return Response({
         "status": True,
         "message": "Success",
+        "profit_settings": profit_settings_dict,
         "pagination": {
             "pageNo": page_no,
             "pageSize": page_size,
