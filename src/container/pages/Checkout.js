@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Spin, Modal, Result } from 'antd';
+import { Spin, Modal, Result, message } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import Cookies from 'js-cookie';
 import { DataService } from '../../config/dataService/dataService';
@@ -331,7 +331,16 @@ function Checkout() {
   }, [dispatch]);
 
   const isStarter =
-    plan?.plan_name?.toLowerCase().includes('starter') || plan?.selectedPrice === 0 || plan?.monthly_price === 0;
+    plan?.plan_name?.toLowerCase().includes('starter') ||
+    plan?.plan_name?.toLowerCase().includes('trial') ||
+    plan?.subscription_type?.toLowerCase().includes('trial');
+
+  const isFreeTrialUsed =
+    userObj?.free_trail_use === true ||
+    userObj?.free_trail_use === 'true' ||
+    userObj?.free_trial_use === true ||
+    userObj?.free_trial_use === 'true' ||
+    Cookies.get('free_trail_use') === 'true';
 
   const rawPlanName = plan?.plan_name || 'Starter';
   const planTitle = rawPlanName.toLowerCase().endsWith('plan') ? rawPlanName : `${rawPlanName} Plan`;
@@ -415,6 +424,11 @@ function Checkout() {
   };
 
   const handleSubscribe = () => {
+    if (isStarter && isFreeTrialUsed) {
+      message.error('You have already used your free trial. Please select a paid plan.');
+      navigate('/pricing');
+      return;
+    }
     setConfirmSubscriptionVisible(true);
   };
 
@@ -764,12 +778,14 @@ function Checkout() {
                   : 'rounded-xl bg-[#0D0F0E] text-white shadow-[0_4px_12px_rgba(13,15,14,0.15)] hover:shadow-[0_6px_16px_rgba(13,15,14,0.25)]'
               }`}
               onClick={handleSubscribe}
-              disabled={loading || processingPayment}
+              disabled={loading || processingPayment || (isStarter && isFreeTrialUsed)}
             >
               {loading || processingPayment
                 ? 'Processing...'
                 : isStarter
-                ? 'Start Free Trial'
+                ? isFreeTrialUsed
+                  ? 'Free Trial Already Used'
+                  : 'Start Free Trial'
                 : `Subscribe · ${formatINR(quote.total)}`}
             </button>
 

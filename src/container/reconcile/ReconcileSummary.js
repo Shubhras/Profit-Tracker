@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Spin, Dropdown, Menu, Row, Col } from 'antd';
+import { Spin, Row, Col } from 'antd';
 import {
-  DownOutlined,
   WalletOutlined,
   CreditCardOutlined,
   FileTextOutlined,
@@ -28,51 +27,15 @@ export default function ReconcileSummary() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const [selectedMarketplace, setSelectedMarketplace] = useState('all');
+  const [selectedMarketplace] = useState('all');
 
   const { dateRange, channel: globalChannel } = useSelector((state) => state.dashboard);
-  const profile = useSelector((state) => state.auth?.profile);
   const { loading, reconcileData } = useSelector((state) => state.reconcilePayment);
 
   const summaryData = useMemo(() => {
     if (!reconcileData) return null;
     return reconcileData.summary || reconcileData.data?.summary || reconcileData.data || reconcileData;
   }, [reconcileData]);
-
-  // Dynamic Marketplace options based on connected channels
-  const marketplaceOptions = useMemo(() => {
-    const connectedChannels = profile?.connected_channels || [];
-    const activeChannels = connectedChannels.length > 0 ? connectedChannels : globalChannel || [];
-
-    const options = [{ id: 'all', name: 'All marketplaces', logo: null, color: null }];
-    const addedValues = new Set();
-
-    if (activeChannels.length > 0) {
-      activeChannels.forEach((ch) => {
-        const lower = String(ch).toLowerCase();
-        if (lower.includes('amazon') && !addedValues.has('amazon')) {
-          options.push({ id: 'amazon', name: 'Amazon', logo: '/icons/amazon.svg', color: '#FF9900' });
-          addedValues.add('amazon');
-        } else if (lower.includes('myntra') && !addedValues.has('myntra')) {
-          options.push({ id: 'myntra', name: 'Myntra', logo: '/icons/myntraLogo.jpg', color: '#FF3F6C' });
-          addedValues.add('myntra');
-        } else if (lower.includes('flipkart') && !addedValues.has('flipkart')) {
-          options.push({ id: 'flipkart', name: 'Flipkart', logo: null, color: '#2874F0' });
-          addedValues.add('flipkart');
-        } else if (lower.includes('meesho') && !addedValues.has('meesho')) {
-          options.push({ id: 'meesho', name: 'Meesho', logo: null, color: '#E5399B' });
-          addedValues.add('meesho');
-        }
-      });
-    }
-
-    if (options.length === 1) {
-      options.push({ id: 'amazon', name: 'Amazon', logo: '/icons/amazon.svg', color: '#FF9900' });
-      options.push({ id: 'myntra', name: 'Myntra', logo: '/icons/myntraLogo.jpg', color: '#FF3F6C' });
-    }
-
-    return options;
-  }, [profile, globalChannel]);
 
   // Fetch summary data from backend via redux actionCreator
   useEffect(() => {
@@ -110,7 +73,9 @@ export default function ReconcileSummary() {
     }
 
     const expected = mpStat
-      ? mpStat.expected_settlement ?? mpStat.expected_payout ?? (mpStat.net_sales ? mpStat.net_sales - (mpStat.deductions || 0) : undefined)
+      ? mpStat.expected_settlement ??
+        mpStat.expected_payout ??
+        (mpStat.net_sales ? mpStat.net_sales - (mpStat.deductions || 0) : undefined)
       : summaryData.expected_settlement ??
         summaryData.expected_payout ??
         summaryData.exp_settlement ??
@@ -126,7 +91,11 @@ export default function ReconcileSummary() {
         -3499;
 
     const hold = mpStat
-      ? mpStat.settlement_hold ?? mpStat.settlement_on_hold ?? mpStat.total_unsettled_not_paid ?? mpStat.unsettled_not_paid ?? mpStat.discrepancy
+      ? mpStat.settlement_hold ??
+        mpStat.settlement_on_hold ??
+        mpStat.total_unsettled_not_paid ??
+        mpStat.unsettled_not_paid ??
+        mpStat.discrepancy
       : summaryData.settlement_on_hold ??
         summaryData.settlement_hold ??
         summaryData.settlement_on_hold_leaks ??
@@ -137,13 +106,23 @@ export default function ReconcileSummary() {
 
     const expChart = mpStat
       ? mpStat.expected_settlement ?? mpStat.expected_payout ?? expected
-      : summaryData.expected_settlement_chart ?? summaryData.expected_payout_chart ?? summaryData.expected_settlement ?? summaryData.expected_payout ?? expected ?? 65542;
+      : summaryData.expected_settlement_chart ??
+        summaryData.expected_payout_chart ??
+        summaryData.expected_settlement ??
+        summaryData.expected_payout ??
+        expected ??
+        65542;
     const settledChart = mpStat
       ? mpStat.bank_settled ?? mpStat.received_payout ?? mpStat.received
       : summaryData.bank_settled_chart ?? summaryData.received_payout ?? summaryData.settlement_paid_in_bank ?? 58791;
     const shortVal = mpStat
       ? Math.abs((expChart || 0) - (settledChart || 0))
-      : summaryData.shortage ?? summaryData.total_unsettled_not_paid ?? summaryData.unsettled_not_paid ?? summaryData.total_discrepancy ?? Math.abs((expChart || 0) - (settledChart || 0)) ?? 58791;
+      : summaryData.shortage ??
+        summaryData.total_unsettled_not_paid ??
+        summaryData.unsettled_not_paid ??
+        summaryData.total_discrepancy ??
+        Math.abs((expChart || 0) - (settledChart || 0)) ??
+        58791;
 
     return {
       expectedSettlement: expected ?? 62043,
@@ -159,30 +138,6 @@ export default function ReconcileSummary() {
     };
   }, [summaryData, selectedMarketplace]);
 
-  const selectedMpObj = marketplaceOptions.find((m) => m.id === selectedMarketplace) || marketplaceOptions[0];
-
-  const marketplaceMenu = (
-    <Menu selectedKeys={[selectedMarketplace]}>
-      {marketplaceOptions.map((opt) => (
-        <Menu.Item key={opt.id} onClick={() => setSelectedMarketplace(opt.id)}>
-          <div className="flex items-center gap-2 py-1 min-w-[160px]">
-            {opt.logo ? (
-              <img src={opt.logo} alt="" className="w-4 h-4 object-contain" />
-            ) : (
-              <span
-                className="w-2.5 h-2.5 rounded-full inline-block"
-                style={{
-                  background: opt.color || 'linear-gradient(135deg,#FF9900 0%,#2874F0 50%,#E5399B 100%)',
-                }}
-              />
-            )}
-            <span className="font-medium text-sm text-gray-800">{opt.name}</span>
-          </div>
-        </Menu.Item>
-      ))}
-    </Menu>
-  );
-
   // Calculate Bar widths dynamically for chart
   const maxVal = Math.max(stats.expectedPayoutChart, stats.bankSettledChart, 1);
   const expBarWidth = Math.min(100, Math.max(10, (stats.expectedPayoutChart / maxVal) * 100));
@@ -195,40 +150,14 @@ export default function ReconcileSummary() {
           {/* HEADER SECTION */}
           <div className="flex justify-between items-start gap-4 flex-wrap mb-5">
             <div>
-              <h1 className="text-[22px] font-bold text-[#111827] mb-1 tracking-tight">
+              <h1 className="text-[22px] font-semibold text-[#111827] mb-0 tracking-tight">
                 Payment Reconciliation Summary
               </h1>
-              <p className="text-[13px] text-[#6b7280] m-0 max-w-[700px] leading-relaxed">
+              <p className="text-[13px] text-[#6b7280] max-w-[700px] leading-relaxed">
                 We match the fees you expected against the marketplace&apos;s actual transaction report. Anything that
                 does not match is a discrepancy.
               </p>
             </div>
-
-            <Dropdown overlay={marketplaceMenu} trigger={['click']} placement="bottomRight">
-              <button
-                type="button"
-                className="bg-white border border-gray-200 hover:border-gray-300 rounded-lg h-[42px] min-w-[170px] px-3.5 py-1.5 flex items-center justify-between shadow-sm transition text-left cursor-pointer"
-              >
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-semibold tracking-wider text-gray-400">MARKETPLACE</span>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    {selectedMpObj.logo ? (
-                      <img src={selectedMpObj.logo} alt="" className="w-5 h-5 object-contain" />
-                    ) : (
-                      <span
-                        className="w-2.5 h-2.5 rounded-full inline-block shrink-0"
-                        style={{
-                          background:
-                            selectedMpObj.color || 'linear-gradient(135deg,#FF9900 0%,#2874F0 50%,#E5399B 100%)',
-                        }}
-                      />
-                    )}
-                    <span className="text-[13px] font-semibold text-gray-900">{selectedMpObj.name}</span>
-                  </div>
-                </div>
-                <DownOutlined className="text-xs text-gray-400 ml-2" />
-              </button>
-            </Dropdown>
           </div>
 
           {/* 4-STEP STEPPER */}
@@ -241,8 +170,6 @@ export default function ReconcileSummary() {
               <span className="text-[14px] font-semibold text-[#111827]">Expected Settlement</span>
             </div>
 
-            <span className="text-gray-300 text-sm font-light shrink-0 px-2">&gt;</span>
-
             {/* Step 2 */}
             <div className="flex items-center gap-2.5 min-w-max">
               <span className="w-6 h-6 rounded-full bg-[#3b82f6] text-white text-[13px] font-bold flex items-center justify-center shrink-0">
@@ -250,8 +177,6 @@ export default function ReconcileSummary() {
               </span>
               <span className="text-[14px] font-semibold text-[#111827]">Actual Transaction Report</span>
             </div>
-
-            <span className="text-gray-300 text-sm font-light shrink-0 px-2">&gt;</span>
 
             {/* Step 3 */}
             <div className="flex items-center gap-2.5 min-w-max">
@@ -264,21 +189,15 @@ export default function ReconcileSummary() {
               </div>
             </div>
 
-            <span className="text-gray-300 text-sm font-light shrink-0 px-2">&gt;</span>
+            {/* <span className="text-dark text-lg font-light shrink-0 px-2">&gt;</span> */}
 
             {/* Step 4 */}
-            <button
-              type="button"
-              onClick={() => navigate('/admin/reconcile/fee-leaks')}
-              className="flex items-center gap-2.5 min-w-max bg-transparent border-0 p-0 cursor-pointer text-left"
-            >
-              <span className="w-6 h-6 rounded-full bg-[#10b981] text-white text-[13px] font-bold flex items-center justify-center shrink-0">
+            <div className="flex items-center gap-2.5 min-w-max bg-transparent border-0 p-0 text-left">
+              <span className="w-6 h-6 rounded-full bg-[#f43f5e] text-white text-[13px] font-bold flex items-center justify-center shrink-0">
                 4
               </span>
-              <span className="text-[14px] font-semibold text-[#111827] hover:text-[#10b981] transition">
-                Claim or Investigate
-              </span>
-            </button>
+              <span className="text-[14px] font-semibold text-[#111827] transition">Claim or Investigate</span>
+            </div>
           </div>
 
           {/* 3 TOP KPI CARDS */}
@@ -420,7 +339,7 @@ export default function ReconcileSummary() {
 
               <button
                 type="button"
-                onClick={() => navigate('/admin/reconcile/fee-leaks')}
+                onClick={() => navigate('/admin/reconcile/allLeaks')}
                 className="bg-white border border-[#10b981] text-[#10b981] hover:bg-[#ecfdf5] font-semibold text-[13px] px-4 py-1 rounded-lg transition cursor-pointer flex items-center gap-1.5 shadow-sm"
               >
                 <span>View Discrepancy Orders</span>

@@ -5,8 +5,10 @@ import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckOutlined } from '@ant-design/icons';
 import PropTypes from 'prop-types';
+import Cookies from 'js-cookie';
 import { getSubscriptionList } from '../../../../redux/admin/actionCreator';
 import { selectPlan } from '../../../../redux/subscription/actionCreator';
+import { getProfile } from '../../../../redux/authentication/actionCreator';
 
 const { Text } = Typography;
 
@@ -60,9 +62,14 @@ const cardVariants = {
 // -------------------------------------------------------------
 // Pricing card — statement / ledger style, matched to reference
 // -------------------------------------------------------------
-function PricingCard({ plan, index, onSelect, selectedPlanId, setSelectedPlanId, selectedType }) {
+function PricingCard({ plan, index, onSelect, selectedPlanId, setSelectedPlanId, selectedType, isFreeTrialUsed }) {
   const isSelected = selectedPlanId === plan.id;
-  const isTrial = plan.plan_name?.toLowerCase().includes('starter');
+  const isTrial =
+    index === 0 ||
+    plan.plan_name?.toLowerCase().includes('starter') ||
+    plan.plan_name?.toLowerCase().includes('trial') ||
+    plan.subscription_type?.toLowerCase().includes('trial');
+  const isTrialDisabled = isTrial && Boolean(isFreeTrialUsed);
   // Kept as an index-based "recommended" highlight since the API doesn't yet
   // send a dedicated flag — purely a visual affordance, no functional change.
   const isRecommended = !isTrial && index === 1;
@@ -72,8 +79,16 @@ function PricingCard({ plan, index, onSelect, selectedPlanId, setSelectedPlanId,
   const currentPrice = selectedType === 'monthly' ? plan.monthly_price : plan.annual_price;
   const savePct = Math.round(Number(plan.discount_percentage || 0));
 
-  const borderColor = isTrial || isRecommended ? '#0C8B5E' : isSelected ? '#0C8B5E' : '#E7E8E4';
-  const cardBg = isTrial ? '#F3FAF7' : '#FFFFFF';
+  const borderColor = isTrial
+    ? isTrialDisabled
+      ? '#E7E8E4'
+      : '#0C8B5E'
+    : isRecommended
+    ? '#0C8B5E'
+    : isSelected
+    ? '#0C8B5E'
+    : '#E7E8E4';
+  const cardBg = isTrial ? (isTrialDisabled ? '#FAFAF8' : '#F3FAF7') : '#FFFFFF';
 
   // The API description for the trial plan sometimes already repeats
   // "7-Day Free Trial" at the start (since that's also the heading) — strip
@@ -89,24 +104,28 @@ function PricingCard({ plan, index, onSelect, selectedPlanId, setSelectedPlanId,
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true }}
-      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      whileHover={isTrialDisabled ? {} : { y: -4, transition: { duration: 0.2 } }}
       className="h-full"
     >
       <div
         role="button"
-        tabIndex={0}
-        onClick={() => setSelectedPlanId(plan.id)}
+        tabIndex={isTrialDisabled ? -1 : 0}
+        onClick={() => {
+          if (isTrialDisabled) return;
+          setSelectedPlanId(plan.id);
+        }}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
+            if (isTrialDisabled) return;
             setSelectedPlanId(plan.id);
           }
         }}
         className={`
           relative h-full flex flex-col rounded-3xl overflow-hidden
-          transition-all duration-300 cursor-pointer
+          transition-all duration-300 ${isTrialDisabled ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'}
           ${
-            isSelected || isTrial || isRecommended
+            isSelected || (isTrial && !isTrialDisabled) || isRecommended
               ? 'shadow-[0_10px_28px_rgba(12,139,94,0.12)]'
               : 'shadow-[0_1px_6px_rgba(16,24,40,0.04)] hover:shadow-[0_8px_22px_rgba(16,24,40,0.07)]'
           }
@@ -172,26 +191,43 @@ function PricingCard({ plan, index, onSelect, selectedPlanId, setSelectedPlanId,
             bottom of the card. */}
         {isTrial && (
           <div className="px-6 pb-2 pt-3">
-            <motion.div whileHover={{ scale: 1.015 }} whileTap={{ scale: 0.985 }}>
+            <motion.div
+              whileHover={isTrialDisabled ? {} : { scale: 1.015 }}
+              whileTap={isTrialDisabled ? {} : { scale: 0.985 }}
+            >
               <button
                 type="button"
                 size="large"
+                disabled={isTrialDisabled}
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (isTrialDisabled) return;
                   onSelect({
                     ...plan,
                     selectedType,
                     selectedPrice: selectedType === 'monthly' ? plan.monthly_price : plan.annual_price,
                   });
                 }}
-                className="w-full h-[48px] rounded-[14px] font-bold text-[14px] border-none cursor-pointer text-white"
-                style={{ background: '#0C8B5E', color: '#fff' }}
+                className={`w-full h-[48px] rounded-[14px] font-bold text-[14px] border-none text-white transition-colors ${
+                  isTrialDisabled ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-[#0C8B5E] cursor-pointer'
+                }`}
+                style={
+                  isTrialDisabled
+                    ? { background: '#D1D5DB', color: '#6B7280', cursor: 'not-allowed' }
+                    : { background: '#0C8B5E', color: '#fff' }
+                }
               >
-                Start Free Trial
+                {isTrialDisabled ? 'Free Trial Availed' : 'Start Free Trial'}
               </button>
             </motion.div>
-            <p className="text-center text-[11px] text-[#98A2B3] mt-2">
-              ₹5 refundable charge to verify your payment method
+            <p
+              className={`text-center text-[11px] mt-2 ${
+                isTrialDisabled ? 'text-[#DC2626] font-medium' : 'text-[#98A2B3]'
+              }`}
+            >
+              {isTrialDisabled
+                ? 'Free trial already used for this account'
+                : '₹5 refundable charge to verify your payment method'}
             </p>
           </div>
         )}
@@ -326,6 +362,7 @@ PricingCard.propTypes = {
   selectedPlanId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   setSelectedPlanId: PropTypes.func.isRequired,
   selectedType: PropTypes.string.isRequired,
+  isFreeTrialUsed: PropTypes.bool,
 };
 
 // -------------------------------------------------------------
@@ -334,7 +371,7 @@ PricingCard.propTypes = {
 function PricingCards() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const isLoggedIn = useSelector((state) => state.auth.login);
+  const { login: isLoggedIn, profile, freeTrailUse } = useSelector((state) => state.auth || {});
   const [selectedPlanId, setSelectedPlanId] = useState(null);
   const [selectedType, setSelectedType] = useState('monthly');
 
@@ -347,16 +384,42 @@ function PricingCards() {
         )
       : 0;
 
-  // const averageDiscount =
-  //   pricingPlans.length > 0
-  //     ? Math.round(
-  //         pricingPlans.reduce((sum, plan) => sum + Number(plan.average_discount || 0), 0) / pricingPlans.length,
-  //       )
-  //     : 0;
+  const isUserLoggedIn = Boolean(
+    isLoggedIn === true ||
+      isLoggedIn === 'true' ||
+      Cookies.get('logedIn') === 'true' ||
+      Cookies.get('access_token') ||
+      profile,
+  );
 
   useEffect(() => {
     dispatch(getSubscriptionList());
-  }, [dispatch]);
+    if (isUserLoggedIn) {
+      dispatch(getProfile());
+    }
+  }, [dispatch, isUserLoggedIn]);
+
+  const cookieFreeTrial = Cookies.get('free_trail_use') || Cookies.get('free_trial_use');
+  const localFreeTrial = localStorage.getItem('free_trail_use') || localStorage.getItem('free_trial_use');
+
+  const isFreeTrialUsed = Boolean(
+    freeTrailUse === true ||
+      freeTrailUse === 'true' ||
+      profile?.free_trail_use === true ||
+      profile?.free_trail_use === 'true' ||
+      profile?.free_trail_use === 1 ||
+      profile?.free_trial_use === true ||
+      profile?.free_trial_use === 'true' ||
+      profile?.free_trial_use === 1 ||
+      profile?.user?.free_trail_use === true ||
+      profile?.user?.free_trial_use === true ||
+      profile?.data?.free_trail_use === true ||
+      profile?.data?.free_trial_use === true ||
+      cookieFreeTrial === 'true' ||
+      cookieFreeTrial === true ||
+      localFreeTrial === 'true' ||
+      localFreeTrial === true,
+  );
 
   // const handlePlanSelect = (plan) => {
   //   dispatch(selectPlan(plan));
@@ -518,6 +581,7 @@ function PricingCards() {
               selectedPlanId={selectedPlanId}
               setSelectedPlanId={setSelectedPlanId}
               selectedType={selectedType}
+              isFreeTrialUsed={isFreeTrialUsed}
             />
           ))}
         </AnimatePresence>

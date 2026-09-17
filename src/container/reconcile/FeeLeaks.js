@@ -537,7 +537,7 @@ export default function FeeLeaks() {
               <h2 className="text-[17px] font-semibold text-[#ef4444] leading-none">
                 {formatCurrency(summaryStats.totalAmount)}
               </h2>
-              <p className="text-[10px] text-light mt-1">▲ Total Identified Discrepancies</p>
+              <p className="text-[10px] text-light mt-1">Total Identified Discrepancies</p>
             </div>
 
             <div className="bg-[#faf5ff] border border-[#f1e4ff] rounded-10 p-4">
