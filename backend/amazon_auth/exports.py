@@ -1137,8 +1137,7 @@ RECONCILE_DETAILS_COLUMNS = {
     "tds_leaks": "TDS Leaks",
     "exp_settlement": "Expected Settlement",
     "settlement_paid_in_bank": "Bank Settled Amount",
-    "unsettled_not_paid": "Unsettled Amount",
-    "settlement_leak": "Settlement Leak",
+    "unsettled_not_paid": "Settlement Hold",
 }
 
 RECONCILE_PARENT_COLUMNS = {
@@ -1172,8 +1171,7 @@ RECONCILE_PARENT_COLUMNS = {
     "tds_leaks": "TDS Leaks",
     "exp_settlement": "Expected Settlement",
     "settlement_paid_in_bank": "Bank Settled Amount",
-    "unsettled_not_paid": "Unsettled Amount",
-    "settlement_leak": "Settlement Leak",
+    "unsettled_not_paid": "Settlement Hold",
 }
 
 RECONCILE_ORDER_COLUMNS = {
@@ -1209,8 +1207,7 @@ RECONCILE_ORDER_COLUMNS = {
     "tds_leaks": "TDS Leaks",
     "exp_settlement": "Expected Settlement",
     "settlement_paid_in_bank": "Bank Settled Amount",
-    "unsettled_not_paid": "Unsettled Amount",
-    "settlement_leak": "Settlement Leak",
+    "unsettled_not_paid": "Settlement Hold",
     "release_transaction_date": "Release Transaction Date"
 }
 

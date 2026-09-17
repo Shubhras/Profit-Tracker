@@ -1845,7 +1845,10 @@ def format_currency(value):
             value = float(value)
         except (ValueError, TypeError):
             value = 0.0
-    return f"-₹{abs(round(value, 2))}" if value < 0 else f"₹{round(value, 2)}"
+    val = round(value, 2)
+    if val == 0:
+        return "₹0.0"
+    return f"-₹{abs(val)}" if val < 0 else f"₹{val}"
 
 
 from decimal import Decimal

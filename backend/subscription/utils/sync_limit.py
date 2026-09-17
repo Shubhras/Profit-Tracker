@@ -24,17 +24,43 @@ def get_user_sync_cutoff_date(user):
     reg_datetime = getattr(user, "date_joined", None) or getattr(user, "created_at", None) or timezone.now()
     reg_date = reg_datetime.date() if hasattr(reg_datetime, "date") else reg_datetime
 
+    now = timezone.now()
     subscription = (
         UserSubscription.objects.filter(
             user=user,
-            status__in=["active", "trial"],
+            status="active",
+            is_paid=True,
         )
         .select_related("plan")
         .order_by("-created_at")
         .first()
     )
 
-    if not subscription or not subscription.plan:
+    if not subscription:
+        subscription = (
+            UserSubscription.objects.filter(
+                user=user,
+                status="cancelled",
+                is_paid=True,
+                end_date__gt=now,
+            )
+            .select_related("plan")
+            .order_by("-created_at")
+            .first()
+        )
+
+    if not subscription:
+        subscription = (
+            UserSubscription.objects.filter(
+                user=user,
+                is_paid=True,
+            )
+            .select_related("plan")
+            .order_by("-created_at")
+            .first()
+        )
+
+    if not subscription:
         subscription = (
             UserSubscription.objects.filter(user=user)
             .select_related("plan")

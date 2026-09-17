@@ -81,7 +81,7 @@ class Command(BaseCommand):
         # 3. EXPIRED SUBSCRIPTIONS & AUTO-RENEWAL
         # ==========================================
         expired_subscriptions = UserSubscription.objects.filter(
-            status='active',
+            status__in=['active', 'cancelled'],
             end_date__isnull=False,
             end_date__lte=now,
         )
@@ -128,6 +128,12 @@ class Command(BaseCommand):
                 sub.status = 'expired'
                 sub.expired_email_sent = True
                 sub.save(update_fields=['status', 'expired_email_sent'])
+
+                # Synchronize user profile
+                if hasattr(sub.user, 'profile') and sub.user.profile:
+                    sub.user.profile.subscription_active = False
+                    sub.user.profile.subscription_status = 'expired'
+                    sub.user.profile.save(update_fields=['subscription_active', 'subscription_status'])
 
                 # Send expiration notification
                 send_subscription_expired_notice(sub)

@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.utils import timezone
+from django.db.models import Q
 
 from subscription.models import UserSubscription
 from user_auth.models import SubUser, AdminSubUser, UserModulePermission
@@ -92,12 +93,32 @@ class UserLoginAPI(APIView):
         else:
             subscription_user = subuser_obj.parent if (subuser_obj and subuser_obj.parent) else user
             now = timezone.now()
-            # Prioritize active and paid subscription first
+
+            # Auto-expire any active subscriptions whose end_date has passed in real-time
+            expired_active_subs = UserSubscription.objects.filter(
+                user=subscription_user,
+                status="active",
+                end_date__isnull=False,
+                end_date__lte=now
+            )
+            if expired_active_subs.exists():
+                expired_active_subs.update(status="expired")
+                if hasattr(subscription_user, "profile") and subscription_user.profile:
+                    subscription_user.profile.subscription_active = False
+                    subscription_user.profile.subscription_status = "expired"
+                    subscription_user.profile.save(update_fields=["subscription_active", "subscription_status"])
+
+            # Prioritize active and paid subscription first (ensuring end_date is in future or null)
             sub = (
                 UserSubscription.objects
                 .select_related("plan")
                 .prefetch_related("plan__modules", "plan__submodules__module")
-                .filter(user=subscription_user, status="active", is_paid=True)
+                .filter(
+                    Q(end_date__gt=now) | Q(end_date__isnull=True),
+                    user=subscription_user,
+                    status="active",
+                    is_paid=True
+                )
                 .order_by("-created_at")
                 .first()
             )
@@ -133,9 +154,13 @@ class UserLoginAPI(APIView):
                 and sub.end_date
                 and sub.end_date > now
             )
-            has_subscription = bool(
-                sub and ((sub.status == "active" and sub.is_paid) or is_cancelled_active)
+            is_active_valid = bool(
+                sub
+                and sub.status == "active"
+                and sub.is_paid
+                and (sub.end_date is None or sub.end_date > now)
             )
+            has_subscription = bool(is_active_valid or is_cancelled_active)
             subscription_status = "active" if has_subscription else (sub.status if sub else "no_subscription")
             is_trial = bool(
                 sub and (

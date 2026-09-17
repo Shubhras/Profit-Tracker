@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import Cookies from 'js-cookie';
-import { Skeleton, Modal, Tag, Alert, Button } from 'antd';
+import { Skeleton, Modal, Tag, Alert, Button, message } from 'antd';
 import {
   // CreditCardOutlined, // Removed as per new design
   // CalendarOutlined,
@@ -16,6 +16,7 @@ import UilBill from '@iconscout/react-unicons/icons/uil-bill';
 // import Heading from '../../../../components/heading/heading'; // Removed as per new design
 import { DataService } from '../../../../config/dataService/dataService';
 import authActions from '../../../../redux/authentication/actions';
+import { logOut } from '../../../../redux/authentication/actionCreator';
 
 function Billing() {
   const navigate = useNavigate();
@@ -34,21 +35,48 @@ function Billing() {
     try {
       const response = await DataService.get('/my-subscription/');
       if (response.data.status && response.data.data) {
-        setSubscription(response.data.data);
+        const subData = response.data.data;
+        setSubscription(subData);
+
+        // Check if user has active access (either active plan or cancelled plan that hasn't reached end_date)
+        const isCancelledActive =
+          subData.status === 'cancelled' &&
+          subData.end_date &&
+          new Date(subData.end_date) > new Date();
+
+        const hasAccess =
+          subData.has_subscription ??
+          ((subData.status === 'active' && !subData.is_expired) || isCancelledActive);
+
+        if (hasAccess) {
+          Cookies.set('hasSubscription', 'true');
+          dispatch(authActions.setHasSubscription(true));
+        } else {
+          Cookies.set('hasSubscription', 'false');
+          dispatch(authActions.setHasSubscription(false));
+        }
       } else {
         setSubscription(null);
+        Cookies.set('hasSubscription', 'false');
+        dispatch(authActions.setHasSubscription(false));
       }
     } catch (err) {
       console.error('Error fetching subscription:', err);
       if (err.response?.status === 404) {
         // No active subscription
         setSubscription(null);
+        Cookies.set('hasSubscription', 'false');
+        dispatch(authActions.setHasSubscription(false));
       } else {
         setError(err.response?.data?.message || 'Failed to load subscription details');
       }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLogoutNow = () => {
+    dispatch(logOut(() => navigate('/auth/login')));
   };
 
   useEffect(() => {
@@ -59,15 +87,26 @@ function Billing() {
   const handleCancelSubscription = async () => {
     setCancelLoading(true);
     try {
-      await DataService.post('/cancel-subscription/');
+      const response = await DataService.post('/cancel-subscription/');
       setCancelModalVisible(false);
 
-      // Update subscription status in cookie and Redux
-      Cookies.set('hasSubscription', 'false');
-      dispatch(authActions.setHasSubscription(false));
+      const resData = response.data?.data;
+      const hasAccess = resData?.has_subscription ?? (
+        subscription?.end_date && new Date(subscription.end_date) > new Date()
+      );
 
-      // Redirect to pricing page since user no longer has subscription
-      navigate('/pricing');
+      if (hasAccess) {
+        Cookies.set('hasSubscription', 'true');
+        dispatch(authActions.setHasSubscription(true));
+        message.success(
+          response.data?.message || 'Subscription cancelled. You will continue to have access until your plan expires.'
+        );
+        fetchSubscription();
+      } else {
+        Cookies.set('hasSubscription', 'false');
+        dispatch(authActions.setHasSubscription(false));
+        navigate('/pricing');
+      }
     } catch (err) {
       console.error('Error cancelling subscription:', err);
       setError(err.response?.data?.message || 'Failed to cancel subscription');
@@ -174,10 +213,22 @@ function Billing() {
               <p className="text-slate-500 dark:text-slate-400 text-sm m-0">Manage your plan and billing details</p>
             </div>
           </div>
-          {subscription?.status === 'active' && (
+          {subscription?.status === 'active' && !subscription?.is_expired && (
             <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold uppercase tracking-wider rounded-full border border-emerald-200 flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Active
+            </span>
+          )}
+          {subscription?.status === 'cancelled' && !subscription?.is_expired && (
+            <span className="px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold uppercase tracking-wider rounded-full border border-amber-200 flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+              Cancelled (Access until {formatDate(subscription?.end_date)})
+            </span>
+          )}
+          {(subscription?.status === 'expired' || subscription?.is_expired) && (
+            <span className="px-3 py-1 bg-rose-100 text-rose-700 text-xs font-bold uppercase tracking-wider rounded-full border border-rose-200 flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+              Expired
             </span>
           )}
         </div>
@@ -251,7 +302,21 @@ function Billing() {
 
                   <div className="flex justify-between">
                     <span>Status</span>
-                    <Tag color={subscription?.status === 'active' ? 'green' : 'orange'}>{subscription?.status}</Tag>
+                    <Tag
+                      color={
+                        subscription?.status === 'active' && !subscription?.is_expired
+                          ? 'green'
+                          : subscription?.status === 'cancelled' && !subscription?.is_expired
+                          ? 'gold'
+                          : 'red'
+                      }
+                    >
+                      {subscription?.status === 'cancelled' && !subscription?.is_expired
+                        ? 'Cancelled (Access Active)'
+                        : subscription?.is_expired || subscription?.status === 'expired'
+                        ? 'Expired'
+                        : subscription?.status}
+                    </Tag>
                   </div>
 
                   <div className="flex justify-between">
@@ -357,16 +422,14 @@ function Billing() {
                           </td>
                           <td className="px-6 py-4">
                             <span
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold capitalize ${
-                                invoice.status === 'paid'
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold capitalize ${invoice.status === 'paid'
                                   ? 'bg-emerald-100 text-emerald-700'
                                   : 'bg-slate-100 text-slate-600'
-                              }`}
+                                }`}
                             >
                               <span
-                                className={`w-1.5 h-1.5 rounded-full ${
-                                  invoice.status === 'paid' ? 'bg-emerald-500' : 'bg-slate-400'
-                                }`}
+                                className={`w-1.5 h-1.5 rounded-full ${invoice.status === 'paid' ? 'bg-emerald-500' : 'bg-slate-400'
+                                  }`}
                               />
                               {invoice.status || 'Pending'}
                             </span>

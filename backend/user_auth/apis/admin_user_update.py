@@ -1,6 +1,8 @@
 import logging
 from django.contrib.auth.models import User
 from django.db import transaction
+from django.db.models import Q
+from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
 from rest_framework.views import APIView
@@ -95,12 +97,18 @@ TrackMyProfit Team
 
 
 def get_user_subscription_data(user):
+    now = timezone.now()
+    # 1. Active or Cancelled-active paid subscription (valid period)
     active_subscription = (
         UserSubscription.objects
         .filter(
-            user=user,
-            status="active",
-            is_paid=True
+            Q(user=user) &
+            Q(is_paid=True) &
+            (
+                Q(status="active", end_date__isnull=True) |
+                Q(status="active", end_date__gt=now) |
+                Q(status="cancelled", end_date__gt=now)
+            )
         )
         .select_related("plan")
         .order_by("-created_at")
@@ -108,6 +116,20 @@ def get_user_subscription_data(user):
     )
 
     if not active_subscription:
+        # 2. Most recently expired paid subscription
+        active_subscription = (
+            UserSubscription.objects
+            .filter(
+                user=user,
+                is_paid=True
+            )
+            .select_related("plan")
+            .order_by("-created_at")
+            .first()
+        )
+
+    if not active_subscription:
+        # 3. Fallback to latest record (e.g., created/unpaid)
         active_subscription = (
             UserSubscription.objects
             .filter(user=user)

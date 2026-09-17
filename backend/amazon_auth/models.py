@@ -1098,6 +1098,8 @@ class ProfitCalculationSetting(models.Model):
     preview_output_gst_rate = models.FloatField(default=0.05)
     preview_input_gst_rate = models.FloatField(default=0.18)
     preview_other_expense = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('25.00'))
+    preview_net_sales = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), null=True, blank=True)
+    preview_product_cost = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
