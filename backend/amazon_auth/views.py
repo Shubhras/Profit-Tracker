@@ -2528,8 +2528,7 @@ def get_full_dashboard(request):
     total_final_net_sales = sum(float(s.get('final_net_sales') if s.get('final_net_sales') is not None else (s.get('net_sales') or 0)) for s in sku_profits)
 
     # ---------------- METRICS ----------------
-    # margin = (profit / total_final_net_sales * 100) if total_final_net_sales else 0  by final sales 
-    margin = (profit / accurate_net_sales * 100) if accurate_net_sales else 0    #by accureate sale 
+    margin = (profit / total_final_net_sales * 100) if total_final_net_sales else 0 
     roi = (ads_sales / abs(ads_amount) * 100) if ads_amount else 0
     
     tacos = (abs(ads_amount) / accurate_net_sales * 100) if accurate_net_sales else 0

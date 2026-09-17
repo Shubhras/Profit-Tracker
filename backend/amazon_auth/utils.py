@@ -211,60 +211,6 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
         )
     )
 
-    # ---------------- ESTIMATED FEES ----------------
-    estimated_fee_qs = AmazonEstimatedFee.objects.filter(
-        order_item__order__user=user
-    ).exclude(order_item__order__order_status__icontains='Cancel')
-
-    # apply same date filter
-    if from_date:
-        estimated_fee_qs = estimated_fee_qs.filter(
-            order_item__order__purchase_date__gte=from_date
-        )
-
-    if to_date:
-        estimated_fee_qs = estimated_fee_qs.filter(
-            order_item__order__purchase_date__lte=to_date
-        )
-
-    # apply same parent filter
-    if parent_ids:
-        estimated_fee_qs = estimated_fee_qs.filter(
-            order_item__parent_asin__in=parent_ids
-        )
-
-    estimated_fee_data = (
-        estimated_fee_qs
-        .values('asin')
-        .annotate(
-            estimated_fees=Sum('total_fees'),
-
-            referral_fee=Sum('referral_fee'),
-            closing_fee=Sum('closing_fee'),
-            per_item_fee=Sum('per_item_fee'),
-
-            fba_fee=Sum('fba_fee'),
-            fba_pick_pack_fee=Sum('fba_pick_pack_fee'),
-            fba_weight_handling_fee=Sum('fba_weight_handling_fee'),
-
-            tax_amount=Sum('tax_amount'),
-        )
-    )
-
-    estimated_fee_by_asin = {
-        row['asin']: {
-            "estimated_fees": float(row['estimated_fees'] or 0),
-            "referral_fee": float(row['referral_fee'] or 0),
-            "closing_fee": float(row['closing_fee'] or 0),
-            "per_item_fee": float(row['per_item_fee'] or 0),
-            "fba_fee": float(row['fba_fee'] or 0),
-            "fba_pick_pack_fee": float(row['fba_pick_pack_fee'] or 0),
-            "fba_weight_handling_fee": float(row['fba_weight_handling_fee'] or 0),
-            "tax_amount": float(row['tax_amount'] or 0),
-        }
-        for row in estimated_fee_data
-    }
-
     # ---------------- FINANCIAL EVENTS ----------------
     finances_qs = FinancialEvent.objects.filter(user=user)
 
@@ -306,7 +252,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
-        .values('asin','parent_asin', 'order__amazon_order_id', 'quantity_ordered', 'item_price','new_item_price','item_tax', 'promotion_discount')
+        .values('asin', 'seller_sku', 'parent_asin', 'order__amazon_order_id', 'quantity_ordered', 'item_price','new_item_price', 'item_tax', 'promotion_discount')
     )
 
     child_parent_map = {}
@@ -316,57 +262,133 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
         child_parent_map[row['asin']] = p_asin
         asin_map.setdefault(p_asin, []).append(row)
 
-    estimated_fee_map = {}
-    for asin, fee_data in estimated_fee_by_asin.items():
-        p_asin = child_parent_map.get(asin) or asin
-        if p_asin not in estimated_fee_map:
-            estimated_fee_map[p_asin] = {
-                "estimated_fees": 0.0, "referral_fee": 0.0, "closing_fee": 0.0,
-                "per_item_fee": 0.0, "fba_fee": 0.0, "fba_pick_pack_fee": 0.0,
-                "fba_weight_handling_fee": 0.0, "tax_amount": 0.0
-            }
-        for k, v in fee_data.items():
-            estimated_fee_map[p_asin][k] += v
-
-    # ---------------- TRANSACTION SHIPPING FEES ----------------
-
-    matching_order_ids = [row["order__amazon_order_id"] for row in asin_orders]
-
+    # ---------------- TRANSACTION SHIPPING FEES — MFN POSTAGE FEE ONLY ----------------  
+    matching_order_ids = [row['order__amazon_order_id'] for row in asin_orders]
     tx_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
-        identifier_name="ORDER_ID", identifier_value__in=matching_order_ids
+        identifier_name="ORDER_ID",
+        identifier_value__in=matching_order_ids
     ).values("transaction_id", "identifier_value")
 
     tx_to_order = {
-        row["transaction_id"]: row["identifier_value"] for row in tx_identifiers
+        row["transaction_id"]: row["identifier_value"]
+        for row in tx_identifiers
     }
 
-    # ------------------------------------------------------------
-    # SHIPPING STATUS PRIORITY
-    # ------------------------------------------------------------
-    #
-    # Same financial event can appear as:
-    #
-    # DEFERRED
-    # DEFERRED_RELEASED
-    # RELEASED
-    #
-    # We use only the highest-priority lifecycle state.
-    #
-    # DEFERRED > DEFERRED_RELEASED > RELEASED
-    # ------------------------------------------------------------
+    # ---------------- ESTIMATED FEES ----------------
+    estimated_fee_qs = AmazonEstimatedFee.objects.filter(
+        order_item__order__user=user
+    ).exclude(order_item__order__order_status__icontains='Cancel')
 
+    if matching_order_ids:
+        estimated_fee_qs = estimated_fee_qs.filter(order_item__order__amazon_order_id__in=matching_order_ids)
+    else:
+        if from_date:
+            estimated_fee_qs = estimated_fee_qs.filter(
+                order_item__order__purchase_date__gte=from_date
+            )
+        if to_date:
+            estimated_fee_qs = estimated_fee_qs.filter(
+                order_item__order__purchase_date__lte=to_date
+            )
+        if channels:
+            estimated_fee_qs = estimated_fee_qs.filter(
+                order_item__order__marketplace_id__in=marketplace_ids
+            )
+        if parent_ids:
+            estimated_fee_qs = estimated_fee_qs.filter(
+                order_item__parent_asin__in=parent_ids
+            )
+
+    estimated_fee_data = (
+        estimated_fee_qs
+        .values(
+            'order_item__order__amazon_order_id',
+            'order_item__seller_sku',
+            'order_item__asin',
+            'order_item__parent_asin',
+            'asin',
+            'seller_sku',
+        )
+        .annotate(
+            estimated_fees=Sum('total_fees'),
+            referral_fee=Sum('referral_fee'),
+            closing_fee=Sum('closing_fee'),
+            per_item_fee=Sum('per_item_fee'),
+            fba_fee=Sum('fba_fee'),
+            fba_pick_pack_fee=Sum('fba_pick_pack_fee'),
+            fba_weight_handling_fee=Sum('fba_weight_handling_fee'),
+            tax_amount=Sum('tax_amount'),
+        )
+    )
+
+    estimated_fee_by_order_sku = {}
+    estimated_fee_by_order = {}
+    estimated_fee_by_sku = {}
+    estimated_fee_by_asin = {}
+    estimated_fee_by_parent = {}
+    unit_fee_by_sku = {}
+    unit_fee_by_asin = {}
+    unit_fee_by_parent = {}
+
+    def _accumulate_fee_row_details(d, key, item_fee):
+        if not key:
+            return
+        if key not in d:
+            d[key] = {k: 0.0 for k in item_fee}
+        for k, v in item_fee.items():
+            d[key][k] += v
+
+    for fee_row in estimated_fee_data:
+        oid = fee_row.get('order_item__order__amazon_order_id')
+        sku_k = (fee_row.get('order_item__seller_sku') or fee_row.get('seller_sku') or '').strip()
+        asin_k = (fee_row.get('order_item__asin') or fee_row.get('asin') or '').strip()
+        p_asin_k = (fee_row.get('order_item__parent_asin') or '').strip()
+
+        item_fee = {
+            "estimated_fees": float(fee_row['estimated_fees'] or 0),
+            "referral_fee": float(fee_row['referral_fee'] or 0),
+            "closing_fee": float(fee_row['closing_fee'] or 0),
+            "per_item_fee": float(fee_row['per_item_fee'] or 0),
+            "fba_fee": float(fee_row['fba_fee'] or 0),
+            "fba_pick_pack_fee": float(fee_row['fba_pick_pack_fee'] or 0),
+            "fba_weight_handling_fee": float(fee_row['fba_weight_handling_fee'] or 0),
+            "tax_amount": float(fee_row['tax_amount'] or 0),
+        }
+
+        if oid and sku_k:
+            _accumulate_fee_row_details(estimated_fee_by_order_sku, (oid, sku_k), item_fee)
+        if oid:
+            _accumulate_fee_row_details(estimated_fee_by_order, oid, item_fee)
+        if sku_k:
+            _accumulate_fee_row_details(estimated_fee_by_sku, sku_k, item_fee)
+            if sku_k not in unit_fee_by_sku:
+                unit_fee_by_sku[sku_k] = item_fee
+        if asin_k:
+            _accumulate_fee_row_details(estimated_fee_by_asin, asin_k, item_fee)
+            if asin_k not in unit_fee_by_asin:
+                unit_fee_by_asin[asin_k] = item_fee
+        if p_asin_k:
+            _accumulate_fee_row_details(estimated_fee_by_parent, p_asin_k, item_fee)
+            if p_asin_k not in unit_fee_by_parent:
+                unit_fee_by_parent[p_asin_k] = item_fee
+
+    # ============================================================
+    # SHIPPING STATUS PRIORITY
+    # ============================================================
     STATUS_PRIORITY = {
         "DEFERRED": 3,
         "DEFERRED_RELEASED": 2,
         "RELEASED": 1,
     }
 
-    tx_shipping_candidates = {}
+    def get_best_shipping_status(statuses):
+        return max(statuses, key=lambda status: STATUS_PRIORITY.get(status, 0))
+
+    tx_shipping_map = {}
 
     # ------------------------------------------------------------
     # MFN SHIPPING
     # ------------------------------------------------------------
-
     mfn_postage_txns = AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
         transaction_type="ServiceFee",
@@ -382,41 +404,28 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
         "transaction_status",
     )
 
+    mfn_by_order_status = {}
+
     for txn in mfn_postage_txns:
         order_id = tx_to_order.get(txn["id"])
-
         if not order_id:
             continue
 
         status = txn["transaction_status"]
-
-        priority = STATUS_PRIORITY.get(status, 0)
-
         amount = float(txn["total_amount"] or 0)
+        mfn_by_order_status.setdefault(order_id, {})
+        mfn_by_order_status[order_id][status] = (
+            mfn_by_order_status[order_id].get(status, 0.0) + amount
+        )
 
-        current = tx_shipping_candidates.get(order_id)
+    for order_id, status_amounts in mfn_by_order_status.items():
+        best_status = get_best_shipping_status(status_amounts.keys())
+        tx_shipping_map[order_id] = status_amounts[best_status]
 
-        # New / higher-priority lifecycle
-        if current is None or priority > current["priority"]:
-            tx_shipping_candidates[order_id] = {
-                "priority": priority,
-                "amount": amount,
-                "status": status,
-            }
-
-        # Same lifecycle → accumulate
-        elif priority == current["priority"]:
-            current["amount"] += amount
-
-    # ------------------------------------------------------------
+    # ============================================================
     # AFN / FBA SHIPPING
-    #
-    # Shipment
-    #     ↓
-    # FBAWeightBasedFee
-    # ------------------------------------------------------------
-
-    afn_txns = AmazonTransaction.objects.filter(
+    # ============================================================
+    afn_tx_ids = AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
         transaction_type="Shipment",
         transaction_status__in=[
@@ -424,60 +433,40 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
             "DEFERRED_RELEASED",
             "RELEASED",
         ],
-    ).values(
-        "id",
-        "transaction_status",
-    )
+    ).values("id", "transaction_status")
 
-    afn_tx_status = {txn["id"]: txn["transaction_status"] for txn in afn_txns}
+    afn_status_map = {txn["id"]: txn["transaction_status"] for txn in afn_tx_ids}
 
     afn_breakdowns = (
         AmazonTransactionBreakdown.objects.filter(
-            transaction_id__in=afn_tx_status.keys(),
+            transaction_id__in=afn_status_map.keys(),
             breakdown_type="FBAWeightBasedFee",
         )
         .values("transaction_id")
         .annotate(total=Sum("amount"))
     )
 
+    afn_by_order_status = {}
+
     for bd in afn_breakdowns:
         transaction_id = bd["transaction_id"]
-
         order_id = tx_to_order.get(transaction_id)
-
         if not order_id:
             continue
 
-        status = afn_tx_status.get(transaction_id)
-
+        status = afn_status_map.get(transaction_id)
         if not status:
             continue
 
-        priority = STATUS_PRIORITY.get(status, 0)
-
         amount = float(bd["total"] or 0)
+        afn_by_order_status.setdefault(order_id, {})
+        afn_by_order_status[order_id][status] = (
+            afn_by_order_status[order_id].get(status, 0.0) + amount
+        )
 
-        current = tx_shipping_candidates.get(order_id)
-
-        # New / higher-priority lifecycle
-        if current is None or priority > current["priority"]:
-            tx_shipping_candidates[order_id] = {
-                "priority": priority,
-                "amount": amount,
-                "status": status,
-            }
-
-        # Same lifecycle → accumulate
-        elif priority == current["priority"]:
-            current["amount"] += amount
-
-    # ------------------------------------------------------------
-    # FINAL SHIPPING MAP
-    # ------------------------------------------------------------
-
-    tx_shipping_map = {
-        order_id: data["amount"] for order_id, data in tx_shipping_candidates.items()
-    }
+    for order_id, status_amounts in afn_by_order_status.items():
+        best_status = get_best_shipping_status(status_amounts.keys())
+        tx_shipping_map[order_id] = status_amounts[best_status]
 
     print("tx_shipping_map", tx_shipping_map)
     
@@ -921,20 +910,6 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
         processed_parent_asins.add(parent_asin)
         # estimated_fees = estimated_fee_map.get(parent_asin, 0)
 
-        fee_data = estimated_fee_map.get(parent_asin, {})
-
-        estimated_fees = fee_data.get("estimated_fees", 0)
-
-        referral_fee = fee_data.get("referral_fee", 0)
-        closing_fee = fee_data.get("closing_fee", 0)
-        per_item_fee = fee_data.get("per_item_fee", 0)
-
-        fba_fee = fee_data.get("fba_fee", 0)
-        fba_pick_pack_fee = fee_data.get("fba_pick_pack_fee", 0)
-        fba_weight_handling_fee = fee_data.get("fba_weight_handling_fee", 0)
-
-        tax_amount = fee_data.get("tax_amount", 0)
-
         gross_qty = int(row['grossqty'] or 0)
         quantity_shipped = int(row['quantity_shipped'] or 0)
 
@@ -948,6 +923,55 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
         standard_cost = float(str(row.get("sku_standard_cost") or 0))
 
         orders = asin_map.get(parent_asin, [])
+
+        fee_data = {
+            "estimated_fees": 0.0,
+            "referral_fee": 0.0,
+            "closing_fee": 0.0,
+            "per_item_fee": 0.0,
+            "fba_fee": 0.0,
+            "fba_pick_pack_fee": 0.0,
+            "fba_weight_handling_fee": 0.0,
+            "tax_amount": 0.0
+        }
+        fee_matched = False
+        for o in orders:
+            oid = o.get('order__amazon_order_id')
+            o_sku = (o.get('seller_sku') or '').strip()
+            o_qty = max(1.0, float(o.get('quantity_ordered') or 1))
+            f_item = None
+            if oid and o_sku and (oid, o_sku) in estimated_fee_by_order_sku:
+                f_item = estimated_fee_by_order_sku[(oid, o_sku)]
+            elif oid and oid in estimated_fee_by_order:
+                f_item = estimated_fee_by_order[oid]
+
+            if f_item:
+                fee_matched = True
+                for k in fee_data:
+                    fee_data[k] += float(f_item.get(k, 0.0)) * o_qty
+
+        if not fee_matched:
+            fallback_fee = (
+                unit_fee_by_parent.get(parent_asin) or
+                unit_fee_by_asin.get(parent_asin) or
+                estimated_fee_by_parent.get(parent_asin) or
+                estimated_fee_by_asin.get(parent_asin, {})
+            )
+            fee_multiplier = max(1.0, float(gross_qty or 1))
+            for k in fee_data:
+                fee_data[k] = float(fallback_fee.get(k, 0.0)) * fee_multiplier
+
+        referral_fee = fee_data.get("referral_fee", 0.0)
+        closing_fee = fee_data.get("closing_fee", 0.0)
+        per_item_fee = fee_data.get("per_item_fee", 0.0)
+
+        fba_fee = fee_data.get("fba_fee", 0.0)
+        fba_pick_pack_fee = fee_data.get("fba_pick_pack_fee", 0.0)
+        fba_weight_handling_fee = fee_data.get("fba_weight_handling_fee", 0.0)
+
+        tax_amount = fee_data.get("tax_amount", 0.0)
+
+        estimated_fees = max(0.0, float(fee_data.get("estimated_fees", 0.0)) - float(fba_weight_handling_fee))
 
         amazon_fee_refund_total = 0.0
         fulfillment_fee_refund_total = 0.0

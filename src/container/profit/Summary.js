@@ -1007,8 +1007,9 @@ export default function Summary() {
                 const totalReturnCount = Number(dashboardData?.header_metrics?.total_return_count) || 0;
                 const totalProfitNum = parseOverviewCurrency(dashboardData?.header_metrics?.profit);
                 const netSalesNum =
-                  parseOverviewCurrency(dashboardData?.header_metrics?.sales) ||
+                  parseOverviewCurrency(dashboardData?.header_metrics?.total_final_net_sales) ||
                   parseOverviewCurrency(dashboardData?.breakdown_table?.net?.amount) ||
+                  parseOverviewCurrency(dashboardData?.header_metrics?.sales) ||
                   0;
                 const shippingNum = Math.abs(parseOverviewCurrency(dashboardData?.header_metrics?.shipping));
 
