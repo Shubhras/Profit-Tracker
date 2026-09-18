@@ -4,6 +4,28 @@ from decimal import Decimal
 from django.db import migrations, models
 
 
+def add_columns_if_not_exists(apps, schema_editor):
+    vendor = schema_editor.connection.vendor
+    if vendor == 'postgresql':
+        schema_editor.execute("""
+            ALTER TABLE amazon_auth_profitcalculationsetting 
+            ADD COLUMN IF NOT EXISTS preview_net_sales numeric(12, 2) DEFAULT 0.00;
+        """)
+        schema_editor.execute("""
+            ALTER TABLE amazon_auth_profitcalculationsetting 
+            ADD COLUMN IF NOT EXISTS preview_product_cost numeric(12, 2) DEFAULT 0.00;
+        """)
+    else:
+        with schema_editor.connection.cursor() as cursor:
+            columns = [col.name for col in schema_editor.connection.introspection.get_table_description(
+                cursor, 'amazon_auth_profitcalculationsetting'
+            )]
+            if 'preview_net_sales' not in columns:
+                cursor.execute("ALTER TABLE amazon_auth_profitcalculationsetting ADD COLUMN preview_net_sales numeric(12, 2) DEFAULT 0.00;")
+            if 'preview_product_cost' not in columns:
+                cursor.execute("ALTER TABLE amazon_auth_profitcalculationsetting ADD COLUMN preview_product_cost numeric(12, 2) DEFAULT 0.00;")
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -11,14 +33,21 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='profitcalculationsetting',
-            name='preview_net_sales',
-            field=models.DecimalField(blank=True, decimal_places=2, default=Decimal('0.00'), max_digits=12, null=True),
-        ),
-        migrations.AddField(
-            model_name='profitcalculationsetting',
-            name='preview_product_cost',
-            field=models.DecimalField(blank=True, decimal_places=2, default=Decimal('0.00'), max_digits=12, null=True),
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AddField(
+                    model_name='profitcalculationsetting',
+                    name='preview_net_sales',
+                    field=models.DecimalField(blank=True, decimal_places=2, default=Decimal('0.00'), max_digits=12, null=True),
+                ),
+                migrations.AddField(
+                    model_name='profitcalculationsetting',
+                    name='preview_product_cost',
+                    field=models.DecimalField(blank=True, decimal_places=2, default=Decimal('0.00'), max_digits=12, null=True),
+                ),
+            ],
+            database_operations=[
+                migrations.RunPython(add_columns_if_not_exists, reverse_code=migrations.RunPython.noop),
+            ]
         ),
     ]
