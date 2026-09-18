@@ -1,28 +1,30 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Row, Col, Table, Spin, Select, Button, Input, Dropdown } from 'antd';
-import { ExportOutlined, DownOutlined, FileExcelOutlined, FileTextOutlined, SearchOutlined } from '@ant-design/icons';
-import { DataService } from '../../config/dataService/dataService';
-import { exportProfitabilityDetails } from '../../redux/dashboard/actionCreator';
+import { Row, Col, Table, Spin, Select, Button, Input, Dropdown, Tooltip } from 'antd';
+import {
+  ExportOutlined,
+  DownOutlined,
+  FileExcelOutlined,
+  FileTextOutlined,
+  SearchOutlined,
+  DollarCircleOutlined,
+  CarOutlined,
+  AuditOutlined,
+  BankOutlined,
+  SafetyCertificateOutlined,
+} from '@ant-design/icons';
+import { getPaymentReconcileDetails, exportProfitabilityDetails } from '../../redux/dashboard/actionCreator';
 
-const parseNum = (val) => {
-  if (val === null || val === undefined) return 0;
-  if (typeof val === 'number') return val;
-  const str = String(val).replace(/[^0-9.-]+/g, '');
-  return parseFloat(str) || 0;
+const parseAmount = (value) => {
+  if (value === null || value === undefined || value === '') return 0;
+  if (typeof value === 'number') return value;
+  const cleaned = String(value).replace(/[₹,\s]/g, '');
+  return parseFloat(cleaned) || 0;
 };
 
 const formatCurrency = (val) => {
-  const num = Math.abs(parseNum(val));
+  const num = Math.abs(parseAmount(val));
   return `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-};
-
-const normalizeMp = (name) => {
-  if (!name) return '';
-  return name
-    .toLowerCase()
-    .replace(/[-_]india$/i, '')
-    .trim();
 };
 
 const formatMpName = (name) => {
@@ -35,22 +37,74 @@ const formatMpName = (name) => {
   return clean.charAt(0).toUpperCase() + clean.slice(1);
 };
 
+const channelLogoMap = {
+  Amazon: '/icons/amazon.svg',
+  'Amazon-India': '/icons/amazon.svg',
+  amazon: '/icons/amazon.svg',
+  Flipkart: '/icons/flipkart.png',
+  'Flipkart-India': '/icons/flipkart.png',
+  flipkart: '/icons/flipkart.png',
+  Myntra: '/icons/myntraLogo.jpg',
+  'Myntra-India': '/icons/myntraLogo.jpg',
+  myntra: '/icons/myntraLogo.jpg',
+  Meesho: '/icons/meesho.png',
+  'Meesho-India': '/icons/meesho.png',
+  meesho: '/icons/meesho.png',
+  Blinkit: '/icons/blinkit.png',
+  Zepto: '/icons/zepto.png',
+  Nykaa: '/icons/nykaa.png',
+  Ajio: '/icons/ajio.png',
+  Shopify: '/icons/shopify.png',
+  Swiggy: '/icons/swiggy.png',
+};
+
 export default function FeeLeaks() {
   const dispatch = useDispatch();
-  const [loading, setLoading] = useState(true);
-  const [apiData, setApiData] = useState([]);
-  const [totalsData, setTotalsData] = useState({});
+  const { dateRange, profitData, loading, channel: globalChannel } = useSelector((state) => state.dashboard);
+  const profile = useSelector((state) => state.auth?.profile);
+
+  const totalsData = useMemo(() => profitData?.totals || {}, [profitData]);
 
   // Filter & Pagination States
   const [selectedMarketplace, setSelectedMarketplace] = useState('all');
-  const [selectedType, setSelectedType] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const { dateRange, channel: globalChannel } = useSelector((state) => state.dashboard);
-  const profile = useSelector((state) => state.auth?.profile);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const dataSource = useMemo(() => {
+    const rows =
+      profitData?.response?.map((item, index) => ({
+        ...item,
+        key: index,
+        asin: item.asin || item.child_sku || item.seller_sku || '-',
+        name: item.name || '',
+        channel: item.channel || '-',
+        redirecturl: item.redirecturl,
+        fees_leaks: item.fees_leaks || '₹0.0',
+        shipping_leaks: item.shipping_leaks || '₹0.0',
+        mp_gst_leaks: item.mp_gst_leaks || '₹0.0',
+        tcs_leaks: item.tcs_leaks || '₹0.0',
+        tds_leaks: item.tds_leaks || '₹0.0',
+        unsettled_not_paid: item.unsettled_not_paid || '₹0.0',
+        actual_fees: item.actual_fees || '₹0.0',
+        actual_shipping_charges: item.actual_shipping_charges || '₹0.0',
+        actual_mp_gst: item.actual_mp_gst || '₹0.0',
+        actual_tcs: item.actual_tcs || '₹0.0',
+        actual_tds: item.actual_tds || '₹0.0',
+        expected_settlement: item.expected_settlement || item.exp_settlement || '₹0.0',
+      })) || [];
+
+    return rows;
+  }, [profitData]);
 
   const marketplaceOptions = useMemo(() => {
     const connectedChannels = profile?.connected_channels || [];
@@ -78,8 +132,8 @@ export default function FeeLeaks() {
       });
     }
 
-    if (options.length === 1) {
-      const presentMp = new Set(apiData.map((row) => formatMpName(row.channel || row.channel1 || 'Amazon')));
+    if (options.length === 1 && dataSource.length > 0) {
+      const presentMp = new Set(dataSource.map((row) => formatMpName(row.channel || 'Amazon')));
       presentMp.forEach((mpName) => {
         const val = mpName.toLowerCase();
         if (!addedValues.has(val)) {
@@ -90,11 +144,11 @@ export default function FeeLeaks() {
     }
 
     return options;
-  }, [profile, globalChannel, apiData]);
+  }, [profile, globalChannel, dataSource]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedMarketplace, selectedType, selectedStatus, searchQuery, apiData]);
+  }, [selectedMarketplace, searchQuery, dataSource]);
 
   const getEffectiveChannels = (mp, globalCh) => {
     if (mp === 'amazon') {
@@ -106,294 +160,125 @@ export default function FeeLeaks() {
     return globalCh || [];
   };
 
-  // Fetch reconciliation data from backend
-  useEffect(() => {
-    let isMounted = true;
-    setLoading(true);
-
-    const payload = {
+  const buildPayload = () => {
+    return {
       filters: {
         channel: {
           IN: getEffectiveChannels(selectedMarketplace, globalChannel),
         },
         fromDate: dateRange?.fromDate || null,
         toDate: dateRange?.endDate || null,
-        ...(searchQuery.trim() && { search: searchQuery.trim() }),
+        ...(debouncedSearch.trim() && { search: debouncedSearch.trim() }),
       },
       pagination: {
         pageNo: 0,
         pageSize: 10000,
       },
     };
+  };
 
-    DataService.post('/amazon/payment-reconcile/details/by-parentproductid/', payload)
-      .then((res) => {
-        if (!isMounted) return;
-        if (res.data?.status === true || res.data?.status === 'success') {
-          setApiData(res.data.response || []);
-          setTotalsData(res.data.totals || {});
-        } else {
-          setApiData([]);
-        }
-      })
-      .catch((err) => {
-        console.error('Error fetching leak data:', err);
-        if (isMounted) setApiData([]);
-      })
-      .finally(() => {
-        if (isMounted) setLoading(false);
-      });
+  // Fetch reconciliation data using getPaymentReconcileDetails
+  useEffect(() => {
+    dispatch(getPaymentReconcileDetails(buildPayload()));
+  }, [dateRange, globalChannel, selectedMarketplace, debouncedSearch]);
 
-    return () => {
-      isMounted = false;
-    };
-  }, [dateRange, globalChannel, selectedMarketplace, searchQuery]);
-
-  // Generate granular leak records from raw API response
-  const allLeaks = useMemo(() => {
-    const leaks = [];
-    let keyCounter = 1;
-
-    apiData.forEach((row, idx) => {
-      const orderId = row.order_id || row.orderId || row.view || `ORD-${idx + 1001}`;
-      const sku = row.child_sku || row.seller_sku || row.asin || row.parent_asin || 'N/A';
-      const rawMarketplace = row.channel || row.channel1 || 'Amazon';
-      const marketplace = formatMpName(rawMarketplace);
-      const leakDate = row.date || row.order_date || 'N/A';
-
-      const feesLeak = parseNum(row.fees_leaks);
-      const shipLeak = parseNum(row.shipping_leaks);
-      const tcsLeak = parseNum(row.tcs_leaks);
-      const unsettledLeak = parseNum(row.unsettled_not_paid);
-
-      // Fee Leak
-      if (feesLeak > 0) {
-        leaks.push({
-          key: keyCounter,
-          leakId: `LEAK-FEE-${String(orderId).slice(-6)}`,
-          marketplace,
-          rawMarketplace,
-          leakType: 'Fee Leak',
-          reason: 'Excess Fee Charged',
-          orderId,
-          sku,
-          leakDate,
-          expectedAmount: formatCurrency(row.estimatefees || row.mpfees),
-          impactAmountNum: feesLeak,
-          impactAmount: `- ${formatCurrency(feesLeak)}`,
-          status: feesLeak > 500 ? 'Open' : 'In Review',
-          source: 'System',
-        });
-        keyCounter += 1;
-      }
-
-      // Shipping Leak
-      if (shipLeak > 0) {
-        leaks.push({
-          key: keyCounter,
-          leakId: `LEAK-SHP-${String(orderId).slice(-6)}`,
-          marketplace,
-          rawMarketplace,
-          leakType: 'Shipping Leak',
-          reason: 'Wrong Shipping Charge',
-          orderId,
-          sku,
-          leakDate,
-          expectedAmount: formatCurrency(row.shippingfees || row.shipping),
-          impactAmountNum: shipLeak,
-          impactAmount: `- ${formatCurrency(shipLeak)}`,
-          status: shipLeak > 300 ? 'Open' : 'In Review',
-          source: 'System',
-        });
-        keyCounter += 1;
-      }
-
-      // MP-GST Leak
-      const actualGst = parseNum(row.actual_mp_gst);
-      const estGst = parseNum(row.mp_gst);
-      const gstLeak =
-        parseNum(row.mp_gst_leaks) || (actualGst > 0 && actualGst !== estGst ? Math.abs(actualGst - estGst) : 0);
-      if (gstLeak > 0) {
-        leaks.push({
-          key: keyCounter,
-          leakId: `LEAK-GST-${String(orderId).slice(-6)}`,
-          marketplace,
-          rawMarketplace,
-          leakType: 'MP-GST Leak',
-          reason: 'MP-GST Discrepancy',
-          orderId,
-          sku,
-          leakDate,
-          expectedAmount: formatCurrency(estGst),
-          impactAmountNum: gstLeak,
-          impactAmount: `- ${formatCurrency(gstLeak)}`,
-          status: 'Open',
-          source: 'System',
-        });
-        keyCounter += 1;
-      }
-
-      // TCS Leak
-      if (tcsLeak > 0) {
-        leaks.push({
-          key: keyCounter,
-          leakId: `LEAK-TCS-${String(orderId).slice(-6)}`,
-          marketplace,
-          rawMarketplace,
-          leakType: 'TCS Leak',
-          reason: 'TCS Discrepancy',
-          orderId,
-          sku,
-          leakDate,
-          expectedAmount: formatCurrency(row.tcs),
-          impactAmountNum: tcsLeak,
-          impactAmount: `- ${formatCurrency(tcsLeak)}`,
-          status: 'Open',
-          source: 'System',
-        });
-        keyCounter += 1;
-      }
-
-      // Unsettled Leak
-      if (unsettledLeak > 0) {
-        leaks.push({
-          key: keyCounter,
-          leakId: `LEAK-UNS-${String(orderId).slice(-6)}`,
-          marketplace,
-          rawMarketplace,
-          leakType: 'Unsettled Leak',
-          reason: 'Unsettled Payment',
-          orderId,
-          sku,
-          leakDate,
-          expectedAmount: formatCurrency(row.expected_settlement || row.exp_settlement),
-          impactAmountNum: unsettledLeak,
-          impactAmount: `- ${formatCurrency(unsettledLeak)}`,
-          status: 'Open',
-          source: 'System',
-        });
-        keyCounter += 1;
-      }
-    });
-
-    return leaks;
-  }, [apiData]);
-
-  // Apply filters
-  const filteredLeaks = useMemo(() => {
-    return allLeaks.filter((item) => {
-      if (selectedMarketplace !== 'all') {
-        const itemMp = normalizeMp(item.marketplace);
-        const selMp = normalizeMp(selectedMarketplace);
-        if (itemMp !== selMp && !itemMp.includes(selMp) && !selMp.includes(itemMp)) {
-          return false;
-        }
-      }
-      if (selectedType !== 'all') {
-        const itemType = item.leakType.toLowerCase();
-        const selType = selectedType.toLowerCase();
-        if (!itemType.includes(selType) && !selType.includes(itemType)) {
-          return false;
-        }
-      }
-      if (selectedStatus !== 'all' && item.status.toLowerCase() !== selectedStatus.toLowerCase()) {
-        return false;
-      }
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        return (
-          item.orderId.toLowerCase().includes(q) ||
-          item.sku.toLowerCase().includes(q) ||
-          item.leakId.toLowerCase().includes(q)
-        );
-      }
-      return true;
-    });
-  }, [allLeaks, selectedMarketplace, selectedType, selectedStatus, searchQuery]);
-
-  // Dynamic summary statistics
+  // Summary statistics for 5 leak categories
   const summaryStats = useMemo(() => {
-    let totalAmount = 0;
-    let openAmount = 0;
-    let inReviewAmount = 0;
-    let recoveredAmount = 0;
+    let totFeesLeak = parseAmount(totalsData?.total_fees_leaks || totalsData?.fees_leaks);
+    let totShipLeak = parseAmount(totalsData?.total_shipping_leaks || totalsData?.shipping_leaks);
+    let totGstLeak = parseAmount(totalsData?.total_mp_gst_leaks || totalsData?.mp_gst_leaks);
+    let totTcsLeak = parseAmount(totalsData?.total_tcs_leaks || totalsData?.tcs_leaks);
+    let totTdsLeak = parseAmount(totalsData?.total_tds_leaks || totalsData?.tds_leaks);
+    let totUnsettled = parseAmount(totalsData?.total_unsettled_not_paid || totalsData?.unsettled_not_paid);
 
-    allLeaks.forEach((item) => {
-      totalAmount += item.impactAmountNum;
-      if (item.status === 'Open') openAmount += item.impactAmountNum;
-      else if (item.status === 'In Review') inReviewAmount += item.impactAmountNum;
-      else if (item.status === 'Recovered') recoveredAmount += item.impactAmountNum;
-    });
-
-    // Fallback calculation using totalsData if individual leaks are empty
-    if (totalAmount === 0 && totalsData) {
-      const totFeesLeak = parseNum(totalsData.total_fees_leaks || totalsData.fees_leaks);
-      const totShipLeak = parseNum(totalsData.total_shipping_leaks || totalsData.shipping_leaks);
-      const totTcsLeak = parseNum(totalsData.total_tcs_leaks || totalsData.tcs_leaks);
-      const totUnsettled = parseNum(totalsData.total_unsettled_not_paid || totalsData.unsettled_not_paid);
-
-      totalAmount = totFeesLeak + totShipLeak + totTcsLeak + totUnsettled;
-      openAmount = totalAmount * 0.75;
-      inReviewAmount = totalAmount * 0.15;
-      recoveredAmount = totalAmount * 0.1;
+    if (totFeesLeak === 0 && totShipLeak === 0 && totTcsLeak === 0 && dataSource.length > 0) {
+      dataSource.forEach((row) => {
+        totFeesLeak += parseAmount(row.fees_leaks);
+        totShipLeak += parseAmount(row.shipping_leaks);
+        totGstLeak += parseAmount(row.mp_gst_leaks);
+        totTcsLeak += parseAmount(row.tcs_leaks);
+        totTdsLeak += parseAmount(row.tds_leaks);
+        totUnsettled += parseAmount(row.unsettled_not_paid);
+      });
     }
 
-    const openPct = totalAmount ? ((openAmount / totalAmount) * 100).toFixed(1) : '0';
-    const reviewPct = totalAmount ? ((inReviewAmount / totalAmount) * 100).toFixed(1) : '0';
-    const recoveredPct = totalAmount ? ((recoveredAmount / totalAmount) * 100).toFixed(1) : '0';
+    const totalLeaksSum = totFeesLeak + totShipLeak + totGstLeak + totTcsLeak + totTdsLeak;
+
+    const feesPct = totalLeaksSum ? ((totFeesLeak / totalLeaksSum) * 100).toFixed(1) : '0';
+    const shipPct = totalLeaksSum ? ((totShipLeak / totalLeaksSum) * 100).toFixed(1) : '0';
+    const gstPct = totalLeaksSum ? ((totGstLeak / totalLeaksSum) * 100).toFixed(1) : '0';
+    const tcsPct = totalLeaksSum ? ((totTcsLeak / totalLeaksSum) * 100).toFixed(1) : '0';
+    const tdsPct = totalLeaksSum ? ((totTdsLeak / totalLeaksSum) * 100).toFixed(1) : '0';
 
     return {
-      totalAmount,
-      openAmount,
-      inReviewAmount,
-      recoveredAmount,
-      openPct,
-      reviewPct,
-      recoveredPct,
+      totFeesLeak,
+      totShipLeak,
+      totGstLeak,
+      totTcsLeak,
+      totTdsLeak,
+      totUnsettled,
+      totalLeaksSum,
+      feesPct,
+      shipPct,
+      gstPct,
+      tcsPct,
+      tdsPct,
     };
-  }, [allLeaks, totalsData]);
+  }, [dataSource, totalsData]);
 
-  // Marketplace leak breakdown for sidebar
+  // Marketplace leak breakdown for sidebar based on dropdown channels and summary cards total
   const topMarketplaces = useMemo(() => {
-    const map = {};
-    let totalAll = 0;
+    const channelsInDropdown = marketplaceOptions.filter((opt) => opt.value !== 'all');
+    const totalLeaksSum = summaryStats.totalLeaksSum || 0;
 
-    allLeaks.forEach((item) => {
-      const mp = formatMpName(item.marketplace);
-      map[mp] = (map[mp] || 0) + item.impactAmountNum;
-      totalAll += item.impactAmountNum;
-    });
+    const targetChannels = channelsInDropdown.length > 0 ? channelsInDropdown : [{ label: 'Amazon', value: 'amazon' }];
 
-    const logos = {
-      Amazon: '🛒',
-      Flipkart: '🟨',
-      Meesho: '🟪',
-      Myntra: '🟥',
-      Others: '📦',
-    };
+    return targetChannels.map((ch) => {
+      const mpName = ch.label;
+      const mpVal = String(ch.value).toLowerCase();
 
-    const entries = Object.keys(map).map((mp) => {
-      const amt = map[mp];
-      const pct = totalAll ? ((amt / totalAll) * 100).toFixed(2) : '0.00';
+      let mpTotal = 0;
+      dataSource.forEach((item) => {
+        const itemChannel = String(item.channel || '').toLowerCase();
+        const formattedName = formatMpName(item.channel);
+
+        if (
+          itemChannel.includes(mpVal) ||
+          mpVal.includes(itemChannel) ||
+          formattedName.toLowerCase() === mpName.toLowerCase()
+        ) {
+          mpTotal +=
+            parseAmount(item.fees_leaks) +
+            parseAmount(item.shipping_leaks) +
+            parseAmount(item.mp_gst_leaks) +
+            parseAmount(item.tcs_leaks) +
+            parseAmount(item.tds_leaks);
+        }
+      });
+
+      if (targetChannels.length === 1 && totalLeaksSum > 0 && mpTotal === 0) {
+        mpTotal = totalLeaksSum;
+      }
+
+      const percentage = totalLeaksSum > 0 ? ((mpTotal / totalLeaksSum) * 100).toFixed(2) : '0.00';
+
+      const logoSrc =
+        channelLogoMap[mpName] ||
+        channelLogoMap[mpVal] ||
+        (mpVal.includes('amazon') ? '/icons/amazon.svg' : null) ||
+        (mpVal.includes('flipkart') ? '/icons/flipkart.png' : null) ||
+        (mpVal.includes('myntra') ? '/icons/myntraLogo.jpg' : null) ||
+        (mpVal.includes('meesho') ? '/icons/meesho.png' : null) ||
+        '/icons/others.png';
+
       return {
-        name: mp,
-        amount: formatCurrency(amt),
-        percentage: `${pct}%`,
-        logo: logos[mp] || '📦',
+        name: mpName,
+        amount: formatCurrency(mpTotal),
+        percentage: `${percentage}%`,
+        logo: logoSrc,
       };
     });
-
-    if (entries.length === 0) {
-      return [
-        { name: 'Amazon', amount: '₹ 0.00', percentage: '0.00%', logo: '🛒' },
-        { name: 'Flipkart', amount: '₹ 0.00', percentage: '0.00%', logo: '🟨' },
-        { name: 'Meesho', amount: '₹ 0.00', percentage: '0.00%', logo: '🟪' },
-        { name: 'Myntra', amount: '₹ 0.00', percentage: '0.00%', logo: '🟥' },
-      ];
-    }
-
-    return entries;
-  }, [allLeaks]);
+  }, [marketplaceOptions, dataSource, summaryStats.totalLeaksSum]);
 
   // Export handler
   const [exportLoading, setExportLoading] = useState(false);
@@ -408,7 +293,7 @@ export default function FeeLeaks() {
           ...(searchQuery.trim() && { search: searchQuery.trim() }),
         },
       };
-      await dispatch(exportProfitabilityDetails(payload, format, '/amazon/payment-reconcile/all-leaks/export/'));
+      await dispatch(exportProfitabilityDetails(payload, format, '/amazon/payment-reconcile/details/export/'));
     } catch (error) {
       console.error('Export failed:', error);
     } finally {
@@ -431,73 +316,94 @@ export default function FeeLeaks() {
     },
   ];
 
-  const varianceSummaryColumns = [
+  const columns = [
     {
-      title: 'Leak ID',
-      dataIndex: 'leakId',
-      key: 'leakId',
-      width: 140,
-      render: (text) => <span className="font-semibold text-blue-600">{text}</span>,
-    },
-    {
-      title: 'Marketplace',
-      dataIndex: 'marketplace',
-      key: 'marketplace',
-      width: 110,
-    },
-    {
-      title: 'Leak Type',
-      dataIndex: 'leakType',
-      key: 'leakType',
-      width: 130,
-    },
-    {
-      title: 'Category / Reason',
-      dataIndex: 'reason',
-      key: 'reason',
-      width: 180,
-    },
-    {
-      title: 'SKU / ASIN',
-      dataIndex: 'sku',
-      key: 'sku',
-      width: 130,
-    },
-    {
-      title: 'Expected Amount (₹)',
-      dataIndex: 'expectedAmount',
-      key: 'expectedAmount',
-      width: 140,
-      align: 'right',
-    },
-    {
-      title: 'Impact Amount (₹)',
-      dataIndex: 'impactAmount',
-      key: 'impactAmount',
-      width: 140,
-      align: 'right',
-      render: (text) => <span className="text-red-500 font-semibold">{text}</span>,
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      width: 110,
-      render: (status) => {
-        const styles = {
-          Open: 'bg-red-100 text-red-600 font-medium',
-          'In Review': 'bg-orange-100 text-orange-600 font-medium',
-          Recovered: 'bg-green-100 text-green-600 font-medium',
-        };
-
-        return <span className={`px-2 py-1 rounded text-[10px] ${styles[status] || 'bg-gray-100'}`}>{status}</span>;
+      title: 'ASIN',
+      dataIndex: 'asin',
+      key: 'asin',
+      width: 70,
+      align: 'center',
+      render: (v, record) => {
+        if (!record?.redirecturl) return <span className="font-semibold text-blue-600">{v || '-'}</span>;
+        return (
+          <Tooltip title={record.name} color="black" overlayInnerStyle={{ color: '#fff' }}>
+            <button
+              type="button"
+              onClick={() => window.open(record.redirecturl, '_blank')}
+              className="text-blue-500 hover:text-blue-600 underline font-semibold bg-transparent border-none p-0 cursor-pointer"
+            >
+              {v}
+            </button>
+          </Tooltip>
+        );
       },
+      sorter: (a, b) => String(a.asin || '').localeCompare(String(b.asin || '')),
     },
     {
-      title: 'Detect Source',
-      dataIndex: 'source',
-      key: 'source',
-      width: 100,
+      title: 'Fee Leaks',
+      dataIndex: 'fees_leaks',
+      key: 'fees_leaks',
+      width: 70,
+      align: 'center',
+      sorter: (a, b) => parseAmount(a.fees_leaks) - parseAmount(b.fees_leaks),
+      render: (v) => (
+        <span style={{ color: parseAmount(v) !== 0 ? '#dc2626' : '#16a34a', fontWeight: 600 }}>{v || '₹ 0.00'}</span>
+      ),
+    },
+    {
+      title: 'Shipping Leaks',
+      dataIndex: 'shipping_leaks',
+      key: 'shipping_leaks',
+      width: 70,
+      align: 'center',
+      sorter: (a, b) => parseAmount(a.shipping_leaks) - parseAmount(b.shipping_leaks),
+      render: (v) => (
+        <span style={{ color: parseAmount(v) !== 0 ? '#dc2626' : '#16a34a', fontWeight: 600 }}>{v || '₹ 0.00'}</span>
+      ),
+    },
+    {
+      title: 'MP-GST Leaks',
+      dataIndex: 'mp_gst_leaks',
+      key: 'mp_gst_leaks',
+      width: 70,
+      align: 'center',
+      sorter: (a, b) => parseAmount(a.mp_gst_leaks) - parseAmount(b.mp_gst_leaks),
+      render: (v) => (
+        <span style={{ color: parseAmount(v) !== 0 ? '#dc2626' : '#16a34a', fontWeight: 600 }}>{v || '₹ 0.00'}</span>
+      ),
+    },
+    {
+      title: 'TCS Leaks',
+      dataIndex: 'tcs_leaks',
+      key: 'tcs_leaks',
+      width: 70,
+      align: 'center',
+      sorter: (a, b) => parseAmount(a.tcs_leaks) - parseAmount(b.tcs_leaks),
+      render: (v) => (
+        <span style={{ color: parseAmount(v) !== 0 ? '#dc2626' : '#16a34a', fontWeight: 600 }}>{v || '₹ 0.00'}</span>
+      ),
+    },
+    {
+      title: 'TDS Leaks',
+      dataIndex: 'tds_leaks',
+      key: 'tds_leaks',
+      width: 70,
+      align: 'center',
+      sorter: (a, b) => parseAmount(a.tds_leaks) - parseAmount(b.tds_leaks),
+      render: (v) => (
+        <span style={{ color: parseAmount(v) !== 0 ? '#dc2626' : '#16a34a', fontWeight: 600 }}>{v || '₹ 0.00'}</span>
+      ),
+    },
+    {
+      title: 'Settlement Hold',
+      dataIndex: 'unsettled_not_paid',
+      key: 'unsettled_not_paid',
+      width: 70,
+      align: 'center',
+      sorter: (a, b) => parseAmount(a.unsettled_not_paid) - parseAmount(b.unsettled_not_paid),
+      render: (v) => (
+        <span style={{ color: parseAmount(v) !== 0 ? '#dc2626' : '#16a34a', fontWeight: 600 }}>{v || '₹ 0.00'}</span>
+      ),
     },
   ];
 
@@ -530,38 +436,91 @@ export default function FeeLeaks() {
             </div>
           </div>
 
-          {/* SUMMARY CARDS */}
-          <div className="grid grid-cols-4 gap-2 xl:grid-cols-2 sm:grid-cols-1 mb-2">
-            <div className="bg-[#fff5f5] border border-[#ffe5e5] rounded-10 p-4">
-              <p className="text-[11px] text-[#ef4444] font-medium mb-2">Total Leak Amount</p>
-              <h2 className="text-[17px] font-semibold text-[#ef4444] leading-none">
-                {formatCurrency(summaryStats.totalAmount)}
-              </h2>
-              <p className="text-[10px] text-light mt-1">Total Identified Discrepancies</p>
+          {/* SUMMARY CARDS - 5 LEAK CATEGORIES */}
+          <div className="grid grid-cols-5 gap-2.5 2xl:grid-cols-5 xl:grid-cols-3 md:grid-cols-2 sm:grid-cols-1 mb-3">
+            {/* Fee Leaks */}
+            <div className="relative overflow-hidden rounded-xl border border-red-100 bg-gradient-to-br from-white via-white to-red-50/30 p-3 shadow-sm hover:shadow-md transition-all duration-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 border border-red-100 text-red-600">
+                  <DollarCircleOutlined style={{ fontSize: 15 }} />
+                </div>
+                <p className="text-[12px] font-medium text-gray-500 uppercase tracking-wider mb-1 truncate">
+                  Fee Leaks
+                </p>
+              </div>
+              <div>
+                <h2 className="text-[17px] font-bold text-red-600 leading-tight truncate">
+                  {formatCurrency(summaryStats.totFeesLeak)}
+                </h2>
+              </div>
             </div>
 
-            <div className="bg-[#faf5ff] border border-[#f1e4ff] rounded-10 p-4">
-              <p className="text-[11px] text-[#9333ea] font-medium mb-2">Open Leaks</p>
-              <h2 className="text-[17px] font-semibold text-[#9333ea] leading-none">
-                {formatCurrency(summaryStats.openAmount)}
-              </h2>
-              <p className="text-[10px] text-light mt-1">{summaryStats.openPct}% of Total Leaks</p>
+            {/* Shipping Leaks */}
+            <div className="relative overflow-hidden rounded-xl border border-amber-100 bg-gradient-to-br from-white via-white to-amber-50/30 p-3 shadow-sm hover:shadow-md transition-all duration-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 border border-amber-100 text-amber-600">
+                  <CarOutlined style={{ fontSize: 15 }} />
+                </div>
+                <p className="text-[12px] font-medium text-gray-500 uppercase tracking-wider mb-1 truncate">
+                  Shipping Leaks
+                </p>
+              </div>
+              <div>
+                <h2 className="text-[17px] font-bold text-amber-600 leading-tight truncate">
+                  {formatCurrency(summaryStats.totShipLeak)}
+                </h2>
+              </div>
             </div>
 
-            <div className="bg-[#fffaf0] border border-[#ffeccc] rounded-10 p-4">
-              <p className="text-[11px] text-[#f59e0b] font-medium mb-2">In Review</p>
-              <h2 className="text-[17px] font-semibold text-[#f59e0b] leading-none">
-                {formatCurrency(summaryStats.inReviewAmount)}
-              </h2>
-              <p className="text-[10px] text-light mt-1">{summaryStats.reviewPct}% of Total Leaks</p>
+            {/* MP-GST Leaks */}
+            <div className="relative overflow-hidden rounded-xl border border-purple-100 bg-gradient-to-br from-white via-white to-purple-50/30 p-3 shadow-sm hover:shadow-md transition-all duration-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-50 border border-purple-100 text-purple-600">
+                  <AuditOutlined style={{ fontSize: 15 }} />
+                </div>
+                <p className="text-[12px] font-medium text-gray-500 uppercase tracking-wider mb-1 truncate">
+                  MP-GST Leaks
+                </p>
+              </div>
+              <div>
+                <h2 className="text-[17px] font-bold text-purple-700 leading-tight truncate">
+                  {formatCurrency(summaryStats.totGstLeak)}
+                </h2>
+              </div>
             </div>
 
-            <div className="bg-[#f0fdf4] border border-[#dcfce7] rounded-10 p-4">
-              <p className="text-[11px] text-[#16a34a] font-medium mb-2">Recovered</p>
-              <h2 className="text-[17px] font-semibold text-[#16a34a] leading-none">
-                {formatCurrency(summaryStats.recoveredAmount)}
-              </h2>
-              <p className="text-[10px] text-light mt-1">{summaryStats.recoveredPct}% of Total Leaks</p>
+            {/* TCS Leaks */}
+            <div className="relative overflow-hidden rounded-xl border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50/30 p-3 shadow-sm hover:shadow-md transition-all duration-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 border border-blue-100 text-blue-600">
+                  <BankOutlined style={{ fontSize: 15 }} />
+                </div>
+                <p className="text-[12px] font-medium text-gray-500 uppercase tracking-wider mb-1 truncate">
+                  TCS Leaks
+                </p>
+              </div>
+              <div>
+                <h2 className="text-[17px] font-bold text-blue-600 leading-tight truncate">
+                  {formatCurrency(summaryStats.totTcsLeak)}
+                </h2>
+              </div>
+            </div>
+
+            {/* TDS Leaks */}
+            <div className="relative overflow-hidden rounded-xl border border-emerald-100 bg-gradient-to-br from-white via-white to-emerald-50/30 p-3 shadow-sm hover:shadow-md transition-all duration-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600">
+                  <SafetyCertificateOutlined style={{ fontSize: 15 }} />
+                </div>
+                <p className="text-[12px] font-medium text-gray-500 uppercase tracking-wider mb-1 truncate">
+                  TDS Leaks
+                </p>
+              </div>
+              <div>
+                <h2 className="text-[17px] font-bold text-emerald-600 leading-tight truncate">
+                  {formatCurrency(summaryStats.totTdsLeak)}
+                </h2>
+              </div>
             </div>
           </div>
 
@@ -576,38 +535,10 @@ export default function FeeLeaks() {
                 options={marketplaceOptions}
               />
 
-              <Select
-                size="small"
-                className="text-[11px] w-full"
-                value={selectedType}
-                onChange={(val) => setSelectedType(val)}
-                options={[
-                  { label: 'All Types', value: 'all' },
-                  { label: 'Fee Leaks', value: 'fee' },
-                  { label: 'Shipping Leaks', value: 'shipping' },
-                  { label: 'MP-GST Leaks', value: 'mp-gst' },
-                  { label: 'TCS Leaks', value: 'tcs' },
-                  { label: 'Unsettled Leaks', value: 'unsettled' },
-                ]}
-              />
-
-              <Select
-                size="small"
-                className="text-[11px] w-full"
-                value={selectedStatus}
-                onChange={(val) => setSelectedStatus(val)}
-                options={[
-                  { label: 'All Status', value: 'all' },
-                  { label: 'Open', value: 'open' },
-                  { label: 'In Review', value: 'in review' },
-                  { label: 'Recovered', value: 'recovered' },
-                ]}
-              />
-
               <div className="col-span-2 sm:col-span-1">
                 <Input
                   size="small"
-                  className="text-[11px]"
+                  className="text-[12px] h-[30px]"
                   placeholder="Search SKU / ASIN "
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -623,15 +554,14 @@ export default function FeeLeaks() {
             <Col xs={24} sm={24} md={24} lg={18}>
               <div className="bg-white rounded-10 shadow-regular overflow-hidden">
                 <Table
-                  columns={varianceSummaryColumns.map((item) => ({
+                  columns={columns.map((item) => ({
                     ...item,
-                    title: <span className="text-[10px] text-light font-semibold">{item.title}</span>,
                   }))}
-                  dataSource={filteredLeaks}
+                  dataSource={dataSource}
                   pagination={{
                     current: currentPage,
                     pageSize,
-                    total: filteredLeaks.length,
+                    total: dataSource.length,
                     showSizeChanger: true,
                     pageSizeOptions: ['10', '20', '50', '100'],
                     onChange: (page, newSize) => {
@@ -644,7 +574,7 @@ export default function FeeLeaks() {
                     },
                   }}
                   size="small"
-                  scroll={{ x: 1400 }}
+                  scroll={{ x: 1000 }}
                   className="
                     [&_.ant-table-thead>tr>th]:!text-[12px]
                     [&_.ant-table-thead>tr>th]:!font-semibold
@@ -667,7 +597,11 @@ export default function FeeLeaks() {
                       className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0"
                     >
                       <div className="flex items-center gap-2">
-                        <span className="text-[16px]">{item.logo}</span>
+                        {item.logo ? (
+                          <img src={item.logo} alt={item.name} className="w-5 h-5 object-contain rounded" />
+                        ) : (
+                          <span className="text-[16px]">📦</span>
+                        )}
                         <span className="text-[12px] text-[#374151] font-medium">{item.name}</span>
                       </div>
 
