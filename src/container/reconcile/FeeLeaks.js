@@ -321,8 +321,9 @@ export default function FeeLeaks() {
       title: 'ASIN',
       dataIndex: 'asin',
       key: 'asin',
-      width: 70,
+      width: 50,
       align: 'center',
+      ellipsis: true,
       render: (v, record) => {
         if (!record?.redirecturl) return <span className="font-semibold text-blue-600">{v || '-'}</span>;
         return (
@@ -343,7 +344,8 @@ export default function FeeLeaks() {
       title: 'Fee Leaks',
       dataIndex: 'fees_leaks',
       key: 'fees_leaks',
-      width: 70,
+      width: 60,
+      ellipsis: true,
       align: 'center',
       sorter: (a, b) => parseAmount(a.fees_leaks) - parseAmount(b.fees_leaks),
       render: (v) => (
@@ -354,7 +356,8 @@ export default function FeeLeaks() {
       title: 'Shipping Leaks',
       dataIndex: 'shipping_leaks',
       key: 'shipping_leaks',
-      width: 70,
+      width: 60,
+      ellipsis: true,
       align: 'center',
       sorter: (a, b) => parseAmount(a.shipping_leaks) - parseAmount(b.shipping_leaks),
       render: (v) => (
@@ -365,7 +368,8 @@ export default function FeeLeaks() {
       title: 'MP-GST Leaks',
       dataIndex: 'mp_gst_leaks',
       key: 'mp_gst_leaks',
-      width: 70,
+      width: 60,
+      ellipsis: true,
       align: 'center',
       sorter: (a, b) => parseAmount(a.mp_gst_leaks) - parseAmount(b.mp_gst_leaks),
       render: (v) => (
@@ -376,7 +380,8 @@ export default function FeeLeaks() {
       title: 'TCS Leaks',
       dataIndex: 'tcs_leaks',
       key: 'tcs_leaks',
-      width: 70,
+      width: 60,
+      ellipsis: true,
       align: 'center',
       sorter: (a, b) => parseAmount(a.tcs_leaks) - parseAmount(b.tcs_leaks),
       render: (v) => (
@@ -387,7 +392,8 @@ export default function FeeLeaks() {
       title: 'TDS Leaks',
       dataIndex: 'tds_leaks',
       key: 'tds_leaks',
-      width: 70,
+      width: 60,
+      ellipsis: true,
       align: 'center',
       sorter: (a, b) => parseAmount(a.tds_leaks) - parseAmount(b.tds_leaks),
       render: (v) => (
@@ -398,7 +404,8 @@ export default function FeeLeaks() {
       title: 'Settlement Hold',
       dataIndex: 'unsettled_not_paid',
       key: 'unsettled_not_paid',
-      width: 70,
+      width: 60,
+      ellipsis: true,
       align: 'center',
       sorter: (a, b) => parseAmount(a.unsettled_not_paid) - parseAmount(b.unsettled_not_paid),
       render: (v) => (
@@ -551,7 +558,7 @@ export default function FeeLeaks() {
 
           {/* TOP TABLE */}
           <Row gutter={[12, 12]}>
-            <Col xs={24} sm={24} md={24} lg={18}>
+            <Col xs={24} sm={24} md={24} lg={20}>
               <div className="bg-white rounded-10 shadow-regular overflow-hidden">
                 <Table
                   columns={columns.map((item) => ({
@@ -574,7 +581,7 @@ export default function FeeLeaks() {
                     },
                   }}
                   size="small"
-                  scroll={{ x: 1000 }}
+                  scroll={{ x: 800 }}
                   className="
                     [&_.ant-table-thead>tr>th]:!text-[12px]
                     [&_.ant-table-thead>tr>th]:!font-semibold
@@ -586,7 +593,7 @@ export default function FeeLeaks() {
               </div>
             </Col>
 
-            <Col xs={24} sm={24} md={24} lg={6}>
+            <Col xs={24} sm={24} md={24} lg={4}>
               <div className="flex flex-col gap-2">
                 <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
                   <h3 className="text-[13px] font-semibold text-[#111827] mb-3">Top Marketplaces by Leaks</h3>
@@ -605,9 +612,7 @@ export default function FeeLeaks() {
                         <span className="text-[12px] text-[#374151] font-medium">{item.name}</span>
                       </div>
 
-                      <span className="text-[12px] font-semibold text-[#374151]">
-                        {item.amount} <span className="text-[#6B7280] font-normal">({item.percentage})</span>
-                      </span>
+                      <span className="text-[12px] font-semibold text-[#374151]">{item.amount}</span>
                     </div>
                   ))}
                 </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Table, Tag, Tooltip, Modal, Switch, Dropdown, message } from 'antd';
+import { Button, Table, Tooltip, Modal, Switch, Dropdown, message } from 'antd';
 import {
   ArrowLeftOutlined,
   ExportOutlined,
@@ -285,11 +285,7 @@ function CampaignDetails() {
       align: 'center',
       width: 70,
       sorter: (a, b) => a.acos - b.acos,
-      render: (v) => (
-        <Tag className="!px-3 !py-[3px] !rounded-full" color={v > 100 ? 'error' : 'processing'}>
-          {v ? `${v.toFixed(2)}%` : '0'}
-        </Tag>
-      ),
+      render: (v) => <span className="font-medium text-[#111827]">{v ? `${v.toFixed(2)}%` : '0'}</span>,
     },
 
     {
@@ -298,11 +294,7 @@ function CampaignDetails() {
       align: 'center',
       sorter: (a, b) => a.roas - b.roas,
       width: 70,
-      render: (v) => (
-        <Tag className="!px-3 !py-[3px] !rounded-full" color={v >= 1 ? 'success' : 'warning'}>
-          {v ? v.toFixed(2) : '0'}
-        </Tag>
-      ),
+      render: (v) => <span className="font-medium text-[#111827]">{v ? `${v.toFixed(2)}%` : '0'}</span>,
     },
     {
       title: '',

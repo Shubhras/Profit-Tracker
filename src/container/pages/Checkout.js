@@ -840,7 +840,7 @@ function Checkout() {
           <div className="mt-6 flex justify-end gap-3">
             <button
               type="button"
-              className="rounded-[10px] border border-[#C8CDC9] bg-white px-4 py-2.5 text-sm font-semibold text-[#0D0F0E] cursor-pointer hover:border-[#0D0F0E]"
+              className="rounded-[10px] border border-[#C8CDC9] bg-white px-4 py-2.5 text-sm font-semibold text-[#0D0F0E] cursor-pointer"
               onClick={() => setConfirmSubscriptionVisible(false)}
             >
               Cancel

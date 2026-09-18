@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Tooltip, Button, Dropdown, message, Tag, Switch } from 'antd';
+import { Table, Tooltip, Button, Dropdown, message, Switch } from 'antd';
 import {
   ArrowLeftOutlined,
   SearchOutlined,
@@ -101,8 +101,8 @@ function CampaignSecondDetails() {
       cost: item.cost ?? 0,
       sales: item.sales ?? 0,
       orders: item.orders ?? 0,
-      acos: item.acos ?? (item.metrics?.acos ?? 0),
-      roas: item.roas ?? (item.metrics?.roas ?? 0),
+      acos: item.acos ?? item.metrics?.acos ?? 0,
+      roas: item.roas ?? item.metrics?.roas ?? 0,
     })) || [];
 
   const columns = [
@@ -234,11 +234,7 @@ function CampaignSecondDetails() {
       width: 70,
       sorter: (a, b) => Number(a.acos || 0) - Number(b.acos || 0),
       ellipsis: true,
-      render: (v) => (
-        <Tag className="!px-3 !py-[3px] !rounded-full" color={Number(v) > 100 ? 'error' : 'processing'}>
-          {v != null && v !== '' ? `${Number(v).toFixed(2)}%` : '0'}
-        </Tag>
-      ),
+      render: (v) => <span className="font-medium text-[#111827]">{v ? `${v.toFixed(2)}%` : '0'}</span>,
     },
     {
       title: 'ROAS',
@@ -247,11 +243,7 @@ function CampaignSecondDetails() {
       width: 70,
       sorter: (a, b) => Number(a.roas || 0) - Number(b.roas || 0),
       ellipsis: true,
-      render: (v) => (
-        <Tag className="!px-3 !py-[3px] !rounded-full" color={Number(v) >= 1 ? 'success' : 'warning'}>
-          {v != null && v !== '' ? Number(v).toFixed(2) : '0'}
-        </Tag>
-      ),
+      render: (v) => <span className="font-medium text-[#111827]">{v ? `${v.toFixed(2)}%` : '0'}</span>,
     },
   ];
 
