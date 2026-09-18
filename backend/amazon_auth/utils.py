@@ -762,7 +762,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
     # ---------------- BUILD RESPONSE ----------------
     results = []
 
-    total_sales = total_profit = total_ads = 0
+    total_sales = total_profit = total_ads = total_other_expenses = 0
     total_mpfees = total_net_sales = total_qty = total_final_net_qty = 0
     total_final_net_sales = 0
     total_returns = total_shipping = 0
@@ -1407,6 +1407,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
         
         total_estimatefees += estimated_fees
         total_mp_gst += mp_gst
+        total_other_expenses += row_other_expense
 
         total_taxable_value += taxable_value
         total_gst_payable += gst_to_pay_amount
