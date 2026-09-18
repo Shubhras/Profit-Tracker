@@ -913,13 +913,6 @@ export default function Summary() {
                           dashboardData?.breakdown_table?.['returned(CRef)']?.amount,
                         mode: 'negative',
                       },
-                      {
-                        label: 'Claims Processed',
-                        // qty: dashboardData?.breakdown_table?.claim?.qty,
-                        qty: 0,
-                        amount: dashboardData?.breakdown_table?.claim?.amount,
-                        mode: 'positive_sign',
-                      },
                     ].map((row) => (
                       <div
                         key={row.label}
@@ -954,12 +947,24 @@ export default function Summary() {
                         {formatSalesOverviewAmount(dashboardData?.breakdown_table?.net?.amount, 'net')}
                       </span>
                     </div>
+
+                    <div className="grid grid-cols-12 px-3.5 py-[6px] mt-1.5 text-[12px] border-b border-[#f3f4f6] items-center">
+                      <span className="col-span-6 font-medium text-[#111827] leading-snug">Claims Processed</span>
+
+                      <span className="col-span-3 text-center font-medium text-[#111827]">
+                        {formatSalesOverviewUnits(dashboardData?.breakdown_table?.claim?.qty, 'positive_sign')}
+                      </span>
+
+                      <span className="col-span-3 text-right font-medium text-[#111827]">
+                        {formatSalesOverviewAmount(dashboardData?.breakdown_table?.claim?.amount, 'positive_sign')}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
             </Col>
 
-            {/* ================= RIGHT CHART ================= */}
+            {/* ========RIGHT CHART ====== */}
           </Row>
         </Spin>
         <Row gutter={[16, 16]} className="mt-2">

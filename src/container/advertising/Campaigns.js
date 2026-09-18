@@ -8,10 +8,10 @@ import {
   DownOutlined,
   FileExcelOutlined,
   FileTextOutlined,
+  CloseOutlined,
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import moment from 'moment';
 import { getCampaigns, getCampaignUpdate, exportCampaigns } from '../../redux/advertising/actionCreator';
 
 function Campaigns() {
@@ -718,9 +718,7 @@ function Campaigns() {
       align: 'center',
       width: 70,
       sorter: (a, b) => a.acos - b.acos,
-      render: (v) => (
-        <span className="font-medium text-[#111827]">{v ? `${v.toFixed(2)}%` : '0'}</span>
-      ),
+      render: (v) => <span className="font-medium text-[#111827]">{v ? `${v.toFixed(2)}%` : '0'}</span>,
     },
 
     {
@@ -729,11 +727,7 @@ function Campaigns() {
       align: 'center',
       width: 70,
       sorter: (a, b) => a.roas - b.roas,
-      render: (v) => (
-        <span>
-          {v ? v.toFixed(2) : '0'}
-        </span>
-      ),
+      render: (v) => <span>{v ? v.toFixed(2) : '0'}</span>,
     },
 
     {
@@ -945,13 +939,15 @@ function Campaigns() {
                     className="h-[22px] text-[#374151] font-medium bg-transparent border-none outline-none cursor-pointer text-[12px]"
                   />
                   {effectiveStartDate && (
-                    <span
+                    <button
+                      type="button"
                       onClick={() => setStartDate('')}
-                      className="text-[#9ca3af] hover:text-[#374151] cursor-pointer text-[11px] ml-0.5"
+                      className="text-[#9ca3af] hover:text-[#374151] cursor-pointer text-[11px] ml-0.5 bg-transparent border-none p-0"
                       title="Clear Start Date"
+                      aria-label="Clear Start Date"
                     >
-                      ✕
-                    </span>
+                      <CloseOutlined />
+                    </button>
                   )}
                 </div>
 
@@ -964,13 +960,15 @@ function Campaigns() {
                     className="h-[22px] text-[#374151] font-medium bg-transparent border-none outline-none cursor-pointer text-[12px]"
                   />
                   {effectiveEndDate && (
-                    <span
+                    <button
+                      type="button"
                       onClick={() => setEndDate('')}
-                      className="text-[#9ca3af] hover:text-[#374151] cursor-pointer text-[11px] ml-0.5"
+                      className="text-[#9ca3af] hover:text-[#374151] cursor-pointer text-[11px] ml-0.5 bg-transparent border-none p-0"
                       title="Clear End Date"
+                      aria-label="Clear End Date"
                     >
-                      ✕
-                    </span>
+                      <CloseOutlined />
+                    </button>
                   )}
                 </div>
 
