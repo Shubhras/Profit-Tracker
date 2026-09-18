@@ -1626,6 +1626,8 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         "total_settlement_leak": format_currency(total_settlement_leak),
         "settlement_leak ": format_currency(total_settlement_leak),
         "release_transaction_date": "-",
+        "amazon_leaks": format_currency(abs(total_fees_leaks) + abs(total_shipping_leaks) + abs(total_mp_gst_leaks) + abs(total_tcs_leaks) + abs(total_tds_leaks)),
+        "myntra_leaks": format_currency(0),
     }
 
     results = enrich_row_image_urls(results, user=request.user)
@@ -2284,6 +2286,8 @@ def _payment_reconcile_order_level_logic(request):
         "total_settlement_leak": format_currency(tot_settlement_leak),
         "settlement_leak ": format_currency(tot_settlement_leak),
         "release_transaction_date": "-",
+        "amazon_leaks": format_currency(abs(tot_fee_leaks) + abs(tot_ship_leaks) + abs(tot_mp_gst_leaks) + abs(tot_tcs_leaks) + abs(tot_tds_leaks)),
+        "myntra_leaks": format_currency(0),
     })
     data["summary"] = _build_reconciliation_summary(rows)
     data["totals"] = totals

@@ -410,6 +410,33 @@ def _combine_totals(amazon_t, myntra_t, type="style"):
             "release_transaction_date": "-",
         })
         
+    # Calculate marketplace-wise leaks (sum of absolute leaks across all categories)
+    am_leak = (
+        abs(parse_currency_to_decimal(amazon_t.get("fees_leaks") or amazon_t.get("total_fees_leaks") or 0)) +
+        abs(parse_currency_to_decimal(amazon_t.get("shipping_leaks") or amazon_t.get("total_shipping_leaks") or 0)) +
+        abs(parse_currency_to_decimal(amazon_t.get("mp_gst_leaks") or amazon_t.get("total_mp_gst_leaks") or 0)) +
+        abs(parse_currency_to_decimal(amazon_t.get("tcs_leaks") or amazon_t.get("total_tcs_leaks") or 0)) +
+        abs(parse_currency_to_decimal(amazon_t.get("tds_leaks") or amazon_t.get("total_tds_leaks") or 0))
+    )
+
+    my_leak = (
+        abs(parse_currency_to_decimal(myntra_t.get("fees_leaks") or myntra_t.get("total_fees_leaks") or 0)) +
+        abs(parse_currency_to_decimal(myntra_t.get("shipping_leaks") or myntra_t.get("total_shipping_leaks") or 0)) +
+        abs(parse_currency_to_decimal(myntra_t.get("mp_gst_leaks") or myntra_t.get("total_mp_gst_leaks") or 0)) +
+        abs(parse_currency_to_decimal(myntra_t.get("tcs_leaks") or myntra_t.get("total_tcs_leaks") or 0)) +
+        abs(parse_currency_to_decimal(myntra_t.get("tds_leaks") or myntra_t.get("total_tds_leaks") or 0))
+    )
+
+    if "amazon_leaks" in amazon_t and amazon_t["amazon_leaks"] is not None:
+        combined["amazon_leaks"] = amazon_t["amazon_leaks"]
+    else:
+        combined["amazon_leaks"] = format_currency(am_leak)
+
+    if "myntra_leaks" in myntra_t and myntra_t["myntra_leaks"] is not None:
+        combined["myntra_leaks"] = myntra_t["myntra_leaks"]
+    else:
+        combined["myntra_leaks"] = format_currency(my_leak)
+
     return combined
 
 

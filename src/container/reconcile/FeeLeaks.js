@@ -184,21 +184,21 @@ export default function FeeLeaks() {
 
   // Summary statistics for 5 leak categories
   const summaryStats = useMemo(() => {
-    let totFeesLeak = parseAmount(totalsData?.total_fees_leaks || totalsData?.fees_leaks);
-    let totShipLeak = parseAmount(totalsData?.total_shipping_leaks || totalsData?.shipping_leaks);
-    let totGstLeak = parseAmount(totalsData?.total_mp_gst_leaks || totalsData?.mp_gst_leaks);
-    let totTcsLeak = parseAmount(totalsData?.total_tcs_leaks || totalsData?.tcs_leaks);
-    let totTdsLeak = parseAmount(totalsData?.total_tds_leaks || totalsData?.tds_leaks);
-    let totUnsettled = parseAmount(totalsData?.total_unsettled_not_paid || totalsData?.unsettled_not_paid);
+    let totFeesLeak = Math.abs(parseAmount(totalsData?.total_fees_leaks || totalsData?.fees_leaks));
+    let totShipLeak = Math.abs(parseAmount(totalsData?.total_shipping_leaks || totalsData?.shipping_leaks));
+    let totGstLeak = Math.abs(parseAmount(totalsData?.total_mp_gst_leaks || totalsData?.mp_gst_leaks));
+    let totTcsLeak = Math.abs(parseAmount(totalsData?.total_tcs_leaks || totalsData?.tcs_leaks));
+    let totTdsLeak = Math.abs(parseAmount(totalsData?.total_tds_leaks || totalsData?.tds_leaks));
+    let totUnsettled = Math.abs(parseAmount(totalsData?.total_unsettled_not_paid || totalsData?.unsettled_not_paid));
 
     if (totFeesLeak === 0 && totShipLeak === 0 && totTcsLeak === 0 && dataSource.length > 0) {
       dataSource.forEach((row) => {
-        totFeesLeak += parseAmount(row.fees_leaks);
-        totShipLeak += parseAmount(row.shipping_leaks);
-        totGstLeak += parseAmount(row.mp_gst_leaks);
-        totTcsLeak += parseAmount(row.tcs_leaks);
-        totTdsLeak += parseAmount(row.tds_leaks);
-        totUnsettled += parseAmount(row.unsettled_not_paid);
+        totFeesLeak += Math.abs(parseAmount(row.fees_leaks));
+        totShipLeak += Math.abs(parseAmount(row.shipping_leaks));
+        totGstLeak += Math.abs(parseAmount(row.mp_gst_leaks));
+        totTcsLeak += Math.abs(parseAmount(row.tcs_leaks));
+        totTdsLeak += Math.abs(parseAmount(row.tds_leaks));
+        totUnsettled += Math.abs(parseAmount(row.unsettled_not_paid));
       });
     }
 
@@ -238,23 +238,28 @@ export default function FeeLeaks() {
       const mpVal = String(ch.value).toLowerCase();
 
       let mpTotal = 0;
-      dataSource.forEach((item) => {
-        const itemChannel = String(item.channel || '').toLowerCase();
-        const formattedName = formatMpName(item.channel);
+      const keyFromTotals = totalsData?.[`${mpVal}_leaks`] ?? totalsData?.[`${mpName.toLowerCase()}_leaks`];
+      if (keyFromTotals !== undefined && keyFromTotals !== null && keyFromTotals !== '') {
+        mpTotal = Math.abs(parseAmount(keyFromTotals));
+      } else {
+        dataSource.forEach((item) => {
+          const itemChannel = String(item.channel || '').toLowerCase();
+          const formattedName = formatMpName(item.channel);
 
-        if (
-          itemChannel.includes(mpVal) ||
-          mpVal.includes(itemChannel) ||
-          formattedName.toLowerCase() === mpName.toLowerCase()
-        ) {
-          mpTotal +=
-            parseAmount(item.fees_leaks) +
-            parseAmount(item.shipping_leaks) +
-            parseAmount(item.mp_gst_leaks) +
-            parseAmount(item.tcs_leaks) +
-            parseAmount(item.tds_leaks);
-        }
-      });
+          if (
+            itemChannel.includes(mpVal) ||
+            mpVal.includes(itemChannel) ||
+            formattedName.toLowerCase() === mpName.toLowerCase()
+          ) {
+            mpTotal +=
+              Math.abs(parseAmount(item.fees_leaks)) +
+              Math.abs(parseAmount(item.shipping_leaks)) +
+              Math.abs(parseAmount(item.mp_gst_leaks)) +
+              Math.abs(parseAmount(item.tcs_leaks)) +
+              Math.abs(parseAmount(item.tds_leaks));
+          }
+        });
+      }
 
       if (targetChannels.length === 1 && totalLeaksSum > 0 && mpTotal === 0) {
         mpTotal = totalLeaksSum;
@@ -278,7 +283,7 @@ export default function FeeLeaks() {
         logo: logoSrc,
       };
     });
-  }, [marketplaceOptions, dataSource, summaryStats.totalLeaksSum]);
+  }, [marketplaceOptions, summaryStats, dataSource, totalsData]);
 
   // Export handler
   const [exportLoading, setExportLoading] = useState(false);
