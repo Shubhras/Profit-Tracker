@@ -559,6 +559,9 @@ def get_effective_user(user):
     return user
 
 
+get_parent_user = get_effective_user
+
+
 
 class EmailOTP(models.Model):
     email = models.EmailField(db_index=True)

@@ -52,7 +52,7 @@ def parse_dt(dt_str, is_end=False):
 
 
 EXCLUDED_TAX_PARENTS = {
-    'sales', 'refunded sales', 'productcharges', 'shipping', 'promotion', 'none', ''
+    'sales', 'refunded sales', 'productcharges', 'shipping', 'promotion', 'none', '', 'top', 'item'
 }
 
 
@@ -67,18 +67,11 @@ def extract_mp_gst_from_breakdowns(bds, parent_type='', is_refund_txn=False):
         if b_type.lower() == 'tax':
             p_lower = (parent_type or '').lower()
             if p_lower not in EXCLUDED_TAX_PARENTS:
-                if is_refund_txn:
-                    # In Refund transactions, include RefundCommission fee tax
-                    if p_lower == 'refundcommission':
-                        amt_data = bd.get('breakdownAmount') or {}
-                        raw_amt = float(amt_data.get('currencyAmount') or 0)
-                        total += (-raw_amt)
-                else:
-                    amt_data = bd.get('breakdownAmount') or {}
-                    raw_amt = float(amt_data.get('currencyAmount') or 0)
-                    # Negative raw_amt means fee charged (adds to tax liability)
-                    # Positive raw_amt means fee refunded (subtracts from tax liability)
-                    total += (-raw_amt)
+                amt_data = bd.get('breakdownAmount') or {}
+                raw_amt = float(amt_data.get('currencyAmount') or 0)
+                # Negative raw_amt means fee charged (adds to tax liability)
+                # Positive raw_amt means fee refunded (subtracts from tax liability)
+                total += (-raw_amt)
         sub_bds = bd.get('breakdowns')
         if sub_bds:
             total += extract_mp_gst_from_breakdowns(sub_bds, parent_type=b_type, is_refund_txn=is_refund_txn)
@@ -92,7 +85,8 @@ def calculate_transaction_actual_mp_gst(txn):
       - Shipment (Order Payment) RELEASED: sums Tax inside fee breakdowns
         (e.g., FBAPerUnitFulfillmentFee, FBAWeightBasedFee, FixedClosingFee, Commission, etc.)
       - ServiceFee RELEASED: sums Tax inside fee breakdowns (e.g., MFNPostageFee, FulfillmentFeeRefund)
-      - Refund RELEASED: sums Tax inside RefundCommission fee breakdown (customer returns)
+        or calculates 18% GST refund for EasyshipFulfillmentFeeRefund
+      - Refund RELEASED: sums Tax inside fee breakdowns (e.g., Commission, FixedClosingFee, RefundCommission)
     Ignores customer/product tax (under Sales/ProductCharges/etc.) and non-RELEASED txns.
     """
     raw = getattr(txn, 'raw_payload', None) or (txn.get('raw_payload') if isinstance(txn, dict) else None) or {}
@@ -108,23 +102,30 @@ def calculate_transaction_actual_mp_gst(txn):
     t_type = getattr(txn, 'transaction_type', None) or (txn.get('transaction_type') if isinstance(txn, dict) else None)
     desc = (getattr(txn, 'description', '') or (txn.get('description', '') if isinstance(txn, dict) else '') or '').lower()
 
-    is_refund = False
     if t_type == 'Shipment':
         if 'order payment' not in desc:
             return 0.0
     elif t_type == 'ServiceFee':
         pass
     elif t_type == 'Refund':
-        is_refund = True
+        pass
     else:
         return 0.0
+
+    if t_type == 'ServiceFee' and 'easyshipfulfillmentfeerefund' in desc:
+        total_amt = getattr(txn, 'total_amount', None)
+        if total_amt is None and isinstance(txn, dict):
+            total_amt = txn.get('total_amount')
+        amt = abs(float(total_amt or 0))
+        if amt > 0:
+            return -round(amt * 18.0 / 118.0, 2)
 
     top_bds = raw.get('breakdowns')
     top_tax = 0.0
     if isinstance(top_bds, list):
-        top_tax = extract_mp_gst_from_breakdowns(top_bds, is_refund_txn=is_refund)
+        top_tax = extract_mp_gst_from_breakdowns(top_bds, parent_type='top')
     elif isinstance(top_bds, dict):
-        top_tax = extract_mp_gst_from_breakdowns(top_bds.get('breakdowns'), is_refund_txn=is_refund)
+        top_tax = extract_mp_gst_from_breakdowns(top_bds.get('breakdowns'), parent_type='top')
 
     if top_tax != 0:
         return top_tax
@@ -134,7 +135,7 @@ def calculate_transaction_actual_mp_gst(txn):
     if isinstance(items, list):
         for item in items:
             if isinstance(item, dict):
-                item_tax += extract_mp_gst_from_breakdowns(item.get('breakdowns'), is_refund_txn=is_refund)
+                item_tax += extract_mp_gst_from_breakdowns(item.get('breakdowns'), parent_type='item')
 
     return item_tax
 
@@ -338,10 +339,18 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
     if to_date:
         order_filter &= Q(order__purchase_date__lte=to_date)
 
-    listing_qs = AmazonListingItem.objects.filter(
-        user=user,
-        sku=OuterRef("seller_sku")
-    ).order_by("-updated_at")
+    listing_qs = (
+        AmazonListingItem.objects.filter(user=user)
+        .filter(Q(sku=OuterRef("seller_sku")) | Q(asin=OuterRef("asin")))
+        .annotate(
+            is_exact_sku=Case(
+                When(sku=OuterRef("seller_sku"), then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+        )
+        .order_by("-is_exact_sku", "-updated_at")
+    )
 
     values_fields = ('asin', 'parent_asin', 'seller_sku') if by_sku else ('parent_asin',)
     items = (
@@ -352,6 +361,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             sku_standard_cost=Subquery(listing_qs.values("standard_cost")[:1]),
             sku_gst_rate=Subquery(listing_qs.values("gst_rate")[:1]),
             sku_tcs_rate=Subquery(listing_qs.values("tcs")[:1]),
+            sku_tds_rate=Subquery(listing_qs.values("tds")[:1]),
             sku_region=Subquery(listing_qs.values("region")[:1]),
         )
         .values(*values_fields)
@@ -382,6 +392,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             sku_standard_cost=Max('sku_standard_cost'),
             sku_gst_rate=Max('sku_gst_rate'),
             sku_tcs_rate=Max('sku_tcs_rate'),
+            sku_tds_rate=Max('sku_tds_rate'),
             sku_region=Max('sku_region'),
         )
     )
@@ -913,6 +924,28 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
     total_claim_count = 0
     total_replacement_count = 0
 
+    listing_items_data = list(
+        AmazonListingItem.objects.filter(user=user)
+        .values('sku', 'asin', 'standard_cost', 'gst_rate', 'tcs', 'tds', 'updated_at')
+        .order_by('-updated_at')
+    )
+
+    sku_config_map = {}
+    asin_config_map = {}
+    for li in listing_items_data:
+        s = (li.get('sku') or '').strip()
+        a = (li.get('asin') or '').strip()
+        cfg = {
+            'standard_cost': float(li.get('standard_cost') or 0.0),
+            'gst_rate': float(li.get('gst_rate') or 0.0),
+            'tcs': float(li.get('tcs') or 0.0),
+            'tds': float(li.get('tds') or 0.0),
+        }
+        if s and s not in sku_config_map:
+            sku_config_map[s] = cfg
+        if a and a not in asin_config_map:
+            asin_config_map[a] = cfg
+
     for row in items:
         if by_sku:
             seller_sku = row.get('seller_sku') or ''
@@ -1066,7 +1099,9 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             if o_act_ship == 0.0 and o_act_fba_weight > 0.0:
                 o_act_ship = max(0.0, round(o_act_fba_weight - o_ship_refund, 2))
 
-            if oid in tx_actual_mp_gst_by_order:
+            if o_act_fees == 0.0 and o_act_ship == 0.0:
+                o_act_gst = 0.0
+            elif oid in tx_actual_mp_gst_by_order:
                 o_act_gst = max(0.0, round(tx_actual_mp_gst_by_order[oid], 2))
             elif oid in order_ids_with_tx:
                 o_act_gst = 0.0
@@ -1105,22 +1140,92 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             if r < 0 or rto_amt < 0:
                 return_units += qty
 
-            o_item_price = o_new_item_price if o_item_price == 0 else o_item_price
-            o_gross = o_item_price + o_item_tax
-            o_cost = standard_cost * qty
+        # Group orders by child SKU / ASIN so child variations with distinct standard costs or TCS/TDS rates are calculated accurately
+        child_sku_orders = {}
+        for o in orders:
+            child_key = (o.get('seller_sku') or o.get('asin') or '').strip()
+            child_sku_orders.setdefault(child_key, []).append(o)
 
-            o_replacement_count = replacement_count_by_order.get(oid, 0)
-            o_return_count = refund_count_by_order.get(oid, 0)
-            o_has_return = oid in order_ids_with_refund
+        final_net_sales = 0.0
+        total_cost = 0.0
+        taxable_value = 0.0
+        gst_to_pay_amount = 0.0
+        tcs = 0.0
+        tds = 0.0
+        row_calculated_promo = 0.0
 
-            if o_replacement_count or (o_has_return and qty == o_return_count):
-                o_gross = 0.0
-                o_cost = 0.0
-                o_promo = float(str(o.get('promotion_discount') or 0))
-                promo_discount -= o_promo
+        for child_key, c_orders in child_sku_orders.items():
+            first_o = c_orders[0]
+            c_sku = (first_o.get('seller_sku') or '').strip()
+            c_asin = (first_o.get('asin') or '').strip()
+            cfg = sku_config_map.get(c_sku) or asin_config_map.get(c_asin) or asin_config_map.get(parent_asin) or {}
 
-            final_net_sales += o_gross
-            total_cost += o_cost
+            c_std_cost = cfg['standard_cost'] if 'standard_cost' in cfg else standard_cost
+            c_gst_rate = cfg['gst_rate'] if 'gst_rate' in cfg else gst_rate
+            c_tcs_rate = cfg['tcs'] if 'tcs' in cfg else tcs_rate
+            c_tds_rate = cfg['tds'] if 'tds' in cfg else (tds_rate or 1.0)
+
+            c_final_net_sales = 0.0
+            c_cost = 0.0
+            c_promo_discount = sum(float(str(o.get('promotion_discount') or 0)) for o in c_orders)
+
+            for o in c_orders:
+                oid = o['order__amazon_order_id']
+                qty = float(o['quantity_ordered'] or 0)
+                o_item_price = float(str(o.get('item_price') or 0))
+                o_new_item_price = float(str(o.get('new_item_price') or 0))
+                o_item_tax = float(str(o.get('item_tax') or 0))
+
+                o_item_price = (
+                    o_new_item_price
+                    if o_item_price == 0
+                    else o_item_price
+                )
+                o_gross = o_item_price + o_item_tax
+                o_cost = c_std_cost * qty
+
+                o_replacement_count = replacement_count_by_order.get(oid, 0)
+                o_return_count = refund_count_by_order.get(oid, 0)
+                o_has_return = oid in order_ids_with_refund
+
+                if o_replacement_count or (o_has_return and qty == o_return_count):
+                    o_gross = 0.0
+                    o_cost = 0.0
+                    o_promo = float(str(o.get('promotion_discount') or 0))
+                    c_promo_discount -= o_promo
+
+                c_final_net_sales += o_gross
+                c_cost += o_cost
+
+            c_final_net_sales = max(0.0, c_final_net_sales - c_promo_discount)
+
+            if c_gst_rate > 0:
+                c_taxable = c_final_net_sales / (1.0 + (c_gst_rate / 100.0))
+                c_gst_pay = c_final_net_sales - c_taxable
+            else:
+                c_taxable = c_final_net_sales
+                c_gst_pay = 0.0
+
+            c_tcs = c_taxable * (c_tcs_rate / 100.0) if c_tcs_rate else 0.0
+            c_tds = c_taxable * (c_tds_rate / 100.0) if c_tds_rate else 0.0
+
+            final_net_sales += c_final_net_sales
+            total_cost += c_cost
+            taxable_value += c_taxable
+            gst_to_pay_amount += c_gst_pay
+            tcs += c_tcs
+            tds += c_tds
+            row_calculated_promo += c_promo_discount
+
+        if child_sku_orders:
+            promo_discount = row_calculated_promo
+
+        if taxable_value:
+            gst_to_pay_perc = (gst_to_pay_amount / taxable_value) * 100.0
+        elif gst_rate:
+            gst_to_pay_perc = gst_rate
+        else:
+            gst_to_pay_perc = 0.0
 
         row_order_ids = [o['order__amazon_order_id'] for o in orders if o.get('order__amazon_order_id')]
         row_first_order_id = row_order_ids[0] if row_order_ids else ""
@@ -1150,23 +1255,10 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         order_claim_count = sum(claim_count_by_order.get(oid, 0) for oid in row_order_ids)
         order_replacement_count = sum(replacement_count_by_order.get(oid, 0) for oid in row_order_ids)
 
-        final_net_sales = max(0.0, final_net_sales - promo_discount)
         net_sales = gross_sales + item_tax
         adjusted_gross_sales_val = gross_sales + item_tax
 
         mpfees = -abs(estimated_fees)
-
-        if gst_rate > 0:
-            taxable_value = final_net_sales / (1.0 + (gst_rate / 100.0))
-            gst_to_pay_amount = final_net_sales - taxable_value
-            gst_to_pay_perc = gst_rate
-        else:
-            taxable_value = final_net_sales
-            gst_to_pay_amount = 0.0
-            gst_to_pay_perc = 0.0
-
-        tcs = taxable_value * ((tcs_rate or 1.0) / 100.0)
-        tds = taxable_value * ((tds_rate or 1.0) / 100.0)
         mp_gst = (-abs(estimated_fees) + shipping_price) * (18 / 118)
 
         cost = total_cost
@@ -1999,7 +2091,9 @@ def _payment_reconcile_order_level_logic(request):
         if row_actual_shipping == 0.0 and actual_fba_weight_fee > 0.0:
             row_actual_shipping = max(0.0, round(actual_fba_weight_fee - ship_fee_refund, 2))
 
-        if oid in tx_actual_mp_gst_order_level:
+        if row_actual_fees == 0.0 and row_actual_shipping == 0.0:
+            row_actual_mp_gst = 0.0
+        elif oid in tx_actual_mp_gst_order_level:
             row_actual_mp_gst = max(0.0, round(tx_actual_mp_gst_order_level[oid], 2))
         elif oid in order_ids_with_tx_order_level:
             row_actual_mp_gst = 0.0

@@ -37,8 +37,8 @@ function CampaignDetails() {
       const payload = {
         campaign_id: id,
         search: debouncedSearch,
-        ...(dateRange?.fromDate && { start_date: dateRange.fromDate, startDate: dateRange.fromDate }),
-        ...(dateRange?.endDate && { end_date: dateRange.endDate, endDate: dateRange.endDate }),
+        ...(dateRange?.fromDate && { from_date: dateRange.fromDate, start_date: dateRange.fromDate }),
+        ...(dateRange?.endDate && { to_date: dateRange.endDate, end_date: dateRange.endDate }),
       };
       const res = await dispatch(exportAdGroups(payload, format));
       if (res?.status) {
@@ -74,8 +74,8 @@ function CampaignDetails() {
       getAdsGroup(pagination.current, pagination.pageSize, {
         campaign_id: id,
         search: debouncedSearch,
-        start_date: dateRange?.fromDate,
-        end_date: dateRange?.endDate,
+        ...(dateRange?.fromDate && { from_date: dateRange.fromDate, start_date: dateRange.fromDate }),
+        ...(dateRange?.endDate && { to_date: dateRange.endDate, end_date: dateRange.endDate }),
       }),
     );
   }, [dispatch, pagination.current, pagination.pageSize, id, debouncedSearch, dateRange]);
@@ -100,14 +100,14 @@ function CampaignDetails() {
       profileId: item.profile_id,
       countryCode: item.country_code,
       currencyCode: item.currency_code,
-      impressions: item.metrics?.impressions,
-      clicks: item.metrics?.clicks,
-      cost: item.metrics?.cost,
-      sales: item.metrics?.sales,
-      orders: item.metrics?.orders,
-      units: item.metrics?.units,
-      acos: item.metrics?.acos,
-      roas: item.metrics?.roas,
+      impressions: item.metrics?.impressions ?? item.impressions,
+      clicks: item.metrics?.clicks ?? item.clicks,
+      cost: item.metrics?.cost ?? item.cost,
+      sales: item.metrics?.sales ?? item.sales,
+      orders: item.metrics?.orders ?? item.orders,
+      units: item.metrics?.units ?? item.units,
+      acos: item.metrics?.acos ?? item.acos,
+      roas: item.metrics?.roas ?? item.roas,
       createdAt: item.created_at,
     })) || [];
 
@@ -287,7 +287,7 @@ function CampaignDetails() {
       sorter: (a, b) => a.acos - b.acos,
       render: (v) => (
         <Tag className="!px-3 !py-[3px] !rounded-full" color={v > 100 ? 'error' : 'processing'}>
-          {v ? `${v.toFixed(2)}%` : '-'}
+          {v ? `${v.toFixed(2)}%` : '0'}
         </Tag>
       ),
     },
@@ -300,7 +300,7 @@ function CampaignDetails() {
       width: 70,
       render: (v) => (
         <Tag className="!px-3 !py-[3px] !rounded-full" color={v >= 1 ? 'success' : 'warning'}>
-          {v ? v.toFixed(2) : '-'}
+          {v ? v.toFixed(2) : '0'}
         </Tag>
       ),
     },
@@ -315,10 +315,12 @@ function CampaignDetails() {
         <button
           type="button"
           onClick={() => {
-            // navigate(`../campaign-second-details/${record.adGroupId}`);
-            navigate(`../campaign-second-details/${record.campaignId}`, {
+            navigate(`../campaign-second-details/${record.adGroupId || record.campaignId}`, {
               state: {
+                adGroupId: record.adGroupId,
                 adGroupName: record.name,
+                campaignId: record.campaignId,
+                campaignName: record.campaignName,
               },
             });
           }}

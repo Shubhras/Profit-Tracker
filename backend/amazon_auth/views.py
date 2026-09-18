@@ -5096,11 +5096,18 @@ def amazon_profitability_parent(request):
     # ITEMS QUERY WITH SKU LEVEL GST / COST / TCS
     # ============================================================
 
-    listing_qs = AmazonListingItem.objects.filter(
-        user=user
-    ).filter(
-        Q(sku=OuterRef("seller_sku")) | Q(asin=OuterRef("asin"))
-    ).order_by("-updated_at")
+    listing_qs = (
+        AmazonListingItem.objects.filter(user=user)
+        .filter(Q(sku=OuterRef("seller_sku")) | Q(asin=OuterRef("asin")))
+        .annotate(
+            is_exact_sku=Case(
+                When(sku=OuterRef("seller_sku"), then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+        )
+        .order_by("-is_exact_sku", "-updated_at")
+    )
 
     # ---------------- CHILD ASIN DATA ----------------
     items = (
@@ -5827,11 +5834,18 @@ def amazon_profitability_parent_transactions_shipping(request):
     # ITEMS QUERY WITH SKU LEVEL GST / COST / TCS
     # ============================================================
 
-    listing_qs = AmazonListingItem.objects.filter(
-        user=user
-    ).filter(
-        Q(sku=OuterRef("seller_sku")) | Q(asin=OuterRef("asin"))
-    ).order_by("-updated_at")
+    listing_qs = (
+        AmazonListingItem.objects.filter(user=user)
+        .filter(Q(sku=OuterRef("seller_sku")) | Q(asin=OuterRef("asin")))
+        .annotate(
+            is_exact_sku=Case(
+                When(sku=OuterRef("seller_sku"), then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+        )
+        .order_by("-is_exact_sku", "-updated_at")
+    )
 
     # ---------------- CHILD ASIN DATA ----------------
     items = (
@@ -6956,10 +6970,11 @@ def amazon_profitability_parent_transactions_shipping(request):
             )
         else:
             # default 1% TCS
-            tcs_total = (
-                taxable_value *
-                (Decimal("1") / Decimal("100"))
-            )   
+            # tcs_total = (
+            #     taxable_value *
+            #     (Decimal("1") / Decimal("100"))
+            # )   
+            tcs_total = Decimal(0)
 
         if tds_rate:
             tds_total = (
@@ -7838,10 +7853,9 @@ def sku_profit_report(request):
         # TCS
         tcs = (
             taxable_value *
-            ((tcs_rate or float("1")) / float("100"))
+            (tcs_rate / float("100"))
+            if tcs_rate else 0.0
         )
-
-        # tcs = taxable_value * (tcs_rate / 100)
 
         # ------------------------------------------------------------
         # GST %
@@ -8189,11 +8203,18 @@ def sku_profit_report_transactions_shipping(request):
     # ITEMS QUERY WITH THIS new gst and st cost
     # ============================================================
 
-    listing_qs = AmazonListingItem.objects.filter(
-        user=user
-    ).filter(
-        Q(sku=OuterRef("seller_sku")) | Q(asin=OuterRef("asin"))
-    ).order_by("-updated_at")
+    listing_qs = (
+        AmazonListingItem.objects.filter(user=user)
+        .filter(Q(sku=OuterRef("seller_sku")) | Q(asin=OuterRef("asin")))
+        .annotate(
+            is_exact_sku=Case(
+                When(sku=OuterRef("seller_sku"), then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+        )
+        .order_by("-is_exact_sku", "-updated_at")
+    )
 
     items = (
         OrderItem.objects
@@ -9173,9 +9194,14 @@ def sku_profit_report_transactions_shipping(request):
                 if taxable_value else float("0")
             )
 
+        # tcs = (
+        #     taxable_value *
+        #     ((tcs_rate or float("0")) / float("100"))
+        # )
         tcs = (
             taxable_value *
-            ((tcs_rate or float("1")) / float("100"))
+            (tcs_rate / float("100"))
+            if tcs_rate else 0.0
         )
 
         tds = (
@@ -9583,11 +9609,18 @@ def orders_profit_report_transactions_shipping(request):
     # ITEMS QUERY WITH THIS new gst and st cost
     # ============================================================
 
-    listing_qs = AmazonListingItem.objects.filter(
-        user=user
-    ).filter(
-        Q(sku=OuterRef("seller_sku")) | Q(asin=OuterRef("asin"))
-    ).order_by("-updated_at")
+    listing_qs = (
+        AmazonListingItem.objects.filter(user=user)
+        .filter(Q(sku=OuterRef("seller_sku")) | Q(asin=OuterRef("asin")))
+        .annotate(
+            is_exact_sku=Case(
+                When(sku=OuterRef("seller_sku"), then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+        )
+        .order_by("-is_exact_sku", "-updated_at")
+    )
 
     items = (
         OrderItem.objects
@@ -10478,9 +10511,14 @@ def orders_profit_report_transactions_shipping(request):
                 if taxable_value else float("0")
             )
 
+        # tcs = (
+        #     taxable_value *
+        #     ((tcs_rate or float("1")) / float("100"))
+        # )
         tcs = (
             taxable_value *
-            ((tcs_rate or float("1")) / float("100"))
+            (tcs_rate / float("100"))
+            if tcs_rate else 0.0
         )
 
         tds = (
@@ -11010,11 +11048,22 @@ def amazon_profitability_details_transactions_shipping(request):
 
     # ---------------- ORDER ITEM AGG ----------------
 
-    listing_qs = AmazonListingItem.objects.filter(
-            user=user
-        ).filter(
-            Q(asin=OuterRef("parent_asin")) | Q(asin=OuterRef("asin")) | Q(sku=OuterRef("seller_sku"))
-        ).order_by("-updated_at")
+    listing_qs = (
+        AmazonListingItem.objects.filter(user=user)
+        .filter(
+            Q(sku=OuterRef("seller_sku")) | Q(asin=OuterRef("asin")) | Q(asin=OuterRef("parent_asin"))
+        )
+        .annotate(
+            match_priority=Case(
+                When(sku=OuterRef("seller_sku"), then=Value(3)),
+                When(asin=OuterRef("asin"), then=Value(2)),
+                When(asin=OuterRef("parent_asin"), then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+        )
+        .order_by("-match_priority", "-updated_at")
+    )
     
     items = (
         OrderItem.objects
@@ -11805,6 +11854,28 @@ def amazon_profitability_details_transactions_shipping(request):
 
     other_expenses_map, total_effective_expense = calculate_other_expenses_map(user, from_date_local, to_date_local, expense_items, return_total_expense=True)
 
+    listing_items_data = list(
+        AmazonListingItem.objects.filter(user=user)
+        .values('sku', 'asin', 'standard_cost', 'gst_rate', 'tcs', 'tds', 'updated_at')
+        .order_by('-updated_at')
+    )
+
+    sku_config_map = {}
+    asin_config_map = {}
+    for li in listing_items_data:
+        s = (li.get('sku') or '').strip()
+        a = (li.get('asin') or '').strip()
+        cfg = {
+            'standard_cost': float(li.get('standard_cost') or 0.0),
+            'gst_rate': float(li.get('gst_rate') or 0.0),
+            'tcs': float(li.get('tcs') or 0.0),
+            'tds': float(li.get('tds') or 0.0),
+        }
+        if s and s not in sku_config_map:
+            sku_config_map[s] = cfg
+        if a and a not in asin_config_map:
+            asin_config_map[a] = cfg
+
     processed_parent_asins = set()
 
     for idx, row in enumerate(items):
@@ -11912,15 +11983,9 @@ def amazon_profitability_details_transactions_shipping(request):
         t_new_charge = 0.0
         gst = 0.0
 
-        final_net_sales = 0.0
-        total_cost = 0.0
-
         for o in orders:
             oid = o['order__amazon_order_id']
             qty = float(o['quantity_ordered'] or 0)
-            o_item_price = float(str(o.get('item_price') or 0))  
-            o_new_item_price = float(str(o.get('new_item_price') or 0)) 
-            o_item_tax = float(str(o.get('item_tax') or 0))
 
             f = finance_map.get(oid, {})
 
@@ -11952,34 +12017,85 @@ def amazon_profitability_details_transactions_shipping(request):
             if r < 0 or rto_amt < 0:
                 return_units += qty
 
-            # Calculate final net sales and cost for this specific order
-            
-            o_item_price = (
-                o_new_item_price
-                if o_item_price == 0
-                else o_item_price
-            )
-            o_gross = o_item_price + o_item_tax
-            # o_new_item_price
-            print("o_new_item_price newwwwwwwww>>>>>>>>>>>>>>>>",o_new_item_price)
-            
-            print("o_item_price first>>>>>>>>>>>>>>>>",o_item_price)
-            
-            print("o_gross first>>>>>>>>>>>>>>>>",o_gross)
-            o_cost = standard_cost * qty
+        # Group orders by child SKU / ASIN so child variations with distinct standard costs or TCS/TDS rates are calculated accurately
+        child_sku_orders = {}
+        for o in orders:
+            child_key = (o.get('seller_sku') or o.get('asin') or '').strip()
+            child_sku_orders.setdefault(child_key, []).append(o)
 
-            o_replacement_count = replacement_count_by_order.get(oid, 0)
-            o_return_count = refund_count_by_order.get(oid, 0)
-            o_has_return = oid in order_ids_with_refund
+        final_net_sales = 0.0
+        total_cost = 0.0
+        taxable_value = 0.0
+        gst_to_pay_amount = 0.0
+        tcs_total = 0.0
+        tds_total = 0.0
+        row_calculated_promo = 0.0
 
-            if o_replacement_count or (o_has_return and qty == o_return_count):
-                o_gross = 0.0
-                o_cost = 0.0
-                o_promo = float(str(o.get('promotion_discount') or 0))
-                promo_discount -= o_promo
+        for child_key, c_orders in child_sku_orders.items():
+            first_o = c_orders[0]
+            c_sku = (first_o.get('seller_sku') or '').strip()
+            c_asin = (first_o.get('asin') or '').strip()
+            cfg = sku_config_map.get(c_sku) or asin_config_map.get(c_asin) or asin_config_map.get(parent_asin) or {}
 
-            final_net_sales += o_gross
-            total_cost += o_cost
+            c_std_cost = cfg['standard_cost'] if 'standard_cost' in cfg else standard_cost
+            c_gst_rate = cfg['gst_rate'] if 'gst_rate' in cfg else gst_rate
+            c_tcs_rate = cfg['tcs'] if 'tcs' in cfg else tcs_rate
+            c_tds_rate = cfg['tds'] if 'tds' in cfg else tds_rate
+
+            c_final_net_sales = 0.0
+            c_cost = 0.0
+            c_promo_discount = sum(float(str(o.get('promotion_discount') or 0)) for o in c_orders)
+
+            for o in c_orders:
+                oid = o['order__amazon_order_id']
+                qty = float(o['quantity_ordered'] or 0)
+                o_item_price = float(str(o.get('item_price') or 0))
+                o_new_item_price = float(str(o.get('new_item_price') or 0))
+                o_item_tax = float(str(o.get('item_tax') or 0))
+
+                o_item_price = (
+                    o_new_item_price
+                    if o_item_price == 0
+                    else o_item_price
+                )
+                o_gross = o_item_price + o_item_tax
+                o_cost = c_std_cost * qty
+
+                o_replacement_count = replacement_count_by_order.get(oid, 0)
+                o_return_count = refund_count_by_order.get(oid, 0)
+                o_has_return = oid in order_ids_with_refund
+
+                if o_replacement_count or (o_has_return and qty == o_return_count):
+                    o_gross = 0.0
+                    o_cost = 0.0
+                    o_promo = float(str(o.get('promotion_discount') or 0))
+                    c_promo_discount -= o_promo
+
+                c_final_net_sales += o_gross
+                c_cost += o_cost
+
+            c_final_net_sales = max(0.0, c_final_net_sales - c_promo_discount)
+
+            if c_gst_rate > 0:
+                c_taxable = c_final_net_sales / (1.0 + (c_gst_rate / 100.0))
+                c_gst_pay = c_final_net_sales - c_taxable
+            else:
+                c_taxable = c_final_net_sales
+                c_gst_pay = 0.0
+
+            c_tcs = c_taxable * (c_tcs_rate / 100.0) if c_tcs_rate else 0.0
+            c_tds = c_taxable * (c_tds_rate / 100.0) if c_tds_rate else 0.0
+
+            final_net_sales += c_final_net_sales
+            total_cost += c_cost
+            taxable_value += c_taxable
+            gst_to_pay_amount += c_gst_pay
+            tcs_total += c_tcs
+            tds_total += c_tds
+            row_calculated_promo += c_promo_discount
+
+        if child_sku_orders:
+            promo_discount = row_calculated_promo
 
         # ------------------------------------------------------------
         # RETURN / CLAIM — aggregated across all orders for this parent_asin row
@@ -12026,47 +12142,12 @@ def amazon_profitability_details_transactions_shipping(request):
         order_replacement_count = sum(replacement_count_by_order.get(oid, 0) for oid in row_order_ids)
         order_is_replacement = any(oid in order_ids_with_replacement for oid in row_order_ids)
 
-        # ------------------------------------------------------------
-        # TAXABLE VALUE
-        # ------------------------------------------------------------
-        print("final_net_sales first>>>>>>>>>>>>>>>>",final_net_sales)
-        
-        final_net_sales = max(0.0, final_net_sales - promo_discount)
-
-        if gst_rate > 0:
-            taxable_value = (
-                final_net_sales / (1 + (gst_rate / 100.0))
-            )
-            gst_to_pay_amount = final_net_sales - taxable_value
-        else:
-            taxable_value = final_net_sales
-            gst_to_pay_amount = 0.0
-
-        # ------------------------------------------------------------
-        # TCS  GST TO PAY
-        # ------------------------------------------------------------
-
-        if tcs_rate:
-            tcs_total = taxable_value * (tcs_rate / 100.0)
-        else:
-            tcs_total = taxable_value * 0.01
-
-        if tds_rate:
-            tds_total = taxable_value * (tds_rate / 100.0)
-        else:
-            tds_total = 0.0
-
-        if gst_rate:
+        if taxable_value:
+            gst_to_pay_perc = (gst_to_pay_amount / taxable_value) * 100.0
+        elif gst_rate:
             gst_to_pay_perc = gst_rate
         else:
-            gst_to_pay_perc = (
-                (gst_to_pay_amount / taxable_value) * 100.0
-                if taxable_value else 0.0
-            )  
-
-
-        print("tds_rate>>>>>>??????????????????????????????????", tds_rate)    
-        print("tds_total>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", tds_total)    
+            gst_to_pay_perc = 0.0    
 
         # ---------------- CALCULATIONS ----------------
         net_qty = max(gross_qty , 0)

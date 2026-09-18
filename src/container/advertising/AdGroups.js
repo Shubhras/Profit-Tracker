@@ -38,8 +38,8 @@ function AdGroups() {
       const payload = {
         ...(debouncedSearch.trim() && { search: debouncedSearch.trim() }),
         ...(stateFilter && { state: stateFilter }),
-        ...(dateRange?.fromDate && { start_date: dateRange.fromDate, startDate: dateRange.fromDate }),
-        ...(dateRange?.endDate && { end_date: dateRange.endDate, endDate: dateRange.endDate }),
+        ...(dateRange?.fromDate && { from_date: dateRange.fromDate, start_date: dateRange.fromDate }),
+        ...(dateRange?.endDate && { to_date: dateRange.endDate, end_date: dateRange.endDate }),
       };
       const res = await dispatch(exportAdGroups(payload, format));
       if (res?.status) {
@@ -75,8 +75,8 @@ function AdGroups() {
       getAdsGroup(pagination.current, pagination.pageSize, {
         search: debouncedSearch,
         state: stateFilter,
-        start_date: dateRange?.fromDate,
-        end_date: dateRange?.endDate,
+        ...(dateRange?.fromDate && { from_date: dateRange.fromDate, start_date: dateRange.fromDate }),
+        ...(dateRange?.endDate && { to_date: dateRange.endDate, end_date: dateRange.endDate }),
       }),
     );
   }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch, stateFilter, dateRange]);
@@ -128,14 +128,14 @@ function AdGroups() {
       countryCode: item.country_code,
       currencyCode: item.currency_code,
       createdAt: item.created_at,
-      impressions: item.metrics?.impressions,
-      clicks: item.metrics?.clicks,
-      cost: item.metrics?.cost,
-      sales: item.metrics?.sales,
-      orders: item.metrics?.orders,
-      units: item.metrics?.units,
-      acos: item.metrics?.acos,
-      roas: item.metrics?.roas,
+      impressions: item.metrics?.impressions ?? item.impressions,
+      clicks: item.metrics?.clicks ?? item.clicks,
+      cost: item.metrics?.cost ?? item.cost,
+      sales: item.metrics?.sales ?? item.sales,
+      orders: item.metrics?.orders ?? item.orders,
+      units: item.metrics?.units ?? item.units,
+      acos: item.metrics?.acos ?? item.acos,
+      roas: item.metrics?.roas ?? item.roas,
     })) || [];
 
   const columns = [

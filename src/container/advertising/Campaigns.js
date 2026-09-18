@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Table, Tag, Tooltip, Switch, Modal, Dropdown, Checkbox, Popover, Input, message } from 'antd';
+import { Button, Table, Tooltip, Switch, Modal, Dropdown, Checkbox, Popover, Input, message } from 'antd';
 import {
   ExportOutlined,
   RightOutlined,
@@ -17,7 +17,6 @@ import { getCampaigns, getCampaignUpdate, exportCampaigns } from '../../redux/ad
 function Campaigns() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const todayStr = moment().format('YYYY-MM-DD');
   const [pagination, setPagination] = React.useState({
     current: 1,
     pageSize: 10,
@@ -33,13 +32,12 @@ function Campaigns() {
   const [stateFilter, setStateFilter] = useState('');
   const [targetinType, settargetingType] = useState('');
   const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState(todayStr);
+  const [endDate, setEndDate] = useState('');
   const [exportLoading, setExportLoading] = useState(false);
   const { campaignData, loading } = useSelector((state) => state.advertising);
-  const { dateRange } = useSelector((state) => state.dashboard);
 
-  const effectiveStartDate = startDate || dateRange?.fromDate || '';
-  const effectiveEndDate = endDate || dateRange?.endDate || todayStr;
+  const effectiveStartDate = startDate || '';
+  const effectiveEndDate = endDate || '';
 
   const handleExport = async (format = 'xlsx') => {
     setExportLoading(true);
@@ -721,9 +719,7 @@ function Campaigns() {
       width: 70,
       sorter: (a, b) => a.acos - b.acos,
       render: (v) => (
-        <Tag className="!px-3 !py-[3px] !rounded-full" color={v > 100 ? 'error' : 'processing'}>
-          {v ? `${v.toFixed(2)}%` : '-'}
-        </Tag>
+        <span className="font-medium text-[#111827]">{v ? `${v.toFixed(2)}%` : '0'}</span>
       ),
     },
 
@@ -734,9 +730,9 @@ function Campaigns() {
       width: 70,
       sorter: (a, b) => a.roas - b.roas,
       render: (v) => (
-        <Tag className="!px-3 !py-[3px] !rounded-full" color={v >= 1 ? 'success' : 'warning'}>
-          {v ? v.toFixed(2) : '-'}
-        </Tag>
+        <span>
+          {v ? v.toFixed(2) : '0'}
+        </span>
       ),
     },
 
@@ -945,9 +941,18 @@ function Campaigns() {
                   <input
                     type="date"
                     value={effectiveStartDate}
-                    onChange={(e) => setStartDate(e.target.value)}
+                    onChange={(e) => setStartDate(e.target.value || '')}
                     className="h-[22px] text-[#374151] font-medium bg-transparent border-none outline-none cursor-pointer text-[12px]"
                   />
+                  {effectiveStartDate && (
+                    <span
+                      onClick={() => setStartDate('')}
+                      className="text-[#9ca3af] hover:text-[#374151] cursor-pointer text-[11px] ml-0.5"
+                      title="Clear Start Date"
+                    >
+                      ✕
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-1 border border-[#dbe1e8] rounded-lg px-2.5 py-0.5 bg-white text-[12px] h-[30px]">
@@ -955,9 +960,18 @@ function Campaigns() {
                   <input
                     type="date"
                     value={effectiveEndDate}
-                    onChange={(e) => setEndDate(e.target.value)}
+                    onChange={(e) => setEndDate(e.target.value || '')}
                     className="h-[22px] text-[#374151] font-medium bg-transparent border-none outline-none cursor-pointer text-[12px]"
                   />
+                  {effectiveEndDate && (
+                    <span
+                      onClick={() => setEndDate('')}
+                      className="text-[#9ca3af] hover:text-[#374151] cursor-pointer text-[11px] ml-0.5"
+                      title="Clear End Date"
+                    >
+                      ✕
+                    </span>
+                  )}
                 </div>
 
                 <Dropdown trigger={['click']} dropdownRender={() => manageColumnsDropdown} placement="bottomRight">
