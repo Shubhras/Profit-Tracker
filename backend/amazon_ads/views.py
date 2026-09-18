@@ -27,7 +27,7 @@ from amazon_ads.services.sync.initial_ads_sync import run_initial_ads_sync
 from amazon_ads.tasks import task_run_initial_ads_sync
 from amazon_auth.models import AmazonAccount, AmazonListingItem
 from subscription.models import UserSubscription
-from user_auth.models import User
+from user_auth.models import User, get_effective_user
 
 from .models import *
 from .serializers import *
@@ -806,14 +806,18 @@ class CampaignListView(APIView):
         end_date = get_param("end_date", "endDate", "toDate", "to_date", "to")
         ordering = get_param("ordering") or "-start_date"
 
-        primary_qs = AdsCampaign.objects.filter(
-            amazon_account__user=user,
-            amazon_account__is_primary=True
-        )
-        if primary_qs.exists():
-            queryset = primary_qs
+        effective_user = get_effective_user(user)
+        if user.is_superuser or user.is_staff:
+            queryset = AdsCampaign.objects.all()
         else:
-            queryset = AdsCampaign.objects.filter(amazon_account__user=user)
+            primary_qs = AdsCampaign.objects.filter(
+                amazon_account__user=effective_user,
+                amazon_account__is_primary=True
+            )
+            if primary_qs.exists():
+                queryset = primary_qs
+            else:
+                queryset = AdsCampaign.objects.filter(amazon_account__user=effective_user)
 
         queryset = queryset.select_related(
             "amazon_account"
@@ -837,6 +841,16 @@ class CampaignListView(APIView):
 
         clean_start_date = str(start_date)[:10] if start_date else None
         clean_end_date = str(end_date)[:10] if end_date else None
+
+        if clean_start_date and clean_end_date:
+            queryset = queryset.filter(
+                start_date__gte=clean_start_date,
+                start_date__lte=clean_end_date
+            )
+        elif clean_start_date:
+            queryset = queryset.filter(start_date__gte=clean_start_date)
+        elif clean_end_date:
+            queryset = queryset.filter(start_date__lte=clean_end_date)
 
         queryset = queryset.order_by(ordering)
 
@@ -912,17 +926,22 @@ class AdsAdGroupListView(APIView):
         end_date = get_param("end_date", "endDate", "toDate", "to_date", "to")
         ordering = get_param("ordering") or "-created_at"
 
-        primary_qs = AdsAdGroup.objects.filter(
-            amazon_account__user=user,
-            amazon_account__is_primary=True
-        )
+        effective_user = get_effective_user(user)
 
-        if primary_qs.exists():
-            queryset = primary_qs
+        if user.is_superuser or user.is_staff:
+            queryset = AdsAdGroup.objects.all()
         else:
-            queryset = AdsAdGroup.objects.filter(
-                amazon_account__user=user
+            primary_qs = AdsAdGroup.objects.filter(
+                amazon_account__user=effective_user,
+                amazon_account__is_primary=True
             )
+
+            if primary_qs.exists():
+                queryset = primary_qs
+            else:
+                queryset = AdsAdGroup.objects.filter(
+                    amazon_account__user=effective_user
+                )
 
         queryset = queryset.select_related(
             "amazon_account",
@@ -951,17 +970,7 @@ class AdsAdGroupListView(APIView):
                     campaign__campaign_id=campaign_id
                 )
 
-        if start_date:
-            try:
-                queryset = queryset.filter(created_at__date__gte=str(start_date)[:10])
-            except Exception:
-                pass
-
-        if end_date:
-            try:
-                queryset = queryset.filter(created_at__date__lte=str(end_date)[:10])
-            except Exception:
-                pass
+        # Date range filter removed as AdsAdGroup records are static entities and created_at is local DB insertion time
 
         queryset = queryset.order_by(
             ordering
@@ -982,16 +991,40 @@ class AdsAdGroupListView(APIView):
 
         serializer = AdsAdGroupSerializer(
             paginated_queryset,
-            many=True
+            many=True,
+            context={
+                "request": request,
+                "start_date": start_date,
+                "end_date": end_date,
+                "from_date": start_date,
+                "to_date": end_date,
+            }
         )
 
         response = paginator.get_paginated_response(
             serializer.data
         )
 
+        total_impressions = sum((item.get("impressions") or 0) for item in serializer.data)
+        total_clicks = sum((item.get("clicks") or 0) for item in serializer.data)
+        total_cost = round(sum((item.get("cost") or 0.0) for item in serializer.data), 2)
+        total_sales = round(sum((item.get("sales") or 0.0) for item in serializer.data), 2)
+        total_orders = sum((item.get("orders") or 0) for item in serializer.data)
+        total_units = sum((item.get("units") or 0) for item in serializer.data)
+        total_acos = round((total_cost / total_sales * 100), 2) if total_sales > 0 else 0.0
+        total_roas = round((total_sales / total_cost), 2) if total_cost > 0 else 0.0
+
         response.data["summary"] = {
             "total_ad_groups": total_ad_groups,
-            "average_default_bid": round(average_bid, 2)
+            "average_default_bid": round(average_bid, 2),
+            "impressions": total_impressions,
+            "clicks": total_clicks,
+            "cost": total_cost,
+            "sales": total_sales,
+            "orders": total_orders,
+            "units": total_units,
+            "acos": total_acos,
+            "roas": total_roas,
         }
 
         return response
@@ -1240,77 +1273,82 @@ class ProductSKUReportView(APIView):
 
         user = request.user
 
-        data = request.data or {}
+        data = request.data if isinstance(request.data, dict) else {}
+        filters = data.get("filters") if isinstance(data.get("filters"), dict) else {}
 
-        search = data.get("search") or getattr(request, "query_params", {}).get("search")
+        def get_param(*keys):
+            for key in keys:
+                val = data.get(key)
+                if val is not None and str(val).strip() != "" and str(val).strip().lower() != "undefined":
+                    return str(val).strip()
+                val = filters.get(key)
+                if val is not None and str(val).strip() != "" and str(val).strip().lower() != "undefined":
+                    return str(val).strip()
+                val = getattr(request, "query_params", {}).get(key)
+                if val is not None and str(val).strip() != "" and str(val).strip().lower() != "undefined":
+                    return str(val).strip()
+            return None
 
-        state = data.get("state") or getattr(request, "query_params", {}).get("state")
+        search = get_param("search", "q", "searchTerm")
+        state = get_param("state")
+        campaign_id = get_param("campaign_id", "campaignId")
+        ad_group_id = get_param("ad_group_id", "adGroupId")
+        start_date = get_param("start_date", "startDate", "fromDate", "from_date", "from")
+        end_date = get_param("end_date", "endDate", "toDate", "to_date", "to")
+        ordering = get_param("ordering") or "-sales"
 
-        campaign_id = data.get(
-            "campaign_id"
-        ) or getattr(request, "query_params", {}).get("campaign_id")
+        effective_user = get_effective_user(user)
 
-        ad_group_id = data.get(
-            "ad_group_id"
-        ) or getattr(request, "query_params", {}).get("ad_group_id")
-
-        start_date = (
-            data.get("start_date")
-            or data.get("from_date")
-            or data.get("fromDate")
-            or getattr(request, "query_params", {}).get("start_date")
-            or getattr(request, "query_params", {}).get("from_date")
-            or getattr(request, "query_params", {}).get("fromDate")
-        )
-
-        end_date = (
-            data.get("end_date")
-            or data.get("to_date")
-            or data.get("toDate")
-            or getattr(request, "query_params", {}).get("end_date")
-            or getattr(request, "query_params", {}).get("to_date")
-            or getattr(request, "query_params", {}).get("toDate")
-        )
-
-        ordering = data.get(
-            "ordering"
-        ) or getattr(request, "query_params", {}).get("ordering") or "-sales"
-
-        queryset = AdsProductAd.objects.filter(
-            amazon_account__user=user,
-            amazon_account__is_primary=True
-        )
+        if user.is_superuser or user.is_staff:
+            queryset = AdsProductAd.objects.all()
+        else:
+            primary_qs = AdsProductAd.objects.filter(
+                amazon_account__user=effective_user,
+                amazon_account__is_primary=True
+            )
+            if primary_qs.exists():
+                queryset = primary_qs
+            else:
+                queryset = AdsProductAd.objects.filter(
+                    amazon_account__user=effective_user
+                )
 
         # SEARCH FILTER
         if search:
-
             queryset = queryset.filter(
-
                 Q(sku__icontains=search) |
-
                 Q(asin__icontains=search)
             )
 
         # STATE FILTER
-        if state:
-
+        if state and state.lower() != "all":
             queryset = queryset.filter(
                 state=state
             )
 
         # CAMPAIGN FILTER
-        if campaign_id:
-
-            queryset = queryset.filter(
-                campaign__campaign_id=campaign_id
-            )
+        if campaign_id and str(campaign_id).lower() != "all":
+            try:
+                c_int = int(campaign_id)
+                queryset = queryset.filter(
+                    Q(campaign__campaign_id=c_int) | Q(campaign__id=c_int)
+                )
+            except ValueError:
+                queryset = queryset.filter(
+                    campaign__campaign_id=campaign_id
+                )
 
         # AD GROUP FILTER
-        if ad_group_id:
-
-            queryset = queryset.filter(
-                ad_group__ad_group_id=ad_group_id
-            )
+        if ad_group_id and str(ad_group_id).lower() != "all":
+            try:
+                ag_int = int(ad_group_id)
+                queryset = queryset.filter(
+                    Q(ad_group__ad_group_id=ag_int) | Q(ad_group__id=ag_int)
+                )
+            except ValueError:
+                queryset = queryset.filter(
+                    ad_group__ad_group_id=ad_group_id
+                )
 
         # DATE FILTER
         metric_filter = Q()
@@ -1329,9 +1367,11 @@ class ProductSKUReportView(APIView):
         # =====================================================
 
         listing_queryset = AmazonListingItem.objects.filter(
-            sku=OuterRef("sku"),
-            user=user
-        ).order_by("-id")
+            sku=OuterRef("sku")
+        )
+        if not (user.is_superuser or user.is_staff):
+            listing_queryset = listing_queryset.filter(user=effective_user)
+        listing_queryset = listing_queryset.order_by("-id")
 
         # GROUP BY SKU
         
@@ -1419,6 +1459,19 @@ class ProductSKUReportView(APIView):
             queryset,
             request
         )
+
+        for item in paginated_queryset:
+            cost = float(item.get("cost") or 0)
+            sales = float(item.get("sales") or 0)
+            item["cost"] = round(cost, 2)
+            item["sales"] = round(sales, 2)
+            item["acos"] = round((cost / sales) * 100, 2) if sales > 0 else 0
+            item["roas"] = round(sales / cost, 2) if cost > 0 else 0
+            item["metrics"] = {
+                "acos": item["acos"],
+                "roas": item["roas"],
+                "units": item.get("orders") or 0,
+            }
 
         response = paginator.get_paginated_response(
             paginated_queryset

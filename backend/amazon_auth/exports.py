@@ -1898,14 +1898,14 @@ def format_ad_groups_export(data_list, totals_dict=None):
             "default_bid": item.get("default_bid", 0),
             "country_code": item.get("country_code", ""),
             "currency_code": item.get("currency_code", ""),
-            "impressions": metrics.get("impressions", 0),
-            "clicks": metrics.get("clicks", 0),
-            "cost": metrics.get("cost", 0),
-            "sales": metrics.get("sales", 0),
-            "orders": metrics.get("orders", 0),
-            "units": metrics.get("units", 0),
-            "acos": metrics.get("acos", 0),
-            "roas": metrics.get("roas", 0),
+            "impressions": metrics.get("impressions") if metrics.get("impressions") is not None else item.get("impressions", 0),
+            "clicks": metrics.get("clicks") if metrics.get("clicks") is not None else item.get("clicks", 0),
+            "cost": metrics.get("cost") if metrics.get("cost") is not None else item.get("cost", 0),
+            "sales": metrics.get("sales") if metrics.get("sales") is not None else item.get("sales", 0),
+            "orders": metrics.get("orders") if metrics.get("orders") is not None else item.get("orders", 0),
+            "units": metrics.get("units") if metrics.get("units") is not None else item.get("units", 0),
+            "acos": metrics.get("acos") if metrics.get("acos") is not None else item.get("acos", 0),
+            "roas": metrics.get("roas") if metrics.get("roas") is not None else item.get("roas", 0),
         })
 
     return formatted, None

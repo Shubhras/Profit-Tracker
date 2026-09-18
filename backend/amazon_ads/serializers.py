@@ -61,46 +61,37 @@ class AdsCampaignSerializer(serializers.ModelSerializer):
         if end_date:
             metrics_qs = metrics_qs.filter(report_date__lte=end_date)
 
-        if start_date or end_date:
-            agg = metrics_qs.aggregate(
-                total_impressions=Sum("impressions"),
-                total_clicks=Sum("clicks"),
-                total_cost=Sum("cost"),
-                total_sales=Sum("sales"),
-                total_orders=Sum("orders"),
-                total_units=Sum("units"),
-            )
-            impressions = agg["total_impressions"] or 0
-            clicks = agg["total_clicks"] or 0
-            cost = float(agg["total_cost"] or 0)
-            sales = float(agg["total_sales"] or 0)
-            orders = agg["total_orders"] or 0
-            units = agg["total_units"] or 0
-            acos = float(round((cost / sales * 100), 2)) if sales > 0 else 0.0
-            roas = float(round((sales / cost), 2)) if cost > 0 else 0.0
-            ctr = float(round((clicks / impressions * 100), 2)) if impressions > 0 else 0.0
-            cpc = float(round((cost / clicks), 2)) if clicks > 0 else 0.0
+        agg = metrics_qs.aggregate(
+            total_impressions=Sum("impressions"),
+            total_clicks=Sum("clicks"),
+            total_cost=Sum("cost"),
+            total_sales=Sum("sales"),
+            total_orders=Sum("orders"),
+            total_units=Sum("units"),
+        )
+        impressions = agg["total_impressions"] or 0
+        clicks = agg["total_clicks"] or 0
+        cost = float(agg["total_cost"] or 0)
+        sales = float(agg["total_sales"] or 0)
+        orders = agg["total_orders"] or 0
+        units = agg["total_units"] or 0
+        acos = float(round((cost / sales * 100), 2)) if sales > 0 else 0.0
+        roas = float(round((sales / cost), 2)) if cost > 0 else 0.0
+        ctr = float(round((clicks / impressions * 100), 2)) if impressions > 0 else 0.0
+        cpc = float(round((cost / clicks), 2)) if clicks > 0 else 0.0
 
-            return {
-                "impressions": impressions,
-                "clicks": clicks,
-                "cost": round(cost, 2),
-                "sales": round(sales, 2),
-                "orders": orders,
-                "units": units,
-                "acos": acos,
-                "roas": roas,
-                "ctr": ctr,
-                "cpc": cpc,
-            }
-
-        latest_metric = metrics_qs.order_by("-report_date").first()
-        if latest_metric:
-            return CampaignMetricSerializer(
-                latest_metric
-            ).data
-
-        return None
+        return {
+            "impressions": impressions,
+            "clicks": clicks,
+            "cost": round(cost, 2),
+            "sales": round(sales, 2),
+            "orders": orders,
+            "units": units,
+            "acos": acos,
+            "roas": roas,
+            "ctr": ctr,
+            "cpc": cpc,
+        }
     
 
 # serializers.py
@@ -112,45 +103,213 @@ class AdsAdGroupSerializer(serializers.ModelSerializer):
     profile_id = serializers.SerializerMethodField()
     country_code = serializers.SerializerMethodField()
     currency_code = serializers.SerializerMethodField()
+    impressions = serializers.SerializerMethodField()
+    clicks = serializers.SerializerMethodField()
+    cost = serializers.SerializerMethodField()
+    sales = serializers.SerializerMethodField()
+    orders = serializers.SerializerMethodField()
+    units = serializers.SerializerMethodField()
+    acos = serializers.SerializerMethodField()
+    roas = serializers.SerializerMethodField()
+    metrics = serializers.SerializerMethodField()
 
     class Meta:
-
         model = AdsAdGroup
-
         fields = [
-
             "id",
-            "ad_group_id","name","state",
-            "default_bid","campaign","campaign_name",
-            "campaign_id_value","profile_id",
-            "country_code", "currency_code","raw_data", "created_at"
+            "ad_group_id",
+            "name",
+            "state",
+            "default_bid",
+            "campaign",
+            "campaign_name",
+            "campaign_id_value",
+            "profile_id",
+            "country_code",
+            "currency_code",
+            "impressions",
+            "clicks",
+            "cost",
+            "sales",
+            "orders",
+            "units",
+            "acos",
+            "roas",
+            "metrics",
+            "raw_data",
+            "created_at",
         ]
 
     def get_campaign_name(self, obj):
-
         if obj.campaign:
             return obj.campaign.name
-
         return None
 
     def get_campaign_id_value(self, obj):
-
         if obj.campaign:
             return obj.campaign.campaign_id
-
         return None
 
     def get_profile_id(self, obj):
-
-        return obj.amazon_account.profile_id
+        return obj.amazon_account.profile_id if obj.amazon_account else None
 
     def get_country_code(self, obj):
-
-        return obj.amazon_account.country_code
+        return obj.amazon_account.country_code if obj.amazon_account else None
 
     def get_currency_code(self, obj):
+        return obj.amazon_account.currency_code if obj.amazon_account else None
 
-        return obj.amazon_account.currency_code    
+    def _get_metrics_data(self, obj):
+        if hasattr(obj, "_cached_metrics_data"):
+            return obj._cached_metrics_data
+
+        context = self.context or {}
+        start_date = context.get("start_date") or context.get("from_date")
+        end_date = context.get("end_date") or context.get("to_date")
+
+        # 1. ProductAdMetric via product ads in this ad group
+        pam_qs = ProductAdMetric.objects.filter(product_ad__ad_group=obj)
+        if start_date:
+            pam_qs = pam_qs.filter(report_date__gte=start_date)
+        if end_date:
+            pam_qs = pam_qs.filter(report_date__lte=end_date)
+
+        if pam_qs.exists():
+            agg = pam_qs.aggregate(
+                total_impressions=Sum("impressions"),
+                total_clicks=Sum("clicks"),
+                total_cost=Sum("cost"),
+                total_sales=Sum("sales"),
+                total_orders=Sum("orders"),
+            )
+            impressions = agg["total_impressions"] or 0
+            clicks = agg["total_clicks"] or 0
+            cost = float(agg["total_cost"] or 0)
+            sales = float(agg["total_sales"] or 0)
+            orders = agg["total_orders"] or 0
+            units = orders
+        else:
+            # 2. Check KeywordMetric
+            kw_qs = KeywordMetric.objects.filter(keyword__ad_group=obj)
+            if start_date:
+                kw_qs = kw_qs.filter(report_date__gte=start_date)
+            if end_date:
+                kw_qs = kw_qs.filter(report_date__lte=end_date)
+
+            if kw_qs.exists():
+                kw_agg = kw_qs.aggregate(
+                    total_impressions=Sum("impressions"),
+                    total_clicks=Sum("clicks"),
+                    total_cost=Sum("cost"),
+                    total_sales=Sum("sales"),
+                    total_orders=Sum("orders"),
+                )
+                impressions = kw_agg["total_impressions"] or 0
+                clicks = kw_agg["total_clicks"] or 0
+                cost = float(kw_agg["total_cost"] or 0)
+                sales = float(kw_agg["total_sales"] or 0)
+                orders = kw_agg["total_orders"] or 0
+                units = orders
+            else:
+                # 3. Check TargetMetric
+                tgt_qs = TargetMetric.objects.filter(target__ad_group=obj)
+                if start_date:
+                    tgt_qs = tgt_qs.filter(report_date__gte=start_date)
+                if end_date:
+                    tgt_qs = tgt_qs.filter(report_date__lte=end_date)
+
+                if tgt_qs.exists():
+                    tgt_agg = tgt_qs.aggregate(
+                        total_impressions=Sum("impressions"),
+                        total_clicks=Sum("clicks"),
+                        total_cost=Sum("cost"),
+                        total_sales=Sum("sales"),
+                        total_orders=Sum("orders"),
+                    )
+                    impressions = tgt_agg["total_impressions"] or 0
+                    clicks = tgt_agg["total_clicks"] or 0
+                    cost = float(tgt_agg["total_cost"] or 0)
+                    sales = float(tgt_agg["total_sales"] or 0)
+                    orders = tgt_agg["total_orders"] or 0
+                    units = orders
+                else:
+                    # 4. Fallback to CampaignMetric if only 1 ad group in campaign
+                    if obj.campaign and AdsAdGroup.objects.filter(campaign=obj.campaign).count() == 1:
+                        cm_qs = CampaignMetric.objects.filter(campaign=obj.campaign)
+                        if start_date:
+                            cm_qs = cm_qs.filter(report_date__gte=start_date)
+                        if end_date:
+                            cm_qs = cm_qs.filter(report_date__lte=end_date)
+                        cm_agg = cm_qs.aggregate(
+                            total_impressions=Sum("impressions"),
+                            total_clicks=Sum("clicks"),
+                            total_cost=Sum("cost"),
+                            total_sales=Sum("sales"),
+                            total_orders=Sum("orders"),
+                            total_units=Sum("units"),
+                        )
+                        impressions = cm_agg["total_impressions"] or 0
+                        clicks = cm_agg["total_clicks"] or 0
+                        cost = float(cm_agg["total_cost"] or 0)
+                        sales = float(cm_agg["total_sales"] or 0)
+                        orders = cm_agg["total_orders"] or 0
+                        units = cm_agg["total_units"] or orders
+                    else:
+                        impressions = 0
+                        clicks = 0
+                        cost = 0.0
+                        sales = 0.0
+                        orders = 0
+                        units = 0
+
+        cost = round(cost, 2)
+        sales = round(sales, 2)
+        acos = float(round((cost / sales * 100), 2)) if sales > 0 else 0.0
+        roas = float(round((sales / cost), 2)) if cost > 0 else 0.0
+        ctr = float(round((clicks / impressions * 100), 2)) if impressions > 0 else 0.0
+        cpc = float(round((cost / clicks), 2)) if clicks > 0 else 0.0
+
+        metrics = {
+            "impressions": impressions,
+            "clicks": clicks,
+            "cost": cost,
+            "sales": sales,
+            "orders": orders,
+            "units": units,
+            "acos": acos,
+            "roas": roas,
+            "ctr": ctr,
+            "cpc": cpc,
+        }
+        obj._cached_metrics_data = metrics
+        return metrics
+
+    def get_metrics(self, obj):
+        return self._get_metrics_data(obj)
+
+    def get_impressions(self, obj):
+        return self._get_metrics_data(obj)["impressions"]
+
+    def get_clicks(self, obj):
+        return self._get_metrics_data(obj)["clicks"]
+
+    def get_cost(self, obj):
+        return self._get_metrics_data(obj)["cost"]
+
+    def get_sales(self, obj):
+        return self._get_metrics_data(obj)["sales"]
+
+    def get_orders(self, obj):
+        return self._get_metrics_data(obj)["orders"]
+
+    def get_units(self, obj):
+        return self._get_metrics_data(obj)["units"]
+
+    def get_acos(self, obj):
+        return self._get_metrics_data(obj)["acos"]
+
+    def get_roas(self, obj):
+        return self._get_metrics_data(obj)["roas"]    
     
 
 

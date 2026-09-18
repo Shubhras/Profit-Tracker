@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Tooltip, Button, Dropdown, message } from 'antd';
+import { Table, Tooltip, Button, Dropdown, message, Tag, Switch } from 'antd';
 import {
   ArrowLeftOutlined,
   SearchOutlined,
@@ -10,7 +10,7 @@ import {
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { getSearchTerms, exportSearchTerms } from '../../redux/advertising/actionCreator';
+import { getAdProducts, exportAdProducts } from '../../redux/advertising/actionCreator';
 
 function CampaignSecondDetails() {
   const { id } = useParams();
@@ -27,33 +27,30 @@ function CampaignSecondDetails() {
     pageSize: 10,
   });
 
-  const { searchTerms, loading } = useSelector((state) => state.advertising);
-  const { dateRange } = useSelector((state) => state.dashboard);
+  const { adsProductsData, loading } = useSelector((state) => ({
+    loading: state.advertising.loading,
+    adsProductsData: state.advertising.adsProductsData,
+  }));
+
+  const adGroupId = location.state?.adGroupId || id;
+  const adGroupName = location.state?.adGroupName || '';
 
   const handleExport = async (format = 'xlsx') => {
     setExportLoading(true);
     try {
       const payload = {
-        filters: {
-          campaign_id: Number(id),
-          search: debouncedSearch,
-          ...(dateRange?.fromDate && { from_date: dateRange.fromDate, start_date: dateRange.fromDate }),
-          ...(dateRange?.endDate && { to_date: dateRange.endDate, end_date: dateRange.endDate }),
-        },
-        pagination: {
-          pageNo: 1,
-          pageSize: 10,
-        },
+        ad_group_id: adGroupId,
+        search: debouncedSearch,
       };
-      const res = await dispatch(exportSearchTerms(payload, format));
+      const res = await dispatch(exportAdProducts(payload, format));
       if (res?.status) {
         message.success('Export report generated successfully!');
       } else {
-        message.error(res?.message || 'Failed to export search terms');
+        message.error(res?.message || 'Failed to export ad products');
       }
     } catch (err) {
       console.error(err);
-      message.error('Failed to export search terms');
+      message.error('Failed to export ad products');
     } finally {
       setExportLoading(false);
     }
@@ -76,20 +73,12 @@ function CampaignSecondDetails() {
 
   useEffect(() => {
     dispatch(
-      getSearchTerms({
-        filters: {
-          campaign_id: Number(id),
-          search: debouncedSearch,
-          ...(dateRange?.fromDate && { from_date: dateRange.fromDate }),
-          ...(dateRange?.endDate && { to_date: dateRange.endDate }),
-        },
-        pagination: {
-          pageNo: pagination.current,
-          pageSize: pagination.pageSize,
-        },
+      getAdProducts(pagination.current, pagination.pageSize, {
+        ad_group_id: adGroupId,
+        search: debouncedSearch,
       }),
     );
-  }, [dispatch, pagination.current, pagination.pageSize, id, debouncedSearch, dateRange]);
+  }, [dispatch, pagination.current, pagination.pageSize, adGroupId, debouncedSearch]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -100,97 +89,169 @@ function CampaignSecondDetails() {
   }, [searchText]);
 
   const dataSource =
-    searchTerms?.data?.map((item, index) => ({
-      key: item.id || index,
-      campaignName: item.campaign_name,
-      searchTerm: item.search_term,
-      clicks: item.clicks,
-      cost: item.cost,
-      sales: item.sales,
-      orders: item.orders,
-      acos: item.acos,
-      roas: item.roas,
+    adsProductsData?.results?.map((item, index) => ({
+      key: item.id || item.sku || index,
+      image: item.image_url,
+      sku: item.sku,
+      asin: item.asin,
+      state: item.state,
+      totalads: item.total_ads,
+      impressions: item.impressions ?? 0,
+      clicks: item.clicks ?? 0,
+      cost: item.cost ?? 0,
+      sales: item.sales ?? 0,
+      orders: item.orders ?? 0,
+      acos: item.acos ?? (item.metrics?.acos ?? 0),
+      roas: item.roas ?? (item.metrics?.roas ?? 0),
     })) || [];
-  const adGroupName = location?.state?.adGroupName || '-';
 
   const columns = [
     {
-      title: 'Campaign Name',
-      dataIndex: 'campaignName',
-      align: 'center',
+      title: 'State',
+      dataIndex: 'state',
       width: 70,
+      align: 'center',
+      render: (v) => <Switch checked={v === 'ENABLED'} size="small" />,
+    },
+    {
+      title: 'Image',
+      dataIndex: 'image',
+      width: 70,
+      align: 'center',
+      render: (image) => (
+        <div className="flex justify-center">
+          {image ? (
+            <img
+              src={image}
+              alt="product"
+              className="w-[35px] h-[35px] rounded-xl object-cover border border-[#e5e7eb] p-[2px] bg-white shadow-sm"
+            />
+          ) : (
+            <div className="w-[35px] h-[35px] rounded-xl bg-gray-100 flex items-center justify-center text-xs text-gray-400">
+              -
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      title: 'SKU',
+      dataIndex: 'sku',
+      align: 'center',
+      width: 80,
       ellipsis: true,
-      sorter: (a, b) => String(a.campaignName).localeCompare(String(b.campaignName)),
+      sorter: (a, b) => String(a.sku || '').localeCompare(String(b.sku || '')),
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-          <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
-            {v}
+          <span
+            className="font-medium text-[#2563eb] block truncate cursor-pointer mx-auto"
+            style={{ maxWidth: '120px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+          >
+            {v || '-'}
           </span>
         </Tooltip>
       ),
     },
     {
-      title: 'Search Term',
-      dataIndex: 'searchTerm',
+      title: 'ASIN',
+      dataIndex: 'asin',
       align: 'center',
-      width: 70,
+      width: 80,
+      ellipsis: true,
+      sorter: (a, b) => String(a.asin || '').localeCompare(String(b.asin || '')),
       render: (v) => (
         <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-          <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
-            {v}
+          <span
+            className="font-medium text-[#111827] block truncate cursor-pointer mx-auto"
+            style={{ maxWidth: '120px' }}
+          >
+            {v || '-'}
           </span>
         </Tooltip>
       ),
-      sorter: (a, b) => String(a.searchTerm).localeCompare(String(b.searchTerm)),
+    },
+    {
+      title: 'Total Ads',
+      dataIndex: 'totalads',
+      align: 'center',
+      width: 70,
+      sorter: (a, b) => Number(a.totalads || 0) - Number(b.totalads || 0),
+      ellipsis: true,
+      render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
+    },
+    {
+      title: 'Impressions',
+      dataIndex: 'impressions',
+      align: 'center',
+      width: 70,
+      sorter: (a, b) => Number(a.impressions || 0) - Number(b.impressions || 0),
+      ellipsis: true,
+      render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
     {
       title: 'Clicks',
       dataIndex: 'clicks',
       align: 'center',
       width: 70,
-      render: (v) => v || '-',
-      sorter: (a, b) => a.clicks - b.clicks,
+      sorter: (a, b) => Number(a.clicks || 0) - Number(b.clicks || 0),
+      ellipsis: true,
+      render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
     {
       title: 'Cost',
       dataIndex: 'cost',
       align: 'center',
       width: 70,
-      render: (v) => v || '-',
-      sorter: (a, b) => a.cost - b.cost,
+      sorter: (a, b) => Number(a.cost || 0) - Number(b.cost || 0),
+      ellipsis: true,
+      render: (v) => <span className="font-medium text-[#dc2626]">₹{Number(v ?? 0).toFixed(2)}</span>,
     },
-
     {
       title: 'Sales',
       dataIndex: 'sales',
       align: 'center',
       width: 70,
-      render: (v) => v || '-',
-      sorter: (a, b) => a.sales - b.sales,
+      sorter: (a, b) => Number(a.sales || 0) - Number(b.sales || 0),
+      ellipsis: true,
+      render: (v) => {
+        const formattedValue = Number(v ?? 0).toLocaleString('en-IN');
+        return <span className="font-medium text-[#16a34a] block truncate">₹{formattedValue}</span>;
+      },
     },
     {
       title: 'Orders',
       dataIndex: 'orders',
       align: 'center',
       width: 70,
-      render: (v) => v || '-',
-      sorter: (a, b) => a.orders - b.orders,
+      sorter: (a, b) => Number(a.orders || 0) - Number(b.orders || 0),
+      ellipsis: true,
+      render: (v) => <span className="font-medium text-[#111827]">{v ?? '-'}</span>,
     },
     {
       title: 'ACOS',
       dataIndex: 'acos',
       align: 'center',
       width: 70,
-      render: (v) => v || '-',
-      sorter: (a, b) => a.acos - b.acos,
+      sorter: (a, b) => Number(a.acos || 0) - Number(b.acos || 0),
+      ellipsis: true,
+      render: (v) => (
+        <Tag className="!px-3 !py-[3px] !rounded-full" color={Number(v) > 100 ? 'error' : 'processing'}>
+          {v != null && v !== '' ? `${Number(v).toFixed(2)}%` : '0'}
+        </Tag>
+      ),
     },
     {
       title: 'ROAS',
       dataIndex: 'roas',
       align: 'center',
       width: 70,
-      render: (v) => (v != null ? Number(v).toFixed(2) : '-'),
-      sorter: (a, b) => a.roas - b.roas,
+      sorter: (a, b) => Number(a.roas || 0) - Number(b.roas || 0),
+      ellipsis: true,
+      render: (v) => (
+        <Tag className="!px-3 !py-[3px] !rounded-full" color={Number(v) >= 1 ? 'success' : 'warning'}>
+          {v != null && v !== '' ? Number(v).toFixed(2) : '0'}
+        </Tag>
+      ),
     },
   ];
 
@@ -230,7 +291,7 @@ function CampaignSecondDetails() {
                   type="text"
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
-                  placeholder="Search ad groups..."
+                  placeholder="Search ad products..."
                   className="w-full h-[30px] rounded-lg border border-[#dbe1e8] bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm focus:border-[#2563eb]"
                 />
 
@@ -260,7 +321,7 @@ function CampaignSecondDetails() {
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
-              total: searchTerms?.pagination?.totalItems || 0,
+              total: adsProductsData?.pagination?.total_records || 0,
               showSizeChanger: true,
               pageSizeOptions: ['10', '20', '50', '100'],
               showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,

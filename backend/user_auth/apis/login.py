@@ -89,6 +89,7 @@ class UserLoginAPI(APIView):
             has_subscription = True
             subscription_status = "active"
             is_trial = False
+            free_trail_use = False
             subscription_data = None
         else:
             subscription_user = subuser_obj.parent if (subuser_obj and subuser_obj.parent) else user
@@ -170,6 +171,28 @@ class UserLoginAPI(APIView):
                     or (hasattr(subscription_user, "profile") and subscription_user.profile and subscription_user.profile.trial_end_date and subscription_user.profile.trial_end_date > now)
                 )
             )
+            user_profile = getattr(subscription_user, "profile", None)
+            profile_trial_used = bool(
+                user_profile and (
+                    user_profile.trial_start_date is not None
+                    or (user_profile.subscriptiontype and "starter" in (user_profile.subscriptiontype.plan_name or "").lower())
+                )
+            )
+            has_starter_sub = UserSubscription.objects.filter(
+                user=subscription_user,
+                is_paid=True
+            ).filter(
+                Q(plan__plan_name__icontains="starter") | Q(plan__slug__icontains="starter") | Q(amount=0, next_plan__isnull=False)
+            ).exists()
+            current_starter = bool(
+                sub
+                and sub.is_paid
+                and (
+                    (sub.plan and "starter" in (sub.plan.plan_name or "").lower())
+                    or (sub.plan and "starter" in (getattr(sub.plan, "slug", None) or "").lower())
+                )
+            )
+            free_trail_use = bool(has_starter_sub or current_starter or profile_trial_used)
             subscription_data = None
 
             if sub and sub.plan:
@@ -278,6 +301,7 @@ class UserLoginAPI(APIView):
                 "subscription_status": subscription_status,
                 "is_trial": is_trial,
                 "isTrial": is_trial,
+                "free_trail_use": free_trail_use,
                 "subscription": subscription_data
             }
         }, status=status.HTTP_200_OK)

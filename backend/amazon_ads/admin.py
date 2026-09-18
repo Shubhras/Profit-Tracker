@@ -122,7 +122,15 @@ class AdsAdGroupAdmin(admin.ModelAdmin):
         "default_bid",
         "created_at",
     )
-    search_fields = ("name", "ad_group_id")
+    search_fields = (
+        "name",
+        "ad_group_id",
+        "campaign__campaign_id",
+        "campaign__id",
+        "campaign__name",
+        "amazon_account__profile_id",
+        "amazon_account__user__email",
+    )
     list_filter = ("state", "created_at")
     readonly_fields = ("created_at",)
     ordering = ("-created_at",)
