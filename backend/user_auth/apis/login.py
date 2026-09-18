@@ -166,24 +166,20 @@ class UserLoginAPI(APIView):
             is_trial = bool(
                 sub and (
                     (sub.plan and "starter" in (sub.plan.plan_name or "").lower())
-                    or sub.amount == 0
+                    or (sub.plan and "starter" in (getattr(sub.plan, "slug", None) or "").lower())
                     or getattr(sub, "status", None) == "trial"
                     or (hasattr(subscription_user, "profile") and subscription_user.profile and subscription_user.profile.trial_end_date and subscription_user.profile.trial_end_date > now)
                 )
             )
             user_profile = getattr(subscription_user, "profile", None)
-            profile_trial_used = bool(
-                user_profile and (
-                    user_profile.trial_start_date is not None
-                    or (user_profile.subscriptiontype and "starter" in (user_profile.subscriptiontype.plan_name or "").lower())
-                )
-            )
+
             has_starter_sub = UserSubscription.objects.filter(
                 user=subscription_user,
                 is_paid=True
             ).filter(
-                Q(plan__plan_name__icontains="starter") | Q(plan__slug__icontains="starter") | Q(amount=0, next_plan__isnull=False)
+                Q(plan__plan_name__icontains="starter") | Q(plan__slug__icontains="starter")
             ).exists()
+
             current_starter = bool(
                 sub
                 and sub.is_paid
@@ -192,6 +188,29 @@ class UserLoginAPI(APIView):
                     or (sub.plan and "starter" in (getattr(sub.plan, "slug", None) or "").lower())
                 )
             )
+
+            # Synchronize profile subscriptiontype with the actual current subscription
+            if sub and sub.plan and user_profile:
+                save_fields = []
+                if user_profile.subscriptiontype != sub.plan:
+                    user_profile.subscriptiontype = sub.plan
+                    save_fields.append("subscriptiontype")
+                if not has_starter_sub and not current_starter:
+                    if user_profile.trial_start_date is not None or user_profile.trial_end_date is not None:
+                        user_profile.trial_start_date = None
+                        user_profile.trial_end_date = None
+                        save_fields.extend(["trial_start_date", "trial_end_date"])
+                if save_fields:
+                    user_profile.save(update_fields=save_fields)
+
+            profile_trial_used = bool(
+                user_profile
+                and user_profile.trial_start_date is not None
+                and user_profile.subscriptiontype
+                and "starter" in (user_profile.subscriptiontype.plan_name or "").lower()
+                and (has_starter_sub or current_starter)
+            )
+
             free_trail_use = bool(has_starter_sub or current_starter or profile_trial_used)
             subscription_data = None
 

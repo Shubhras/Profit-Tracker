@@ -146,8 +146,7 @@ def calculate_actual_tcs_by_order(tx_to_order):
     - Shipment transactions charge TCS (TaxCollectedAtSource is negative)
     - Refund transactions reverse/credit TCS (TaxCollectedAtSource is positive)
     Net TCS = Shipment TCS minus Refund TCS.
-    Prioritizes RELEASED transactions for settled orders, and falls back to
-    DEFERRED / DEFERRED_RELEASED for unsettled orders.
+    Uses only RELEASED transactions.
     """
     if not tx_to_order:
         return {}
@@ -155,7 +154,8 @@ def calculate_actual_tcs_by_order(tx_to_order):
     tx_meta_list = AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
         transaction_type__in=["Shipment", "Refund"],
-    ).values("id", "transaction_type", "transaction_status")
+        transaction_status="RELEASED",
+    ).values("id", "transaction_type")
 
     tx_meta_map = {t["id"]: t for t in tx_meta_list}
     if not tx_meta_map:
@@ -174,14 +174,10 @@ def calculate_actual_tcs_by_order(tx_to_order):
         if not oid or not meta:
             continue
         ttype = meta["transaction_type"]
-        is_rel = (meta["transaction_status"] == "RELEASED")
         val = abs(float(bd["amount"] or 0))
 
-        order_tcs_data.setdefault(oid, {}).setdefault(ttype, {"RELEASED": 0.0, "DEFERRED": 0.0})
-        if is_rel:
-            order_tcs_data[oid][ttype]["RELEASED"] += val
-        else:
-            order_tcs_data[oid][ttype]["DEFERRED"] += val
+        order_tcs_data.setdefault(oid, {}).setdefault(ttype, 0.0)
+        order_tcs_data[oid][ttype] += val
 
     tx_actual_tcs_by_order = {}
     for oid in set(tx_to_order.values()):
@@ -190,11 +186,8 @@ def calculate_actual_tcs_by_order(tx_to_order):
             tx_actual_tcs_by_order[oid] = 0.0
             continue
 
-        ship_data = data.get("Shipment", {})
-        ref_data = data.get("Refund", {})
-
-        ship_val = ship_data.get("RELEASED") if ship_data.get("RELEASED", 0.0) > 0 else ship_data.get("DEFERRED", 0.0)
-        ref_val = ref_data.get("RELEASED") if ref_data.get("RELEASED", 0.0) > 0 else ref_data.get("DEFERRED", 0.0)
+        ship_val = data.get("Shipment", 0.0)
+        ref_val = data.get("Refund", 0.0)
 
         tx_actual_tcs_by_order[oid] = max(0.0, round((ship_val or 0.0) - (ref_val or 0.0), 2))
 
@@ -539,30 +532,81 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
 
     tx_to_order = {row["transaction_id"]: row["identifier_value"] for row in tx_identifiers}
 
-    tx_shipping_map = {}
+    STATUS_PRIORITY = {
+        "DEFERRED": 3,
+        "DEFERRED_RELEASED": 2,
+        "RELEASED": 1,
+    }
 
-    mfn_postage_txns = AmazonTransaction.objects.filter(
+    # 1. Expected Shipping Fee (MFN across DEFERRED, DEFERRED_RELEASED, RELEASED with priority)
+    mfn_expected_txns = AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
         transaction_type="ServiceFee",
-        transaction_status="DEFERRED",
+        transaction_status__in=["DEFERRED", "DEFERRED_RELEASED", "RELEASED"],
         description__icontains="MfnPostageFee",
-    ).values("id", "total_amount")
+    ).values("id", "total_amount", "transaction_status")
 
-    for txn in mfn_postage_txns:
+    mfn_by_order_status = {}
+    for txn in mfn_expected_txns:
         order_id = tx_to_order.get(txn["id"])
         if not order_id:
             continue
-        tx_shipping_map[order_id] = tx_shipping_map.get(order_id, 0.0) + float(txn["total_amount"] or 0)
+        status = txn.get("transaction_status")
+        amount = abs(float(txn.get("total_amount") or 0))
+        mfn_by_order_status.setdefault(order_id, {})
+        mfn_by_order_status[order_id][status] = mfn_by_order_status[order_id].get(status, 0.0) + amount
 
-    afn_tx_ids = set(AmazonTransaction.objects.filter(
+    tx_shipping_map = {}
+    for oid, status_amounts in mfn_by_order_status.items():
+        best_status = max(status_amounts.keys(), key=lambda s: STATUS_PRIORITY.get(s, 0))
+        tx_shipping_map[oid] = status_amounts[best_status]
+
+    # 2. Actual Released Shipping Charges (MFN RELEASED only)
+    mfn_released_txns = AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_type="ServiceFee",
+        transaction_status="RELEASED",
+        description__icontains="MfnPostageFee",
+    ).values("id", "total_amount")
+
+    tx_actual_shipping_map = {}
+    for txn in mfn_released_txns:
+        order_id = tx_to_order.get(txn["id"])
+        if not order_id:
+            continue
+        tx_actual_shipping_map[order_id] = tx_actual_shipping_map.get(order_id, 0.0) + abs(float(txn.get("total_amount") or 0))
+
+    afn_all_tx_ids = set(AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
         transaction_type="Shipment",
-        transaction_status="DEFERRED",
+        transaction_status__in=["DEFERRED", "DEFERRED_RELEASED", "RELEASED"],
+    ).values_list("id", flat=True))
+
+    afn_released_tx_ids = set(AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_type="Shipment",
+        transaction_status="RELEASED",
     ).values_list("id", flat=True))
 
     afn_breakdowns = (
         AmazonTransactionBreakdown.objects.filter(
-            transaction_id__in=afn_tx_ids,
+            transaction_id__in=afn_all_tx_ids,
+            breakdown_type__in=["FBAWeightBasedFee"],
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+
+    for bd in afn_breakdowns:
+        order_id = tx_to_order.get(bd["transaction_id"])
+        if not order_id:
+            continue
+        if order_id not in tx_shipping_map:
+            tx_shipping_map[order_id] = abs(float(bd["total"] or 0))
+
+    afn_released_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=afn_released_tx_ids,
             breakdown_type__in=["FBAWeightBasedFee"],
         )
         .values("transaction_id")
@@ -570,20 +614,19 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
     )
 
     tx_fba_weight_fee_by_order = {}
-    for bd in afn_breakdowns:
+    for bd in afn_released_breakdowns:
         order_id = tx_to_order.get(bd["transaction_id"])
         if not order_id:
             continue
-        tx_shipping_map[order_id] = tx_shipping_map.get(order_id, 0.0) + float(bd["total"] or 0)
         tx_fba_weight_fee_by_order[order_id] = tx_fba_weight_fee_by_order.get(order_id, 0.0) + abs(float(bd["total"] or 0))
 
-    # 1. Actual TCS: Shipment TCS minus Refund TCS (RELEASED prioritized, falling back to DEFERRED)
+    # 1. Actual TCS: Shipment TCS minus Refund TCS (RELEASED only)
     tx_actual_tcs_by_order = calculate_actual_tcs_by_order(tx_to_order)
 
-    # 2. Actual MP Fees from Shipment DEFERRED (AmazonFees breakdown)
+    # 2. Actual MP Fees from Shipment RELEASED (AmazonFees breakdown)
     mp_fees_breakdowns = (
         AmazonTransactionBreakdown.objects.filter(
-            transaction_id__in=afn_tx_ids,
+            transaction_id__in=afn_released_tx_ids,
             breakdown_type="AmazonFees"
         )
         .values("transaction_id")
@@ -595,10 +638,11 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         if oid:
             tx_actual_fees_by_order[oid] = tx_actual_fees_by_order.get(oid, 0.0) + abs(float(bd["total"] or 0))
 
-    # 3. Actual TDS from Shipment transactions (TaxDeductedAtSource breakdown)
+    # 3. Actual TDS from Shipment transactions (TaxDeductedAtSource breakdown) - RELEASED only
     shipment_all_tx_ids = set(AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
         transaction_type="Shipment",
+        transaction_status="RELEASED",
     ).values_list("id", flat=True))
 
     tds_breakdowns = (
@@ -635,19 +679,39 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
 
     FULFILLMENT_FEE_REFUND_PATTERNS = ["FulfillmentFeeRefund"]
 
-    refund_txns = AmazonTransaction.objects.filter(
+    refund_deferred_txns = AmazonTransaction.objects.filter(
         amazon_account__user=user,
         transaction_type='Refund',
         transaction_status__in=['DEFERRED', 'DEFERRED_RELEASED']
     )
 
-    refund_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
-        transaction__in=refund_txns,
+    refund_deferred_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+        transaction__in=refund_deferred_txns,
         identifier_name='ORDER_ID',
         identifier_value__in=matching_order_ids
     ).values('transaction_id', 'identifier_value')
 
-    refund_tx_to_order = {row['transaction_id']: row['identifier_value'] for row in refund_identifiers}
+    refund_tx_to_order = {row['transaction_id']: row['identifier_value'] for row in refund_deferred_identifiers}
+    orders_with_deferred_refund = set(refund_tx_to_order.values())
+
+    refund_released_txns = AmazonTransaction.objects.filter(
+        amazon_account__user=user,
+        transaction_type='Refund',
+        transaction_status='RELEASED'
+    )
+    refund_released_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+        transaction__in=refund_released_txns,
+        identifier_name='ORDER_ID',
+        identifier_value__in=matching_order_ids
+    ).values('transaction_id', 'identifier_value')
+    refund_released_tx_to_order = {row['transaction_id']: row['identifier_value'] for row in refund_released_identifiers}
+
+    # For orders without DEFERRED/DEFERRED_RELEASED refund, fall back to RELEASED refund
+    for tx_id, oid in refund_released_tx_to_order.items():
+        if oid not in orders_with_deferred_refund:
+            refund_tx_to_order[tx_id] = oid
+
+    refund_txns = AmazonTransaction.objects.filter(id__in=refund_tx_to_order.keys())
 
     refunded_sales_breakdowns = (
         AmazonTransactionBreakdown.objects.filter(
@@ -674,7 +738,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
     fee_refund_txns = AmazonTransaction.objects.filter(
         amazon_account__user=user,
         transaction_type='ServiceFee',
-        transaction_status__in=['DEFERRED', 'DEFERRED_RELEASED'],
+        transaction_status__in=['DEFERRED', 'DEFERRED_RELEASED', 'RELEASED'],
     ).filter(fee_refund_q)
 
     fee_refund_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
@@ -689,7 +753,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         AmazonTransaction.objects.filter(
             id__in=tx_to_order.keys(),
             transaction_type="ServiceFee",
-            transaction_status__in=["DEFERRED", "DEFERRED_RELEASED"],
+            transaction_status__in=["DEFERRED", "DEFERRED_RELEASED", "RELEASED"],
         )
         .filter(
             Q(description__icontains="EasyshipFulfillmentFeeRefund")
@@ -705,6 +769,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         )
     )
 
+    # Expected fee refunds (used to reduce estimated_fees on returns)
     amazon_fee_breakdowns = (
         AmazonTransactionBreakdown.objects.filter(
             transaction_id__in=refund_tx_to_order.keys(),
@@ -720,6 +785,23 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         if not order_id:
             continue
         amazon_fee_refund_by_order[order_id] = amazon_fee_refund_by_order.get(order_id, 0.0) + float(row["total"] or 0)
+
+    # Released fee refunds (strictly RELEASED, used to offset actual_fees)
+    amazon_fee_released_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=refund_released_tx_to_order.keys(),
+            breakdown_type="AmazonFees",
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+
+    amazon_fee_released_refund_by_order = {}
+    for row in amazon_fee_released_breakdowns:
+        order_id = refund_released_tx_to_order.get(row["transaction_id"])
+        if not order_id:
+            continue
+        amazon_fee_released_refund_by_order[order_id] = amazon_fee_released_refund_by_order.get(order_id, 0.0) + float(row["total"] or 0)
 
     for txn in fulfillment_fee_refund_breakdowns:
         order_id = tx_to_order.get(txn["id"])
@@ -1023,18 +1105,18 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         for o in orders:
             oid = o['order__amazon_order_id']
             o_ship = float(tx_shipping_map.get(oid, 0.0))
+            if o_ship == 0.0:
+                f = finance_map.get(oid, {})
+                o_ship = float(f.get('shipping_fee') or 0)
             o_ref = float(fulfillment_fee_refund_by_order.get(oid, 0.0))
-            if o_ship < 0:
-                shipping_price += -max(0.0, abs(o_ship) - abs(o_ref))
-            else:
-                shipping_price += max(0.0, o_ship - abs(o_ref))
+            shipping_price -= max(0.0, abs(o_ship) - abs(o_ref))
             amazon_fee_refund_total += float(amazon_fee_refund_by_order.get(oid, 0.0))
             fulfillment_fee_refund_total += o_ref
             refunded_sales_total += float(refunded_sales_by_order.get(oid, 0.0))
 
         if abs(shipping_price) == 0.0:
             shipping_price = 0.0
-        estimated_fees -= amazon_fee_refund_total
+        estimated_fees = max(0.0, estimated_fees - amazon_fee_refund_total)
 
         parent_ad_data = ads_by_parent.get(parent_asin, {})
         ads = -abs(float(parent_ad_data.get("cost", 0)))
@@ -1078,19 +1160,25 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             # RECONCILIATION ACTUALS PER ORDER
             o_act_fees = tx_actual_fees_by_order.get(oid)
             if o_act_fees is None:
-                o_act_fees = (
-                    abs(float(f.get('commission') or 0)) +
-                    abs(float(f.get('fulfillment') or 0)) +
-                    abs(float(f.get('other_fee') or 0))
-                )
+                if oid in order_ids_with_tx:
+                    o_act_fees = 0.0
+                else:
+                    o_act_fees = (
+                        abs(float(f.get('commission') or 0)) +
+                        abs(float(f.get('fulfillment') or 0)) +
+                        abs(float(f.get('other_fee') or 0))
+                    )
 
             o_act_fba_weight = tx_fba_weight_fee_by_order.get(oid, 0.0)
-            o_fee_refund = float(amazon_fee_refund_by_order.get(oid, 0.0))
+            o_fee_refund = float(amazon_fee_released_refund_by_order.get(oid, 0.0))
             o_act_fees = max(0.0, float(o_act_fees or 0) - o_act_fba_weight - o_fee_refund)
 
-            o_act_ship = tx_shipping_map.get(oid)
+            o_act_ship = tx_actual_shipping_map.get(oid)
             if o_act_ship is None:
-                o_act_ship = abs(float(f.get('shipping_fee') or 0))
+                if oid in order_ids_with_tx:
+                    o_act_ship = 0.0
+                else:
+                    o_act_ship = abs(float(f.get('shipping_fee') or 0))
             else:
                 o_act_ship = abs(float(o_act_ship))
 
@@ -1901,6 +1989,7 @@ def _payment_reconcile_order_level_logic(request):
     shipment_all_tx_ids = set(AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
         transaction_type="Shipment",
+        transaction_status="RELEASED",
     ).values_list("id", flat=True))
 
     tds_breakdowns = (
@@ -1940,12 +2029,13 @@ def _payment_reconcile_order_level_logic(request):
         transaction_status="DEFERRED"
     ).values_list("id", flat=True))
 
-    # 1. Actual TCS: Shipment TCS minus Refund TCS (RELEASED prioritized, falling back to DEFERRED)
+    # 1. Actual TCS: Shipment TCS minus Refund TCS (RELEASED only)
     tx_actual_tcs_by_order = calculate_actual_tcs_by_order(tx_to_order)
 
+    # 2. Actual MP Fees from Shipment RELEASED (AmazonFees breakdown)
     mp_fees_breakdowns = (
         AmazonTransactionBreakdown.objects.filter(
-            transaction_id__in=shipment_deferred_tx_ids,
+            transaction_id__in=shipment_all_tx_ids,
             breakdown_type="AmazonFees"
         )
         .values("transaction_id")
@@ -1959,7 +2049,7 @@ def _payment_reconcile_order_level_logic(request):
 
     fba_weight_fee_breakdowns = (
         AmazonTransactionBreakdown.objects.filter(
-            transaction_id__in=shipment_deferred_tx_ids,
+            transaction_id__in=shipment_all_tx_ids,
             breakdown_type="FBAWeightBasedFee"
         )
         .values("transaction_id")
@@ -1971,15 +2061,15 @@ def _payment_reconcile_order_level_logic(request):
         if oid:
             tx_fba_weight_fee_by_order[oid] = tx_fba_weight_fee_by_order.get(oid, 0.0) + abs(float(bd["total"] or 0))
 
-    refund_deferred_tx_ids = set(AmazonTransaction.objects.filter(
+    refund_released_tx_ids = set(AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
         transaction_type="Refund",
-        transaction_status__in=["DEFERRED", "DEFERRED_RELEASED"]
+        transaction_status="RELEASED"
     ).values_list("id", flat=True))
 
     refund_fee_breakdowns = (
         AmazonTransactionBreakdown.objects.filter(
-            transaction_id__in=refund_deferred_tx_ids,
+            transaction_id__in=refund_released_tx_ids,
             breakdown_type="AmazonFees"
         )
         .values("transaction_id")
@@ -1991,62 +2081,38 @@ def _payment_reconcile_order_level_logic(request):
         if oid:
             amazon_fee_refund_by_order[oid] = amazon_fee_refund_by_order.get(oid, 0.0) + float(bd["total"] or 0)
 
-    STATUS_PRIORITY = {
-        "DEFERRED": 3,
-        "DEFERRED_RELEASED": 2,
-        "RELEASED": 1,
-    }
-
     mfn_postage_txns = AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
         transaction_type="ServiceFee",
-        transaction_status__in=["DEFERRED", "DEFERRED_RELEASED", "RELEASED"],
+        transaction_status="RELEASED",
         description__icontains="MfnPostageFee",
-    ).values("id", "total_amount", "transaction_status")
+    ).values("id", "total_amount")
 
-    mfn_by_order_status = {}
+    tx_actual_shipping_by_order = {}
     for txn in mfn_postage_txns:
         oid = tx_to_order.get(txn["id"])
         if not oid:
             continue
-        status = txn.get("transaction_status")
         amount = abs(float(txn.get("total_amount") or 0))
-        mfn_by_order_status.setdefault(oid, {})
-        mfn_by_order_status[oid][status] = (
-            mfn_by_order_status[oid].get(status, 0.0) + amount
-        )
-
-    tx_actual_shipping_by_order = {}
-    for oid, status_amounts in mfn_by_order_status.items():
-        best_status = max(status_amounts.keys(), key=lambda s: STATUS_PRIORITY.get(s, 0))
-        tx_actual_shipping_by_order[oid] = status_amounts[best_status]
+        tx_actual_shipping_by_order[oid] = tx_actual_shipping_by_order.get(oid, 0.0) + amount
 
     fulfillment_fee_refund_breakdowns = (
         AmazonTransaction.objects.filter(
             id__in=tx_to_order.keys(),
             transaction_type="ServiceFee",
-            transaction_status__in=["DEFERRED", "DEFERRED_RELEASED", "RELEASED"],
+            transaction_status="RELEASED",
             description__icontains="FulfillmentFeeRefund",
         )
-        .values("id", "total_amount", "transaction_status")
+        .values("id", "total_amount")
     )
 
-    refund_by_order_status = {}
+    tx_fulfillment_fee_refund_by_order = {}
     for txn in fulfillment_fee_refund_breakdowns:
         oid = tx_to_order.get(txn["id"])
         if not oid:
             continue
-        status = txn.get("transaction_status")
         amount = abs(float(txn.get("total_amount") or 0))
-        refund_by_order_status.setdefault(oid, {})
-        refund_by_order_status[oid][status] = (
-            refund_by_order_status[oid].get(status, 0.0) + amount
-        )
-
-    tx_fulfillment_fee_refund_by_order = {}
-    for oid, status_amounts in refund_by_order_status.items():
-        best_status = max(status_amounts.keys(), key=lambda s: STATUS_PRIORITY.get(s, 0))
-        tx_fulfillment_fee_refund_by_order[oid] = status_amounts[best_status]
+        tx_fulfillment_fee_refund_by_order[oid] = tx_fulfillment_fee_refund_by_order.get(oid, 0.0) + amount
 
     tx_released_txns_order_level = (
         AmazonTransaction.objects.filter(
@@ -2072,17 +2138,26 @@ def _payment_reconcile_order_level_logic(request):
 
         row_actual_fees = tx_actual_fees_by_order.get(oid)
         if row_actual_fees is None:
-            row_actual_fees = abs(float(f.get('commission') or 0)) + abs(float(f.get('fulfillment') or 0)) + abs(float(f.get('other_fee') or 0))
+            if oid in order_ids_with_tx_order_level:
+                row_actual_fees = 0.0
+            else:
+                row_actual_fees = abs(float(f.get('commission') or 0)) + abs(float(f.get('fulfillment') or 0)) + abs(float(f.get('other_fee') or 0))
 
         actual_fba_weight_fee = tx_fba_weight_fee_by_order.get(oid)
         if actual_fba_weight_fee is None:
-            actual_fba_weight_fee = abs(float(parse_currency_to_decimal(r.get("fba_weight_handling_fee")) or 0))
+            if oid in order_ids_with_tx_order_level:
+                actual_fba_weight_fee = 0.0
+            else:
+                actual_fba_weight_fee = abs(float(parse_currency_to_decimal(r.get("fba_weight_handling_fee")) or 0))
         fee_refund = float(amazon_fee_refund_by_order.get(oid, 0.0))
         row_actual_fees = max(0.0, float(row_actual_fees or 0) - actual_fba_weight_fee - fee_refund)
 
         row_actual_shipping = tx_actual_shipping_by_order.get(oid)
         if row_actual_shipping is None:
-            row_actual_shipping = abs(float(f.get('shipping_fee') or 0))
+            if oid in order_ids_with_tx_order_level:
+                row_actual_shipping = 0.0
+            else:
+                row_actual_shipping = abs(float(f.get('shipping_fee') or 0))
         else:
             row_actual_shipping = abs(float(row_actual_shipping))
 

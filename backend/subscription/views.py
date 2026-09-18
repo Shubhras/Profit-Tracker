@@ -146,7 +146,7 @@ class CreateSubscriptionAPIView(APIView):
         # ==========================
         # FREE PLAN / STARTER TRIAL
         # ==========================
-        is_starter_trial = "starter" in (plan.plan_name or "").lower() or amount == 0
+        is_starter_trial = "starter" in (plan.plan_name or "").lower() or (getattr(plan, "slug", None) and "starter" in plan.slug.lower())
         growth_plan = SubscriptionPlan.objects.filter(plan_name__icontains="Growth", is_active=True).first()
 
         if is_starter_trial:

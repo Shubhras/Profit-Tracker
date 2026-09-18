@@ -6366,22 +6366,40 @@ def amazon_profitability_parent_transactions_shipping(request):
     # ============================================================
     FULFILLMENT_FEE_REFUND_PATTERNS = ["FulfillmentFeeRefund"]
 
-    refund_txns = AmazonTransaction.objects.filter(
+    refund_deferred_txns = AmazonTransaction.objects.filter(
         amazon_account__user=user,
         transaction_type='Refund',
         transaction_status__in=['DEFERRED', 'DEFERRED_RELEASED']
     )
 
-    refund_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
-        transaction__in=refund_txns,
+    refund_deferred_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+        transaction__in=refund_deferred_txns,
         identifier_name='ORDER_ID',
         identifier_value__in=matching_order_ids
     ).values('transaction_id', 'identifier_value')
 
     refund_tx_to_order = {
         row['transaction_id']: row['identifier_value']
-        for row in refund_identifiers
+        for row in refund_deferred_identifiers
     }
+    orders_with_deferred_refund = set(refund_tx_to_order.values())
+
+    refund_released_txns = AmazonTransaction.objects.filter(
+        amazon_account__user=user,
+        transaction_type='Refund',
+        transaction_status='RELEASED'
+    )
+    refund_released_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+        transaction__in=refund_released_txns,
+        identifier_name='ORDER_ID',
+        identifier_value__in=matching_order_ids
+    ).values('transaction_id', 'identifier_value')
+
+    for row in refund_released_identifiers:
+        if row['identifier_value'] not in orders_with_deferred_refund:
+            refund_tx_to_order[row['transaction_id']] = row['identifier_value']
+
+    refund_txns = AmazonTransaction.objects.filter(id__in=refund_tx_to_order.keys())
 
     # ============================================================
     # REFUNDED SALES MAP
@@ -6419,7 +6437,7 @@ def amazon_profitability_parent_transactions_shipping(request):
     fee_refund_txns = AmazonTransaction.objects.filter(
         amazon_account__user=user,
         transaction_type='ServiceFee',
-        transaction_status__in=['DEFERRED', 'DEFERRED_RELEASED']
+        transaction_status__in=['DEFERRED', 'DEFERRED_RELEASED', 'RELEASED']
     ).filter(fee_refund_q)
 
     fee_refund_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
@@ -6438,7 +6456,7 @@ def amazon_profitability_parent_transactions_shipping(request):
         AmazonTransaction.objects.filter(
             id__in=tx_to_order.keys(),
             transaction_type="ServiceFee",
-            transaction_status__in=["DEFERRED", "DEFERRED_RELEASED"],
+            transaction_status__in=["DEFERRED", "DEFERRED_RELEASED", "RELEASED"],
         )
         .filter(
             Q(description__icontains="EasyshipFulfillmentFeeRefund")
@@ -8647,26 +8665,40 @@ def sku_profit_report_transactions_shipping(request):
     # ============================================================
     FULFILLMENT_FEE_REFUND_PATTERNS = ["FulfillmentFeeRefund"]
 
-    refund_txns = AmazonTransaction.objects.filter(
+    refund_deferred_txns = AmazonTransaction.objects.filter(
         amazon_account__user=user,
         transaction_type='Refund',
         transaction_status__in=['DEFERRED', 'DEFERRED_RELEASED']
     )
-    # if from_date:
-    #     refund_txns = refund_txns.filter(posted_date__gte=from_date)
-    # if to_date:
-    #     refund_txns = refund_txns.filter(posted_date__lt=to_date)
 
-    refund_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
-        transaction__in=refund_txns,
+    refund_deferred_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+        transaction__in=refund_deferred_txns,
         identifier_name='ORDER_ID',
         identifier_value__in=matching_order_ids
     ).values('transaction_id', 'identifier_value')
 
     refund_tx_to_order = {
         row['transaction_id']: row['identifier_value']
-        for row in refund_identifiers
+        for row in refund_deferred_identifiers
     }
+    orders_with_deferred_refund = set(refund_tx_to_order.values())
+
+    refund_released_txns = AmazonTransaction.objects.filter(
+        amazon_account__user=user,
+        transaction_type='Refund',
+        transaction_status='RELEASED'
+    )
+    refund_released_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+        transaction__in=refund_released_txns,
+        identifier_name='ORDER_ID',
+        identifier_value__in=matching_order_ids
+    ).values('transaction_id', 'identifier_value')
+
+    for row in refund_released_identifiers:
+        if row['identifier_value'] not in orders_with_deferred_refund:
+            refund_tx_to_order[row['transaction_id']] = row['identifier_value']
+
+    refund_txns = AmazonTransaction.objects.filter(id__in=refund_tx_to_order.keys())
 
     # ============================================================
     # REFUNDED SALES MAP
@@ -8704,12 +8736,8 @@ def sku_profit_report_transactions_shipping(request):
     fee_refund_txns = AmazonTransaction.objects.filter(
         amazon_account__user=user,
         transaction_type='ServiceFee',
-        transaction_status__in=['DEFERRED', 'DEFERRED_RELEASED']
+        transaction_status__in=['DEFERRED', 'DEFERRED_RELEASED', 'RELEASED']
     ).filter(fee_refund_q)
-    # if from_date:
-    #     fee_refund_txns = fee_refund_txns.filter(posted_date__gte=from_date)
-    # if to_date:
-    #     fee_refund_txns = fee_refund_txns.filter(posted_date__lt=to_date)
 
     fee_refund_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
         transaction__in=fee_refund_txns,
@@ -8727,7 +8755,7 @@ def sku_profit_report_transactions_shipping(request):
         AmazonTransaction.objects.filter(
             id__in=tx_to_order.keys(),
             transaction_type="ServiceFee",
-            transaction_status__in=["DEFERRED", "DEFERRED_RELEASED"],
+            transaction_status__in=["DEFERRED", "DEFERRED_RELEASED", "RELEASED"],
         )
         .filter(
             Q(description__icontains="EasyshipFulfillmentFeeRefund")
@@ -10031,22 +10059,40 @@ def orders_profit_report_transactions_shipping(request):
     # ============================================================
     FULFILLMENT_FEE_REFUND_PATTERNS = ["FulfillmentFeeRefund"]
 
-    refund_txns = AmazonTransaction.objects.filter(
+    refund_deferred_txns = AmazonTransaction.objects.filter(
         amazon_account__user=user,
         transaction_type='Refund',
         transaction_status__in=['DEFERRED', 'DEFERRED_RELEASED']
     )
 
-    refund_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
-        transaction__in=refund_txns,
+    refund_deferred_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+        transaction__in=refund_deferred_txns,
         identifier_name='ORDER_ID',
         identifier_value__in=matching_order_ids
     ).values('transaction_id', 'identifier_value')
 
     refund_tx_to_order = {
         row['transaction_id']: row['identifier_value']
-        for row in refund_identifiers
+        for row in refund_deferred_identifiers
     }
+    orders_with_deferred_refund = set(refund_tx_to_order.values())
+
+    refund_released_txns = AmazonTransaction.objects.filter(
+        amazon_account__user=user,
+        transaction_type='Refund',
+        transaction_status='RELEASED'
+    )
+    refund_released_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+        transaction__in=refund_released_txns,
+        identifier_name='ORDER_ID',
+        identifier_value__in=matching_order_ids
+    ).values('transaction_id', 'identifier_value')
+
+    for row in refund_released_identifiers:
+        if row['identifier_value'] not in orders_with_deferred_refund:
+            refund_tx_to_order[row['transaction_id']] = row['identifier_value']
+
+    refund_txns = AmazonTransaction.objects.filter(id__in=refund_tx_to_order.keys())
 
     # ============================================================
     # REFUNDED SALES MAP
@@ -10084,7 +10130,7 @@ def orders_profit_report_transactions_shipping(request):
     fee_refund_txns = AmazonTransaction.objects.filter(
         amazon_account__user=user,
         transaction_type='ServiceFee',
-        transaction_status__in=['DEFERRED', 'DEFERRED_RELEASED']
+        transaction_status__in=['DEFERRED', 'DEFERRED_RELEASED', 'RELEASED']
     ).filter(fee_refund_q)
 
     fee_refund_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
@@ -10103,7 +10149,7 @@ def orders_profit_report_transactions_shipping(request):
         AmazonTransaction.objects.filter(
             id__in=tx_to_order.keys(),
             transaction_type="ServiceFee",
-            transaction_status__in=["DEFERRED", "DEFERRED_RELEASED"],
+            transaction_status__in=["DEFERRED", "DEFERRED_RELEASED", "RELEASED"],
         )
         .filter(
             Q(description__icontains="EasyshipFulfillmentFeeRefund")
@@ -11435,22 +11481,40 @@ def amazon_profitability_details_transactions_shipping(request):
     # ============================================================
     FULFILLMENT_FEE_REFUND_PATTERNS = ["FulfillmentFeeRefund"]
 
-    refund_txns = AmazonTransaction.objects.filter(
+    refund_deferred_txns = AmazonTransaction.objects.filter(
         amazon_account__user=user,
         transaction_type='Refund',
         transaction_status__in=['DEFERRED', 'DEFERRED_RELEASED']
     )
 
-    refund_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
-        transaction__in=refund_txns,
+    refund_deferred_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+        transaction__in=refund_deferred_txns,
         identifier_name='ORDER_ID',
         identifier_value__in=matching_order_ids
     ).values('transaction_id', 'identifier_value')
 
     refund_tx_to_order = {
         row['transaction_id']: row['identifier_value']
-        for row in refund_identifiers
+        for row in refund_deferred_identifiers
     }
+    orders_with_deferred_refund = set(refund_tx_to_order.values())
+
+    refund_released_txns = AmazonTransaction.objects.filter(
+        amazon_account__user=user,
+        transaction_type='Refund',
+        transaction_status='RELEASED'
+    )
+    refund_released_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
+        transaction__in=refund_released_txns,
+        identifier_name='ORDER_ID',
+        identifier_value__in=matching_order_ids
+    ).values('transaction_id', 'identifier_value')
+
+    for row in refund_released_identifiers:
+        if row['identifier_value'] not in orders_with_deferred_refund:
+            refund_tx_to_order[row['transaction_id']] = row['identifier_value']
+
+    refund_txns = AmazonTransaction.objects.filter(id__in=refund_tx_to_order.keys())
 
     refunded_sales_breakdowns = (
         AmazonTransactionBreakdown.objects.filter(
@@ -11483,7 +11547,7 @@ def amazon_profitability_details_transactions_shipping(request):
     fee_refund_txns = AmazonTransaction.objects.filter(
         amazon_account__user=user,
         transaction_type='ServiceFee',
-        transaction_status__in=['DEFERRED', 'DEFERRED_RELEASED'],
+        transaction_status__in=['DEFERRED', 'DEFERRED_RELEASED', 'RELEASED'],
     ).filter(fee_refund_q)
 
     fee_refund_identifiers = AmazonTransactionRelatedIdentifier.objects.filter(
@@ -11502,7 +11566,7 @@ def amazon_profitability_details_transactions_shipping(request):
         AmazonTransaction.objects.filter(
             id__in=tx_to_order.keys(),
             transaction_type="ServiceFee",
-            transaction_status__in=["DEFERRED", "DEFERRED_RELEASED"],
+            transaction_status__in=["DEFERRED", "DEFERRED_RELEASED", "RELEASED"],
         )
         .filter(
             Q(description__icontains="EasyshipFulfillmentFeeRefund")
