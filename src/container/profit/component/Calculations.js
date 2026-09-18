@@ -93,44 +93,6 @@ function CalculationModal({ open, onClose, type, data }) {
           </button>
         </div>
 
-        {/* Region */}
-        <div className="px-5 pt-3">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[14px] font-medium text-[#374151]">Current Region</p>
-
-            <p className="text-[14px] font-medium text-[#374151]">Zonal Regional</p>
-          </div>
-
-          {/* Table */}
-          <div className="border border-[#e5e7eb] rounded-xl overflow-hidden">
-            <div className="grid grid-cols-4 bg-[#f9fafb]">
-              {['Step Level', 'Product Weight', 'Weight Slab', 'Rate'].map((item) => (
-                <div key={item} className="px-3 py-3 text-[12px] font-semibold text-[#111827] border-r last:border-r-0">
-                  {item}
-                </div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-4">
-              <div className="px-3 py-4 border-r">
-                <p className="text-[12px] text-[#111827] font-medium">Step 2</p>
-              </div>
-
-              <div className="px-3 py-4 border-r">
-                <p className="text-[12px] text-[#111827] font-medium">{data?.weight || '0.000 kg'}</p>
-              </div>
-
-              <div className="px-3 py-4 border-r">
-                <p className="text-[12px] text-[#111827] font-medium">{data?.slab || '0.000 kg - 0.500 kg'}</p>
-              </div>
-
-              <div className="px-3 py-4">
-                <p className="text-[12px] text-[#111827] font-medium">{data?.rate || '₹0.00'}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Shipping Calculation */}
         <div className="px-5 pt-6">
           <h3 className="text-[15px] font-bold text-[#111827] mb-4">Shipping Calculation</h3>
@@ -411,9 +373,7 @@ function CalculationModal({ open, onClose, type, data }) {
         ? data.product_cost
         : 0;
 
-    const productCost = !isProductCostEnabled
-      ? 0
-      : parseFloat(String(rawCost).replace(/[₹,]/g, '')) || 0;
+    const productCost = !isProductCostEnabled ? 0 : parseFloat(String(rawCost).replace(/[₹,]/g, '')) || 0;
 
     const shippingCost = parseFloat(String(data?.shipping || data?.shippingfees || 0).replace(/[₹,]/g, ''));
 
@@ -440,9 +400,7 @@ function CalculationModal({ open, onClose, type, data }) {
         ? data.total_claim_amount
         : 0;
 
-    const claim = !isClaimEnabled
-      ? 0
-      : parseFloat(String(rawClaim).replace(/[₹,]/g, '')) || 0;
+    const claim = !isClaimEnabled ? 0 : parseFloat(String(rawClaim).replace(/[₹,]/g, '')) || 0;
 
     const profit = parseFloat(String(data?.profit || 0).replace(/[₹,]/g, ''));
 

@@ -16,7 +16,6 @@ import UilBill from '@iconscout/react-unicons/icons/uil-bill';
 // import Heading from '../../../../components/heading/heading'; // Removed as per new design
 import { DataService } from '../../../../config/dataService/dataService';
 import authActions from '../../../../redux/authentication/actions';
-import { logOut } from '../../../../redux/authentication/actionCreator';
 
 function Billing() {
   const navigate = useNavigate();
@@ -40,13 +39,10 @@ function Billing() {
 
         // Check if user has active access (either active plan or cancelled plan that hasn't reached end_date)
         const isCancelledActive =
-          subData.status === 'cancelled' &&
-          subData.end_date &&
-          new Date(subData.end_date) > new Date();
+          subData.status === 'cancelled' && subData.end_date && new Date(subData.end_date) > new Date();
 
         const hasAccess =
-          subData.has_subscription ??
-          ((subData.status === 'active' && !subData.is_expired) || isCancelledActive);
+          subData.has_subscription ?? ((subData.status === 'active' && !subData.is_expired) || isCancelledActive);
 
         if (hasAccess) {
           Cookies.set('hasSubscription', 'true');
@@ -75,10 +71,6 @@ function Billing() {
     }
   };
 
-  const handleLogoutNow = () => {
-    dispatch(logOut(() => navigate('/auth/login')));
-  };
-
   useEffect(() => {
     fetchSubscription();
   }, []);
@@ -91,15 +83,14 @@ function Billing() {
       setCancelModalVisible(false);
 
       const resData = response.data?.data;
-      const hasAccess = resData?.has_subscription ?? (
-        subscription?.end_date && new Date(subscription.end_date) > new Date()
-      );
+      const hasAccess =
+        resData?.has_subscription ?? (subscription?.end_date && new Date(subscription.end_date) > new Date());
 
       if (hasAccess) {
         Cookies.set('hasSubscription', 'true');
         dispatch(authActions.setHasSubscription(true));
         message.success(
-          response.data?.message || 'Subscription cancelled. You will continue to have access until your plan expires.'
+          response.data?.message || 'Subscription cancelled. You will continue to have access until your plan expires.',
         );
         fetchSubscription();
       } else {
@@ -234,7 +225,24 @@ function Billing() {
         </div>
 
         {/* No Subscription State */}
-        {!subscription ? (
+        {subscription?.status === 'no_subscription' ? (
+          <div className="p-12 flex flex-col items-center justify-center text-center">
+            <div className="w-20 h-20 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mb-6">
+              <UilBill className="w-10 h-10 text-slate-300" />
+            </div>
+
+            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">No Billing Information</h3>
+
+            <Button
+              type="primary"
+              size="large"
+              onClick={handleUpgrade}
+              className="h-10 px-7 rounded-lg font-bold bg-primary shadow-lg shadow-primary/30 border-0 text-[14px]"
+            >
+              View Pricing Plans
+            </Button>
+          </div>
+        ) : !subscription ? (
           <div className="p-12 flex flex-col items-center justify-center text-center">
             <div className="w-20 h-20 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mb-6">
               <UilBill className="w-10 h-10 text-slate-300" />
@@ -422,14 +430,16 @@ function Billing() {
                           </td>
                           <td className="px-6 py-4">
                             <span
-                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold capitalize ${invoice.status === 'paid'
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold capitalize ${
+                                invoice.status === 'paid'
                                   ? 'bg-emerald-100 text-emerald-700'
                                   : 'bg-slate-100 text-slate-600'
-                                }`}
+                              }`}
                             >
                               <span
-                                className={`w-1.5 h-1.5 rounded-full ${invoice.status === 'paid' ? 'bg-emerald-500' : 'bg-slate-400'
-                                  }`}
+                                className={`w-1.5 h-1.5 rounded-full ${
+                                  invoice.status === 'paid' ? 'bg-emerald-500' : 'bg-slate-400'
+                                }`}
                               />
                               {invoice.status || 'Pending'}
                             </span>

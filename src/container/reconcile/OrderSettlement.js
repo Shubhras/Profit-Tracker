@@ -509,7 +509,7 @@ function OrderSettlement() {
 
   return (
     <>
-      <div className="min-h-screen bg-[#f6f8fc] p-3 md:p-2 sm:p-3">
+      <div className="min-h-screen bg-[#f6f8fc] p-4 md:p-2 sm:p-3">
         {' '}
         {/* HEADER */}
         <div className="mb-2 flex items-start justify-between lg:flex-col lg:gap-2">
@@ -525,12 +525,6 @@ function OrderSettlement() {
             <p className="mt-1 text-[12px] text-[#6b7280]">
               Track order volume, GMV and settlement status across all marketplaces.
             </p>
-          </div>
-          <div className="flex items-center gap-2 text-[10px] text-[#6b7280] lg:flex-wrap">
-            {' '}
-            <span>Payment Reconciliation</span>
-            <span>{'>'}</span>
-            <span className="font-semibold text-[#2563eb]">Order & Settlements</span>
           </div>
         </div>
         {/* TOP CARDS */}

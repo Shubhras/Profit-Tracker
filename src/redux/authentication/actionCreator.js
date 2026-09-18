@@ -42,6 +42,21 @@ const login = (values, callback) => {
         const hasSubscription = response.data.data.has_subscription === true;
         Cookies.set('hasSubscription', hasSubscription ? 'true' : 'false');
 
+        const freeTrailUse =
+          response.data?.data?.free_trail_use === true ||
+          response.data?.data?.free_trail_use === 'true' ||
+          response.data?.data?.free_trail_use === 1 ||
+          response.data?.data?.free_trial_use === true ||
+          response.data?.data?.free_trial_use === 'true' ||
+          response.data?.data?.free_trial_use === 1 ||
+          response.data?.free_trail_use === true ||
+          response.data?.free_trail_use === 'true' ||
+          response.data?.free_trial_use === true ||
+          response.data?.free_trial_use === 'true';
+
+        Cookies.set('free_trail_use', freeTrailUse ? 'true' : 'false', { path: '/' });
+        localStorage.setItem('free_trail_use', freeTrailUse ? 'true' : 'false');
+
         // Dispatch login success and subscription status
         dispatch(loginSuccess(true));
         dispatch(actions.setUserProfile(response.data.data));
@@ -210,6 +225,7 @@ const logOut = (callback) => {
       Cookies.remove('hasSubscription');
       Cookies.remove('isSuperAdmin');
       Cookies.remove('userEmail');
+      Cookies.remove('free_trail_use');
 
       dispatch(logoutSuccess(false));
       message.success('Logged out successfully');
@@ -227,6 +243,7 @@ const logOut = (callback) => {
       Cookies.remove('hasSubscription');
       Cookies.remove('isSuperAdmin');
       Cookies.remove('userEmail');
+      Cookies.remove('free_trail_use');
 
       dispatch(logoutErr(err));
 
@@ -236,11 +253,11 @@ const logOut = (callback) => {
     }
   };
 };
+
 const getProfile = () => {
   return async (dispatch, getState) => {
-    // Check if profile is already loading or already loaded to prevent duplicate calls
-    const { profileLoading, profile } = getState().auth;
-    if (profileLoading || profile) {
+    const { profileLoading } = getState().auth;
+    if (profileLoading) {
       return;
     }
 
@@ -251,7 +268,20 @@ const getProfile = () => {
       console.log('PROFILE DATA:', response.data.data);
       console.log('IS SUPERUSER:', response.data.data?.is_superuser);
       if (response.data.status === true) {
-        dispatch(actions.setUserProfile(response.data.data));
+        const userData = response.data.data || response.data;
+        const freeTrailUse =
+          userData?.free_trail_use === true ||
+          userData?.free_trail_use === 'true' ||
+          userData?.free_trail_use === 1 ||
+          userData?.free_trial_use === true ||
+          userData?.free_trial_use === 'true' ||
+          userData?.free_trial_use === 1 ||
+          response.data?.free_trail_use === true ||
+          response.data?.free_trail_use === 'true';
+
+        Cookies.set('free_trail_use', freeTrailUse ? 'true' : 'false', { path: '/' });
+        localStorage.setItem('free_trail_use', freeTrailUse ? 'true' : 'false');
+        dispatch(actions.setUserProfile(userData));
       }
     } catch (err) {
       console.log('Get Profile Failed:', err);
@@ -271,10 +301,10 @@ const subUserLogin = (subUserId, callback) => {
         const userData = response.data.data;
 
         // Store tokens
-        Cookies.set('access_token', userData.access);
-        Cookies.set('refresh_token', userData.refresh);
-        Cookies.set('logedIn', 'true');
-        Cookies.set('userEmail', userData.email);
+        Cookies.set('access_token', userData.access, { path: '/' });
+        Cookies.set('refresh_token', userData.refresh, { path: '/' });
+        Cookies.set('logedIn', 'true', { path: '/' });
+        Cookies.set('userEmail', userData.email, { path: '/' });
 
         const hasSubscription = userData.has_subscription === true;
         const isSuperAdmin =
@@ -283,8 +313,16 @@ const subUserLogin = (subUserId, callback) => {
           userData.role === 'Admin' ||
           (!userData.is_client_user && userData.role !== 'Client');
 
-        Cookies.set('hasSubscription', hasSubscription ? 'true' : 'false');
-        Cookies.set('isSuperAdmin', isSuperAdmin ? 'true' : 'false');
+        const freeTrailUse =
+          userData.free_trail_use === true ||
+          userData.free_trail_use === 'true' ||
+          userData.free_trial_use === true ||
+          userData.free_trial_use === 'true';
+        Cookies.set('free_trail_use', freeTrailUse ? 'true' : 'false', { path: '/' });
+        localStorage.setItem('free_trail_use', freeTrailUse ? 'true' : 'false');
+
+        Cookies.set('hasSubscription', hasSubscription ? 'true' : 'false', { path: '/' });
+        Cookies.set('isSuperAdmin', isSuperAdmin ? 'true' : 'false', { path: '/' });
 
         dispatch(loginSuccess(true));
         dispatch(actions.setUserProfile(userData));
@@ -296,7 +334,7 @@ const subUserLogin = (subUserId, callback) => {
       }
     } catch (err) {
       console.log('Sub-User Login Failed:', err.response?.data);
-      const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Failed to login as sub-user';
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || 'Failed to login as sub-user';
       dispatch(loginErr(errorMessage));
     }
   };

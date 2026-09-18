@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Spin, Modal, Result } from 'antd';
+import { Spin, Modal, Result, message } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import Cookies from 'js-cookie';
 import { DataService } from '../../config/dataService/dataService';
@@ -331,7 +331,16 @@ function Checkout() {
   }, [dispatch]);
 
   const isStarter =
-    plan?.plan_name?.toLowerCase().includes('starter') || plan?.selectedPrice === 0 || plan?.monthly_price === 0;
+    plan?.plan_name?.toLowerCase().includes('starter') ||
+    plan?.plan_name?.toLowerCase().includes('trial') ||
+    plan?.subscription_type?.toLowerCase().includes('trial');
+
+  const isFreeTrialUsed =
+    userObj?.free_trail_use === true ||
+    userObj?.free_trail_use === 'true' ||
+    userObj?.free_trial_use === true ||
+    userObj?.free_trial_use === 'true' ||
+    Cookies.get('free_trail_use') === 'true';
 
   const rawPlanName = plan?.plan_name || 'Starter';
   const planTitle = rawPlanName.toLowerCase().endsWith('plan') ? rawPlanName : `${rawPlanName} Plan`;
@@ -415,6 +424,11 @@ function Checkout() {
   };
 
   const handleSubscribe = () => {
+    if (isStarter && isFreeTrialUsed) {
+      message.error('You have already used your free trial. Please select a paid plan.');
+      navigate('/pricing');
+      return;
+    }
     setConfirmSubscriptionVisible(true);
   };
 
@@ -764,12 +778,14 @@ function Checkout() {
                   : 'rounded-xl bg-[#0D0F0E] text-white shadow-[0_4px_12px_rgba(13,15,14,0.15)] hover:shadow-[0_6px_16px_rgba(13,15,14,0.25)]'
               }`}
               onClick={handleSubscribe}
-              disabled={loading || processingPayment}
+              disabled={loading || processingPayment || (isStarter && isFreeTrialUsed)}
             >
               {loading || processingPayment
                 ? 'Processing...'
                 : isStarter
-                ? 'Start Free Trial'
+                ? isFreeTrialUsed
+                  ? 'Free Trial Already Used'
+                  : 'Start Free Trial'
                 : `Subscribe · ${formatINR(quote.total)}`}
             </button>
 
@@ -800,19 +816,27 @@ function Checkout() {
         width={480}
       >
         <div className="px-2 py-4">
-          <h2 className="m-0 text-xl font-bold text-[#0D0F0E]">Confirm subscription change</h2>
+          <h2 className="m-0 text-xl font-bold text-[#0D0F0E]">
+            {currentPlanName && currentPlanName.trim() ? 'Confirm subscription change' : 'Confirm subscription'}
+          </h2>
           <p className="mt-3 mb-0 text-sm leading-6 text-[#5E6461]">
-            Are you sure you want to change from your subscription
-            <span className="font-bold text-[#5E6461]"> {currentPlanName || 'No active plan'} Plan </span>
-            to
-            <span className="font-bold text-[#5E6461]"> {planTitle} </span>?
+            {currentPlanName && currentPlanName.trim() ? (
+              <>
+                Are you sure you want to change from your subscription{' '}
+                <span className="font-bold text-[#0D0F0E]">{currentPlanName} Plan</span> to{' '}
+                <span className="font-bold text-[#0D0F0E]">{planTitle}</span>?
+              </>
+            ) : (
+              <>
+                Are you sure you want to subscribe to <span className="font-bold text-[#0D0F0E]">{planTitle}</span>?
+              </>
+            )}
           </p>
-          {/* <p className="mt-2 mb-0 text-sm leading-6 text-[#5E6461]">
-            Current plan: <span className="font-semibold text-[#0D0F0E]">{currentPlanName || 'No active plan'}</span>
-          </p> */}
-          <p className="mt-2 mb-0 text-sm leading-6 text-[#8A4B00]">
-            Your current subscription will be made inactive after this change.
-          </p>
+          {currentPlanName && currentPlanName.trim() ? (
+            <p className="mt-2 mb-0 text-sm leading-6 text-[#8A4B00]">
+              Your current subscription will be made inactive after this change.
+            </p>
+          ) : null}
           <div className="mt-6 flex justify-end gap-3">
             <button
               type="button"

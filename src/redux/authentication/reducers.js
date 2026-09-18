@@ -26,6 +26,7 @@ const {
 const initState = {
   login: Cookies.get('logedIn'),
   hasSubscription: Cookies.get('hasSubscription') === 'true',
+  freeTrailUse: Cookies.get('free_trail_use') === 'true' || localStorage.getItem('free_trail_use') === 'true',
   loading: false,
   error: null,
   profile: null, // ✅ Add profile state
@@ -69,6 +70,7 @@ const AuthReducer = (state = initState, action) => {
         ...state,
         login: data,
         hasSubscription: false, // ✅ Clear subscription status on logout
+        freeTrailUse: false, // ✅ Clear free trial status on logout
         profile: null, // ✅ Clear profile on logout
         loading: false,
         error: null,
@@ -150,7 +152,18 @@ const AuthReducer = (state = initState, action) => {
     case SET_USER_PROFILE:
       return {
         ...state,
-        profile: data,
+        profile: {
+          ...state.profile,
+          ...data,
+          free_trail_use:
+            data?.free_trail_use !== undefined
+              ? Boolean(data.free_trail_use === true || data.free_trail_use === 'true' || data.free_trail_use === 1)
+              : state.profile?.free_trail_use ?? state.freeTrailUse ?? Cookies.get('free_trail_use') === 'true',
+        },
+        freeTrailUse:
+          data?.free_trail_use !== undefined
+            ? Boolean(data.free_trail_use === true || data.free_trail_use === 'true' || data.free_trail_use === 1)
+            : state.freeTrailUse ?? Cookies.get('free_trail_use') === 'true',
         profileLoading: false,
       };
 
