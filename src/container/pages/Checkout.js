@@ -335,12 +335,23 @@ function Checkout() {
     plan?.plan_name?.toLowerCase().includes('trial') ||
     plan?.subscription_type?.toLowerCase().includes('trial');
 
-  const isFreeTrialUsed =
+  const isFreeTrialUsed = Boolean(
     userObj?.free_trail_use === true ||
-    userObj?.free_trail_use === 'true' ||
-    userObj?.free_trial_use === true ||
-    userObj?.free_trial_use === 'true' ||
-    Cookies.get('free_trail_use') === 'true';
+      userObj?.free_trail_use === 'true' ||
+      userObj?.free_trail_use === 1 ||
+      userObj?.free_trial_use === true ||
+      userObj?.free_trial_use === 'true' ||
+      userObj?.free_trial_use === 1 ||
+      userObj?.isTrial === true ||
+      userObj?.isTrial === 'true' ||
+      userObj?.is_trial === true ||
+      userObj?.is_trial === 'true' ||
+      (userObj?.subscription &&
+        (userObj?.subscription?.plan_name?.toLowerCase().includes('starter') ||
+          userObj?.subscription?.plan_name?.toLowerCase().includes('trial') ||
+          userObj?.subscription?.slug?.includes('starter') ||
+          userObj?.subscription?.slug?.includes('trial'))),
+  );
 
   const rawPlanName = plan?.plan_name || 'Starter';
   const planTitle = rawPlanName.toLowerCase().endsWith('plan') ? rawPlanName : `${rawPlanName} Plan`;
@@ -429,6 +440,28 @@ function Checkout() {
       navigate('/pricing');
       return;
     }
+
+    const currentSub = userObj?.subscription;
+    const isAlreadySubscribed = Boolean(
+      currentSub &&
+        ((currentSub.plan_id &&
+          (Number(currentSub.plan_id) === Number(plan?.id) || String(currentSub.plan_id) === String(plan?.id))) ||
+          (currentSub.id &&
+            (Number(currentSub.id) === Number(plan?.id) || String(currentSub.id) === String(plan?.id))) ||
+          (currentSub.plan_name &&
+            plan?.plan_name &&
+            currentSub.plan_name.trim().toLowerCase() === plan.plan_name.trim().toLowerCase()) ||
+          (currentSub.slug &&
+            plan?.slug &&
+            currentSub.slug.replace(/[-_ ]/g, '').toLowerCase() === plan.slug.replace(/[-_ ]/g, '').toLowerCase())),
+    );
+
+    if (isAlreadySubscribed) {
+      message.warning('You are already subscribed to this plan.');
+      navigate('/pricing');
+      return;
+    }
+
     setConfirmSubscriptionVisible(true);
   };
 
@@ -774,7 +807,7 @@ function Checkout() {
               type="button"
               className={`mt-[30px] w-full border-0 px-5 py-[15px] text-base font-bold cursor-pointer transition-all duration-150 hover:-translate-y-px disabled:opacity-[0.55] disabled:cursor-default disabled:translate-y-0 disabled:shadow-none ${
                 isStarter
-                  ? 'rounded-[14px] bg-[#00BA70] text-white shadow-[0_4px_14px_rgba(0,186,112,0.25)] hover:bg-[#00A362] hover:text-[#0D0F0E] hover:shadow-[0_6px_18px_rgba(0,186,112,0.35)]'
+                  ? 'rounded-[14px] bg-[#00BA70] text-white shadow-[0_4px_14px_rgba(0,186,112,0.25)] hover:bg-[#00A362] hover:shadow-[0_6px_18px_rgba(0,186,112,0.35)]'
                   : 'rounded-xl bg-[#0D0F0E] text-white shadow-[0_4px_12px_rgba(13,15,14,0.15)] hover:shadow-[0_6px_16px_rgba(13,15,14,0.25)]'
               }`}
               onClick={handleSubscribe}

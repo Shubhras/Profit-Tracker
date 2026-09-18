@@ -141,7 +141,7 @@ function Billing() {
   // const getPaymentMethod = () => subscription?.history?.[0]?.customer_details?.customer_email || 'N/A';
 
   const handleUpgrade = () => {
-    window.location.href = '/pricing';
+    navigate('/pricing');
   };
 
   // Get status tag color

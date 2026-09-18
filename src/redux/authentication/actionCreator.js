@@ -42,22 +42,7 @@ const login = (values, callback) => {
         const hasSubscription = response.data.data.has_subscription === true;
         Cookies.set('hasSubscription', hasSubscription ? 'true' : 'false');
 
-        const freeTrailUse =
-          response.data?.data?.free_trail_use === true ||
-          response.data?.data?.free_trail_use === 'true' ||
-          response.data?.data?.free_trail_use === 1 ||
-          response.data?.data?.free_trial_use === true ||
-          response.data?.data?.free_trial_use === 'true' ||
-          response.data?.data?.free_trial_use === 1 ||
-          response.data?.free_trail_use === true ||
-          response.data?.free_trail_use === 'true' ||
-          response.data?.free_trial_use === true ||
-          response.data?.free_trial_use === 'true';
-
-        Cookies.set('free_trail_use', freeTrailUse ? 'true' : 'false', { path: '/' });
-        localStorage.setItem('free_trail_use', freeTrailUse ? 'true' : 'false');
-
-        // Dispatch login success and subscription status
+        // Dispatch login success, user profile (containing free_trail_use), and subscription status
         dispatch(loginSuccess(true));
         dispatch(actions.setUserProfile(response.data.data));
         console.log('USER DATA STORED IN REDUX:', response.data.data);

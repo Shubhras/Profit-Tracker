@@ -23,13 +23,21 @@ const {
   PROFILE_ERR,
 } = actions;
 
+const getStoredProfile = () => {
+  try {
+    const stored = localStorage.getItem('userProfile');
+    return stored ? JSON.parse(stored) : null;
+  } catch (e) {
+    return null;
+  }
+};
+
 const initState = {
   login: Cookies.get('logedIn'),
   hasSubscription: Cookies.get('hasSubscription') === 'true',
-  freeTrailUse: Cookies.get('free_trail_use') === 'true' || localStorage.getItem('free_trail_use') === 'true',
   loading: false,
   error: null,
-  profile: null, // ✅ Add profile state
+  profile: getStoredProfile(), // ✅ Load persisted profile on page reload
   profileLoading: false, // ✅ Track profile API loading state
   profileError: null, // ✅ Track profile API error state
 };
@@ -66,11 +74,15 @@ const AuthReducer = (state = initState, action) => {
         loading: true,
       };
     case LOGOUT_SUCCESS:
+      try {
+        localStorage.removeItem('userProfile');
+      } catch (e) {
+        // ignore
+      }
       return {
         ...state,
         login: data,
         hasSubscription: false, // ✅ Clear subscription status on logout
-        freeTrailUse: false, // ✅ Clear free trial status on logout
         profile: null, // ✅ Clear profile on logout
         loading: false,
         error: null,
@@ -149,23 +161,22 @@ const AuthReducer = (state = initState, action) => {
         error: err,
       };
 
-    case SET_USER_PROFILE:
+    case SET_USER_PROFILE: {
+      const mergedProfile = {
+        ...state.profile,
+        ...data,
+      };
+      try {
+        localStorage.setItem('userProfile', JSON.stringify(mergedProfile));
+      } catch (e) {
+        // ignore
+      }
       return {
         ...state,
-        profile: {
-          ...state.profile,
-          ...data,
-          free_trail_use:
-            data?.free_trail_use !== undefined
-              ? Boolean(data.free_trail_use === true || data.free_trail_use === 'true' || data.free_trail_use === 1)
-              : state.profile?.free_trail_use ?? state.freeTrailUse ?? Cookies.get('free_trail_use') === 'true',
-        },
-        freeTrailUse:
-          data?.free_trail_use !== undefined
-            ? Boolean(data.free_trail_use === true || data.free_trail_use === 'true' || data.free_trail_use === 1)
-            : state.freeTrailUse ?? Cookies.get('free_trail_use') === 'true',
+        profile: mergedProfile,
         profileLoading: false,
       };
+    }
 
     case PROFILE_LOADING:
       return {

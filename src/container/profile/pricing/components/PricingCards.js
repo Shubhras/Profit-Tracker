@@ -62,7 +62,16 @@ const cardVariants = {
 // -------------------------------------------------------------
 // Pricing card — statement / ledger style, matched to reference
 // -------------------------------------------------------------
-function PricingCard({ plan, index, onSelect, selectedPlanId, setSelectedPlanId, selectedType, isFreeTrialUsed }) {
+function PricingCard({
+  plan,
+  index,
+  onSelect,
+  selectedPlanId,
+  setSelectedPlanId,
+  selectedType,
+  isFreeTrialUsed,
+  currentSubscription,
+}) {
   const isSelected = selectedPlanId === plan.id;
   const isTrial =
     index === 0 ||
@@ -70,9 +79,30 @@ function PricingCard({ plan, index, onSelect, selectedPlanId, setSelectedPlanId,
     plan.plan_name?.toLowerCase().includes('trial') ||
     plan.subscription_type?.toLowerCase().includes('trial');
   const isTrialDisabled = isTrial && Boolean(isFreeTrialUsed);
+
+  // Check if this card matches the user's current subscription
+  const isCurrentPlan = Boolean(
+    !isTrial &&
+      currentSubscription &&
+      ((currentSubscription.plan_id &&
+        (Number(currentSubscription.plan_id) === Number(plan.id) ||
+          String(currentSubscription.plan_id) === String(plan.id))) ||
+        (currentSubscription.id &&
+          (Number(currentSubscription.id) === Number(plan.id) || String(currentSubscription.id) === String(plan.id))) ||
+        (currentSubscription.plan_name &&
+          plan.plan_name &&
+          currentSubscription.plan_name.trim().toLowerCase() === plan.plan_name.trim().toLowerCase()) ||
+        (currentSubscription.slug &&
+          plan.slug &&
+          currentSubscription.slug.replace(/[-_ ]/g, '').toLowerCase() ===
+            plan.slug.replace(/[-_ ]/g, '').toLowerCase())),
+  );
+
+  const isCardDisabled = isTrialDisabled || isCurrentPlan;
+
   // Kept as an index-based "recommended" highlight since the API doesn't yet
   // send a dedicated flag — purely a visual affordance, no functional change.
-  const isRecommended = !isTrial && index === 1;
+  const isRecommended = !isTrial && !isCurrentPlan && index === 1;
 
   const [showAllFeatures, setShowAllFeatures] = useState(false);
 
@@ -83,12 +113,14 @@ function PricingCard({ plan, index, onSelect, selectedPlanId, setSelectedPlanId,
     ? isTrialDisabled
       ? '#E7E8E4'
       : '#0C8B5E'
+    : isCurrentPlan
+    ? '#E7E8E4'
     : isRecommended
     ? '#0C8B5E'
     : isSelected
     ? '#0C8B5E'
     : '#E7E8E4';
-  const cardBg = isTrial ? (isTrialDisabled ? '#FAFAF8' : '#F3FAF7') : '#FFFFFF';
+  const cardBg = isTrial ? (isTrialDisabled ? '#FAFAF8' : '#F3FAF7') : isCurrentPlan ? '#FAFAF8' : '#FFFFFF';
 
   // The API description for the trial plan sometimes already repeats
   // "7-Day Free Trial" at the start (since that's also the heading) — strip
@@ -104,26 +136,26 @@ function PricingCard({ plan, index, onSelect, selectedPlanId, setSelectedPlanId,
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true }}
-      whileHover={isTrialDisabled ? {} : { y: -4, transition: { duration: 0.2 } }}
+      whileHover={isCardDisabled ? {} : { y: -4, transition: { duration: 0.2 } }}
       className="h-full"
     >
       <div
         role="button"
-        tabIndex={isTrialDisabled ? -1 : 0}
+        tabIndex={isCardDisabled ? -1 : 0}
         onClick={() => {
-          if (isTrialDisabled) return;
+          if (isCardDisabled) return;
           setSelectedPlanId(plan.id);
         }}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            if (isTrialDisabled) return;
+            if (isCardDisabled) return;
             setSelectedPlanId(plan.id);
           }
         }}
         className={`
           relative h-full flex flex-col rounded-3xl overflow-hidden
-          transition-all duration-300 ${isTrialDisabled ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'}
+          transition-all duration-300 ${isCardDisabled ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'}
           ${
             isSelected || (isTrial && !isTrialDisabled) || isRecommended
               ? 'shadow-[0_10px_28px_rgba(12,139,94,0.12)]'
@@ -135,21 +167,20 @@ function PricingCard({ plan, index, onSelect, selectedPlanId, setSelectedPlanId,
           backgroundColor: cardBg,
         }}
       >
-        {/* recommended header bar — reserved on all non-trial cards so titles
-            align in a row; only visibly shown on the recommended card */}
+        {/* recommended / current plan header bar */}
         {!isTrial && (
           <div
             className={`flex items-center justify-between px-4 py-1.5 ${
-              isRecommended ? 'bg-[#0C8B5E]' : 'bg-transparent'
+              isCurrentPlan ? 'bg-[#10182B]' : isRecommended ? 'bg-[#0C8B5E]' : 'bg-transparent'
             }`}
           >
             <span
               className="text-[11px] font-semibold tracking-wide"
-              style={{ color: isRecommended ? '#fff' : 'transparent' }}
+              style={{ color: isCurrentPlan || isRecommended ? '#fff' : 'transparent' }}
             >
-              Most Popular
+              {isCurrentPlan ? 'Current Active Plan' : isRecommended ? 'Most Popular' : ''}
             </span>
-            <CheckOutlined style={{ color: isRecommended ? '#fff' : 'transparent', fontSize: 11 }} />
+            {(isCurrentPlan || isRecommended) && <CheckOutlined style={{ color: '#fff', fontSize: 11 }} />}
           </div>
         )}
 
@@ -313,25 +344,39 @@ function PricingCard({ plan, index, onSelect, selectedPlanId, setSelectedPlanId,
         {/* ===================== CTA (paid plans only) ===================== */}
         {!isTrial && (
           <div className="px-6 pb-6 pt-2">
-            <motion.div whileHover={{ scale: 1.015 }} whileTap={{ scale: 0.985 }}>
+            <motion.div
+              whileHover={isCardDisabled ? {} : { scale: 1.015 }}
+              whileTap={isCardDisabled ? {} : { scale: 0.985 }}
+            >
               <button
                 type="button"
+                disabled={isCardDisabled}
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (isCardDisabled) return;
                   onSelect({
                     ...plan,
                     selectedType,
                     selectedPrice: selectedType === 'monthly' ? plan.monthly_price : plan.annual_price,
                   });
                 }}
-                className="w-full h-[48px] rounded-[14px] font-bold text-[14px] border-none cursor-pointer text-white"
+                className={`w-full h-[48px] rounded-[14px] font-bold text-[14px] border-none text-white transition-colors ${
+                  isCurrentPlan ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'cursor-pointer'
+                }`}
                 style={{
-                  background: isRecommended ? '#0C8B5E' : '#10182B',
+                  background: isCurrentPlan ? '#D1D5DB' : isRecommended ? '#0C8B5E' : '#10182B',
+                  color: isCurrentPlan ? '#6B7280' : '#fff',
+                  cursor: isCurrentPlan ? 'not-allowed' : 'pointer',
                 }}
               >
-                {plan.button?.text || 'Buy now'}
+                {isCurrentPlan ? 'Current Plan' : plan.button?.text || 'Buy now'}
               </button>
             </motion.div>
+            {isCurrentPlan && (
+              <p className="text-center text-[11px] mt-2 text-[#0C8B5E] font-medium">
+                You are currently subscribed to this plan
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -363,6 +408,7 @@ PricingCard.propTypes = {
   setSelectedPlanId: PropTypes.func.isRequired,
   selectedType: PropTypes.string.isRequired,
   isFreeTrialUsed: PropTypes.bool,
+  currentSubscription: PropTypes.object,
 };
 
 // -------------------------------------------------------------
@@ -371,7 +417,7 @@ PricingCard.propTypes = {
 function PricingCards() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { login: isLoggedIn, profile, freeTrailUse } = useSelector((state) => state.auth || {});
+  const { login: isLoggedIn, profile } = useSelector((state) => state.auth || {});
   const [selectedPlanId, setSelectedPlanId] = useState(null);
   const [selectedType, setSelectedType] = useState('monthly');
 
@@ -399,26 +445,23 @@ function PricingCards() {
     }
   }, [dispatch, isUserLoggedIn]);
 
-  const cookieFreeTrial = Cookies.get('free_trail_use') || Cookies.get('free_trial_use');
-  const localFreeTrial = localStorage.getItem('free_trail_use') || localStorage.getItem('free_trial_use');
-
+  // Check directly from Redux profile if user has already used the free trial
   const isFreeTrialUsed = Boolean(
-    freeTrailUse === true ||
-      freeTrailUse === 'true' ||
-      profile?.free_trail_use === true ||
+    profile?.free_trail_use === true ||
       profile?.free_trail_use === 'true' ||
       profile?.free_trail_use === 1 ||
       profile?.free_trial_use === true ||
       profile?.free_trial_use === 'true' ||
       profile?.free_trial_use === 1 ||
-      profile?.user?.free_trail_use === true ||
-      profile?.user?.free_trial_use === true ||
-      profile?.data?.free_trail_use === true ||
-      profile?.data?.free_trial_use === true ||
-      cookieFreeTrial === 'true' ||
-      cookieFreeTrial === true ||
-      localFreeTrial === 'true' ||
-      localFreeTrial === true,
+      profile?.isTrial === true ||
+      profile?.isTrial === 'true' ||
+      profile?.is_trial === true ||
+      profile?.is_trial === 'true' ||
+      (profile?.subscription &&
+        (profile?.subscription?.plan_name?.toLowerCase().includes('starter') ||
+          profile?.subscription?.plan_name?.toLowerCase().includes('trial') ||
+          profile?.subscription?.slug?.includes('starter') ||
+          profile?.subscription?.slug?.includes('trial'))),
   );
 
   // const handlePlanSelect = (plan) => {
@@ -489,6 +532,7 @@ function PricingCards() {
       button: { text: 'Buy now' },
       id: plan.id,
       subscription_type: plan.subscription_type,
+      slug: plan.slug,
       specs,
     };
   };
@@ -582,6 +626,7 @@ function PricingCards() {
               setSelectedPlanId={setSelectedPlanId}
               selectedType={selectedType}
               isFreeTrialUsed={isFreeTrialUsed}
+              currentSubscription={profile?.subscription}
             />
           ))}
         </AnimatePresence>
