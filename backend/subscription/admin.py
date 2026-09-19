@@ -78,6 +78,7 @@ class UserSubscriptionAdmin(admin.ModelAdmin):
                     "reminder_3day_sent",
                     "reminder_1day_sent",
                     "expired_email_sent",
+                    "next_plan",
                 )
             },
         ),
