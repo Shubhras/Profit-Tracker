@@ -81,7 +81,7 @@ class Command(BaseCommand):
         # 3. EXPIRED SUBSCRIPTIONS & AUTO-RENEWAL
         # ==========================================
         expired_subscriptions = UserSubscription.objects.filter(
-            status__in=['active', 'cancelled'],
+            status__in=['active', 'cancelled', 'trial'],
             end_date__isnull=False,
             end_date__lte=now,
         )
@@ -95,48 +95,12 @@ class Command(BaseCommand):
             if dry_run:
                 continue
 
-            # Check if auto_renew is enabled and recurring razorpay_subscription_id exists
-            renewed_successfully = False
+            from subscription.services.renewal_service import handle_subscription_expiry_and_renewal
+            updated_sub, renewed_successfully = handle_subscription_expiry_and_renewal(sub, check_razorpay=True)
 
-            if sub.auto_renew and sub.razorpay_subscription_id:
-                try:
-                    # Attempt to fetch subscription status from Razorpay
-                    rzp_sub = client.subscription.fetch(sub.razorpay_subscription_id)
-                    rzp_status = rzp_sub.get('status')
-
-                    if rzp_status == 'active':
-                        # Razorpay will auto-charge via mandate; extend subscription cycle
-                        sub.start_date = now
-                        if sub.billing_cycle == 'monthly':
-                            sub.end_date = now + relativedelta(months=1)
-                        else:
-                            sub.end_date = now + relativedelta(years=1)
-
-                        sub.reminder_3day_sent = False
-                        sub.reminder_1day_sent = False
-                        sub.expired_email_sent = False
-                        sub.save()
-
-                        renewed_successfully = True
-                        send_auto_renewal_success_notice(sub)
-                        self.stdout.write(self.style.SUCCESS(f"Auto-renewed subscription for {user_email} via Razorpay."))
-                except Exception as e:
-                    logger.error(f"Error checking Razorpay subscription for {user_email}: {str(e)}")
-
-            if not renewed_successfully:
-                # Mark current subscription as expired
-                sub.status = 'expired'
-                sub.expired_email_sent = True
-                sub.save(update_fields=['status', 'expired_email_sent'])
-
-                # Synchronize user profile
-                if hasattr(sub.user, 'profile') and sub.user.profile:
-                    sub.user.profile.subscription_active = False
-                    sub.user.profile.subscription_status = 'expired'
-                    sub.user.profile.save(update_fields=['subscription_active', 'subscription_status'])
-
-                # Send expiration notification
-                send_subscription_expired_notice(sub)
-                self.stdout.write(self.style.WARNING(f"Marked subscription as expired and notified {user_email}."))
+            if renewed_successfully:
+                self.stdout.write(self.style.SUCCESS(f"Auto-renewed subscription for {user_email} via Razorpay (New Sub ID: {updated_sub.id}, Plan: {updated_sub.plan})."))
+            else:
+                self.stdout.write(self.style.WARNING(f"Marked subscription as expired for {user_email}."))
 
         self.stdout.write(self.style.SUCCESS("[Subscription Renewal Job] Completed successfully."))

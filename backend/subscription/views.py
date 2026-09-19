@@ -543,89 +543,14 @@ class MySubscriptionAPIView(APIView):
                 }
             )
 
+        from subscription.services.renewal_service import handle_subscription_expiry_and_renewal
+
+        # Evaluate expiration and auto-renewal (creates new record if paid, or marks expired if unpaid)
+        sub, _ = handle_subscription_expiry_and_renewal(sub, check_razorpay=True)
+
         all_subscriptions = UserSubscription.objects.filter(
             user=request.user
         ).select_related("plan").order_by("-created_at")
-
-        is_starter_or_trial = (
-            (sub.plan and "starter" in (sub.plan.plan_name or "").lower())
-            or sub.amount == 0
-            or getattr(sub, "status", None) == "trial"
-        )
-
-        if (
-            is_starter_or_trial
-            and sub.end_date
-            and sub.end_date <= timezone.now()
-            and sub.next_plan
-        ):
-            sub.plan = sub.next_plan
-            sub.next_plan = None
-            sub.status = "active"
-            sub.start_date = timezone.now()
-
-            sub.end_date = (
-                timezone.now() + relativedelta(months=1)
-                if sub.billing_cycle == "monthly"
-                else timezone.now() + relativedelta(years=1)
-            )
-
-            sub.amount = (
-                sub.plan.monthly_price
-                if sub.billing_cycle == "monthly"
-                else sub.plan.annual_price
-            )
-
-            sub.save()
-
-            if hasattr(request.user, "profile") and request.user.profile:
-                request.user.profile.subscriptiontype = sub.plan
-                request.user.profile.subscription_status = "active"
-                request.user.profile.save()
-
-        elif (
-            sub.status in ["active", "cancelled"]
-            and sub.end_date
-            and sub.end_date <= timezone.now()
-        ):
-            sub.status = "expired"
-            sub.save(update_fields=["status"])
-
-            if hasattr(request.user, "profile") and request.user.profile:
-                request.user.profile.subscription_active = False
-                request.user.profile.subscription_status = "expired"
-                request.user.profile.save(update_fields=["subscription_active", "subscription_status"])
-    # def get(self, request):
-
-    #     sub = UserSubscription.objects.filter(
-    #         user=request.user
-    #     ).select_related("plan").order_by("-created_at").first()
-        
-    #     current_subscription = UserSubscription.objects.filter(
-    #         user=request.user
-    #     ).select_related("plan").order_by("-created_at").first()
-
-    #     all_subscriptions = UserSubscription.objects.filter(
-    #         user=request.user
-    #     ).select_related("plan").order_by("-created_at")
-
-    #     is_starter_or_trial = (
-    #         (sub.plan and "starter" in (sub.plan.plan_name or "").lower())
-    #         or sub.amount == 0
-    #         or getattr(sub, "status", None) == "trial"
-    #     )
-    #     if sub and is_starter_or_trial and sub.end_date and sub.end_date <= timezone.now() and sub.next_plan:
-    #         sub.plan = sub.next_plan
-    #         sub.next_plan = None
-    #         sub.status = "active"
-    #         sub.start_date = timezone.now()
-    #         sub.end_date = timezone.now() + relativedelta(months=1) if sub.billing_cycle == "monthly" else timezone.now() + relativedelta(years=1)
-    #         sub.amount = sub.plan.monthly_price if sub.billing_cycle == "monthly" else sub.plan.annual_price
-    #         sub.save()
-    #         if hasattr(request.user, "profile") and request.user.profile:
-    #             request.user.profile.subscriptiontype = sub.plan
-    #             request.user.profile.subscription_status = "active"
-    #             request.user.profile.save()
 
         if not sub:
             return success_response(
@@ -817,31 +742,26 @@ class RazorpayWebhookAPIView(APIView):
 
         event = request.data.get("event")
 
-        if event in ["subscription.charged", "subscription.activated", "invoice.paid"]:
+        if event in ["subscription.charged", "invoice.paid"]:
             sub_id = request.data.get("payload", {}).get("subscription", {}).get("entity", {}).get("id")
             if sub_id:
-                subscriptions = UserSubscription.objects.filter(razorpay_subscription_id=sub_id)
-                now = timezone.now()
-                from dateutil.relativedelta import relativedelta
-                from subscription.services.email_notifications import send_auto_renewal_success_notice
+                from subscription.services.renewal_service import handle_subscription_expiry_and_renewal
+                latest_sub = UserSubscription.objects.filter(razorpay_subscription_id=sub_id).order_by("-created_at").first()
+                if latest_sub:
+                    handle_subscription_expiry_and_renewal(latest_sub, check_razorpay=False, payment_confirmed=True)
 
+        elif event == "subscription.activated":
+            sub_id = request.data.get("payload", {}).get("subscription", {}).get("entity", {}).get("id")
+            if sub_id:
+                subscriptions = UserSubscription.objects.filter(razorpay_subscription_id=sub_id, status="created")
                 for sub in subscriptions:
                     sub.status = "active"
-                    sub.start_date = now
-                    if sub.billing_cycle == "monthly":
-                        sub.end_date = now + relativedelta(months=1)
-                    else:
-                        sub.end_date = now + relativedelta(years=1)
-                    sub.reminder_3day_sent = False
-                    sub.reminder_1day_sent = False
-                    sub.expired_email_sent = False
-                    sub.save()
+                    sub.save(update_fields=["status"])
                     if hasattr(sub.user, "profile") and sub.user.profile:
                         sub.user.profile.subscriptiontype = sub.plan
                         sub.user.profile.subscription_active = True
                         sub.user.profile.subscription_status = "active"
                         sub.user.profile.save()
-                    send_auto_renewal_success_notice(sub)
 
         elif event in ["subscription.cancelled", "subscription.halted"]:
             sub_id = request.data.get("payload", {}).get("subscription", {}).get("entity", {}).get("id")
