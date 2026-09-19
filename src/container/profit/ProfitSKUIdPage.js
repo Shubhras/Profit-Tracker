@@ -56,10 +56,6 @@ export default function ProfitSKUIdPage() {
     current: 1,
     pageSize: 10,
   });
-  const [sortState, setSortState] = React.useState({
-    field: null,
-    order: null,
-  });
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -84,22 +80,8 @@ export default function ProfitSKUIdPage() {
       channel: {
         IN: globalChannel?.length > 0 ? globalChannel : channels,
       },
-
       profit_filter: profitType === 'profitable' ? 'GT_0' : profitType === 'losing' ? 'LT_0' : undefined,
-      ...(sortState.field &&
-        sortState.order && {
-          sort_by: sortState.field,
-          sort_order: sortState.order === 'ascend' ? 'asc' : 'desc',
-        }),
     },
-
-    sort_by: sortState.field || null,
-    sort_order: sortState.order ? (sortState.order === 'ascend' ? 'asc' : 'desc') : null,
-    sort: {
-      field: sortState.field || null,
-      order: sortState.order || null,
-    },
-
     pagination: {
       pageNo: pagination.current - 1,
       pageSize: pagination.pageSize,
@@ -154,8 +136,6 @@ export default function ProfitSKUIdPage() {
     globalChannel,
     channels,
     profitType,
-    sortState.field,
-    sortState.order,
   ]);
 
   useEffect(() => {
@@ -689,26 +669,11 @@ export default function ProfitSKUIdPage() {
               pageSizeOptions: ['10', '20', '50', '100'],
               showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
             }}
-            onChange={(pag, filters, sorter, extra) => {
-              if (extra.action === 'paginate') {
-                setPagination({
-                  current: pag.current,
-                  pageSize: pag.pageSize,
-                });
-              }
-              if (extra.action === 'sort') {
-                const activeSorter = Array.isArray(sorter) ? sorter[0] : sorter;
-                const currentOrder = activeSorter?.order || null;
-                const currentField = currentOrder ? activeSorter?.field || activeSorter?.columnKey : null;
-                setSortState({
-                  field: currentField,
-                  order: currentOrder,
-                });
-                setPagination({
-                  current: 1,
-                  pageSize: pag.pageSize,
-                });
-              }
+            onChange={(pag) => {
+              setPagination({
+                current: pag.current,
+                pageSize: pag.pageSize,
+              });
             }}
             size="small"
             scroll={{ x: 1800 }}

@@ -416,7 +416,7 @@ export default function ProfitTableView() {
       <Row gutter={[16, 16]} className="mb-5">
         {/* Card 1: Total Net Sales */}
         <Col xs={24} sm={12} md={12} lg={6} xl={6}>
-          <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow duration-200 h-full">
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-md flex items-start gap-4 transition-shadow duration-200 h-full">
             <div className="w-10 h-10 rounded-xl bg-[#ecfdf5] flex items-center justify-center shrink-0">
               <BarChartOutlined className="text-[18px] text-[#10b981]" />
             </div>
@@ -425,17 +425,13 @@ export default function ProfitTableView() {
               <div className="text-[21px] font-bold text-[#111827] mt-0.5 tracking-tight truncate">
                 ₹{formatNumber(totals.netsales)}
               </div>
-              <div className="text-[12px] font-semibold text-[#10b981] flex items-center gap-1 mt-1">
-                <span>↑</span>
-                <span>12.5% vs previous period</span>
-              </div>
             </div>
           </div>
         </Col>
 
         {/* Card 2: Total Units Sold */}
         <Col xs={24} sm={12} md={12} lg={6} xl={6}>
-          <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow duration-200 h-full">
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-md flex items-start gap-4 transition-shadow duration-200 h-full">
             <div className="w-10 h-10 rounded-xl bg-[#eff6ff] flex items-center justify-center shrink-0">
               <ShoppingOutlined className="text-[18px] text-[#3b82f6]" />
             </div>
@@ -444,17 +440,13 @@ export default function ProfitTableView() {
               <div className="text-[21px] font-bold text-[#111827] mt-0.5 tracking-tight truncate">
                 {formatInteger(totals.netqty ?? totals.grossqty ?? 0)}
               </div>
-              <div className="text-[12px] font-semibold text-[#10b981] flex items-center gap-1 mt-1">
-                <span>↑</span>
-                <span>15.8% vs previous period</span>
-              </div>
             </div>
           </div>
         </Col>
 
         {/* Card 3: Total Profit */}
         <Col xs={24} sm={12} md={12} lg={6} xl={6}>
-          <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow duration-200 h-full">
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-md flex items-start gap-4 transition-shadow duration-200 h-full">
             <div className="w-10 h-10 rounded-xl bg-[#ecfdf5] flex items-center justify-center shrink-0">
               <WalletOutlined className="text-[18px] text-[#10b981]" />
             </div>
@@ -463,17 +455,13 @@ export default function ProfitTableView() {
               <div className="text-[21px] font-bold text-[#111827] mt-0.5 tracking-tight truncate">
                 ₹{formatNumber(totals.profit)}
               </div>
-              <div className="text-[12px] font-semibold text-[#10b981] flex items-center gap-1 mt-1">
-                <span>↑</span>
-                <span>{totals.profitmargin ?? totals.grossprofitper ?? 0}% Profit Margin</span>
-              </div>
             </div>
           </div>
         </Col>
 
         {/* Card 4: Overall Profit % */}
         <Col xs={24} sm={12} md={12} lg={6} xl={6}>
-          <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow duration-200 h-full">
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-md flex items-start gap-4 transition-shadow duration-200 h-full">
             <div className="w-10 h-10 rounded-xl bg-[#f3e8ff] flex items-center justify-center shrink-0">
               <PercentageOutlined className="text-[18px] text-[#8b5cf6]" />
             </div>
@@ -481,10 +469,6 @@ export default function ProfitTableView() {
               <div className="text-[13px] font-medium text-[#6b7280]">Overall Profit %</div>
               <div className="text-[21px] font-bold text-[#111827] mt-0.5 tracking-tight truncate">
                 {totals.profitmargin ?? totals.grossprofitper ?? 0}%
-              </div>
-              <div className="text-[12px] font-semibold text-[#10b981] flex items-center gap-1 mt-1">
-                <span>↑</span>
-                <span>22.1% vs previous period</span>
               </div>
             </div>
           </div>
@@ -600,64 +584,68 @@ export default function ProfitTableView() {
             {/* Donut Chart */}
             <div className="relative w-full h-[220px] flex items-center justify-center my-3">
               {totalNetSales > 0 ? (
-                <ResponsiveContainer width="100%" height={220}>
-                  <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-                    <RechartsTooltip
-                      formatter={(val) => [`₹${formatNumber(val)}`, 'Net Sales']}
-                      contentStyle={{
-                        borderRadius: '8px',
-                        border: '1px solid #e5e7eb',
-                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                        fontSize: '12px',
-                      }}
-                    />
-                    <Pie
-                      data={pieData}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={65}
-                      outerRadius={90}
-                      paddingAngle={pieData.length > 1 ? 3 : 0}
-                      stroke="none"
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
+                <>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                      <RechartsTooltip
+                        formatter={(val) => [`₹${formatNumber(val)}`, 'Net Sales']}
+                        contentStyle={{
+                          borderRadius: '8px',
+                          border: '1px solid #e5e7eb',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                          fontSize: '12px',
+                        }}
+                      />
+                      <Pie
+                        data={pieData}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={65}
+                        outerRadius={90}
+                        paddingAngle={pieData.length > 1 ? 3 : 0}
+                        stroke="none"
+                      >
+                        {pieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-[20px] font-bold text-[#111827] leading-tight tracking-tight">
+                      {formatCompactCurrency(totals.netsales ?? totalNetSales)}
+                    </span>
+                    <span className="text-[11px] font-medium text-[#9ca3af] mt-0.5">Net Sales</span>
+                  </div>
+                </>
               ) : (
                 <div className="flex items-center justify-center text-gray-400 text-sm">No Sales Data</div>
               )}
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-[20px] font-bold text-[#111827] leading-tight tracking-tight">
-                  {formatCompactCurrency(totals.netsales ?? totalNetSales)}
-                </span>
-                <span className="text-[11px] font-medium text-[#9ca3af] mt-0.5">Net Sales</span>
-              </div>
             </div>
 
             {/* Legend list */}
-            <div className="mt-4 space-y-2.5">
-              {pieData.map((item, idx) => {
-                const pct = totalNetSales > 0 ? ((item.value / totalNetSales) * 100).toFixed(1) : '0.0';
-                return (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between text-[13px] py-1 border-b border-gray-50 last:border-none"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                      <span className="font-medium text-[#374151]">{item.name}</span>
+            {totalNetSales > 0 && (
+              <div className="mt-4 space-y-2.5">
+                {pieData.map((item, idx) => {
+                  const pct = totalNetSales > 0 ? ((item.value / totalNetSales) * 100).toFixed(1) : '0.0';
+                  return (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between text-[13px] py-1 border-b border-gray-50 last:border-none"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                        <span className="font-medium text-[#374151]">{item.name}</span>
+                      </div>
+                      <span className="text-[#6b7280] text-[12px] font-medium">{pct}%</span>
+                      <span className="font-semibold text-[#111827]">₹{formatNumber(item.value)}</span>
                     </div>
-                    <span className="text-[#6b7280] text-[12px] font-medium">{pct}%</span>
-                    <span className="font-semibold text-[#111827]">₹{formatNumber(item.value)}</span>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </Col>
       </Row>

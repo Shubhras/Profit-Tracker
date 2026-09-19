@@ -12,6 +12,7 @@ import {
   AuditOutlined,
   BankOutlined,
   SafetyCertificateOutlined,
+  PauseCircleOutlined,
 } from '@ant-design/icons';
 import { getPaymentReconcileDetails, exportProfitabilityDetails } from '../../redux/dashboard/actionCreator';
 
@@ -148,7 +149,7 @@ export default function FeeLeaks() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedMarketplace, searchQuery, dataSource]);
+  }, [selectedMarketplace, debouncedSearch, globalChannel, dateRange]);
 
   const getEffectiveChannels = (mp, globalCh) => {
     if (mp === 'amazon') {
@@ -171,8 +172,8 @@ export default function FeeLeaks() {
         ...(debouncedSearch.trim() && { search: debouncedSearch.trim() }),
       },
       pagination: {
-        pageNo: 0,
-        pageSize: 10000,
+        pageNo: currentPage - 1,
+        pageSize: pageSize,
       },
     };
   };
@@ -180,7 +181,7 @@ export default function FeeLeaks() {
   // Fetch reconciliation data using getPaymentReconcileDetails
   useEffect(() => {
     dispatch(getPaymentReconcileDetails(buildPayload()));
-  }, [dateRange, globalChannel, selectedMarketplace, debouncedSearch]);
+  }, [dateRange, globalChannel, selectedMarketplace, debouncedSearch, currentPage, pageSize]);
 
   // Summary statistics for 5 leak categories
   const summaryStats = useMemo(() => {
@@ -189,7 +190,14 @@ export default function FeeLeaks() {
     let totGstLeak = Math.abs(parseAmount(totalsData?.total_mp_gst_leaks || totalsData?.mp_gst_leaks));
     let totTcsLeak = Math.abs(parseAmount(totalsData?.total_tcs_leaks || totalsData?.tcs_leaks));
     let totTdsLeak = Math.abs(parseAmount(totalsData?.total_tds_leaks || totalsData?.tds_leaks));
-    let totUnsettled = Math.abs(parseAmount(totalsData?.total_unsettled_not_paid || totalsData?.unsettled_not_paid));
+    let totUnsettled = Math.abs(
+      parseAmount(
+        totalsData?.total_settlement_hold ||
+        totalsData?.settlement_hold ||
+        totalsData?.total_unsettled_not_paid ||
+        totalsData?.unsettled_not_paid
+      )
+    );
 
     if (totFeesLeak === 0 && totShipLeak === 0 && totTcsLeak === 0 && dataSource.length > 0) {
       dataSource.forEach((row) => {
@@ -198,7 +206,7 @@ export default function FeeLeaks() {
         totGstLeak += Math.abs(parseAmount(row.mp_gst_leaks));
         totTcsLeak += Math.abs(parseAmount(row.tcs_leaks));
         totTdsLeak += Math.abs(parseAmount(row.tds_leaks));
-        totUnsettled += Math.abs(parseAmount(row.unsettled_not_paid));
+        totUnsettled += Math.abs(parseAmount(row.unsettled_not_paid || row.settlement_hold));
       });
     }
 
@@ -278,12 +286,17 @@ export default function FeeLeaks() {
 
       return {
         name: mpName,
+        rawAmount: mpTotal,
         amount: formatCurrency(mpTotal),
         percentage: `${percentage}%`,
         logo: logoSrc,
       };
     });
   }, [marketplaceOptions, summaryStats, dataSource, totalsData]);
+
+  const totalMarketplacesAmount = useMemo(() => {
+    return topMarketplaces.reduce((acc, item) => acc + (item.rawAmount ?? parseAmount(item.amount) ?? 0), 0);
+  }, [topMarketplaces]);
 
   // Export handler
   const [exportLoading, setExportLoading] = useState(false);
@@ -448,10 +461,10 @@ export default function FeeLeaks() {
             </div>
           </div>
 
-          {/* SUMMARY CARDS - 5 LEAK CATEGORIES */}
-          <div className="grid grid-cols-5 gap-2.5 2xl:grid-cols-5 xl:grid-cols-3 md:grid-cols-2 sm:grid-cols-1 mb-3">
+          {/* SUMMARY CARDS - 6 LEAK & SETTLEMENT CATEGORIES */}
+          <div className="grid grid-cols-6 gap-2.5 2xl:grid-cols-6 xl:grid-cols-3 md:grid-cols-2 sm:grid-cols-1 mb-3">
             {/* Fee Leaks */}
-            <div className="relative overflow-hidden rounded-xl border border-red-100 bg-gradient-to-br from-white via-white to-red-50/30 p-3 shadow-sm hover:shadow-md transition-all duration-200">
+            <div className="relative overflow-hidden rounded-xl border border-red-100 bg-gradient-to-br from-white via-white to-red-50/30 p-3 shadow-md transition-all duration-200">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 border border-red-100 text-red-600">
                   <DollarCircleOutlined style={{ fontSize: 15 }} />
@@ -468,7 +481,7 @@ export default function FeeLeaks() {
             </div>
 
             {/* Shipping Leaks */}
-            <div className="relative overflow-hidden rounded-xl border border-amber-100 bg-gradient-to-br from-white via-white to-amber-50/30 p-3 shadow-sm hover:shadow-md transition-all duration-200">
+            <div className="relative overflow-hidden rounded-xl border border-amber-100 bg-gradient-to-br from-white via-white to-amber-50/30 p-3 shadow-md transition-all duration-200">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 border border-amber-100 text-amber-600">
                   <CarOutlined style={{ fontSize: 15 }} />
@@ -485,7 +498,7 @@ export default function FeeLeaks() {
             </div>
 
             {/* MP-GST Leaks */}
-            <div className="relative overflow-hidden rounded-xl border border-purple-100 bg-gradient-to-br from-white via-white to-purple-50/30 p-3 shadow-sm hover:shadow-md transition-all duration-200">
+            <div className="relative overflow-hidden rounded-xl border border-purple-100 bg-gradient-to-br from-white via-white to-purple-50/30 p-3 shadow-md transition-all duration-200">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-50 border border-purple-100 text-purple-600">
                   <AuditOutlined style={{ fontSize: 15 }} />
@@ -502,7 +515,7 @@ export default function FeeLeaks() {
             </div>
 
             {/* TCS Leaks */}
-            <div className="relative overflow-hidden rounded-xl border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50/30 p-3 shadow-sm hover:shadow-md transition-all duration-200">
+            <div className="relative overflow-hidden rounded-xl border border-blue-100 bg-gradient-to-br from-white via-white to-blue-50/30 p-3 shadow-md transition-all duration-200">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 border border-blue-100 text-blue-600">
                   <BankOutlined style={{ fontSize: 15 }} />
@@ -519,7 +532,7 @@ export default function FeeLeaks() {
             </div>
 
             {/* TDS Leaks */}
-            <div className="relative overflow-hidden rounded-xl border border-emerald-100 bg-gradient-to-br from-white via-white to-emerald-50/30 p-3 shadow-sm hover:shadow-md transition-all duration-200">
+            <div className="relative overflow-hidden rounded-xl border border-emerald-100 bg-gradient-to-br from-white via-white to-emerald-50/30 p-3 shadow-md transition-all duration-200">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600">
                   <SafetyCertificateOutlined style={{ fontSize: 15 }} />
@@ -531,6 +544,23 @@ export default function FeeLeaks() {
               <div>
                 <h2 className="text-[17px] font-bold text-emerald-600 leading-tight truncate">
                   {formatCurrency(summaryStats.totTdsLeak)}
+                </h2>
+              </div>
+            </div>
+
+            {/* Settlement Hold */}
+            <div className="relative overflow-hidden rounded-xl border border-rose-100 bg-gradient-to-br from-white via-white to-rose-50/30 p-3 shadow-md transition-all duration-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 border border-rose-100 text-rose-600">
+                  <PauseCircleOutlined style={{ fontSize: 15 }} />
+                </div>
+                <p className="text-[12px] font-medium text-gray-500 uppercase tracking-wider mb-1 truncate">
+                  Settlement Hold
+                </p>
+              </div>
+              <div>
+                <h2 className="text-[17px] font-bold text-rose-600 leading-tight truncate">
+                  {formatCurrency(summaryStats.totUnsettled)}
                 </h2>
               </div>
             </div>
@@ -570,12 +600,14 @@ export default function FeeLeaks() {
                     ...item,
                   }))}
                   dataSource={dataSource}
+                  showSorterTooltip={false}
                   pagination={{
                     current: currentPage,
                     pageSize,
-                    total: dataSource.length,
+                    total: profitData?.pagination?.count || 0,
                     showSizeChanger: true,
                     pageSizeOptions: ['10', '20', '50', '100'],
+                    showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
                     onChange: (page, newSize) => {
                       setCurrentPage(page);
                       setPageSize(newSize);
@@ -620,6 +652,13 @@ export default function FeeLeaks() {
                       <span className="text-[12px] font-semibold text-[#374151]">{item.amount}</span>
                     </div>
                   ))}
+
+                  <div className="flex items-center justify-between pt-2.5 mt-1 border-t border-gray-200">
+                    <span className="text-[12px] font-semibold text-[#111827]">Total</span>
+                    <span className="text-[12px] font-bold text-[#111827]">
+                      {formatCurrency(totalMarketplacesAmount)}
+                    </span>
+                  </div>
                 </div>
               </div>
             </Col>
