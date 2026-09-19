@@ -143,7 +143,7 @@ class GrowthOpportunitiesAPIView(APIView):
             # ---------------------------------------------------------
             payment_leaks_amount = 0.0
             try:
-                from amazon_auth.payment_reconcyle import combined_payment_reconcile_by_parentproductid
+                from amazon_auth.payment_reconcyle import combined_payment_reconcile_overview
                 from_date_val = filters.get("fromDate") or data.get("fromDate")
                 to_date_val = filters.get("toDate") or data.get("toDate") or filters.get("endDate") or data.get("endDate")
                 channel_list = channels if channels else ["Amazon-India"]
@@ -162,31 +162,20 @@ class GrowthOpportunitiesAPIView(APIView):
                 recon_req = getattr(request, '_request', request)
                 recon_req._body = json.dumps(recon_payload).encode('utf-8')
                 recon_req.data = recon_payload
-                recon_res = combined_payment_reconcile_by_parentproductid(recon_req)
+                recon_res = combined_payment_reconcile_overview(recon_req)
                 if recon_res.status_code == 200 and isinstance(recon_res.data, dict):
-                    rows = recon_res.data.get("response", [])
-                    for r in rows:
-                        f_leak = _parse_num_safe(r.get("fees_leaks"))
-                        s_leak = _parse_num_safe(r.get("shipping_leaks"))
-                        t_leak = _parse_num_safe(r.get("tcs_leaks"))
-                        u_leak = _parse_num_safe(r.get("unsettled_not_paid"))
-
-                        act_gst = _parse_num_safe(r.get("actual_mp_gst"))
-                        est_gst = _parse_num_safe(r.get("mp_gst"))
-                        gst_leak = _parse_num_safe(r.get("mp_gst_leaks")) or (
-                            abs(act_gst - est_gst) if (act_gst > 0 and act_gst != est_gst) else 0.0
-                        )
-
-                        if f_leak > 0:
-                            payment_leaks_amount += f_leak
-                        if s_leak > 0:
-                            payment_leaks_amount += s_leak
-                        if gst_leak > 0:
-                            payment_leaks_amount += gst_leak
-                        if t_leak > 0:
-                            payment_leaks_amount += t_leak
-                        if u_leak > 0:
-                            payment_leaks_amount += u_leak
+                    totals = recon_res.data.get("totals", {})
+                    amz_leak = _parse_num_safe(totals.get("amazon_leaks"))
+                    myntra_leak = _parse_num_safe(totals.get("myntra_leaks"))
+                    if amz_leak > 0 or myntra_leak > 0:
+                        payment_leaks_amount = amz_leak + myntra_leak
+                    else:
+                        f_leak = abs(_parse_num_safe(totals.get("total_fees_leaks") or totals.get("fees_leaks")))
+                        s_leak = abs(_parse_num_safe(totals.get("total_shipping_leaks") or totals.get("shipping_leaks")))
+                        g_leak = abs(_parse_num_safe(totals.get("total_mp_gst_leaks") or totals.get("mp_gst_leaks")))
+                        t_leak = abs(_parse_num_safe(totals.get("total_tcs_leaks") or totals.get("tcs_leaks")))
+                        tds_leak = abs(_parse_num_safe(totals.get("total_tds_leaks") or totals.get("tds_leaks")))
+                        payment_leaks_amount = f_leak + s_leak + g_leak + t_leak + tds_leak
             except Exception as e:
                 logger.error(f"Error fetching payment reconcile details in GrowthOpportunitiesAPIView: {str(e)}")
 
