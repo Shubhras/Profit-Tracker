@@ -846,6 +846,7 @@ export default function ProfitDetailsView() {
 
     return visibleColumns.includes(key);
   });
+  const tableWidth = filteredColumns.reduce((total, col) => total + (col.width || 120), 0);
 
   return (
     <>
@@ -930,7 +931,8 @@ export default function ProfitDetailsView() {
               });
             }}
             size="small"
-            scroll={{ x: isReconcile ? 2600 : 'true' }}
+            // scroll={{ x: isReconcile ? 2600 : 'true' }}
+            scroll={{ x: tableWidth }}
             className="
     [&_.ant-table-thead>tr>th]:!text-[12px]
     [&_.ant-table-thead>tr>th]:!font-semibold
