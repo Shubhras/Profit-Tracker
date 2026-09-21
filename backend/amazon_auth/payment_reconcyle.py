@@ -1541,6 +1541,15 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
     return_perc = (total_returns / total_qty * 100) if total_qty else 0.0
     overall_profit_margin = (total_profit / total_net_sales * 100) if total_net_sales else 0.0
     overall_gst_perc = (total_gst_payable / total_taxable_value * 100) if total_taxable_value else 0.0
+    # print(f"total_fees_leaks: {total_fees_leaks}")
+    # print(f"total_shipping_leaks: {total_shipping_leaks}")
+    # print(f"total_mp_gst_leaks: {total_mp_gst_leaks}")
+    # print(f"total_tcs_leaks: {total_tcs_leaks}")
+    # print(f"total_tds_leaks: {total_tds_leaks}")
+    # print(f"total_settlement_leak: {total_settlement_leak}")
+    # print(f"total_settlement_paid: {total_settlement_paid}")
+    # print(f"total_unsettled_not_paid: {total_unsettled_not_paid}")
+    # print(f"amazon_leaks: {abs(total_fees_leaks) + abs(total_shipping_leaks) + abs(total_mp_gst_leaks) + abs(total_tcs_leaks) + abs(total_tds_leaks) + abs(total_settlement_leak)}")
 
     totals = {
         "profit_settings": profit_settings_dict,
@@ -1621,12 +1630,10 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         "total_tds_leaks": format_currency(total_tds_leaks),
         "mp_gst_leaks": format_currency(total_mp_gst_leaks),
         "total_mp_gst_leaks": format_currency(total_mp_gst_leaks),
-        "mp_gst_leaks ": format_currency(total_mp_gst_leaks),
         "settlement_leak": format_currency(total_settlement_leak),
         "total_settlement_leak": format_currency(total_settlement_leak),
-        "settlement_leak ": format_currency(total_settlement_leak),
         "release_transaction_date": "-",
-        "amazon_leaks": format_currency(abs(total_fees_leaks) + abs(total_shipping_leaks) + abs(total_mp_gst_leaks) + abs(total_tcs_leaks) + abs(total_tds_leaks)),
+        "amazon_leaks": format_currency(abs(total_fees_leaks) + abs(total_shipping_leaks) + abs(total_mp_gst_leaks) + abs(total_tcs_leaks) + abs(total_tds_leaks) + abs(total_unsettled_not_paid)),
         "myntra_leaks": format_currency(0),
     }
 
@@ -2281,12 +2288,10 @@ def _payment_reconcile_order_level_logic(request):
         "total_tds_leaks": format_currency(tot_tds_leaks),
         "mp_gst_leaks": format_currency(tot_mp_gst_leaks),
         "total_mp_gst_leaks": format_currency(tot_mp_gst_leaks),
-        "mp_gst_leaks ": format_currency(tot_mp_gst_leaks),
         "settlement_leak": format_currency(tot_settlement_leak),
         "total_settlement_leak": format_currency(tot_settlement_leak),
-        "settlement_leak ": format_currency(tot_settlement_leak),
         "release_transaction_date": "-",
-        "amazon_leaks": format_currency(abs(tot_fee_leaks) + abs(tot_ship_leaks) + abs(tot_mp_gst_leaks) + abs(tot_tcs_leaks) + abs(tot_tds_leaks)),
+        "amazon_leaks": format_currency(abs(tot_fee_leaks) + abs(tot_ship_leaks) + abs(tot_mp_gst_leaks) + abs(tot_tcs_leaks) + abs(tot_tds_leaks) + abs(tot_unsettled)),
         "myntra_leaks": format_currency(0),
     })
     data["summary"] = _build_reconciliation_summary(rows)

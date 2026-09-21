@@ -416,7 +416,8 @@ def _combine_totals(amazon_t, myntra_t, type="style"):
         abs(parse_currency_to_decimal(amazon_t.get("shipping_leaks") or amazon_t.get("total_shipping_leaks") or 0)) +
         abs(parse_currency_to_decimal(amazon_t.get("mp_gst_leaks") or amazon_t.get("total_mp_gst_leaks") or 0)) +
         abs(parse_currency_to_decimal(amazon_t.get("tcs_leaks") or amazon_t.get("total_tcs_leaks") or 0)) +
-        abs(parse_currency_to_decimal(amazon_t.get("tds_leaks") or amazon_t.get("total_tds_leaks") or 0))
+        abs(parse_currency_to_decimal(amazon_t.get("tds_leaks") or amazon_t.get("total_tds_leaks") or 0)) +
+        abs(parse_currency_to_decimal(amazon_t.get("unsettled_not_paid") or amazon_t.get("total_unsettled_not_paid") or 0))
     )
 
     my_leak = (
@@ -424,7 +425,8 @@ def _combine_totals(amazon_t, myntra_t, type="style"):
         abs(parse_currency_to_decimal(myntra_t.get("shipping_leaks") or myntra_t.get("total_shipping_leaks") or 0)) +
         abs(parse_currency_to_decimal(myntra_t.get("mp_gst_leaks") or myntra_t.get("total_mp_gst_leaks") or 0)) +
         abs(parse_currency_to_decimal(myntra_t.get("tcs_leaks") or myntra_t.get("total_tcs_leaks") or 0)) +
-        abs(parse_currency_to_decimal(myntra_t.get("tds_leaks") or myntra_t.get("total_tds_leaks") or 0))
+        abs(parse_currency_to_decimal(myntra_t.get("tds_leaks") or myntra_t.get("total_tds_leaks") or 0)) +
+        abs(parse_currency_to_decimal(myntra_t.get("unsettled_not_paid") or myntra_t.get("total_unsettled_not_paid") or 0))
     )
 
     if "amazon_leaks" in amazon_t and amazon_t["amazon_leaks"] is not None:
