@@ -181,7 +181,7 @@ function ActionsRequired() {
             {CARD_CONFIG.filter((card) => visibleCards.includes(card.key)).map((card) => (
               <div
                 key={card.key}
-                className={`group ${card.bg} bg-white border border-[#E5E7EB] rounded-[10px] overflow-hidden shadow-[0_1px_3px_rgba(16,24,40,0.04)] hover:shadow-[0_4px_14px_rgba(16,24,40,0.08)] transition-shadow duration-200`}
+                className={`group ${card.bg} bg-white border border-[#E5E7EB] rounded-[10px] overflow-hidden shadow-[0_4px_14px_rgba(16,24,40,0.08)] transition-shadow duration-200`}
               >
                 {/* ================= CARD CONTENT ================= */}
 

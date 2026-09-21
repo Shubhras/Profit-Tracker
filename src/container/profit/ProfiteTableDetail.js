@@ -63,10 +63,6 @@ export default function ProfitDetailsView() {
     current: 1,
     pageSize: 10,
   });
-  const [sortState, setSortState] = React.useState({
-    field: null,
-    order: null,
-  });
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -102,17 +98,6 @@ export default function ProfitDetailsView() {
 
         fromDate: dateRange?.fromDate || null,
         toDate: dateRange?.endDate || null,
-        ...(sortState.field &&
-          sortState.order && {
-            sort_by: sortState.field,
-            sort_order: sortState.order === 'ascend' ? 'asc' : 'desc',
-          }),
-      },
-      sort_by: sortState.field || null,
-      sort_order: sortState.order ? (sortState.order === 'ascend' ? 'asc' : 'desc') : null,
-      sort: {
-        field: sortState.field || null,
-        order: sortState.order || null,
       },
       pagination: {
         pageNo: pagination.current - 1,
@@ -131,17 +116,7 @@ export default function ProfitDetailsView() {
     if (decodedChannel) {
       dispatch(getProfitDetails(buildPayload()));
     }
-  }, [
-    dateRange,
-    decodedChannel,
-    globalChannel,
-    pagination.current,
-    pagination.pageSize,
-    debouncedSearch,
-    profitType,
-    sortState.field,
-    sortState.order,
-  ]);
+  }, [dateRange, decodedChannel, globalChannel, pagination.current, pagination.pageSize, debouncedSearch, profitType]);
 
   const handleExport = async (format = 'xlsx') => {
     setExportLoading(true);
@@ -1036,27 +1011,11 @@ export default function ProfitDetailsView() {
               pageSizeOptions: ['10', '20', '50', '100'],
               showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
             }}
-            onChange={(pag, filters, sorter, extra) => {
-              if (extra.action === 'paginate') {
-                setPagination((prev) => ({
-                  ...prev,
-                  current: pag.current,
-                  pageSize: pag.pageSize,
-                }));
-              }
-              if (extra.action === 'sort') {
-                const activeSorter = Array.isArray(sorter) ? sorter[0] : sorter;
-                const currentOrder = activeSorter?.order || null;
-                const currentField = currentOrder ? activeSorter?.field || activeSorter?.columnKey : null;
-                setSortState({
-                  field: currentField,
-                  order: currentOrder,
-                });
-                setPagination((prev) => ({
-                  ...prev,
-                  current: 1,
-                }));
-              }
+            onChange={(pag) => {
+              setPagination({
+                current: pag.current,
+                pageSize: pag.pageSize,
+              });
             }}
             size="small"
             // scroll={{ x: 'true' }}

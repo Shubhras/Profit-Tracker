@@ -387,7 +387,10 @@ function ProductRanking() {
 
       <div className="grid grid-cols-6 gap-2 xl:grid-cols-3 md:grid-cols-2 sm:grid-cols-1 mb-2">
         {stats.map((item) => (
-          <div key={item.title} className="bg-white border border-[#edf0f2] rounded-xl px-3 py-3 min-h-[92px]">
+          <div
+            key={item.title}
+            className="bg-white border border-[#edf0f2] rounded-xl px-3 py-3 min-h-[92px] shadow-md"
+          >
             {/* TOP ROW */}
             <div className="flex items-start justify-between mb-3">
               <p className="text-[11px] font-medium text-[#6b7280] leading-[14px]">{item.title}</p>
@@ -399,20 +402,6 @@ function ProductRanking() {
 
             {/* VALUE */}
             <div className="text-[20px] font-bold text-[#111827] leading-none mb-2">{item.value}</div>
-
-            {/* CHANGE */}
-            <div
-              className={`flex items-center gap-1 text-[11px] font-medium ${
-                item.trend === 'up' ? 'text-[#16a34a]' : item.trend === 'down' ? 'text-[#ef4444]' : 'text-[#6b7280]'
-              }`}
-            >
-              {item.trend === 'up' && <span>↑</span>}
-              {item.trend === 'down' && <span>↓</span>}
-
-              <span>{item.change}</span>
-
-              <span className="text-[#6b7280]">vs last 30 days</span>
-            </div>
           </div>
         ))}
       </div>

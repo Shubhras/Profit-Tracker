@@ -528,10 +528,10 @@ function OrderSettlement() {
           </div>
         </div>
         {/* TOP CARDS */}
-        <div className="grid grid-cols-5 lg:grid-cols-2 md:grid-cols-1 gap-2 mb-2">
+        <div className="grid grid-cols-5 lg:grid-cols-2 md:grid-cols-1 gap-2 mb-3">
           {' '}
           {topCards.map((item, index) => (
-            <div key={index} className="rounded-xl border border-[#e5e7eb] bg-white px-3 py-2 sm:px-2">
+            <div key={index} className="rounded-xl border border-[#e5e7eb] bg-white px-3 py-2 sm:px-2 shadow-md">
               <div className="flex items-center gap-2">
                 {/* Icon */}
                 <div

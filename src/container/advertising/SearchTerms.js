@@ -456,7 +456,7 @@ function SearchTerms() {
 
       <div className="grid grid-cols-6 xl:grid-cols-3 md:grid-cols-2 sm:grid-cols-1 gap-2 mb-2">
         {metricCards.map((item) => (
-          <div key={item.title} className="bg-white rounded-xl border border-[#e5e7eb] px-3 py-3">
+          <div key={item.title} className="bg-white rounded-xl border border-[#e5e7eb] px-3 py-3 shadow-md">
             <div className="flex items-start justify-between">
               <p className="text-[12px] font-medium text-[#6b7280]">{item.title}</p>
 

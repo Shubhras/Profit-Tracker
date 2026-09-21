@@ -156,7 +156,7 @@ function ReturnRefundFees() {
         {cards.map((item, index) => (
           <div
             key={index}
-            className={`flex items-center gap-3 rounded-2xl border-4 border-white ${item.bg} px-3 py-3 shadow-sm`}
+            className={`flex items-center gap-3 rounded-2xl border-4 border-white shadow-md ${item.bg} px-3 py-3`}
           >
             <div
               className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${item.iconBg} ${item.iconColor} text-[18px]`}
