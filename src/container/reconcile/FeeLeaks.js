@@ -173,7 +173,7 @@ export default function FeeLeaks() {
       },
       pagination: {
         pageNo: currentPage - 1,
-        pageSize: pageSize,
+        pageSize,
       },
     };
   };
@@ -193,10 +193,10 @@ export default function FeeLeaks() {
     let totUnsettled = Math.abs(
       parseAmount(
         totalsData?.total_settlement_hold ||
-        totalsData?.settlement_hold ||
-        totalsData?.total_unsettled_not_paid ||
-        totalsData?.unsettled_not_paid
-      )
+          totalsData?.settlement_hold ||
+          totalsData?.total_unsettled_not_paid ||
+          totalsData?.unsettled_not_paid,
+      ),
     );
 
     if (totFeesLeak === 0 && totShipLeak === 0 && totTcsLeak === 0 && dataSource.length > 0) {
