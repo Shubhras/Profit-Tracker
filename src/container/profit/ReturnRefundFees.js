@@ -168,8 +168,9 @@ function ReturnRefundFees() {
               <h3 className="mb-1 truncate text-[12px] font-medium text-[#6b7280]">{item.title}</h3>
               <h2 className="mb-0 text-[20px] font-bold leading-none tracking-tight text-[#111827]">{item.value}</h2>
               <p
-                className={`mt-1.5 mb-0 text-[10px] font-semibold ${item.trend === 'up' ? 'text-[#ef4444]' : 'text-[#16a34a]'
-                  }`}
+                className={`mt-1.5 mb-0 text-[10px] font-semibold ${
+                  item.trend === 'up' ? 'text-[#ef4444]' : 'text-[#16a34a]'
+                }`}
               >
                 {item.trend === 'up' ? '↑' : '↓'} {item.growth}
                 <span className="ml-1 font-normal text-[#9ca3af]">vs previous period</span>

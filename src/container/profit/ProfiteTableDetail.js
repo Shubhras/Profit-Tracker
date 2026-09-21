@@ -116,15 +116,7 @@ export default function ProfitDetailsView() {
     if (decodedChannel) {
       dispatch(getProfitDetails(buildPayload()));
     }
-  }, [
-    dateRange,
-    decodedChannel,
-    globalChannel,
-    pagination.current,
-    pagination.pageSize,
-    debouncedSearch,
-    profitType,
-  ]);
+  }, [dateRange, decodedChannel, globalChannel, pagination.current, pagination.pageSize, debouncedSearch, profitType]);
 
   const handleExport = async (format = 'xlsx') => {
     setExportLoading(true);
@@ -348,8 +340,8 @@ export default function ProfitDetailsView() {
           (value && value.toLowerCase().includes('myntra')
             ? '/icons/myntraLogo.jpg'
             : value && value.toLowerCase().includes('amazon')
-              ? '/icons/amazon.svg'
-              : null);
+            ? '/icons/amazon.svg'
+            : null);
 
         return (
           <div className="flex items-center justify-center w-full">
@@ -1093,12 +1085,13 @@ export default function ProfitDetailsView() {
                             <div />
                           ) : (
                             <span
-                              className={`text-[13px] font-semibold ${Number(value) > 0 && ['profitPercent'].includes(col.dataIndex)
-                                ? 'text-green-600'
-                                : Number(value) < 0
+                              className={`text-[13px] font-semibold ${
+                                Number(value) > 0 && ['profitPercent'].includes(col.dataIndex)
+                                  ? 'text-green-600'
+                                  : Number(value) < 0
                                   ? 'text-red-600'
                                   : 'text-[#111827]'
-                                }`}
+                              }`}
                             >
                               {value ?? 0}
                               {isPercent ? '%' : ''}

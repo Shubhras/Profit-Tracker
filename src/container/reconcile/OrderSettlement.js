@@ -88,11 +88,11 @@ function OrderSettlement() {
       const isSummary = activeTab === 'summary';
       const endpoint = isSummary
         ? `/amazon/order-settlement-dashboard/export/?start_date=${startDate}&end_date=${endDate}&search=${encodeURIComponent(
-          debouncedSearch || '',
-        )}&format=${format}`
+            debouncedSearch || '',
+          )}&format=${format}`
         : `/amazon/settlement-summary/export/?start_date=${startDate}&end_date=${endDate}&search=${encodeURIComponent(
-          debouncedSearch || '',
-        )}&format=${format}`;
+            debouncedSearch || '',
+          )}&format=${format}`;
 
       const response = await DataService.get(endpoint, { responseType: 'blob' });
 
@@ -193,13 +193,14 @@ function OrderSettlement() {
 
     {
       title: 'Total GMV',
-      value: `₹ ${kpiStats?.total_gmv !== undefined
-        ? Number(kpiStats.total_gmv).toLocaleString('en-IN', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })
-        : '0.00'
-        }`,
+      value: `₹ ${
+        kpiStats?.total_gmv !== undefined
+          ? Number(kpiStats.total_gmv).toLocaleString('en-IN', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })
+          : '0.00'
+      }`,
       sub: 'Gross Sales',
       icon: <DollarOutlined />,
       iconBg: 'bg-[#ecfdf3]',
@@ -209,13 +210,14 @@ function OrderSettlement() {
 
     {
       title: 'Total Settlements',
-      value: `₹ ${kpiStats?.total_settlements !== undefined
-        ? Number(kpiStats.total_settlements).toLocaleString('en-IN', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })
-        : '0.00'
-        }`,
+      value: `₹ ${
+        kpiStats?.total_settlements !== undefined
+          ? Number(kpiStats.total_settlements).toLocaleString('en-IN', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })
+          : '0.00'
+      }`,
       sub: 'Released Payouts',
       icon: <CheckCircleOutlined />,
       iconBg: 'bg-[#f5f3ff]',
@@ -225,13 +227,14 @@ function OrderSettlement() {
 
     {
       title: 'Pending Settlements',
-      value: `₹ ${kpiStats?.pending_settlements !== undefined
-        ? Number(kpiStats.pending_settlements).toLocaleString('en-IN', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })
-        : '0.00'
-        }`,
+      value: `₹ ${
+        kpiStats?.pending_settlements !== undefined
+          ? Number(kpiStats.pending_settlements).toLocaleString('en-IN', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })
+          : '0.00'
+      }`,
       sub: 'Deferred Payouts',
       icon: <ClockCircleOutlined />,
       iconBg: 'bg-[#fff7ed]',
@@ -253,31 +256,31 @@ function OrderSettlement() {
   const dataSource =
     activeTab === 'summary'
       ? settledData?.results?.map((item, index) => ({
-        key: item.id || index,
-        transactionId: item.transaction_id,
-        orderId: item.order_id,
-        transactionType: item.transaction_type,
-        transactionStatus: item.transaction_status,
-        description: item.description,
-        postedDate: item.posted_date,
-        totalAmount: item.total_amount,
-        currencyCode: item.currency_code,
-        breakdowns: item.breakdowns || [],
-        relatedIdentifiers: item.related_identifiers || [],
-      })) || []
+          key: item.id || index,
+          transactionId: item.transaction_id,
+          orderId: item.order_id,
+          transactionType: item.transaction_type,
+          transactionStatus: item.transaction_status,
+          description: item.description,
+          postedDate: item.posted_date,
+          totalAmount: item.total_amount,
+          currencyCode: item.currency_code,
+          breakdowns: item.breakdowns || [],
+          relatedIdentifiers: item.related_identifiers || [],
+        })) || []
       : allsettlementData?.results?.map((item, index) => ({
-        key: item.settlement_date || index,
+          key: item.settlement_date || index,
 
-        // SAME COLUMN NAMES
-        settlementDate: item.settlement_date,
-        sales: item.sales,
-        refunds: item.refunds,
-        expenses: item.expenses,
-        others: item.others,
-        payoutAmount: item.payout_amount,
-        totalTransactions: item.total_transactions,
-        transactions: item.transactions || [],
-      })) || [];
+          // SAME COLUMN NAMES
+          settlementDate: item.settlement_date,
+          sales: item.sales,
+          refunds: item.refunds,
+          expenses: item.expenses,
+          others: item.others,
+          payoutAmount: item.payout_amount,
+          totalTransactions: item.total_transactions,
+          transactions: item.transactions || [],
+        })) || [];
 
   const columns = [
     {
@@ -577,8 +580,9 @@ function OrderSettlement() {
                       pageSize: 10,
                     });
                   }}
-                  className={`pb-0 text-[12px] font-semibold ${activeTab === item.value ? 'border-b-2 border-[#16a34a] text-[#16a34a]' : 'text-[#6b7280]'
-                    }`}
+                  className={`pb-0 text-[12px] font-semibold ${
+                    activeTab === item.value ? 'border-b-2 border-[#16a34a] text-[#16a34a]' : 'text-[#6b7280]'
+                  }`}
                 >
                   {item.label}
                 </button>
@@ -713,8 +717,9 @@ function OrderSettlement() {
                           <span className="text-[10px] text-gray-400">ID: {txn.transaction_id}</span>
                         </div>
                         <span
-                          className={`font-semibold ${Number(txn.total_amount) < 0 ? 'text-red-500' : 'text-green-600'
-                            }`}
+                          className={`font-semibold ${
+                            Number(txn.total_amount) < 0 ? 'text-red-500' : 'text-green-600'
+                          }`}
                         >
                           ₹ {Math.abs(Number(txn.total_amount || 0)).toFixed(2)}
                         </span>
@@ -742,8 +747,9 @@ function OrderSettlement() {
                         <span className="text-[13px] font-medium text-gray-800">{item.breakdown_type}</span>
 
                         <span
-                          className={`text-[13px] font-semibold ${Number(item.amount) < 0 ? 'text-red-500' : 'text-green-600'
-                            }`}
+                          className={`text-[13px] font-semibold ${
+                            Number(item.amount) < 0 ? 'text-red-500' : 'text-green-600'
+                          }`}
                         >
                           ₹ {Math.abs(Number(item.amount)).toFixed(2)}
                         </span>
@@ -756,8 +762,9 @@ function OrderSettlement() {
                               <span className="text-[12px] text-gray-500">{child.breakdown_type}</span>
 
                               <span
-                                className={`text-[12px] font-medium ${Number(child.amount) < 0 ? 'text-red-500' : 'text-green-600'
-                                  }`}
+                                className={`text-[12px] font-medium ${
+                                  Number(child.amount) < 0 ? 'text-red-500' : 'text-green-600'
+                                }`}
                               >
                                 ₹ {Math.abs(Number(child.amount)).toFixed(2)}
                               </span>
