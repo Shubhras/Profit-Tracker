@@ -200,6 +200,21 @@ def _combine_totals(amazon_t, myntra_t, type="style"):
                 num_my = 0
             return num_am + num_my
 
+    def get_abs_sum(*fields):
+        val_am = 0
+        for f in fields:
+            if f in amazon_t and amazon_t[f] is not None:
+                val_am = amazon_t[f]
+                break
+        val_my = 0
+        for f in fields:
+            if f in myntra_t and myntra_t[f] is not None:
+                val_my = myntra_t[f]
+                break
+        num_am = abs(parse_currency_to_decimal(val_am))
+        num_my = abs(parse_currency_to_decimal(val_my))
+        return num_am + num_my
+
     combined = {}
     
     if type == "style" or type == "sku":
@@ -269,35 +284,35 @@ def _combine_totals(amazon_t, myntra_t, type="style"):
             "total_claim_amount": format_currency(get_sum("total_claim_amount")),
             "total_replacement_return_count": get_sum("total_replacement_return_count", is_currency=False),
             "total_actual_fees": format_currency(get_sum("actual_fees") or get_sum("total_actual_fees")),
-            "total_fees_leaks": format_currency(get_sum("fees_leaks") or get_sum("total_fees_leaks")),
+            "total_fees_leaks": format_currency(get_abs_sum("fees_leaks", "total_fees_leaks")),
             "total_actual_shipping": format_currency(get_sum("actual_shipping_charges") or get_sum("total_actual_shipping")),
-            "total_shipping_leaks": format_currency(get_sum("shipping_leaks") or get_sum("total_shipping_leaks")),
+            "total_shipping_leaks": format_currency(get_abs_sum("shipping_leaks", "total_shipping_leaks")),
             "total_actual_mp_gst": format_currency(get_sum("actual_mp_gst") or get_sum("total_actual_mp_gst")),
             "total_actual_tcs": format_currency(get_sum("actual_tcs") or get_sum("total_actual_tcs")),
-            "total_tcs_leaks": format_currency(get_sum("tcs_leaks") or get_sum("total_tcs_leaks")),
+            "total_tcs_leaks": format_currency(get_abs_sum("tcs_leaks", "total_tcs_leaks")),
             "total_expected_settlement": format_currency(get_sum("expected_settlement") or get_sum("total_expected_settlement") or get_sum("exp_settlement")),
             "total_settlement_paid_in_bank": format_currency(get_sum("settlement_paid_in_bank") or get_sum("total_settlement_paid_in_bank")),
-            "total_unsettled_not_paid": format_currency(get_sum("unsettled_not_paid") or get_sum("total_unsettled_not_paid")),
+            "total_unsettled_not_paid": format_currency(get_abs_sum("unsettled_not_paid", "total_unsettled_not_paid")),
 
             "actual_fees": format_currency(get_sum("actual_fees") or get_sum("total_actual_fees")),
-            "fees_leaks": format_currency(get_sum("fees_leaks") or get_sum("total_fees_leaks")),
+            "fees_leaks": format_currency(get_abs_sum("fees_leaks", "total_fees_leaks")),
             "actual_shipping_charges": format_currency(get_sum("actual_shipping_charges") or get_sum("total_actual_shipping")),
-            "shipping_leaks": format_currency(get_sum("shipping_leaks") or get_sum("total_shipping_leaks")),
+            "shipping_leaks": format_currency(get_abs_sum("shipping_leaks", "total_shipping_leaks")),
             "actual_mp_gst": format_currency(get_sum("actual_mp_gst") or get_sum("total_actual_mp_gst")),
             "actual_tcs": format_currency(get_sum("actual_tcs") or get_sum("total_actual_tcs")),
-            "tcs_leaks": format_currency(get_sum("tcs_leaks") or get_sum("total_tcs_leaks")),
+            "tcs_leaks": format_currency(get_abs_sum("tcs_leaks", "total_tcs_leaks")),
             "settlement_paid_in_bank": format_currency(get_sum("settlement_paid_in_bank") or get_sum("total_settlement_paid_in_bank")),
-            "unsettled_not_paid": format_currency(get_sum("unsettled_not_paid") or get_sum("total_unsettled_not_paid")),
+            "unsettled_not_paid": format_currency(get_abs_sum("unsettled_not_paid", "total_unsettled_not_paid")),
             "total_actual_tds": format_currency(get_sum("actual_tds") or get_sum("total_actual_tds")),
-            "total_tds_leaks": format_currency(get_sum("tds_leaks") or get_sum("total_tds_leaks")),
-            "total_mp_gst_leaks": format_currency(get_sum("mp_gst_leaks") or get_sum("total_mp_gst_leaks")),
-            "total_settlement_leak": format_currency(get_sum("settlement_leak") or get_sum("total_settlement_leak")),
+            "total_tds_leaks": format_currency(get_abs_sum("tds_leaks", "total_tds_leaks")),
+            "total_mp_gst_leaks": format_currency(get_abs_sum("mp_gst_leaks", "total_mp_gst_leaks")),
+            "total_settlement_leak": format_currency(get_abs_sum("settlement_leak", "total_settlement_leak")),
             "actual_tds": format_currency(get_sum("actual_tds") or get_sum("total_actual_tds")),
-            "tds_leaks": format_currency(get_sum("tds_leaks") or get_sum("total_tds_leaks")),
-            "mp_gst_leaks": format_currency(get_sum("mp_gst_leaks") or get_sum("total_mp_gst_leaks")),
-            "mp_gst_leaks ": format_currency(get_sum("mp_gst_leaks") or get_sum("total_mp_gst_leaks")),
-            "settlement_leak": format_currency(get_sum("settlement_leak") or get_sum("total_settlement_leak")),
-            "settlement_leak ": format_currency(get_sum("settlement_leak") or get_sum("total_settlement_leak")),
+            "tds_leaks": format_currency(get_abs_sum("tds_leaks", "total_tds_leaks")),
+            "mp_gst_leaks": format_currency(get_abs_sum("mp_gst_leaks", "total_mp_gst_leaks")),
+            "mp_gst_leaks ": format_currency(get_abs_sum("mp_gst_leaks", "total_mp_gst_leaks")),
+            "settlement_leak": format_currency(get_abs_sum("settlement_leak", "total_settlement_leak")),
+            "settlement_leak ": format_currency(get_abs_sum("settlement_leak", "total_settlement_leak")),
             "release_transaction_date": "-",
         })
         
@@ -375,38 +390,38 @@ def _combine_totals(amazon_t, myntra_t, type="style"):
 
             "actual_fees": format_currency(get_sum("actual_fees") or get_sum("total_actual_fees")),
             "total_actual_fees": format_currency(get_sum("actual_fees") or get_sum("total_actual_fees")),
-            "fees_leaks": format_currency(get_sum("fees_leaks") or get_sum("total_fees_leaks")),
-            "total_fees_leaks": format_currency(get_sum("fees_leaks") or get_sum("total_fees_leaks")),
+            "fees_leaks": format_currency(get_abs_sum("fees_leaks", "total_fees_leaks")),
+            "total_fees_leaks": format_currency(get_abs_sum("fees_leaks", "total_fees_leaks")),
             "actual_shipping_charges": format_currency(get_sum("actual_shipping_charges") or get_sum("total_actual_shipping")),
             "total_actual_shipping": format_currency(get_sum("actual_shipping_charges") or get_sum("total_actual_shipping")),
-            "shipping_leaks": format_currency(get_sum("shipping_leaks") or get_sum("total_shipping_leaks")),
-            "total_shipping_leaks": format_currency(get_sum("shipping_leaks") or get_sum("total_shipping_leaks")),
+            "shipping_leaks": format_currency(get_abs_sum("shipping_leaks", "total_shipping_leaks")),
+            "total_shipping_leaks": format_currency(get_abs_sum("shipping_leaks", "total_shipping_leaks")),
             "actual_mp_gst": format_currency(get_sum("actual_mp_gst") or get_sum("total_actual_mp_gst")),
             "total_actual_mp_gst": format_currency(get_sum("actual_mp_gst") or get_sum("total_actual_mp_gst")),
             "actual_tcs": format_currency(get_sum("actual_tcs") or get_sum("total_actual_tcs")),
             "total_actual_tcs": format_currency(get_sum("actual_tcs") or get_sum("total_actual_tcs")),
-            "tcs_leaks": format_currency(get_sum("tcs_leaks") or get_sum("total_tcs_leaks")),
-            "total_tcs_leaks": format_currency(get_sum("tcs_leaks") or get_sum("total_tcs_leaks")),
+            "tcs_leaks": format_currency(get_abs_sum("tcs_leaks", "total_tcs_leaks")),
+            "total_tcs_leaks": format_currency(get_abs_sum("tcs_leaks", "total_tcs_leaks")),
             "expected_settlement": format_currency(get_sum("expected_settlement") or get_sum("total_expected_settlement") or get_sum("exp_settlement")),
             "total_expected_settlement": format_currency(get_sum("expected_settlement") or get_sum("total_expected_settlement") or get_sum("exp_settlement")),
             "settlement_paid_in_bank": format_currency(get_sum("settlement_paid_in_bank") or get_sum("total_settlement_paid_in_bank")),
             "total_settlement_paid_in_bank": format_currency(get_sum("settlement_paid_in_bank") or get_sum("total_settlement_paid_in_bank")),
-            "unsettled_not_paid": format_currency(get_sum("unsettled_not_paid") or get_sum("total_unsettled_not_paid")),
-            "total_unsettled_not_paid": format_currency(get_sum("unsettled_not_paid") or get_sum("total_unsettled_not_paid")),
+            "unsettled_not_paid": format_currency(get_abs_sum("unsettled_not_paid", "total_unsettled_not_paid")),
+            "total_unsettled_not_paid": format_currency(get_abs_sum("unsettled_not_paid", "total_unsettled_not_paid")),
             "total_cancelled_qty": get_sum("total_cancelled_qty", is_currency=False) or get_sum("cancelled_qty", is_currency=False),
             "cancelled_qty": get_sum("total_cancelled_qty", is_currency=False) or get_sum("cancelled_qty", is_currency=False),
             "total_cancelled_sales": format_currency(get_sum("total_cancelled_sales") or get_sum("cancelled_sales")),
             "cancelled_sales": format_currency(get_sum("total_cancelled_sales") or get_sum("cancelled_sales")),
             "total_actual_tds": format_currency(get_sum("actual_tds") or get_sum("total_actual_tds")),
-            "total_tds_leaks": format_currency(get_sum("tds_leaks") or get_sum("total_tds_leaks")),
-            "total_mp_gst_leaks": format_currency(get_sum("mp_gst_leaks") or get_sum("total_mp_gst_leaks")),
-            "total_settlement_leak": format_currency(get_sum("settlement_leak") or get_sum("total_settlement_leak")),
+            "total_tds_leaks": format_currency(get_abs_sum("tds_leaks", "total_tds_leaks")),
+            "total_mp_gst_leaks": format_currency(get_abs_sum("mp_gst_leaks", "total_mp_gst_leaks")),
+            "total_settlement_leak": format_currency(get_abs_sum("settlement_leak", "total_settlement_leak")),
             "actual_tds": format_currency(get_sum("actual_tds") or get_sum("total_actual_tds")),
-            "tds_leaks": format_currency(get_sum("tds_leaks") or get_sum("total_tds_leaks")),
-            "mp_gst_leaks": format_currency(get_sum("mp_gst_leaks") or get_sum("total_mp_gst_leaks")),
-            "mp_gst_leaks ": format_currency(get_sum("mp_gst_leaks") or get_sum("total_mp_gst_leaks")),
-            "settlement_leak": format_currency(get_sum("settlement_leak") or get_sum("total_settlement_leak")),
-            "settlement_leak ": format_currency(get_sum("settlement_leak") or get_sum("total_settlement_leak")),
+            "tds_leaks": format_currency(get_abs_sum("tds_leaks", "total_tds_leaks")),
+            "mp_gst_leaks": format_currency(get_abs_sum("mp_gst_leaks", "total_mp_gst_leaks")),
+            "mp_gst_leaks ": format_currency(get_abs_sum("mp_gst_leaks", "total_mp_gst_leaks")),
+            "settlement_leak": format_currency(get_abs_sum("settlement_leak", "total_settlement_leak")),
+            "settlement_leak ": format_currency(get_abs_sum("settlement_leak", "total_settlement_leak")),
             "release_transaction_date": "-",
         })
         
