@@ -341,7 +341,7 @@ function AdProducts() {
       ellipsis: true,
       render: (v) => (
         <Tag className="!px-3 !py-[3px] !rounded-full" color={v > 100 ? 'error' : 'processing'}>
-          {v ? `${v.toFixed(2)}%` : '-'}
+          {v ? `${v.toFixed(2)}` : '0.00'}
         </Tag>
       ),
     },
@@ -355,7 +355,7 @@ function AdProducts() {
       ellipsis: true,
       render: (v) => (
         <Tag className="!px-3 !py-[3px] !rounded-full" color={v >= 1 ? 'success' : 'warning'}>
-          {v ? v.toFixed(2) : '-'}
+          {v ? v.toFixed(2) : '0.00'}
         </Tag>
       ),
     },
