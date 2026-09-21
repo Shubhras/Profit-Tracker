@@ -30,8 +30,6 @@ function AdProductsDetails() {
     pageSize: 10,
   });
 
-  // const [selectedRowKeys, setSelectedRowKeys] = React.useState([]);
-
   const { loading, adsProductsDataDetails } = useSelector((state) => ({
     loading: state.advertising.loading,
     adsProductsDataDetails: state.advertising.adsProductsDataDetails,
