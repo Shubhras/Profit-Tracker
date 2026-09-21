@@ -175,7 +175,7 @@ class GrowthOpportunitiesAPIView(APIView):
                         g_leak = abs(_parse_num_safe(totals.get("total_mp_gst_leaks") or totals.get("mp_gst_leaks")))
                         t_leak = abs(_parse_num_safe(totals.get("total_tcs_leaks") or totals.get("tcs_leaks")))
                         tds_leak = abs(_parse_num_safe(totals.get("total_tds_leaks") or totals.get("tds_leaks")))
-                        total_unsettled_not_paid = abs(_parse_num_safe(totals.get("total_unsettled_not_paid") or totals.get("total_unsettled_not_paid")))
+                        total_unsettled_not_paid = abs(_parse_num_safe(totals.get("total_unsettled_not_paid") or totals.get("unsettled_not_paid")))
                         payment_leaks_amount = f_leak + s_leak + g_leak + t_leak + tds_leak + total_unsettled_not_paid
             except Exception as e:
                 logger.error(f"Error fetching payment reconcile details in GrowthOpportunitiesAPIView: {str(e)}")
