@@ -391,6 +391,7 @@ class AmazonEstimatedFeeAdmin(admin.ModelAdmin):
         "seller_sku",
         "asin",
         "marketplace_id",
+        "order_item__order__amazon_order_id",
         # "amazon_account__name",   # FIXED
         "fulfillment_channel",
     )

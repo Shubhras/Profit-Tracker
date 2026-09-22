@@ -538,6 +538,72 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         "RELEASED": 1,
     }
 
+    # ============================================================
+    # ESTIMATE FEES FROM TRANSACTIONS
+    # ------------------------------------------------------------
+    # This is ONLY for estimatefees.
+    #
+    # actual_fees / reconciliation actual_fees below are intentionally
+    # left unchanged.
+    #
+    # If multiple Shipment transactions exist for the same order,
+    # use the highest-priority lifecycle state:
+    # DEFERRED > DEFERRED_RELEASED > RELEASED
+    # ============================================================
+
+    estimatefee_txns = AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_type="Shipment",
+        transaction_status__in=[
+            "DEFERRED",
+            "DEFERRED_RELEASED",
+            "RELEASED",
+        ],
+    ).values(
+        "id",
+        "transaction_status",
+    )
+
+    estimatefee_tx_status = {
+        txn["id"]: txn["transaction_status"]
+        for txn in estimatefee_txns
+    }
+
+    estimatefee_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=estimatefee_tx_status.keys(),
+            breakdown_type="AmazonFees",
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+
+    estimatefee_candidates = {}
+
+    for bd in estimatefee_breakdowns:
+        transaction_id = bd["transaction_id"]
+        order_id = tx_to_order.get(transaction_id)
+
+        if not order_id:
+            continue
+
+        status = estimatefee_tx_status.get(transaction_id)
+        priority = STATUS_PRIORITY.get(status, 0)
+
+        current = estimatefee_candidates.get(order_id)
+
+        if current is None or priority > current["priority"]:
+            estimatefee_candidates[order_id] = {
+                "priority": priority,
+                "status": status,
+                "amount": abs(float(bd["total"] or 0)),
+            }
+
+    estimatefee_actual_map = {
+        order_id: data["amount"]
+        for order_id, data in estimatefee_candidates.items()
+    }
+
     # 1. Expected Shipping Fee (MFN across DEFERRED, DEFERRED_RELEASED, RELEASED with priority)
     mfn_expected_txns = AmazonTransaction.objects.filter(
         id__in=tx_to_order.keys(),
@@ -1086,7 +1152,58 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         fba_pick_pack_fee = fee_data.get("fba_pick_pack_fee", 0)
         fba_weight_handling_fee = fee_data.get("fba_weight_handling_fee", 0)
         tax_amount = fee_data.get("tax_amount", 0)
-        estimated_fees = max(0.0, float(fee_data.get("estimated_fees", 0)) - float(fba_weight_handling_fee))
+
+        # ------------------------------------------------------------
+        # ESTIMATE FEES
+        # ------------------------------------------------------------
+        # Use the actual AmazonFees transaction for estimatefees when
+        # available, with lifecycle priority:
+        #
+        # DEFERRED > DEFERRED_RELEASED > RELEASED
+        #
+        # IMPORTANT:
+        # - This changes ONLY estimatefees.
+        # - actual_fees / row_actual_fees below are untouched.
+        # - When an actual AmazonFees amount is used, do NOT subtract
+        #   FBA weight handling from it because it is already an
+        #   actual AmazonFees amount.
+        # - If no actual AmazonFees transaction exists for an order,
+        #   retain the existing estimated-fee calculation.
+        estimated_fees = 0.0
+
+        for o in orders:
+            oid = o.get('order__amazon_order_id')
+            o_sku = (o.get('seller_sku') or '').strip()
+            o_qty = max(1, int(o.get('quantity_ordered') or 1))
+
+            actual_estimatefee = estimatefee_actual_map.get(oid)
+
+            if actual_estimatefee is not None:
+                estimated_fees += actual_estimatefee
+                continue
+
+            f_item = None
+
+            if oid and o_sku and (oid, o_sku) in estimated_fee_by_order_sku:
+                f_item = estimated_fee_by_order_sku[(oid, o_sku)]
+            elif oid and oid in estimated_fee_by_order:
+                f_item = estimated_fee_by_order[oid]
+
+            if f_item:
+                estimated_fees += max(
+                    0.0,
+                    float(f_item.get("estimated_fees", 0.0) or 0.0)
+                    - float(f_item.get("fba_weight_handling_fee", 0.0) or 0.0)
+                ) * o_qty
+
+        if not orders:
+            # Preserve the existing fallback behavior for rows where
+            # no order-level records are available.
+            estimated_fees = max(
+                0.0,
+                float(fee_data.get("estimated_fees", 0.0) or 0.0)
+                - float(fee_data.get("fba_weight_handling_fee", 0.0) or 0.0)
+            )
 
         gross_qty = int(row['grossqty'] or 0)
         gross_sales = float(str(row['grosssales'] or 0))
