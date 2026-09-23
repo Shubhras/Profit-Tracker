@@ -385,9 +385,9 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
     # SHIPPING STATUS PRIORITY
     # ============================================================
     STATUS_PRIORITY = {
-        "DEFERRED": 3,
+        "RELEASED": 3,
         "DEFERRED_RELEASED": 2,
-        "RELEASED": 1,
+        "DEFERRED": 1,
     }
 
     def get_best_shipping_status(statuses):
@@ -396,10 +396,15 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
     # ============================================================
     # TRANSACTION MARKETPLACE FEES
     #
-    # Use the actual AmazonFees transaction when available.
-    # DEFERRED is preferred over DEFERRED_RELEASED and RELEASED.
-    # We select only one transaction state per order so the same fee
-    # is never counted more than once.
+    # Shipment transaction existence is authoritative.  If a Shipment
+    # transaction exists, it replaces the estimated marketplace fee even
+    # when the transaction has no AmazonFees breakdown (actual fee = 0).
+    #
+    # Lifecycle priority:
+    # RELEASED > DEFERRED_RELEASED > DEFERRED
+    #
+    # FBAWeightBasedFee is deducted from AmazonFees on the selected
+    # Shipment transaction.
     # ============================================================
     tx_mp_fee_candidates = {}
 
@@ -430,20 +435,44 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
         .annotate(total=Sum("amount"))
     )
 
-    for bd in mp_fee_breakdowns:
-        transaction_id = bd["transaction_id"]
+    fba_weight_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=shipment_fee_tx_status.keys(),
+            breakdown_type="FBAWeightBasedFee",
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+
+    amazon_fee_by_tx = {
+        row["transaction_id"]: abs(float(row["total"] or 0))
+        for row in mp_fee_breakdowns
+    }
+
+    fba_weight_by_tx = {
+        row["transaction_id"]: abs(float(row["total"] or 0))
+        for row in fba_weight_breakdowns
+    }
+
+    # Iterate over Shipment transactions themselves, not AmazonFees
+    # breakdowns, so a Shipment with no AmazonFees still wins and gives
+    # an actual fee of 0.
+    for transaction_id, status in shipment_fee_tx_status.items():
         order_id = tx_to_order.get(transaction_id)
         if not order_id:
             continue
 
-        status = shipment_fee_tx_status.get(transaction_id)
         priority = STATUS_PRIORITY.get(status, 0)
         current = tx_mp_fee_candidates.get(order_id)
+
+        amazon_fees = amazon_fee_by_tx.get(transaction_id, 0.0)
+        fba_weight_fee = fba_weight_by_tx.get(transaction_id, 0.0)
+        actual_fee = max(0.0, amazon_fees - fba_weight_fee)
 
         if current is None or priority > current["priority"]:
             tx_mp_fee_candidates[order_id] = {
                 "priority": priority,
-                "amount": abs(float(bd["total"] or 0)),
+                "amount": actual_fee,
                 "status": status,
             }
 
@@ -1072,6 +1101,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
         transaction_fee_matched = False
         transaction_fee_total = 0.0
         estimated_fee_total = 0.0
+        estimated_fba_weight_handling_total = 0.0
 
         for o in orders:
             oid = o.get('order__amazon_order_id')
@@ -1088,17 +1118,22 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
             if f_item:
                 fee_matched = True
                 for k in fee_data:
-                    if k == "estimated_fees" and actual_transaction_fee is not None:
+                    if k == "estimated_fees":
                         continue
                     fee_data[k] += float(f_item.get(k, 0.0)) * o_qty
 
-                if actual_transaction_fee is None:
+                if actual_transaction_fee is not None:
+                    transaction_fee_matched = True
+                    transaction_fee_total += actual_transaction_fee
+                else:
                     estimated_fee_total += float(f_item.get("estimated_fees", 0.0)) * o_qty
+                    estimated_fba_weight_handling_total += (
+                        float(f_item.get("fba_weight_handling_fee", 0.0)) * o_qty
+                    )
 
-            if actual_transaction_fee is not None:
+            elif actual_transaction_fee is not None:
                 transaction_fee_matched = True
                 transaction_fee_total += actual_transaction_fee
-                fee_data["estimated_fees"] += actual_transaction_fee
 
         if not fee_matched and not transaction_fee_matched:
             fallback_fee = (
@@ -1109,7 +1144,14 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
             )
             fee_multiplier = max(1.0, float(gross_qty or 1))
             for k in fee_data:
+                if k == "estimated_fees":
+                    continue
                 fee_data[k] = float(fallback_fee.get(k, 0.0)) * fee_multiplier
+
+            estimated_fee_total = float(fallback_fee.get("estimated_fees", 0.0)) * fee_multiplier
+            estimated_fba_weight_handling_total = (
+                float(fallback_fee.get("fba_weight_handling_fee", 0.0)) * fee_multiplier
+            )
 
         referral_fee = fee_data.get("referral_fee", 0.0)
         closing_fee = fee_data.get("closing_fee", 0.0)
@@ -1121,17 +1163,13 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
 
         tax_amount = fee_data.get("tax_amount", 0.0)
 
-        if transaction_fee_matched:
-            estimated_fees = (
-                transaction_fee_total
-                + max(0.0, estimated_fee_total - float(fba_weight_handling_fee))
-            )
-        else:
-            estimated_fees = max(
+        estimated_fees = (
+            transaction_fee_total
+            + max(
                 0.0,
-                float(fee_data.get("estimated_fees", 0.0))
-                - float(fba_weight_handling_fee)
+                estimated_fee_total - estimated_fba_weight_handling_total,
             )
+        )
 
         amazon_fee_refund_total = 0.0
         fulfillment_fee_refund_total = 0.0

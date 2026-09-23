@@ -6220,19 +6220,25 @@ def amazon_profitability_parent_transactions_shipping(request):
     # ============================================================
 
     STATUS_PRIORITY = {
-        "DEFERRED": 3,
+        "RELEASED": 3,
         "DEFERRED_RELEASED": 2,
-        "RELEASED": 1,
+        "DEFERRED": 1,
     }
 
     # ============================================================
     # TRANSACTION MARKETPLACE FEES
     #
-    # Use the actual AmazonFees transaction when available.
+    # Use the actual Shipment transaction when available.
     #
-    # DEFERRED is preferred over DEFERRED_RELEASED and RELEASED.
-    # We select only one transaction state per order so the same fee
-    # is never counted more than once.
+    # Priority:
+    #     RELEASED > DEFERRED_RELEASED > DEFERRED
+    #
+    # IMPORTANT:
+    # Transaction existence itself determines whether the estimated
+    # fee is replaced. A Shipment transaction with no AmazonFees
+    # breakdown, or AmazonFees = 0, must still win over the estimate.
+    #
+    # FBAWeightBasedFee is deducted from AmazonFees.
     # ============================================================
 
     tx_mp_fee_candidates = {}
@@ -6264,23 +6270,50 @@ def amazon_profitability_parent_transactions_shipping(request):
         .annotate(total=Sum("amount"))
     )
 
-    for bd in mp_fee_breakdowns:
-        transaction_id = bd["transaction_id"]
+    amazon_fee_by_tx = {
+        bd["transaction_id"]: Decimal(str(bd["total"] or 0))
+        for bd in mp_fee_breakdowns
+    }
 
+    fba_weight_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=shipment_fee_tx_status.keys(),
+            breakdown_type="FBAWeightBasedFee",
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+
+    fba_weight_by_tx = {
+        bd["transaction_id"]: Decimal(str(bd["total"] or 0))
+        for bd in fba_weight_breakdowns
+    }
+
+    # Iterate over Shipment transactions, not AmazonFees breakdowns.
+    # This ensures a Shipment transaction with zero/no AmazonFees
+    # still replaces the estimated fee.
+    for transaction_id, status in shipment_fee_tx_status.items():
         order_id = tx_to_order.get(transaction_id)
 
         if not order_id:
             continue
 
-        status = shipment_fee_tx_status.get(transaction_id)
         priority = STATUS_PRIORITY.get(status, 0)
+
+        amazon_fees = abs(amazon_fee_by_tx.get(transaction_id, Decimal("0")))
+        fba_weight_fee = abs(fba_weight_by_tx.get(transaction_id, Decimal("0")))
+
+        actual_fee = max(
+            Decimal("0"),
+            amazon_fees - fba_weight_fee,
+        )
 
         current = tx_mp_fee_candidates.get(order_id)
 
         if current is None or priority > current["priority"]:
             tx_mp_fee_candidates[order_id] = {
                 "priority": priority,
-                "amount": abs(Decimal(str(bd["total"] or 0))),
+                "amount": actual_fee,
                 "status": status,
             }
 
@@ -6803,10 +6836,20 @@ def amazon_profitability_parent_transactions_shipping(request):
         }
         fee_matched = False
         transaction_fee_matched = False
+
+        # Keep actual transaction fees separate from estimated fees.
+        # The selected Shipment transaction already has its own
+        # FBAWeightBasedFee deducted, so estimated FBA weight must not
+        # be deducted from the actual transaction fee a second time.
+        transaction_fee_total = Decimal("0")
+        estimated_fee_total = Decimal("0")
+        estimated_fba_weight_handling_total = Decimal("0")
+
         for o in orders:
             oid = o.get('order__amazon_order_id')
             o_sku = (o.get('seller_sku') or child_sku or '').strip()
             o_qty = max(Decimal("1"), Decimal(str(o.get('quantity_ordered') or 1)))
+
             f_item = None
             if oid and o_sku and (oid, o_sku) in estimated_fee_by_order_sku:
                 f_item = estimated_fee_by_order_sku[(oid, o_sku)]
@@ -6817,14 +6860,36 @@ def amazon_profitability_parent_transactions_shipping(request):
 
             if f_item:
                 fee_matched = True
+
+                # Keep the estimate's detail fields for display.
+                # Only the marketplace fee itself is replaced by the
+                # actual Shipment transaction when one exists.
                 for k in fee_data:
-                    if k == "estimated_fees" and actual_transaction_fee is not None:
+                    if k == "estimated_fees":
                         continue
                     fee_data[k] += f_item.get(k, Decimal("0")) * o_qty
 
-            if actual_transaction_fee is not None:
+                if actual_transaction_fee is not None:
+                    # Actual Shipment transaction wins even when its
+                    # AmazonFees amount is zero or no AmazonFees
+                    # breakdown exists.
+                    transaction_fee_matched = True
+                    transaction_fee_total += actual_transaction_fee
+                else:
+                    # No actual Shipment transaction: retain the
+                    # existing estimated-fee calculation.
+                    estimated_fee_total += (
+                        f_item.get("estimated_fees", Decimal("0")) * o_qty
+                    )
+                    estimated_fba_weight_handling_total += (
+                        f_item.get("fba_weight_handling_fee", Decimal("0")) * o_qty
+                    )
+
+            elif actual_transaction_fee is not None:
+                # Actual transaction can still be used even when the
+                # estimated-fee row is missing.
                 transaction_fee_matched = True
-                fee_data["estimated_fees"] += actual_transaction_fee
+                transaction_fee_total += actual_transaction_fee
 
         if not fee_matched and not transaction_fee_matched:
             fallback_fee = (
@@ -6836,8 +6901,16 @@ def amazon_profitability_parent_transactions_shipping(request):
                 estimated_fee_by_parent.get(parent_asin, {})
             )
             fee_multiplier = max(Decimal("1"), Decimal(str(row.get('grossqty') or 1)))
+
             for k in fee_data:
                 fee_data[k] = fallback_fee.get(k, Decimal("0")) * fee_multiplier
+
+            estimated_fee_total = (
+                fallback_fee.get("estimated_fees", Decimal("0")) * fee_multiplier
+            )
+            estimated_fba_weight_handling_total = (
+                fallback_fee.get("fba_weight_handling_fee", Decimal("0")) * fee_multiplier
+            )
 
         referral_fee = fee_data.get("referral_fee", Decimal("0"))
         closing_fee = fee_data.get("closing_fee", Decimal("0"))
@@ -6846,7 +6919,14 @@ def amazon_profitability_parent_transactions_shipping(request):
         fba_pick_pack_fee = fee_data.get("fba_pick_pack_fee", Decimal("0"))
         fba_weight_handling_fee = fee_data.get("fba_weight_handling_fee", Decimal("0"))
         tax_amount = fee_data.get("tax_amount", Decimal("0"))
-        estimated_fees = max(Decimal("0"), fee_data.get("estimated_fees", Decimal("0")) - fba_weight_handling_fee)
+
+        estimated_fees = (
+            transaction_fee_total
+            + max(
+                Decimal("0"),
+                estimated_fee_total - estimated_fba_weight_handling_total,
+            )
+        )
 
         gross_qty = Decimal(row['grossqty'] or 0)
         gross_sales = Decimal(row['grosssales'] or 0)
@@ -8626,13 +8706,24 @@ def sku_profit_report_transactions_shipping(request):
     tx_shipping_candidates = {}
 
     STATUS_PRIORITY = {
-        "DEFERRED": 3,
+        "RELEASED": 3,
         "DEFERRED_RELEASED": 2,
-        "RELEASED": 1,
+        "DEFERRED": 1,
     }
 
     # ============================================================
     # TRANSACTION MP FEES
+    # ============================================================
+    #
+    # IMPORTANT:
+    # - A Shipment transaction itself is the source-of-truth signal.
+    # - Transaction priority is RELEASED > DEFERRED_RELEASED > DEFERRED.
+    # - The selected Shipment transaction must win even when:
+    #     * AmazonFees is 0
+    #     * there is no AmazonFees breakdown
+    # - FBAWeightBasedFee is deducted from AmazonFees.
+    # - This map is used only for the estimated-fee calculation below.
+    # - The existing actual mpfees/finance calculation is untouched.
     # ============================================================
 
     tx_mp_fee_candidates = {}
@@ -8664,28 +8755,56 @@ def sku_profit_report_transactions_shipping(request):
         .annotate(total=Sum("amount"))
     )
 
-    for bd in mp_fee_breakdowns:
-        transaction_id = bd["transaction_id"]
+    amazon_fees_by_tx = {
+        bd["transaction_id"]: abs(float(bd["total"] or 0))
+        for bd in mp_fee_breakdowns
+    }
 
+    fba_weight_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=shipment_fee_tx_status.keys(),
+            breakdown_type="FBAWeightBasedFee",
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+
+    fba_weight_by_tx = {
+        bd["transaction_id"]: abs(float(bd["total"] or 0))
+        for bd in fba_weight_breakdowns
+    }
+
+    # Iterate over Shipment transactions, NOT AmazonFees breakdowns.
+    # This guarantees that a real Shipment transaction with zero/no
+    # AmazonFees breakdown still overrides the estimated fee.
+    for transaction_id, status in shipment_fee_tx_status.items():
         order_id = tx_to_order.get(transaction_id)
 
         if not order_id:
             continue
 
-        status = shipment_fee_tx_status.get(transaction_id)
         priority = STATUS_PRIORITY.get(status, 0)
+
+        amazon_fees = amazon_fees_by_tx.get(transaction_id, 0.0)
+        fba_weight_fee = fba_weight_by_tx.get(transaction_id, 0.0)
+
+        actual_transaction_fee = max(
+            0.0,
+            amazon_fees - fba_weight_fee,
+        )
 
         current = tx_mp_fee_candidates.get(order_id)
 
         if current is None or priority > current["priority"]:
             tx_mp_fee_candidates[order_id] = {
                 "priority": priority,
-                "amount": abs(float(bd["total"] or 0)),
+                "amount": actual_transaction_fee,
                 "status": status,
             }
 
     tx_mp_fee_map = {
-        order_id: data["amount"] for order_id, data in tx_mp_fee_candidates.items()
+        order_id: data["amount"]
+        for order_id, data in tx_mp_fee_candidates.items()
     }
 
     # ============================================================
@@ -9193,12 +9312,28 @@ def sku_profit_report_transactions_shipping(request):
 
         tax_amount = float(fee_data.get("tax_amount", 0) or 0) * fee_multiplier
 
+        # ------------------------------------------------------------
+        # ESTIMATED MARKETPLACE FEES
+        # ------------------------------------------------------------
+        # If an actual Shipment transaction exists, it always wins over
+        # the AmazonEstimatedFee value, even when its AmazonFees amount
+        # is zero or there is no AmazonFees breakdown.
+        #
+        # For the transaction-based value:
+        #     estimated_fees = AmazonFees - FBAWeightBasedFee
+        #
+        # If no Shipment transaction exists, retain the existing
+        # AmazonEstimatedFee fallback calculation.
         transaction_mp_fee = tx_mp_fee_map.get(oid)
 
         if transaction_mp_fee is not None:
             estimated_fees = float(transaction_mp_fee)
         else:
-            estimated_fees = max(0.0, float(fee_data.get("estimated_fees", 0) or 0) - float(fee_data.get("fba_weight_handling_fee", 0) or 0)) * fee_multiplier
+            estimated_fees = max(
+                0.0,
+                float(fee_data.get("estimated_fees", 0) or 0)
+                - float(fee_data.get("fba_weight_handling_fee", 0) or 0)
+            ) * fee_multiplier
 
         # ------------------------------------------------------------
         # SHIPPING — Direct sum of breakdowns for this order
@@ -10089,13 +10224,13 @@ def orders_profit_report_transactions_shipping(request):
     # ============================================================
     # ESTIMATE FEES FROM AMAZON FEES TRANSACTION
     # Only affects estimatefees. actual_mpfees remains unchanged.
-    # Priority: DEFERRED > DEFERRED_RELEASED > RELEASED
+    # Priority: RELEASED > DEFERRED_RELEASED > DEFERRED
     # ============================================================
 
     estimatefee_status_priority = {
-        "DEFERRED": 3,
+        "RELEASED": 3,
         "DEFERRED_RELEASED": 2,
-        "RELEASED": 1,
+        "DEFERRED": 1,
     }
 
     estimatefee_candidates = {}
@@ -10127,29 +10262,63 @@ def orders_profit_report_transactions_shipping(request):
         .annotate(total=Sum("amount"))
     )
 
-    for bd in estimatefee_breakdowns:
-        transaction_id = bd["transaction_id"]
+    estimatefee_amazon_fees_by_tx = {
+        bd["transaction_id"]: abs(float(bd["total"] or 0))
+        for bd in estimatefee_breakdowns
+    }
+
+    estimatefee_fba_weight_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=estimatefee_tx_status.keys(),
+            breakdown_type="FBAWeightBasedFee",
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+
+    estimatefee_fba_weight_by_tx = {
+        bd["transaction_id"]: abs(float(bd["total"] or 0))
+        for bd in estimatefee_fba_weight_breakdowns
+    }
+
+    # Build candidates from TRANSACTION existence, not AmazonFees
+    # breakdown existence. Therefore an existing transaction with
+    # AmazonFees = 0 or no AmazonFees breakdown still wins over
+    # the estimated fee.
+    for transaction_id, status in estimatefee_tx_status.items():
         order_id = tx_to_order.get(transaction_id)
 
         if not order_id:
             continue
 
-        status = estimatefee_tx_status.get(transaction_id)
         priority = estimatefee_status_priority.get(status, 0)
-
         current = estimatefee_candidates.get(order_id)
 
         if current is None or priority > current["priority"]:
+            amazon_fees = estimatefee_amazon_fees_by_tx.get(
+                transaction_id,
+                0.0,
+            )
+            fba_weight_fee = estimatefee_fba_weight_by_tx.get(
+                transaction_id,
+                0.0,
+            )
+
             estimatefee_candidates[order_id] = {
                 "priority": priority,
                 "status": status,
-                "amount": abs(float(bd["total"] or 0)),
+                # FBAWeightBasedFee must be deducted from AmazonFees.
+                "amount": max(
+                    0.0,
+                    amazon_fees - fba_weight_fee,
+                ),
             }
 
     estimatefee_actual_map = {
         order_id: data["amount"]
         for order_id, data in estimatefee_candidates.items()
     }
+
 
     tx_shipping_candidates = {}
 
@@ -10653,15 +10822,13 @@ def orders_profit_report_transactions_shipping(request):
         actual_estimatefee = estimatefee_actual_map.get(oid)
 
         if actual_estimatefee is not None:
-            # Actual AmazonFees transaction is used only for estimatefees.
+            # Actual Shipment transaction is available, so never use
+            # the estimated fee, even when its AmazonFees value is 0.
             estimated_fees = actual_estimatefee
         else:
             estimated_fees = (
-                max(
-                    0.0,
-                    float(fee_data.get("estimated_fees", 0) or 0)
-                    - float(fee_data.get("fba_weight_handling_fee", 0) or 0),
-                )
+                float(fee_data.get("estimated_fees", 0) or 0)
+                 - float(fee_data.get("fba_weight_handling_fee", 0) or 0)
                 * fee_multiplier
             )
 
@@ -10985,7 +11152,7 @@ def orders_profit_report_transactions_shipping(request):
         total_tds += round(tds, 2)
         total_cost += cost
         total_new_charge += new_charge
-        total_estimatefees += estimated_fees
+        total_estimatefees += abs(estimated_fees)
         total_mp_gst += round(mp_gst, 2)
         total_taxable_value += round(taxable_value, 2)
         total_gst_payable += round(gst_to_pay_amount, 2)
@@ -11575,9 +11742,9 @@ def amazon_profitability_details_transactions_shipping(request):
     # ============================================================
 
     STATUS_PRIORITY = {
-        "DEFERRED": 3,
+        "RELEASED": 3,
         "DEFERRED_RELEASED": 2,
-        "RELEASED": 1,
+        "DEFERRED": 1,
     }
 
     def get_best_shipping_status(statuses):
@@ -11586,9 +11753,19 @@ def amazon_profitability_details_transactions_shipping(request):
     # ============================================================
     # TRANSACTION MARKETPLACE FEES
     #
-    # Use the actual AmazonFees transaction when available.
+    # Use the actual Shipment transaction when available.
     #
-    # DEFERRED is preferred over DEFERRED_RELEASED and RELEASED.
+    # Lifecycle priority:
+    #     RELEASED > DEFERRED_RELEASED > DEFERRED
+    #
+    # IMPORTANT:
+    # The existence of a Shipment transaction is what replaces the
+    # estimated fee. We must NOT depend on an AmazonFees breakdown
+    # existing because a valid Shipment transaction may legitimately
+    # have AmazonFees = 0 or no AmazonFees breakdown at all.
+    #
+    # FBAWeightBasedFee is deducted from AmazonFees.
+    #
     # We select only one transaction state per order so the same fee
     # is never counted more than once.
     # ============================================================
@@ -11613,32 +11790,60 @@ def amazon_profitability_details_transactions_shipping(request):
         for txn in shipment_fee_txns
     }
 
-    mp_fee_breakdowns = (
-        AmazonTransactionBreakdown.objects.filter(
-            transaction_id__in=shipment_fee_tx_status.keys(),
-            breakdown_type="AmazonFees",
+    # AmazonFees per Shipment transaction.
+    # Missing AmazonFees breakdown => 0 actual AmazonFees.
+    amazon_fee_by_tx = {
+        row["transaction_id"]: Decimal(str(row["total"] or 0))
+        for row in (
+            AmazonTransactionBreakdown.objects.filter(
+                transaction_id__in=shipment_fee_tx_status.keys(),
+                breakdown_type="AmazonFees",
+            )
+            .values("transaction_id")
+            .annotate(total=Sum("amount"))
         )
-        .values("transaction_id")
-        .annotate(total=Sum("amount"))
-    )
+    }
 
-    for bd in mp_fee_breakdowns:
-        transaction_id = bd["transaction_id"]
+    # FBAWeightBasedFee per Shipment transaction.
+    # Missing breakdown => 0 FBA weight fee.
+    fba_weight_by_tx = {
+        row["transaction_id"]: Decimal(str(row["total"] or 0))
+        for row in (
+            AmazonTransactionBreakdown.objects.filter(
+                transaction_id__in=shipment_fee_tx_status.keys(),
+                breakdown_type="FBAWeightBasedFee",
+            )
+            .values("transaction_id")
+            .annotate(total=Sum("amount"))
+        )
+    }
 
+    # Iterate over ALL Shipment transactions, not only AmazonFees
+    # breakdowns. This is important because transaction existence
+    # itself determines whether the estimated fee is replaced.
+    for transaction_id, status in shipment_fee_tx_status.items():
         order_id = tx_to_order.get(transaction_id)
 
         if not order_id:
             continue
 
-        status = shipment_fee_tx_status.get(transaction_id)
         priority = STATUS_PRIORITY.get(status, 0)
+
+        amazon_fees = abs(amazon_fee_by_tx.get(transaction_id, Decimal("0")))
+        fba_weight_fee = abs(fba_weight_by_tx.get(transaction_id, Decimal("0")))
+
+        # Actual marketplace fee = AmazonFees - FBAWeightBasedFee.
+        actual_fee = max(
+            Decimal("0"),
+            amazon_fees - fba_weight_fee,
+        )
 
         current = tx_mp_fee_candidates.get(order_id)
 
         if current is None or priority > current["priority"]:
             tx_mp_fee_candidates[order_id] = {
                 "priority": priority,
-                "amount": abs(Decimal(str(bd["total"] or 0))),
+                "amount": actual_fee,
                 "status": status,
             }
 
