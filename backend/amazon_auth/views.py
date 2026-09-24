@@ -1532,6 +1532,17 @@ def sync_orders(request):
                 #  NEW
                 # FIXED new order block
                 if not order:
+                    raw_channel = o.get("SalesChannel") or o.get("salesChannel")
+                    if isinstance(raw_channel, dict):
+                        sales_channel_value = raw_channel.get("channelName") or raw_channel.get("marketplaceName") or "Amazon"
+                    elif isinstance(raw_channel, str):
+                        sales_channel_value = raw_channel
+                    else:
+                        sales_channel_value = None
+
+                    b_info = o.get("BuyerInfo") or {}
+                    s_addr = o.get("ShippingAddress") or {}
+
                     order = Order.objects.create(
                         amazon_account=account,
                         amazon_order_id=amazon_order_id,
@@ -1541,15 +1552,15 @@ def sync_orders(request):
                         order_status=o.get("OrderStatus"),
                         total_amount=total_info.get("Amount", 0),
                         currency_code=total_info.get("CurrencyCode"),
-                        buyer_name=o.get("BuyerInfo", {}).get("BuyerName", "Unknown"),
-                        city=o.get("ShippingAddress", {}).get("City", ""),
-                        state=o.get("ShippingAddress", {}).get("StateOrRegion", ""),
-                        country=o.get("ShippingAddress", {}).get("CountryCode", ""),
+                        buyer_name=b_info.get("BuyerName", "Unknown"),
+                        city=s_addr.get("City", ""),
+                        state=s_addr.get("StateOrRegion", ""),
+                        country=s_addr.get("CountryCode", ""),
                         fulfillment_channel=o.get("FulfillmentChannel", ""),
                         items_shipped=o.get("NumberOfItemsShipped", 0),
                         items_unshipped=o.get("NumberOfItemsUnshipped", 0),
                         marketplace_id=o.get("MarketplaceId"),
-                        sales_channel=o.get("SalesChannel")
+                        sales_channel=sales_channel_value
                     )
                     should_sync_items = True
                     account_saved_count += 1
@@ -1719,7 +1730,12 @@ def sync_orders(request):
                                 
                                 order.new_total_amount = total_amt
                                 order.raw_data = po
-                                order.save(update_fields=['new_total_amount', 'raw_data'])
+                                update_fields_list = ['new_total_amount', 'raw_data']
+                                raw_ch = po.get("salesChannel") or po.get("SalesChannel")
+                                if not order.sales_channel and raw_ch:
+                                    order.sales_channel = raw_ch.get("channelName") or raw_ch.get("marketplaceName") or "Amazon" if isinstance(raw_ch, dict) else raw_ch
+                                    update_fields_list.append('sales_channel')
+                                order.save(update_fields=update_fields_list)
                                 
                                 for item_data in order_items_list:
                                     sku = item_data.get("product", {}).get("sellerSku")
