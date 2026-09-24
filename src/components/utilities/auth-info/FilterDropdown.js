@@ -53,18 +53,43 @@ function FilterDropdown() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-  useEffect(() => {
-    if (connectedChannels.length > 0 && (!globalChannel || globalChannel.length === 0)) {
-      setTempSelected(connectedChannels);
-      dispatch(actions.setChannel(connectedChannels));
-    }
-  }, [connectedChannels, globalChannel, dispatch]);
+  // useEffect(() => {
+  //   if (connectedChannels.length > 0 && (!globalChannel || globalChannel.length === 0)) {
+  //     setTempSelected(connectedChannels);
+  //     dispatch(actions.setChannel(connectedChannels));
+  //   }
+  // }, [connectedChannels, globalChannel, dispatch]);
+
+  // useEffect(() => {
+  //   if (globalChannel && globalChannel.length > 0) {
+  //     setTempSelected(globalChannel);
+  //   }
+  // }, [globalChannel]);
 
   useEffect(() => {
-    if (globalChannel && globalChannel.length > 0) {
-      setTempSelected(globalChannel);
+    if (connectedChannels.length === 0) {
+      if (tempSelected.length > 0) {
+        setTempSelected([]);
+      }
+      return;
     }
-  }, [globalChannel]);
+
+    if (globalChannel?.length > 0) {
+      if (JSON.stringify(tempSelected) !== JSON.stringify(globalChannel)) {
+        setTempSelected(globalChannel);
+      }
+      return;
+    }
+
+    if (JSON.stringify(tempSelected) !== JSON.stringify(connectedChannels)) {
+      setTempSelected(connectedChannels);
+    }
+
+    if (!globalChannel?.length) {
+      dispatch(actions.setChannel(connectedChannels));
+    }
+  }, [connectedChannels, globalChannel, tempSelected, dispatch]);
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button

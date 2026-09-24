@@ -210,6 +210,7 @@ const AuthInfo = React.memo(() => {
     '/profit/profitTableView/third/',
     'reconcile/second/',
     'reconcile/third/',
+    '/settings/product-setting/estimated-fees',
   ];
 
   const hideFilterDropdown = isSuperAdmin || HIDE_FILTER_DROPDOWN.some((route) => location.pathname.includes(route));

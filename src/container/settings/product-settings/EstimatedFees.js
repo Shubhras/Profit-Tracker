@@ -120,7 +120,7 @@ export default function EstimatedFees() {
   const [fees, setFees] = useState(INITIAL_FEES);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [selectedMarketplace, setSelectedMarketplace] = useState('Select');
+  const [selectedMarketplace, setSelectedMarketplace] = useState('Myntra');
   const [selectedSampleItem, setSelectedSampleItem] = useState('top');
 
   const marketplaceOptions = useMemo(() => {
@@ -589,7 +589,7 @@ export default function EstimatedFees() {
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => openModal()}
-                className="bg-[#16A34A] hover:bg-[#15803D] border-none text-[13px] font-semibold h-[35px] px-5 rounded-[8px] flex items-center"
+                className="bg-[#16A34A] hover:bg-[#15803D] border-none text-[13px] font-semibold h-[35px] px-5 rounded-[8px] flex items-center mb-1"
               >
                 Add fee
               </Button>
