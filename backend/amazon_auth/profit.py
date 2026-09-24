@@ -314,6 +314,25 @@ def _combine_totals(amazon_t, myntra_t, type="style"):
             "settlement_leak": format_currency(get_abs_sum("settlement_leak", "total_settlement_leak")),
             "settlement_leak ": format_currency(get_abs_sum("settlement_leak", "total_settlement_leak")),
             "release_transaction_date": "-",
+
+            # NEW: Revised Expected Settlement & 9 Charges Totals
+            "revised_expected_settlement": format_currency(get_sum("revised_expected_settlement") or get_sum("total_revised_expected_settlement") or get_sum("new_expected_settlement") or get_sum("expected_settlement") or get_sum("exp_settlement")),
+            "total_revised_expected_settlement": format_currency(get_sum("revised_expected_settlement") or get_sum("total_revised_expected_settlement") or get_sum("new_expected_settlement") or get_sum("expected_settlement") or get_sum("exp_settlement")),
+            "new_expected_settlement": format_currency(get_sum("revised_expected_settlement") or get_sum("total_revised_expected_settlement") or get_sum("new_expected_settlement") or get_sum("expected_settlement") or get_sum("exp_settlement")),
+            "total_new_expected_settlement": format_currency(get_sum("revised_expected_settlement") or get_sum("total_revised_expected_settlement") or get_sum("new_expected_settlement") or get_sum("expected_settlement") or get_sum("exp_settlement")),
+            "revised_unsettled_not_paid": format_currency(get_abs_sum("revised_unsettled_not_paid", "total_revised_unsettled_not_paid", "unsettled_not_paid", "total_unsettled_not_paid")),
+            "total_revised_unsettled_not_paid": format_currency(get_abs_sum("revised_unsettled_not_paid", "total_revised_unsettled_not_paid", "unsettled_not_paid", "total_unsettled_not_paid")),
+            "revised_settlement_leak": format_currency(get_abs_sum("revised_settlement_leak", "total_revised_settlement_leak", "settlement_leak", "total_settlement_leak")),
+            "total_revised_settlement_leak": format_currency(get_abs_sum("revised_settlement_leak", "total_revised_settlement_leak", "settlement_leak", "total_settlement_leak")),
+            "total_order_payment_amount": format_currency(get_sum("total_order_payment_amount") or get_sum("order_payment_amount")),
+            "total_refund_charge_amount": format_currency(get_sum("total_refund_charge_amount") or get_sum("refund_charge_amount")),
+            "total_chargeback_refund": format_currency(get_sum("total_chargeback_refund") or get_sum("chargeback_refund")),
+            "total_atoz_guarantee_refund": format_currency(get_sum("total_atoz_guarantee_refund") or get_sum("atoz_guarantee_refund")),
+            "total_easy_ship_charges": format_currency(get_sum("total_easy_ship_charges") or get_sum("easy_ship_charges")),
+            "total_delivery_label_charges": format_currency(get_sum("total_delivery_label_charges") or get_sum("delivery_label_charges")),
+            "total_pass_through_charges": format_currency(get_sum("total_pass_through_charges") or get_sum("pass_through_charges")),
+            "total_other_charges": format_currency(get_sum("total_other_charges") or get_sum("other_charges")),
+            "total_inventory_reimbursement": format_currency(get_sum("total_inventory_reimbursement") or get_sum("inventory_reimbursement")),
         })
         
     elif type == "order":
@@ -423,6 +442,25 @@ def _combine_totals(amazon_t, myntra_t, type="style"):
             "settlement_leak": format_currency(get_abs_sum("settlement_leak", "total_settlement_leak")),
             "settlement_leak ": format_currency(get_abs_sum("settlement_leak", "total_settlement_leak")),
             "release_transaction_date": "-",
+
+            # NEW: Revised Expected Settlement & 9 Charges Totals
+            "revised_expected_settlement": format_currency(get_sum("revised_expected_settlement") or get_sum("total_revised_expected_settlement") or get_sum("new_expected_settlement") or get_sum("expected_settlement") or get_sum("exp_settlement")),
+            "total_revised_expected_settlement": format_currency(get_sum("revised_expected_settlement") or get_sum("total_revised_expected_settlement") or get_sum("new_expected_settlement") or get_sum("expected_settlement") or get_sum("exp_settlement")),
+            "new_expected_settlement": format_currency(get_sum("revised_expected_settlement") or get_sum("total_revised_expected_settlement") or get_sum("new_expected_settlement") or get_sum("expected_settlement") or get_sum("exp_settlement")),
+            "total_new_expected_settlement": format_currency(get_sum("revised_expected_settlement") or get_sum("total_revised_expected_settlement") or get_sum("new_expected_settlement") or get_sum("expected_settlement") or get_sum("exp_settlement")),
+            "revised_unsettled_not_paid": format_currency(get_abs_sum("revised_unsettled_not_paid", "total_revised_unsettled_not_paid", "unsettled_not_paid", "total_unsettled_not_paid")),
+            "total_revised_unsettled_not_paid": format_currency(get_abs_sum("revised_unsettled_not_paid", "total_revised_unsettled_not_paid", "unsettled_not_paid", "total_unsettled_not_paid")),
+            "revised_settlement_leak": format_currency(get_abs_sum("revised_settlement_leak", "total_revised_settlement_leak", "settlement_leak", "total_settlement_leak")),
+            "total_revised_settlement_leak": format_currency(get_abs_sum("revised_settlement_leak", "total_revised_settlement_leak", "settlement_leak", "total_settlement_leak")),
+            "total_order_payment_amount": format_currency(get_sum("total_order_payment_amount") or get_sum("order_payment_amount")),
+            "total_refund_charge_amount": format_currency(get_sum("total_refund_charge_amount") or get_sum("refund_charge_amount")),
+            "total_chargeback_refund": format_currency(get_sum("total_chargeback_refund") or get_sum("chargeback_refund")),
+            "total_atoz_guarantee_refund": format_currency(get_sum("total_atoz_guarantee_refund") or get_sum("atoz_guarantee_refund")),
+            "total_easy_ship_charges": format_currency(get_sum("total_easy_ship_charges") or get_sum("easy_ship_charges")),
+            "total_delivery_label_charges": format_currency(get_sum("total_delivery_label_charges") or get_sum("delivery_label_charges")),
+            "total_pass_through_charges": format_currency(get_sum("total_pass_through_charges") or get_sum("pass_through_charges")),
+            "total_other_charges": format_currency(get_sum("total_other_charges") or get_sum("other_charges")),
+            "total_inventory_reimbursement": format_currency(get_sum("total_inventory_reimbursement") or get_sum("inventory_reimbursement")),
         })
         
     # Calculate marketplace-wise leaks (sum of absolute leaks across all categories)
@@ -603,6 +641,20 @@ class ProfitabilityItemDTO:
     settlement_leak: Any = "₹0.0"
     release_transaction_date: str = "-"
 
+    revised_expected_settlement: Any = "₹0.0"
+    new_expected_settlement: Any = "₹0.0"
+    revised_unsettled_not_paid: Any = "₹0.0"
+    revised_settlement_leak: Any = "₹0.0"
+    order_payment_amount: Any = "₹0.0"
+    refund_charge_amount: Any = "₹0.0"
+    chargeback_refund: Any = "₹0.0"
+    atoz_guarantee_refund: Any = "₹0.0"
+    easy_ship_charges: Any = "₹0.0"
+    delivery_label_charges: Any = "₹0.0"
+    pass_through_charges: Any = "₹0.0"
+    other_charges: Any = "₹0.0"
+    inventory_reimbursement: Any = "₹0.0"
+
     def to_dict(self) -> dict:
         return asdict(self)
 
@@ -705,6 +757,21 @@ class ProfitabilityDTOAdapter:
         settlement_leak = _format_curr(row.get("settlement_leak"))
         release_transaction_date = _safe_str(row.get("release_transaction_date") or "-")
 
+        revised_expected_settlement = _format_curr(row.get("revised_expected_settlement") or row.get("new_expected_settlement") or expected_settlement)
+        new_expected_settlement = revised_expected_settlement
+        revised_unsettled_not_paid = _format_curr(row.get("revised_unsettled_not_paid") or unsettled_not_paid)
+        revised_settlement_leak = _format_curr(row.get("revised_settlement_leak") or settlement_leak)
+
+        order_payment_amount = _format_curr(row.get("order_payment_amount"))
+        refund_charge_amount = _format_curr(row.get("refund_charge_amount"))
+        chargeback_refund = _format_curr(row.get("chargeback_refund"))
+        atoz_guarantee_refund = _format_curr(row.get("atoz_guarantee_refund"))
+        easy_ship_charges = _format_curr(row.get("easy_ship_charges") or row.get("shippingfees"))
+        delivery_label_charges = _format_curr(row.get("delivery_label_charges"))
+        pass_through_charges = _format_curr(row.get("pass_through_charges"))
+        other_charges = _format_curr(row.get("other_charges"))
+        inventory_reimbursement = _format_curr(row.get("inventory_reimbursement") or row.get("claim_amount"))
+
         return ProfitabilityItemDTO(
             asin=asin,
             parent_asin=parent_asin,
@@ -778,6 +845,19 @@ class ProfitabilityDTOAdapter:
             tds_leaks=tds_leaks,
             settlement_leak=settlement_leak,
             release_transaction_date=release_transaction_date,
+            revised_expected_settlement=revised_expected_settlement,
+            new_expected_settlement=new_expected_settlement,
+            revised_unsettled_not_paid=revised_unsettled_not_paid,
+            revised_settlement_leak=revised_settlement_leak,
+            order_payment_amount=order_payment_amount,
+            refund_charge_amount=refund_charge_amount,
+            chargeback_refund=chargeback_refund,
+            atoz_guarantee_refund=atoz_guarantee_refund,
+            easy_ship_charges=easy_ship_charges,
+            delivery_label_charges=delivery_label_charges,
+            pass_through_charges=pass_through_charges,
+            other_charges=other_charges,
+            inventory_reimbursement=inventory_reimbursement,
         )
 
 

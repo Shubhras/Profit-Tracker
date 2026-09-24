@@ -68,18 +68,26 @@ class PaymentSyncService:
         return None
 
     def _transaction_key(self, row):
-        normalized = {
-            str(key): "" if value is None else str(value).strip()
-            for key, value in row.items()
-        }
+        neft = str(row.get("neft_ref") or "").strip()
+        line_id = str(row.get("order_line_id") or "").strip()
+        order_type = str(row.get("order_type") or "").strip()
+        packet_id = str(row.get("packet_id") or "").strip()
+        return_id = str(row.get("return_id") or "").strip()
+        nod = str(row.get("nod_comment") or "").strip()
+        store_order_id = str(row.get("store_order_id") or "").strip()
 
-        payload = json.dumps(
-            normalized,
-            sort_keys=True,
-            separators=(",", ":"),
-        )
+        settled_raw = row.get("settled_amount")
+        try:
+            settled_val = f"{float(str(settled_raw).replace(',', '')):.2f}" if settled_raw not in ("", None) else ""
+        except Exception:
+            settled_val = str(settled_raw or "").strip()
 
-        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+        if line_id:
+            raw_key = f"{neft}:{line_id}:{order_type}:{packet_id}:{return_id}:{nod}:{settled_val}"
+        else:
+            raw_key = f"{neft}:{store_order_id}:{order_type}:{nod}:{settled_val}"
+
+        return hashlib.sha256(raw_key.encode("utf-8")).hexdigest()
 
     def _build(self, row, payment_method):
         return MyntraPaymentTransaction(
@@ -146,6 +154,7 @@ class PaymentSyncService:
                 update_list.append(transaction)
             else:
                 create_list.append(transaction)
+                existing[key] = transaction
 
         if create_list:
             MyntraPaymentTransaction.objects.bulk_create(create_list)

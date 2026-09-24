@@ -273,6 +273,17 @@ def sync_historical_orders(days, accounts=None):
                     # =================================================
 
                     if not order:
+                        raw_channel = order_data.get("SalesChannel") or order_data.get("salesChannel")
+                        if isinstance(raw_channel, dict):
+                            sales_channel_value = raw_channel.get("channelName") or raw_channel.get("marketplaceName") or "Amazon"
+                        elif isinstance(raw_channel, str):
+                            sales_channel_value = raw_channel
+                        else:
+                            sales_channel_value = None
+
+                        b_info = order_data.get("BuyerInfo") or {}
+                        s_addr = order_data.get("ShippingAddress") or {}
+
                         with transaction.atomic():
                             order = Order.objects.create(
                                 amazon_account=account,
@@ -283,18 +294,10 @@ def sync_historical_orders(days, accounts=None):
                                 order_status=order_data.get("OrderStatus"),
                                 total_amount=total_info.get("Amount", 0),
                                 currency_code=total_info.get("CurrencyCode"),
-                                buyer_name=order_data.get("BuyerInfo", {}).get(
-                                    "BuyerName", "Unknown"
-                                ),
-                                city=order_data.get("ShippingAddress", {}).get(
-                                    "City", ""
-                                ),
-                                state=order_data.get("ShippingAddress", {}).get(
-                                    "StateOrRegion", ""
-                                ),
-                                country=order_data.get("ShippingAddress", {}).get(
-                                    "CountryCode", ""
-                                ),
+                                buyer_name=b_info.get("BuyerName", "Unknown"),
+                                city=s_addr.get("City", ""),
+                                state=s_addr.get("StateOrRegion", ""),
+                                country=s_addr.get("CountryCode", ""),
                                 fulfillment_channel=order_data.get(
                                     "FulfillmentChannel", ""
                                 ),
@@ -303,7 +306,11 @@ def sync_historical_orders(days, accounts=None):
                                     "NumberOfItemsUnshipped", 0
                                 ),
                                 marketplace_id=order_data.get("MarketplaceId"),
+                                sales_channel=sales_channel_value,
+                                raw_data = order_data
                             )
+
+                            print(f"SAVED ORDER: {order_data}")
 
                         existing_orders[amazon_order_id] = order
 

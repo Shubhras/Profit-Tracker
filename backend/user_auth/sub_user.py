@@ -48,7 +48,7 @@ Hello {user_name},
 
 {action_text.replace('<strong>', '').replace('</strong>', '')}
 
-Here are your account credentials to log in:
+Here are your account credentials to login:
 - Email: {user_email}
 - Password: {password}
 

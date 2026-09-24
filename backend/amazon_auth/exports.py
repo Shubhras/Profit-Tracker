@@ -1206,8 +1206,19 @@ RECONCILE_ORDER_COLUMNS = {
     "actual_tds": "Actual TDS",
     "tds_leaks": "TDS Leaks",
     "exp_settlement": "Expected Settlement",
+    "revised_expected_settlement": "Revised Expected Settlement",
     "settlement_paid_in_bank": "Bank Settled Amount",
     "unsettled_not_paid": "Settlement Hold",
+    "revised_unsettled_not_paid": "Revised Settlement Hold",
+    "order_payment_amount": "Order Payment",
+    "refund_charge_amount": "Refund Amount",
+    "chargeback_refund": "Chargeback Refund",
+    "atoz_guarantee_refund": "A-to-Z Guarantee Refund",
+    "easy_ship_charges": "Easy Ship Charges",
+    "delivery_label_charges": "Delivery Labels",
+    "pass_through_charges": "Pass-Through Charges",
+    "other_charges": "Other Charges",
+    "inventory_reimbursement": "Inventory Reimbursement",
     "release_transaction_date": "Release Transaction Date"
 }
 
@@ -1230,8 +1241,20 @@ def format_reconcile_order_export(data_list, totals_dict=None):
                 formatted_list[idx]['tds'] = format_val_currency(item.get('tds'))
                 formatted_list[idx]['actual_tds'] = format_val_currency(item.get('actual_tds'))
                 formatted_list[idx]['tds_leaks'] = format_val_currency(item.get('tds_leaks'))
+                formatted_list[idx]['exp_settlement'] = format_val_currency(item.get('exp_settlement') or item.get('expected_settlement'))
+                formatted_list[idx]['revised_expected_settlement'] = format_val_currency(item.get('revised_expected_settlement'))
                 formatted_list[idx]['settlement_paid_in_bank'] = format_val_currency(item.get('settlement_paid_in_bank'))
                 formatted_list[idx]['unsettled_not_paid'] = format_val_currency(item.get('unsettled_not_paid'))
+                formatted_list[idx]['revised_unsettled_not_paid'] = format_val_currency(item.get('revised_unsettled_not_paid'))
+                formatted_list[idx]['order_payment_amount'] = format_val_currency(item.get('order_payment_amount'))
+                formatted_list[idx]['refund_charge_amount'] = format_val_currency(item.get('refund_charge_amount'))
+                formatted_list[idx]['chargeback_refund'] = format_val_currency(item.get('chargeback_refund'))
+                formatted_list[idx]['atoz_guarantee_refund'] = format_val_currency(item.get('atoz_guarantee_refund'))
+                formatted_list[idx]['easy_ship_charges'] = format_val_currency(item.get('easy_ship_charges'))
+                formatted_list[idx]['delivery_label_charges'] = format_val_currency(item.get('delivery_label_charges'))
+                formatted_list[idx]['pass_through_charges'] = format_val_currency(item.get('pass_through_charges'))
+                formatted_list[idx]['other_charges'] = format_val_currency(item.get('other_charges'))
+                formatted_list[idx]['inventory_reimbursement'] = format_val_currency(item.get('inventory_reimbursement'))
                 formatted_list[idx]['settlement_leak'] = format_val_currency(item.get('settlement_leak'))
                 formatted_list[idx]['release_transaction_date'] = item.get('release_transaction_date', '-')
                 
@@ -1249,10 +1272,24 @@ def format_reconcile_order_export(data_list, totals_dict=None):
         formatted_totals['tds'] = format_val_currency(totals_dict.get('tds'))
         formatted_totals['actual_tds'] = format_val_currency(totals_dict.get('total_actual_tds') or totals_dict.get('actual_tds'))
         formatted_totals['tds_leaks'] = format_val_currency(totals_dict.get('total_tds_leaks') or totals_dict.get('tds_leaks'))
+        formatted_totals['exp_settlement'] = format_val_currency(totals_dict.get('total_expected_settlement') or totals_dict.get('expected_settlement') or totals_dict.get('exp_settlement'))
+        formatted_totals['revised_expected_settlement'] = format_val_currency(totals_dict.get('total_revised_expected_settlement') or totals_dict.get('revised_expected_settlement'))
         formatted_totals['settlement_paid_in_bank'] = format_val_currency(totals_dict.get('total_settlement_paid_in_bank') or totals_dict.get('settlement_paid_in_bank'))
         formatted_totals['unsettled_not_paid'] = format_val_currency(totals_dict.get('total_unsettled_not_paid') or totals_dict.get('unsettled_not_paid'))
+        formatted_totals['revised_unsettled_not_paid'] = format_val_currency(totals_dict.get('total_revised_unsettled_not_paid') or totals_dict.get('revised_unsettled_not_paid'))
+        formatted_totals['order_payment_amount'] = format_val_currency(totals_dict.get('total_order_payment_amount'))
+        formatted_totals['refund_charge_amount'] = format_val_currency(totals_dict.get('total_refund_charge_amount'))
+        formatted_totals['chargeback_refund'] = format_val_currency(totals_dict.get('total_chargeback_refund'))
+        formatted_totals['atoz_guarantee_refund'] = format_val_currency(totals_dict.get('total_atoz_guarantee_refund'))
+        formatted_totals['easy_ship_charges'] = format_val_currency(totals_dict.get('total_easy_ship_charges'))
+        formatted_totals['delivery_label_charges'] = format_val_currency(totals_dict.get('total_delivery_label_charges'))
+        formatted_totals['pass_through_charges'] = format_val_currency(totals_dict.get('total_pass_through_charges'))
+        formatted_totals['other_charges'] = format_val_currency(totals_dict.get('total_other_charges'))
+        formatted_totals['inventory_reimbursement'] = format_val_currency(totals_dict.get('total_inventory_reimbursement'))
         formatted_totals['settlement_leak'] = format_val_currency(totals_dict.get('total_settlement_leak') or totals_dict.get('settlement_leak'))
         formatted_totals['release_transaction_date'] = '-'
+        
+    return formatted_list, formatted_totals
         
     return formatted_list, formatted_totals
 

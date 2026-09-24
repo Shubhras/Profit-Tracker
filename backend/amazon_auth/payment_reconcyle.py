@@ -350,6 +350,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
+        .exclude(order__sales_channel__iexact="Non-Amazon")
         .annotate(
             sku_standard_cost=Subquery(listing_qs.values("standard_cost")[:1]),
             sku_gst_rate=Subquery(listing_qs.values("gst_rate")[:1]),
@@ -431,6 +432,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
+        .exclude(order__sales_channel__iexact="Non-Amazon")
         .values('asin', 'parent_asin', 'seller_sku', 'order__amazon_order_id', 'order__purchase_date', 'quantity_ordered', 'item_price', 'new_item_price', 'item_tax', 'promotion_discount')
     )
 
@@ -533,9 +535,112 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
     tx_to_order = {row["transaction_id"]: row["identifier_value"] for row in tx_identifiers}
 
     STATUS_PRIORITY = {
-        "DEFERRED": 3,
+        "RELEASED": 3,
         "DEFERRED_RELEASED": 2,
-        "RELEASED": 1,
+        "DEFERRED": 1,
+    }
+
+    # ============================================================
+    # ESTIMATE FEES FROM TRANSACTIONS
+    # ------------------------------------------------------------
+    # This is ONLY for estimatefees.
+    #
+    # actual_fees / reconciliation actual_fees below are intentionally
+    # left unchanged.
+    #
+    # If multiple Shipment transactions exist for the same order,
+    # use the highest-priority lifecycle state:
+    # RELEASED > DEFERRED_RELEASED > DEFERRED
+    #
+    # IMPORTANT:
+    # - Transaction existence determines whether estimatefees is
+    #   replaced by the transaction value.
+    # - A Shipment transaction with no AmazonFees breakdown still
+    #   counts as an actual transaction and therefore wins over the
+    #   estimated fee with an amount of 0.
+    # - FBAWeightBasedFee is deducted from AmazonFees.
+    # ============================================================
+
+    estimatefee_txns = AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_type="Shipment",
+        transaction_status__in=[
+            "DEFERRED",
+            "DEFERRED_RELEASED",
+            "RELEASED",
+        ],
+    ).values(
+        "id",
+        "transaction_status",
+    )
+
+    estimatefee_tx_status = {
+        txn["id"]: txn["transaction_status"]
+        for txn in estimatefee_txns
+    }
+
+    estimatefee_amazon_fee_by_tx = {
+        row["transaction_id"]: abs(float(row["total"] or 0))
+        for row in (
+            AmazonTransactionBreakdown.objects.filter(
+                transaction_id__in=estimatefee_tx_status.keys(),
+                breakdown_type="AmazonFees",
+            )
+            .values("transaction_id")
+            .annotate(total=Sum("amount"))
+        )
+    }
+
+    estimatefee_fba_weight_by_tx = {
+        row["transaction_id"]: abs(float(row["total"] or 0))
+        for row in (
+            AmazonTransactionBreakdown.objects.filter(
+                transaction_id__in=estimatefee_tx_status.keys(),
+                breakdown_type="FBAWeightBasedFee",
+            )
+            .values("transaction_id")
+            .annotate(total=Sum("amount"))
+        )
+    }
+
+    estimatefee_candidates = {}
+
+    # Iterate over TRANSACTIONS, not AmazonFees breakdowns.
+    # This is important because a transaction can exist with
+    # AmazonFees = 0 or with no AmazonFees breakdown at all.
+    for transaction_id, status in estimatefee_tx_status.items():
+        order_id = tx_to_order.get(transaction_id)
+
+        if not order_id:
+            continue
+
+        priority = STATUS_PRIORITY.get(status, 0)
+        current = estimatefee_candidates.get(order_id)
+
+        if current is None or priority > current["priority"]:
+            amazon_fees = estimatefee_amazon_fee_by_tx.get(
+                transaction_id,
+                0.0,
+            )
+            fba_weight_fee = estimatefee_fba_weight_by_tx.get(
+                transaction_id,
+                0.0,
+            )
+
+            estimatefee_candidates[order_id] = {
+                "priority": priority,
+                "status": status,
+                "amount": max(
+                    0.0,
+                    amazon_fees - fba_weight_fee,
+                ),
+            }
+
+    # Presence in this map means an actual Shipment transaction exists
+    # for the order. The value may legitimately be 0.
+    estimatefee_actual_map = {
+        order_id: data["amount"]
+        for order_id, data in estimatefee_candidates.items()
     }
 
     # 1. Expected Shipping Fee (MFN across DEFERRED, DEFERRED_RELEASED, RELEASED with priority)
@@ -885,14 +990,106 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
     )
     tx_settlement_paid_by_order = {}
     tx_actual_mp_gst_by_order = {}
+    tx_order_payment_by_order = {}
+    tx_refund_by_order = {}
     order_ids_with_tx = set(tx_to_order.values())
     for txn in tx_released_txns:
         oid = tx_to_order.get(txn["id"])
         if oid:
-            tx_settlement_paid_by_order[oid] = tx_settlement_paid_by_order.get(oid, 0.0) + float(txn.get("total_amount") or 0)
+            t_amt = float(txn.get("total_amount") or 0)
+            tx_settlement_paid_by_order[oid] = tx_settlement_paid_by_order.get(oid, 0.0) + t_amt
             gst_val = calculate_transaction_actual_mp_gst(txn)
             if gst_val != 0:
                 tx_actual_mp_gst_by_order[oid] = tx_actual_mp_gst_by_order.get(oid, 0.0) + gst_val
+            t_type = txn.get("transaction_type") or ""
+            t_desc = txn.get("description") or ""
+            if t_type == "Shipment" or "Order Payment" in t_desc:
+                tx_order_payment_by_order[oid] = tx_order_payment_by_order.get(oid, 0.0) + t_amt
+            elif t_type == "Refund" or ("Refund" in t_desc and t_type != "ServiceFee" and "Fee" not in t_desc):
+                tx_refund_by_order[oid] = tx_refund_by_order.get(oid, 0.0) + abs(t_amt)
+
+    # 9 Order Level Charges: Extractions for SKU/ASIN Level Reconciliation
+    chargeback_txns = AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_status="RELEASED",
+    ).filter(
+        Q(description__icontains="Chargeback") |
+        Q(transaction_type__icontains="Chargeback")
+    ).values("id", "total_amount")
+    tx_chargeback_by_order = {}
+    for txn in chargeback_txns:
+        oid = tx_to_order.get(txn["id"])
+        if oid:
+            tx_chargeback_by_order[oid] = tx_chargeback_by_order.get(oid, 0.0) + abs(float(txn.get("total_amount") or 0))
+
+    guarantee_txns = AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_status="RELEASED",
+    ).filter(
+        Q(description__icontains="Guarantee") |
+        Q(transaction_type__icontains="Guarantee")
+    ).values("id", "total_amount")
+    tx_guarantee_by_order = {}
+    for txn in guarantee_txns:
+        oid = tx_to_order.get(txn["id"])
+        if oid:
+            tx_guarantee_by_order[oid] = tx_guarantee_by_order.get(oid, 0.0) + abs(float(txn.get("total_amount") or 0))
+
+    delivery_label_txns = AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_type="ServiceFee",
+        transaction_status="RELEASED",
+    ).filter(
+        Q(description__icontains="Delivery") |
+        Q(description__icontains="ShippingLabel") |
+        Q(description__icontains="BuyShipping") |
+        Q(description__icontains="ShippingServices")
+    ).values("id", "total_amount")
+    tx_delivery_label_by_order = {}
+    for txn in delivery_label_txns:
+        oid = tx_to_order.get(txn["id"])
+        if oid:
+            tx_delivery_label_by_order[oid] = tx_delivery_label_by_order.get(oid, 0.0) + abs(float(txn.get("total_amount") or 0))
+
+    passthrough_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=afn_all_tx_ids,
+            breakdown_type__in=["GiftwrapChargeback", "ShippingChargeback", "CODCharge"]
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+    tx_passthrough_by_order = {}
+    for bd in passthrough_breakdowns:
+        oid = tx_to_order.get(bd["transaction_id"])
+        if oid:
+            tx_passthrough_by_order[oid] = tx_passthrough_by_order.get(oid, 0.0) + float(bd["total"] or 0)
+
+    other_charge_txns = AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_status="RELEASED",
+    ).filter(
+        Q(description__in=["OrderCancellationCharge", "Order Adjustment"]) |
+        Q(description__icontains="CancellationCharge")
+    ).values("id", "total_amount")
+    tx_other_charge_by_order = {}
+    for txn in other_charge_txns:
+        oid = tx_to_order.get(txn["id"])
+        if oid:
+            tx_other_charge_by_order[oid] = tx_other_charge_by_order.get(oid, 0.0) + abs(float(txn.get("total_amount") or 0))
+
+    reimbursement_txns = AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_status="RELEASED",
+    ).filter(
+        Q(description__in=["SERRACReimbursement", "REVERSAL_REIMBURSEMENT"]) |
+        Q(transaction_type="FBAInventoryReimbursement")
+    ).values("id", "total_amount")
+    tx_reimbursement_by_order = {}
+    for txn in reimbursement_txns:
+        oid = tx_to_order.get(txn["id"])
+        if oid:
+            tx_reimbursement_by_order[oid] = tx_reimbursement_by_order.get(oid, 0.0) + abs(float(txn.get("total_amount") or 0))
 
     sku_asin_map = {
         normalize_sku(k): v
@@ -1006,6 +1203,19 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
     total_claim_count = 0
     total_replacement_count = 0
 
+    tot_revised_exp = 0.0
+    tot_revised_unsettled = 0.0
+    tot_revised_settlement_leak = 0.0
+    tot_order_payment = 0.0
+    tot_refund_charge = 0.0
+    tot_chargeback = 0.0
+    tot_atoz = 0.0
+    tot_easy_ship = 0.0
+    tot_delivery_label = 0.0
+    tot_passthrough = 0.0
+    tot_other_charges = 0.0
+    tot_inventory_reimbursement = 0.0
+
     listing_items_data = list(
         AmazonListingItem.objects.filter(user=user)
         .values('sku', 'asin', 'standard_cost', 'gst_rate', 'tcs', 'tds', 'updated_at')
@@ -1086,7 +1296,58 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         fba_pick_pack_fee = fee_data.get("fba_pick_pack_fee", 0)
         fba_weight_handling_fee = fee_data.get("fba_weight_handling_fee", 0)
         tax_amount = fee_data.get("tax_amount", 0)
-        estimated_fees = max(0.0, float(fee_data.get("estimated_fees", 0)) - float(fba_weight_handling_fee))
+
+        # ------------------------------------------------------------
+        # ESTIMATE FEES
+        # ------------------------------------------------------------
+        # Use the actual Shipment transaction for estimatefees when
+        # available, with lifecycle priority:
+        #
+        # RELEASED > DEFERRED_RELEASED > DEFERRED
+        #
+        # IMPORTANT:
+        # - This changes ONLY estimatefees.
+        # - actual_fees / row_actual_fees below are untouched.
+        # - Transaction existence wins over the estimate, even when
+        #   AmazonFees is 0 or the AmazonFees breakdown is absent.
+        # - FBAWeightBasedFee is deducted from AmazonFees.
+        # - If no actual Shipment transaction exists for an order,
+        #   retain the existing estimated-fee calculation.
+        estimated_fees = 0.0
+
+        for o in orders:
+            oid = o.get('order__amazon_order_id')
+            o_sku = (o.get('seller_sku') or '').strip()
+            o_qty = max(1, int(o.get('quantity_ordered') or 1))
+
+            actual_estimatefee = estimatefee_actual_map.get(oid)
+            print(actual_estimatefee)
+            if actual_estimatefee is not None:
+                estimated_fees += actual_estimatefee
+                continue
+
+            f_item = None
+
+            if oid and o_sku and (oid, o_sku) in estimated_fee_by_order_sku:
+                f_item = estimated_fee_by_order_sku[(oid, o_sku)]
+            elif oid and oid in estimated_fee_by_order:
+                f_item = estimated_fee_by_order[oid]
+
+            if f_item:
+                estimated_fees += max(
+                    0.0,
+                    float(f_item.get("estimated_fees", 0.0) or 0.0)
+                    - float(f_item.get("fba_weight_handling_fee", 0.0) or 0.0)
+                ) * o_qty
+
+        if not orders:
+            # Preserve the existing fallback behavior for rows where
+            # no order-level records are available.
+            estimated_fees = max(
+                0.0,
+                float(fee_data.get("estimated_fees", 0.0) or 0.0)
+                - float(fee_data.get("fba_weight_handling_fee", 0.0) or 0.0)
+            )
 
         gross_qty = int(row['grossqty'] or 0)
         gross_sales = float(str(row['grosssales'] or 0))
@@ -1241,6 +1502,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         tcs = 0.0
         tds = 0.0
         row_calculated_promo = 0.0
+        order_expected_op = {}
 
         for child_key, c_orders in child_sku_orders.items():
             first_o = c_orders[0]
@@ -1276,14 +1538,26 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
                 o_return_count = refund_count_by_order.get(oid, 0)
                 o_has_return = oid in order_ids_with_refund
 
+                o_promo = float(str(o.get('promotion_discount') or 0))
                 if o_replacement_count or (o_has_return and qty == o_return_count):
                     o_gross = 0.0
                     o_cost = 0.0
-                    o_promo = float(str(o.get('promotion_discount') or 0))
                     c_promo_discount -= o_promo
 
                 c_final_net_sales += o_gross
                 c_cost += o_cost
+
+                # Accumulate order-level expected payment for unsettled orders
+                if oid not in tx_order_payment_by_order:
+                    o_fn_sales = 0.0 if (o_replacement_count or (o_has_return and qty == o_return_count)) else max(0.0, (o_item_price + o_item_tax) - o_promo)
+                    o_base = (o_item_price + o_item_tax) if (o_has_return and refund_amount_by_order.get(oid, 0.0) > 0) else o_fn_sales
+                    o_taxable_val = o_fn_sales / (1.0 + (c_gst_rate / 100.0)) if c_gst_rate > 0 else o_fn_sales
+                    o_tcs_val = o_taxable_val * (c_tcs_rate / 100.0) if c_tcs_rate else 0.0
+                    o_tds_val = o_taxable_val * (c_tds_rate / 100.0) if c_tds_rate else 0.0
+                    f_info = estimated_fee_by_order_sku.get((oid, c_sku)) or estimated_fee_by_order.get(oid) or {}
+                    fba_w = float(f_info.get("fba_weight_handling_fee", 0.0) or 0.0)
+                    o_fees = max(0.0, float(f_info.get("estimated_fees", 0.0) or 0.0) - fba_w) * max(1, int(qty))
+                    order_expected_op[oid] = order_expected_op.get(oid, 0.0) + max(0.0, o_base - o_fees - o_tcs_val - o_tds_val)
 
             c_final_net_sales = max(0.0, c_final_net_sales - c_promo_discount)
 
@@ -1345,7 +1619,6 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
 
         net_sales = gross_sales + item_tax
         adjusted_gross_sales_val = gross_sales + item_tax
-
         mpfees = -abs(estimated_fees)
         mp_gst = (-abs(estimated_fees) + shipping_price) * (18 / 118)
 
@@ -1404,8 +1677,91 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         row_actual_tds = round(sum(tx_actual_tds_by_order.get(o['order__amazon_order_id'], 0.0) for o in orders), 2)
         tds_leaks = round(abs(tds) - row_actual_tds, 2)
         mp_gst_leaks = round(abs(mp_gst) - row_actual_mp_gst, 2)
-        settlement_leak = round(exp_settlement - unsettled_not_paid - row_settlement_paid, 2)
         release_date = next((tx_release_date_by_order[o['order__amazon_order_id']] for o in orders if o['order__amazon_order_id'] in tx_release_date_by_order), "-")
+
+        # 9 Order Level Charges for this SKU / ASIN row:
+        row_order_payment = 0.0
+        row_refund = 0.0
+        row_easy_ship = 0.0
+        for oid in set(row_order_ids):
+            # 1. Order Payment
+            if oid in tx_order_payment_by_order:
+                row_order_payment += tx_order_payment_by_order[oid]
+            elif oid in order_expected_op:
+                row_order_payment += order_expected_op[oid]
+            else:
+                base_sales = net_sales if (row_customer_return_price != 0 or row_courier_return_price != 0) else final_net_sales
+                row_order_payment += max(0.0, base_sales - abs(mpfees) - tcs - tds)
+
+            # 2. Refund
+            if oid in tx_refund_by_order:
+                row_refund += tx_refund_by_order[oid]
+            else:
+                row_refund += refund_amount_by_order.get(oid, 0.0)
+
+            # 5. Easy Ship
+            act_ship = float(tx_actual_shipping_map.get(oid, 0.0))
+            ship_refund = abs(float(fulfillment_fee_refund_by_order.get(oid, 0.0)))
+            net_act_ship = max(0.0, round(act_ship - ship_refund, 2))
+            if net_act_ship > 0:
+                row_easy_ship += net_act_ship
+            elif ship_refund > 0:
+                row_easy_ship += 0.0
+            else:
+                row_easy_ship += float(tx_shipping_map.get(oid, 0.0))
+
+        if not row_order_payment and not row_order_ids:
+            base_sales = net_sales if (row_customer_return_price != 0 or row_courier_return_price != 0) else final_net_sales
+            row_order_payment = max(0.0, base_sales - abs(mpfees) - tcs - tds)
+
+        if not row_refund and not row_order_ids:
+            row_refund = row_customer_return_price or row_courier_return_price or order_return_amount or 0.0
+
+        if not row_easy_ship and not row_order_ids:
+            row_easy_ship = row_actual_shipping if row_actual_shipping > 0 else abs(shipping_price)
+
+        row_chargeback = round(sum(tx_chargeback_by_order.get(oid, 0.0) for oid in set(row_order_ids)), 2)
+        row_atoz = round(sum(tx_guarantee_by_order.get(oid, 0.0) for oid in set(row_order_ids)), 2)
+        row_delivery_label = round(sum(tx_delivery_label_by_order.get(oid, 0.0) for oid in set(row_order_ids)), 2)
+        row_passthrough = round(sum(tx_passthrough_by_order.get(oid, 0.0) for oid in set(row_order_ids)), 2)
+        row_other_charges = round(sum(tx_other_charge_by_order.get(oid, 0.0) for oid in set(row_order_ids)), 2)
+        row_reimbursement = round(sum(tx_reimbursement_by_order.get(oid, 0.0) for oid in set(row_order_ids)) or order_claim_amount, 2)
+
+        row_order_payment = round(row_order_payment, 2)
+        row_refund = round(row_refund, 2)
+        row_easy_ship = round(row_easy_ship, 2)
+
+        # Revised Expected Settlement: Net of all 9 Amazon Order-Level Charges
+        revised_exp_settlement_num = round(
+            row_order_payment
+            - row_refund
+            - row_chargeback
+            - row_atoz
+            - row_easy_ship
+            - row_delivery_label
+            + row_passthrough
+            - row_other_charges
+            + row_reimbursement,
+            2
+        )
+        revised_unsettled_not_paid = round(revised_exp_settlement_num - row_settlement_paid, 2)
+        revised_settlement_leak = round(revised_exp_settlement_num - revised_unsettled_not_paid - row_settlement_paid, 2)
+
+        unsettled_not_paid = revised_unsettled_not_paid
+        settlement_leak = revised_settlement_leak
+
+        tot_revised_exp += revised_exp_settlement_num
+        tot_revised_unsettled += revised_unsettled_not_paid
+        tot_revised_settlement_leak += revised_settlement_leak
+        tot_order_payment += row_order_payment
+        tot_refund_charge += row_refund
+        tot_chargeback += row_chargeback
+        tot_atoz += row_atoz
+        tot_easy_ship += row_easy_ship
+        tot_delivery_label += row_delivery_label
+        tot_passthrough += row_passthrough
+        tot_other_charges += row_other_charges
+        tot_inventory_reimbursement += row_reimbursement
 
         row_cancelled_qty = sum(int(o.get('cancelled_qty', 0) or 0) for o in orders) if by_sku else 0
         row_cancelled_sales = sum(float(parse_currency_to_decimal(o.get('cancelled_sales', 0)) or 0) for o in orders) if by_sku else 0.0
@@ -1471,6 +1827,19 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
 
             "exp_settlement": format_currency(exp_settlement),
             "expected_settlement": format_currency(exp_settlement),
+            "revised_expected_settlement": format_currency(revised_exp_settlement_num),
+            "new_expected_settlement": format_currency(revised_exp_settlement_num),
+            "revised_unsettled_not_paid": format_currency(revised_unsettled_not_paid),
+            "revised_settlement_leak": format_currency(revised_settlement_leak),
+            "order_payment_amount": format_currency(row_order_payment),
+            "refund_charge_amount": format_currency(row_refund),
+            "chargeback_refund": format_currency(row_chargeback),
+            "atoz_guarantee_refund": format_currency(row_atoz),
+            "easy_ship_charges": format_currency(row_easy_ship),
+            "delivery_label_charges": format_currency(row_delivery_label),
+            "pass_through_charges": format_currency(row_passthrough),
+            "other_charges": format_currency(row_other_charges),
+            "inventory_reimbursement": format_currency(row_reimbursement),
             "stdcost": format_currency(cost),
             "profit": format_currency(profit),
             "grossprofitper": round(profit_margin, 2),
@@ -1595,6 +1964,24 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         "total_replacement_return_count": total_replacement_count,
         "exp_settlement": format_currency(total_exp_settlement),
         "expected_settlement": format_currency(total_exp_settlement),
+        "total_expected_settlement": format_currency(total_exp_settlement),
+        "revised_expected_settlement": format_currency(tot_revised_exp),
+        "total_revised_expected_settlement": format_currency(tot_revised_exp),
+        "new_expected_settlement": format_currency(tot_revised_exp),
+        "total_new_expected_settlement": format_currency(tot_revised_exp),
+        "revised_unsettled_not_paid": format_currency(tot_revised_unsettled),
+        "total_revised_unsettled_not_paid": format_currency(tot_revised_unsettled),
+        "revised_settlement_leak": format_currency(tot_revised_settlement_leak),
+        "total_revised_settlement_leak": format_currency(tot_revised_settlement_leak),
+        "total_order_payment_amount": format_currency(tot_order_payment),
+        "total_refund_charge_amount": format_currency(tot_refund_charge),
+        "total_chargeback_refund": format_currency(tot_chargeback),
+        "total_atoz_guarantee_refund": format_currency(tot_atoz),
+        "total_easy_ship_charges": format_currency(tot_easy_ship),
+        "total_delivery_label_charges": format_currency(tot_delivery_label),
+        "total_pass_through_charges": format_currency(tot_passthrough),
+        "total_other_charges": format_currency(tot_other_charges),
+        "total_inventory_reimbursement": format_currency(tot_inventory_reimbursement),
         "stdcost": format_currency(total_stdcost),
         "cost": format_currency(total_stdcost),
         "profit": format_currency(total_profit),
@@ -1702,7 +2089,7 @@ def combined_payment_reconcile_overview(request):
 
     if has_myntra:
         from myntra.services.profit.calculator import MyntraProfitCalculator
-        from myntra.services.profit.sku_summary import SKUSummary
+        from myntra.services.profit.style_summary import StyleSummary
         from myntra.amazon_adapter import MyntraAmazonProfitAdapter
 
         from_date_local = None
@@ -1721,13 +2108,15 @@ def combined_payment_reconcile_overview(request):
         }
 
         calculator = MyntraProfitCalculator(user=user, filters=myntra_filters)
-        summary = SKUSummary(calculator)
+        summary = StyleSummary(calculator)
+        myntra_raw_rows = summary.execute()
 
-        style_id = parent_ids[0] if parent_ids else None
-        if style_id:
-            myntra_raw_rows = summary.execute(style_id=style_id)
-        else:
-            myntra_raw_rows = summary.execute()
+        if parent_ids:
+            parent_ids_set = {str(pid).strip() for pid in parent_ids if pid}
+            myntra_raw_rows = [
+                r for r in myntra_raw_rows
+                if str(r.get("style_id") or "").strip() in parent_ids_set
+            ]
 
         if search_term:
             search_term_lower = search_term.lower()
@@ -2132,14 +2521,127 @@ def _payment_reconcile_order_level_logic(request):
     )
     tx_settlement_paid_order_level = {}
     tx_actual_mp_gst_order_level = {}
+    tx_order_payment_by_order = {}
+    tx_refund_by_order = {}
     order_ids_with_tx_order_level = set(tx_to_order.values())
     for txn in tx_released_txns_order_level:
         oid = tx_to_order.get(txn["id"])
         if oid:
-            tx_settlement_paid_order_level[oid] = tx_settlement_paid_order_level.get(oid, 0.0) + float(txn.get("total_amount") or 0)
+            t_amt = float(txn.get("total_amount") or 0)
+            tx_settlement_paid_order_level[oid] = tx_settlement_paid_order_level.get(oid, 0.0) + t_amt
             gst_val = calculate_transaction_actual_mp_gst(txn)
             if gst_val != 0:
                 tx_actual_mp_gst_order_level[oid] = tx_actual_mp_gst_order_level.get(oid, 0.0) + gst_val
+            t_type = txn.get("transaction_type") or ""
+            t_desc = txn.get("description") or ""
+            if t_type == "Shipment" or "Order Payment" in t_desc:
+                tx_order_payment_by_order[oid] = tx_order_payment_by_order.get(oid, 0.0) + t_amt
+            elif t_type == "Refund" or ("Refund" in t_desc and t_type != "ServiceFee" and "Fee" not in t_desc):
+                tx_refund_by_order[oid] = tx_refund_by_order.get(oid, 0.0) + abs(t_amt)
+
+    # =========================================================
+    # 9 Order Level Charges Extraction (For Revised Expected Settlement)
+    # =========================================================
+    # 3. Chargeback Refunds (Type 3)
+    chargeback_txns = AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_status="RELEASED",
+    ).filter(
+        Q(description__icontains="Chargeback") |
+        Q(transaction_type__icontains="Chargeback")
+    ).values("id", "total_amount")
+    tx_chargeback_by_order = {}
+    for txn in chargeback_txns:
+        oid = tx_to_order.get(txn["id"])
+        if oid:
+            tx_chargeback_by_order[oid] = tx_chargeback_by_order.get(oid, 0.0) + abs(float(txn.get("total_amount") or 0))
+
+    # 4. A-to-Z Guarantee Refunds (Type 4)
+    guarantee_txns = AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_status="RELEASED",
+    ).filter(
+        Q(description__icontains="Guarantee") |
+        Q(transaction_type__icontains="Guarantee")
+    ).values("id", "total_amount")
+    tx_guarantee_by_order = {}
+    for txn in guarantee_txns:
+        oid = tx_to_order.get(txn["id"])
+        if oid:
+            tx_guarantee_by_order[oid] = tx_guarantee_by_order.get(oid, 0.0) + abs(float(txn.get("total_amount") or 0))
+
+    # 6. Delivery Labels purchased through Amazon (Type 6)
+    delivery_label_txns = AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_type="ServiceFee",
+        transaction_status="RELEASED",
+    ).filter(
+        Q(description__icontains="Delivery") |
+        Q(description__icontains="ShippingLabel") |
+        Q(description__icontains="BuyShipping") |
+        Q(description__icontains="ShippingServices")
+    ).values("id", "total_amount")
+    tx_delivery_label_by_order = {}
+    for txn in delivery_label_txns:
+        oid = tx_to_order.get(txn["id"])
+        if oid:
+            tx_delivery_label_by_order[oid] = tx_delivery_label_by_order.get(oid, 0.0) + abs(float(txn.get("total_amount") or 0))
+
+    # 7. Pass-Through Charges (GiftwrapChargeback, ShippingChargeback, CODCharge)
+    passthrough_breakdowns = (
+        AmazonTransactionBreakdown.objects.filter(
+            transaction_id__in=shipment_all_tx_ids,
+            breakdown_type__in=["GiftwrapChargeback", "ShippingChargeback", "CODCharge"]
+        )
+        .values("transaction_id")
+        .annotate(total=Sum("amount"))
+    )
+    tx_passthrough_by_order = {}
+    for bd in passthrough_breakdowns:
+        oid = tx_to_order.get(bd["transaction_id"])
+        if oid:
+            tx_passthrough_by_order[oid] = tx_passthrough_by_order.get(oid, 0.0) + float(bd["total"] or 0)
+
+    # 8. Other: Order Cancellation Charges & Adjustments (Type 8)
+    other_charge_txns = AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_status="RELEASED",
+    ).filter(
+        Q(description__in=["OrderCancellationCharge", "Order Adjustment"]) |
+        Q(description__icontains="CancellationCharge")
+    ).values("id", "total_amount")
+    tx_other_charge_by_order = {}
+    for txn in other_charge_txns:
+        oid = tx_to_order.get(txn["id"])
+        if oid:
+            tx_other_charge_by_order[oid] = tx_other_charge_by_order.get(oid, 0.0) + abs(float(txn.get("total_amount") or 0))
+
+    # 9. Inventory Reimbursements (Type 9)
+    reimbursement_txns = AmazonTransaction.objects.filter(
+        id__in=tx_to_order.keys(),
+        transaction_status="RELEASED",
+    ).filter(
+        Q(description__in=["SERRACReimbursement", "REVERSAL_REIMBURSEMENT"]) |
+        Q(transaction_type="FBAInventoryReimbursement")
+    ).values("id", "total_amount")
+    tx_reimbursement_by_order = {}
+    for txn in reimbursement_txns:
+        oid = tx_to_order.get(txn["id"])
+        if oid:
+            tx_reimbursement_by_order[oid] = tx_reimbursement_by_order.get(oid, 0.0) + abs(float(txn.get("total_amount") or 0))
+
+    tot_revised_exp = 0.0
+    tot_revised_unsettled = 0.0
+    tot_revised_settlement_leak = 0.0
+    tot_order_payment = 0.0
+    tot_refund_charge = 0.0
+    tot_chargeback = 0.0
+    tot_atoz = 0.0
+    tot_easy_ship = 0.0
+    tot_delivery_label = 0.0
+    tot_passthrough = 0.0
+    tot_other_charges = 0.0
+    tot_inventory_reimbursement = 0.0
 
     for r in rows:
         oid = r.get("order_id")
@@ -2207,7 +2709,7 @@ def _payment_reconcile_order_level_logic(request):
         fees_leaks = round(mpfees_num - row_actual_fees, 2)
         shipping_leaks = round(shipping_num - row_actual_shipping, 2)
         tcs_leaks = round(tcs_num - row_actual_tcs, 2)
-        unsettled_not_paid = round(exp_settlement_num - row_settlement_paid, 2)
+        # unsettled_not_paid = round(exp_settlement_num - row_settlement_paid, 2)
 
         row_cancelled_qty = int(r.get("cancelled_qty") or 0)
         row_cancelled_sales = float(parse_currency_to_decimal(r.get("cancelled_sales") or 0))
@@ -2219,8 +2721,61 @@ def _payment_reconcile_order_level_logic(request):
         mp_gst_num = abs(float(parse_currency_to_decimal(r.get("mp_gst")) or 0))
         mp_gst_leaks = round(mp_gst_num - row_actual_mp_gst, 2)
 
-        row_settlement_leak = round(exp_settlement_num - unsettled_not_paid - row_settlement_paid, 2)
+        # row_settlement_leak = round(exp_settlement_num - unsettled_not_paid - row_settlement_paid, 2)
         row_release_date = tx_release_date_by_order.get(oid, "-")
+
+        # 9 Order Level Charges:
+        row_net_sales = float(parse_currency_to_decimal(r.get("netsales") or r.get("grosssales")) or 0)
+        row_final_net_sales = float(parse_currency_to_decimal(r.get("final_net_sales") if r.get("final_net_sales") is not None else r.get("netsales")) or 0)
+        
+        # 1. Order Payment:
+        if oid in tx_order_payment_by_order:
+            row_order_payment = round(tx_order_payment_by_order[oid], 2)
+        else:
+            base_sales = row_net_sales if (float(parse_currency_to_decimal(r.get("customer_return_price") or r.get("return_amount") or 0)) != 0) else row_final_net_sales
+            row_order_payment = round(max(0.0, base_sales - mpfees_num - tcs_num - tds_num), 2)
+
+        # 2. Refund:
+        if oid in tx_refund_by_order:
+            row_refund = round(tx_refund_by_order[oid], 2)
+        else:
+            row_refund = round(abs(float(parse_currency_to_decimal(r.get("customer_return_price") or r.get("return_amount") or r.get("courier_return_price") or 0))), 2)
+        row_chargeback = round(float(tx_chargeback_by_order.get(oid, 0.0)), 2)
+        row_atoz = round(float(tx_guarantee_by_order.get(oid, 0.0)), 2)
+        if row_actual_shipping > 0:
+            row_easy_ship = row_actual_shipping
+        elif ship_fee_refund > 0:
+            row_easy_ship = 0.0
+        else:
+            row_easy_ship = shipping_num
+        row_easy_ship = round(row_easy_ship, 2)
+        row_delivery_label = round(float(tx_delivery_label_by_order.get(oid, 0.0)), 2)
+        row_passthrough = round(float(tx_passthrough_by_order.get(oid, 0.0)), 2)
+        row_other_charges = round(float(tx_other_charge_by_order.get(oid, 0.0)), 2)
+        existing_claim_amt = abs(float(parse_currency_to_decimal(r.get("claim_amount")) or 0.0))
+        row_reimbursement = round(float(tx_reimbursement_by_order.get(oid, 0.0) or existing_claim_amt), 2)
+
+        # Revised Expected Settlement: Net of all 9 Amazon Order-Level Charges
+        revised_exp_settlement_num = round(
+            row_order_payment
+            - row_refund
+            - row_chargeback
+            - row_atoz
+            - row_easy_ship
+            - row_delivery_label
+            + row_passthrough
+            - row_other_charges
+            + row_reimbursement,
+            2
+        )
+        revised_unsettled_not_paid = round(revised_exp_settlement_num - row_settlement_paid, 2)
+        revised_settlement_leak = round(revised_exp_settlement_num - revised_unsettled_not_paid - row_settlement_paid, 2)
+
+        # unsettled_not_paid = round(exp_settlement_num - row_settlement_paid, 2)
+        # row_settlement_leak = round(exp_settlement_num - unsettled_not_paid - row_settlement_paid, 2)
+        unsettled_not_paid = round(revised_exp_settlement_num - row_settlement_paid, 2)
+        row_settlement_leak = round(revised_exp_settlement_num - unsettled_not_paid - row_settlement_paid, 2)
+        
 
         tot_act_fees += row_actual_fees
         tot_fee_leaks += fees_leaks
@@ -2237,6 +2792,19 @@ def _payment_reconcile_order_level_logic(request):
         tot_settlement_leak += row_settlement_leak
         tot_cancelled_qty += row_cancelled_qty
         tot_cancelled_sales += row_cancelled_sales
+
+        tot_revised_exp += revised_exp_settlement_num
+        tot_revised_unsettled += revised_unsettled_not_paid
+        tot_revised_settlement_leak += revised_settlement_leak
+        tot_order_payment += row_order_payment
+        tot_refund_charge += row_refund
+        tot_chargeback += row_chargeback
+        tot_atoz += row_atoz
+        tot_easy_ship += row_easy_ship
+        tot_delivery_label += row_delivery_label
+        tot_passthrough += row_passthrough
+        tot_other_charges += row_other_charges
+        tot_inventory_reimbursement += row_reimbursement
 
         r.update({
             "cancelled_qty": row_cancelled_qty,
@@ -2257,6 +2825,21 @@ def _payment_reconcile_order_level_logic(request):
             "expected_settlement": format_currency(exp_settlement_num),
             "settlement_paid_in_bank": format_currency(row_settlement_paid),
             "unsettled_not_paid": format_currency(unsettled_not_paid),
+
+            # NEW: Revised Expected Settlement & 9 Order-Level Charges
+            "revised_expected_settlement": format_currency(revised_exp_settlement_num),
+            "new_expected_settlement": format_currency(revised_exp_settlement_num),
+            "revised_unsettled_not_paid": format_currency(revised_unsettled_not_paid),
+            "revised_settlement_leak": format_currency(revised_settlement_leak),
+            "order_payment_amount": format_currency(row_order_payment),
+            "refund_charge_amount": format_currency(row_refund),
+            "chargeback_refund": format_currency(row_chargeback),
+            "atoz_guarantee_refund": format_currency(row_atoz),
+            "easy_ship_charges": format_currency(row_easy_ship),
+            "delivery_label_charges": format_currency(row_delivery_label),
+            "pass_through_charges": format_currency(row_passthrough),
+            "other_charges": format_currency(row_other_charges),
+            "inventory_reimbursement": format_currency(row_reimbursement),
         })
 
     totals.update({
@@ -2293,6 +2876,25 @@ def _payment_reconcile_order_level_logic(request):
         "release_transaction_date": "-",
         "amazon_leaks": format_currency(abs(tot_fee_leaks) + abs(tot_ship_leaks) + abs(tot_mp_gst_leaks) + abs(tot_tcs_leaks) + abs(tot_tds_leaks) + abs(tot_unsettled)),
         "myntra_leaks": format_currency(0),
+
+        # NEW: Totals for Revised Expected Settlement & 9 Charges
+        "revised_expected_settlement": format_currency(tot_revised_exp),
+        "total_revised_expected_settlement": format_currency(tot_revised_exp),
+        "new_expected_settlement": format_currency(tot_revised_exp),
+        "total_new_expected_settlement": format_currency(tot_revised_exp),
+        "revised_unsettled_not_paid": format_currency(tot_revised_unsettled),
+        "total_revised_unsettled_not_paid": format_currency(tot_revised_unsettled),
+        "revised_settlement_leak": format_currency(tot_revised_settlement_leak),
+        "total_revised_settlement_leak": format_currency(tot_revised_settlement_leak),
+        "total_order_payment_amount": format_currency(tot_order_payment),
+        "total_refund_charge_amount": format_currency(tot_refund_charge),
+        "total_chargeback_refund": format_currency(tot_chargeback),
+        "total_atoz_guarantee_refund": format_currency(tot_atoz),
+        "total_easy_ship_charges": format_currency(tot_easy_ship),
+        "total_delivery_label_charges": format_currency(tot_delivery_label),
+        "total_pass_through_charges": format_currency(tot_passthrough),
+        "total_other_charges": format_currency(tot_other_charges),
+        "total_inventory_reimbursement": format_currency(tot_inventory_reimbursement),
     })
     data["summary"] = _build_reconciliation_summary(rows)
     data["totals"] = totals
@@ -2583,10 +3185,16 @@ def _build_reconciliation_summary(dto_rows, totals_dict=None):
     total_orders = sum(m["orders"] for m in marketplaces_list)
     total_flagged = sum(m["flagged"] for m in marketplaces_list)
 
+    tot_revised_exp = total_expected
+    tot_revised_uns = total_unsettled
+
     if totals_dict and isinstance(totals_dict, dict):
         tot_exp = parse_val(totals_dict.get("exp_settlement") or totals_dict.get("total_expected_settlement") or totals_dict.get("expected_settlement"))
         tot_rec = parse_val(totals_dict.get("total_settlement_paid_in_bank") or totals_dict.get("settlement_paid_in_bank"))
         tot_uns = parse_val(totals_dict.get("total_unsettled_not_paid") or totals_dict.get("unsettled_not_paid"))
+        p_rev_exp = parse_val(totals_dict.get("revised_expected_settlement") or totals_dict.get("total_revised_expected_settlement") or totals_dict.get("new_expected_settlement"))
+        p_rev_uns = parse_val(totals_dict.get("revised_unsettled_not_paid") or totals_dict.get("total_revised_unsettled_not_paid"))
+
         if tot_exp != 0.0 or len(dto_rows) == 0:
             total_expected = tot_exp
         if tot_rec != 0.0 or len(dto_rows) == 0:
@@ -2594,6 +3202,17 @@ def _build_reconciliation_summary(dto_rows, totals_dict=None):
         if tot_uns != 0.0 or len(dto_rows) == 0:
             total_unsettled = tot_uns
             total_discrepancy = tot_uns
+
+        if p_rev_exp != 0.0 or len(dto_rows) == 0:
+            tot_revised_exp = p_rev_exp
+        else:
+            tot_revised_exp = total_expected
+
+        if p_rev_uns != 0.0 or len(dto_rows) == 0:
+            tot_revised_uns = p_rev_uns
+        else:
+            tot_revised_uns = total_unsettled
+
         if len(marketplaces_list) == 1:
             marketplaces_list[0]["expected_settlement"] = total_expected
             marketplaces_list[0]["expected_payout"] = total_expected
@@ -2605,6 +3224,8 @@ def _build_reconciliation_summary(dto_rows, totals_dict=None):
             marketplaces_list[0]["total_unsettled_not_paid"] = total_unsettled
             marketplaces_list[0]["unsettled_not_paid"] = total_unsettled
             marketplaces_list[0]["discrepancy"] = total_unsettled
+            marketplaces_list[0]["revised_expected_settlement"] = tot_revised_exp
+            marketplaces_list[0]["revised_unsettled_not_paid"] = tot_revised_uns
 
     discrepancy_pct = round((abs(total_discrepancy) / total_expected * 100), 1) if total_expected > 0 else 0.0
     shortage_val = round(total_unsettled, 2)
@@ -2643,6 +3264,12 @@ def _build_reconciliation_summary(dto_rows, totals_dict=None):
         "expected_settlement_chart": round(total_expected, 2),
         "bank_settled_chart": round(total_received, 2),
         "shortage": shortage_val,
+
+        # Revised Expected Settlement Summary Metrics
+        "revised_expected_payout": round(tot_revised_exp, 2),
+        "revised_expected_settlement": round(tot_revised_exp, 2),
+        "revised_total_discrepancy": round(tot_revised_uns, 2),
+        "revised_unsettled_not_paid": round(tot_revised_uns, 2),
 
         "marketplaces": marketplaces_list
     }
@@ -2691,7 +3318,7 @@ def combined_payment_reconcile_summary(request):
 
     if has_myntra:
         from myntra.services.profit.calculator import MyntraProfitCalculator
-        from myntra.services.profit.sku_summary import SKUSummary
+        from myntra.services.profit.style_summary import StyleSummary
         from myntra.amazon_adapter import MyntraAmazonProfitAdapter
 
         from_date_local = None
@@ -2710,7 +3337,7 @@ def combined_payment_reconcile_summary(request):
         }
 
         calculator = MyntraProfitCalculator(user=user, filters=myntra_filters)
-        summary = SKUSummary(calculator)
+        summary = StyleSummary(calculator)
         myntra_raw_rows = summary.execute()
 
         myntra_adapted = MyntraAmazonProfitAdapter.style_response(
