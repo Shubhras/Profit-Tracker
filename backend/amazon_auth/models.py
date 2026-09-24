@@ -74,6 +74,7 @@ class Order(models.Model):
     payment_method = models.CharField(max_length=50, null=True, blank=True)
 
     marketplace_id = models.CharField(max_length=50)
+    sales_channel = models.CharField(max_length=100, null=True, blank=True)
     channel = models.CharField(max_length=50, default="Amazon-India", db_index=True)
 
     # Financial Info
