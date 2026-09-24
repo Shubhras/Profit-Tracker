@@ -350,6 +350,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
+        .exclude(order__sales_channel__iexact="Non-Amazon")
         .annotate(
             sku_standard_cost=Subquery(listing_qs.values("standard_cost")[:1]),
             sku_gst_rate=Subquery(listing_qs.values("gst_rate")[:1]),
@@ -431,6 +432,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
+        .exclude(order__sales_channel__iexact="Non-Amazon")
         .values('asin', 'parent_asin', 'seller_sku', 'order__amazon_order_id', 'order__purchase_date', 'quantity_ordered', 'item_price', 'new_item_price', 'item_tax', 'promotion_discount')
     )
 

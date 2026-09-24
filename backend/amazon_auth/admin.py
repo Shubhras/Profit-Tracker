@@ -34,7 +34,7 @@ class AmazonAccountAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id','amazon_order_id','items_shipped','fulfillment_channel', 'amazon_account', 'purchase_date', 'order_status', 'total_amount','new_total_amount', 'currency_code', 'user')
+    list_display = ('id','amazon_order_id','items_shipped','fulfillment_channel', 'amazon_account', 'purchase_date', 'order_status', 'sales_channel', 'total_amount','new_total_amount', 'currency_code', 'user')
     list_filter = ('amazon_account', 'order_status', 'fulfillment_channel', 'purchase_date')
     search_fields = ('amazon_order_id', 'buyer_name', 'city')
     date_hierarchy = 'purchase_date'
