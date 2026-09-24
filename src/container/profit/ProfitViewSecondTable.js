@@ -259,6 +259,18 @@ export default function ProfitViewSecondTable() {
         tds_leaks: item.tds_leaks || 0,
         settlement_leak: item.settlement_leak || 0,
         release_transaction_date: item.release_transaction_date || 0,
+        revised_expected_settlement: item.revised_expected_settlement || item.new_expected_settlement || item.expected_settlement || item.exp_settlement || '₹0.0',
+        revisedExpectedSettlement: item.revised_expected_settlement || item.new_expected_settlement || item.exp_settlement || 0,
+        revised_unsettled_not_paid: item.revised_unsettled_not_paid || '₹0.0',
+        order_payment_amount: item.order_payment_amount || 0,
+        refund_charge_amount: item.refund_charge_amount || 0,
+        chargeback_refund: item.chargeback_refund || 0,
+        atoz_guarantee_refund: item.atoz_guarantee_refund || 0,
+        easy_ship_charges: item.easy_ship_charges || 0,
+        delivery_label_charges: item.delivery_label_charges || 0,
+        pass_through_charges: item.pass_through_charges || 0,
+        other_charges_breakdown: item.other_charges || 0,
+        inventory_reimbursement: item.inventory_reimbursement || 0,
 
         // settledamount: Number(item.profit_settled_amount) || 0,
       })) || [];
@@ -745,6 +757,29 @@ export default function ProfitViewSecondTable() {
     ...(isReconcile
       ? [
           {
+            title: 'Revised Expected Settlement',
+            dataIndex: 'revisedExpectedSettlement',
+            align: 'center',
+            width: 100,
+            ellipsis: true,
+            sorter: (a, b) => parseAmount(a.revisedExpectedSettlement) - parseAmount(b.revisedExpectedSettlement),
+            render: (v, record) => (
+              <button
+                type="button"
+                onClick={() =>
+                  setCalculationModal({
+                    open: true,
+                    type: 'revised_settlement',
+                    record,
+                  })
+                }
+                className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none whitespace-nowrap inline-block"
+              >
+                {v || '₹0.00'}
+              </button>
+            ),
+          },
+          {
             title: 'Bank Settled Amount',
             dataIndex: 'settlement_paid_in_bank',
             align: 'center',
@@ -986,10 +1021,17 @@ export default function ProfitViewSecondTable() {
   ];
 
   useEffect(() => {
-    if (columns.length && visibleColumns.length === 0) {
-      setVisibleColumns(columns.map((col) => col.dataIndex || col.key || col.title));
+    if (columns.length) {
+      const allKeys = columns.map((col) => col.dataIndex || col.key || col.title);
+      setVisibleColumns((prev) => {
+        if (!prev || prev.length === 0) return allKeys;
+        const prevSet = new Set(prev);
+        allKeys.forEach((k) => prevSet.add(k));
+        return Array.from(prevSet);
+      });
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReconcile]);
 
   // const columnOptions = columns
   //   .filter((col) => col.dataIndex !== 'action')
@@ -1197,6 +1239,7 @@ export default function ProfitViewSecondTable() {
                       gst_to_pay_amount: 'gst_to_pay_amount',
                       gst_to_pay_perc: 'gst_to_pay_perc',
                       settleAmount: 'exp_settlement',
+                      revisedExpectedSettlement: 'revised_expected_settlement',
                       profit: 'profit',
                       profitPercent: 'grossprofitper',
                       mp_gst: 'mp_gst',
@@ -1243,7 +1286,7 @@ export default function ProfitViewSecondTable() {
                     };
 
                     const totalKey = keyMap[col.dataIndex] || col.dataIndex;
-                    const value = totals[totalKey];
+                    const value = totals[totalKey] || (col.dataIndex === 'revisedExpectedSettlement' ? (totals.revised_expected_settlement || totals.total_revised_expected_settlement || totals.new_expected_settlement) : undefined);
 
                     return (
                       <Table.Summary.Cell key={col.key || index} index={index + 3} fixed={col.fixed} align="center">

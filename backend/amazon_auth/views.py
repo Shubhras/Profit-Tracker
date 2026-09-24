@@ -10734,6 +10734,9 @@ def orders_profit_report_transactions_shipping(request):
             "tcs": format_currency(tcs),
             "tds": format_currency(tds),
             "exp_settlement": format_currency(exp_settlement),
+            "expected_settlement": format_currency(exp_settlement),
+            "revised_expected_settlement": format_currency(exp_settlement),
+            "new_expected_settlement": format_currency(exp_settlement),
             "promo_discount": format_currency(promo_discount),
             
             "return_type": order_return_type,
@@ -10825,6 +10828,12 @@ def orders_profit_report_transactions_shipping(request):
             "gst_to_pay_amount": format_currency(total_gst_payable),
             "gst_to_pay_perc": f"{round((total_gst_payable / total_taxable_value * 100), 2) if total_taxable_value else 1}%",
             "exp_settlement": format_currency(total_exp_settlement),
+            "expected_settlement": format_currency(total_exp_settlement),
+            "total_expected_settlement": format_currency(total_exp_settlement),
+            "revised_expected_settlement": format_currency(total_exp_settlement),
+            "total_revised_expected_settlement": format_currency(total_exp_settlement),
+            "new_expected_settlement": format_currency(total_exp_settlement),
+            "total_new_expected_settlement": format_currency(total_exp_settlement),
             
             "total_promo_discount": format_currency(total_promo_discount),
             "total_return_count": total_return_count,

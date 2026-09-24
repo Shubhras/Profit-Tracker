@@ -38,7 +38,7 @@ Your TrackMyProfit subscription ({plan_name}) is set to expire in 3 days on {end
 {auto_renew_text}
 
 Log in to your account dashboard to view subscription details or manage payment settings:
-https://trackmyprofit.in/admin/settings/user-setting/user-management
+https://trackmyprofit.com/admin/pages/billing
 
 Best regards,
 TrackMyProfit Team
@@ -72,7 +72,7 @@ TrackMyProfit Team
             </div>
 
             <p style="text-align: center;">
-                <a href="https://trackmyprofit.in/admin/settings/user-setting/user-management" class="btn" style="color: #ffffff;">Manage Subscription</a>
+                <a href="https://trackmyprofit.com/admin/pages/billing" class="btn" style="color: #ffffff;">Manage Subscription</a>
             </p>
         </div>
         <div class="footer">
@@ -136,7 +136,7 @@ Hello {user.first_name or user.username},
 {auto_renew_text}
 
 Log in now to manage your subscription:
-https://trackmyprofit.in/admin/settings/user-setting/user-management
+https://trackmyprofit.com/admin/pages/billing
 
 Best regards,
 TrackMyProfit Team
@@ -170,7 +170,7 @@ TrackMyProfit Team
             </div>
 
             <p style="text-align: center;">
-                <a href="https://trackmyprofit.in/admin/settings/user-setting/user-management" class="btn" style="color: #ffffff;">Manage Subscription</a>
+                <a href="https://trackmyprofit.com/admin/pages/billing" class="btn" style="color: #ffffff;">Manage Subscription</a>
             </p>
         </div>
         <div class="footer">
@@ -216,7 +216,7 @@ Hello {user.first_name or user.username},
 Your TrackMyProfit subscription ({plan_name}) has expired.
 
 To continue enjoying automated financial reporting, payment reconciliation, and analytics, please renew your subscription:
-https://trackmyprofit.in/admin/settings/user-setting/user-management
+https://trackmyprofit.com/admin/pages/billing
 
 Best regards,
 TrackMyProfit Team
@@ -250,7 +250,7 @@ TrackMyProfit Team
             </div>
 
             <p style="text-align: center;">
-                <a href="https://trackmyprofit.in/admin/settings/user-setting/user-management" class="btn" style="color: #ffffff;">Renew Subscription Now</a>
+                <a href="https://trackmyprofit.com/admin/pages/billing" class="btn" style="color: #ffffff;">Renew Subscription Now</a>
             </p>
         </div>
         <div class="footer">

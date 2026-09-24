@@ -48,7 +48,7 @@ function CalculationModal({ open, onClose, type, data }) {
             }
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [open, data]);
 
@@ -213,13 +213,13 @@ function CalculationModal({ open, onClose, type, data }) {
         value: data?.fba_pick_pack_fee || 0,
       },
       ...(parseFloat(String(data?.fba_fee || 0).replace(/[₹,]/g, '')) > 0 &&
-      !parseFloat(String(data?.fba_pick_pack_fee || 0).replace(/[₹,]/g, ''))
+        !parseFloat(String(data?.fba_pick_pack_fee || 0).replace(/[₹,]/g, ''))
         ? [
-            {
-              label: 'FBA Fee',
-              value: data?.fba_fee || 0,
-            },
-          ]
+          {
+            label: 'FBA Fee',
+            value: data?.fba_fee || 0,
+          },
+        ]
         : []),
       {
         label: 'Other charges',
@@ -342,6 +342,185 @@ function CalculationModal({ open, onClose, type, data }) {
     );
   };
 
+  const renderRevisedSettlementUI = () => {
+    const formatSignedAmount = (val, defaultSign) => {
+      if (val === undefined || val === null || val === '') {
+        return `${defaultSign}₹0.00`;
+      }
+      const clean = String(val).replace(/[₹,\s]/g, '');
+      const num = parseFloat(clean);
+      if (isNaN(num) || num === 0) {
+        return `${defaultSign}₹0.00`;
+      }
+      if (defaultSign === '-') {
+        return `-₹${Math.abs(num).toFixed(2)}`;
+      }
+      if (defaultSign === '+') {
+        return num < 0 ? `-₹${Math.abs(num).toFixed(2)}` : `+₹${Math.abs(num).toFixed(2)}`;
+      }
+      return num >= 0 ? `+₹${num.toFixed(2)}` : `-₹${Math.abs(num).toFixed(2)}`;
+    };
+
+    const charges = [
+      { label: 'Order Payment', formatted: formatSignedAmount(data?.order_payment_amount, '+') },
+      { label: 'Refund', formatted: formatSignedAmount(data?.refund_charge_amount, '-') },
+      { label: 'Chargeback Refund', formatted: formatSignedAmount(data?.chargeback_refund, '-') },
+      { label: 'A-to-Z Guarantee Refund', formatted: formatSignedAmount(data?.atoz_guarantee_refund, '-') },
+      { label: 'Easy Ship Charges', formatted: formatSignedAmount(data?.easy_ship_charges, '-') },
+      { label: 'Delivery Labels', formatted: formatSignedAmount(data?.delivery_label_charges, '-') },
+      { label: 'Pass-Through Charges', formatted: formatSignedAmount(data?.pass_through_charges, '+') },
+      { label: 'Other Charges', formatted: formatSignedAmount(data?.other_charges_breakdown || data?.other_charges, '-') },
+      { label: 'Inventory Reimbursement', formatted: formatSignedAmount(data?.inventory_reimbursement, '+') },
+    ];
+
+    const parseAmountVal = (val) => {
+      if (val === undefined || val === null || val === '') return 0;
+      const clean = String(val).replace(/[₹,\s]/g, '');
+      const num = parseFloat(clean);
+      return isNaN(num) ? 0 : Math.abs(num);
+    };
+
+    const hasBreakdownData =
+      parseAmountVal(data?.order_payment_amount) > 0 ||
+      parseAmountVal(data?.refund_charge_amount) > 0 ||
+      parseAmountVal(data?.easy_ship_charges) > 0 ||
+      parseAmountVal(data?.chargeback_refund) > 0 ||
+      parseAmountVal(data?.atoz_guarantee_refund) > 0 ||
+      parseAmountVal(data?.delivery_label_charges) > 0 ||
+      parseAmountVal(data?.pass_through_charges) > 0 ||
+      parseAmountVal(data?.other_charges_breakdown || data?.other_charges) > 0 ||
+      parseAmountVal(data?.inventory_reimbursement) > 0;
+
+    const calculatedSum =
+      parseAmountVal(data?.order_payment_amount)
+      - parseAmountVal(data?.refund_charge_amount)
+      - parseAmountVal(data?.chargeback_refund)
+      - parseAmountVal(data?.atoz_guarantee_refund)
+      - parseAmountVal(data?.easy_ship_charges)
+      - parseAmountVal(data?.delivery_label_charges)
+      + parseAmountVal(data?.pass_through_charges)
+      - parseAmountVal(data?.other_charges_breakdown || data?.other_charges)
+      + parseAmountVal(data?.inventory_reimbursement);
+
+    const rawTotal = hasBreakdownData
+      ? calculatedSum
+      : (data?.revisedExpectedSettlement ||
+        data?.revised_expected_settlement ||
+        data?.new_expected_settlement ||
+        data?.settleAmount ||
+        data?.exp_settlement ||
+        0);
+    const cleanTotal = String(rawTotal).replace(/[₹,\s]/g, '');
+    const numTotal = parseFloat(cleanTotal) || 0;
+    const isPositive = numTotal >= 0;
+    const formattedTotal = isPositive ? `+₹${numTotal.toFixed(2)}` : `-₹${Math.abs(numTotal).toFixed(2)}`;
+
+    return (
+      <div className="rounded-2xl overflow-hidden bg-white max-h-[85vh] overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#eef2f7]">
+          <h2 className="text-[20px] font-semibold text-[#111827]">Order Level Charges Breakdown</h2>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-8 h-8 rounded-full hover:bg-[#f3f4f6] flex items-center justify-center transition"
+          >
+            <CloseOutlined />
+          </button>
+        </div>
+
+        {/* Product + Summary */}
+        <div className="px-5 pt-5">
+          <div className="flex gap-4">
+            {/* Left */}
+            <div className="flex-1 border border-[#e5e7eb] rounded-xl p-4 flex gap-3">
+              {(data?.image || data?.image_url) ? (
+                <img src={data?.image || data?.image_url} alt="" className="w-[58px] h-[58px] rounded-lg object-cover border" />
+              ) : (
+                <div className="w-[58px] h-[58px] rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 font-bold border">
+                  📦
+                </div>
+              )}
+
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-semibold text-[#111827] line-clamp-2 mb-1">
+                  {data?.name || 'Order Settlement Details'}
+                </p>
+
+                <div className="flex items-center gap-2 mt-1 text-[12px] text-[#6b7280]">
+                  {data?.asin && <span>ASIN: {data.asin}</span>}
+                  {data?.asin && (data?.view || data?.order_id) && <span>|</span>}
+                  <span>Order ID: {data?.order_id || data?.view || '-'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right */}
+            <div className="w-[200px] border border-[#e5e7eb] rounded-xl p-4 flex flex-col justify-center">
+              <p className="text-[12px] text-[#6b7280] font-medium mb-1">Revised Settlement</p>
+              <p className={`text-[24px] font-bold mb-1 ${isPositive ? 'text-[#059669]' : 'text-red-500'}`}>
+                {formattedTotal}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="px-5 pt-5">
+          <div className="border border-[#e5e7eb] rounded-xl overflow-hidden">
+            {/* Header */}
+            <div className="grid grid-cols-2 bg-[#f9fafb] border-b border-[#e5e7eb]">
+              <div className="px-4 py-3 text-[14px] font-bold text-[#111827] border-r">Charge Type</div>
+              <div className="px-4 py-3 text-[14px] font-semibold text-[#111827] text-right">Amount (₹)</div>
+            </div>
+
+            {/* Rows */}
+            {charges.map((item, index) => {
+              const isZero = item.formatted.includes('₹0.00');
+              const isItemPositive = item.formatted.startsWith('+');
+              const valColor = isZero ? 'text-gray-400 font-normal' : (isItemPositive ? 'text-[#059669] font-semibold' : 'text-red-500 font-semibold');
+
+              return (
+                <div key={index} className="grid grid-cols-2 border-b last:border-b-0 border-[#e5e7eb]">
+                  <div className="px-4 py-3 text-[14px] text-[#111827] border-r flex items-center gap-2 font-semibold">
+                    {item.label}
+                  </div>
+
+                  <div className={`px-4 py-3 text-right text-[13px] ${valColor}`}>
+                    {item.formatted}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Total */}
+            <div className={`grid grid-cols-2 ${isPositive ? 'bg-[#f0fdf4]' : 'bg-[#fff7f7]'}`}>
+              <div className={`px-4 py-4 text-[14px] font-bold border-r ${isPositive ? 'text-[#059669]' : 'text-red-500'}`}>
+                Revised Expected Settlement
+              </div>
+
+              <div className={`px-4 py-4 text-right text-[16px] font-bold ${isPositive ? 'text-[#059669]' : 'text-red-500'}`}>
+                {formattedTotal}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Info */}
+        <div className="px-5 pt-5 pb-5">
+          <div className="rounded-xl border border-[#bfdbfe] bg-[#eff6ff] px-4 py-4 flex gap-3">
+            <InfoCircleOutlined className="text-[#2563eb] mt-[2px]" />
+
+            <p className="text-[12px] text-[#1e40af] leading-5 mb-0">
+              This breakdown includes all Amazon order-level transaction categories (Order Payment, Refunds, Chargebacks, A-to-Z claims, Easy Ship postage, Delivery Labels, Pass-Through charges, Other adjustments, and Inventory Reimbursements).
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderProfitUI = () => {
     const activeSettings = data?.profit_settings || profitSettings || getStoredProfitSettings();
 
@@ -366,12 +545,12 @@ function CalculationModal({ open, onClose, type, data }) {
       data?.stdcost !== undefined && data?.stdcost !== null && data?.stdcost !== ''
         ? data.stdcost
         : data?.cost !== undefined && data?.cost !== null && data?.cost !== ''
-        ? data.cost
-        : data?.std !== undefined && data?.std !== null && data?.std !== ''
-        ? data.std
-        : data?.product_cost !== undefined && data?.product_cost !== null && data?.product_cost !== ''
-        ? data.product_cost
-        : 0;
+          ? data.cost
+          : data?.std !== undefined && data?.std !== null && data?.std !== ''
+            ? data.std
+            : data?.product_cost !== undefined && data?.product_cost !== null && data?.product_cost !== ''
+              ? data.product_cost
+              : 0;
 
     const productCost = !isProductCostEnabled ? 0 : parseFloat(String(rawCost).replace(/[₹,]/g, '')) || 0;
 
@@ -395,10 +574,10 @@ function CalculationModal({ open, onClose, type, data }) {
       data?.claim_amount !== undefined && data?.claim_amount !== null && data?.claim_amount !== ''
         ? data.claim_amount
         : data?.claim !== undefined && data?.claim !== null && data?.claim !== ''
-        ? data.claim
-        : data?.total_claim_amount !== undefined && data?.total_claim_amount !== null && data?.total_claim_amount !== ''
-        ? data.total_claim_amount
-        : 0;
+          ? data.claim
+          : data?.total_claim_amount !== undefined && data?.total_claim_amount !== null && data?.total_claim_amount !== ''
+            ? data.total_claim_amount
+            : 0;
 
     const claim = !isClaimEnabled ? 0 : parseFloat(String(rawClaim).replace(/[₹,]/g, '')) || 0;
 
@@ -540,9 +719,8 @@ function CalculationModal({ open, onClose, type, data }) {
               <div className="px-4 py-4 text-[15px] font-bold text-[#111827]">Profit</div>
 
               <div
-                className={`px-4 py-4 text-right text-[18px] font-bold ${
-                  profit < 0 ? 'text-red-500' : 'text-green-600'
-                }`}
+                className={`px-4 py-4 text-right text-[18px] font-bold ${profit < 0 ? 'text-red-500' : 'text-green-600'
+                  }`}
               >
                 {profit < 0 ? '-' : ''}₹{Math.abs(profit).toFixed(2)}
               </div>
@@ -553,9 +731,8 @@ function CalculationModal({ open, onClose, type, data }) {
               <div className="px-4 py-4 text-[15px] font-bold text-[#111827]">Profit %</div>
 
               <div
-                className={`px-4 py-4 text-right text-[18px] font-bold ${
-                  profitPercent < 0 ? 'text-red-500' : 'text-green-600'
-                }`}
+                className={`px-4 py-4 text-right text-[18px] font-bold ${profitPercent < 0 ? 'text-red-500' : 'text-green-600'
+                  }`}
               >
                 {profitPercent.toFixed(2)}%
               </div>
@@ -589,6 +766,9 @@ function CalculationModal({ open, onClose, type, data }) {
 
       case 'profit':
         return renderProfitUI();
+
+      case 'revised_settlement':
+        return renderRevisedSettlementUI();
 
       default:
         return null;

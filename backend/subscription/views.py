@@ -24,81 +24,6 @@ from user_auth.models import SubscriptionPlan
 from dateutil.relativedelta import relativedelta
 
 
-# class CreateSubscriptionAPIView(APIView): 
-#     permission_classes = [IsAuthenticated]
-#     @swagger_auto_schema(tags=["Subscription"])
-#     def post(self, request):
-#         user = request.user
-#         plan_id = request.data.get("plan_id")
-
-#         if not plan_id:
-#             return error_response("plan_id is required", 400)
-
-#         # ==========================
-#         # ✅ FREE PLAN (NO RAZORPAY)
-#         # ==========================
-#         if plan_id == "FREE":
-#             # deactivate previous subscriptions
-#             UserSubscription.objects.filter(user=user).update(status="inactive")
-
-#             UserSubscription.objects.create(
-#                 user=user,
-#                 plan_name="Free",
-#                 is_paid=False,
-#                 status="active"
-#             )
-
-#             return success_response(
-#                 message="Free plan activated successfully",
-#                 data={
-#                     "plan_id": "FREE",
-#                     "plan_name": "Free",
-#                     "active": True,
-#                     "payment_required": False
-#                 },
-#                 statusCode=200
-#             )
-
-#         # ==========================
-#         # ✅ PAID PLAN (RAZORPAY)
-#         # ==========================
-#         try:
-#             if not settings.RAZORPAY_KEY_ID or not settings.RAZORPAY_KEY_SECRET:
-#                 return error_response("Razorpay keys are not configured in the server environment (.env)", 500)
-
-#             # deactivate previous subscriptions
-#             UserSubscription.objects.filter(user=user).update(status="inactive")
-
-#             sub_data = {
-#                 "plan_id": plan_id,
-#                 "customer_notify": 1,
-#                 "total_count": 12
-#             }
-
-#             subscription = client.subscription.create(sub_data)
-
-#             UserSubscription.objects.create(
-#                 user=user,
-#                 razorpay_plan_id=plan_id,
-#                 razorpay_subscription_id=subscription["id"],
-#                 status=subscription["status"],
-#                 is_paid=True
-#             )
-
-#             return success_response(
-#                 message="Subscription created successfully",
-#                 data={
-#                     "subscription_id": subscription["id"],
-#                     "subscription_status": subscription["status"],
-#                     "razorpay_key": settings.RAZORPAY_KEY_ID
-#                 },
-#                 statusCode=201
-#             )
-
-#         except Exception as e:
-#             return error_response(str(e), 500)
-
-
 # new
 class CreateSubscriptionAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -741,17 +666,33 @@ class RazorpayWebhookAPIView(APIView):
                 return error_response("Invalid signature", 400)
 
         event = request.data.get("event")
+        payload_data = request.data.get("payload", {})
 
         if event in ["subscription.charged", "invoice.paid"]:
-            sub_id = request.data.get("payload", {}).get("subscription", {}).get("entity", {}).get("id")
+            sub_id = (
+                payload_data.get("subscription", {}).get("entity", {}).get("id")
+                or payload_data.get("invoice", {}).get("entity", {}).get("subscription_id")
+            )
+            payment_id = (
+                payload_data.get("payment", {}).get("entity", {}).get("id")
+                or payload_data.get("invoice", {}).get("entity", {}).get("payment_id")
+            )
             if sub_id:
                 from subscription.services.renewal_service import handle_subscription_expiry_and_renewal
                 latest_sub = UserSubscription.objects.filter(razorpay_subscription_id=sub_id).order_by("-created_at").first()
                 if latest_sub:
-                    handle_subscription_expiry_and_renewal(latest_sub, check_razorpay=False, payment_confirmed=True)
+                    handle_subscription_expiry_and_renewal(
+                        latest_sub,
+                        check_razorpay=False,
+                        payment_confirmed=True,
+                        payment_id=payment_id
+                    )
 
         elif event == "subscription.activated":
-            sub_id = request.data.get("payload", {}).get("subscription", {}).get("entity", {}).get("id")
+            sub_id = (
+                payload_data.get("subscription", {}).get("entity", {}).get("id")
+                or payload_data.get("invoice", {}).get("entity", {}).get("subscription_id")
+            )
             if sub_id:
                 subscriptions = UserSubscription.objects.filter(razorpay_subscription_id=sub_id, status="created")
                 for sub in subscriptions:
@@ -764,7 +705,10 @@ class RazorpayWebhookAPIView(APIView):
                         sub.user.profile.save()
 
         elif event in ["subscription.cancelled", "subscription.halted"]:
-            sub_id = request.data.get("payload", {}).get("subscription", {}).get("entity", {}).get("id")
+            sub_id = (
+                payload_data.get("subscription", {}).get("entity", {}).get("id")
+                or payload_data.get("invoice", {}).get("entity", {}).get("subscription_id")
+            )
             if sub_id:
                 from subscription.services.email_notifications import send_subscription_expired_notice
                 subscriptions = UserSubscription.objects.filter(razorpay_subscription_id=sub_id)
@@ -806,56 +750,6 @@ class ToggleAutoRenewAPIView(APIView):
             data={"auto_renew": sub.auto_renew}
         )
 
-# class VerifyPaymentAPIView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     @swagger_auto_schema(
-#         tags=["Subscription"],
-#         request_body=openapi.Schema(
-#             type=openapi.TYPE_OBJECT,
-#             required=["razorpay_payment_id", "razorpay_subscription_id", "razorpay_signature"],
-#             properties={
-#                 "razorpay_payment_id": openapi.Schema(type=openapi.TYPE_STRING),
-#                 "razorpay_subscription_id": openapi.Schema(type=openapi.TYPE_STRING),
-#                 "razorpay_signature": openapi.Schema(type=openapi.TYPE_STRING),
-#             }
-#         )
-#     )
-#     def post(self, request):
-#         razorpay_payment_id = request.data.get("razorpay_payment_id")
-#         razorpay_subscription_id = request.data.get("razorpay_subscription_id")
-#         razorpay_signature = request.data.get("razorpay_signature")
-
-#         if not razorpay_payment_id or not razorpay_subscription_id or not razorpay_signature:
-#             return error_response("razorpay_payment_id, razorpay_subscription_id, razorpay_signature are required", 400)
-
-#         # ✅ Signature verification string
-#         payload = f"{razorpay_payment_id}|{razorpay_subscription_id}"
-
-#         expected_signature = hmac.new(
-#             bytes(settings.RAZORPAY_KEY_SECRET, "utf-8"),
-#             bytes(payload, "utf-8"),
-#             hashlib.sha256
-#         ).hexdigest()
-
-#         if expected_signature != razorpay_signature:
-#             return error_response("Invalid signature", 400)
-
-#         # ✅ Update DB status
-#         UserSubscription.objects.filter(
-#             user=request.user,
-#             razorpay_subscription_id=razorpay_subscription_id
-#         ).update(status="active")
-
-#         return success_response(
-#             message="Payment verified successfully",
-#             data={
-#                 "subscription_id": razorpay_subscription_id,
-#                 "payment_id": razorpay_payment_id,
-#                 "status": "active"
-#             }
-#         )
-        
 
 import hmac
 import hashlib

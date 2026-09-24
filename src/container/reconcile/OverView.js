@@ -215,6 +215,18 @@ export default function ProfitDetailsView() {
         actual_tcs: item.actual_tcs || '₹0.0',
         tcs_leaks: item.tcs_leaks || '₹0.0',
         expected_settlement: item.expected_settlement || item.exp_settlement || '₹0.0',
+        revised_expected_settlement: item.revised_expected_settlement || item.new_expected_settlement || item.expected_settlement || item.exp_settlement || '₹0.0',
+        revisedExpectedSettlement: item.revised_expected_settlement || item.new_expected_settlement || item.exp_settlement || 0,
+        revised_unsettled_not_paid: item.revised_unsettled_not_paid || '₹0.0',
+        order_payment_amount: item.order_payment_amount || 0,
+        refund_charge_amount: item.refund_charge_amount || 0,
+        chargeback_refund: item.chargeback_refund || 0,
+        atoz_guarantee_refund: item.atoz_guarantee_refund || 0,
+        easy_ship_charges: item.easy_ship_charges || 0,
+        delivery_label_charges: item.delivery_label_charges || 0,
+        pass_through_charges: item.pass_through_charges || 0,
+        other_charges_breakdown: item.other_charges || 0,
+        inventory_reimbursement: item.inventory_reimbursement || 0,
         settlement_paid_in_bank: item.settlement_paid_in_bank || '₹0.0',
         unsettled_not_paid: item.unsettled_not_paid || '₹0.0',
 
@@ -262,6 +274,7 @@ export default function ProfitDetailsView() {
       actual_tcs: 'actual_tcs',
       tcs_leaks: 'tcs_leaks',
       expected_settlement: 'exp_settlement',
+      revisedExpectedSettlement: 'revised_expected_settlement',
       settlement_paid_in_bank: 'settlement_paid_in_bank',
       unsettled_not_paid: 'unsettled_not_paid',
       cancelled_qty: 'cancelled_qty',
@@ -708,6 +721,29 @@ export default function ProfitDetailsView() {
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.settleAmount) - parseAmount(b.settleAmount),
     },
+    {
+      title: 'Revised Expected Settlement',
+      dataIndex: 'revisedExpectedSettlement',
+      align: 'center',
+      width: getDynamicWidth('revisedExpectedSettlement', 110),
+      ellipsis: true,
+      sorter: (a, b) => parseAmount(a.revisedExpectedSettlement) - parseAmount(b.revisedExpectedSettlement),
+      render: (v, record) => (
+        <button
+          type="button"
+          onClick={() =>
+            setCalculationModal({
+              open: true,
+              type: 'revised_settlement',
+              record,
+            })
+          }
+          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none whitespace-nowrap inline-block"
+        >
+          {v || '₹0.00'}
+        </button>
+      ),
+    },
 
     {
       title: 'Bank Settled Amount',
@@ -1067,6 +1103,7 @@ export default function ProfitDetailsView() {
                         profitPercent: 'grossprofitper',
                         taxableValue: 'taxable_value',
                         settleAmount: 'exp_settlement',
+                        revisedExpectedSettlement: 'revised_expected_settlement',
                         netmrp: 'netmrp',
                         mrpNetDiscount: 'mrp_net_discount',
                         mrpCustomerDiscount: 'mrpCustomerDiscount',

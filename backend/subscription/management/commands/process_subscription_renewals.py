@@ -3,6 +3,7 @@ from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 from django.core.management.base import BaseCommand
 from django.utils import timezone
+from django.db.models import Q
 from subscription.models import UserSubscription
 from subscription.services.email_notifications import (
     send_3day_expiry_reminder,
@@ -80,17 +81,19 @@ class Command(BaseCommand):
         # ==========================================
         # 3. EXPIRED SUBSCRIPTIONS & AUTO-RENEWAL
         # ==========================================
+        # Query active/trial/cancelled past end_date, as well as subscriptions marked expired
+        # within the last 48 hours that have auto_renew enabled (in case Razorpay debits later in the day)
+        recheck_window = now - timedelta(days=2)
         expired_subscriptions = UserSubscription.objects.filter(
-            status__in=['active', 'cancelled', 'trial'],
-            end_date__isnull=False,
-            end_date__lte=now,
-        )
+            Q(status__in=['active', 'cancelled', 'trial'], end_date__lte=now) |
+            Q(status='expired', auto_renew=True, razorpay_subscription_id__isnull=False, end_date__gte=recheck_window)
+        ).filter(end_date__isnull=False).distinct()
 
-        self.stdout.write(f"Found {expired_subscriptions.count()} expired active subscriptions.")
+        self.stdout.write(f"Found {expired_subscriptions.count()} subscriptions due for expiration / auto-renewal verification.")
 
         for sub in expired_subscriptions:
             user_email = getattr(sub.user, 'email', sub.user.username)
-            self.stdout.write(f"Processing expiration for {user_email} (expired on {sub.end_date})")
+            self.stdout.write(f"Processing renewal/expiration check for {user_email} (ended {sub.end_date}, status={sub.status})")
 
             if dry_run:
                 continue
@@ -99,8 +102,8 @@ class Command(BaseCommand):
             updated_sub, renewed_successfully = handle_subscription_expiry_and_renewal(sub, check_razorpay=True)
 
             if renewed_successfully:
-                self.stdout.write(self.style.SUCCESS(f"Auto-renewed subscription for {user_email} via Razorpay (New Sub ID: {updated_sub.id}, Plan: {updated_sub.plan})."))
+                self.stdout.write(self.style.SUCCESS(f"Auto-renewed subscription for {user_email} via Razorpay (New Sub ID: {updated_sub.id}, Plan: {updated_sub.plan}, Amount: {updated_sub.amount})."))
             else:
-                self.stdout.write(self.style.WARNING(f"Marked subscription as expired for {user_email}."))
+                self.stdout.write(self.style.WARNING(f"Processed subscription check for {user_email} (Current Status: {updated_sub.status})."))
 
         self.stdout.write(self.style.SUCCESS("[Subscription Renewal Job] Completed successfully."))
