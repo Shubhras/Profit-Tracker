@@ -1548,7 +1548,8 @@ def sync_orders(request):
                         fulfillment_channel=o.get("FulfillmentChannel", ""),
                         items_shipped=o.get("NumberOfItemsShipped", 0),
                         items_unshipped=o.get("NumberOfItemsUnshipped", 0),
-                        marketplace_id=o.get("MarketplaceId")
+                        marketplace_id=o.get("MarketplaceId"),
+                        sales_channel=o.get("SalesChannel")
                     )
                     should_sync_items = True
                     account_saved_count += 1
@@ -2345,7 +2346,7 @@ def get_full_dashboard(request):
     order_items_qs = OrderItem.objects.filter(
         order__user=user,
         order__purchase_date__range=(start_date, end_date)
-    )
+    ).exclude(order__sales_channel__iexact="Non-Amazon")
 
     qty_data = order_items_qs.aggregate(
         orderquantity=Sum('quantity_ordered'),
@@ -2374,7 +2375,7 @@ def get_full_dashboard(request):
     net_sales_items_qs = OrderItem.objects.filter(
         order__user=user,
         order__purchase_date__range=(start_date, end_date)
-    ).exclude(order__order_status__icontains='Cancel')
+    ).exclude(order__order_status__icontains='Cancel').exclude(order__sales_channel__iexact="Non-Amazon")
 
     net_sales_agg = net_sales_items_qs.aggregate(
         # item_grosssales=Sum('item_price'),   previus calculating
@@ -4404,6 +4405,7 @@ def amazon_profitability_details(request):
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
+        .exclude(order__sales_channel__iexact="Non-Amazon")
 
         .annotate(
 
@@ -5114,6 +5116,7 @@ def amazon_profitability_parent(request):
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
+        .exclude(order__sales_channel__iexact="Non-Amazon")
         .annotate(
 
             # SKU LEVEL DATA
@@ -5852,6 +5855,7 @@ def amazon_profitability_parent_transactions_shipping(request):
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
+        .exclude(order__sales_channel__iexact="Non-Amazon")
         .annotate(
 
             # SKU LEVEL DATA
@@ -5971,6 +5975,7 @@ def amazon_profitability_parent_transactions_shipping(request):
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
+        .exclude(order__sales_channel__iexact="Non-Amazon")
         .values('asin','seller_sku', 'parent_asin', 'order__amazon_order_id', 'quantity_ordered', 'item_price','new_item_price', 'item_tax', 'promotion_discount')
     )
 
@@ -7600,6 +7605,7 @@ def sku_profit_report(request):
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
+        .exclude(order__sales_channel__iexact="Non-Amazon")
         .annotate(
 
             # SKU LEVEL DATA
@@ -8366,6 +8372,7 @@ def sku_profit_report_transactions_shipping(request):
     matching_order_ids = list(
         OrderItem.objects.filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
+        .exclude(order__sales_channel__iexact="Non-Amazon")
         .values_list('order__amazon_order_id', flat=True)
         .distinct()
     )
@@ -8391,6 +8398,7 @@ def sku_profit_report_transactions_shipping(request):
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
+        .exclude(order__sales_channel__iexact="Non-Amazon")
         .annotate(
 
             # SKU LEVEL DATA
@@ -9899,6 +9907,7 @@ def orders_profit_report_transactions_shipping(request):
     matching_order_ids = list(
         OrderItem.objects.filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
+        .exclude(order__sales_channel__iexact="Non-Amazon")
         .values_list('order__amazon_order_id', flat=True)
         .distinct()
     )
@@ -9924,6 +9933,7 @@ def orders_profit_report_transactions_shipping(request):
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
+        .exclude(order__sales_channel__iexact="Non-Amazon")
         .annotate(
 
             # SKU LEVEL DATA
@@ -11495,6 +11505,7 @@ def amazon_profitability_details_transactions_shipping(request):
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
+        .exclude(order__sales_channel__iexact="Non-Amazon")
 
         .annotate(
 
@@ -11605,6 +11616,7 @@ def amazon_profitability_details_transactions_shipping(request):
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
+        .exclude(order__sales_channel__iexact="Non-Amazon")
         .values('asin', 'seller_sku', 'parent_asin', 'order__amazon_order_id', 'quantity_ordered', 'item_price','new_item_price', 'item_tax', 'promotion_discount')
     )
 

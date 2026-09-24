@@ -105,7 +105,7 @@ class AdsReportLogAdmin(admin.ModelAdmin):
         "created_at",
     )
     search_fields = ("report_id", "report_type")
-    list_filter = ("status", "report_type", "start_date", "end_date")
+    list_filter = ("status", "report_type","amazon_account__user", "start_date", "end_date")
     readonly_fields = ("created_at",)
     ordering = ("-created_at",)
 
@@ -255,7 +255,7 @@ class ProductAdMetricAdmin(admin.ModelAdmin):
         "product_ad__sku",
         "product_ad__asin",
     )
-    list_filter = ("report_date",)
+    list_filter = ("report_date","product_ad__amazon_account__user",)
     ordering = ("-report_date",)
 
 

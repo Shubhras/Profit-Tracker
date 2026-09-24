@@ -303,6 +303,7 @@ def sync_historical_orders(days, accounts=None):
                                     "NumberOfItemsUnshipped", 0
                                 ),
                                 marketplace_id=order_data.get("MarketplaceId"),
+                                sales_channel=order_data.get("SalesChannel"),
                             )
 
                         existing_orders[amazon_order_id] = order
@@ -330,6 +331,7 @@ def sync_historical_orders(days, accounts=None):
                                 "order_status",
                                 "total_amount",
                                 "last_update_date",
+                                "sales_channel",
                             ]
                         )
 

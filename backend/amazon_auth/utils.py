@@ -157,6 +157,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
+        .exclude(order__sales_channel__iexact="Non-Amazon")
 
         .annotate(
 
@@ -261,6 +262,7 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
         OrderItem.objects
         .filter(order_filter)
         .exclude(order__order_status__icontains='Cancel')
+        .exclude(order__sales_channel__iexact="Non-Amazon")
         .values('asin', 'seller_sku', 'parent_asin', 'order__amazon_order_id', 'quantity_ordered', 'item_price','new_item_price', 'item_tax', 'promotion_discount')
     )
 
