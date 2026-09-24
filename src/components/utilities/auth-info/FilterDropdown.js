@@ -6,7 +6,6 @@ import actions from '../../../redux/dashboard/action';
 
 function FilterDropdown() {
   const [open, setOpen] = useState(false);
-  // const [selected, setSelected] = useState([]);
   const dropdownRef = useRef(null);
   // const selected = globalChannel || [];
   const dispatch = useDispatch();

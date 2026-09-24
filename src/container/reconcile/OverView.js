@@ -215,8 +215,14 @@ export default function ProfitDetailsView() {
         actual_tcs: item.actual_tcs || '₹0.0',
         tcs_leaks: item.tcs_leaks || '₹0.0',
         expected_settlement: item.expected_settlement || item.exp_settlement || '₹0.0',
-        revised_expected_settlement: item.revised_expected_settlement || item.new_expected_settlement || item.expected_settlement || item.exp_settlement || '₹0.0',
-        revisedExpectedSettlement: item.revised_expected_settlement || item.new_expected_settlement || item.exp_settlement || 0,
+        revised_expected_settlement:
+          item.revised_expected_settlement ||
+          item.new_expected_settlement ||
+          item.expected_settlement ||
+          item.exp_settlement ||
+          '₹0.0',
+        revisedExpectedSettlement:
+          item.revised_expected_settlement || item.new_expected_settlement || item.exp_settlement || 0,
         revised_unsettled_not_paid: item.revised_unsettled_not_paid || '₹0.0',
         order_payment_amount: item.order_payment_amount || 0,
         refund_charge_amount: item.refund_charge_amount || 0,
