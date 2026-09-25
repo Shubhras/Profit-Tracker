@@ -152,9 +152,49 @@ class AmazonAdsCallbackView(APIView):
                 "message": "Invalid user account or state"
             }, status=400)
 
-        amazon_account = AmazonAccount.objects.get(
-            user=user
-        )
+        # Get all AmazonAccount stores for this user
+        amazon_accounts = list(AmazonAccount.objects.filter(user=user))
+
+        def match_profile_to_amazon_account(profile_data, amz_list):
+            if not amz_list:
+                return None
+
+            acc_info = profile_data.get("accountInfo") or {}
+            seller_id = str(acc_info.get("id") or "").strip()
+            mkt_id = str(acc_info.get("marketplaceStringId") or "").strip()
+            name = str(acc_info.get("name") or "").strip().lower()
+
+            # 1. Match by seller_central_id AND marketplace_id
+            if seller_id and mkt_id:
+                for amz in amz_list:
+                    if amz.seller_central_id and amz.seller_central_id.strip() == seller_id:
+                        if amz.marketplace_id and amz.marketplace_id.strip() == mkt_id:
+                            return amz
+
+            # 2. Match by seller_central_id alone
+            if seller_id:
+                for amz in amz_list:
+                    if amz.seller_central_id and amz.seller_central_id.strip() == seller_id:
+                        return amz
+
+            # 3. Match by store_name AND marketplace_id
+            if name and mkt_id:
+                for amz in amz_list:
+                    if amz.store_name and amz.store_name.strip().lower() == name:
+                        if amz.marketplace_id and amz.marketplace_id.strip() == mkt_id:
+                            return amz
+
+            # 4. Match by store_name alone
+            if name:
+                for amz in amz_list:
+                    if amz.store_name and amz.store_name.strip().lower() == name:
+                        return amz
+
+            # 5. Fallback: If user has only 1 AmazonAccount and exactly 1 profile returned
+            if len(amz_list) == 1 and len(profiles) == 1:
+                return amz_list[0]
+
+            return None
 
         # Exchange auth code
         token_response = self.exchange_token(code)
@@ -185,108 +225,94 @@ class AmazonAdsCallbackView(APIView):
 
         profiles = profile_response["profiles"]
 
+        # Determine the single primary profile among the returned profiles
+        primary_profile_id = None
+        for profile in profiles:
+            matched = match_profile_to_amazon_account(profile, amazon_accounts)
+            if matched:
+                primary_profile_id = profile.get("profileId")
+                break
+
+        # Fallback: If no profile matched by seller ID/name, but exactly 1 profile was returned
+        if primary_profile_id is None and len(profiles) == 1:
+            primary_profile_id = profiles[0].get("profileId")
+
         saved_profiles = []
+        primary_account_instance = None
 
         for profile in profiles:
             account_info = profile.get("accountInfo") or {}
+            profile_id = profile["profileId"]
+            matched_amz = match_profile_to_amazon_account(profile, amazon_accounts)
+
+            is_this_primary = (profile_id == primary_profile_id)
+
+            country_code = (profile.get("countryCode") or "").strip().upper()
+            dynamic_region = get_ads_region_by_country(
+                country_code,
+                default=(matched_amz.region if matched_amz and matched_amz.region else "EU")
+            )
 
             account, created = (
                 AmazonAdsAccount.objects.update_or_create(
                     user=user,
-                    amazon_account=amazon_account,
-                    profile_id=profile["profileId"],
+                    profile_id=profile_id,
                     defaults={
-
                         "user": user,
-                        "amazon_account":amazon_account,
-
-                        "country_code":
-                        profile.get("countryCode"),
-
-                        "currency_code":
-                        profile.get("currencyCode"),
-
-                        "access_token":
-                        access_token,
-
-                        "refresh_token":
-                        refresh_token,
-
+                        "amazon_account": matched_amz,
+                        "country_code": country_code,
+                        "currency_code": profile.get("currencyCode"),
+                        "access_token": access_token,
+                        "refresh_token": refresh_token,
                         "marketplace_string_id": account_info.get("marketplaceStringId"),
                         "amazon_id": account_info.get("id"),
                         "account_type": account_info.get("type"),
                         "account_name": account_info.get("name"),
-
-                        "client_id":
-                        settings.AMAZON_ADS_CLIENT_ID,
-
-                        "client_secret":
-                        settings.AMAZON_ADS_CLIENT_SECRET,
-
-                        "account_info":
-                        profile,
-
-                        "region": "EU"
+                        "client_id": settings.AMAZON_ADS_CLIENT_ID,
+                        "client_secret": settings.AMAZON_ADS_CLIENT_SECRET,
+                        "account_info": profile,
+                        "region": dynamic_region,
+                        "is_primary": is_this_primary,
+                        "initial_sync_required": is_this_primary,
+                        "initial_sync_completed": False if is_this_primary else True,
                     }
                 )
             )
+
+            if is_this_primary:
+                primary_account_instance = account
+
             saved_profiles.append({
-                "profile_id":
-                profile["profileId"],
-
-                "country":
-                profile.get("countryCode"),
-
-                "created":
-                created
+                "profile_id": profile["profileId"],
+                "country": profile.get("countryCode"),
+                "created": created,
+                "is_primary": is_this_primary,
+                "matched_amazon_account": matched_amz.id if matched_amz else None,
             })
 
-            if created:
-                account.initial_sync_required = True
-                account.initial_sync_completed = False
-                account.is_primary = True
+        # Ensure only the single primary account has is_primary=True for this user
+        if primary_account_instance:
+            AmazonAdsAccount.objects.filter(user=user).exclude(id=primary_account_instance.id).update(
+                is_primary=False,
+                initial_sync_required=False
+            )
 
-                account.save(
-                    update_fields=[
-                        "initial_sync_required",
-                        "initial_sync_completed",
-                        "is_primary"
-                    ]
+            subscription = (
+                UserSubscription.objects.filter(
+                    user=user,
+                    status="active",
+                    is_paid=True,
                 )
-                subscription = (
-                    UserSubscription.objects.filter(
-                        user=user,
-                        status="active",
-                        is_paid=True,
-                    )
-                    .select_related("plan")
-                    .first()
-                )
+                .select_related("plan")
+                .first()
+            )
 
-                if not subscription or not subscription.plan:
-                    return Response(
-                        {"status": False, "message": "No active subscription found"},
-                        status=403,
-                    )
-
+            if subscription and subscription.plan:
                 days = subscription.plan.initial_sync_duration
-
                 try:
-                    task_run_initial_ads_sync.delay(account_id=account.id, days=days)
-
+                    task_run_initial_ads_sync.delay(account_id=primary_account_instance.id, days=days)
                 except Exception as e:
-                    print(f"FAILED TO DISPATCH CELERY INITIAL ADS SYNC: {account.profile_id} - {e}")
-
-            # saved_profiles.append({
-            #     "profile_id":
-            #     profile["profileId"],
-
-            #     "country":
-            #     profile.get("countryCode"),
-
-            #     "created":
-            #     created
-            # })
+                    print(f"FAILED TO DISPATCH CELERY INITIAL ADS SYNC: {primary_account_instance.profile_id} - {e}")
 
         return Response({
             "status": True,

@@ -1,6 +1,6 @@
 from django.urls import path
 
-from amazon_ads.tests import AmazonAdsTestView
+# from amazon_ads.tests import AmazonAdsTestView
 
 from .views import *
 from .budget_rules import *
@@ -203,5 +203,5 @@ path(
    path("targets/category-recommendations/", CategoryRecommendationAPIView.as_view()),
 
 
-   path("account/test/advertise",AmazonAdsTestView.as_view()),
+#    path("account/test/advertise",AmazonAdsTestView.as_view()),
 ]
