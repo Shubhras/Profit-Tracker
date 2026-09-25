@@ -1560,7 +1560,8 @@ def sync_orders(request):
                         items_shipped=o.get("NumberOfItemsShipped", 0),
                         items_unshipped=o.get("NumberOfItemsUnshipped", 0),
                         marketplace_id=o.get("MarketplaceId"),
-                        sales_channel=sales_channel_value
+                        sales_channel=sales_channel_value,
+                        raw_data = o
                     )
                     should_sync_items = True
                     account_saved_count += 1
