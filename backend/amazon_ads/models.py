@@ -15,7 +15,7 @@ class AmazonAdsAccount(models.Model):
 
     user = models.ForeignKey(User,on_delete=models.CASCADE)
     amazon_account = models.ForeignKey(AmazonAccount,on_delete=models.CASCADE,null=True,blank=True)
-    profile_id = models.BigIntegerField(unique=True)
+    profile_id = models.BigIntegerField()
 
     country_code = models.CharField(max_length=10,null=True,blank=True)
 
@@ -27,6 +27,12 @@ class AmazonAdsAccount(models.Model):
     refresh_token = models.TextField()
     client_id = models.TextField()
     client_secret = models.TextField()
+    
+    marketplace_string_id = models.CharField(max_length=50, blank=True, null=True)
+    amazon_id = models.CharField(max_length=100, blank=True, null=True)
+    account_type = models.CharField(max_length=30, blank=True, null=True)
+    account_name = models.CharField(max_length=255, blank=True, null=True)
+    
     account_info = models.JSONField(default=dict)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -39,6 +45,14 @@ class AmazonAdsAccount(models.Model):
 
     def __str__(self):
         return str(self.profile_id)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "profile_id"],
+                name="unique_ads_profile_per_user",
+            ),
+        ]
 
 class AdsPortfolio(models.Model):
     amazon_account = models.ForeignKey(AmazonAdsAccount, on_delete=models.CASCADE)
