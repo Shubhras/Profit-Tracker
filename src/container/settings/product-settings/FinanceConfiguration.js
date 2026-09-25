@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { Modal, Button, message, Spin } from 'antd';
+import { Modal, Button, message, Spin, Table } from 'antd';
 import {
   CloseOutlined,
   ExclamationCircleOutlined,
@@ -100,6 +100,11 @@ export default function FinanceConfiguration() {
       window.removeEventListener('headerAction', handler);
     };
   }, []);
+
+  const dataSource = recentUploads.map((item, index) => ({
+    ...item,
+    key: item.id ? `upload-${item.id}` : `${item.fileName}-${index}`,
+  }));
 
   /*
    * Select file
@@ -310,6 +315,181 @@ export default function FinanceConfiguration() {
       message.info(`Downloading ${item.fileName || item.reportName}...`);
     }
   };
+  const columns = [
+    {
+      title: 'Report Name',
+      dataIndex: 'reportName',
+      key: 'reportName',
+      width: 180,
+      render: (text, item) => (
+        <div className="flex items-center gap-2 min-w-0">
+          <div
+            className={`
+            w-[25px] h-[25px] rounded-[5px]
+            flex items-center justify-center shrink-0
+            ${
+              item.reportName === 'Transaction Report' || item.reportName?.includes('Orders')
+                ? 'bg-[#E8F8F1]'
+                : item.reportName === 'Ads Report' || item.reportName?.includes('Returns')
+                ? 'bg-[#F1EAFE]'
+                : item.reportName === 'Settlement Report' || item.reportName?.includes('Payments')
+                ? 'bg-[#FFF7D6]'
+                : 'bg-[#FEEBEC]'
+            }
+          `}
+          >
+            <FileTextOutlined
+              className={`
+              text-[12px]
+              ${
+                item.reportName === 'Transaction Report' || item.reportName?.includes('Orders')
+                  ? 'text-[#35B77B]'
+                  : item.reportName === 'Ads Report' || item.reportName?.includes('Returns')
+                  ? 'text-[#8B5CF6]'
+                  : item.reportName === 'Settlement Report' || item.reportName?.includes('Payments')
+                  ? 'text-[#EAB308]'
+                  : 'text-[#EF4444]'
+              }
+            `}
+            />
+          </div>
+
+          <span className="text-[11px] text-[#374151] font-medium truncate">{text}</span>
+        </div>
+      ),
+    },
+
+    {
+      title: 'Marketplace',
+      dataIndex: 'marketplace',
+      key: 'marketplace',
+      width: 130,
+      render: (text) => (
+        <div className="flex items-center gap-1.5">
+          <div className="w-[18px] h-[18px] rounded-[3px] bg-[#EAFBF4] flex items-center justify-center overflow-hidden">
+            <ShopOutlined className="text-[10px] text-[#35B77B]" />
+          </div>
+
+          <span className="text-[11px] text-[#4B5563]">{text || 'Myntra'}</span>
+        </div>
+      ),
+    },
+
+    {
+      title: 'Report Type',
+      dataIndex: 'reportType',
+      key: 'reportType',
+      width: 150,
+      ellipsis: true,
+      render: (text) => <span className="text-[11px] text-[#4B5563]">{text}</span>,
+    },
+
+    {
+      title: 'File Name',
+      dataIndex: 'fileName',
+      key: 'fileName',
+      width: 180,
+      ellipsis: true,
+      render: (text) => <span className="text-[11px] text-[#4B5563]">{text}</span>,
+    },
+
+    {
+      title: 'Uploaded On',
+      dataIndex: 'uploadedOn',
+      key: 'uploadedOn',
+      width: 160,
+      render: (text) => <span className="text-[11px] text-[#4B5563] whitespace-nowrap">{text}</span>,
+    },
+
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      width: 110,
+      render: (status) => {
+        if (status === 'Processed') {
+          return (
+            <span className="inline-flex items-center gap-1 h-[21px] px-2 rounded-[4px] border border-[#A7E8CB] bg-[#ECFDF5] text-[#159669] text-[8px] font-medium whitespace-nowrap">
+              <CheckCircleOutlined className="text-[9px]" />
+              Processed
+            </span>
+          );
+        }
+
+        if (status === 'Processing') {
+          return (
+            <span className="inline-flex items-center gap-1 h-[21px] px-2 rounded-[4px] border border-[#A9CFF7] bg-[#EFF6FF] text-[#287BC5] text-[8px] font-medium whitespace-nowrap">
+              <SyncOutlined spin className="text-[9px]" />
+              Processing
+            </span>
+          );
+        }
+
+        if (status === 'Failed') {
+          return (
+            <span className="inline-flex items-center gap-1 h-[21px] px-2 rounded-[4px] border border-[#F5B5B5] bg-[#FEF2F2] text-[#E54848] text-[8px] font-medium whitespace-nowrap">
+              <CloseCircleOutlined className="text-[9px]" />
+              Failed
+            </span>
+          );
+        }
+
+        return null;
+      },
+    },
+
+    {
+      title: 'Records',
+      dataIndex: 'records',
+      key: 'records',
+      width: 90,
+      render: (text) => <span className="text-[11px] text-[#4B5563]">{text}</span>,
+    },
+
+    {
+      title: 'Actions',
+      key: 'actions',
+      width: 90,
+      render: (_, item) => (
+        <div className="flex items-center gap-3">
+          {item.status === 'Processed' && (
+            <>
+              <button
+                type="button"
+                title="View"
+                onClick={() => handleView(item)}
+                className="text-[#64748B] hover:text-[#1683D8] transition-colors cursor-pointer"
+              >
+                <EyeOutlined size={17} />
+              </button>
+
+              <button
+                type="button"
+                title="Download"
+                onClick={() => handleDownload(item)}
+                className="text-[#64748B] hover:text-[#1683D8] transition-colors cursor-pointer"
+              >
+                <DownloadOutlined size={17} />
+              </button>
+            </>
+          )}
+
+          {item.status === 'Processing' && <span className="text-[11px] text-[#9CA3AF]">—</span>}
+
+          {item.status === 'Failed' && (
+            <button
+              type="button"
+              title="View Error"
+              onClick={() => handleView(item)}
+              className="text-[#64748B] hover:text-[#E54848] transition-colors cursor-pointer"
+            >
+              <EyeOutlined size={17} />
+            </button>
+          )}
+        </div>
+      ),
+    },
+  ];
 
   return (
     <>
@@ -543,157 +723,23 @@ export default function FinanceConfiguration() {
               <h3 className="text-[15px] font-semibold text-[#1F2937]">Recent Uploads</h3>
             </div>
 
-            <div className="border border-[#E8EAED] rounded-[6px] overflow-hidden">
-              {/* TABLE HEADER */}
-              <div className="grid grid-cols-[1.2fr_1fr_1.2fr_1.35fr_1.3fr_.9fr_.75fr_.65fr] bg-[#F8FAFC] border-b border-[#E8EAED]">
-                <div className="px-3 py-2.5 text-[11px] font-semibold text-[#374151]">Report Name</div>
-                <div className="px-3 py-2.5 text-[11px] font-semibold text-[#374151]">Marketplace</div>
-                <div className="px-3 py-2.5 text-[11px] font-semibold text-[#374151]">Report Type</div>
-                <div className="px-3 py-2.5 text-[11px] font-semibold text-[#374151]">File Name</div>
-                <div className="px-3 py-2.5 text-[11px] font-semibold text-[#374151]">Uploaded On</div>
-                <div className="px-3 py-2.5 text-[11px] font-semibold text-[#374151]">Status</div>
-                <div className="px-3 py-2.5 text-[11px] font-semibold text-[#374151]">Records</div>
-                <div className="px-3 py-2.5 text-[11px] font-semibold text-[#374151]">Actions</div>
-              </div>
-
-              {/* TABLE ROWS */}
-              {recentUploads.length === 0 && (
-                <div className="py-8 text-center text-[12px] text-[#6B7280]">No uploaded reports found</div>
-              )}
-
-              {recentUploads.map((item, index) => (
-                <div
-                  key={item.id ? `upload-${item.id}` : `${item.fileName}-${index}`}
-                  className="grid grid-cols-[1.2fr_1fr_1.2fr_1.35fr_1.3fr_.9fr_.75fr_.65fr] min-h-[45px] items-center border-b border-[#F0F1F3] last:border-b-0 hover:bg-[#FAFCFB] transition-colors"
-                >
-                  {/* REPORT NAME */}
-                  <div className="px-3 flex items-center gap-2 min-w-0">
-                    <div
-                      className={`
-                  w-[25px] h-[25px] rounded-[5px]
-                  flex items-center justify-center shrink-0
-                  ${
-                    item.reportName === 'Transaction Report' || item.reportName.includes('Orders')
-                      ? 'bg-[#E8F8F1]'
-                      : item.reportName === 'Ads Report' || item.reportName.includes('Returns')
-                      ? 'bg-[#F1EAFE]'
-                      : item.reportName === 'Settlement Report' || item.reportName.includes('Payments')
-                      ? 'bg-[#FFF7D6]'
-                      : 'bg-[#FEEBEC]'
-                  }
-                `}
-                    >
-                      <FileTextOutlined
-                        className={`
-                    text-[12px]
-                    ${
-                      item.reportName === 'Transaction Report' || item.reportName.includes('Orders')
-                        ? 'text-[#35B77B]'
-                        : item.reportName === 'Ads Report' || item.reportName.includes('Returns')
-                        ? 'text-[#8B5CF6]'
-                        : item.reportName === 'Settlement Report' || item.reportName.includes('Payments')
-                        ? 'text-[#EAB308]'
-                        : 'text-[#EF4444]'
-                    }
-                  `}
-                      />
-                    </div>
-
-                    <span className="text-[11px] text-[#374151] font-medium truncate">{item.reportName}</span>
-                  </div>
-
-                  {/* MARKETPLACE */}
-                  <div className="px-3 flex items-center gap-1.5">
-                    <div className="w-[18px] h-[18px] rounded-[3px] bg-[#EAFBF4] flex items-center justify-center overflow-hidden">
-                      <ShopOutlined className="text-[10px] text-[#35B77B]" />
-                    </div>
-
-                    <span className="text-[11px] text-[#4B5563]">{item.marketplace || 'Myntra'}</span>
-                  </div>
-
-                  {/* REPORT TYPE */}
-                  <div className="px-3 min-w-0">
-                    <span className="text-[11px] text-[#4B5563] truncate block">{item.reportType}</span>
-                  </div>
-
-                  {/* FILE NAME */}
-                  <div className="px-3 min-w-0">
-                    <span className="text-[11px] text-[#4B5563] truncate block">{item.fileName}</span>
-                  </div>
-
-                  {/* UPLOADED ON */}
-                  <div className="px-3 min-w-0">
-                    <span className="text-[11px] text-[#4B5563] whitespace-nowrap">{item.uploadedOn}</span>
-                  </div>
-
-                  {/* STATUS */}
-                  <div className="px-3">
-                    {item.status === 'Processed' && (
-                      <span className="inline-flex items-center gap-1 h-[21px] px-2 rounded-[4px] border border-[#A7E8CB] bg-[#ECFDF5] text-[#159669] text-[8px] font-medium whitespace-nowrap">
-                        <CheckCircleOutlined className="text-[9px]" />
-                        Processed
-                      </span>
-                    )}
-
-                    {item.status === 'Processing' && (
-                      <span className="inline-flex items-center gap-1 h-[21px] px-2 rounded-[4px] border border-[#A9CFF7] bg-[#EFF6FF] text-[#287BC5] text-[8px] font-medium whitespace-nowrap">
-                        <SyncOutlined spin className="text-[9px]" />
-                        Processing
-                      </span>
-                    )}
-
-                    {item.status === 'Failed' && (
-                      <span className="inline-flex items-center gap-1 h-[21px] px-2 rounded-[4px] border border-[#F5B5B5] bg-[#FEF2F2] text-[#E54848] text-[8px] font-medium whitespace-nowrap">
-                        <CloseCircleOutlined className="text-[9px]" />
-                        Failed
-                      </span>
-                    )}
-                  </div>
-
-                  {/* RECORDS */}
-                  <div className="px-3">
-                    <span className="text-[11px] text-[#4B5563]">{item.records}</span>
-                  </div>
-
-                  {/* ACTIONS */}
-                  <div className="px-3 flex items-center gap-3">
-                    {item.status === 'Processed' && (
-                      <>
-                        <button
-                          type="button"
-                          title="View"
-                          onClick={() => handleView(item)}
-                          className="text-[#64748B] hover:text-[#1683D8] transition-colors cursor-pointer"
-                        >
-                          <EyeOutlined className="text-[12px]" />
-                        </button>
-
-                        <button
-                          type="button"
-                          title="Download"
-                          onClick={() => handleDownload(item)}
-                          className="text-[#64748B] hover:text-[#1683D8] transition-colors cursor-pointer"
-                        >
-                          <DownloadOutlined className="text-[12px]" />
-                        </button>
-                      </>
-                    )}
-
-                    {item.status === 'Processing' && <span className="text-[11px] text-[#9CA3AF]">—</span>}
-
-                    {item.status === 'Failed' && (
-                      <button
-                        type="button"
-                        title="View Error"
-                        onClick={() => handleView(item)}
-                        className="text-[#64748B] hover:text-[#E54848] transition-colors cursor-pointer"
-                      >
-                        <EyeOutlined className="text-[12px]" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
+            <div>
+              <Table
+                columns={columns}
+                dataSource={dataSource}
+                pagination={false}
+                scroll={{ x: 1100 }}
+                size="small"
+                className="
+            [&_.ant-table-thead>tr>th]:!bg-[#f9fafb]
+            [&_.ant-table-thead>tr>th]:!text-[13px]
+            [&_.ant-table-thead>tr>th]:!font-semibold
+            [&_.ant-table-tbody>tr>td]:!text-[16px]
+          "
+                locale={{
+                  emptyText: <div className="py-4 text-[12px] text-[#6B7280]">No uploaded reports found</div>,
+                }}
+              />
             </div>
           </div>
         </div>

@@ -30,8 +30,6 @@ function AdProductsDetails() {
     pageSize: 10,
   });
 
-  // const [selectedRowKeys, setSelectedRowKeys] = React.useState([]);
-
   const { loading, adsProductsDataDetails } = useSelector((state) => ({
     loading: state.advertising.loading,
     adsProductsDataDetails: state.advertising.adsProductsDataDetails,
@@ -131,8 +129,6 @@ function AdProductsDetails() {
               checked={isActive}
               onChange={(checked) => {
                 console.log('STATUS:', checked ? 'ENABLED' : 'PAUSED', record);
-
-                // API CALL HERE
               }}
               style={{
                 transform: 'scale(1.15)',
@@ -290,7 +286,6 @@ function AdProductsDetails() {
       align: 'center',
       width: '70',
       sorter: (a, b) => a.cost - b.cost,
-
       render: (v) => <span className="font-medium text-[#dc2626]">₹{Number(v || 0).toFixed(2)}</span>,
     },
 
@@ -300,9 +295,6 @@ function AdProductsDetails() {
       align: 'center',
       width: '70',
       sorter: (a, b) => a.sales - b.sales,
-
-      // render: (v) => <span className="font-medium text-[#16a34a]">₹{v}</span>,
-
       render: (v) => (
         <span className="font-semibold text-[#16a34a] whitespace-nowrap">₹{Math.round(Number(v || 0))}</span>
       ),
@@ -330,10 +322,9 @@ function AdProductsDetails() {
       align: 'center',
       width: '70',
       sorter: (a, b) => a.acos - b.acos,
-
       render: (v) => (
-        <Tag color={v > 40 ? 'error' : 'processing'} className="!rounded-full !px-3">
-          {v}%
+        <Tag color={v > 40 ? 'error' : 'processing'} className="!rounded-full !px-3 !py-[3px]">
+          {v ? v.toFixed(2) : '0.00'}
         </Tag>
       ),
     },
@@ -344,10 +335,9 @@ function AdProductsDetails() {
       align: 'center',
       width: '70',
       sorter: (a, b) => a.roas - b.roas,
-
       render: (v) => (
-        <Tag color={v >= 1 ? 'success' : 'warning'} className="!rounded-full !px-3">
-          {v}
+        <Tag className="!px-3 !py-[3px] !rounded-full" color={v >= 1 ? 'success' : 'warning'}>
+          {v ? v.toFixed(2) : '0.00'}
         </Tag>
       ),
     },

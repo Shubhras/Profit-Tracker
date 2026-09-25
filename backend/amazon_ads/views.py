@@ -152,9 +152,9 @@ class AmazonAdsCallbackView(APIView):
                 "message": "Invalid user account or state"
             }, status=400)
 
-        amazon_account = AmazonAccount.objects.filter(
+        amazon_account = AmazonAccount.objects.get(
             user=user
-        ).first()
+        )
 
         # Exchange auth code
         token_response = self.exchange_token(code)
@@ -188,9 +188,12 @@ class AmazonAdsCallbackView(APIView):
         saved_profiles = []
 
         for profile in profiles:
+            account_info = profile.get("accountInfo") or {}
 
             account, created = (
                 AmazonAdsAccount.objects.update_or_create(
+                    user=user,
+                    amazon_account=amazon_account,
                     profile_id=profile["profileId"],
                     defaults={
 
@@ -208,6 +211,11 @@ class AmazonAdsCallbackView(APIView):
 
                         "refresh_token":
                         refresh_token,
+
+                        "marketplace_string_id": account_info.get("marketplaceStringId"),
+                        "amazon_id": account_info.get("id"),
+                        "account_type": account_info.get("type"),
+                        "account_name": account_info.get("name"),
 
                         "client_id":
                         settings.AMAZON_ADS_CLIENT_ID,

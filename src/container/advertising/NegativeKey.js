@@ -1,14 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Table, Tag, Tooltip, Dropdown, message } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  SearchOutlined,
-  MoreOutlined,
-  ExportOutlined,
-  DownOutlined,
-  FileExcelOutlined,
-  FileTextOutlined,
-} from '@ant-design/icons';
+import { SearchOutlined, ExportOutlined, DownOutlined, FileExcelOutlined, FileTextOutlined } from '@ant-design/icons';
 import {
   getNegativeKeywords,
   getCampaignsRulesList,
@@ -120,13 +113,6 @@ function NegativeKey() {
 
   const columns = [
     {
-      title: <input type="checkbox" className="w-[13px] h-[13px] accent-[#10b981]" />,
-      width: 50,
-      align: 'center',
-      render: () => <input type="checkbox" className="w-[13px] h-[13px] accent-[#10b981]" />,
-    },
-
-    {
       title: 'Keyword Text',
       dataIndex: 'keyword',
       width: 70,
@@ -213,13 +199,6 @@ function NegativeKey() {
           <span className="cursor-pointer">{v}</span>
         </Tooltip>
       ),
-    },
-
-    {
-      title: 'Actions',
-      width: 50,
-      align: 'center',
-      render: () => <Button type="text" icon={<MoreOutlined />} />,
     },
   ];
 

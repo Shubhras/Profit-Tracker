@@ -259,8 +259,14 @@ export default function ProfitViewSecondTable() {
         tds_leaks: item.tds_leaks || 0,
         settlement_leak: item.settlement_leak || 0,
         release_transaction_date: item.release_transaction_date || 0,
-        revised_expected_settlement: item.revised_expected_settlement || item.new_expected_settlement || item.expected_settlement || item.exp_settlement || '₹0.0',
-        revisedExpectedSettlement: item.revised_expected_settlement || item.new_expected_settlement || item.exp_settlement || 0,
+        revised_expected_settlement:
+          item.revised_expected_settlement ||
+          item.new_expected_settlement ||
+          item.expected_settlement ||
+          item.exp_settlement ||
+          '₹0.0',
+        revisedExpectedSettlement:
+          item.revised_expected_settlement || item.new_expected_settlement || item.exp_settlement || 0,
         revised_unsettled_not_paid: item.revised_unsettled_not_paid || '₹0.0',
         order_payment_amount: item.order_payment_amount || 0,
         refund_charge_amount: item.refund_charge_amount || 0,
@@ -1286,7 +1292,13 @@ export default function ProfitViewSecondTable() {
                     };
 
                     const totalKey = keyMap[col.dataIndex] || col.dataIndex;
-                    const value = totals[totalKey] || (col.dataIndex === 'revisedExpectedSettlement' ? (totals.revised_expected_settlement || totals.total_revised_expected_settlement || totals.new_expected_settlement) : undefined);
+                    const value =
+                      totals[totalKey] ||
+                      (col.dataIndex === 'revisedExpectedSettlement'
+                        ? totals.revised_expected_settlement ||
+                          totals.total_revised_expected_settlement ||
+                          totals.new_expected_settlement
+                        : undefined);
 
                     return (
                       <Table.Summary.Cell key={col.key || index} index={index + 3} fixed={col.fixed} align="center">

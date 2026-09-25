@@ -273,21 +273,21 @@ function AdProductsThird() {
       width: 70,
       sorter: (a, b) => a.acos - b.acos,
       render: (v) => (
-        <Tag color={v > 40 ? 'error' : 'processing'} className="!rounded-full !px-3">
-          {v}%
+        <Tag color={v > 40 ? 'error' : 'processing'} className="!rounded-full !px-3 !py-[3px]">
+          {v ? `${v.toFixed(2)}` : '0.00'}
         </Tag>
       ),
     },
 
     {
-      title: 'ROI',
+      title: 'ROAS',
       dataIndex: 'roas',
       align: 'center',
       width: 70,
       sorter: (a, b) => a.roas - b.roas,
       render: (v) => (
-        <Tag color={v >= 1 ? 'success' : 'warning'} className="!rounded-full !px-3">
-          {v}
+        <Tag color={v >= 1 ? 'success' : 'warning'} className="!rounded-full !px-3 !py-[3px]">
+          {v ? v.toFixed(2) : '0.00'}
         </Tag>
       ),
     },
