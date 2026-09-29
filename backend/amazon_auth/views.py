@@ -1502,6 +1502,24 @@ def sync_orders(request):
         kwargs = {"MaxResultsPerPage": 100}
         if request.GET.get('CreatedAfter'): kwargs['CreatedAfter'] = request.GET.get('CreatedAfter')
         if request.GET.get('CreatedBefore'): kwargs['CreatedBefore'] = request.GET.get('CreatedBefore')
+        if request.GET.get('LastUpdatedAfter'): kwargs['LastUpdatedAfter'] = request.GET.get('LastUpdatedAfter')
+        if request.GET.get('LastUpdatedBefore'): kwargs['LastUpdatedBefore'] = request.GET.get('LastUpdatedBefore')
+
+        # Incremental Sync Optimization:
+        # If no explicit dates are requested and account already has synced orders,
+        # fetch only orders that were created or updated since the last sync.
+        # This prevents repeatedly fetching thousands of unchanged orders across dozens of pages.
+        if not kwargs.get('CreatedAfter') and not kwargs.get('LastUpdatedAfter'):
+            latest_order = Order.objects.filter(amazon_account=account, last_update_date__isnull=False).order_by('-last_update_date').first()
+            if latest_order and latest_order.last_update_date:
+                # 2-hour safety buffer
+                buffer_time = latest_order.last_update_date - timedelta(hours=2)
+                buffer_time = min(buffer_time, timezone.now() - timedelta(minutes=5))
+                kwargs['LastUpdatedAfter'] = buffer_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+            elif account.last_synced_at:
+                buffer_time = account.last_synced_at - timedelta(hours=2)
+                buffer_time = min(buffer_time, timezone.now() - timedelta(minutes=5))
+                kwargs['LastUpdatedAfter'] = buffer_time.strftime("%Y-%m-%dT%H:%M:%SZ")
         
         # PAGINATION LOOP
         account_saved_count = 0
@@ -1774,6 +1792,10 @@ def sync_orders(request):
 
         total_saved += account_saved_count
 
+        # UPDATE LAST SYNC TIME
+        account.last_synced_at = timezone.now()
+        account.save(update_fields=['last_synced_at'])
+
         if account_error:
             sync_details.append({
                 "seller_id": account.seller_central_id,
@@ -1782,10 +1804,6 @@ def sync_orders(request):
                 "errors": account_error
             })
         else:
-            # UPDATE LAST SYNC TIME
-            account.last_synced_at = timezone.now()
-            account.save()
-
             sync_details.append({
                 "seller_id": account.seller_central_id,
                 "status": "success",
