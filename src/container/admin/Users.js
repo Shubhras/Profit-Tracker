@@ -203,7 +203,7 @@ function UsersList() {
       // dataIndex: 'subscription_plan',
       width: 70,
       align: 'center',
-      render: (_, record) => <Tag color="blue">{record?.subscription?.plan_name || 'Trial'}</Tag>,
+      render: (_, record) => <Tag color="blue">{record?.subscription?.plan_name || ''}</Tag>,
     },
 
     {

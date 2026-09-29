@@ -89,6 +89,7 @@ function CampaignStep({ wizardData, setWizardData, onNext }) {
             <Col span={12}>
               <Form.Item label="Campaign Name" required>
                 <Input
+                  className="h-10 border-gray-200 dark:border-white/15 dark:bg-transparent dark:text-white"
                   value={wizardData.campaign.name}
                   onChange={(e) =>
                     setWizardData({
