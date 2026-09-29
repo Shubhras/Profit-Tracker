@@ -1911,7 +1911,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
 
     total_courier_return_count = len(order_ids_with_fee_refund)
     total_customer_return_count = len(order_ids_with_refund - order_ids_with_fee_refund) + total_replacement_return_count
-    total_returns = total_courier_return_count + total_customer_return_count
+    total_return_count = total_courier_return_count + total_customer_return_count
     total_replacement_count = total_replacement_return_count
 
     return_perc = (total_returns / total_qty * 100) if total_qty else 0.0
@@ -1941,7 +1941,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         "returnqty": total_returns,
         "totalreturn": total_returns,
         "total_returns": total_returns,
-        "total_return_count": total_returns,
+        "total_return_count": total_return_count,
         "retpercent": round(return_perc, 2),
         "totalreturnper": f"{round(return_perc, 2)}%",
         "courier_return_count": total_courier_return_count,

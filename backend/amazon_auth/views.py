@@ -7377,7 +7377,7 @@ def amazon_profitability_parent_transactions_shipping(request):
         total_ads += ads
         total_qty += net_qty
         total_final_net_qty += final_net_qty
-        total_returns += return_units
+        total_returns += order_return_count
         total_shipping += shipping_final
         total_tcs += Decimal(str(round(tcs_total, 2)))
         total_tds += Decimal(str(round(tds_total, 2)))
@@ -7490,8 +7490,9 @@ def amazon_profitability_parent_transactions_shipping(request):
             "ads": format_currency(total_ads),
             "netqty": total_qty,
             "total_final_net_qty":total_final_net_qty,
-            "totalreturn": total_return_count,
-            "totalreturnper": f"{round((total_return_count / float(total_qty) * 100), 2) if total_final_net_qty else 0.0}%",
+            "totalreturn": total_returns,
+            "total_returns": total_returns,
+            "totalreturnper": f"{round((total_returns / float(total_qty) * 100), 2) if total_qty else 0.0}%",
             "grosssales": format_currency(total_sales),
             "netsales": format_currency(total_net_sales),
             "total_net_sales": format_currency(total_net_sales),
@@ -9754,7 +9755,7 @@ def sku_profit_report_transactions_shipping(request):
         total_other_expenses += row_other_expense
         total_qty += net_qty
         total_final_net_qty += final_net_qty
-        total_returns += return_units
+        total_returns += order_return_count
         total_ads += ads
         total_mpfees += mpfees
         total_shipping += shipping_final
@@ -9792,9 +9793,10 @@ def sku_profit_report_transactions_shipping(request):
             "total_other_expenses": format_currency(-abs(total_other_expenses)),
             "profit": format_currency(total_profit),
             
-            "total_returns": total_return_count,
-            "total_ret_percent": f"{round((total_return_count / total_qty * 100), 2) if total_qty else 0.0}%",
-            "totalreturnper": f"{round((total_return_count / total_qty * 100), 2) if total_qty else 0.0}%",
+            "totalreturn": total_returns,
+            "total_returns": total_returns,
+            "total_ret_percent": f"{round((total_returns / total_qty * 100), 2) if total_qty else 0.0}%",
+            "totalreturnper": f"{round((total_returns / total_qty * 100), 2) if total_qty else 0.0}%",
 
             "totalprofitmargin": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
 
@@ -11197,7 +11199,7 @@ def orders_profit_report_transactions_shipping(request):
         total_other_expenses += row_other_expense
         total_qty += net_qty
         total_final_net_qty += final_net_qty
-        total_returns += return_units
+        total_returns += order_return_count
         total_ads += ads
         total_mpfees += mpfees
         total_shipping += shipping_final
@@ -11235,9 +11237,10 @@ def orders_profit_report_transactions_shipping(request):
             "total_other_expenses": format_currency(-abs(total_other_expenses)),
             "profit": format_currency(total_profit),
             
-            "total_returns": total_return_count,
-            "total_ret_percent": f"{round((total_return_count / total_qty * 100), 2) if total_qty else 0.0}%",
-            "totalreturnper": f"{round((total_return_count / total_qty * 100), 2) if total_qty else 0.0}%",
+            "totalreturn": total_returns,
+            "total_returns": total_returns,
+            "total_ret_percent": f"{round((total_returns / total_qty * 100), 2) if total_qty else 0.0}%",
+            "totalreturnper": f"{round((total_returns / total_qty * 100), 2) if total_qty else 0.0}%",
 
             "totalprofitmargin": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
 
@@ -12964,7 +12967,7 @@ def amazon_profitability_details_transactions_shipping(request):
         total_mpfees += t_new_charge
         total_qty += net_qty
         total_final_net_qty += final_net_qty
-        total_returns += return_units
+        total_returns += order_return_count
         total_shipping += shipping_final
         total_stdcost += stdcost
         total_gst += gst
@@ -12979,7 +12982,7 @@ def amazon_profitability_details_transactions_shipping(request):
         total_exp_settlement += exp_settlement
         total_promo_discount += promo_discount
         # total_ret_percent = (total_return_count / total_final_net_qty * 100) if total_final_net_qty else 0
-        total_ret_percent = (total_return_count / total_qty * 100) if total_qty else 0
+        total_ret_percent = (total_returns / total_qty * 100) if total_qty else 0
     # ====== START: ADD ASINS WITH AD SPEND BUT NO ORDERS ======
     for p_asin, data in ads_by_parent.items():
         if p_asin in processed_parent_asins:
@@ -13095,8 +13098,8 @@ def amazon_profitability_details_transactions_shipping(request):
             "ads": format_currency(total_ads),
             "netqty": total_qty,
             "total_final_net_qty":total_final_net_qty,
-            # "totalreturn": total_returns,
-            "totalreturn": total_return_count,
+            "totalreturn": total_returns,
+            "total_returns": total_returns,
             "totalreturnper": f"{round(total_ret_percent, 2)}%",
             "grosssales": format_currency(total_sales),
             "netsales": format_currency(total_net_sales),

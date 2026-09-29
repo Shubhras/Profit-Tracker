@@ -249,6 +249,7 @@ def _combine_totals(amazon_t, myntra_t, type="style"):
             "netqty": netqty,
             "total_final_net_qty": total_final_net_qty,
             "totalreturn": totalreturn,
+            "total_returns": totalreturn,
             "totalreturnper": f"{round(return_percentage, 2)}%",
             "total_ret_percent": f"{round(return_percentage, 2)}%",
             "grosssales": format_currency(grosssales),
