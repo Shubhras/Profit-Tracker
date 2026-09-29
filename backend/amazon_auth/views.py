@@ -1099,7 +1099,7 @@ def sync_new_business_reports():
                         amazon_account=req.amazon_account,
                         user=req.amazon_account.user,
                         # date=report_json.get("reportSpecification", {}).get("dataStartTime"),
-                        date = item.get("date"),
+                        date=report_date or timezone.now().date(),
                         report_datetime=report_dt,
                         title=title,
                         parent_asin=parent_asin,
@@ -1449,6 +1449,8 @@ def sync_finances(request):
 
                 next_token = payload.get("NextToken")
                 if next_token:
+                    import time
+                    time.sleep(1.5)
                     kwargs = {"NextToken": next_token}
                 else:
                     break
@@ -1502,11 +1504,13 @@ def sync_orders(request):
         
         # PAGINATION LOOP
         account_saved_count = 0
+        account_error = None
         while True:
             data = manager.fetch_orders(**kwargs) 
 
             if "errors" in data:
                 sync_details.append({"seller_id": account.seller_central_id, "status": "error", "errors": data["errors"]})
+                account_error = data["errors"]
                 break
 
             payload = data.get("payload", {})
@@ -1762,20 +1766,29 @@ def sync_orders(request):
             # PAGINATION
             next_token = payload.get("NextToken")
             if next_token:
+                import time
+                time.sleep(1.5)
                 kwargs = {"NextToken": next_token}
             else:
                 break
 
-        # UPDATE LAST SYNC TIME
-        account.last_synced_at = timezone.now()
-        account.save()
+        if account_error:
+            sync_details.append({
+                "seller_id": account.seller_central_id,
+                "status": "error",
+                "errors": account_error
+            })
+        else:
+            # UPDATE LAST SYNC TIME
+            account.last_synced_at = timezone.now()
+            account.save()
 
-        total_saved += account_saved_count
-        sync_details.append({
-            "seller_id": account.seller_central_id,
-            "status": "success",
-            "synced_count": account_saved_count
-        })
+            total_saved += account_saved_count
+            sync_details.append({
+                "seller_id": account.seller_central_id,
+                "status": "success",
+                "synced_count": account_saved_count
+            })
 
     return JsonResponse({
         "status": "success",
