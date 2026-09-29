@@ -95,8 +95,10 @@ class Command(BaseCommand):
                     self.stdout.write(self.style.ERROR(f"  - Ads failed: {str(e)}"))
 
                 self.stdout.write(self.style.SUCCESS(f"Successfully synced {account.seller_central_id}"))
+                time.sleep(2)
             
             except Exception as e:
                 self.stdout.write(self.style.ERROR(f"Failed to sync {account.seller_central_id}: {str(e)}"))
+                time.sleep(2)
 
         self.stdout.write(self.style.SUCCESS("Background sync completed!"))

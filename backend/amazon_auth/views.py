@@ -1589,6 +1589,7 @@ def sync_orders(request):
                 if sync_items and should_sync_items:
                     logger.info(f"Order Items fetch start")
                     try:
+                        time.sleep(0.5)
                         items_response = manager.get_order_items(amazon_order_id)
                         
                         payload_items = items_response.get("payload", {})

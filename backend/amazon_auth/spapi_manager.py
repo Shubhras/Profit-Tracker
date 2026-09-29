@@ -152,12 +152,17 @@ class SPAPIManager:
         headers['Authorization'] = authorization_header
 
         start_time = time.time()
-        response = requests.request(method, url, params=params, headers=headers, data=data)
-
-        # Automatic retry on rate limit (429 QuotaExceeded)
-        if response.status_code == 429:
-            time.sleep(2.5)
+        max_retries = 3
+        backoff_delays = [3, 6, 12]
+        response = None
+        for attempt in range(max_retries + 1):
             response = requests.request(method, url, params=params, headers=headers, data=data)
+            # Automatic retry on rate limit (429 QuotaExceeded)
+            if response.status_code == 429 and attempt < max_retries:
+                delay = backoff_delays[attempt]
+                time.sleep(delay)
+                continue
+            break
 
         elapsed_ms = int((time.time() - start_time) * 1000)
 
