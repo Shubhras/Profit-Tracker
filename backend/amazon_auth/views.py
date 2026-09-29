@@ -2694,9 +2694,7 @@ def get_full_dashboard(request):
     cancelled_qty = 0
 
     
-    total_return_count_dashboard += total_replacement_return_count_dashboard
-    
-    customer_return_count_dashboard += total_replacement_return_count_dashboard
+    total_return_count_dashboard = courier_return_count_dashboard + customer_return_count_dashboard
     
     total_q = (
         gross_item_qty
@@ -6778,13 +6776,15 @@ def amazon_profitability_parent_transactions_shipping(request):
 
     for order_id in order_ids_with_refund:
         amount = refund_amount_by_order.get(order_id, 0.0)
+        units = refund_count_by_order.get(order_id, 1)
         if order_id in order_ids_with_fee_refund:
-            courier_return_count += 1
+            courier_return_count += units
             courier_return_price += amount
         else:
-            customer_return_count += 1
+            customer_return_count += units
             customer_return_price += amount
 
+    total_replacement_return_count = sum(replacement_count_by_order.values()) if replacement_count_by_order else len(order_ids_with_replacement)
     customer_return_count += total_replacement_return_count
     total_return_count = courier_return_count + customer_return_count
     total_claim_amount = sum(claim_amount_by_order.values())
@@ -7051,11 +7051,12 @@ def amazon_profitability_parent_transactions_shipping(request):
         seen_order_ids_for_row = set(oid for oid in row_order_ids if oid in order_ids_with_refund)
         for oid in seen_order_ids_for_row:
             amount = refund_amount_by_order.get(oid, 0.0)
+            units = refund_count_by_order.get(oid, 1)
             if oid in order_ids_with_fee_refund:
-                row_courier_return_count += 1
+                row_courier_return_count += units
                 row_courier_return_price += amount
             else:
-                row_customer_return_count += 1
+                row_customer_return_count += units
                 row_customer_return_price += amount
 
         order_claim_amount = sum(claim_amount_by_order.get(oid, 0.0) for oid in row_order_ids)
@@ -9131,11 +9132,12 @@ def sku_profit_report_transactions_shipping(request):
 
     for order_id in order_ids_with_refund:
         amount = refund_amount_by_order.get(order_id, 0.0)
+        units = refund_count_by_order.get(order_id, 1)
         if order_id in order_ids_with_fee_refund:
-            courier_return_count += 1
+            courier_return_count += units
             courier_return_price += amount
         else:
-            customer_return_count += 1
+            customer_return_count += units
             customer_return_price += amount
 
     total_return_count = courier_return_count + customer_return_count
@@ -9211,7 +9213,7 @@ def sku_profit_report_transactions_shipping(request):
             continue
         replacement_count_by_order[oid] = replacement_count_by_order.get(oid, 0) + 1
 
-    total_replacement_return_count = len(order_ids_with_replacement)
+    total_replacement_return_count = sum(replacement_count_by_order.values()) if replacement_count_by_order else len(order_ids_with_replacement)
 
     customer_return_count += total_replacement_return_count
     total_return_count = courier_return_count + customer_return_count
@@ -9424,8 +9426,8 @@ def sku_profit_report_transactions_shipping(request):
         else:
             order_return_type = None
 
-        row_courier_return_count = 1 if order_is_courier_return else 0
-        row_customer_return_count = 1 if (order_has_return and not order_is_courier_return) else 0
+        row_courier_return_count = order_return_count if order_is_courier_return else 0
+        row_customer_return_count = order_return_count if (order_has_return and not order_is_courier_return) else 0
 
         row_courier_return_price = (
             order_return_amount if order_is_courier_return else 0.0
@@ -10647,11 +10649,12 @@ def orders_profit_report_transactions_shipping(request):
 
     for order_id in order_ids_with_refund:
         amount = refund_amount_by_order.get(order_id, 0.0)
+        units = refund_count_by_order.get(order_id, 1)
         if order_id in order_ids_with_fee_refund:
-            courier_return_count += 1
+            courier_return_count += units
             courier_return_price += amount
         else:
-            customer_return_count += 1
+            customer_return_count += units
             customer_return_price += amount
 
     total_return_count = courier_return_count + customer_return_count
@@ -10721,7 +10724,7 @@ def orders_profit_report_transactions_shipping(request):
             continue
         replacement_count_by_order[oid] = replacement_count_by_order.get(oid, 0) + 1
 
-    total_replacement_return_count = len(order_ids_with_replacement)
+    total_replacement_return_count = sum(replacement_count_by_order.values()) if replacement_count_by_order else len(order_ids_with_replacement)
 
     customer_return_count += total_replacement_return_count
     total_return_count = courier_return_count + customer_return_count
@@ -10903,8 +10906,8 @@ def orders_profit_report_transactions_shipping(request):
         else:
             order_return_type = None
 
-        row_courier_return_count = 1 if order_is_courier_return else 0
-        row_customer_return_count = 1 if (order_has_return and not order_is_courier_return) else 0
+        row_courier_return_count = order_return_count if order_is_courier_return else 0
+        row_customer_return_count = order_return_count if (order_has_return and not order_is_courier_return) else 0
 
         row_courier_return_price = (
             order_return_amount if order_is_courier_return else 0.0
@@ -12189,11 +12192,12 @@ def amazon_profitability_details_transactions_shipping(request):
 
     for order_id in order_ids_with_refund:
         amount = refund_amount_by_order.get(order_id, 0.0)
+        units = refund_count_by_order.get(order_id, 1)
         if order_id in order_ids_with_fee_refund:
-            courier_return_count += 1
+            courier_return_count += units
             courier_return_price += amount
         else:
-            customer_return_count += 1
+            customer_return_count += units
             customer_return_price += amount
 
     total_return_count = courier_return_count + customer_return_count
@@ -12264,7 +12268,7 @@ def amazon_profitability_details_transactions_shipping(request):
             continue
         replacement_count_by_order[oid] = replacement_count_by_order.get(oid, 0) + 1
 
-    total_replacement_return_count = len(order_ids_with_replacement)
+    total_replacement_return_count = sum(replacement_count_by_order.values()) if replacement_count_by_order else len(order_ids_with_replacement)
 
     customer_return_count += total_replacement_return_count
     total_return_count = courier_return_count + customer_return_count
@@ -12792,11 +12796,12 @@ def amazon_profitability_details_transactions_shipping(request):
         seen_order_ids_for_row = set(oid for oid in row_order_ids if oid in order_ids_with_refund)
         for oid in seen_order_ids_for_row:
             amount = refund_amount_by_order.get(oid, 0.0)
+            units = refund_count_by_order.get(oid, 1)
             if oid in order_ids_with_fee_refund:
-                row_courier_return_count += 1
+                row_courier_return_count += units
                 row_courier_return_price += amount
             else:
-                row_customer_return_count += 1
+                row_customer_return_count += units
                 row_customer_return_price += amount
 
         order_claim_amount = sum(claim_amount_by_order.get(oid, 0.0) for oid in row_order_ids)

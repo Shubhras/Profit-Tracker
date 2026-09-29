@@ -1606,8 +1606,8 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         else:
             order_return_type = None
 
-        row_courier_return_count = sum(1 for oid in row_order_ids if oid in order_ids_with_fee_refund)
-        row_customer_return_count = sum(1 for oid in row_order_ids if (oid in order_ids_with_refund and oid not in order_ids_with_fee_refund))
+        row_courier_return_count = sum(refund_count_by_order.get(oid, 1) for oid in row_order_ids if oid in order_ids_with_fee_refund)
+        row_customer_return_count = sum(refund_count_by_order.get(oid, 1) for oid in row_order_ids if (oid in order_ids_with_refund and oid not in order_ids_with_fee_refund))
 
         row_courier_return_price = sum(refund_amount_by_order.get(oid, 0.0) for oid in row_order_ids if oid in order_ids_with_fee_refund)
         row_customer_return_price = sum(refund_amount_by_order.get(oid, 0.0) for oid in row_order_ids if (oid in order_ids_with_refund and oid not in order_ids_with_fee_refund))
@@ -1909,9 +1909,8 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         total_claim_count += order_claim_count
         total_replacement_count += order_replacement_count
 
-    total_courier_return_count = len(order_ids_with_fee_refund)
-    total_customer_return_count = len(order_ids_with_refund - order_ids_with_fee_refund) + total_replacement_return_count
     total_return_count = total_courier_return_count + total_customer_return_count
+    total_returns = total_return_count
     total_replacement_count = total_replacement_return_count
 
     return_perc = (total_returns / total_qty * 100) if total_qty else 0.0

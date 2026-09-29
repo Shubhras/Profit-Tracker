@@ -773,11 +773,12 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
 
     for order_id in order_ids_with_refund:
         amount = refund_amount_by_order.get(order_id, 0.0)
+        units = refund_count_by_order.get(order_id, 1)
         if order_id in order_ids_with_fee_refund:
-            courier_return_count += 1
+            courier_return_count += units
             courier_return_price += amount
         else:
-            customer_return_count += 1
+            customer_return_count += units
             customer_return_price += amount
 
     total_return_count = courier_return_count + customer_return_count
@@ -848,7 +849,9 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
             continue
         replacement_count_by_order[oid] = replacement_count_by_order.get(oid, 0) + 1
 
-    total_replacement_return_count = len(order_ids_with_replacement)
+    total_replacement_return_count = sum(replacement_count_by_order.values()) if replacement_count_by_order else len(order_ids_with_replacement)
+    customer_return_count += total_replacement_return_count
+    total_return_count = courier_return_count + customer_return_count
     # ---------------- BUILD RESPONSE ----------------
     results = []
 
@@ -1355,11 +1358,12 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
         seen_order_ids_for_row = set(oid for oid in row_order_ids if oid in order_ids_with_refund)
         for oid in seen_order_ids_for_row:
             amount = refund_amount_by_order.get(oid, 0.0)
+            units = refund_count_by_order.get(oid, 1)
             if oid in order_ids_with_fee_refund:
-                row_courier_return_count += 1
+                row_courier_return_count += units
                 row_courier_return_price += amount
             else:
-                row_customer_return_count += 1
+                row_customer_return_count += units
                 row_customer_return_price += amount
 
         order_claim_amount = sum(claim_amount_by_order.get(oid, 0.0) for oid in row_order_ids)
