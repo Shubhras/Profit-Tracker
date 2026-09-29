@@ -82,11 +82,6 @@ export default function ProductConfiguration() {
     };
   }, []);
 
-  const PageRoutes = [
-    { path: 'index', breadcrumbName: 'Settings' },
-    { path: '', breadcrumbName: 'Product Configuration' },
-  ];
-
   const handleExport = () => {
     dispatch(exportProductConfiguration(globalChannel));
     setExportModal(false);
@@ -120,12 +115,11 @@ export default function ProductConfiguration() {
   return (
     <>
       <PageHeader
-        routes={PageRoutes}
         title="Product Configuration"
-        className="flex justify-between items-center px-5 pt-2 pb-3 bg-transparent"
+        className="flex justify-between items-center px-4 pt-2 pb-1 bg-transparent"
       />
 
-      <main className="min-h-[715px] px-5 pb-[30px]">
+      <main className="min-h-[715px] px-4 pb-[30px]">
         <div className="mt-3 bg-white rounded-lg">
           <Spin spinning={loading}>
             <ProductConfigTab
