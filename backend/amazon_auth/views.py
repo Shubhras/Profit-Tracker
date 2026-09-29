@@ -1767,15 +1767,18 @@ def sync_orders(request):
             next_token = payload.get("NextToken")
             if next_token:
                 import time
-                time.sleep(1.5)
+                time.sleep(2.0)
                 kwargs = {"NextToken": next_token}
             else:
                 break
 
+        total_saved += account_saved_count
+
         if account_error:
             sync_details.append({
                 "seller_id": account.seller_central_id,
-                "status": "error",
+                "status": "error" if account_saved_count == 0 else "partial_success",
+                "synced_count": account_saved_count,
                 "errors": account_error
             })
         else:
@@ -1783,7 +1786,6 @@ def sync_orders(request):
             account.last_synced_at = timezone.now()
             account.save()
 
-            total_saved += account_saved_count
             sync_details.append({
                 "seller_id": account.seller_central_id,
                 "status": "success",

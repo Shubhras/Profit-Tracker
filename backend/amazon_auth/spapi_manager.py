@@ -160,6 +160,7 @@ class SPAPIManager:
             # Automatic retry on rate limit (429 QuotaExceeded)
             if response.status_code == 429 and attempt < max_retries:
                 delay = backoff_delays[attempt]
+                print(f"  [SP-API Rate Limit] 429 QuotaExceeded on {path}. Waiting {delay}s (retry {attempt + 1}/{max_retries})...")
                 time.sleep(delay)
                 continue
             break
@@ -199,6 +200,10 @@ class SPAPIManager:
         """
         path = "/orders/v0/orders"
         
+        # When NextToken is provided, SP-API expects ONLY NextToken
+        if kwargs.get("NextToken"):
+            return self.request("GET", path, params={"NextToken": kwargs["NextToken"]})
+
         # Prepare parameters
         params = {}
         

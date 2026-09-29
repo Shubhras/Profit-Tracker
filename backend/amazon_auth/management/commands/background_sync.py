@@ -40,6 +40,7 @@ class Command(BaseCommand):
             .values_list("user_id", flat=True)
             .distinct()
         )
+        print("active_user_ids", active_user_ids)
         # active_user_ids = (
         #     UserSubscription.objects.filter(
         #         status="active",
@@ -87,12 +88,12 @@ class Command(BaseCommand):
                 self.stdout.write("  - Reports: synced")
 
                 # 4. Sync Ads (Excel or API)   /home/lenovo/Desktop/profit /Profit-Tracker/backend/amazon_auth/services/ads_report.xlsx
-                try:
-                    file_path = "/home/lenovo/Desktop/profit /Profit-Tracker/backend/amazon_auth/services/ads_report.xlsx"   #  change this
-                    import_ads_from_excel(file_path)
-                    self.stdout.write("  - Ads: Imported successfully")
-                except Exception as e:
-                    self.stdout.write(self.style.ERROR(f"  - Ads failed: {str(e)}"))
+                # try:
+                #     file_path = "/home/lenovo/Desktop/profit /Profit-Tracker/backend/amazon_auth/services/ads_report.xlsx"   #  change this
+                #     import_ads_from_excel(file_path)
+                #     self.stdout.write("  - Ads: Imported successfully")
+                # except Exception as e:
+                #     self.stdout.write(self.style.ERROR(f"  - Ads failed: {str(e)}"))
 
                 self.stdout.write(self.style.SUCCESS(f"Successfully synced {account.seller_central_id}"))
                 time.sleep(2)
