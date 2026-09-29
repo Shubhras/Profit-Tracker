@@ -1735,7 +1735,6 @@ def sync_orders(request):
                         #  update order item price have inpending status
                 if order and order.order_status and order.order_status.upper() == "PENDING":
                     try:
-                        from datetime import timedelta
                         last_updated_after = (order.last_update_date or order.purchase_date - timedelta(minutes=5)).strftime("%Y-%m-%dT%H:%M:%SZ")
                         p_params = {
                             "lastUpdatedAfter": last_updated_after,
