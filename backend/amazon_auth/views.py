@@ -7042,21 +7042,17 @@ def amazon_profitability_parent_transactions_shipping(request):
         else:
             order_return_type = None
 
-        # -------- Courier vs Customer split for THIS row's orders --------
-        row_courier_return_count = 0
-        row_customer_return_count = 0
+        row_courier_return_count = sum(refund_count_by_order.get(oid, 1) for oid in row_order_ids if oid in order_ids_with_fee_refund)
+        row_customer_return_count = sum(refund_count_by_order.get(oid, 1) for oid in row_order_ids if (oid in order_ids_with_refund and oid not in order_ids_with_fee_refund))
+
         row_courier_return_price = 0.0
         row_customer_return_price = 0.0
-
         seen_order_ids_for_row = set(oid for oid in row_order_ids if oid in order_ids_with_refund)
         for oid in seen_order_ids_for_row:
             amount = refund_amount_by_order.get(oid, 0.0)
-            units = refund_count_by_order.get(oid, 1)
             if oid in order_ids_with_fee_refund:
-                row_courier_return_count += units
                 row_courier_return_price += amount
             else:
-                row_customer_return_count += units
                 row_customer_return_price += amount
 
         order_claim_amount = sum(claim_amount_by_order.get(oid, 0.0) for oid in row_order_ids)
@@ -7526,9 +7522,9 @@ def amazon_profitability_parent_transactions_shipping(request):
             "exp_settlement": format_currency(total_exp_settlement),
             
             "total_promo_discount":format_currency(total_promo_discount),
-            "total_return_count": total_return_count,
-            "courier_return_count": courier_return_count, 
-            "customer_return_count": customer_return_count,
+            "total_return_count": total_courier_return_count + total_customer_return_count,
+            "courier_return_count": total_courier_return_count, 
+            "customer_return_count": total_customer_return_count,
             "courier_return_price": format_currency(courier_return_price),
             "customer_return_price": format_currency(customer_return_price),
             
@@ -9227,6 +9223,8 @@ def sku_profit_report_transactions_shipping(request):
     total_net_sales = 0
     total_final_net_sales = 0
     total_returns = 0
+    total_courier_return_count = 0
+    total_customer_return_count = 0
     total_new_charge = 0
     adjusted_gross_sales = 0
     total_estimatefees = 0
@@ -9758,6 +9756,8 @@ def sku_profit_report_transactions_shipping(request):
         total_qty += net_qty
         total_final_net_qty += final_net_qty
         total_returns += order_return_count
+        total_courier_return_count += row_courier_return_count
+        total_customer_return_count += row_customer_return_count
         total_ads += ads
         total_mpfees += mpfees
         total_shipping += shipping_final
@@ -9819,9 +9819,9 @@ def sku_profit_report_transactions_shipping(request):
             "exp_settlement": format_currency(total_exp_settlement),
             
             "total_promo_discount":format_currency(total_promo_discount),
-            "total_return_count": total_return_count,
-            "courier_return_count": courier_return_count,
-            "customer_return_count": customer_return_count,
+            "total_return_count": total_courier_return_count + total_customer_return_count,
+            "courier_return_count": total_courier_return_count,
+            "customer_return_count": total_customer_return_count,
             "courier_return_price": format_currency(courier_return_price),
             "customer_return_price": format_currency(customer_return_price),
             
@@ -10738,6 +10738,8 @@ def orders_profit_report_transactions_shipping(request):
     total_net_sales = 0
     total_final_net_sales = 0
     total_returns = 0
+    total_courier_return_count = 0
+    total_customer_return_count = 0
     total_new_charge = 0
     adjusted_gross_sales = 0
     total_estimatefees = 0
@@ -11203,6 +11205,8 @@ def orders_profit_report_transactions_shipping(request):
         total_qty += net_qty
         total_final_net_qty += final_net_qty
         total_returns += order_return_count
+        total_courier_return_count += row_courier_return_count
+        total_customer_return_count += row_customer_return_count
         total_ads += ads
         total_mpfees += mpfees
         total_shipping += shipping_final
@@ -11270,9 +11274,9 @@ def orders_profit_report_transactions_shipping(request):
             "total_new_expected_settlement": format_currency(total_exp_settlement),
             
             "total_promo_discount": format_currency(total_promo_discount),
-            "total_return_count": total_return_count,
-            "courier_return_count": courier_return_count,
-            "customer_return_count": customer_return_count,
+            "total_return_count": total_courier_return_count + total_customer_return_count,
+            "courier_return_count": total_courier_return_count,
+            "customer_return_count": total_customer_return_count,
             "courier_return_price": format_currency(courier_return_price),
             "customer_return_price": format_currency(customer_return_price),
             
@@ -12313,6 +12317,8 @@ def amazon_profitability_details_transactions_shipping(request):
     total_mpfees = total_net_sales = total_qty = total_final_net_qty = 0
     total_final_net_sales = 0
     total_returns = total_shipping = 0
+    total_courier_return_count = 0
+    total_customer_return_count = 0
     total_stdcost = 0
     total_ret_percent = 0
     adjusted_gross_sales = 0
@@ -12788,20 +12794,17 @@ def amazon_profitability_details_transactions_shipping(request):
         else:
             order_return_type = None
 
-        row_courier_return_count = 0
-        row_customer_return_count = 0
+        row_courier_return_count = sum(refund_count_by_order.get(oid, 1) for oid in row_order_ids if oid in order_ids_with_fee_refund)
+        row_customer_return_count = sum(refund_count_by_order.get(oid, 1) for oid in row_order_ids if (oid in order_ids_with_refund and oid not in order_ids_with_fee_refund))
+
         row_courier_return_price = 0.0
         row_customer_return_price = 0.0
-
         seen_order_ids_for_row = set(oid for oid in row_order_ids if oid in order_ids_with_refund)
         for oid in seen_order_ids_for_row:
             amount = refund_amount_by_order.get(oid, 0.0)
-            units = refund_count_by_order.get(oid, 1)
             if oid in order_ids_with_fee_refund:
-                row_courier_return_count += units
                 row_courier_return_price += amount
             else:
-                row_customer_return_count += units
                 row_customer_return_price += amount
 
         order_claim_amount = sum(claim_amount_by_order.get(oid, 0.0) for oid in row_order_ids)
@@ -12973,6 +12976,8 @@ def amazon_profitability_details_transactions_shipping(request):
         total_qty += net_qty
         total_final_net_qty += final_net_qty
         total_returns += order_return_count
+        total_courier_return_count += row_courier_return_count
+        total_customer_return_count += row_customer_return_count
         total_shipping += shipping_final
         total_stdcost += stdcost
         total_gst += gst
@@ -13141,9 +13146,9 @@ def amazon_profitability_details_transactions_shipping(request):
             "exp_settlement": format_currency(total_exp_settlement),
             
             "total_promo_discount": format_currency(total_promo_discount),
-            "total_return_count": total_return_count,
-            "courier_return_count": courier_return_count,
-            "customer_return_count": customer_return_count,
+            "total_return_count": total_courier_return_count + total_customer_return_count,
+            "courier_return_count": total_courier_return_count,
+            "customer_return_count": total_customer_return_count,
             "courier_return_price": format_currency(courier_return_price),
             "customer_return_price": format_currency(customer_return_price),
 
