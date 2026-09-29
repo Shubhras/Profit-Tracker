@@ -153,6 +153,12 @@ class SPAPIManager:
 
         start_time = time.time()
         response = requests.request(method, url, params=params, headers=headers, data=data)
+
+        # Automatic retry on rate limit (429 QuotaExceeded)
+        if response.status_code == 429:
+            time.sleep(2.5)
+            response = requests.request(method, url, params=params, headers=headers, data=data)
+
         elapsed_ms = int((time.time() - start_time) * 1000)
 
         try:

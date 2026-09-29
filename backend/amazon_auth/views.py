@@ -1509,7 +1509,6 @@ def sync_orders(request):
             data = manager.fetch_orders(**kwargs) 
 
             if "errors" in data:
-                sync_details.append({"seller_id": account.seller_central_id, "status": "error", "errors": data["errors"]})
                 account_error = data["errors"]
                 break
 
