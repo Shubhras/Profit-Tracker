@@ -6771,13 +6771,24 @@ def amazon_profitability_parent_transactions_shipping(request):
     total_courier_return_count = 0
     total_customer_return_count = 0
     
-    total_return_count = 0
     courier_return_count = 0
     customer_return_count = 0
     courier_return_price = 0.0
     customer_return_price = 0.0
-    total_claim_amount = 0.0
-    total_claim_count = 0
+
+    for order_id in order_ids_with_refund:
+        amount = refund_amount_by_order.get(order_id, 0.0)
+        if order_id in order_ids_with_fee_refund:
+            courier_return_count += 1
+            courier_return_price += amount
+        else:
+            customer_return_count += 1
+            customer_return_price += amount
+
+    customer_return_count += total_replacement_return_count
+    total_return_count = courier_return_count + customer_return_count
+    total_claim_amount = sum(claim_amount_by_order.values())
+    total_claim_count = len(claim_amount_by_order)
 
     total_other_expenses = Decimal(0)
 
@@ -7274,22 +7285,6 @@ def amazon_profitability_parent_transactions_shipping(request):
             if gross_sales else 0
         )
         
-        courier_return_count = 0
-        customer_return_count = 0
-        courier_return_price = 0.0
-        customer_return_price = 0.0
-
-        for order_id in order_ids_with_refund:
-            amount = refund_amount_by_order.get(order_id, 0.0)
-            if order_id in order_ids_with_fee_refund:
-                courier_return_count += 1
-                courier_return_price += amount
-            else:
-                customer_return_count += 1
-                customer_return_price += amount
-
-        total_claim_amount = sum(claim_amount_by_order.values())
-        total_claim_count = len(claim_amount_by_order)
         
         row_customer_return_count += order_replacement_count
         
@@ -7396,15 +7391,8 @@ def amazon_profitability_parent_transactions_shipping(request):
         total_exp_settlement += Decimal(str(round(exp_settlement, 2)))  
         total_promo_discount += Decimal(str(round(promo_discount, 2))) 
         
-        customer_return_count += order_replacement_count
-        
         total_courier_return_count += row_courier_return_count
         total_customer_return_count += row_customer_return_count
-
-        total_return_count += (
-            row_courier_return_count
-            + row_customer_return_count
-        )
 
     # ====== ADD ASINS WITH AD SPEND BUT NO ORDERS ======
     for sku, data in ads_by_sku.items():
@@ -7537,10 +7525,8 @@ def amazon_profitability_parent_transactions_shipping(request):
             
             "total_promo_discount":format_currency(total_promo_discount),
             "total_return_count": total_return_count,
-            # "courier_return_count": courier_return_count,   
-            "courier_return_count": total_courier_return_count, 
-            # "customer_return_count": customer_return_count,
-            "customer_return_count": total_customer_return_count,
+            "courier_return_count": courier_return_count, 
+            "customer_return_count": customer_return_count,
             "courier_return_price": format_currency(courier_return_price),
             "customer_return_price": format_currency(customer_return_price),
             
@@ -9226,6 +9212,9 @@ def sku_profit_report_transactions_shipping(request):
 
     total_replacement_return_count = len(order_ids_with_replacement)
 
+    customer_return_count += total_replacement_return_count
+    total_return_count = courier_return_count + customer_return_count
+
     # ---------------- BUILD RESPONSE ----------------
     results = []
 
@@ -9780,9 +9769,6 @@ def sku_profit_report_transactions_shipping(request):
         total_gst_payable += round(gst_to_pay_amount, 2)
         total_exp_settlement += round(exp_settlement, 2)
         total_promo_discount += promo_discount
-        
-        total_return_count += order_replacement_count
-        customer_return_count += order_replacement_count
 
     # ---------------- RESPONSE ----------------
     return Response({
@@ -10735,6 +10721,9 @@ def orders_profit_report_transactions_shipping(request):
 
     total_replacement_return_count = len(order_ids_with_replacement)
 
+    customer_return_count += total_replacement_return_count
+    total_return_count = courier_return_count + customer_return_count
+
     # ---------------- BUILD RESPONSE ----------------
     results = []
 
@@ -11223,9 +11212,6 @@ def orders_profit_report_transactions_shipping(request):
         total_gst_payable += round(gst_to_pay_amount, 2)
         total_exp_settlement += round(exp_settlement, 2)
         total_promo_discount += promo_discount
-        
-        total_return_count += order_replacement_count
-        customer_return_count += order_replacement_count
 
     # ---------------- RESPONSE ----------------
     return Response({
@@ -12277,6 +12263,9 @@ def amazon_profitability_details_transactions_shipping(request):
 
     total_replacement_return_count = len(order_ids_with_replacement)
 
+    customer_return_count += total_replacement_return_count
+    total_return_count = courier_return_count + customer_return_count
+
     from_date_local = from_date_ist.date() if from_date_ist else None
     to_date_local = to_date_ist.date() if to_date_ist else None
 
@@ -12989,10 +12978,6 @@ def amazon_profitability_details_transactions_shipping(request):
         total_gst_payable += gst_to_pay_amount
         total_exp_settlement += exp_settlement
         total_promo_discount += promo_discount
-
-        total_return_count += order_replacement_count
-
-        customer_return_count += order_replacement_count
         # total_ret_percent = (total_return_count / total_final_net_qty * 100) if total_final_net_qty else 0
         total_ret_percent = (total_return_count / total_qty * 100) if total_qty else 0
     # ====== START: ADD ASINS WITH AD SPEND BUT NO ORDERS ======

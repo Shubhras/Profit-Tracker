@@ -973,6 +973,8 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
     ).values('transaction_id', 'identifier_value')
 
     replacement_tx_to_order = {row['transaction_id']: row['identifier_value'] for row in replacement_identifiers}
+    order_ids_with_replacement = set(replacement_tx_to_order.values())
+    total_replacement_return_count = len(order_ids_with_replacement)
 
     replacement_count_by_order = {}
     for txn in replacement_txns.filter(id__in=replacement_tx_to_order.keys()):
@@ -1907,6 +1909,11 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         total_claim_count += order_claim_count
         total_replacement_count += order_replacement_count
 
+    total_courier_return_count = len(order_ids_with_fee_refund)
+    total_customer_return_count = len(order_ids_with_refund - order_ids_with_fee_refund) + total_replacement_return_count
+    total_returns = total_courier_return_count + total_customer_return_count
+    total_replacement_count = total_replacement_return_count
+
     return_perc = (total_returns / total_qty * 100) if total_qty else 0.0
     overall_profit_margin = (total_profit / total_net_sales * 100) if total_net_sales else 0.0
     overall_gst_perc = (total_gst_payable / total_taxable_value * 100) if total_taxable_value else 0.0
@@ -1934,6 +1941,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         "returnqty": total_returns,
         "totalreturn": total_returns,
         "total_returns": total_returns,
+        "total_return_count": total_returns,
         "retpercent": round(return_perc, 2),
         "totalreturnper": f"{round(return_perc, 2)}%",
         "courier_return_count": total_courier_return_count,
