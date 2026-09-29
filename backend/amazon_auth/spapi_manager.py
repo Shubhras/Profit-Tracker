@@ -152,8 +152,8 @@ class SPAPIManager:
         headers['Authorization'] = authorization_header
 
         start_time = time.time()
-        max_retries = 3
-        backoff_delays = [3, 6, 12]
+        max_retries = 4
+        backoff_delays = [3, 6, 10, 15]
         response = None
         for attempt in range(max_retries + 1):
             response = requests.request(method, url, params=params, headers=headers, data=data)

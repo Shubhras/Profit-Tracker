@@ -2,6 +2,7 @@ import os
 import secrets
 import requests
 import json
+import time
 from datetime import datetime, date, timedelta
 from django.shortcuts import redirect, render
 from django.http import JsonResponse
@@ -1766,8 +1767,7 @@ def sync_orders(request):
             # PAGINATION
             next_token = payload.get("NextToken")
             if next_token:
-                import time
-                time.sleep(2.0)
+                time.sleep(2.5)
                 kwargs = {"NextToken": next_token}
             else:
                 break
