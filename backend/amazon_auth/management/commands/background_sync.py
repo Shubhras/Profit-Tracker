@@ -101,4 +101,4 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR(f"Failed to sync {account.seller_central_id}: {str(e)}"))
                 time.sleep(2)
 
-        self.stdout.write(self.style.SUCCESS("Background sync completed!"))
+        self.stdout.write(self.style.SUCCESS("Background sync completed!"))   
