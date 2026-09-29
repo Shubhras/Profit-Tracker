@@ -286,8 +286,10 @@ class UserLoginAPI(APIView):
         business_name = ""
         if hasattr(user, 'profile') and user.profile and user.profile.business_name:
             business_name = user.profile.business_name
+            name = user.profile.name
         elif subuser_obj and hasattr(subuser_obj.parent, 'profile') and subuser_obj.parent.profile and subuser_obj.parent.profile.business_name:
             business_name = subuser_obj.parent.profile.business_name
+            name = subuser_obj.parent.profile.name
 
         return Response({
             "statusCode": 200,
@@ -297,8 +299,7 @@ class UserLoginAPI(APIView):
                 "user_id": user.id,
                 "email": user.email,
                 "business_name": business_name,
-                "name": business_name,
-                
+                "name": name,
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
                 "profile_picture": profile_pic,
