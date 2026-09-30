@@ -1468,13 +1468,13 @@ class ProductSKUReportView(APIView):
         )
         if roi_type:
             roi_str = str(roi_type).lower().strip()
-            if roi_str in ("high", "high_roi", "high_roi_products", "gt_2", "gte_2"):
+            if roi_str in ("high", "high_roi", "high_roi_products", "gt_1", "gte_1", "gt_2", "gte_2"):
                 queryset = queryset.filter(
-                    Q(cost__gt=0, sales__gte=F("cost") * 2.0) | Q(cost=0, sales__gt=0) | Q(cost__isnull=True, sales__gt=0)
+                    Q(cost__gt=0, sales__gte=F("cost")) | Q(cost=0, sales__gt=0) | Q(cost__isnull=True, sales__gt=0)
                 )
-            elif roi_str in ("low", "low_roi", "low_roi_products", "lt_2"):
+            elif roi_str in ("low", "low_roi", "low_roi_products", "lt_1", "lt_2"):
                 queryset = queryset.filter(
-                    cost__gt=0, sales__lt=F("cost") * 2.0
+                    cost__gt=0, sales__lt=F("cost")
                 )
             elif roi_str in ("no_sales", "no_sales_ad_spend", "zero_sales"):
                 queryset = queryset.filter(
