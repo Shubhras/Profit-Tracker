@@ -6750,7 +6750,8 @@ def amazon_profitability_parent_transactions_shipping(request):
     total_sales = total_profit = total_final_net_qty = total_ads = Decimal(0)
     total_net_sales = total_qty = Decimal(0)
     total_final_net_sales = Decimal(0)
-    total_returns = total_shipping = Decimal(0)
+    total_returns = 0
+    total_shipping = Decimal(0)
     total_tcs = Decimal(0)
     total_tds = Decimal(0)
     total_mpfees = Decimal(0)   
@@ -7489,7 +7490,8 @@ def amazon_profitability_parent_transactions_shipping(request):
             "total_final_net_qty":total_final_net_qty,
             "totalreturn": total_returns,
             "total_returns": total_returns,
-            "totalreturnper": f"{round((total_returns / float(total_qty) * 100), 2) if total_qty else 0.0}%",
+            "totalreturnper": f"{round((float(total_returns) / float(total_qty) * 100), 2) if (total_qty and float(total_qty) != 0) else 0.0}%",
+            "total_ret_percent": f"{round((float(total_returns) / float(total_qty) * 100), 2) if (total_qty and float(total_qty) != 0) else 0.0}%",
             "grosssales": format_currency(total_sales),
             "netsales": format_currency(total_net_sales),
             "total_net_sales": format_currency(total_net_sales),
@@ -7498,9 +7500,9 @@ def amazon_profitability_parent_transactions_shipping(request):
             "total_other_expenses": format_currency(-abs(total_other_expenses)),
             "profit": format_currency(total_profit),
             "grossprofitper": (
-                round((total_profit / total_net_sales) * 100, 2)
-                if total_net_sales
-                else round(total_profit, 2) if total_profit else 0
+                round((float(total_profit) / float(total_net_sales) * 100), 2)
+                if (total_net_sales and float(total_net_sales) != 0)
+                else round(float(total_profit), 2) if total_profit else 0
             ),
             "mpfees": format_currency(total_mpfees),
              "mp_gst": format_currency(total_mp_gst),
@@ -7508,7 +7510,7 @@ def amazon_profitability_parent_transactions_shipping(request):
             "estimatefees": format_currency(-abs(total_estimatefees)),
             "total_new_mpfees": format_currency(total_mpfees),
             "shippingfees": format_currency(total_shipping),
-            "tacos": (total_ads / total_sales * 100) if total_sales else 0,
+            "tacos": (float(total_ads) / float(total_sales) * 100) if (total_sales and float(total_sales) != 0) else 0,
             "stdcost": format_currency(total_stdcost),
             # "totalgst": format_currency(total_tcs),
             "totalgst": format_currency(0),
@@ -7517,7 +7519,7 @@ def amazon_profitability_parent_transactions_shipping(request):
             "taxable_value": format_currency(total_taxable_value),
 
             "gst_to_pay_amount": format_currency(total_gst_payable),
-            "gst_to_pay_perc": f"{round((total_gst_payable / total_taxable_value * 100), 2) if total_taxable_value else 1}%",
+            "gst_to_pay_perc": f"{round((float(total_gst_payable) / float(total_taxable_value) * 100), 2) if (total_taxable_value and float(total_taxable_value) != 0) else 1}%",
 
             "exp_settlement": format_currency(total_exp_settlement),
             
