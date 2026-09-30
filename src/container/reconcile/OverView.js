@@ -1009,7 +1009,7 @@ export default function ProfitDetailsView() {
         <Card bordered={false}>
           <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
             {/* Search */}
-            <div className="`rel`ative w-[220px] lg:w-full md:w-full sm:w-full">
+            <div className="relative w-[220px] lg:w-full md:w-full sm:w-full">
               <input
                 type="text"
                 placeholder="Search..."
