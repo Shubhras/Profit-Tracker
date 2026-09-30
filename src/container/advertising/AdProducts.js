@@ -252,12 +252,6 @@ function AdProducts() {
     //   dataIndex: 'countryCode',
     //   align: 'center',
     // },
-
-    // {
-    //   title: 'Currency Code',
-    //   dataIndex: 'currencyCode',
-    //   align: 'center',
-    // },
     {
       title: 'Total Ads',
       dataIndex: 'totalads',
