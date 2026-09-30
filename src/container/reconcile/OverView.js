@@ -547,39 +547,39 @@ export default function ProfitDetailsView() {
     //     </button>
     //   ),
     // },
-    {
-      title: 'Cancelled Sales',
-      dataIndex: 'cancelled_sales',
-      align: 'center',
-      // width: 70,
-      width: getDynamicWidth('cancelled_sales', 70),
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.cancelled_sales) - parseAmount(b.cancelled_sales),
-    },
-    {
-      title: 'MP fees',
-      dataIndex: 'mpfees',
-      align: 'center',
-      // width: 70,
-      width: getDynamicWidth('mpfees', 85),
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.mpfees) - parseAmount(b.mpfees),
-      render: (v, record) => (
-        <button
-          type="button"
-          onClick={() =>
-            setCalculationModal({
-              open: true,
-              type: 'mpfees',
-              record,
-            })
-          }
-          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none whitespace-nowrap inline-block"
-        >
-          {v}
-        </button>
-      ),
-    },
+    // {
+    //   title: 'Cancelled Sales',
+    //   dataIndex: 'cancelled_sales',
+    //   align: 'center',
+    //   // width: 70,
+    //   width: getDynamicWidth('cancelled_sales', 70),
+    //   ellipsis: true,
+    //   sorter: (a, b) => parseAmount(a.cancelled_sales) - parseAmount(b.cancelled_sales),
+    // },
+    // {
+    //   title: 'MP fees',
+    //   dataIndex: 'mpfees',
+    //   align: 'center',
+    //   // width: 70,
+    //   width: getDynamicWidth('mpfees', 85),
+    //   ellipsis: true,
+    //   sorter: (a, b) => parseAmount(a.mpfees) - parseAmount(b.mpfees),
+    //   render: (v, record) => (
+    //     <button
+    //       type="button"
+    //       onClick={() =>
+    //         setCalculationModal({
+    //           open: true,
+    //           type: 'mpfees',
+    //           record,
+    //         })
+    //       }
+    //       className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none whitespace-nowrap inline-block"
+    //     >
+    //       {v}
+    //     </button>
+    //   ),
+    // },
     {
       title: 'Actual MP Fees',
       dataIndex: 'actual_fees',
@@ -588,39 +588,39 @@ export default function ProfitDetailsView() {
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.actual_fees) - parseAmount(b.actual_fees),
     },
-    {
-      title: 'Fee Leaks',
-      dataIndex: 'fees_leaks',
-      align: 'center',
-      width: getDynamicWidth('fees_leaks', 80),
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.fees_leaks) - parseAmount(b.fees_leaks),
-      render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
-    },
-    {
-      title: 'Shipping',
-      dataIndex: 'shipping',
-      align: 'center',
-      // width: 70,
-      width: getDynamicWidth('shipping', 85),
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.shipping) - parseAmount(b.shipping),
-      render: (v, record) => (
-        <button
-          type="button"
-          onClick={() =>
-            setCalculationModal({
-              open: true,
-              type: 'shipping',
-              record,
-            })
-          }
-          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none whitespace-nowrap inline-block"
-        >
-          {v}
-        </button>
-      ),
-    },
+    // {
+    //   title: 'Fee Leaks',
+    //   dataIndex: 'fees_leaks',
+    //   align: 'center',
+    //   width: getDynamicWidth('fees_leaks', 80),
+    //   ellipsis: true,
+    //   sorter: (a, b) => parseAmount(a.fees_leaks) - parseAmount(b.fees_leaks),
+    //   render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+    // },
+    // {
+    //   title: 'Shipping',
+    //   dataIndex: 'shipping',
+    //   align: 'center',
+    //   // width: 70,
+    //   width: getDynamicWidth('shipping', 85),
+    //   ellipsis: true,
+    //   sorter: (a, b) => parseAmount(a.shipping) - parseAmount(b.shipping),
+    //   render: (v, record) => (
+    //     <button
+    //       type="button"
+    //       onClick={() =>
+    //         setCalculationModal({
+    //           open: true,
+    //           type: 'shipping',
+    //           record,
+    //         })
+    //       }
+    //       className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none whitespace-nowrap inline-block"
+    //     >
+    //       {v}
+    //     </button>
+    //   ),
+    // },
     {
       title: 'Actual Shipping',
       dataIndex: 'actual_shipping_charges',
@@ -629,24 +629,24 @@ export default function ProfitDetailsView() {
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.actual_shipping_charges) - parseAmount(b.actual_shipping_charges),
     },
-    {
-      title: 'Shipping Leaks',
-      dataIndex: 'shipping_leaks',
-      align: 'center',
-      width: getDynamicWidth('shipping_leaks', 80),
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.shipping_leaks) - parseAmount(b.shipping_leaks),
-      render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
-    },
-    {
-      title: 'MP-GST',
-      dataIndex: 'mp_gst',
-      align: 'center',
-      // width: 70,
-      width: getDynamicWidth('mp_gst', 70),
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.mp_gst) - parseAmount(b.mp_gst),
-    },
+    // {
+    //   title: 'Shipping Leaks',
+    //   dataIndex: 'shipping_leaks',
+    //   align: 'center',
+    //   width: getDynamicWidth('shipping_leaks', 80),
+    //   ellipsis: true,
+    //   sorter: (a, b) => parseAmount(a.shipping_leaks) - parseAmount(b.shipping_leaks),
+    //   render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+    // },
+    // {
+    //   title: 'MP-GST',
+    //   dataIndex: 'mp_gst',
+    //   align: 'center',
+    //   // width: 70,
+    //   width: getDynamicWidth('mp_gst', 70),
+    //   ellipsis: true,
+    //   sorter: (a, b) => parseAmount(a.mp_gst) - parseAmount(b.mp_gst),
+    // },
     {
       title: 'Actual MP-GST',
       dataIndex: 'actual_mp_gst',
@@ -656,24 +656,24 @@ export default function ProfitDetailsView() {
       sorter: (a, b) => parseAmount(a.actual_mp_gst) - parseAmount(b.actual_mp_gst),
     },
 
-    {
-      title: 'MP-GST Leaks',
-      dataIndex: 'mp_gst_leaks',
-      align: 'center',
-      width: getDynamicWidth('mp_gst_leaks', 80),
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.mp_gst_leaks) - parseAmount(b.mp_gst_leaks),
-    },
+    // {
+    //   title: 'MP-GST Leaks',
+    //   dataIndex: 'mp_gst_leaks',
+    //   align: 'center',
+    //   width: getDynamicWidth('mp_gst_leaks', 80),
+    //   ellipsis: true,
+    //   sorter: (a, b) => parseAmount(a.mp_gst_leaks) - parseAmount(b.mp_gst_leaks),
+    // },
 
-    {
-      title: 'TCS',
-      dataIndex: 'tcs',
-      align: 'center',
-      // width: 100,
-      width: getDynamicWidth('tcs', 70),
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.tcs) - parseAmount(b.tcs),
-    },
+    // {
+    //   title: 'TCS',
+    //   dataIndex: 'tcs',
+    //   align: 'center',
+    //   // width: 100,
+    //   width: getDynamicWidth('tcs', 70),
+    //   ellipsis: true,
+    //   sorter: (a, b) => parseAmount(a.tcs) - parseAmount(b.tcs),
+    // },
     {
       title: 'Actual TCS',
       dataIndex: 'actual_tcs',
@@ -682,24 +682,24 @@ export default function ProfitDetailsView() {
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.actual_tcs) - parseAmount(b.actual_tcs),
     },
-    {
-      title: 'TCS Leaks',
-      dataIndex: 'tcs_leaks',
-      align: 'center',
-      width: getDynamicWidth('tcs_leaks', 80),
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.tcs_leaks) - parseAmount(b.tcs_leaks),
-      render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
-    },
-    {
-      title: 'TDS',
-      dataIndex: 'tds',
-      align: 'center',
-      // width: 100,
-      width: getDynamicWidth('tds', 70),
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.tds) - parseAmount(b.tds),
-    },
+    // {
+    //   title: 'TCS Leaks',
+    //   dataIndex: 'tcs_leaks',
+    //   align: 'center',
+    //   width: getDynamicWidth('tcs_leaks', 80),
+    //   ellipsis: true,
+    //   sorter: (a, b) => parseAmount(a.tcs_leaks) - parseAmount(b.tcs_leaks),
+    //   render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+    // },
+    // {
+    //   title: 'TDS',
+    //   dataIndex: 'tds',
+    //   align: 'center',
+    //   // width: 100,
+    //   width: getDynamicWidth('tds', 70),
+    //   ellipsis: true,
+    //   sorter: (a, b) => parseAmount(a.tds) - parseAmount(b.tds),
+    // },
     {
       title: 'Actual TDS',
       dataIndex: 'actual_tds',
@@ -709,47 +709,47 @@ export default function ProfitDetailsView() {
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.actual_tds) - parseAmount(b.actual_tds),
     },
-    {
-      title: 'TDS Leaks',
-      dataIndex: 'tds_leaks',
-      align: 'center',
-      // width: 100,
-      width: getDynamicWidth('tds_leaks', 70),
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.tds_leaks) - parseAmount(b.tds_leaks),
-    },
-    {
-      title: 'Expected Settlement',
-      dataIndex: 'settleAmount',
-      align: 'center',
-      // width: 70,
-      width: getDynamicWidth('settleAmount', 70),
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.settleAmount) - parseAmount(b.settleAmount),
-    },
-    {
-      title: 'Revised Expected Settlement',
-      dataIndex: 'revisedExpectedSettlement',
-      align: 'center',
-      width: getDynamicWidth('revisedExpectedSettlement', 110),
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.revisedExpectedSettlement) - parseAmount(b.revisedExpectedSettlement),
-      render: (v, record) => (
-        <button
-          type="button"
-          onClick={() =>
-            setCalculationModal({
-              open: true,
-              type: 'revised_settlement',
-              record,
-            })
-          }
-          className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none whitespace-nowrap inline-block"
-        >
-          {v || '₹0.00'}
-        </button>
-      ),
-    },
+    // {
+    //   title: 'TDS Leaks',
+    //   dataIndex: 'tds_leaks',
+    //   align: 'center',
+    //   // width: 100,
+    //   width: getDynamicWidth('tds_leaks', 70),
+    //   ellipsis: true,
+    //   sorter: (a, b) => parseAmount(a.tds_leaks) - parseAmount(b.tds_leaks),
+    // },
+    // {
+    //   title: 'Expected Settlement',
+    //   dataIndex: 'settleAmount',
+    //   align: 'center',
+    //   // width: 70,
+    //   width: getDynamicWidth('settleAmount', 70),
+    //   ellipsis: true,
+    //   sorter: (a, b) => parseAmount(a.settleAmount) - parseAmount(b.settleAmount),
+    // },
+    // {
+    //   title: 'Revised Expected Settlement',
+    //   dataIndex: 'revisedExpectedSettlement',
+    //   align: 'center',
+    //   width: getDynamicWidth('revisedExpectedSettlement', 110),
+    //   ellipsis: true,
+    //   sorter: (a, b) => parseAmount(a.revisedExpectedSettlement) - parseAmount(b.revisedExpectedSettlement),
+    //   render: (v, record) => (
+    //     <button
+    //       type="button"
+    //       onClick={() =>
+    //         setCalculationModal({
+    //           open: true,
+    //           type: 'revised_settlement',
+    //           record,
+    //         })
+    //       }
+    //       className="text-[#2563eb] font-medium underline cursor-pointer bg-transparent border-none whitespace-nowrap inline-block"
+    //     >
+    //       {v || '₹0.00'}
+    //     </button>
+    //   ),
+    // },
 
     {
       title: 'Bank Settled Amount',
@@ -759,15 +759,15 @@ export default function ProfitDetailsView() {
       ellipsis: true,
       sorter: (a, b) => parseAmount(a.settlement_paid_in_bank) - parseAmount(b.settlement_paid_in_bank),
     },
-    {
-      title: 'Settlement Hold',
-      dataIndex: 'unsettled_not_paid',
-      align: 'center',
-      width: getDynamicWidth('unsettled_not_paid', 100),
-      ellipsis: true,
-      sorter: (a, b) => parseAmount(a.unsettled_not_paid) - parseAmount(b.unsettled_not_paid),
-      render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
-    },
+    // {
+    //   title: 'Settlement Hold',
+    //   dataIndex: 'unsettled_not_paid',
+    //   align: 'center',
+    //   width: getDynamicWidth('unsettled_not_paid', 100),
+    //   ellipsis: true,
+    //   sorter: (a, b) => parseAmount(a.unsettled_not_paid) - parseAmount(b.unsettled_not_paid),
+    //   render: (v) => <span style={{ color: parseFloat(v) !== 0 ? '#dc2626' : '#16a34a' }}>{v}</span>,
+    // },
 
     // {
     //   title: 'Settlement Leak',
@@ -1009,7 +1009,7 @@ export default function ProfitDetailsView() {
         <Card bordered={false}>
           <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
             {/* Search */}
-            <div className="relative w-[220px] lg:w-full md:w-full sm:w-full">
+            <div className="`rel`ative w-[220px] lg:w-full md:w-full sm:w-full">
               <input
                 type="text"
                 placeholder="Search..."

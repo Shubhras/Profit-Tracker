@@ -104,8 +104,16 @@ function CampaignStep({ wizardData, setWizardData, onNext }) {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="Portfolio">
+              <div className="mb-[24px]">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-[#272b41] dark:text-white60">Portfolio</label>
+                  <Button type="link" className="p-0 h-auto text-xs" onClick={() => setPortfolioModalOpen(true)}>
+                    + Create Portfolio
+                  </Button>
+                </div>
                 <Select
+                  className="w-full"
+                  style={{ width: '100%' }}
                   allowClear
                   placeholder="Select Portfolio"
                   value={wizardData.campaign.portfolioId}
@@ -124,11 +132,7 @@ function CampaignStep({ wizardData, setWizardData, onNext }) {
                     })
                   }
                 />
-              </Form.Item>
-
-              <Button type="link" style={{ padding: 0 }} onClick={() => setPortfolioModalOpen(true)}>
-                + Create Portfolio
-              </Button>
+              </div>
             </Col>
             <Col span={12}>
               <Form.Item label="Campaign Status">

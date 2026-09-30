@@ -318,7 +318,7 @@ function UsersList() {
   return (
     <>
       <div className="p-4 min-h-screen">
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
           {/* Header */}
           <div className="flex items-center justify-between px-3 py-3">
             <div>
@@ -349,18 +349,7 @@ function UsersList() {
             />
           </div>
 
-          <div
-            className="
-    [&_.ant-pagination]:text-[12px]
-    [&_.ant-pagination-item]:min-w-[24px]
-    [&_.ant-pagination-item]:h-[24px]
-    [&_.ant-pagination-item]:leading-[22px]
-    [&_.ant-pagination-prev]:h-[24px]
-    [&_.ant-pagination-next]:h-[24px]
-    [&_.ant-pagination-total-text]:text-[12px]
-    [&_.ant-select-selection-item]:text-[12px]
-  "
-          >
+          <div className="p-2">
             <Table
               rowKey="user_id"
               columns={columns}

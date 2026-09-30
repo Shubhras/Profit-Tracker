@@ -165,7 +165,7 @@ function HelpSupport() {
     <>
       <div className="min-h-screen p-4">
         <div className="flex gap-5 items-start">
-          <div className="flex-1 bg-white rounded-2xl border border-[#e5e7eb] p-5 overflow-hidden">
+          <div className="flex-1 bg-white rounded-lg border border-[#e5e7eb] p-5 overflow-hidden">
             {' '}
             {/* Header */}
             <div className="flex items-center justify-between mb-4">

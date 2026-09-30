@@ -359,7 +359,7 @@ function AdminUsers() {
   return (
     <>
       <div className="min-h-screen bg-[#f8fafc] p-4">
-        <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+        <div className="bg-white rounded-lg border border-gray-200 p-3">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-[20px] font-semibold text-gray-800">Admin Users</h2>
 

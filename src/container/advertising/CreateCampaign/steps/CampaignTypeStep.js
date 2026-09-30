@@ -17,25 +17,7 @@ function CampaignTypeStep({ onSelect }) {
         {/* CAMPAIGN CARDS */}
         <div className="mt-6 grid grid-cols-3 gap-6 lg:grid-cols-2 md:gap-4 sm:grid-cols-1">
           {/* SPONSORED PRODUCTS */}
-          <div
-            className="
-            h-full
-            min-h-[190px]
-            rounded-[8px]
-            border
-            border-[#E5E7EB]
-            bg-white
-            p-5
-            transition-all
-            duration-200
-            hover:border-[#22C55E]
-            hover:shadow-[0_4px_14px_rgba(34,197,94,0.10)]
-            flex
-            flex-col
-            justify-between
-            sm:p-4
-          "
-          >
+          <div className="shadow-md h-full min-h-[190px] rounded-[8px] border border-[#E5E7EB] bg-white p-5 transition-all duration-200 hover:border-[#22C55E] flex flex-col justify-between sm:p-4">
             <div>
               <h3 className="m-0 text-[18px] leading-[25px] font-semibold text-[#1F2937]">Sponsored Products</h3>
 
@@ -82,6 +64,8 @@ function CampaignTypeStep({ onSelect }) {
             flex
             flex-col
             sm:p-4
+            shadow-md
+            hover:border-[#22C55E]
           "
           >
             <div className="flex items-center gap-2 flex-wrap">
@@ -110,6 +94,8 @@ function CampaignTypeStep({ onSelect }) {
             flex
             flex-col
             sm:p-4
+            shadow-md
+            hover:border-[#22C55E]
           "
           >
             <div className="flex items-center gap-2 flex-wrap">
