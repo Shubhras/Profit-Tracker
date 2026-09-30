@@ -8,11 +8,14 @@ class AmazonAdsAccountAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "user",
+        "account_name",
         "profile_id",
+        "marketplace_string_id",
+        "amazon_id",
         "country_code",
         "currency_code",
         "region",
-        "created_at",
+        # "created_at",
     )
     search_fields = (
         "profile_id",

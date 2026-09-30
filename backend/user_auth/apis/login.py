@@ -279,15 +279,49 @@ class UserLoginAPI(APIView):
                 }
 
         profile_pic = None
-        if hasattr(user, 'profile') and user.profile.profile_picture:
-            url = user.profile.profile_picture.url
-            profile_pic = request.build_absolute_uri(url) if request else url
-
+        name = ""
         business_name = ""
-        if hasattr(user, 'profile') and user.profile and user.profile.business_name:
-            business_name = user.profile.business_name
-        elif subuser_obj and hasattr(subuser_obj.parent, 'profile') and subuser_obj.parent.profile and subuser_obj.parent.profile.business_name:
-            business_name = subuser_obj.parent.profile.business_name
+
+        # Safely obtain profile for user or parent (if sub-user)
+        user_profile = None
+        try:
+            user_profile = user.profile
+        except Exception:
+            user_profile = None
+
+        parent_profile = None
+        if subuser_obj and getattr(subuser_obj, 'parent', None):
+            try:
+                parent_profile = subuser_obj.parent.profile
+            except Exception:
+                parent_profile = None
+
+        target_profile = user_profile or parent_profile
+
+        if target_profile:
+            if getattr(target_profile, 'profile_picture', None):
+                try:
+                    url = target_profile.profile_picture.url
+                    profile_pic = request.build_absolute_uri(url) if request else url
+                except Exception:
+                    profile_pic = None
+
+            name = getattr(target_profile, 'name', '') or ""
+            business_name = getattr(target_profile, 'business_name', '') or ""
+
+        # Fallback for name if profile doesn't provide it
+        if not name:
+            full_name = user.get_full_name()
+            if full_name and full_name.strip():
+                name = full_name.strip()
+            elif user.first_name or user.last_name:
+                name = f"{user.first_name or ''} {user.last_name or ''}".strip()
+            elif user.username:
+                name = user.username
+            elif user.email:
+                name = user.email.split('@')[0]
+            else:
+                name = "User"
 
         return Response({
             "statusCode": 200,
@@ -297,8 +331,7 @@ class UserLoginAPI(APIView):
                 "user_id": user.id,
                 "email": user.email,
                 "business_name": business_name,
-                "name": business_name,
-                
+                "name": name,
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
                 "profile_picture": profile_pic,

@@ -245,11 +245,11 @@ class GrowthOpportunitiesAPIView(APIView):
                     )
 
                     high_roi_count = sku_ads_qs.filter(
-                        Q(cost__gt=0, sales__gte=F("cost") * 2.0) | Q(cost=0, sales__gt=0) | Q(cost__isnull=True, sales__gt=0)
+                        Q(cost__gt=0, sales__gte=F("cost")) | Q(cost=0, sales__gt=0) | Q(cost__isnull=True, sales__gt=0)
                     ).count()
 
                     low_roi_count = sku_ads_qs.filter(
-                        cost__gt=0, sales__lt=F("cost") * 2.0
+                        cost__gt=0, sales__lt=F("cost")
                     ).count()
 
                     no_sales_ad_spend_count = sku_ads_qs.filter(

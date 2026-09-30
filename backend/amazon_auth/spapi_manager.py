@@ -152,7 +152,19 @@ class SPAPIManager:
         headers['Authorization'] = authorization_header
 
         start_time = time.time()
-        response = requests.request(method, url, params=params, headers=headers, data=data)
+        max_retries = 4
+        backoff_delays = [3, 6, 10, 15]
+        response = None
+        for attempt in range(max_retries + 1):
+            response = requests.request(method, url, params=params, headers=headers, data=data)
+            # Automatic retry on rate limit (429 QuotaExceeded)
+            if response.status_code == 429 and attempt < max_retries:
+                delay = backoff_delays[attempt]
+                print(f"  [SP-API Rate Limit] 429 QuotaExceeded on {path}. Waiting {delay}s (retry {attempt + 1}/{max_retries})...")
+                time.sleep(delay)
+                continue
+            break
+
         elapsed_ms = int((time.time() - start_time) * 1000)
 
         try:
@@ -188,6 +200,10 @@ class SPAPIManager:
         """
         path = "/orders/v0/orders"
         
+        # When NextToken is provided, SP-API expects ONLY NextToken
+        if kwargs.get("NextToken"):
+            return self.request("GET", path, params={"NextToken": kwargs["NextToken"]})
+
         # Prepare parameters
         params = {}
         

@@ -529,8 +529,8 @@ function AdProducts() {
                   className="h-[30px] px-3 pr-6 rounded-lg border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
                 >
                   <option value="">All ROI</option>
-                  <option value="high">High ROI (ROAS ≥ 2.0)</option>
-                  <option value="low">Low ROI (ROAS &lt; 2.0)</option>
+                  <option value="high">High ROI (Sales ≥ Cost)</option>
+                  <option value="low">Low ROI (Cost &gt; Sales)</option>
                   <option value="zero_sales">Zero Sales</option>
                 </select>
 

@@ -973,6 +973,8 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
     ).values('transaction_id', 'identifier_value')
 
     replacement_tx_to_order = {row['transaction_id']: row['identifier_value'] for row in replacement_identifiers}
+    order_ids_with_replacement = set(replacement_tx_to_order.values())
+    total_replacement_return_count = len(order_ids_with_replacement)
 
     replacement_count_by_order = {}
     for txn in replacement_txns.filter(id__in=replacement_tx_to_order.keys()):
@@ -1314,6 +1316,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         # - If no actual Shipment transaction exists for an order,
         #   retain the existing estimated-fee calculation.
         estimated_fees = 0.0
+        applied_actual_fee_oids_row = set()
 
         for o in orders:
             oid = o.get('order__amazon_order_id')
@@ -1321,9 +1324,10 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
             o_qty = max(1, int(o.get('quantity_ordered') or 1))
 
             actual_estimatefee = estimatefee_actual_map.get(oid)
-            print(actual_estimatefee)
             if actual_estimatefee is not None:
-                estimated_fees += actual_estimatefee
+                if oid not in applied_actual_fee_oids_row:
+                    estimated_fees += actual_estimatefee
+                    applied_actual_fee_oids_row.add(oid)
                 continue
 
             f_item = None
@@ -1503,6 +1507,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         tds = 0.0
         row_calculated_promo = 0.0
         order_expected_op = {}
+        applied_actual_fee_oids_op = set()
 
         for child_key, c_orders in child_sku_orders.items():
             first_o = c_orders[0]
@@ -1554,9 +1559,17 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
                     o_taxable_val = o_fn_sales / (1.0 + (c_gst_rate / 100.0)) if c_gst_rate > 0 else o_fn_sales
                     o_tcs_val = o_taxable_val * (c_tcs_rate / 100.0) if c_tcs_rate else 0.0
                     o_tds_val = o_taxable_val * (c_tds_rate / 100.0) if c_tds_rate else 0.0
-                    f_info = estimated_fee_by_order_sku.get((oid, c_sku)) or estimated_fee_by_order.get(oid) or {}
-                    fba_w = float(f_info.get("fba_weight_handling_fee", 0.0) or 0.0)
-                    o_fees = max(0.0, float(f_info.get("estimated_fees", 0.0) or 0.0) - fba_w) * max(1, int(qty))
+                    actual_estimatefee = estimatefee_actual_map.get(oid)
+                    if actual_estimatefee is not None:
+                        if oid not in applied_actual_fee_oids_op:
+                            o_fees = actual_estimatefee
+                            applied_actual_fee_oids_op.add(oid)
+                        else:
+                            o_fees = 0.0
+                    else:
+                        f_info = estimated_fee_by_order_sku.get((oid, c_sku)) or estimated_fee_by_order.get(oid) or {}
+                        fba_w = float(f_info.get("fba_weight_handling_fee", 0.0) or 0.0)
+                        o_fees = max(0.0, float(f_info.get("estimated_fees", 0.0) or 0.0) - fba_w) * max(1, int(qty))
                     order_expected_op[oid] = order_expected_op.get(oid, 0.0) + max(0.0, o_base - o_fees - o_tcs_val - o_tds_val)
 
             c_final_net_sales = max(0.0, c_final_net_sales - c_promo_discount)
@@ -1604,8 +1617,8 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         else:
             order_return_type = None
 
-        row_courier_return_count = sum(1 for oid in row_order_ids if oid in order_ids_with_fee_refund)
-        row_customer_return_count = sum(1 for oid in row_order_ids if (oid in order_ids_with_refund and oid not in order_ids_with_fee_refund))
+        row_courier_return_count = sum(refund_count_by_order.get(oid, 1) for oid in row_order_ids if oid in order_ids_with_fee_refund)
+        row_customer_return_count = sum(refund_count_by_order.get(oid, 1) for oid in row_order_ids if (oid in order_ids_with_refund and oid not in order_ids_with_fee_refund))
 
         row_courier_return_price = sum(refund_amount_by_order.get(oid, 0.0) for oid in row_order_ids if oid in order_ids_with_fee_refund)
         row_customer_return_price = sum(refund_amount_by_order.get(oid, 0.0) for oid in row_order_ids if (oid in order_ids_with_refund and oid not in order_ids_with_fee_refund))
@@ -1747,8 +1760,8 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         revised_unsettled_not_paid = round(revised_exp_settlement_num - row_settlement_paid, 2)
         revised_settlement_leak = round(revised_exp_settlement_num - revised_unsettled_not_paid - row_settlement_paid, 2)
 
-        unsettled_not_paid = revised_unsettled_not_paid
-        settlement_leak = revised_settlement_leak
+        unsettled_not_paid = round(exp_settlement - row_settlement_paid, 2)
+        settlement_leak = round(exp_settlement - unsettled_not_paid - row_settlement_paid, 2)
 
         tot_revised_exp += revised_exp_settlement_num
         tot_revised_unsettled += revised_unsettled_not_paid
@@ -1907,6 +1920,10 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         total_claim_count += order_claim_count
         total_replacement_count += order_replacement_count
 
+    total_return_count = total_courier_return_count + total_customer_return_count
+    total_returns = total_return_count
+    total_replacement_count = total_replacement_return_count
+
     return_perc = (total_returns / total_qty * 100) if total_qty else 0.0
     overall_profit_margin = (total_profit / total_net_sales * 100) if total_net_sales else 0.0
     overall_gst_perc = (total_gst_payable / total_taxable_value * 100) if total_taxable_value else 0.0
@@ -1934,6 +1951,7 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         "returnqty": total_returns,
         "totalreturn": total_returns,
         "total_returns": total_returns,
+        "total_return_count": total_return_count,
         "retpercent": round(return_perc, 2),
         "totalreturnper": f"{round(return_perc, 2)}%",
         "courier_return_count": total_courier_return_count,
@@ -2313,7 +2331,7 @@ def _payment_reconcile_order_level_logic(request):
     - settlement_paid_in_bank
     - unsettled_not_paid
     """
-    req_data = getattr(request, "_full_data", None) or getattr(request, 'data', None) or {}
+    req_data = request.data if (hasattr(request, 'data') and isinstance(request.data, dict)) else {}
     pagination = req_data.get("pagination", {})
     page_no = int(pagination.get("pageNo", 0))
     page_size = int(pagination.get("pageSize", 25))
@@ -2771,10 +2789,8 @@ def _payment_reconcile_order_level_logic(request):
         revised_unsettled_not_paid = round(revised_exp_settlement_num - row_settlement_paid, 2)
         revised_settlement_leak = round(revised_exp_settlement_num - revised_unsettled_not_paid - row_settlement_paid, 2)
 
-        # unsettled_not_paid = round(exp_settlement_num - row_settlement_paid, 2)
-        # row_settlement_leak = round(exp_settlement_num - unsettled_not_paid - row_settlement_paid, 2)
-        unsettled_not_paid = round(revised_exp_settlement_num - row_settlement_paid, 2)
-        row_settlement_leak = round(revised_exp_settlement_num - unsettled_not_paid - row_settlement_paid, 2)
+        unsettled_not_paid = round(exp_settlement_num - row_settlement_paid, 2)
+        row_settlement_leak = round(exp_settlement_num - unsettled_not_paid - row_settlement_paid, 2)
         
 
         tot_act_fees += row_actual_fees

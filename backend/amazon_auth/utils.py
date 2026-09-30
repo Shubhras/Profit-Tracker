@@ -773,11 +773,12 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
 
     for order_id in order_ids_with_refund:
         amount = refund_amount_by_order.get(order_id, 0.0)
+        units = refund_count_by_order.get(order_id, 1)
         if order_id in order_ids_with_fee_refund:
-            courier_return_count += 1
+            courier_return_count += units
             courier_return_price += amount
         else:
-            customer_return_count += 1
+            customer_return_count += units
             customer_return_price += amount
 
     total_return_count = courier_return_count + customer_return_count
@@ -848,7 +849,9 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
             continue
         replacement_count_by_order[oid] = replacement_count_by_order.get(oid, 0) + 1
 
-    total_replacement_return_count = len(order_ids_with_replacement)
+    total_replacement_return_count = sum(replacement_count_by_order.values()) if replacement_count_by_order else len(order_ids_with_replacement)
+    customer_return_count += total_replacement_return_count
+    total_return_count = courier_return_count + customer_return_count
     # ---------------- BUILD RESPONSE ----------------
     results = []
 
@@ -856,6 +859,8 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
     total_mpfees = total_net_sales = total_qty = total_final_net_qty = 0
     total_final_net_sales = 0
     total_returns = total_shipping = 0
+    total_courier_return_count = 0
+    total_customer_return_count = 0
     total_stdcost = 0
     total_ret_percent = 0
     adjusted_gross_sales = 0
@@ -1347,19 +1352,17 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
         else:
             order_return_type = None
 
-        row_courier_return_count = 0
-        row_customer_return_count = 0
+        row_courier_return_count = sum(refund_count_by_order.get(oid, 1) for oid in row_order_ids if oid in order_ids_with_fee_refund)
+        row_customer_return_count = sum(refund_count_by_order.get(oid, 1) for oid in row_order_ids if (oid in order_ids_with_refund and oid not in order_ids_with_fee_refund))
+
         row_courier_return_price = 0.0
         row_customer_return_price = 0.0
-
         seen_order_ids_for_row = set(oid for oid in row_order_ids if oid in order_ids_with_refund)
         for oid in seen_order_ids_for_row:
             amount = refund_amount_by_order.get(oid, 0.0)
             if oid in order_ids_with_fee_refund:
-                row_courier_return_count += 1
                 row_courier_return_price += amount
             else:
-                row_customer_return_count += 1
                 row_customer_return_price += amount
 
         order_claim_amount = sum(claim_amount_by_order.get(oid, 0.0) for oid in row_order_ids)
@@ -1539,9 +1542,9 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
         total_exp_settlement += exp_settlement
         total_promo_discount += promo_discount
         
-        total_return_count += order_replacement_count
-        
-        customer_return_count += order_replacement_count
+        total_courier_return_count += row_courier_return_count
+        total_customer_return_count += row_customer_return_count
+        total_return_count = total_courier_return_count + total_customer_return_count
         total_ret_percent = (total_return_count / total_final_net_qty * 100) if total_final_net_qty else 0
     # ====== START: ADD ASINS WITH AD SPEND BUT NO ORDERS ======
     for p_asin, data in ads_by_parent.items():
@@ -1678,9 +1681,9 @@ def _get_sku_profits_for_dashboard(user, start_date, end_date, filters={}, from_
         final_total_return_amount = courier_return_price + customer_return_price
 
     return_claim_summary = {
-        "total_return_count": total_return_count,
-        "courier_return_count": courier_return_count,
-        "customer_return_count": customer_return_count,
+        "total_return_count": total_courier_return_count + total_customer_return_count,
+        "courier_return_count": total_courier_return_count,
+        "customer_return_count": total_customer_return_count,
         # "total_return_amount": float(courier_return_price + customer_return_price),
         # "courier_return_amount": float(courier_return_price),
         # "customer_return_amount": float(customer_return_price),

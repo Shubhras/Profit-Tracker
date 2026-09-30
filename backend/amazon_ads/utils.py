@@ -15,6 +15,44 @@ REGION_URLS = {
     "FE": "https://advertising-api-fe.amazon.com",
 }
 
+COUNTRY_TO_ADS_REGION = {
+    # North America (NA)
+    "US": "NA",
+    "CA": "NA",
+    "MX": "NA",
+    "BR": "NA",
+
+    # Europe (EU)
+    "UK": "EU",
+    "GB": "EU",
+    "FR": "EU",
+    "IT": "EU",
+    "ES": "EU",
+    "DE": "EU",
+    "NL": "EU",
+    "AE": "EU",
+    "PL": "EU",
+    "TR": "EU",
+    "EG": "EU",
+    "SA": "EU",
+    "SE": "EU",
+    "BE": "EU",
+    "IN": "EU",
+    "ZA": "EU",
+    "IE": "EU",
+
+    # Far East (FE)
+    "JP": "FE",
+    "AU": "FE",
+    "SG": "FE",
+}
+
+def get_ads_region_by_country(country_code, default="EU"):
+    if not country_code:
+        return default
+    return COUNTRY_TO_ADS_REGION.get(str(country_code).strip().upper(), default)
+
+
 import time
 import requests
 

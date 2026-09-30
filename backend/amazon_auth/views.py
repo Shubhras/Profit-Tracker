@@ -2,6 +2,7 @@ import os
 import secrets
 import requests
 import json
+import time
 from datetime import datetime, date, timedelta
 from django.shortcuts import redirect, render
 from django.http import JsonResponse
@@ -1099,7 +1100,7 @@ def sync_new_business_reports():
                         amazon_account=req.amazon_account,
                         user=req.amazon_account.user,
                         # date=report_json.get("reportSpecification", {}).get("dataStartTime"),
-                        date = item.get("date"),
+                        date=report_date or timezone.now().date(),
                         report_datetime=report_dt,
                         title=title,
                         parent_asin=parent_asin,
@@ -1449,6 +1450,8 @@ def sync_finances(request):
 
                 next_token = payload.get("NextToken")
                 if next_token:
+                    import time
+                    time.sleep(1.5)
                     kwargs = {"NextToken": next_token}
                 else:
                     break
@@ -1499,14 +1502,35 @@ def sync_orders(request):
         kwargs = {"MaxResultsPerPage": 100}
         if request.GET.get('CreatedAfter'): kwargs['CreatedAfter'] = request.GET.get('CreatedAfter')
         if request.GET.get('CreatedBefore'): kwargs['CreatedBefore'] = request.GET.get('CreatedBefore')
+        if request.GET.get('LastUpdatedAfter'): kwargs['LastUpdatedAfter'] = request.GET.get('LastUpdatedAfter')
+        if request.GET.get('LastUpdatedBefore'): kwargs['LastUpdatedBefore'] = request.GET.get('LastUpdatedBefore')
+
+        # Incremental Sync Optimization:
+        # If no explicit dates are requested and account already has synced orders,
+        # fetch only orders that were created or updated since the last sync.
+        # This prevents repeatedly fetching thousands of unchanged orders across dozens of pages.
+        if not kwargs.get('CreatedAfter') and not kwargs.get('LastUpdatedAfter'):
+            latest_order = Order.objects.filter(amazon_account=account, last_update_date__isnull=False).order_by('-last_update_date').first()
+            if latest_order and latest_order.last_update_date:
+                # Incremental sync: fetch orders updated in the last 7 days
+                # A 7-day buffer ensures any orders missed during server restarts or previous rate limits are automatically backfilled
+                buffer_time = latest_order.last_update_date - timedelta(days=7)
+                buffer_time = min(buffer_time, timezone.now() - timedelta(minutes=5))
+                kwargs['LastUpdatedAfter'] = buffer_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+        
+            # elif account.last_synced_at:
+            #     buffer_time = account.last_synced_at - timedelta(hours=2)
+            #     buffer_time = min(buffer_time, timezone.now() - timedelta(minutes=5))
+            #     kwargs['LastUpdatedAfter'] = buffer_time.strftime("%Y-%m-%dT%H:%M:%SZ")    
         
         # PAGINATION LOOP
         account_saved_count = 0
+        account_error = None
         while True:
             data = manager.fetch_orders(**kwargs) 
 
             if "errors" in data:
-                sync_details.append({"seller_id": account.seller_central_id, "status": "error", "errors": data["errors"]})
+                account_error = data["errors"]
                 break
 
             payload = data.get("payload", {})
@@ -1560,7 +1584,8 @@ def sync_orders(request):
                         items_shipped=o.get("NumberOfItemsShipped", 0),
                         items_unshipped=o.get("NumberOfItemsUnshipped", 0),
                         marketplace_id=o.get("MarketplaceId"),
-                        sales_channel=sales_channel_value
+                        sales_channel=sales_channel_value,
+                        raw_data = o
                     )
                     should_sync_items = True
                     account_saved_count += 1
@@ -1585,6 +1610,7 @@ def sync_orders(request):
                 if sync_items and should_sync_items:
                     logger.info(f"Order Items fetch start")
                     try:
+                        time.sleep(0.5)
                         items_response = manager.get_order_items(amazon_order_id)
                         
                         payload_items = items_response.get("payload", {})
@@ -1711,7 +1737,6 @@ def sync_orders(request):
                         #  update order item price have inpending status
                 if order and order.order_status and order.order_status.upper() == "PENDING":
                     try:
-                        from datetime import timedelta
                         last_updated_after = (order.last_update_date or order.purchase_date - timedelta(minutes=5)).strftime("%Y-%m-%dT%H:%M:%SZ")
                         p_params = {
                             "lastUpdatedAfter": last_updated_after,
@@ -1761,20 +1786,31 @@ def sync_orders(request):
             # PAGINATION
             next_token = payload.get("NextToken")
             if next_token:
+                time.sleep(2.5)
                 kwargs = {"NextToken": next_token}
             else:
                 break
 
-        # UPDATE LAST SYNC TIME
-        account.last_synced_at = timezone.now()
-        account.save()
-
         total_saved += account_saved_count
-        sync_details.append({
-            "seller_id": account.seller_central_id,
-            "status": "success",
-            "synced_count": account_saved_count
-        })
+
+        # UPDATE LAST SYNC TIME
+        # account.last_synced_at = timezone.now()
+        # account.save(update_fields=['last_synced_at'])
+        account.save(update_fields=['updated_at'])
+
+        if account_error:
+            sync_details.append({
+                "seller_id": account.seller_central_id,
+                "status": "error" if account_saved_count == 0 else "partial_success",
+                "synced_count": account_saved_count,
+                "errors": account_error
+            })
+        else:
+            sync_details.append({
+                "seller_id": account.seller_central_id,
+                "status": "success",
+                "synced_count": account_saved_count
+            })
 
     return JsonResponse({
         "status": "success",
@@ -2658,9 +2694,7 @@ def get_full_dashboard(request):
     cancelled_qty = 0
 
     
-    total_return_count_dashboard += total_replacement_return_count_dashboard
-    
-    customer_return_count_dashboard += total_replacement_return_count_dashboard
+    total_return_count_dashboard = courier_return_count_dashboard + customer_return_count_dashboard
     
     total_q = (
         gross_item_qty
@@ -6716,7 +6750,8 @@ def amazon_profitability_parent_transactions_shipping(request):
     total_sales = total_profit = total_final_net_qty = total_ads = Decimal(0)
     total_net_sales = total_qty = Decimal(0)
     total_final_net_sales = Decimal(0)
-    total_returns = total_shipping = Decimal(0)
+    total_returns = 0
+    total_shipping = Decimal(0)
     total_tcs = Decimal(0)
     total_tds = Decimal(0)
     total_mpfees = Decimal(0)   
@@ -6735,13 +6770,26 @@ def amazon_profitability_parent_transactions_shipping(request):
     total_courier_return_count = 0
     total_customer_return_count = 0
     
-    total_return_count = 0
     courier_return_count = 0
     customer_return_count = 0
     courier_return_price = 0.0
     customer_return_price = 0.0
-    total_claim_amount = 0.0
-    total_claim_count = 0
+
+    for order_id in order_ids_with_refund:
+        amount = refund_amount_by_order.get(order_id, 0.0)
+        units = refund_count_by_order.get(order_id, 1)
+        if order_id in order_ids_with_fee_refund:
+            courier_return_count += units
+            courier_return_price += amount
+        else:
+            customer_return_count += units
+            customer_return_price += amount
+
+    total_replacement_return_count = sum(replacement_count_by_order.values()) if replacement_count_by_order else len(order_ids_with_replacement)
+    customer_return_count += total_replacement_return_count
+    total_return_count = courier_return_count + customer_return_count
+    total_claim_amount = sum(claim_amount_by_order.values())
+    total_claim_count = len(claim_amount_by_order)
 
     total_other_expenses = Decimal(0)
 
@@ -6995,20 +7043,17 @@ def amazon_profitability_parent_transactions_shipping(request):
         else:
             order_return_type = None
 
-        # -------- Courier vs Customer split for THIS row's orders --------
-        row_courier_return_count = 0
-        row_customer_return_count = 0
+        row_courier_return_count = sum(refund_count_by_order.get(oid, 1) for oid in row_order_ids if oid in order_ids_with_fee_refund)
+        row_customer_return_count = sum(refund_count_by_order.get(oid, 1) for oid in row_order_ids if (oid in order_ids_with_refund and oid not in order_ids_with_fee_refund))
+
         row_courier_return_price = 0.0
         row_customer_return_price = 0.0
-
         seen_order_ids_for_row = set(oid for oid in row_order_ids if oid in order_ids_with_refund)
         for oid in seen_order_ids_for_row:
             amount = refund_amount_by_order.get(oid, 0.0)
             if oid in order_ids_with_fee_refund:
-                row_courier_return_count += 1
                 row_courier_return_price += amount
             else:
-                row_customer_return_count += 1
                 row_customer_return_price += amount
 
         order_claim_amount = sum(claim_amount_by_order.get(oid, 0.0) for oid in row_order_ids)
@@ -7238,22 +7283,6 @@ def amazon_profitability_parent_transactions_shipping(request):
             if gross_sales else 0
         )
         
-        courier_return_count = 0
-        customer_return_count = 0
-        courier_return_price = 0.0
-        customer_return_price = 0.0
-
-        for order_id in order_ids_with_refund:
-            amount = refund_amount_by_order.get(order_id, 0.0)
-            if order_id in order_ids_with_fee_refund:
-                courier_return_count += 1
-                courier_return_price += amount
-            else:
-                customer_return_count += 1
-                customer_return_price += amount
-
-        total_claim_amount = sum(claim_amount_by_order.values())
-        total_claim_count = len(claim_amount_by_order)
         
         row_customer_return_count += order_replacement_count
         
@@ -7346,7 +7375,7 @@ def amazon_profitability_parent_transactions_shipping(request):
         total_ads += ads
         total_qty += net_qty
         total_final_net_qty += final_net_qty
-        total_returns += return_units
+        total_returns += order_return_count
         total_shipping += shipping_final
         total_tcs += Decimal(str(round(tcs_total, 2)))
         total_tds += Decimal(str(round(tds_total, 2)))
@@ -7360,15 +7389,8 @@ def amazon_profitability_parent_transactions_shipping(request):
         total_exp_settlement += Decimal(str(round(exp_settlement, 2)))  
         total_promo_discount += Decimal(str(round(promo_discount, 2))) 
         
-        customer_return_count += order_replacement_count
-        
         total_courier_return_count += row_courier_return_count
         total_customer_return_count += row_customer_return_count
-
-        total_return_count += (
-            row_courier_return_count
-            + row_customer_return_count
-        )
 
     # ====== ADD ASINS WITH AD SPEND BUT NO ORDERS ======
     for sku, data in ads_by_sku.items():
@@ -7466,8 +7488,10 @@ def amazon_profitability_parent_transactions_shipping(request):
             "ads": format_currency(total_ads),
             "netqty": total_qty,
             "total_final_net_qty":total_final_net_qty,
-            "totalreturn": total_return_count,
-            "totalreturnper": f"{round((total_return_count / float(total_qty) * 100), 2) if total_final_net_qty else 0.0}%",
+            "totalreturn": total_returns,
+            "total_returns": total_returns,
+            "totalreturnper": f"{round((float(total_returns) / float(total_qty) * 100), 2) if (total_qty and float(total_qty) != 0) else 0.0}%",
+            "total_ret_percent": f"{round((float(total_returns) / float(total_qty) * 100), 2) if (total_qty and float(total_qty) != 0) else 0.0}%",
             "grosssales": format_currency(total_sales),
             "netsales": format_currency(total_net_sales),
             "total_net_sales": format_currency(total_net_sales),
@@ -7476,9 +7500,9 @@ def amazon_profitability_parent_transactions_shipping(request):
             "total_other_expenses": format_currency(-abs(total_other_expenses)),
             "profit": format_currency(total_profit),
             "grossprofitper": (
-                round((total_profit / total_net_sales) * 100, 2)
-                if total_net_sales
-                else round(total_profit, 2) if total_profit else 0
+                round((float(total_profit) / float(total_net_sales) * 100), 2)
+                if (total_net_sales and float(total_net_sales) != 0)
+                else round(float(total_profit), 2) if total_profit else 0
             ),
             "mpfees": format_currency(total_mpfees),
              "mp_gst": format_currency(total_mp_gst),
@@ -7486,7 +7510,7 @@ def amazon_profitability_parent_transactions_shipping(request):
             "estimatefees": format_currency(-abs(total_estimatefees)),
             "total_new_mpfees": format_currency(total_mpfees),
             "shippingfees": format_currency(total_shipping),
-            "tacos": (total_ads / total_sales * 100) if total_sales else 0,
+            "tacos": (float(total_ads) / float(total_sales) * 100) if (total_sales and float(total_sales) != 0) else 0,
             "stdcost": format_currency(total_stdcost),
             # "totalgst": format_currency(total_tcs),
             "totalgst": format_currency(0),
@@ -7495,15 +7519,13 @@ def amazon_profitability_parent_transactions_shipping(request):
             "taxable_value": format_currency(total_taxable_value),
 
             "gst_to_pay_amount": format_currency(total_gst_payable),
-            "gst_to_pay_perc": f"{round((total_gst_payable / total_taxable_value * 100), 2) if total_taxable_value else 1}%",
+            "gst_to_pay_perc": f"{round((float(total_gst_payable) / float(total_taxable_value) * 100), 2) if (total_taxable_value and float(total_taxable_value) != 0) else 1}%",
 
             "exp_settlement": format_currency(total_exp_settlement),
             
             "total_promo_discount":format_currency(total_promo_discount),
-            "total_return_count": total_return_count,
-            # "courier_return_count": courier_return_count,   
+            "total_return_count": total_courier_return_count + total_customer_return_count,
             "courier_return_count": total_courier_return_count, 
-            # "customer_return_count": customer_return_count,
             "customer_return_count": total_customer_return_count,
             "courier_return_price": format_currency(courier_return_price),
             "customer_return_price": format_currency(customer_return_price),
@@ -9108,11 +9130,12 @@ def sku_profit_report_transactions_shipping(request):
 
     for order_id in order_ids_with_refund:
         amount = refund_amount_by_order.get(order_id, 0.0)
+        units = refund_count_by_order.get(order_id, 1)
         if order_id in order_ids_with_fee_refund:
-            courier_return_count += 1
+            courier_return_count += units
             courier_return_price += amount
         else:
-            customer_return_count += 1
+            customer_return_count += units
             customer_return_price += amount
 
     total_return_count = courier_return_count + customer_return_count
@@ -9188,7 +9211,10 @@ def sku_profit_report_transactions_shipping(request):
             continue
         replacement_count_by_order[oid] = replacement_count_by_order.get(oid, 0) + 1
 
-    total_replacement_return_count = len(order_ids_with_replacement)
+    total_replacement_return_count = sum(replacement_count_by_order.values()) if replacement_count_by_order else len(order_ids_with_replacement)
+
+    customer_return_count += total_replacement_return_count
+    total_return_count = courier_return_count + customer_return_count
 
     # ---------------- BUILD RESPONSE ----------------
     results = []
@@ -9199,6 +9225,8 @@ def sku_profit_report_transactions_shipping(request):
     total_net_sales = 0
     total_final_net_sales = 0
     total_returns = 0
+    total_courier_return_count = 0
+    total_customer_return_count = 0
     total_new_charge = 0
     adjusted_gross_sales = 0
     total_estimatefees = 0
@@ -9398,8 +9426,8 @@ def sku_profit_report_transactions_shipping(request):
         else:
             order_return_type = None
 
-        row_courier_return_count = 1 if order_is_courier_return else 0
-        row_customer_return_count = 1 if (order_has_return and not order_is_courier_return) else 0
+        row_courier_return_count = order_return_count if order_is_courier_return else 0
+        row_customer_return_count = order_return_count if (order_has_return and not order_is_courier_return) else 0
 
         row_courier_return_price = (
             order_return_amount if order_is_courier_return else 0.0
@@ -9729,7 +9757,9 @@ def sku_profit_report_transactions_shipping(request):
         total_other_expenses += row_other_expense
         total_qty += net_qty
         total_final_net_qty += final_net_qty
-        total_returns += return_units
+        total_returns += order_return_count
+        total_courier_return_count += row_courier_return_count
+        total_customer_return_count += row_customer_return_count
         total_ads += ads
         total_mpfees += mpfees
         total_shipping += shipping_final
@@ -9744,9 +9774,6 @@ def sku_profit_report_transactions_shipping(request):
         total_gst_payable += round(gst_to_pay_amount, 2)
         total_exp_settlement += round(exp_settlement, 2)
         total_promo_discount += promo_discount
-        
-        total_return_count += order_replacement_count
-        customer_return_count += order_replacement_count
 
     # ---------------- RESPONSE ----------------
     return Response({
@@ -9770,9 +9797,10 @@ def sku_profit_report_transactions_shipping(request):
             "total_other_expenses": format_currency(-abs(total_other_expenses)),
             "profit": format_currency(total_profit),
             
-            "total_returns": total_return_count,
-            "total_ret_percent": f"{round((total_return_count / total_qty * 100), 2) if total_qty else 0.0}%",
-            "totalreturnper": f"{round((total_return_count / total_qty * 100), 2) if total_qty else 0.0}%",
+            "totalreturn": total_returns,
+            "total_returns": total_returns,
+            "total_ret_percent": f"{round((total_returns / total_qty * 100), 2) if total_qty else 0.0}%",
+            "totalreturnper": f"{round((total_returns / total_qty * 100), 2) if total_qty else 0.0}%",
 
             "totalprofitmargin": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
 
@@ -9793,9 +9821,9 @@ def sku_profit_report_transactions_shipping(request):
             "exp_settlement": format_currency(total_exp_settlement),
             
             "total_promo_discount":format_currency(total_promo_discount),
-            "total_return_count": total_return_count,
-            "courier_return_count": courier_return_count,
-            "customer_return_count": customer_return_count,
+            "total_return_count": total_courier_return_count + total_customer_return_count,
+            "courier_return_count": total_courier_return_count,
+            "customer_return_count": total_customer_return_count,
             "courier_return_price": format_currency(courier_return_price),
             "customer_return_price": format_currency(customer_return_price),
             
@@ -10623,11 +10651,12 @@ def orders_profit_report_transactions_shipping(request):
 
     for order_id in order_ids_with_refund:
         amount = refund_amount_by_order.get(order_id, 0.0)
+        units = refund_count_by_order.get(order_id, 1)
         if order_id in order_ids_with_fee_refund:
-            courier_return_count += 1
+            courier_return_count += units
             courier_return_price += amount
         else:
-            customer_return_count += 1
+            customer_return_count += units
             customer_return_price += amount
 
     total_return_count = courier_return_count + customer_return_count
@@ -10697,7 +10726,10 @@ def orders_profit_report_transactions_shipping(request):
             continue
         replacement_count_by_order[oid] = replacement_count_by_order.get(oid, 0) + 1
 
-    total_replacement_return_count = len(order_ids_with_replacement)
+    total_replacement_return_count = sum(replacement_count_by_order.values()) if replacement_count_by_order else len(order_ids_with_replacement)
+
+    customer_return_count += total_replacement_return_count
+    total_return_count = courier_return_count + customer_return_count
 
     # ---------------- BUILD RESPONSE ----------------
     results = []
@@ -10708,6 +10740,8 @@ def orders_profit_report_transactions_shipping(request):
     total_net_sales = 0
     total_final_net_sales = 0
     total_returns = 0
+    total_courier_return_count = 0
+    total_customer_return_count = 0
     total_new_charge = 0
     adjusted_gross_sales = 0
     total_estimatefees = 0
@@ -10876,8 +10910,8 @@ def orders_profit_report_transactions_shipping(request):
         else:
             order_return_type = None
 
-        row_courier_return_count = 1 if order_is_courier_return else 0
-        row_customer_return_count = 1 if (order_has_return and not order_is_courier_return) else 0
+        row_courier_return_count = order_return_count if order_is_courier_return else 0
+        row_customer_return_count = order_return_count if (order_has_return and not order_is_courier_return) else 0
 
         row_courier_return_price = (
             order_return_amount if order_is_courier_return else 0.0
@@ -11172,7 +11206,9 @@ def orders_profit_report_transactions_shipping(request):
         total_other_expenses += row_other_expense
         total_qty += net_qty
         total_final_net_qty += final_net_qty
-        total_returns += return_units
+        total_returns += order_return_count
+        total_courier_return_count += row_courier_return_count
+        total_customer_return_count += row_customer_return_count
         total_ads += ads
         total_mpfees += mpfees
         total_shipping += shipping_final
@@ -11187,9 +11223,6 @@ def orders_profit_report_transactions_shipping(request):
         total_gst_payable += round(gst_to_pay_amount, 2)
         total_exp_settlement += round(exp_settlement, 2)
         total_promo_discount += promo_discount
-        
-        total_return_count += order_replacement_count
-        customer_return_count += order_replacement_count
 
     # ---------------- RESPONSE ----------------
     return Response({
@@ -11213,9 +11246,10 @@ def orders_profit_report_transactions_shipping(request):
             "total_other_expenses": format_currency(-abs(total_other_expenses)),
             "profit": format_currency(total_profit),
             
-            "total_returns": total_return_count,
-            "total_ret_percent": f"{round((total_return_count / total_qty * 100), 2) if total_qty else 0.0}%",
-            "totalreturnper": f"{round((total_return_count / total_qty * 100), 2) if total_qty else 0.0}%",
+            "totalreturn": total_returns,
+            "total_returns": total_returns,
+            "total_ret_percent": f"{round((total_returns / total_qty * 100), 2) if total_qty else 0.0}%",
+            "totalreturnper": f"{round((total_returns / total_qty * 100), 2) if total_qty else 0.0}%",
 
             "totalprofitmargin": round((total_profit / total_net_sales * 100), 2) if total_net_sales else 0,
 
@@ -11242,9 +11276,9 @@ def orders_profit_report_transactions_shipping(request):
             "total_new_expected_settlement": format_currency(total_exp_settlement),
             
             "total_promo_discount": format_currency(total_promo_discount),
-            "total_return_count": total_return_count,
-            "courier_return_count": courier_return_count,
-            "customer_return_count": customer_return_count,
+            "total_return_count": total_courier_return_count + total_customer_return_count,
+            "courier_return_count": total_courier_return_count,
+            "customer_return_count": total_customer_return_count,
             "courier_return_price": format_currency(courier_return_price),
             "customer_return_price": format_currency(customer_return_price),
             
@@ -12164,11 +12198,12 @@ def amazon_profitability_details_transactions_shipping(request):
 
     for order_id in order_ids_with_refund:
         amount = refund_amount_by_order.get(order_id, 0.0)
+        units = refund_count_by_order.get(order_id, 1)
         if order_id in order_ids_with_fee_refund:
-            courier_return_count += 1
+            courier_return_count += units
             courier_return_price += amount
         else:
-            customer_return_count += 1
+            customer_return_count += units
             customer_return_price += amount
 
     total_return_count = courier_return_count + customer_return_count
@@ -12239,7 +12274,10 @@ def amazon_profitability_details_transactions_shipping(request):
             continue
         replacement_count_by_order[oid] = replacement_count_by_order.get(oid, 0) + 1
 
-    total_replacement_return_count = len(order_ids_with_replacement)
+    total_replacement_return_count = sum(replacement_count_by_order.values()) if replacement_count_by_order else len(order_ids_with_replacement)
+
+    customer_return_count += total_replacement_return_count
+    total_return_count = courier_return_count + customer_return_count
 
     from_date_local = from_date_ist.date() if from_date_ist else None
     to_date_local = to_date_ist.date() if to_date_ist else None
@@ -12281,6 +12319,8 @@ def amazon_profitability_details_transactions_shipping(request):
     total_mpfees = total_net_sales = total_qty = total_final_net_qty = 0
     total_final_net_sales = 0
     total_returns = total_shipping = 0
+    total_courier_return_count = 0
+    total_customer_return_count = 0
     total_stdcost = 0
     total_ret_percent = 0
     adjusted_gross_sales = 0
@@ -12756,19 +12796,17 @@ def amazon_profitability_details_transactions_shipping(request):
         else:
             order_return_type = None
 
-        row_courier_return_count = 0
-        row_customer_return_count = 0
+        row_courier_return_count = sum(refund_count_by_order.get(oid, 1) for oid in row_order_ids if oid in order_ids_with_fee_refund)
+        row_customer_return_count = sum(refund_count_by_order.get(oid, 1) for oid in row_order_ids if (oid in order_ids_with_refund and oid not in order_ids_with_fee_refund))
+
         row_courier_return_price = 0.0
         row_customer_return_price = 0.0
-
         seen_order_ids_for_row = set(oid for oid in row_order_ids if oid in order_ids_with_refund)
         for oid in seen_order_ids_for_row:
             amount = refund_amount_by_order.get(oid, 0.0)
             if oid in order_ids_with_fee_refund:
-                row_courier_return_count += 1
                 row_courier_return_price += amount
             else:
-                row_customer_return_count += 1
                 row_customer_return_price += amount
 
         order_claim_amount = sum(claim_amount_by_order.get(oid, 0.0) for oid in row_order_ids)
@@ -12939,7 +12977,9 @@ def amazon_profitability_details_transactions_shipping(request):
         total_mpfees += t_new_charge
         total_qty += net_qty
         total_final_net_qty += final_net_qty
-        total_returns += return_units
+        total_returns += order_return_count
+        total_courier_return_count += row_courier_return_count
+        total_customer_return_count += row_customer_return_count
         total_shipping += shipping_final
         total_stdcost += stdcost
         total_gst += gst
@@ -12953,12 +12993,8 @@ def amazon_profitability_details_transactions_shipping(request):
         total_gst_payable += gst_to_pay_amount
         total_exp_settlement += exp_settlement
         total_promo_discount += promo_discount
-
-        total_return_count += order_replacement_count
-
-        customer_return_count += order_replacement_count
         # total_ret_percent = (total_return_count / total_final_net_qty * 100) if total_final_net_qty else 0
-        total_ret_percent = (total_return_count / total_qty * 100) if total_qty else 0
+        total_ret_percent = (total_returns / total_qty * 100) if total_qty else 0
     # ====== START: ADD ASINS WITH AD SPEND BUT NO ORDERS ======
     for p_asin, data in ads_by_parent.items():
         if p_asin in processed_parent_asins:
@@ -13074,8 +13110,8 @@ def amazon_profitability_details_transactions_shipping(request):
             "ads": format_currency(total_ads),
             "netqty": total_qty,
             "total_final_net_qty":total_final_net_qty,
-            # "totalreturn": total_returns,
-            "totalreturn": total_return_count,
+            "totalreturn": total_returns,
+            "total_returns": total_returns,
             "totalreturnper": f"{round(total_ret_percent, 2)}%",
             "grosssales": format_currency(total_sales),
             "netsales": format_currency(total_net_sales),
@@ -13112,9 +13148,9 @@ def amazon_profitability_details_transactions_shipping(request):
             "exp_settlement": format_currency(total_exp_settlement),
             
             "total_promo_discount": format_currency(total_promo_discount),
-            "total_return_count": total_return_count,
-            "courier_return_count": courier_return_count,
-            "customer_return_count": customer_return_count,
+            "total_return_count": total_courier_return_count + total_customer_return_count,
+            "courier_return_count": total_courier_return_count,
+            "customer_return_count": total_customer_return_count,
             "courier_return_price": format_currency(courier_return_price),
             "customer_return_price": format_currency(customer_return_price),
 
