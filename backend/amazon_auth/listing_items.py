@@ -49,108 +49,166 @@ from openpyxl.utils import get_column_letter
 
 
 def sync_listing_items(user, account):
+    """
+    Synchronizes all Amazon listing items for the account.
+    Uses a sliding date window on 'lastUpdatedAfter' (sorted ASC) to seamlessly
+    bypass Amazon's SP-API 1,000-item hard limit per search query.
+    """
+    import dateutil.parser
+    from datetime import timedelta
 
     manager = SPAPIManager(user=user, account=account)
 
     seller_id = account.seller_central_id
     marketplace_id = account.marketplace_id
 
-    next_token = None
     total_synced = 0
+    synced_skus = set()
+    last_updated_after = None
+    window_index = 0
+    max_windows = 100  # Safety limit allowing up to 100,000 listings
 
-    while True:
+    while window_index < max_windows:
+        window_index += 1
+        next_token = None
+        window_items_count = 0
+        window_new_items = 0
+        last_seen_date = None
 
-        response = manager.search_listing_items(
-            seller_id=seller_id,
-            marketplace_id=marketplace_id,
-            page_token=next_token
-        )
+        print(f"--- Starting listing sync window #{window_index} (lastUpdatedAfter: {last_updated_after}) ---")
 
-        items = response.get("items", [])
+        while True:
 
-        for item in items:
+            response = manager.search_listing_items(
+                seller_id=seller_id,
+                marketplace_id=marketplace_id,
+                page_token=next_token,
+                last_updated_after=last_updated_after,
+                sort_order="ASC"
+            )
 
-            try:
+            items = response.get("items", [])
+            if not items:
+                break
 
-                sku = item.get("sku")
+            for item in items:
 
-                summary = item.get("summaries", [{}])[0]
+                try:
 
-                asin = summary.get("asin")
+                    sku = item.get("sku")
 
-                marketplace_id = summary.get("marketplaceId")
+                    summary = item.get("summaries", [{}])[0] if item.get("summaries") else {}
 
-                product_type = summary.get("productType")
+                    asin = summary.get("asin")
 
-                condition_type = summary.get("conditionType")
+                    mkt_id = summary.get("marketplaceId") or marketplace_id
 
-                status = summary.get("status", [])
+                    product_type = summary.get("productType")
 
-                fnsku = summary.get("fnSku")
+                    condition_type = summary.get("conditionType")
 
-                item_name = summary.get("itemName")
+                    status = summary.get("status", [])
 
-                created_date = summary.get("createdDate")
+                    fnsku = summary.get("fnSku")
 
-                last_updated_date = summary.get("lastUpdatedDate")
+                    item_name = summary.get("itemName")
 
-                main_image = summary.get("mainImage", {})
+                    created_date = summary.get("createdDate")
 
-                image_url = main_image.get("link") if main_image else None
+                    last_updated_date = summary.get("lastUpdatedDate")
 
-                with transaction.atomic():
+                    if last_updated_date:
+                        last_seen_date = last_updated_date
 
-                    AmazonListingItem.objects.update_or_create(
+                    main_image = summary.get("mainImage", {})
 
-                        amazon_account=account,
-                        sku=sku,
-                        marketplace_id=marketplace_id,
+                    image_url = main_image.get("link") if main_image else None
 
-                        defaults={
+                    with transaction.atomic():
 
-                            "user": user,
-                            "asin": asin,
-                            "product_type": product_type,
-                            "condition_type": condition_type,
-                            "status": status,
-                            "fnsku": fnsku,
-                            "item_name": item_name,
-                            "image_url": image_url,
-                            "created_date": created_date,
-                            "last_updated_date": last_updated_date,
-                            "attributes": item.get("attributes", {}),
-                            "issues": item.get("issues", []),
-                            "offers": item.get("offers", []),
-                            "fulfillment_availability": item.get(
-                                "fulfillmentAvailability",
-                                []
-                            ),
-                            "relationships": item.get(
-                                "relationships",
-                                []
-                            ),
-                            "product_types": item.get(
-                                "productTypes",
-                                []
-                            ),
-                            "raw_response": item
-                        }
-                    )
+                        AmazonListingItem.objects.update_or_create(
 
-                total_synced += 1
+                            amazon_account=account,
+                            sku=sku,
+                            marketplace_id=mkt_id,
 
-                print(f"Synced SKU: {sku}")
+                            defaults={
 
-            except Exception as e:
+                                "user": user,
+                                "asin": asin,
+                                "product_type": product_type,
+                                "condition_type": condition_type,
+                                "status": status,
+                                "fnsku": fnsku,
+                                "item_name": item_name,
+                                "image_url": image_url,
+                                "created_date": created_date,
+                                "last_updated_date": last_updated_date,
+                                "attributes": item.get("attributes", {}),
+                                "issues": item.get("issues", []),
+                                "offers": item.get("offers", []),
+                                "fulfillment_availability": item.get(
+                                    "fulfillmentAvailability",
+                                    []
+                                ),
+                                "relationships": item.get(
+                                    "relationships",
+                                    []
+                                ),
+                                "product_types": item.get(
+                                    "productTypes",
+                                    []
+                                ),
+                                "raw_response": item
+                            }
+                        )
 
-                print(f"Error syncing SKU {item.get('sku')}: {str(e)}")
+                    window_items_count += 1
+                    if sku not in synced_skus:
+                        synced_skus.add(sku)
+                        total_synced += 1
+                        window_new_items += 1
 
-        pagination = response.get("pagination", {})
+                    print(f"Synced SKU: {sku}")
 
-        next_token = pagination.get("nextToken")
+                except Exception as e:
 
-        if not next_token:
+                    print(f"Error syncing SKU {item.get('sku')}: {str(e)}")
+
+            pagination = response.get("pagination", {})
+
+            next_token = pagination.get("nextToken")
+
+            if not next_token:
+                break
+
+        print(f"Window #{window_index} complete: {window_items_count} items processed ({window_new_items} new). Total unique: {total_synced}")
+
+        # If this window processed fewer than 980 items (out of 1000 max),
+        # or if next_token was absent, it means Amazon naturally reached the end of the catalog
+        if window_items_count < 980:
+            print("Reached the end of all catalog listings.")
             break
+
+        # If no new items were discovered in this entire window, stop to avoid infinite loop
+        if window_new_items == 0:
+            print("No new items discovered in this window; stopping.")
+            break
+
+        # If no last_seen_date is available, we cannot advance the sliding window
+        if not last_seen_date:
+            print("No lastUpdatedDate available to advance sliding window; stopping.")
+            break
+
+        # Advance last_updated_after to the last seen date
+        if last_seen_date == last_updated_after:
+            try:
+                dt = dateutil.parser.isoparse(last_seen_date) + timedelta(milliseconds=1)
+                last_updated_after = dt.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            except Exception:
+                break
+        else:
+            last_updated_after = last_seen_date
 
     return total_synced
 

@@ -514,7 +514,9 @@ class SPAPIManager:
         self,
         seller_id,
         marketplace_id,
-        page_token=None
+        page_token=None,
+        last_updated_after=None,
+        sort_order="ASC",
     ):
 
         path = f"/listings/2021-08-01/items/{seller_id}"
@@ -531,12 +533,15 @@ class SPAPIManager:
                 "productTypes"
             ]),
             "sortBy": "lastUpdatedDate",
-            "sortOrder": "DESC",
+            "sortOrder": sort_order,
             "pageSize": 20,
         }
 
         if page_token:
             params["pageToken"] = page_token
+
+        if last_updated_after:
+            params["lastUpdatedAfter"] = last_updated_after
 
         return self.request(
             "GET",
