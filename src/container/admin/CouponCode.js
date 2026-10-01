@@ -226,7 +226,7 @@ function CouponCode() {
           {/* Header */}
           <div className="flex justify-between items-center border-b px-4 py-3 md:flex-col md:items-start md:gap-3">
             {' '}
-            <h2 className="text-[18px] sm:text-[15px] font-semibold text-gray-800">Coupon Codes</h2>
+            <h2 className="text-[20px] sm:text-[15px] font-semibold text-gray-800">Coupon Codes</h2>
             <div className="flex items-center gap-3">
               <Input
                 placeholder="Search promo code..."

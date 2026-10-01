@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Tag, Input, Button, Modal, Select, message, Tooltip } from 'antd';
+import { Table, Tag, Input, Button, Modal, Select, message } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { getAdminTickets, updateTicketStatus } from '../../redux/admin/actionCreator';
@@ -12,8 +12,17 @@ function HelpSupport() {
     current: 1,
     pageSize: 10,
   });
+  const [searchText, setSearchText] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [priority, setPriority] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500);
 
-  // const page=01
+    return () => clearTimeout(timer);
+  }, [searchText]);
+
   const [statusModal, setStatusModal] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState('');
@@ -22,8 +31,15 @@ function HelpSupport() {
   const { getTicketsLists, loading } = useSelector((state) => state.AdminDashboard);
 
   useEffect(() => {
-    dispatch(getAdminTickets(pagination.current, pagination.pageSize));
-  }, [dispatch, pagination.current, pagination.pageSize]);
+    dispatch(getAdminTickets(pagination.current, pagination.pageSize, debouncedSearch, '', priority));
+  }, [dispatch, pagination.current, pagination.pageSize, debouncedSearch, priority]);
+
+  useEffect(() => {
+    setPagination((prev) => ({
+      ...prev,
+      current: 1,
+    }));
+  }, [debouncedSearch, priority]);
 
   const handleOpenStatusModal = (record) => {
     setSelectedTicket(record);
@@ -47,6 +63,7 @@ function HelpSupport() {
       status: item.status || 'Open',
       adminNote: item.admin_note || '',
       description: item.description || '',
+      document: item.document || '',
     })) || [];
 
   const columns = [
@@ -73,11 +90,9 @@ function HelpSupport() {
       align: 'center',
       // render: (text) => <span className="text-[12px]">{text}</span>,
       render: (v) => (
-        <Tooltip title={v} color="black" overlayInnerStyle={{ color: '#fff' }}>
-          <span className="font-medium text-[#111827] block truncate cursor-pointer" style={{ maxWidth: '220px' }}>
-            {v}
-          </span>
-        </Tooltip>
+        <span className="font-medium text-[#111827] block truncate" style={{ maxWidth: '220px' }}>
+          {v}
+        </span>
       ),
     },
 
@@ -101,14 +116,14 @@ function HelpSupport() {
       dataIndex: 'priority',
       width: 120,
       align: 'center',
-      render: (priority) => {
+      render: (priorityValue) => {
         const colorMap = {
           High: 'red',
           Medium: 'orange',
           Low: 'green',
         };
 
-        return <Tag color={colorMap[priority]}>{priority}</Tag>;
+        return <Tag color={colorMap[priorityValue]}>{priorityValue}</Tag>;
       },
     },
     {
@@ -129,7 +144,7 @@ function HelpSupport() {
               ? 'red'
               : 'default'
           }
-          className="cursor-pointer px-3 py-1 rounded-full"
+          className="cursor-pointer px-3 py-1 rounded-l"
           onClick={() => handleOpenStatusModal(record)}
         >
           {status?.replace(/_/g, ' ')?.replace(/\b\w/g, (c) => c.toUpperCase())}
@@ -168,11 +183,50 @@ function HelpSupport() {
           <div className="flex-1 bg-white rounded-lg border border-[#e5e7eb] p-5 overflow-hidden">
             {' '}
             {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[18px] font-semibold text-[#111827] mb-0">All Tickets</h2>
+            {/* Header */}
+            <div className="mb-4">
+              <h2 className="text-[20px] font-semibold text-[#111827] mb-0">All Tickets</h2>
 
-              <div className="flex items-center gap-3">
-                <Input placeholder="Search tickets..." prefix={<SearchOutlined />} className="w-[280px] h-[30px]" />
+              {/* Filters */}
+              <div className="flex items-center justify-between mt-4">
+                {/* Search - Left */}
+                <Input
+                  placeholder="Search tickets..."
+                  prefix={<SearchOutlined />}
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  allowClear
+                  className="w-[280px] h-[34px] rounded-lg"
+                />
+
+                {/* Priority + Reset - Right */}
+                <div className="flex items-center gap-3">
+                  <select
+                    value={priority}
+                    onChange={(e) => setPriority(e.target.value)}
+                    aria-label="Filter by Priority"
+                    className="w-[180px] h-[34px] rounded-lg border border-[#d9d9d9] bg-white px-3 text-[13px] text-[#374151] outline-none cursor-pointer"
+                  >
+                    <option value="">Filter by Priority</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+
+                  <Button
+                    onClick={() => {
+                      setSearchText('');
+                      setPriority('');
+                      setPagination((prev) => ({
+                        ...prev,
+                        current: 1,
+                      }));
+                    }}
+                    className="h-[34px] px-3 rounded-lg"
+                  >
+                    Reset
+                  </Button>
+                </div>
               </div>
             </div>
             {/* Table */}
@@ -185,7 +239,7 @@ function HelpSupport() {
               pagination={{
                 current: pagination.current,
                 pageSize: pagination.pageSize,
-                total: ticketData.length,
+                total: getTicketsLists?.results?.pagination?.total || 0,
                 showSizeChanger: true,
                 pageSizeOptions: ['10', '20', '50', '100'],
                 showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
@@ -266,15 +320,30 @@ function HelpSupport() {
           <div className="mt-5">
             <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
 
-            <TextArea
-              value={selectedTicket?.description || ''}
-              disabled
-              autoSize={{
-                minRows: 2,
-                maxRows: 6,
-              }}
-              className="bg-gray-50 cursor-not-allowed"
-            />
+            <div className="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 min-h-[80px] whitespace-pre-wrap">
+              {selectedTicket?.description || 'No description available'}
+            </div>
+          </div>
+
+          {/* Attachment */}
+          <div className="mt-5">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Attachment</label>
+
+            {selectedTicket?.document ? (
+              <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                <div className="flex items-center justify-center rounded-lg bg-white border border-gray-200 overflow-hidden">
+                  <img
+                    src={selectedTicket.document}
+                    alt="Ticket attachment"
+                    className="max-h-[220px] w-auto max-w-full object-contain"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center">
+                <p className="text-sm text-gray-400 m-0">No attachment available</p>
+              </div>
+            )}
           </div>
 
           {/* Footer */}
