@@ -18,12 +18,19 @@ function HelpSupport() {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState('');
   const [adminNote, setAdminNote] = useState('');
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
 
   const { getTicketsLists, loading } = useSelector((state) => state.AdminDashboard);
 
   useEffect(() => {
-    dispatch(getAdminTickets(pagination.current, pagination.pageSize));
-  }, [dispatch, pagination.current, pagination.pageSize]);
+    const timer = setTimeout(() => {
+      dispatch(getAdminTickets(pagination.current, pagination.pageSize, search, statusFilter, priorityFilter));
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [dispatch, pagination.current, pagination.pageSize, search, statusFilter, priorityFilter]);
 
   const handleOpenStatusModal = (record) => {
     setSelectedTicket(record);
@@ -152,7 +159,7 @@ function HelpSupport() {
 
             setStatusModal(false);
 
-            dispatch(getAdminTickets(pagination.current, pagination.pageSize));
+            dispatch(getAdminTickets(pagination.current, pagination.pageSize, search, statusFilter, priorityFilter));
           } else {
             message.error('Failed to update ticket');
           }
@@ -166,13 +173,53 @@ function HelpSupport() {
       <div className="min-h-screen p-4">
         <div className="flex gap-5 items-start">
           <div className="flex-1 bg-white rounded-lg border border-[#e5e7eb] p-5 overflow-hidden">
-            {' '}
             {/* Header */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <h2 className="text-[18px] font-semibold text-[#111827] mb-0">All Tickets</h2>
 
-              <div className="flex items-center gap-3">
-                <Input placeholder="Search tickets..." prefix={<SearchOutlined />} className="w-[280px] h-[30px]" />
+              <div className="flex flex-wrap items-center gap-3">
+                <Input
+                  placeholder="Search Ticket, User, Email..."
+                  prefix={<SearchOutlined />}
+                  allowClear
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPagination((prev) => ({ ...prev, current: 1 }));
+                  }}
+                  className="w-[260px] h-[32px]"
+                />
+
+                <Select
+                  value={statusFilter}
+                  onChange={(val) => {
+                    setStatusFilter(val);
+                    setPagination((prev) => ({ ...prev, current: 1 }));
+                  }}
+                  className="w-[140px]"
+                  options={[
+                    { label: 'All Status', value: 'all' },
+                    { label: 'Open', value: 'open' },
+                    { label: 'In Progress', value: 'in_progress' },
+                    { label: 'Resolved', value: 'resolved' },
+                    { label: 'Closed', value: 'closed' },
+                  ]}
+                />
+
+                <Select
+                  value={priorityFilter}
+                  onChange={(val) => {
+                    setPriorityFilter(val);
+                    setPagination((prev) => ({ ...prev, current: 1 }));
+                  }}
+                  className="w-[130px]"
+                  options={[
+                    { label: 'All Priority', value: 'all' },
+                    { label: 'Low', value: 'low' },
+                    { label: 'Medium', value: 'medium' },
+                    { label: 'High', value: 'high' },
+                  ]}
+                />
               </div>
             </div>
             {/* Table */}
@@ -185,7 +232,7 @@ function HelpSupport() {
               pagination={{
                 current: pagination.current,
                 pageSize: pagination.pageSize,
-                total: ticketData.length,
+                total: getTicketsLists?.count ?? ticketData.length,
                 showSizeChanger: true,
                 pageSizeOptions: ['10', '20', '50', '100'],
                 showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,

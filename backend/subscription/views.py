@@ -84,7 +84,12 @@ class CreateSubscriptionAPIView(APIView):
             rzp_sub_id = None
             if getattr(settings, 'RAZORPAY_KEY_ID', None) and getattr(settings, 'RAZORPAY_KEY_SECRET', None):
                 try:
-                    growth_base_price = float(growth_plan.monthly_price) if (growth_plan and growth_plan.monthly_price) else 9999.0
+                    is_monthly = (billing_cycle == "monthly")
+                    if growth_plan:
+                        growth_base_price = float(growth_plan.monthly_price if is_monthly else growth_plan.annual_price)
+                    else:
+                        growth_base_price = 9999.0 if is_monthly else 107989.0
+
                     coupon_code = request.data.get("coupon_code") or request.data.get("promocode")
                     discount_amount = 0.0
                     promo_obj = None
@@ -114,22 +119,29 @@ class CreateSubscriptionAPIView(APIView):
                     final_growth_price = round(taxable_growth + gst_growth, 2)
                     growth_amount_paise = int(round(final_growth_price * 100))
 
-                    plan_item_name = f"TrackMyProfit Growth Plan ({promo_obj.promocode})" if promo_obj else "TrackMyProfit Growth Plan"
+                    cycle_label = "Monthly" if is_monthly else "Annual"
+                    freq_suffix = "mo" if is_monthly else "yr"
+                    plan_item_name = f"TrackMyProfit Growth Plan ({cycle_label})"
+                    if promo_obj:
+                        plan_item_name += f" - {promo_obj.promocode}"
+
+                    period = "monthly" if is_monthly else "yearly"
+                    total_count = 12 if is_monthly else 5
 
                     rzp_plan = client.plan.create({
-                        "period": "monthly",
+                        "period": period,
                         "interval": 1,
                         "item": {
                             "name": plan_item_name,
                             "amount": growth_amount_paise,
                             "currency": "INR",
-                            "description": f"Monthly subscription for Growth Plan after 7-day trial (₹{final_growth_price}/mo)"
+                            "description": f"{cycle_label} subscription for Growth Plan after 7-day trial (₹{final_growth_price}/{freq_suffix})"
                         }
                     })
 
                     rzp_sub = client.subscription.create({
                         "plan_id": rzp_plan["id"],
-                        "total_count": 12,
+                        "total_count": total_count,
                         "quantity": 1,
                         "customer_notify": 1,
                         "start_at": start_at_ts

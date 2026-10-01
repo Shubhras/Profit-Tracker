@@ -552,12 +552,17 @@ export const deleteNotification = (id, callback) => {
   };
 };
 
-export const getAdminTickets = (page = 1, limit = 10) => {
+export const getAdminTickets = (page = 1, limit = 10, search = '', status = '', priority = '') => {
   return async (dispatch) => {
     dispatch(getTicketsListBegin());
 
     try {
-      const response = await DataService.get(`user/admin/support-tickets/?page=${page}&limit=${limit}`);
+      let url = `user/admin/support-tickets/?page=${page}&limit=${limit}`;
+      if (search && search.trim()) url += `&search=${encodeURIComponent(search.trim())}`;
+      if (status && status !== 'all') url += `&status=${encodeURIComponent(status.trim())}`;
+      if (priority && priority !== 'all') url += `&priority=${encodeURIComponent(priority.trim())}`;
+
+      const response = await DataService.get(url);
 
       if (response.data?.results?.status === true) {
         dispatch(getTicketsListSuccess(response.data));

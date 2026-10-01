@@ -198,6 +198,7 @@ def amazon_callback(request):
     account.save()
 
     if created:
+        now = timezone.now()
         subscription = (
             UserSubscription.objects.filter(
                 user=user,
@@ -207,13 +208,24 @@ def amazon_callback(request):
             .select_related("plan")
             .first()
         )
+        if not subscription:
+            subscription = (
+                UserSubscription.objects.filter(
+                    user=user,
+                    status="cancelled",
+                    is_paid=True,
+                    end_date__gt=now,
+                )
+                .select_related("plan")
+                .first()
+            )
 
         if not subscription or not subscription.plan:
             return JsonResponse(
                 {"status": False, "message": "No active subscription found"}, status=403
             )
 
-        days = subscription.plan.initial_sync_duration
+        days = getattr(subscription.plan, "initial_sync_duration", 30) or 30
 
         try:
             task_run_initial_amazon_sync.delay(
@@ -1523,6 +1535,38 @@ def sync_orders(request):
             #     buffer_time = min(buffer_time, timezone.now() - timedelta(minutes=5))
             #     kwargs['LastUpdatedAfter'] = buffer_time.strftime("%Y-%m-%dT%H:%M:%SZ")    
         
+        # Determine allowed historical duration from user's active/cancelled subscription
+        min_allowed_purchase_date = None
+        if not request.GET.get('CreatedAfter'):
+            now = timezone.now()
+            sub = (
+                UserSubscription.objects.filter(
+                    user=user,
+                    status="active",
+                    is_paid=True,
+                )
+                .select_related("plan")
+                .first()
+            )
+            if not sub:
+                sub = (
+                    UserSubscription.objects.filter(
+                        user=user,
+                        status="cancelled",
+                        is_paid=True,
+                        end_date__gt=now,
+                    )
+                    .select_related("plan")
+                    .first()
+                )
+
+            sync_days = getattr(sub.plan, "initial_sync_duration", None) if (sub and sub.plan) else None
+            if not sync_days or sync_days <= 0:
+                sync_days = 7  # Default fallback if plan duration is unspecified
+
+            # Buffer of 2 days to account for UTC vs IST / timezone differences
+            min_allowed_purchase_date = now - timedelta(days=sync_days + 2)
+
         # PAGINATION LOOP
         account_saved_count = 0
         account_error = None
@@ -1544,6 +1588,7 @@ def sync_orders(request):
                 amazon_order_id = o.get("AmazonOrderId")
                 total_info = o.get("OrderTotal", {})
                 last_update = parse_date(o.get("LastUpdateDate"))
+                order_purchase_date = parse_date(o.get("PurchaseDate"))
 
                 order = Order.objects.filter(
                     amazon_account=account,
@@ -1556,6 +1601,10 @@ def sync_orders(request):
                 #  NEW
                 # FIXED new order block
                 if not order:
+                    # Enforce subscription historical duration limit: Ignore orders older than allowed window
+                    if min_allowed_purchase_date and order_purchase_date and order_purchase_date < min_allowed_purchase_date:
+                        continue
+
                     raw_channel = o.get("SalesChannel") or o.get("salesChannel")
                     if isinstance(raw_channel, dict):
                         sales_channel_value = raw_channel.get("channelName") or raw_channel.get("marketplaceName") or "Amazon"
@@ -1571,7 +1620,7 @@ def sync_orders(request):
                         amazon_account=account,
                         amazon_order_id=amazon_order_id,
                         user=user,
-                        purchase_date=parse_date(o.get("PurchaseDate")),
+                        purchase_date=order_purchase_date,
                         last_update_date=last_update,
                         order_status=o.get("OrderStatus"),
                         total_amount=total_info.get("Amount", 0),

@@ -282,6 +282,7 @@ else:
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER") or os.getenv("MAIL_USERNAME", "")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD") or os.getenv("MAIL_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL") or os.getenv("MAIL_FROM_ADDRESS", EMAIL_HOST_USER or "noreply@trackmyprofit.com")
+ADMIN_NOTIFICATION_EMAIL = os.getenv("ADMIN_NOTIFICATION_EMAIL", "letstalk@trackmyprofit.com")
 
 # CELERY CONFIGURATION
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")

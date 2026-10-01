@@ -273,6 +273,10 @@ def sync_historical_orders(days, accounts=None):
                     # =================================================
 
                     if not order:
+                        # Guardrail: skip creating orders older than the requested historical sync window
+                        if purchase_date and purchase_date < (start_date - timedelta(days=2)):
+                            continue
+
                         raw_channel = order_data.get("SalesChannel") or order_data.get("salesChannel")
                         if isinstance(raw_channel, dict):
                             sales_channel_value = raw_channel.get("channelName") or raw_channel.get("marketplaceName") or "Amazon"
