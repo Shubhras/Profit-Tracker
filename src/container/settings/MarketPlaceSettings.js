@@ -8,6 +8,7 @@ import {
   AppstoreOutlined,
   LinkOutlined,
   CalendarOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 
 import { getChannels } from '../../redux/Settings/actionCreator';
@@ -388,6 +389,14 @@ function ConnectedMarketplaceCard({ market, iconMap }) {
       </div>
 
       {/* Connected Date */}
+
+      <div className="flex items-center gap-1.5 mt-2.5">
+        <UserOutlined className="text-[11px] text-[#667085]" />
+
+        <span className="text-[11px] text-[#667085]">Account Name:</span>
+
+        <span className="text-[11px] font-medium text-[#475467]">{market.store_name || market.storename || '-'}</span>
+      </div>
 
       <div className="flex items-center gap-1.5 mt-2.5">
         <CalendarOutlined className="text-[11px] text-[#667085]" />
