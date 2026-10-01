@@ -271,9 +271,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
     is_sub_user = serializers.SerializerMethodField()
     role = serializers.SerializerMethodField()
 
-    profile_picture = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
     connected_channels = serializers.SerializerMethodField() 
+
+    has_subscription = serializers.SerializerMethodField()
+    subscription_status = serializers.SerializerMethodField()
+    is_trial = serializers.SerializerMethodField()
+    isTrial = serializers.SerializerMethodField()
+    free_trail_use = serializers.SerializerMethodField()
 
     subscription = serializers.SerializerMethodField()
     unread_notification_count = serializers.SerializerMethodField()
@@ -301,6 +306,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "is_client_user",
             "is_sub_user",
             "role",
+
+            "has_subscription",
+            "subscription_status",
+            "is_trial",
+            "isTrial",
+            "free_trail_use",
 
             "subscription",
             "unread_notification_count",
@@ -359,44 +370,190 @@ class UserProfileSerializer(serializers.ModelSerializer):
             channels.append("Myntra")
         return channels    
 
-    def get_subscription(self, obj):
+    def _get_subscription_info(self, obj):
+        if hasattr(self, '_cached_sub_info') and self._cached_sub_info.get('user_id') == obj.id:
+            return self._cached_sub_info
+
+        is_admin_user = (
+            obj.is_superuser 
+            or obj.is_staff 
+            or AdminSubUser.objects.filter(user=obj).exists()
+        )
+
+        if is_admin_user:
+            info = {
+                'user_id': obj.id,
+                'has_subscription': True,
+                'subscription_status': "active",
+                'is_trial': False,
+                'free_trail_use': False,
+                'sub': None,
+                'target_user': obj,
+                'subuser': None,
+            }
+            self._cached_sub_info = info
+            return info
+
         subuser = SubUser.objects.filter(user=obj).first()
         target_user = subuser.parent if subuser else obj
+        now = timezone.now()
 
-        subscription = (
+        # Auto-expire any active subscriptions whose end_date has passed in real-time
+        expired_active_subs = UserSubscription.objects.filter(
+            user=target_user,
+            status="active",
+            end_date__isnull=False,
+            end_date__lte=now
+        )
+        if expired_active_subs.exists():
+            expired_active_subs.update(status="expired")
+            if hasattr(target_user, "profile") and target_user.profile:
+                target_user.profile.subscription_active = False
+                target_user.profile.subscription_status = "expired"
+                target_user.profile.save(update_fields=["subscription_active", "subscription_status"])
+
+        # Prioritize active and paid subscription first (ensuring end_date is in future or null)
+        sub = (
             UserSubscription.objects
             .select_related("plan")
-            .prefetch_related(
-                "plan__modules",
-                "plan__submodules__module"
-            )
+            .prefetch_related("plan__modules", "plan__submodules__module")
             .filter(
-                Q(status="active") | (Q(status="cancelled") & Q(end_date__gt=timezone.now())),
+                Q(end_date__gt=now) | Q(end_date__isnull=True),
                 user=target_user,
+                status="active",
                 is_paid=True
             )
             .order_by("-created_at")
             .first()
         )
-
-        if not subscription:
-            subscription = (
+        # If no active subscription, check for cancelled but paid subscription that has not expired yet
+        if not sub:
+            sub = (
                 UserSubscription.objects
                 .select_related("plan")
-                .prefetch_related(
-                    "plan__modules",
-                    "plan__submodules__module"
+                .prefetch_related("plan__modules", "plan__submodules__module")
+                .filter(
+                    user=target_user,
+                    status="cancelled",
+                    is_paid=True,
+                    end_date__gt=now
                 )
+                .order_by("-created_at")
+                .first()
+            )
+        if not sub:
+            sub = (
+                UserSubscription.objects
+                .select_related("plan")
+                .prefetch_related("plan__modules", "plan__submodules__module")
                 .filter(user=target_user)
                 .order_by("-created_at")
                 .first()
             )
 
-        if not subscription:
+        is_cancelled_active = bool(
+            sub
+            and sub.status == "cancelled"
+            and sub.is_paid
+            and sub.end_date
+            and sub.end_date > now
+        )
+        is_active_valid = bool(
+            sub
+            and sub.status == "active"
+            and sub.is_paid
+            and (sub.end_date is None or sub.end_date > now)
+        )
+        has_subscription = bool(is_active_valid or is_cancelled_active)
+        subscription_status = "active" if has_subscription else (sub.status if sub else "no_subscription")
+        is_trial = bool(
+            sub and (
+                (sub.plan and "starter" in (sub.plan.plan_name or "").lower())
+                or (sub.plan and "starter" in (getattr(sub.plan, "slug", None) or "").lower())
+                or getattr(sub, "status", None) == "trial"
+                or (hasattr(target_user, "profile") and target_user.profile and target_user.profile.trial_end_date and target_user.profile.trial_end_date > now)
+            )
+        )
+        user_profile = getattr(target_user, "profile", None)
+
+        has_starter_sub = UserSubscription.objects.filter(
+            user=target_user,
+            is_paid=True
+        ).filter(
+            Q(plan__plan_name__icontains="starter") | Q(plan__slug__icontains="starter")
+        ).exists()
+
+        current_starter = bool(
+            sub
+            and sub.is_paid
+            and (
+                (sub.plan and "starter" in (sub.plan.plan_name or "").lower())
+                or (sub.plan and "starter" in (getattr(sub.plan, "slug", None) or "").lower())
+            )
+        )
+
+        # Synchronize profile subscriptiontype with the actual current subscription
+        if sub and sub.plan and user_profile:
+            save_fields = []
+            if user_profile.subscriptiontype != sub.plan:
+                user_profile.subscriptiontype = sub.plan
+                save_fields.append("subscriptiontype")
+            if not has_starter_sub and not current_starter:
+                if user_profile.trial_start_date is not None or user_profile.trial_end_date is not None:
+                    user_profile.trial_start_date = None
+                    user_profile.trial_end_date = None
+                    save_fields.extend(["trial_start_date", "trial_end_date"])
+            if save_fields:
+                user_profile.save(update_fields=save_fields)
+
+        profile_trial_used = bool(
+            user_profile
+            and user_profile.trial_start_date is not None
+            and user_profile.subscriptiontype
+            and "starter" in (user_profile.subscriptiontype.plan_name or "").lower()
+            and (has_starter_sub or current_starter)
+        )
+
+        free_trail_use = bool(has_starter_sub or current_starter or profile_trial_used)
+
+        info = {
+            'user_id': obj.id,
+            'has_subscription': has_subscription,
+            'subscription_status': subscription_status,
+            'is_trial': is_trial,
+            'free_trail_use': free_trail_use,
+            'sub': sub,
+            'target_user': target_user,
+            'subuser': subuser,
+        }
+        self._cached_sub_info = info
+        return info
+
+    def get_has_subscription(self, obj):
+        return self._get_subscription_info(obj)['has_subscription']
+
+    def get_subscription_status(self, obj):
+        return self._get_subscription_info(obj)['subscription_status']
+
+    def get_is_trial(self, obj):
+        return self._get_subscription_info(obj)['is_trial']
+
+    def get_isTrial(self, obj):
+        return self._get_subscription_info(obj)['is_trial']
+
+    def get_free_trail_use(self, obj):
+        return self._get_subscription_info(obj)['free_trail_use']
+
+    def get_subscription(self, obj):
+        info = self._get_subscription_info(obj)
+        subscription = info['sub']
+        subuser = info['subuser']
+
+        if not subscription or not subscription.plan:
             return None
 
         # If subscription has expired, inactive, or unpaid created (and not trial), do not grant active subscription modules/access
-        is_sub_trial = getattr(subscription, "is_trial", False)
+        is_sub_trial = info['is_trial']
         if subscription.status in ["expired", "inactive", "created"] or (not subscription.is_paid and not is_sub_trial) or (subscription.end_date and subscription.end_date <= timezone.now()):
             return None
 
