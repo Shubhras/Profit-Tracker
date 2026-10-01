@@ -192,7 +192,7 @@ function SupportTicket() {
               },
             ]}
           >
-            <Input placeholder="Enter ticket title" size="small" />
+            <Input placeholder="Enter ticket title" size="small" maxLength={50} showCount />
           </Form.Item>
 
           <Form.Item
@@ -205,7 +205,7 @@ function SupportTicket() {
               },
             ]}
           >
-            <Input.TextArea rows={5} placeholder="Describe your issue..." />
+            <Input.TextArea rows={5} maxLength={500} showCount placeholder="Describe your issue..." />
           </Form.Item>
 
           <Form.Item
@@ -217,7 +217,20 @@ function SupportTicket() {
               return e?.fileList?.[0];
             }}
           >
-            <Upload.Dragger beforeUpload={() => false} maxCount={1} accept=".jpg,.jpeg,.png,.doc,.docx">
+            <Upload.Dragger
+              beforeUpload={(file) => {
+                const isLt5MB = file.size / 1024 / 1024 < 5;
+
+                if (!isLt5MB) {
+                  message.error('File size must be less than 5 MB');
+                  return Upload.LIST_IGNORE;
+                }
+
+                return false;
+              }}
+              maxCount={1}
+              accept=".jpg,.jpeg,.png,.doc,.docx"
+            >
               <p className="ant-upload-drag-icon">
                 <InboxOutlined
                   style={{

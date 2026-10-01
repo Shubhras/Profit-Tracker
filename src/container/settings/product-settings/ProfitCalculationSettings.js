@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Button, InputNumber, Select, message, Spin, Tooltip } from 'antd';
-import { ReloadOutlined, SaveOutlined } from '@ant-design/icons';
-import { PageHeader } from '../../../components/page-headers/page-headers';
+import { ReloadOutlined, SaveOutlined, CheckOutlined } from '@ant-design/icons';
 import { DataService } from '../../../config/dataService/dataService';
 
 const { Option } = Select;
@@ -344,12 +343,6 @@ export default function ProfitCalculationSettings() {
       .reduce((acc, r) => acc + (r.v || 0), 0);
   }, [activeTab, calculatedData.rows]);
 
-  const PageRoutes = [
-    { path: '', breadcrumbName: 'Settings' },
-    { path: '', breadcrumbName: 'Product Setting' },
-    { path: '', breadcrumbName: 'Profit Calculation Settings' },
-  ];
-
   // Helper render method for Card with On/Off Switch Button
   const renderItemCard = (key, title, subtitle, infoTooltip, accentColor, iconSvg, signPrefix = '−') => {
     const isChecked = !!settings[key];
@@ -401,9 +394,7 @@ export default function ProfitCalculationSettings() {
         >
           <span
             className={`w-[46px] h-[26px] rounded-full relative transition-colors duration-200 ${
-              isChecked
-                ? 'bg-gradient-to-r from-[#1BB255] to-[#15803D] shadow-[0_2px_9px_rgba(22,163,74,0.32)]'
-                : 'bg-[#D1D5DB]'
+              isChecked ? 'bg-gradient-to-r from-[#1BB255] to-[#15803D]' : 'bg-[#D1D5DB]'
             }`}
           >
             <span
@@ -411,14 +402,11 @@ export default function ProfitCalculationSettings() {
                 isChecked ? 'translate-x-[20px]' : 'translate-x-0'
               }`}
             >
-              <svg
-                viewBox="0 0 24 24"
-                className={`w-2.5 h-2.5 stroke-[#15803D] stroke-[3] fill-none transition-all duration-200 ${
+              <CheckOutlined
+                className={`text-[10px] text-[#15803D] transition-opacity duration-200 ${
                   isChecked ? 'opacity-100' : 'opacity-0'
                 }`}
-              >
-                <path d="M5 13l4.5 4.5L19 7" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              />
             </span>
           </span>
 
@@ -438,11 +426,17 @@ export default function ProfitCalculationSettings() {
     <>
       {/* PAGE HEADER */}
       <div className="px-6 xl:px-[15px] pt-3 pb-4">
-        <PageHeader routes={PageRoutes} title="Profit Calculation Settings" className="p-0 bg-transparent" />
-        <div className="flex items-center justify-between mt-1 sm:flex-col sm:items-start sm:gap-3">
-          <p className="text-[13.5px] text-[#6B7280] m-0">
-            Choose which components to include in your profit calculation.
-          </p>
+        <div className="flex items-center justify-between sm:flex-col sm:items-start sm:gap-3">
+          {/* Heading + Description */}
+          <div>
+            <h1 className="text-xl font-semibold text-[#111827] m-0">Profit Calculation Settings</h1>
+
+            <p className="text-[13.5px] text-[#6B7280]">
+              Choose which components to include in your profit calculation.
+            </p>
+          </div>
+
+          {/* Buttons */}
           <div className="flex items-center gap-3">
             <Button
               onClick={handleResetDefault}
@@ -451,19 +445,19 @@ export default function ProfitCalculationSettings() {
             >
               Reset to Default
             </Button>
+
             <Button
               type="primary"
               onClick={handleSaveSettings}
               loading={saving}
               icon={<SaveOutlined />}
-              className="h-[38px] px-5 rounded-[9px] text-[13.5px] font-semibold bg-[#16A34A] hover:bg-[#15803D] border-none text-white shadow-sm flex items-center gap-0"
+              className="h-[38px] px-4 rounded-[9px] text-[13.5px] font-semibold bg-[#16A34A] hover:bg-[#15803D] border-none text-white shadow-sm flex items-center gap-0"
             >
               Save Settings
             </Button>
           </div>
         </div>
       </div>
-
       <main className="px-6 xl:px-[15px] pb-[50px]">
         <Spin spinning={loading}>
           <div className="grid grid-cols-12 gap-5 items-start">

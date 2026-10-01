@@ -537,7 +537,7 @@ export default function EstimatedFees() {
                       icon={<UploadOutlined />}
                       size="small"
                       loading={uploading}
-                      className="bg-[#16A34A] hover:bg-[#15803D] border-none text-[12.5px] h-[32px] rounded-[6px]"
+                      className="bg-[#16A34A] border-none text-[12.5px] h-[32px] rounded-[6px]"
                     >
                       Upload rate card
                     </Button>
@@ -570,18 +570,18 @@ export default function EstimatedFees() {
               <div className="w-[300px] max-w-full">
                 <label className="block text-[15px] font-semibold text-[#374151] mb-1.5">Select Marketplace</label>
                 <div className="relative">
-                  <Select
+                  <select
                     value={selectedMarketplace || undefined}
                     placeholder="Select Marketplace"
                     onChange={(val) => setSelectedMarketplace(val)}
-                    className="w-full h-[45px] custom-mp-select [&_.ant-select-selector]:!h-[40px] [&_.ant-select-selection-item]:!leading-[38px]"
+                    className="h-[35px] w-full rounded-l border border-[#e5e7eb] bg-white px-3 text-[12px] text-[#374151] outline-none"
                   >
                     {marketplaceOptions.map((channel) => (
-                      <Option key={channel} value={channel}>
+                      <option key={channel} value={channel}>
                         {channel}
-                      </Option>
+                      </option>
                     ))}
-                  </Select>
+                  </select>
                 </div>
               </div>
 
@@ -589,7 +589,7 @@ export default function EstimatedFees() {
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => openModal()}
-                className="bg-[#16A34A] hover:bg-[#15803D] border-none text-[13px] font-semibold h-[35px] px-5 rounded-[8px] flex items-center mb-1"
+                className="bg-[#16A34A] border-none text-[13px] font-semibold h-[35px] px-5 rounded-lg flex items-center"
               >
                 Add fee
               </Button>

@@ -557,12 +557,24 @@ export const getAdminTickets = (page = 1, limit = 10, search = '', status = '', 
     dispatch(getTicketsListBegin());
 
     try {
-      let url = `user/admin/support-tickets/?page=${page}&limit=${limit}`;
-      if (search && search.trim()) url += `&search=${encodeURIComponent(search.trim())}`;
-      if (status && status !== 'all') url += `&status=${encodeURIComponent(status.trim())}`;
-      if (priority && priority !== 'all') url += `&priority=${encodeURIComponent(priority.trim())}`;
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
 
-      const response = await DataService.get(url);
+      if (search.trim()) {
+        params.append('search', search.trim());
+      }
+
+      if (status) {
+        params.append('status', status);
+      }
+
+      if (priority) {
+        params.append('priority', priority);
+      }
+
+      const response = await DataService.get(`user/admin/support-tickets/?${params.toString()}`);
 
       if (response.data?.results?.status === true) {
         dispatch(getTicketsListSuccess(response.data));

@@ -467,14 +467,17 @@ export default function BusinessExpenses() {
                   rules={[{ required: true, message: 'Please select a marketplace' }]}
                   initialValue={connectedMarketplaces[0]?.name || 'Amazon'}
                 >
-                  <Select className="h-[36px]" placeholder="Select Marketplace">
+                  <select
+                    className="h-[34px] w-full rounded-l border border-[#e5e7eb] bg-white px-3 text-[12px] text-[#374151] outline-none"
+                    placeholder="Select Marketplace"
+                  >
                     {connectedChannels.map((channel) => (
-                      <Option key={channel} value={channel}>
+                      <option key={channel} value={channel}>
                         {channel}
-                      </Option>
+                      </option>
                     ))}
                     {/* <Option value="All">All Connected Marketplaces</Option> */}
-                  </Select>
+                  </select>
                 </Form.Item>
 
                 {/* Cost Value */}
@@ -663,7 +666,7 @@ export default function BusinessExpenses() {
                   type="primary"
                   onClick={() => handleSubmit('applied')}
                   loading={saving}
-                  className="bg-[#16A36A] hover:bg-[#128A59]"
+                  className="bg-[#16A36A]"
                 >
                   {editingExpense ? 'Update & apply to profit' : 'Save & apply to profit'}
                 </Button>
