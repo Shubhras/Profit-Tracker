@@ -339,7 +339,7 @@ function EstimatedFees() {
   return (
     <div className="p-4">
       <div className="bg-white rounded-xl border border-[#e5e7eb] p-4">
-        <h2 className="text-[20px] font-semibold mb-4">Estimated Fees</h2>
+        <h2 className="text-[21px] font-semibold mb-4">Estimated Fees</h2>
 
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           {/* Search */}
@@ -371,7 +371,7 @@ function EstimatedFees() {
             <select
               value={fullfilment}
               onChange={(e) => setFullfilment(e.target.value)}
-              className="h-[30px] w-[150px] lg:flex-1 md:flex-1 sm:w-full px-2 rounded-lg border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
+              className="h-[35px] w-[150px] lg:flex-1 md:flex-1 sm:w-full px-2 rounded-lg border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
             >
               <option value="">All Fulfillment</option>
               <option value="AFN">AFN</option>
@@ -381,7 +381,7 @@ function EstimatedFees() {
             <Dropdown trigger={['click']} dropdownRender={() => manageColumnsDropdown} placement="bottomRight">
               <Button
                 icon={<SettingOutlined style={{ fontSize: 14 }} />}
-                className="!h-[30px] !flex !items-center !justify-center gap-1 text-[13px] !rounded-lg !border-[#dbe1e8] !text-[#374151] !font-medium"
+                className="!h-[35px] !flex !items-center !justify-center gap-1 text-[13px] !rounded-lg !border-[#dbe1e8] !text-[#374151] !font-medium"
               >
                 <span className="text-[#4B5563] text-[13px]">Manage Columns</span>
               </Button>
@@ -392,7 +392,7 @@ function EstimatedFees() {
                 type="primary"
                 icon={<ExportOutlined />}
                 loading={exportLoading}
-                className="bg-[#10b981] hover:bg-[#059669] border-none text-white font-medium px-4 !h-[30px] rounded-lg flex items-center gap-1.5 shadow-sm text-[13px]"
+                className="bg-[#10b981] hover:bg-[#059669] border-none text-white font-medium px-4 !h-[35px] rounded-lg flex items-center gap-1.5 shadow-sm text-[13px]"
               >
                 Export <DownOutlined style={{ fontSize: 10 }} />
               </Button>

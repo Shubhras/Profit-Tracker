@@ -26,7 +26,7 @@ import {
 
 function SectionCard({ icon, title, subtitle, children }) {
   return (
-    <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50/60 p-6">
+    <div className="mb-4 rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
       <div className="flex items-center gap-3 mb-5">
         <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
           <span className="text-blue-600 text-[15px]">{icon}</span>
@@ -139,7 +139,7 @@ function AddSubscription() {
           <h2 className="mb-0 text-[23px] font-semibold">{isEditMode ? 'Update Subscription' : 'Add Subscription'}</h2>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-3">
           <Form
             form={form}
             layout="vertical"

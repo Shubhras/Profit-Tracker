@@ -21,6 +21,29 @@ import { getPaymentReconcileDetails, exportProfitabilityDetails } from '../../re
 
 // import { PageHeader } from '../../components/page-headers/page-headers';
 
+const DEFAULT_SELECTED_COLUMNS = [
+  'image',
+  'channel',
+  'view',
+  'netQty',
+  'final_net_qty',
+  'cancelled_qty',
+  'returnqty',
+  'courier_return_count',
+  'customer_return_count',
+  'returnPercent',
+  'netsales',
+  'promo_discount',
+  'final_net_sales',
+  'actual_fees',
+  'actual_shipping_charges',
+  'actual_mp_gst',
+  'actual_tcs',
+  'actual_tds',
+  'settlement_paid_in_bank',
+  'action',
+];
+
 export default function ProfitDetailsView() {
   const { channel } = useParams();
   const location = useLocation();
@@ -46,7 +69,7 @@ export default function ProfitDetailsView() {
 
   const [previewImage, setPreviewImage] = React.useState('');
   const [previewOpen, setPreviewOpen] = React.useState(false);
-  const [visibleColumns, setVisibleColumns] = React.useState(null);
+  const [visibleColumns, setVisibleColumns] = React.useState(DEFAULT_SELECTED_COLUMNS);
   const [search, setSearch] = React.useState('');
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
 
@@ -903,16 +926,6 @@ export default function ProfitDetailsView() {
       ),
     },
   ];
-  useEffect(() => {
-    if (columns.length && visibleColumns === null) {
-      setVisibleColumns(columns.map((col) => col.dataIndex || col.key || col.title));
-    }
-  }, [columns, visibleColumns]);
-  //   .filter((col) => col.dataIndex !== 'action')
-  //   .map((col) => ({
-  //     key: col.dataIndex || col.key || col.title,
-  //     label: typeof col.title === 'string' ? col.title : col.dataIndex || 'Column',
-  //   }));
   const columnOptions = columns
     .filter(
       (col) =>
@@ -935,7 +948,11 @@ export default function ProfitDetailsView() {
       <div className="flex items-center justify-between px-4 py-3 border-b">
         <span className="font-medium text-[14px]">Manage Columns</span>
 
-        <button type="button" className="text-[#6366f1] text-[12px]" onClick={() => setVisibleColumns(allColumnKeys)}>
+        <button
+          type="button"
+          className="text-[#6366f1] text-[13px] cursor-pointer hover:underline bg-transparent border-none p-0"
+          onClick={() => setVisibleColumns(DEFAULT_SELECTED_COLUMNS)}
+        >
           Restore
         </button>
       </div>
@@ -948,7 +965,11 @@ export default function ProfitDetailsView() {
           checked={allSelected}
           indeterminate={someSelected}
           onChange={(e) => {
-            setVisibleColumns(e.target.checked ? allColumnKeys : []);
+            setVisibleColumns(
+              e.target.checked
+                ? ['image', 'channel', 'view', 'action', ...allColumnKeys]
+                : ['image', 'channel', 'view', 'action'],
+            );
           }}
         />
       </div>

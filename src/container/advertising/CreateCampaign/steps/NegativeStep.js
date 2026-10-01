@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import { Card, Input, Select, Button, Table, Space, Typography, message } from 'antd';
-
-const { Title } = Typography;
+import { Input, Select, Button, Table, message } from 'antd';
 
 function NegativeStep({ wizardData, setWizardData, onBack, onNext }) {
   const [keywordText, setKeywordText] = useState('');
@@ -182,33 +180,31 @@ function NegativeStep({ wizardData, setWizardData, onBack, onNext }) {
   ];
 
   return (
-    <>
-      <Title level={4}>Campaign Negative Targeting</Title>
+    <div className="w-full space-y-5">
+      <div className="rounded-lg bg-white dark:bg-[#1b1e2b] border border-gray-100 dark:border-white/10 p-4 sm:p-5 md:p-6 shadow-sm">
+        <h3 className="text-base font-bold text-gray-800 dark:text-white mb-4">Negative Keywords (Optional)</h3>
 
-      <Card title="Negative Keywords (Optional)" style={{ marginBottom: 24 }}>
-        <Space
-          style={{
-            width: '100%',
-            marginBottom: 16,
-          }}
-        >
-          <Input placeholder="Keyword" value={keywordText} onChange={(e) => setKeywordText(e.target.value)} />
+        <div className="flex flex-row sm:flex-col items-center sm:items-stretch gap-3 mb-4">
+          <Input
+            placeholder="Keyword"
+            value={keywordText}
+            onChange={(e) => setKeywordText(e.target.value)}
+            className="h-10 rounded-lg flex-1 min-w-[200px]"
+          />
 
           <Select
             value={matchType}
-            style={{ width: 200 }}
+            className="w-[200px] sm:w-full h-10"
             onChange={setMatchType}
             options={[
               {
                 label: 'Negative Broad',
                 value: 'NEGATIVE_BROAD',
               },
-
               {
                 label: 'Negative Phrase',
                 value: 'NEGATIVE_PHRASE',
               },
-
               {
                 label: 'Negative Exact',
                 value: 'NEGATIVE_EXACT',
@@ -216,55 +212,83 @@ function NegativeStep({ wizardData, setWizardData, onBack, onNext }) {
             ]}
           />
 
-          <Button type="primary" onClick={addNegativeKeyword}>
+          <Button
+            type="primary"
+            className="h-10 px-5 rounded-lg font-medium w-auto sm:w-full shrink-0"
+            onClick={addNegativeKeyword}
+          >
             Add Negative Keyword
           </Button>
-        </Space>
+        </div>
 
-        <Table
-          rowKey={(record) => `${record.keywordText}-${record.matchType}`}
-          columns={keywordColumns}
-          dataSource={campaignNegativeKeywords}
-          pagination={false}
-        />
-      </Card>
+        <div className="border border-gray-100 dark:border-white/10 rounded-xl overflow-hidden">
+          <Table
+            scroll={{ x: 500, y: 250 }}
+            rowKey={(record) => `${record.keywordText}-${record.matchType}`}
+            columns={keywordColumns}
+            dataSource={campaignNegativeKeywords}
+            pagination={false}
+            size="small"
+            className="
+    [&_.ant-table-thead>tr>th]:!text-[12px]
+    [&_.ant-table-thead>tr>th]:!font-semibold
+    [&_.ant-table-tbody>tr>td]:!text-[12px]
+    [&_.ant-table-cell]:!px-2
+    [&_.ant-table-cell]:!py-[6px]
+  "
+          />
+        </div>
+      </div>
 
-      <Card title="Negative Product Targets (Optional)">
-        <Space
-          style={{
-            width: '100%',
-            marginBottom: 16,
-          }}
-        >
-          <Input placeholder="ASIN" value={asin} onChange={(e) => setAsin(e.target.value)} />
+      <div className="rounded-lg bg-white dark:bg-[#1b1e2b] border border-gray-100 dark:border-white/10 p-4 sm:p-5 md:p-6 shadow-sm">
+        <h3 className="text-base font-bold text-gray-800 dark:text-white mb-4">Negative Product Targets (Optional)</h3>
 
-          <Button type="primary" onClick={addNegativeTarget}>
+        <div className="flex flex-row sm:flex-col items-center sm:items-stretch gap-3 mb-4">
+          <Input
+            placeholder="ASIN"
+            value={asin}
+            onChange={(e) => setAsin(e.target.value)}
+            className="h-10 rounded-lg flex-1 min-w-[200px]"
+          />
+
+          <Button
+            type="primary"
+            className="h-10 px-5 rounded-lg font-medium w-auto sm:w-full shrink-0"
+            onClick={addNegativeTarget}
+          >
             Add Negative Target
           </Button>
-        </Space>
+        </div>
 
-        <Table
-          rowKey={(record) => record.expression?.[0]?.value}
-          columns={targetColumns}
-          dataSource={campaignNegativeTargets}
-          pagination={false}
-        />
-      </Card>
+        <div className="border border-gray-100 dark:border-white/10 rounded-xl overflow-hidden">
+          <Table
+            scroll={{ x: 500, y: 250 }}
+            rowKey={(record) => record.expression?.[0]?.value}
+            columns={targetColumns}
+            dataSource={campaignNegativeTargets}
+            pagination={false}
+            size="small"
+            className="
+    [&_.ant-table-thead>tr>th]:!text-[12px]
+    [&_.ant-table-thead>tr>th]:!font-semibold
+    [&_.ant-table-tbody>tr>td]:!text-[12px]
+    [&_.ant-table-cell]:!px-2
+    [&_.ant-table-cell]:!py-[6px]
+  "
+          />
+        </div>
+      </div>
 
-      <div
-        style={{
-          marginTop: 24,
-          display: 'flex',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Button onClick={onBack}>Back</Button>
+      <div className="mt-6 pt-4 border-t border-gray-100 dark:border-white/10 flex items-center justify-between gap-3">
+        <Button className="h-10 px-6 rounded-lg font-medium w-auto" onClick={onBack}>
+          Back
+        </Button>
 
-        <Button type="primary" onClick={onNext}>
+        <Button type="primary" className="h-10 px-6 rounded-lg font-medium w-auto" onClick={onNext}>
           Next
         </Button>
       </div>
-    </>
+    </div>
   );
 }
 

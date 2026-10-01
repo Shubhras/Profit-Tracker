@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { Card, Radio, Input, Select, InputNumber, Button, Table, Space, Typography, message, Checkbox } from 'antd';
+import { Radio, Input, Select, InputNumber, Button, Table, Space, Typography, message, Checkbox } from 'antd';
 import {
   getKeywordRecommendations,
   getCategoryRecommendations,
@@ -183,37 +183,32 @@ function TargetingStep({ wizardData, setWizardData, onBack, onNext }) {
   };
 
   // AUTO CAMPAIGN
-
   if (targetingType === 'AUTO') {
     return (
-      <>
-        <Card>
-          <Title level={4}>Automatic Targeting</Title>
+      <div className="w-full rounded-2xl bg-white dark:bg-[#1b1e2b] border border-gray-100 dark:border-white/10 p-4 sm:p-5 md:p-6 shadow-sm space-y-4">
+        <Title level={4} className="!mb-2 text-gray-900 dark:text-white">
+          Automatic Targeting
+        </Title>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Amazon will automatically create targeting for this campaign.
+        </p>
+        <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600 dark:text-gray-400">
+          <li>Close Match</li>
+          <li>Loose Match</li>
+          <li>Substitutes</li>
+          <li>Complements</li>
+        </ul>
 
-          <p>Amazon will automatically create targeting for this campaign.</p>
+        <div className="mt-6 pt-4 border-t border-gray-100 dark:border-white/10 flex items-center justify-between gap-3">
+          <Button className="h-10 px-6 rounded-lg font-medium" onClick={onBack}>
+            Back
+          </Button>
 
-          <ul>
-            <li>Close Match</li>
-            <li>Loose Match</li>
-            <li>Substitutes</li>
-            <li>Complements</li>
-          </ul>
-        </Card>
-
-        <div
-          style={{
-            marginTop: 24,
-            display: 'flex',
-            justifyContent: 'space-between',
-          }}
-        >
-          <Button onClick={onBack}>Back</Button>
-
-          <Button type="primary" onClick={onNext}>
+          <Button type="primary" className="h-10 px-6 rounded-lg font-medium" onClick={onNext}>
             Next
           </Button>
         </div>
-      </>
+      </div>
     );
   }
 
@@ -418,18 +413,25 @@ function TargetingStep({ wizardData, setWizardData, onBack, onNext }) {
     {
       title: 'Keyword',
       dataIndex: 'keywordText',
+      ellipsis: true,
+      width: 120,
     },
 
     {
       title: 'Match Type',
       dataIndex: 'matchType',
+      width: 120,
+      ellipsis: true,
     },
 
     {
       title: 'Bid',
+      width: 120,
+      ellipsis: true,
       render: (_, record, index) => (
         <InputNumber
           min={0.02}
+          className="w-full"
           value={record.bid}
           onChange={(value) => {
             const updated = [...keywords];
@@ -453,6 +455,7 @@ function TargetingStep({ wizardData, setWizardData, onBack, onNext }) {
 
     {
       title: 'Action',
+      width: 90,
       render: (_, __, index) => (
         <Button
           danger
@@ -482,39 +485,39 @@ function TargetingStep({ wizardData, setWizardData, onBack, onNext }) {
 
   const targetColumns = [
     {
-      title: 'ASIN',
+      title: 'ASIN / Category',
+      ellipsis: true,
+      width: 120,
       render: (_, record) => {
         if (record.expression?.[0]?.type === 'ASIN_CATEGORY_SAME_AS') {
           return (
             <>
-              <div>{record.categoryName}</div>
-
-              <div
-                style={{
-                  color: '#888',
-                  fontSize: 12,
-                }}
-              >
-                {record.categoryPath}
-              </div>
+              <div className="font-medium text-xs text-gray-800 dark:text-white">{record.categoryName}</div>
+              <div className="text-[11px] text-gray-400 truncate max-w-[200px]">{record.categoryPath}</div>
             </>
           );
         }
 
-        return record.expression?.[0]?.value;
+        return <span className="font-mono text-xs">{record.expression?.[0]?.value}</span>;
       },
     },
 
     {
       title: 'Expression Type',
-      render: (_, record) => record.expression?.[0]?.type,
+      dataIndex: 'expressionType',
+      width: 140,
+      render: (_, record) => (
+        <span className="text-xs text-gray-500">{record.expression?.[0]?.type || record.expressionType}</span>
+      ),
     },
 
     {
       title: 'Bid',
+      width: 120,
       render: (_, record) => (
         <InputNumber
           min={0.02}
+          className="w-full"
           value={record.bid}
           onChange={(value) => {
             const updated = targets.map((target) => {
@@ -545,6 +548,7 @@ function TargetingStep({ wizardData, setWizardData, onBack, onNext }) {
 
     {
       title: 'Action',
+      width: 90,
       render: (_, record) => (
         <Button danger size="small" onClick={() => removeTarget(record)}>
           Remove
@@ -554,8 +558,10 @@ function TargetingStep({ wizardData, setWizardData, onBack, onNext }) {
   ];
 
   return (
-    <>
-      <Card title="Manual Targeting Method" style={{ marginBottom: 24 }}>
+    <div className="w-full space-y-5">
+      {/* Target Method Selector */}
+      <div className="rounded-lg bg-white dark:bg-[#1b1e2b] border border-gray-100 dark:border-white/10 p-4 sm:p-5 shadow-sm">
+        <h3 className="text-sm font-bold text-gray-800 dark:text-white mb-3">Manual Targeting Method</h3>
         <Radio.Group
           value={method}
           onChange={(e) =>
@@ -563,29 +569,31 @@ function TargetingStep({ wizardData, setWizardData, onBack, onNext }) {
               ...wizardData,
               targeting: {
                 method: e.target.value,
-
                 keywords: e.target.value === 'KEYWORD' ? targeting.keywords || [] : [],
-
                 targets: e.target.value === 'PRODUCT' ? targeting.targets || [] : [],
               },
             })
           }
         >
-          <Space direction="horizontal">
-            <Radio value="KEYWORD">Keyword Targeting</Radio>
-
-            <Radio value="PRODUCT">Product Targeting</Radio>
-          </Space>
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+            <Radio value="KEYWORD" className="text-sm">
+              Keyword Targeting
+            </Radio>
+            <Radio value="PRODUCT" className="text-sm">
+              Product Targeting
+            </Radio>
+          </div>
         </Radio.Group>
-      </Card>
+      </div>
 
       {method === 'KEYWORD' && (
-        <Card
-          title="Keywords"
-          extra={
-            <Space>
+        <div className="rounded-2xl bg-white dark:bg-[#1b1e2b] border border-gray-100 dark:border-white/10 p-4 sm:p-5 md:p-6 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-gray-100 dark:border-white/10">
+            <h3 className="text-base font-bold text-gray-800 dark:text-white m-0">Keywords</h3>
+            <div className="flex items-center gap-2">
               <Button
                 type={activeKeywordTab === 'MANUAL' ? 'primary' : 'default'}
+                className="h-9 px-4 rounded-lg text-xs font-medium"
                 onClick={() => setActiveKeywordTab('MANUAL')}
               >
                 Manual Keywords
@@ -593,9 +601,9 @@ function TargetingStep({ wizardData, setWizardData, onBack, onNext }) {
 
               <Button
                 type={activeKeywordTab === 'SUGGESTED' ? 'primary' : 'default'}
+                className="h-9 px-4 rounded-lg text-xs font-medium"
                 onClick={async () => {
                   setActiveKeywordTab('SUGGESTED');
-
                   if (recommendations.length === 0) {
                     await fetchRecommendations();
                   }
@@ -603,57 +611,53 @@ function TargetingStep({ wizardData, setWizardData, onBack, onNext }) {
               >
                 Suggested Keywords
               </Button>
-            </Space>
-          }
-        >
+            </div>
+          </div>
+
           {activeKeywordTab === 'MANUAL' && (
             <>
-              <Space
-                style={{
-                  width: '100%',
-                  marginBottom: 16,
-                }}
-              >
-                <Input placeholder="Keyword" value={keywordText} onChange={(e) => setKeywordText(e.target.value)} />
+              <div className="flex flex-row sm:flex-col items-center sm:items-stretch gap-3 mb-4">
+                <Input
+                  placeholder="Keyword"
+                  value={keywordText}
+                  onChange={(e) => setKeywordText(e.target.value)}
+                  className="h-10 rounded-lg flex-1 min-w-[200px]"
+                />
 
                 <Select
                   value={matchType}
-                  style={{ width: 140 }}
+                  className="w-[140px] sm:w-full h-10"
                   onChange={setMatchType}
                   options={[
-                    {
-                      label: 'Broad',
-                      value: 'BROAD',
-                    },
-                    {
-                      label: 'Phrase',
-                      value: 'PHRASE',
-                    },
-                    {
-                      label: 'Exact',
-                      value: 'EXACT',
-                    },
+                    { label: 'Broad', value: 'BROAD' },
+                    { label: 'Phrase', value: 'PHRASE' },
+                    { label: 'Exact', value: 'EXACT' },
                   ]}
                 />
 
-                <InputNumber min={0.02} value={keywordBid} onChange={setKeywordBid} />
+                <InputNumber
+                  min={0.02}
+                  value={keywordBid}
+                  onChange={setKeywordBid}
+                  className="w-[130px] sm:w-full h-10 rounded-lg flex items-center"
+                  placeholder="Bid"
+                />
 
-                <Button type="primary" onClick={addKeyword}>
+                <Button
+                  type="primary"
+                  className="h-10 px-5 rounded-lg font-medium w-auto sm:w-full shrink-0"
+                  onClick={addKeyword}
+                >
                   Add Keyword
                 </Button>
-              </Space>
-              <div
-                style={{
-                  marginBottom: 12,
-                  fontWeight: 600,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                }}
-              >
-                Total Added Keywords ({keywords.length})
+              </div>
+
+              <div className="mb-3 flex items-center justify-between text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <span>Total Added Keywords ({keywords.length})</span>
                 <Button
                   danger
                   type="link"
+                  className="p-0 text-xs"
                   onClick={() => {
                     setWizardData({
                       ...wizardData,
@@ -667,89 +671,74 @@ function TargetingStep({ wizardData, setWizardData, onBack, onNext }) {
                   Remove All
                 </Button>
               </div>
-              <Table
-                scroll={{
-                  y: 300,
-                }}
-                rowKey={(record) => `${record.keywordText}-${record.matchType}`}
-                columns={keywordColumns}
-                dataSource={keywords}
-                pagination={false}
-              />
+
+              <div className="border border-gray-100 dark:border-white/10 rounded-xl overflow-hidden">
+                <Table
+                  scroll={{ x: 550, y: 300 }}
+                  rowKey={(record) => `${record.keywordText}-${record.matchType}`}
+                  columns={keywordColumns}
+                  dataSource={keywords}
+                  pagination={false}
+                  size="small"
+                  className="
+    [&_.ant-table-thead>tr>th]:!text-[12px]
+    [&_.ant-table-thead>tr>th]:!font-semibold
+    [&_.ant-table-tbody>tr>td]:!text-[12px]
+    [&_.ant-table-cell]:!px-2
+    [&_.ant-table-cell]:!py-[6px]
+  "
+                />
+              </div>
             </>
           )}
 
           {activeKeywordTab === 'SUGGESTED' && (
             <>
-              <div
-                style={{
-                  marginBottom: 16,
-                }}
-              >
-                <span
-                  style={{
-                    marginRight: 12,
-                    fontWeight: 500,
-                  }}
-                >
-                  Add as:
-                </span>
-
+              <div className="flex items-center gap-3 mb-4 text-sm">
+                <span className="font-medium text-gray-700 dark:text-gray-300">Add as:</span>
                 <Checkbox.Group value={selectedMatchTypes} onChange={setSelectedMatchTypes}>
                   <Checkbox value="BROAD">Broad</Checkbox>
-
                   <Checkbox value="PHRASE">Phrase</Checkbox>
-
                   <Checkbox value="EXACT">Exact</Checkbox>
                 </Checkbox.Group>
               </div>
-              <Table
-                scroll={{
-                  y: 300,
-                }}
-                loading={loadingRecommendations}
-                rowKey="keyword"
-                dataSource={recommendations}
-                rowSelection={{
-                  selectedRowKeys: selectedRecommendationKeys,
-                  onChange: setSelectedRecommendationKeys,
-                }}
-                columns={[
-                  {
-                    title: 'Keyword',
-                    dataIndex: 'keyword',
-                  },
-                  {
-                    title: 'Rank',
-                    dataIndex: 'rank',
-                  },
-                  {
-                    title: 'Suggested Bid',
-                    dataIndex: 'bid',
-                    render: (value) => `₹${value}`,
-                  },
-                  {
-                    title: 'IS',
-                    dataIndex: 'searchTermImpressionShare',
-                    render: (IS) => `${IS}%`,
-                  },
-                  {
-                    title: 'IR',
-                    dataIndex: 'searchTermImpressionRank',
-                  },
-                ]}
-                pagination={{
-                  pageSize: 10,
-                }}
-              />
-              <div
-                style={{
-                  marginTop: 16,
-                  textAlign: 'right',
-                }}
-              >
+
+              <div className="border border-gray-100 dark:border-white/10 rounded-xl overflow-hidden">
+                <Table
+                  scroll={{ x: 650, y: 300 }}
+                  loading={loadingRecommendations}
+                  rowKey="keyword"
+                  dataSource={recommendations}
+                  rowSelection={{
+                    selectedRowKeys: selectedRecommendationKeys,
+                    onChange: setSelectedRecommendationKeys,
+                  }}
+                  columns={[
+                    { title: 'Keyword', dataIndex: 'keyword', ellipsis: true },
+                    { title: 'Rank', dataIndex: 'rank', width: 90 },
+                    {
+                      title: 'Suggested Bid',
+                      dataIndex: 'bid',
+                      width: 120,
+                      render: (value) => `₹${value}`,
+                    },
+                    {
+                      title: 'IS',
+                      dataIndex: 'searchTermImpressionShare',
+                      width: 90,
+                      render: (IS) => `${IS}%`,
+                    },
+                    { title: 'IR', dataIndex: 'searchTermImpressionRank', width: 90 },
+                  ]}
+                  pagination={{ pageSize: 10 }}
+                  size="middle"
+                />
+              </div>
+
+              <div className="mt-4 flex justify-end">
                 <Button
                   type="primary"
+                  className="h-10 px-5 rounded-lg font-medium"
                   disabled={!selectedRecommendationKeys.length}
                   onClick={addSelectedRecommendations}
                 >
@@ -758,17 +747,17 @@ function TargetingStep({ wizardData, setWizardData, onBack, onNext }) {
               </div>
             </>
           )}
-        </Card>
+        </div>
       )}
 
       {method === 'PRODUCT' && (
         <>
-          <Card title="Target Type" style={{ marginBottom: 24 }}>
+          <div className="rounded-lg bg-white dark:bg-[#1b1e2b] border border-gray-100 dark:border-white/10 p-4 sm:p-5 shadow-sm">
+            <h3 className="text-sm font-bold text-gray-800 dark:text-white mb-3">Target Type</h3>
             <Radio.Group
               value={productTargetType}
               onChange={(e) => {
                 setProductTargetType(e.target.value);
-
                 setWizardData({
                   ...wizardData,
                   targeting: {
@@ -778,20 +767,25 @@ function TargetingStep({ wizardData, setWizardData, onBack, onNext }) {
                 });
               }}
             >
-              <Space>
-                <Radio value="PRODUCTS">Products</Radio>
-
-                <Radio value="CATEGORIES">Categories</Radio>
-              </Space>
+              <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+                <Radio value="PRODUCTS" className="text-sm">
+                  Products
+                </Radio>
+                <Radio value="CATEGORIES" className="text-sm">
+                  Categories
+                </Radio>
+              </div>
             </Radio.Group>
-          </Card>
+          </div>
+
           {productTargetType === 'PRODUCTS' && (
-            <Card
-              title="Products"
-              extra={
-                <Space>
+            <div className="rounded-lg bg-white dark:bg-[#1b1e2b] border border-gray-100 dark:border-white/10 p-4 sm:p-5 md:p-6 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-gray-100 dark:border-white/10">
+                <h3 className="text-base font-bold text-gray-800 dark:text-white m-0">Products</h3>
+                <div className="flex items-center gap-2">
                   <Button
                     type={activeProductTab === 'MANUAL' ? 'primary' : 'default'}
+                    className="h-9 px-4 rounded-lg text-xs font-medium"
                     onClick={() => setActiveProductTab('MANUAL')}
                   >
                     Manual Products
@@ -799,41 +793,47 @@ function TargetingStep({ wizardData, setWizardData, onBack, onNext }) {
 
                   <Button
                     type={activeProductTab === 'SUGGESTED' ? 'primary' : 'default'}
+                    className="h-9 px-4 rounded-lg text-xs font-medium"
                     onClick={() => setActiveProductTab('SUGGESTED')}
                   >
                     Suggested Products
                   </Button>
-                </Space>
-              }
-            >
+                </div>
+              </div>
+
               {activeProductTab === 'MANUAL' && (
                 <>
-                  <Space
-                    style={{
-                      width: '100%',
-                      marginBottom: 16,
-                    }}
-                  >
-                    <Input placeholder="ASIN" value={asin} onChange={(e) => setAsin(e.target.value)} />
+                  <div className="flex flex-row sm:flex-col items-center sm:items-stretch gap-3 mb-4">
+                    <Input
+                      placeholder="ASIN"
+                      value={asin}
+                      onChange={(e) => setAsin(e.target.value)}
+                      className="h-10 rounded-lg flex-1 min-w-[200px]"
+                    />
 
-                    <InputNumber min={0.02} value={targetBid} onChange={setTargetBid} />
+                    <InputNumber
+                      min={0.02}
+                      value={targetBid}
+                      onChange={setTargetBid}
+                      className="w-[130px] sm:w-full h-10 rounded-lg flex items-center"
+                      placeholder="Bid"
+                    />
 
-                    <Button type="primary" onClick={addTarget}>
+                    <Button
+                      type="primary"
+                      className="h-10 px-5 rounded-lg font-medium w-auto sm:w-full shrink-0"
+                      onClick={addTarget}
+                    >
                       Add Target
                     </Button>
-                  </Space>
-                  <div
-                    style={{
-                      marginBottom: 12,
-                      fontWeight: 600,
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    Total Added Products ({productTargets.length})
+                  </div>
+
+                  <div className="mb-3 flex items-center justify-between text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <span>Total Added Products ({productTargets.length})</span>
                     <Button
                       danger
                       type="link"
+                      className="p-0 text-xs"
                       onClick={() => {
                         setWizardData({
                           ...wizardData,
@@ -847,57 +847,61 @@ function TargetingStep({ wizardData, setWizardData, onBack, onNext }) {
                       Remove All
                     </Button>
                   </div>
-                  <Table
-                    rowKey={(record) => record.expression?.[0]?.value}
-                    columns={targetColumns}
-                    dataSource={productTargets}
-                    pagination={false}
-                    scroll={{
-                      y: 300,
-                    }}
-                  />
+
+                  <div className="border border-gray-100 dark:border-white/10 rounded-xl overflow-hidden">
+                    <Table
+                      rowKey={(record) => record.expression?.[0]?.value}
+                      columns={targetColumns}
+                      dataSource={productTargets}
+                      pagination={false}
+                      scroll={{ x: 550, y: 300 }}
+                      size="middle"
+                    />
+                  </div>
                 </>
               )}
+
               {activeProductTab === 'SUGGESTED' && (
                 <>
-                  <Table
-                    scroll={{ y: 350 }}
-                    rowKey="recommendedAsin"
-                    loading={loadingProductRecommendations}
-                    dataSource={productRecommendations}
-                    pagination={{ pageSize: 10 }}
-                    rowSelection={{
-                      selectedRowKeys: selectedProductRecommendationKeys,
-                      onChange: setSelectedProductRecommendationKeys,
-                    }}
-                    columns={[
-                      {
-                        title: 'ASIN',
-                        dataIndex: 'recommendedAsin',
-                      },
-                      {
-                        title: 'Themes',
-                        render: (_, record) => (
-                          <Space direction="vertical" size={2}>
-                            {record.themes.map((theme) => (
-                              <Typography.Text key={theme} type="secondary">
-                                • {theme}
-                              </Typography.Text>
-                            ))}
-                          </Space>
-                        ),
-                      },
-                    ]}
-                  />
+                  <div className="border border-gray-100 dark:border-white/10 rounded-xl overflow-hidden">
+                    <Table
+                      scroll={{ x: 550, y: 350 }}
+                      rowKey="recommendedAsin"
+                      loading={loadingProductRecommendations}
+                      dataSource={productRecommendations}
+                      pagination={{ pageSize: 10 }}
+                      rowSelection={{
+                        selectedRowKeys: selectedProductRecommendationKeys,
+                        onChange: setSelectedProductRecommendationKeys,
+                      }}
+                      columns={[
+                        {
+                          title: 'ASIN',
+                          dataIndex: 'recommendedAsin',
+                          width: 180,
+                          render: (val) => <span className="font-mono text-xs">{val}</span>,
+                        },
+                        {
+                          title: 'Themes',
+                          render: (_, record) => (
+                            <Space direction="vertical" size={2}>
+                              {record.themes.map((theme) => (
+                                <Typography.Text key={theme} type="secondary" className="text-xs">
+                                  • {theme}
+                                </Typography.Text>
+                              ))}
+                            </Space>
+                          ),
+                        },
+                      ]}
+                      size="middle"
+                    />
+                  </div>
 
-                  <div
-                    style={{
-                      marginTop: 16,
-                      textAlign: 'right',
-                    }}
-                  >
+                  <div className="mt-4 flex justify-end">
                     <Button
                       type="primary"
+                      className="h-10 px-5 rounded-lg font-medium"
                       disabled={!selectedProductRecommendationKeys.length}
                       onClick={addSelectedProducts}
                     >
@@ -906,63 +910,56 @@ function TargetingStep({ wizardData, setWizardData, onBack, onNext }) {
                   </div>
                 </>
               )}
-            </Card>
+            </div>
           )}
+
           {productTargetType === 'CATEGORIES' && (
-            <Card
-              title="Suggested Categories"
-              extra={
-                <Button type="primary" disabled={!selectedCategoryKeys.length} onClick={addSelectedCategories}>
+            <div className="rounded-lg bg-white dark:bg-[#1b1e2b] border border-gray-100 dark:border-white/10 p-4 sm:p-5 md:p-6 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-gray-100 dark:border-white/10">
+                <h3 className="text-base font-bold text-gray-800 dark:text-white m-0">Suggested Categories</h3>
+                <Button
+                  type="primary"
+                  className="h-9 px-4 rounded-lg text-xs font-medium"
+                  disabled={!selectedCategoryKeys.length}
+                  onClick={addSelectedCategories}
+                >
                   Add Selected Categories
                 </Button>
-              }
-            >
-              <Table
-                scroll={{ y: 250 }}
-                loading={loadingCategoryRecommendations}
-                rowKey="id"
-                dataSource={categoryRecommendations}
-                pagination={{
-                  pageSize: 10,
-                }}
-                rowSelection={{
-                  selectedRowKeys: selectedCategoryKeys,
-                  onChange: setSelectedCategoryKeys,
-                }}
-                columns={[
-                  {
-                    title: 'Category',
-                    render: (_, record) => (
-                      <>
-                        <div>{record.name}</div>
+              </div>
 
-                        <div
-                          style={{
-                            color: '#888',
-                            fontSize: 12,
-                          }}
-                        >
-                          {record.path}
-                        </div>
-                      </>
-                    ),
-                  },
-                ]}
-              />
-              <div style={{ marginTop: 24 }}>
-                <div
-                  style={{
-                    marginBottom: 12,
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    fontWeight: 600,
+              <div className="border border-gray-100 dark:border-white/10 rounded-xl overflow-hidden">
+                <Table
+                  scroll={{ x: 550, y: 250 }}
+                  loading={loadingCategoryRecommendations}
+                  rowKey="id"
+                  dataSource={categoryRecommendations}
+                  pagination={{ pageSize: 10 }}
+                  rowSelection={{
+                    selectedRowKeys: selectedCategoryKeys,
+                    onChange: setSelectedCategoryKeys,
                   }}
-                >
-                  <span>Added Category Targets ({categoryTargets.length})</span>
+                  columns={[
+                    {
+                      title: 'Category',
+                      render: (_, record) => (
+                        <>
+                          <div className="font-medium text-xs text-gray-800 dark:text-white">{record.name}</div>
+                          <div className="text-[11px] text-gray-400 truncate max-w-[300px]">{record.path}</div>
+                        </>
+                      ),
+                    },
+                  ]}
+                  size="middle"
+                />
+              </div>
 
+              <div className="mt-6">
+                <div className="mb-3 flex items-center justify-between text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  <span>Added Category Targets ({categoryTargets.length})</span>
                   <Button
                     danger
                     type="link"
+                    className="p-0 text-xs"
                     onClick={() => {
                       setWizardData({
                         ...wizardData,
@@ -976,30 +973,31 @@ function TargetingStep({ wizardData, setWizardData, onBack, onNext }) {
                     Remove All
                   </Button>
                 </div>
-                <Table
-                  rowKey={(record) => record.expression?.[0]?.value}
-                  columns={targetColumns}
-                  dataSource={categoryTargets}
-                  pagination={false}
-                  scroll={{ y: 250 }}
-                />
+
+                <div className="border border-gray-100 dark:border-white/10 rounded-xl overflow-hidden">
+                  <Table
+                    rowKey={(record) => record.expression?.[0]?.value}
+                    columns={targetColumns}
+                    dataSource={categoryTargets}
+                    pagination={false}
+                    scroll={{ x: 550, y: 250 }}
+                    size="middle"
+                  />
+                </div>
               </div>
-            </Card>
+            </div>
           )}
         </>
       )}
 
-      <div
-        style={{
-          marginTop: 24,
-          display: 'flex',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Button onClick={onBack}>Back</Button>
+      <div className="mt-6 pt-4 border-t border-gray-100 dark:border-white/10 flex items-center justify-between gap-3">
+        <Button className="h-10 px-6 rounded-lg font-medium" onClick={onBack}>
+          Back
+        </Button>
 
         <Button
           type="primary"
+          className="h-10 px-6 rounded-lg font-medium"
           disabled={
             (method === 'KEYWORD' && keywords.length === 0) || (method === 'PRODUCT' && targets.length === 0) || !method
           }
@@ -1008,7 +1006,7 @@ function TargetingStep({ wizardData, setWizardData, onBack, onNext }) {
           Next
         </Button>
       </div>
-    </>
+    </div>
   );
 }
 

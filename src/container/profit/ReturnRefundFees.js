@@ -136,7 +136,7 @@ function ReturnRefundFees() {
             className="mb-1 [&_*]:!text-[11px]"
             items={[{ title: 'Profit' }, { title: <span className="text-[#111827]">Return Tracker</span> }]}
           />
-          <h1 className="mb-0 text-[20px] font-semibold leading-tight text-[#111827]">Return Tracker</h1>
+          <h1 className="mb-0 text-[22px] font-semibold leading-tight text-[#111827]">Return Tracker</h1>
           <p className="mt-1 mb-0 text-[12px] text-[#6b7280]">
             Track and manage all returned orders with complete details.
           </p>
@@ -156,7 +156,7 @@ function ReturnRefundFees() {
         {cards.map((item, index) => (
           <div
             key={index}
-            className={`flex items-center gap-3 rounded-2xl border-4 border-white shadow-md ${item.bg} px-3 py-3`}
+            className={`flex items-center gap-3 rounded-xl border-4 border-white shadow-md ${item.bg} px-3 py-3`}
           >
             <div
               className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${item.iconBg} ${item.iconColor} text-[18px]`}
@@ -167,14 +167,6 @@ function ReturnRefundFees() {
             <div className="min-w-0">
               <h3 className="mb-1 truncate text-[12px] font-medium text-[#6b7280]">{item.title}</h3>
               <h2 className="mb-0 text-[20px] font-bold leading-none tracking-tight text-[#111827]">{item.value}</h2>
-              <p
-                className={`mt-1.5 mb-0 text-[10px] font-semibold ${
-                  item.trend === 'up' ? 'text-[#ef4444]' : 'text-[#16a34a]'
-                }`}
-              >
-                {item.trend === 'up' ? '↑' : '↓'} {item.growth}
-                <span className="ml-1 font-normal text-[#9ca3af]">vs previous period</span>
-              </p>
             </div>
           </div>
         ))}
@@ -263,7 +255,7 @@ function ReturnRefundFees() {
       </div>
 
       {/* Table */}
-      <div className="mt-4 rounded-2xl border border-[#e5e7eb] bg-white p-3 shadow-sm">
+      <div className="mt-4 rounded-lg border border-[#e5e7eb] bg-white p-3 shadow-sm">
         <h2 className="mb-3 text-[14px] font-semibold text-[#111827]">Recent Orders</h2>
         <Table
           columns={columns}

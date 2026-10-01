@@ -219,10 +219,6 @@ export default function ReconcileSummary() {
                     {formatCurrency(stats.expectedSettlement)}
                   </div>
                 </div>
-                <div className="text-[13px] font-semibold text-[#10b981] flex items-center gap-1 mt-3">
-                  <span>↑</span>
-                  <span>{stats.expectedSettlementChange}</span>
-                </div>
               </div>
             </Col>
 
@@ -243,10 +239,6 @@ export default function ReconcileSummary() {
                     {formatCurrency(stats.bankSettled)}
                   </div>
                 </div>
-                <div className="text-[13px] font-semibold text-[#ef4444] flex items-center gap-1 mt-3">
-                  <span>↑</span>
-                  <span>{stats.bankSettledChange}</span>
-                </div>
               </div>
             </Col>
 
@@ -265,10 +257,6 @@ export default function ReconcileSummary() {
                   <div className="text-[13px] font-medium text-gray-700">Settlement on Hold/Leaks</div>
                   <div className="text-[26px] font-bold text-[#111827] mt-1 tracking-tight">
                     {formatCurrency(stats.settlementHold)}
-                  </div>
-                  <div className="text-[13px] font-semibold text-[#10b981] flex items-center gap-1 mt-1">
-                    <span>↑</span>
-                    <span>{stats.settlementHoldChange}</span>
                   </div>
                 </div>
 

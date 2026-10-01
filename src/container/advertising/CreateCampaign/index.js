@@ -83,10 +83,10 @@ function CreateCampaign() {
   };
 
   return (
-    <main className="min-h-[600px] px-4 pb-[30px] py-4">
-      {/* Modern Custom Horizontal Stepper */}
-      <div className="bg-white dark:bg-[#1b1e2b] rounded-2xl shadow-sm border border-gray-100 dark:border-white/10 p-5 mb-6">
-        <div className="flex items-center justify-between w-full">
+    <main className="min-h-[600px] px-3 sm:px-4 md:px-6 pb-[30px] py-3 sm:py-4">
+      {/* Modern Custom Responsive Stepper */}
+      <div className="bg-white dark:bg-[#1b1e2b] rounded-lg shadow-sm border border-gray-100 dark:border-white/10 p-3 sm:p-4 md:p-5 mb-5 sm:mb-6 overflow-x-auto">
+        <div className="flex items-center justify-between min-w-max md:min-w-0 w-full gap-1 sm:gap-2">
           {SP_STEPS.map((step, idx) => {
             const isCompleted = idx < currentStep;
             const isActive = idx === currentStep;
@@ -102,27 +102,27 @@ function CreateCampaign() {
                       setCurrentStep(idx);
                     }
                   }}
-                  className={`flex items-center gap-3 transition-all duration-200 select-none ${
+                  className={`flex items-center gap-2 md:gap-3 transition-all duration-200 select-none shrink-0 ${
                     isClickable ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
                   }`}
                 >
                   {/* Badge */}
                   <div
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm transition-all duration-300 ${
+                    className={`w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-lg sm:rounded-lg flex items-center justify-center font-bold text-xs md:text-sm transition-all duration-300 ${
                       isCompleted
                         ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/25 scale-95'
                         : isActive
-                        ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/35 ring-4 ring-emerald-500/20 scale-105'
+                        ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md'
                         : 'bg-gray-100 dark:bg-white/5 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-white/10'
                     }`}
                   >
-                    {isCompleted ? <CheckOutlined className="text-xs stroke-[3]" /> : idx + 1}
+                    {isCompleted ? <CheckOutlined className="text-[10px] sm:text-xs stroke-[3]" /> : idx + 1}
                   </div>
 
                   {/* Title */}
-                  <div className="hidden sm:flex flex-col">
+                  <div className="flex flex-col text-left">
                     <span
-                      className={`text-[11px] font-semibold uppercase tracking-wider ${
+                      className={`text-[9px] sm:text-[10px] md:text-[11px] font-semibold uppercase tracking-wider ${
                         isActive
                           ? 'text-emerald-600 dark:text-emerald-400'
                           : isCompleted
@@ -133,7 +133,7 @@ function CreateCampaign() {
                       Step {idx + 1}
                     </span>
                     <span
-                      className={`text-sm whitespace-nowrap transition-colors ${
+                      className={`text-xs md:text-sm whitespace-nowrap transition-colors ${
                         isActive
                           ? 'font-bold text-gray-900 dark:text-white'
                           : isCompleted
@@ -148,7 +148,7 @@ function CreateCampaign() {
 
                 {/* Connecting Line between steps */}
                 {idx < SP_STEPS.length - 1 && (
-                  <div className="flex-1 mx-3 sm:mx-4 h-[2px] rounded-full bg-gray-100 dark:bg-white/10 overflow-hidden relative">
+                  <div className="flex-1 mx-1.5 sm:mx-2 md:mx-3 min-w-[12px] sm:min-w-[16px] md:min-w-[24px] h-[2px] rounded-full bg-gray-100 dark:bg-white/10 overflow-hidden relative">
                     <div
                       className={`h-full transition-all duration-500 rounded-full ${
                         idx < currentStep ? 'w-full bg-emerald-500' : 'w-0 bg-transparent'

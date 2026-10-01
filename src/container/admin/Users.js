@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Table, Input, Tag, Switch, Modal, Button, Select, Tooltip, message } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { EyeOutlined, SearchOutlined, DeleteOutlined } from '@ant-design/icons';
+import { EyeOutlined, SearchOutlined, DeleteOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { getUsersList, deleteUserDetails } from '../../redux/admin/actionCreator';
 
 function UsersList() {
@@ -243,7 +243,7 @@ function UsersList() {
           <Button
             type="text"
             danger
-            icon={<DeleteOutlined className="text-red-500 text-[16px]" />}
+            icon={<DeleteOutlined className="text-red-500 text-[18px]" />}
             onClick={() => handleDeleteClick(record)}
           />
         </div>
@@ -318,7 +318,7 @@ function UsersList() {
   return (
     <>
       <div className="p-4 min-h-screen">
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
           {/* Header */}
           <div className="flex items-center justify-between px-3 py-3">
             <div>
@@ -337,30 +337,31 @@ function UsersList() {
           </div>
 
           {/* Search */}
+          {/* Search */}
           <div className="p-2 border-b">
             <Input
-              allowClear
               placeholder="Search user..."
-              prefix={<SearchOutlined />}
+              suffix={
+                searchText ? (
+                  <button
+                    type="button"
+                    onClick={() => setSearchText('')}
+                    className="flex items-center justify-center cursor-pointer text-[#9ca3af] hover:text-[#374151]"
+                  >
+                    <CloseCircleOutlined style={{ fontSize: 16 }} />
+                  </button>
+                ) : (
+                  <SearchOutlined style={{ fontSize: 14, color: '#9ca3af' }} />
+                )
+              }
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              className="w-80 h-[30px] text-[12px]"
+              className="w-80 h-[35px] rounded-lg border border-[#e5e7eb] bg-white text-[12px] outline-none shadow-sm focus:border-[#1677ff]"
               size="small"
             />
           </div>
 
-          <div
-            className="
-    [&_.ant-pagination]:text-[12px]
-    [&_.ant-pagination-item]:min-w-[24px]
-    [&_.ant-pagination-item]:h-[24px]
-    [&_.ant-pagination-item]:leading-[22px]
-    [&_.ant-pagination-prev]:h-[24px]
-    [&_.ant-pagination-next]:h-[24px]
-    [&_.ant-pagination-total-text]:text-[12px]
-    [&_.ant-select-selection-item]:text-[12px]
-  "
-          >
+          <div className="p-2">
             <Table
               rowKey="user_id"
               columns={columns}

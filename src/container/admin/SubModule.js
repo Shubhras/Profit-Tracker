@@ -219,7 +219,7 @@ function SubModule() {
   return (
     <>
       <div className="min-h-screen bg-[#f8fafc] p-4">
-        <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+        <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
           <div className="mb-5">
             <div className="flex items-center justify-between">
               <h2 className="text-[20px] font-semibold text-gray-800">Sub Modules</h2>
