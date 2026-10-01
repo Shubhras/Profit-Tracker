@@ -58,6 +58,8 @@ class Command(BaseCommand):
                     self.stdout.write(f"SYNC DAYS: {days} (COMMAND ARGUMENT)")
 
                 else:
+                    from django.utils import timezone
+                    now = timezone.now()
                     subscription = (
                         UserSubscription.objects.filter(
                             user=account.user,
@@ -67,6 +69,17 @@ class Command(BaseCommand):
                         .select_related("plan")
                         .first()
                     )
+                    if not subscription:
+                        subscription = (
+                            UserSubscription.objects.filter(
+                                user=account.user,
+                                status="cancelled",
+                                is_paid=True,
+                                end_date__gt=now,
+                            )
+                            .select_related("plan")
+                            .first()
+                        )
 
                     if not subscription or not subscription.plan:
                         raise Exception(

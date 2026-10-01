@@ -297,6 +297,8 @@ class AmazonAdsCallbackView(APIView):
                 initial_sync_required=False
             )
 
+            from django.utils import timezone
+            now = timezone.now()
             subscription = (
                 UserSubscription.objects.filter(
                     user=user,
@@ -306,6 +308,17 @@ class AmazonAdsCallbackView(APIView):
                 .select_related("plan")
                 .first()
             )
+            if not subscription:
+                subscription = (
+                    UserSubscription.objects.filter(
+                        user=user,
+                        status="cancelled",
+                        is_paid=True,
+                        end_date__gt=now,
+                    )
+                    .select_related("plan")
+                    .first()
+                )
 
             if subscription and subscription.plan:
                 days = subscription.plan.initial_sync_duration

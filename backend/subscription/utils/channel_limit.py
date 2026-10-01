@@ -43,8 +43,8 @@ def check_user_channel_connection_limit(user):
 
     myntra_count = 0
     try:
-        from myntra.models import MyntraAccount
-        myntra_count = MyntraAccount.objects.filter(user=user).count()
+        from myntra.models import MyntraConnection
+        myntra_count = MyntraConnection.objects.filter(user=user).count()
     except Exception:
         pass
 

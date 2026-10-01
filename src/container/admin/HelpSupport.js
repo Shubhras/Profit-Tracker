@@ -167,7 +167,7 @@ function HelpSupport() {
 
             setStatusModal(false);
 
-            dispatch(getAdminTickets(pagination.current, pagination.pageSize));
+            dispatch(getAdminTickets(pagination.current, pagination.pageSize, debouncedSearch, '', priority));
           } else {
             message.error('Failed to update ticket');
           }
@@ -181,7 +181,6 @@ function HelpSupport() {
       <div className="min-h-screen p-4">
         <div className="flex gap-5 items-start">
           <div className="flex-1 bg-white rounded-lg border border-[#e5e7eb] p-5 overflow-hidden">
-            {' '}
             {/* Header */}
             {/* Header */}
             <div className="mb-4">
