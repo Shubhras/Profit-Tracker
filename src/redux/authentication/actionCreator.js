@@ -45,8 +45,6 @@ const login = (values, callback) => {
         // Dispatch login success, user profile (containing free_trail_use), and subscription status
         dispatch(loginSuccess(true));
         dispatch(actions.setUserProfile(response.data.data));
-        console.log('USER DATA STORED IN REDUX:', response.data.data);
-
         dispatch(actions.setHasSubscription(hasSubscription));
 
         // callback(hasSubscription);
@@ -57,13 +55,21 @@ const login = (values, callback) => {
           userData.role === 'Admin' ||
           (!userData.is_client_user && userData.role !== 'Client');
 
+        const freeTrailUse =
+          userData?.free_trail_use === true ||
+          userData?.free_trail_use === 'true' ||
+          userData?.free_trail_use === 1 ||
+          userData?.free_trial_use === true ||
+          userData?.free_trial_use === 'true' ||
+          userData?.free_trial_use === 1;
+
+        Cookies.set('free_trail_use', freeTrailUse ? 'true' : 'false', { path: '/' });
+        localStorage.setItem('free_trail_use', freeTrailUse ? 'true' : 'false');
         Cookies.set('isSuperAdmin', isSuperAdmin ? 'true' : 'false');
 
         callback(userData);
       }
     } catch (err) {
-      console.log('Login Failed:', err.response?.data);
-
       const errorMessage = err.response?.data?.error || 'Something went wrong';
 
       dispatch(loginErr(errorMessage));
@@ -95,7 +101,6 @@ const register = (values, callback) => {
     try {
       const response = await DataService.post('/user/register/', values);
 
-      // console.log('Register Success:', response.data);
       if (response.data.status === true) {
         dispatch(loginSuccess(false));
         callback(); // redirect to login page
@@ -148,8 +153,6 @@ const resetPassword = (values, callback) => {
     try {
       const response = await DataService.post('/user/reset-password/', values);
 
-      // console.log('Reset Password Success:', response.data);
-
       if (response.data.status === true) {
         dispatch(forgotSuccess(response.data.message));
         callback();
@@ -180,8 +183,6 @@ const changePassword = (values, callback) => {
         dispatch(passwordErr(response.data.error || 'Password change failed'));
       }
     } catch (error) {
-      console.log('Change Password Failed:', error.response?.data);
-
       const errorMessage = error.response?.data?.error || 'Something went wrong';
 
       dispatch(passwordErr(errorMessage));
@@ -249,9 +250,6 @@ const getProfile = () => {
     try {
       dispatch(actions.profileLoading(true));
       const response = await DataService.get('/user/profile/');
-      console.log('PROFILE API RESPONSE:', response.data);
-      console.log('PROFILE DATA:', response.data.data);
-      console.log('IS SUPERUSER:', response.data.data?.is_superuser);
       if (response.data.status === true) {
         const userData = response.data.data || response.data;
         const freeTrailUse =

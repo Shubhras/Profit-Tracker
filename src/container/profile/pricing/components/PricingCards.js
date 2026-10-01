@@ -452,16 +452,7 @@ function PricingCards() {
       profile?.free_trail_use === 1 ||
       profile?.free_trial_use === true ||
       profile?.free_trial_use === 'true' ||
-      profile?.free_trial_use === 1 ||
-      profile?.isTrial === true ||
-      profile?.isTrial === 'true' ||
-      profile?.is_trial === true ||
-      profile?.is_trial === 'true' ||
-      (profile?.subscription &&
-        (profile?.subscription?.plan_name?.toLowerCase().includes('starter') ||
-          profile?.subscription?.plan_name?.toLowerCase().includes('trial') ||
-          profile?.subscription?.slug?.includes('starter') ||
-          profile?.subscription?.slug?.includes('trial'))),
+      profile?.free_trial_use === 1,
   );
 
   // const handlePlanSelect = (plan) => {

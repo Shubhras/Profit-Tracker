@@ -295,8 +295,17 @@ function Checkout() {
     const fetchCurrentSubscription = async () => {
       try {
         const response = await DataService.get('/my-subscription/');
-        const subscription = response?.data?.data;
-        setCurrentPlanName(subscription?.plan?.plan_name || '');
+        const subData = response?.data?.data;
+        const isCancelledActive =
+          subData?.status === 'cancelled' && subData?.end_date && new Date(subData.end_date) > new Date();
+        const hasAccess =
+          subData?.has_subscription ?? ((subData?.status === 'active' && !subData?.is_expired) || isCancelledActive);
+
+        if (hasAccess && subData?.is_paid && subData?.plan?.plan_name) {
+          setCurrentPlanName(subData.plan.plan_name);
+        } else {
+          setCurrentPlanName('');
+        }
       } catch (err) {
         // A user without an active subscription can continue with a new plan.
         setCurrentPlanName('');
@@ -341,16 +350,7 @@ function Checkout() {
       userObj?.free_trail_use === 1 ||
       userObj?.free_trial_use === true ||
       userObj?.free_trial_use === 'true' ||
-      userObj?.free_trial_use === 1 ||
-      userObj?.isTrial === true ||
-      userObj?.isTrial === 'true' ||
-      userObj?.is_trial === true ||
-      userObj?.is_trial === 'true' ||
-      (userObj?.subscription &&
-        (userObj?.subscription?.plan_name?.toLowerCase().includes('starter') ||
-          userObj?.subscription?.plan_name?.toLowerCase().includes('trial') ||
-          userObj?.subscription?.slug?.includes('starter') ||
-          userObj?.subscription?.slug?.includes('trial'))),
+      userObj?.free_trial_use === 1,
   );
 
   const rawPlanName = plan?.plan_name || 'Starter';
@@ -441,7 +441,8 @@ function Checkout() {
       return;
     }
 
-    const currentSub = userObj?.subscription;
+    const hasActiveSub = Boolean(userObj?.has_subscription === true);
+    const currentSub = hasActiveSub ? userObj?.subscription : null;
     const isAlreadySubscribed = Boolean(
       currentSub &&
         ((currentSub.plan_id &&
