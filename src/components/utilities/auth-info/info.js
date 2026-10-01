@@ -200,7 +200,7 @@ const AuthInfo = React.memo(() => {
   ];
 
   const hideCalendar = HIDE_CALENDAR.some((route) => location.pathname.includes(route));
-  const { profile, profileLoading, profileError } = useSelector((state) => state.auth);
+  const { profile, profileLoading } = useSelector((state) => state.auth);
   const [selectedRows, setSelectedRows] = useState([]);
 
   const isSuperAdmin = profile?.is_superuser === true;
@@ -254,11 +254,19 @@ const AuthInfo = React.memo(() => {
     };
   }, []);
 
+  // useEffect(() => {
+  //   if (!profile && !profileLoading && !profileError) {
+  //     dispatch(getProfile());
+  //   }
+  // }, [dispatch, profile, profileLoading, profileError]);
+  // src/components/utilities/auth-info/info.js
+
   useEffect(() => {
-    if (!profile && !profileLoading && !profileError) {
+    if (!profileLoading) {
       dispatch(getProfile());
     }
-  }, [dispatch, profile, profileLoading, profileError]);
+  }, [dispatch]);
+
   useEffect(() => {
     dispatch(
       action.setDateRange({

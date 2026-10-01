@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Spin, Select, DatePicker } from 'antd';
+import { Spin, DatePicker } from 'antd';
 import {
   WalletOutlined,
   ShoppingCartOutlined,
   RiseOutlined,
   PercentageOutlined,
   EyeOutlined,
-  AmazonOutlined,
   AimOutlined,
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -50,8 +49,6 @@ function AdvertisingDashboard() {
     }
     return [moment().startOf('month'), moment().endOf('month')];
   });
-
-  const [marketplace, setMarketplace] = useState('amazon');
 
   const fetchDashboardData = (dates) => {
     const startDate = dates?.[0] && dates[0].isValid() ? dates[0].format('YYYY-MM-DD') : undefined;
@@ -158,21 +155,12 @@ function AdvertisingDashboard() {
         <div className="mb-3 rounded-2xl border border-[#e5e7eb] bg-white p-4 shadow-sm">
           <div className="flex flex-wrap items-center gap-6">
             {/* Marketplace Select */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Marketplace</label>
-              <Select
-                value={marketplace}
-                onChange={(val) => setMarketplace(val)}
-                className="w-52 h-10 border-gray-300 rounded-lg text-sm"
-                dropdownMatchSelectWidth={false}
-              >
-                <Select.Option value="amazon">
-                  <div className="flex items-center gap-2 font-medium">
-                    <AmazonOutlined className="text-base text-[#ff9900]" />
-                    <span>Amazon</span>
-                  </div>
-                </Select.Option>
-              </Select>
+            <div className="flex w-[150px] flex-col gap-1 sm:w-full">
+              <label className="text-[12px] font-medium text-[#111827]">Marketplace</label>
+
+              <div className="flex h-[34px] w-full items-center rounded-lg border border-[#e5e7eb] bg-white px-3 text-[12px] text-[#374151]">
+                Amazon
+              </div>
             </div>
 
             {/* Date Range Picker */}
@@ -197,7 +185,7 @@ function AdvertisingDashboard() {
                   }
                 }}
                 format="DD/MM/YYYY"
-                className="h-10 border-gray-300 rounded-lg text-sm"
+                className="!h-[34px] !w-full !rounded-lg !border-[#e5e7eb] !text-[12px]"
               />
             </div>
 
@@ -206,7 +194,7 @@ function AdvertisingDashboard() {
               <button
                 type="button"
                 onClick={handleApplyFilter}
-                className="h-10 px-5 rounded-lg border border-[#0d9488] text-[#0d9488] font-semibold text-xs hover:bg-[#ccfbf1] transition-all duration-150"
+                className="flex items-center !h-[34px] !rounded-lg !text-[12px] !font-medium border border-[#fffff] px-3"
               >
                 Apply Filter
               </button>

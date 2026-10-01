@@ -171,7 +171,7 @@ function SubscriptionTable() {
                                 [plan.id]: !prev[plan.id],
                               }))
                             }
-                            className="mt-2 text-[12px] font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                            className="flex justify-end mt-2 text-[12px] font-medium text-blue-600 hover:text-blue-800 hover:underline"
                           >
                             {isFeaturesExpanded ? 'Show less' : `+ ${remainingFeatures} more`}
                           </button>
@@ -214,7 +214,7 @@ function SubscriptionTable() {
                                     [plan.id]: !prev[plan.id],
                                   }))
                                 }
-                                className="mt-2 text-[12px] font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                                className="flex justify-end mt-2 text-[12px] font-medium text-blue-600 hover:text-blue-800 hover:underline"
                               >
                                 {isTermsExpanded ? 'Show less' : `+ ${remainingTerms} more`}
                               </button>
@@ -300,7 +300,7 @@ function SubscriptionTable() {
                                                       [key]: !prev[key],
                                                     }))
                                                   }
-                                                  className="mt-2 text-[12px] font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                                                  className="block ml-auto mt-2 text-[12px] font-medium text-blue-600 hover:text-blue-800 hover:underline"
                                                 >
                                                   {isExpanded ? 'Show less' : `+ ${remaining} more`}
                                                 </button>
@@ -328,7 +328,7 @@ function SubscriptionTable() {
                                       [plan.id]: !prev[plan.id],
                                     }))
                                   }
-                                  className="w-full mt-1 mb-2 py-2 text-[13px] font-medium text-blue-600 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 hover:text-blue-800 transition-colors"
+                                  className="w-full mt-1 mb-2 py-2 text-[13px] font-medium text-blue-600 bg-white border border-blue-200 rounded-lg transition-colors hover:shadow-md"
                                 >
                                   {isModulesExpanded ? 'Show less modules' : `Show ${remainingModules} more modules`}
                                 </button>

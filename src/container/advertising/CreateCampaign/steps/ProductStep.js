@@ -202,26 +202,26 @@ function ProductStep({ wizardData, setWizardData, onBack, onNext }) {
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="w-full rounded-2xl bg-white dark:bg-[#1b1e2b] border border-gray-100 dark:border-white/10 p-4 sm:p-5 md:p-6 shadow-sm space-y-4">
       {/* Top Search & Actions Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-gray-50/60 dark:bg-white/5 p-3 rounded-lg border border-gray-100 dark:border-white/10">
-        <div className="w-full sm:w-80">
+      <div className="flex flex-row sm:flex-col items-center sm:items-stretch justify-between gap-3 bg-gray-50/80 dark:bg-white/5 p-3 rounded-xl border border-gray-100 dark:border-white/10">
+        <div className="w-80 md:w-96 sm:w-full">
           <Input
             placeholder="Search products by SKU, ASIN, or Title..."
             prefix={<SearchOutlined className="text-gray-400" />}
             allowClear
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            className="w-full"
+            className="w-full h-10 rounded-lg"
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+        <div className="flex items-center gap-2 justify-end sm:justify-between">
           <Button
             type={selectedProducts.length > 0 ? 'primary' : 'default'}
             icon={<ShoppingCartOutlined />}
             onClick={() => setDrawerOpen(true)}
-            className="flex items-center gap-1.5"
+            className="flex items-center gap-1.5 h-10 px-4 rounded-lg font-medium"
           >
             <span>Selected Products</span>
             <span
@@ -241,16 +241,16 @@ function ProductStep({ wizardData, setWizardData, onBack, onNext }) {
         </div>
       </div>
 
-      {/* Full-Width Table */}
-      <div className="border border-gray-200/80 dark:border-white/10 rounded-lg overflow-hidden bg-white dark:bg-transparent p-2">
+      {/* Full-Width Table with Horizontal Scroll for Mobile */}
+      <div className="border border-gray-200/80 dark:border-white/10 rounded-xl overflow-hidden bg-white dark:bg-transparent p-2">
         <Table
           rowKey="asin"
-          size="small"
+          size="middle"
           showSorterTooltip={false}
           loading={loading}
           columns={columns}
           dataSource={products}
-          scroll={{ y: 500 }}
+          scroll={{ x: 750, y: 500 }}
           rowSelection={{
             selectedRowKeys,
             preserveSelectedRowKeys: true,
@@ -324,7 +324,7 @@ function ProductStep({ wizardData, setWizardData, onBack, onNext }) {
           </div>
         }
         placement="right"
-        width={420}
+        width={typeof window !== 'undefined' && window.innerWidth < 480 ? '100%' : 420}
         onClose={() => setDrawerOpen(false)}
         open={drawerOpen}
         footer={
@@ -391,10 +391,12 @@ function ProductStep({ wizardData, setWizardData, onBack, onNext }) {
       </Drawer>
 
       {/* Bottom Step Actions */}
-      <div className="pt-3 border-t border-gray-100 dark:border-white/10 flex items-center justify-between">
-        <Button onClick={onBack}>Back</Button>
+      <div className="mt-6 pt-4 border-t border-gray-100 dark:border-white/10 flex flex-row sm:flex-col items-center justify-between gap-3">
+        <Button className="h-10 px-6 rounded-lg font-medium w-auto sm:w-full" onClick={onBack}>
+          Back
+        </Button>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-auto sm:w-full justify-end sm:justify-between">
           <span className="text-xs text-gray-500">
             {selectedProducts.length > 0 ? (
               <span className="text-green-600 font-medium">✓ {selectedProducts.length} product(s) selected</span>
@@ -405,6 +407,7 @@ function ProductStep({ wizardData, setWizardData, onBack, onNext }) {
 
           <Button
             type="primary"
+            className="h-10 px-6 rounded-lg font-medium w-auto sm:w-full"
             disabled={selectedProducts.length === 0}
             onClick={() => {
               setWizardData({

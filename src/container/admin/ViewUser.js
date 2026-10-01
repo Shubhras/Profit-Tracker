@@ -99,13 +99,13 @@ function ViewUser() {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="w-10 h-10 rounded-xl border border-gray-200 bg-white shadow hover:bg-gray-100 transition flex items-center justify-center"
+            className="w-[35px] h-[35px] rounded-xl border border-[#dbe1e8] bg-white flex items-center justify-center hover:bg-[#f8fafc] transition-all duration-200 shadow-sm"
           >
             <ArrowLeftOutlined />
           </button>
 
           <div>
-            <h2 className="text-[20px] font-bold text-gray-800 mb-0">User Details</h2>
+            <h1 className="text-[19px] font-bold text-gray-800 mb-0">User Details</h1>
           </div>
         </div>
 
@@ -200,17 +200,17 @@ function ViewUser() {
             <p className="text-[15px] text-black mb-3">{user?.address || '-'}</p>
 
             <div className="grid grid-cols-3 gap-3">
-              <div className="bg-gray-50 rounded-xl p-2">
+              <div className="bg-gray-50 rounded-xl p-3">
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-400 mb-1">City</p>
                 <p className="text-[14px] text-black">{user?.city || '-'}</p>
               </div>
 
-              <div className="bg-gray-50 rounded-xl p-2">
+              <div className="bg-gray-50 rounded-xl p-3">
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-400 mb-1">State</p>
                 <p className="text-[14px] text-black">{user?.state || '-'}</p>
               </div>
 
-              <div className="bg-gray-50 rounded-xl p-2">
+              <div className="bg-gray-50 rounded-xl p-3">
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-400 mb-1">Pin Code</p>
                 <p className="text-[14px] text-black">{user?.pin_code || '-'}</p>
               </div>

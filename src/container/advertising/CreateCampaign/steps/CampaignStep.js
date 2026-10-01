@@ -83,13 +83,14 @@ function CampaignStep({ wizardData, setWizardData, onNext }) {
 
   return (
     <>
-      <main className="min-h-[600px] px-4 pb-[10px] py-3 bg-white">
+      <div className="w-full rounded-lg bg-white dark:bg-[#1b1e2b] border border-gray-100 dark:border-white/10 p-4 sm:p-5 md:p-6 shadow-sm">
         <Form layout="vertical">
-          <Row gutter={24}>
-            <Col span={12}>
-              <Form.Item label="Campaign Name" required>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={24} md={12} lg={12}>
+              <Form.Item label="Campaign Name" required className="mb-3 sm:mb-4">
                 <Input
-                  className="h-10 border-gray-200 dark:border-white/15 dark:bg-transparent dark:text-white"
+                  placeholder="Enter campaign name"
+                  className="h-10 w-full rounded-l border-gray-200 dark:border-white/15 dark:bg-transparent dark:text-white"
                   value={wizardData.campaign.name}
                   onChange={(e) =>
                     setWizardData({
@@ -103,8 +104,9 @@ function CampaignStep({ wizardData, setWizardData, onNext }) {
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
-              <div className="mb-[24px]">
+
+            <Col xs={24} sm={24} md={12} lg={12}>
+              <div className="mb-3 sm:mb-4">
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-sm font-medium text-[#272b41] dark:text-white60">Portfolio</label>
                   <Button type="link" className="p-0 h-auto text-xs" onClick={() => setPortfolioModalOpen(true)}>
@@ -112,7 +114,7 @@ function CampaignStep({ wizardData, setWizardData, onNext }) {
                   </Button>
                 </div>
                 <Select
-                  className="w-full"
+                  className="w-full h-10"
                   style={{ width: '100%' }}
                   allowClear
                   placeholder="Select Portfolio"
@@ -134,9 +136,12 @@ function CampaignStep({ wizardData, setWizardData, onNext }) {
                 />
               </div>
             </Col>
-            <Col span={12}>
-              <Form.Item label="Campaign Status">
+
+            <Col xs={24} sm={24} md={12} lg={12}>
+              <Form.Item label="Campaign Status" className="mb-3 sm:mb-4">
                 <Select
+                  className="w-full h-10"
+                  style={{ width: '100%' }}
                   value={wizardData.campaign.state}
                   options={[
                     {
@@ -161,9 +166,11 @@ function CampaignStep({ wizardData, setWizardData, onNext }) {
               </Form.Item>
             </Col>
 
-            <Col span={12}>
-              <Form.Item label="Targeting Type">
+            <Col xs={24} sm={24} md={12} lg={12}>
+              <Form.Item label="Targeting Type" className="mb-3 sm:mb-4">
                 <Select
+                  className="w-full h-10"
+                  style={{ width: '100%' }}
                   value={wizardData.campaign.targetingType}
                   options={[
                     {
@@ -188,11 +195,13 @@ function CampaignStep({ wizardData, setWizardData, onNext }) {
               </Form.Item>
             </Col>
 
-            <Col span={12}>
-              <Form.Item label="Daily Budget" required extra="Minimum budget: ₹50">
+            <Col xs={24} sm={24} md={12} lg={12}>
+              <Form.Item label="Daily Budget" required extra="Minimum budget: ₹50" className="mb-3 sm:mb-4">
                 <InputNumber
-                  // min={50}
-                  style={{ width: '100%', paddingTop: '0' }}
+                  type="number"
+                  className="w-full h-10 rounded-lg flex items-center"
+                  style={{ width: '100%' }}
+                  placeholder="Enter daily budget"
                   value={wizardData.campaign.budget}
                   onChange={(value) =>
                     setWizardData({
@@ -207,59 +216,11 @@ function CampaignStep({ wizardData, setWizardData, onNext }) {
               </Form.Item>
             </Col>
 
-            <Col span={12}>
-              <Form.Item label="Start Date">
-                <DatePicker
-                  style={{ width: '100%' }}
-                  value={wizardData?.campaign?.startDate ? moment(wizardData.campaign.startDate) : moment()}
-                  disabledDate={(current) => current && current < moment().startOf('day')}
-                  onChange={(date, dateString) => {
-                    const endDate = wizardData?.campaign?.endDate;
-
-                    const shouldClearEndDate = endDate && moment(endDate, 'YYYY-MM-DD').isBefore(date, 'day');
-
-                    setWizardData({
-                      ...wizardData,
-                      campaign: {
-                        ...wizardData.campaign,
-                        startDate: dateString,
-                        endDate: shouldClearEndDate ? '' : endDate,
-                      },
-                    });
-                  }}
-                />
-              </Form.Item>
-            </Col>
-
-            <Col span={12}>
-              <Form.Item label="End Date">
-                <DatePicker
-                  style={{ width: '100%' }}
-                  value={wizardData?.campaign?.endDate ? moment(wizardData.campaign.endDate, 'YYYY-MM-DD') : null}
-                  disabledDate={(current) => {
-                    const startDate = wizardData?.campaign?.startDate;
-
-                    return (
-                      current &&
-                      current < (startDate ? moment(startDate, 'YYYY-MM-DD').startOf('day') : moment().startOf('day'))
-                    );
-                  }}
-                  onChange={(date, dateString) =>
-                    setWizardData({
-                      ...wizardData,
-                      campaign: {
-                        ...wizardData.campaign,
-                        endDate: dateString,
-                      },
-                    })
-                  }
-                />
-              </Form.Item>
-            </Col>
-
-            <Col span={12}>
-              <Form.Item label="Bidding Strategy">
+            <Col xs={24} sm={24} md={12} lg={12}>
+              <Form.Item label="Bidding Strategy" className="mb-3 sm:mb-4">
                 <Select
+                  className="w-full h-10"
+                  style={{ width: '100%' }}
                   value={wizardData.campaign.biddingStrategy}
                   options={[
                     {
@@ -287,16 +248,71 @@ function CampaignStep({ wizardData, setWizardData, onNext }) {
                 />
               </Form.Item>
             </Col>
+
+            <Col xs={24} sm={24} md={12} lg={12}>
+              <Form.Item label="Start Date" className="mb-3 sm:mb-4">
+                <DatePicker
+                  className="w-full h-10 rounded-lg"
+                  style={{ width: '100%' }}
+                  value={wizardData?.campaign?.startDate ? moment(wizardData.campaign.startDate) : moment()}
+                  disabledDate={(current) => current && current < moment().startOf('day')}
+                  onChange={(date, dateString) => {
+                    const endDate = wizardData?.campaign?.endDate;
+
+                    const shouldClearEndDate = endDate && moment(endDate, 'YYYY-MM-DD').isBefore(date, 'day');
+
+                    setWizardData({
+                      ...wizardData,
+                      campaign: {
+                        ...wizardData.campaign,
+                        startDate: dateString,
+                        endDate: shouldClearEndDate ? '' : endDate,
+                      },
+                    });
+                  }}
+                />
+              </Form.Item>
+            </Col>
+
+            <Col xs={24} sm={24} md={12} lg={12}>
+              <Form.Item label="End Date" className="mb-3 sm:mb-4">
+                <DatePicker
+                  className="w-full h-10 rounded-lg"
+                  style={{ width: '100%' }}
+                  value={wizardData?.campaign?.endDate ? moment(wizardData.campaign.endDate, 'YYYY-MM-DD') : null}
+                  disabledDate={(current) => {
+                    const startDate = wizardData?.campaign?.startDate;
+
+                    return (
+                      current &&
+                      current < (startDate ? moment(startDate, 'YYYY-MM-DD').startOf('day') : moment().startOf('day'))
+                    );
+                  }}
+                  onChange={(date, dateString) =>
+                    setWizardData({
+                      ...wizardData,
+                      campaign: {
+                        ...wizardData.campaign,
+                        endDate: dateString,
+                      },
+                    })
+                  }
+                />
+              </Form.Item>
+            </Col>
           </Row>
 
-          <Divider>Placement Adjustments</Divider>
+          <Divider className="my-6">
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Placement Adjustments</span>
+          </Divider>
 
-          <Row gutter={24}>
-            <Col span={8}>
-              <Form.Item label="Top of Search (%)">
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12} md={8} lg={8}>
+              <Form.Item label="Top of Search (%)" className="mb-3">
                 <InputNumber
                   min={0}
                   max={900}
+                  className="w-full h-10 rounded-lg flex items-center"
                   style={{ width: '100%' }}
                   value={wizardData.campaign.placements?.topOfSearch}
                   onChange={(value) =>
@@ -315,11 +331,12 @@ function CampaignStep({ wizardData, setWizardData, onNext }) {
               </Form.Item>
             </Col>
 
-            <Col span={8}>
-              <Form.Item label="Rest of Search (%)">
+            <Col xs={24} sm={12} md={8} lg={8}>
+              <Form.Item label="Rest of Search (%)" className="mb-3">
                 <InputNumber
                   min={0}
                   max={900}
+                  className="w-full h-10 rounded-lg flex items-center"
                   style={{ width: '100%' }}
                   value={wizardData.campaign.placements?.restOfSearch}
                   onChange={(value) =>
@@ -338,11 +355,12 @@ function CampaignStep({ wizardData, setWizardData, onNext }) {
               </Form.Item>
             </Col>
 
-            <Col span={8}>
-              <Form.Item label="Product Pages (%)">
+            <Col xs={24} sm={12} md={8} lg={8}>
+              <Form.Item label="Product Pages (%)" className="mb-3">
                 <InputNumber
                   min={0}
                   max={900}
+                  className="w-full h-10 rounded-lg flex items-center"
                   style={{ width: '100%' }}
                   value={wizardData.campaign.placements?.productPages}
                   onChange={(value) =>
@@ -372,25 +390,23 @@ function CampaignStep({ wizardData, setWizardData, onNext }) {
         >
           <Input
             placeholder="Portfolio Name"
+            className="h-10 rounded-lg"
             value={portfolioName}
             onChange={(e) => setPortfolioName(e.target.value)}
           />
         </Modal>
-        <div
-          style={{
-            marginTop: 24,
-            textAlign: 'right',
-          }}
-        >
+
+        <div className="mt-6 pt-4 border-t border-gray-100 dark:border-white/10 flex items-center justify-end">
           <Button
             type="primary"
+            className="h-10 px-6 rounded-lg font-medium"
             disabled={!wizardData.campaign.name?.trim() || !wizardData.campaign.budget}
             onClick={onNext}
           >
             Next
           </Button>
         </div>
-      </main>
+      </div>
     </>
   );
 }

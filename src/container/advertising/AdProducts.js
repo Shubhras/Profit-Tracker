@@ -490,7 +490,7 @@ function AdProducts() {
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
                   placeholder="Search ad products..."
-                  className="w-full h-[30px] rounded-lg border bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm transition-all duration-200 focus:border-[#dbe1e8]"
+                  className="w-full h-[35px] rounded-lg border bg-white pl-11 pr-4 text-[14px] text-[#111827] outline-none shadow-sm transition-all duration-200 focus:border-[#dbe1e8]"
                 />
 
                 <SearchOutlined className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] text-[15px]" />
@@ -506,7 +506,7 @@ function AdProducts() {
                     setStateFilter(e.target.value);
                     setPagination((prev) => ({ ...prev, current: 1 }));
                   }}
-                  className="h-[30px] px-3 pr-6 rounded-lg border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
+                  className="h-[35px] px-3 pr-6 rounded-lg border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
                 >
                   <option value="">All State</option>
                   <option value="ENABLED">Enabled</option>
@@ -520,7 +520,7 @@ function AdProducts() {
                     setRoiFilter(e.target.value);
                     setPagination((prev) => ({ ...prev, current: 1 }));
                   }}
-                  className="h-[30px] px-3 pr-6 rounded-lg border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
+                  className="h-[35px] px-3 pr-6 rounded-lg border border-[#dbe1e8] text-[#374151] font-medium bg-white text-[12px] outline-none cursor-pointer"
                 >
                   <option value="">All ROI</option>
                   <option value="high">High ROI (Sales ≥ Cost)</option>
@@ -531,7 +531,7 @@ function AdProducts() {
                 <Dropdown trigger={['click']} dropdownRender={() => manageColumnsDropdown} placement="bottomRight">
                   <Button
                     icon={<SettingOutlined />}
-                    className="!h-[30px] text-[13px] !px-5 !rounded-lg border border-[#dbe1e8] bg-white !text-[#111827] !font-medium !flex !items-center !justify-center"
+                    className="!h-[35px] text-[13px] !px-5 !rounded-lg border border-[#dbe1e8] bg-white !text-[#111827] !font-medium !flex !items-center !justify-center"
                   >
                     Manage Columns
                   </Button>
@@ -541,7 +541,7 @@ function AdProducts() {
                     type="primary"
                     loading={exportLoading}
                     icon={<ExportOutlined />}
-                    className="!h-[30px] text-[13px] !px-3 !rounded-lg !bg-[#2563eb] !border-[#2563eb] !font-semibold !flex !items-center !justify-center gap-1 cursor-pointer"
+                    className="!h-[35px] text-[13px] !px-3 !rounded-lg !bg-[#2563eb] !border-[#2563eb] !font-semibold !flex !items-center !justify-center gap-1 cursor-pointer"
                   >
                     Export <DownOutlined className="text-[10px]" />
                   </Button>
