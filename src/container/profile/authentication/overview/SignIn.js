@@ -21,6 +21,7 @@ function SignIn() {
   const dispatch = useDispatch();
   const isLoading = useSelector((state) => state.auth.loading);
   const [form] = Form.useForm();
+  const error = useSelector((state) => state.auth.error);
   // =============================================================================
   // PREVIOUS CODE (Commented out):
   // Only checked location.state?.redirectTo; did not support deep link preservation

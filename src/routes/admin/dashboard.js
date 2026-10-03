@@ -1,5 +1,5 @@
 import React, { lazy } from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, Navigate } from 'react-router-dom';
 
 const Dashboard = lazy(() => import('../../container/dashboard/Dashboard'));
 const DemoTwo = lazy(() => import('../../container/dashboard/DemoTwo'));
@@ -16,6 +16,8 @@ const NotFound = lazy(() => import('../../container/pages/404'));
 function DashboardRoutes() {
   return (
     <Routes>
+      {/* Default dashboard redirect to profit summary */}
+      <Route index element={<Navigate to="/admin/profit/summary" replace />} />
       <Route path="demo-1" element={<Dashboard />} />
       <Route path="demo-2" element={<DemoTwo />} />
       <Route path="demo-3" element={<DemoThree />} />

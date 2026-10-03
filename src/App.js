@@ -56,7 +56,7 @@ function ProviderConfig() {
             {/* ========================================================================= */}
 
             {/* 1️⃣ AUTH ROUTES */}
-            <Route path="/auth/*" element={isLoggedIn ? <Navigate to="/admin" replace /> : <Auth />} />
+            <Route path="/auth/*" element={isLoggedIn ? <Navigate to="/admin/profit/summary" replace /> : <Auth />} />
             <Route path="/login" element={<Navigate to="/auth/login" replace />} />
             <Route path="/register" element={<Navigate to="/auth/register" replace />} />
 

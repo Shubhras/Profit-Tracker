@@ -1,6 +1,6 @@
 import { Spin } from 'antd';
 import React, { lazy, Suspense, useEffect } from 'react';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { Route, Routes, useLocation, Navigate } from 'react-router-dom';
 import Axios from './axios';
 import Dashboard from './dashboard';
 import Ecommerce from './ecommerce';
@@ -66,11 +66,32 @@ const Admin = React.memo(() => {
       }
     >
       <Routes>
+        {/* ========================================================================= */}
+        {/* PREVIOUS CODE (Commented out):                                           */}
+        {/* Captured /admin on path="/*" and rendered <Dashboard /> which had no     */}
+        {/* index route, causing an immediate 404 page when visiting /admin.          */}
+        {/*                                                                           */}
+        {/* <Route                                                                   */}
+        {/*   index                                                                   */}
+        {/*   path="/*"                                                               */}
+        {/*   element={                                                               */}
+        {/*     // <SubscriptionGate allowFree>                                       */}
+        {/*     <SubscriptionGate>                                                    */}
+        {/*       <Dashboard />                                                       */}
+        {/*     </SubscriptionGate>                                                   */}
+        {/*   }                                                                       */}
+        {/* />                                                                        */}
+        {/* ========================================================================= */}
+
+        {/* ========================================================================= */}
+        {/* NEW CODE:                                                                 */}
+        {/* When user visits /admin or /admin/, redirect cleanly to the real dashboard*/}
+        {/* at /admin/profit/summary instead of showing a 404 page.                   */}
+        {/* ========================================================================= */}
+        <Route index element={<Navigate to="/admin/profit/summary" replace />} />
         <Route
-          index
-          path="/*"
+          path="dashboard/*"
           element={
-            // <SubscriptionGate allowFree>
             <SubscriptionGate>
               <Dashboard />
             </SubscriptionGate>
