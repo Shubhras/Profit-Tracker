@@ -10,10 +10,7 @@
  * @param {string} [options.businessName]
  * @returns {string|null} Error message or null if valid
  */
-export const validatePasswordPolicy = (
-  password,
-  { email = '', name = '', username = '', businessName = '' } = {},
-) => {
+export const validatePasswordPolicy = (password, { email = '', name = '', username = '', businessName = '' } = {}) => {
   if (!password) return null;
 
   const valLower = password.toLowerCase();
@@ -37,16 +34,24 @@ export const validatePasswordPolicy = (
 
     // Also check if any word from the password (length >= 4) appears inside the email prefix
     const pwdWords = password.match(/[a-zA-Z]+/g) || [];
-    for (const w of pwdWords) {
-      if (w.length >= 4 && prefix.includes(w.toLowerCase())) {
-        return 'Password cannot contain your username, name, email, or business name.';
+    // for (const w of pwdWords) {
+    //   if (w.length >= 4 && prefix.includes(w.toLowerCase())) {
+    //     return 'Password cannot contain your username, name, email, or business name.';
+    //   }
+    // }
+    pwdWords.forEach((word) => {
+      if (word.length >= 4 && prefix.includes(word.toLowerCase())) {
+        identifiers.add('__INVALID_PASSWORD__');
       }
-    }
+    });
   }
 
   // 2. Process username
   if (username) {
-    const uClean = username.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    const uClean = username
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '');
     if (uClean.length >= 3) identifiers.add(uClean);
   }
 
@@ -79,10 +84,25 @@ export const validatePasswordPolicy = (
   }
 
   // Check if any forbidden identifier appears in the password
-  for (const id of identifiers) {
-    if (id.length >= 3 && valLower.includes(id)) {
-      return 'Password cannot contain your username, name, email, or business name.';
+  // for (const id of identifiers) {
+  //   if (id.length >= 3 && valLower.includes(id)) {
+  //     return 'Password cannot contain your username, name, email, or business name.';
+  //   }
+  // }
+
+  // Check if password contains any forbidden identifier
+  let isInvalid = false;
+  identifiers.forEach((id) => {
+    if (id === '__INVALID_PASSWORD__') {
+      isInvalid = true;
+      return;
     }
+    if (id.length >= 3 && valLower.includes(id)) {
+      isInvalid = true;
+    }
+  });
+  if (isInvalid) {
+    return 'Password cannot contain your username, name, email, or business name.';
   }
 
   return null;
