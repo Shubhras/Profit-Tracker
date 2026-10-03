@@ -17,6 +17,7 @@ import {
 } from 'antd';
 import { UilTrashAlt, UilLock, UilEye, UilEdit, UilSearch, UilUserPlus } from '@iconscout/react-unicons';
 import { getSubUsers, addUser, deleteSubUser, updateSubUser } from '../../redux/Settings/actionCreator';
+import { validatePasswordPolicy } from '../../utility/passwordValidator';
 // import { subUserLogin } from '../../redux/authentication/actionCreator';
 import { DataService } from '../../config/dataService/dataService';
 // import { PageHeader } from '../../components/page-headers/page-headers';
@@ -827,6 +828,8 @@ export default function UserManagement() {
           <Form.Item
             label="Password"
             name="password"
+            dependencies={['name', 'email']}
+            validateTrigger={['onChange', 'onBlur']}
             rules={[
               { required: true, message: 'Enter password' },
               {
@@ -834,6 +837,19 @@ export default function UserManagement() {
                 message:
                   'Password must be at least 12 characters and include uppercase, lowercase, number, and special character.',
               },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value) return Promise.resolve();
+                  const errMsg = validatePasswordPolicy(value, {
+                    email: getFieldValue('email'),
+                    name: getFieldValue('name'),
+                  });
+                  if (errMsg) {
+                    return Promise.reject(new Error(errMsg));
+                  }
+                  return Promise.resolve();
+                },
+              }),
             ]}
           >
             <Input.Password placeholder="Enter Password" />
@@ -931,12 +947,27 @@ export default function UserManagement() {
           <Form.Item
             label="Reset Password (Optional)"
             name="password"
+            dependencies={['name', 'email']}
+            validateTrigger={['onChange', 'onBlur']}
             rules={[
               {
                 pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$/,
                 message:
                   'Password must be at least 12 characters and include uppercase, lowercase, number, and special character.',
               },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value) return Promise.resolve();
+                  const errMsg = validatePasswordPolicy(value, {
+                    email: getFieldValue('email'),
+                    name: getFieldValue('name'),
+                  });
+                  if (errMsg) {
+                    return Promise.reject(new Error(errMsg));
+                  }
+                  return Promise.resolve();
+                },
+              }),
             ]}
           >
             <Input.Password placeholder="Leave blank to keep current password" />

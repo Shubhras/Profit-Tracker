@@ -4,6 +4,7 @@ import { Form, Input, Button, Modal, message } from 'antd';
 import { MailOutlined, KeyOutlined, LockOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { forgotPassword, verifyResetOtp, resetPassword } from '../../../../redux/authentication/actionCreator';
+import { validatePasswordPolicy } from '../../../../utility/passwordValidator';
 
 function ForgotPassword() {
   const dispatch = useDispatch();
@@ -217,6 +218,7 @@ function ForgotPassword() {
                 <Form.Item
                   label={<span className="font-medium text-gray-700">New Password</span>}
                   name="new_password"
+                  validateTrigger={['onChange', 'onBlur']}
                   rules={[
                     { required: true, message: 'Please enter new password' },
                     {
@@ -224,6 +226,18 @@ function ForgotPassword() {
                       message:
                         'Must be at least 12 characters and include uppercase, lowercase, number, and special character.',
                     },
+                    () => ({
+                      validator(_, value) {
+                        if (!value) return Promise.resolve();
+                        const errMsg = validatePasswordPolicy(value, {
+                          email: userEmail,
+                        });
+                        if (errMsg) {
+                          return Promise.reject(new Error(errMsg));
+                        }
+                        return Promise.resolve();
+                      },
+                    }),
                   ]}
                 >
                   <Input.Password className="rounded-lg py-2" placeholder="New Password" />

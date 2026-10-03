@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 from core.email_utils import get_email_logo_header_html, send_email_with_logo
+from user_auth.password_validation import validate_password_policy
 
 def send_password_changed_email(user):
     """
@@ -111,6 +112,15 @@ class UserChangePasswordAPI(APIView):
                 "statusCode": 400,
                 "status": False,
                 "error": "old_password and new_password are required"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate password policy: length, complexity, and prevent username/email inside password
+        is_valid_pw, pw_err = validate_password_policy(new_password, user=user)
+        if not is_valid_pw:
+            return Response({
+                "statusCode": 400,
+                "status": False,
+                "error": pw_err
             }, status=status.HTTP_400_BAD_REQUEST)
 
         if not user.check_password(old_password):

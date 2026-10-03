@@ -3,11 +3,14 @@ import { Form, Input, Button, message } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { GlobalUtilityStyle } from '../../../styled';
 import { changePassword } from '../../../../redux/authentication/actionCreator';
+import { validatePasswordPolicy } from '../../../../utility/passwordValidator';
 
 function Password() {
   const [form] = Form.useForm();
   const dispatch = useDispatch();
-  const { loading, error } = useSelector((state) => state.auth);
+  const { loading, error, currentUser } = useSelector((state) => state.auth);
+  const profileData = useSelector((state) => state.profile?.data);
+  const userProfile = currentUser || profileData;
 
   const handleSubmit = (values) => {
     dispatch(
@@ -85,6 +88,7 @@ function Password() {
             <Form.Item
               name="new_password"
               label={<span className="text-gray-700 font-medium">New Password</span>}
+              validateTrigger={['onChange', 'onBlur']}
               rules={[
                 { required: true, message: 'Please enter a new password' },
                 {
@@ -92,6 +96,20 @@ function Password() {
                   message:
                     'Password must be at least 12 characters and include uppercase, lowercase, number, and special character.',
                 },
+                () => ({
+                  validator(_, value) {
+                    if (!value) return Promise.resolve();
+                    const errMsg = validatePasswordPolicy(value, {
+                      email: userProfile?.email,
+                      name: userProfile?.name || userProfile?.first_name,
+                      businessName: userProfile?.business_name,
+                    });
+                    if (errMsg) {
+                      return Promise.reject(new Error(errMsg));
+                    }
+                    return Promise.resolve();
+                  },
+                }),
               ]}
               className="mb-2"
             >
@@ -113,6 +131,7 @@ function Password() {
                   'One lowercase letter',
                   'One number',
                   'One special character',
+                  'No username, name or email',
                 ].map((rule) => (
                   <li key={rule} className="flex items-center gap-2">
                     <span className="w-1 h-1 rounded-full bg-emerald-500 flex-shrink-0" />

@@ -6,6 +6,7 @@ import { MailOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { Checkbox } from '../../../../components/checkbox/checkbox';
 import { register, sendSignupOTP } from '../../../../redux/authentication/actionCreator';
+import { validatePasswordPolicy } from '../../../../utility/passwordValidator';
 
 function SignUp() {
   const dispatch = useDispatch();
@@ -177,6 +178,8 @@ function SignUp() {
           <Form.Item
             label={<span className="font-medium text-gray-700">Password</span>}
             name="password"
+            dependencies={['name', 'email', 'businessName']}
+            validateTrigger={['onChange', 'onBlur']}
             rules={[
               {
                 required: true,
@@ -187,6 +190,20 @@ function SignUp() {
                 message:
                   'Password must be at least 12 characters and include uppercase, lowercase, number, and special character.',
               },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value) return Promise.resolve();
+                  const errMsg = validatePasswordPolicy(value, {
+                    email: getFieldValue('email'),
+                    name: getFieldValue('name'),
+                    businessName: getFieldValue('businessName'),
+                  });
+                  if (errMsg) {
+                    return Promise.reject(new Error(errMsg));
+                  }
+                  return Promise.resolve();
+                },
+              }),
             ]}
           >
             <Input.Password className="rounded-lg py-2" placeholder="Password" />

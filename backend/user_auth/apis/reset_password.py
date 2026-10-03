@@ -8,6 +8,7 @@ from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 from subscription.utils.custom_response import success_response, error_response
 from user_auth.models import EmailOTP, PasswordResetRequest
+from user_auth.password_validation import validate_password_policy
 
 
 class UserResetPasswordAPI(APIView):
@@ -22,13 +23,10 @@ class UserResetPasswordAPI(APIView):
         email = email.strip().lower()
         otp = str(otp).strip()
 
-        # Validate password policy
-        pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$'
-        if not re.match(pattern, new_password):
-            return error_response(
-                "Password must be at least 12 characters and include uppercase, lowercase, number, and special character.",
-                400
-            )
+        # Validate password policy: length, complexity, and prevent username/email inside password
+        is_valid_pw, pw_err = validate_password_policy(new_password, email=email)
+        if not is_valid_pw:
+            return error_response(pw_err, 400)
 
         try:
             user = User.objects.get(email=email)

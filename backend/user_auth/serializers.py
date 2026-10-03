@@ -10,6 +10,7 @@ import requests
 from django.conf import settings
 from myntra.models import MyntraConnection
 from amazon_auth.models import AmazonAccount
+from user_auth.password_validation import validate_password_policy
 # class UserRegisterSerializer(serializers.Serializer):
 #     name = serializers.CharField()
 #     business_name = serializers.CharField()
@@ -120,6 +121,17 @@ class UserRegisterSerializer(serializers.Serializer):
     def validate(self, data):
         if data["password"] != data["confirm_password"]:
             raise serializers.ValidationError("Passwords do not match")
+
+        # Validate password policy: length, complexity, and prevent username/name/email/business_name inside password
+        is_valid_pw, pw_err = validate_password_policy(
+            data["password"],
+            email=data.get("email"),
+            username=data.get("email"),
+            full_name=data.get("name"),
+            business_name=data.get("business_name")
+        )
+        if not is_valid_pw:
+            raise serializers.ValidationError(pw_err)
 
         if not data["accepted_terms"]:
             raise serializers.ValidationError("You must accept Terms & Conditions")

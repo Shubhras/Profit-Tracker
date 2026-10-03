@@ -17,15 +17,11 @@ from user_auth.subscription import CustomPagination
 from rest_framework_simplejwt.tokens import RefreshToken
 from subscription.models import UserSubscription
 
-logger = logging.getLogger(__name__)
-
-PASSWORD_REGEX = re.compile(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$')
+from user_auth.password_validation import validate_password_policy
 
 
-def validate_password_strength(password):
-    if not PASSWORD_REGEX.match(password):
-        return False, "Password must be at least 12 characters and include uppercase, lowercase, number, and special character."
-    return True, None
+def validate_password_strength(password, email=None, name=None, user=None, business_name=None):
+    return validate_password_policy(password, user=user, email=email, full_name=name, business_name=business_name)
 
 
 from core.email_utils import get_email_logo_header_html, send_email_with_logo
@@ -150,7 +146,8 @@ class SubUserCreateAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         # Password strength validation
-        is_valid_pw, pw_error = validate_password_strength(password)
+        parent_biz = getattr(getattr(request.user, 'profile', None), 'business_name', None)
+        is_valid_pw, pw_error = validate_password_strength(password, email=email, name=name, business_name=parent_biz)
         if not is_valid_pw:
             return Response({
                 "statusCode": 400,
@@ -408,7 +405,12 @@ class SubUserUpdateAPIView(APIView):
 
         # Validate password if provided
         if password:
-            is_valid_pw, pw_error = validate_password_strength(password)
+            is_valid_pw, pw_error = validate_password_strength(
+                password,
+                user=subuser.user,
+                name=name or getattr(subuser.user, 'first_name', None),
+                email=getattr(subuser.user, 'email', None)
+            )
             if not is_valid_pw:
                 return Response({
                     "statusCode": 400,
