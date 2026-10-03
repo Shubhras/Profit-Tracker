@@ -32,22 +32,8 @@ function NotFound() {
           <p className="text-body dark:text-white60 mb-6 text-lg xs:text-base font-medium">
             Sorry! the page you are looking for does not exist.
           </p>
-          {/* ========================================================================= */}
-          {/* PREVIOUS CODE (Commented out):                                           */}
-          {/* Pointed to /admin which caused a 404 loop.                               */}
-          {/* <NavLink to="/admin">                                                    */}
-          {/*   <Button size="default" type="primary" to="/admin" className="h-11">    */}
-          {/*     Return Home                                                          */}
-          {/*   </Button>                                                              */}
-          {/* </NavLink>                                                               */}
-          {/* ========================================================================= */}
-
-          {/* ========================================================================= */}
-          {/* NEW CODE:                                                                 */}
-          {/* Navigates directly to the main profit summary dashboard.                  */}
-          {/* ========================================================================= */}
-          <NavLink to="/admin/profit/summary">
-            <Button size="default" type="primary" to="/admin/profit/summary" className="h-11">
+          <NavLink to="/admin">
+            <Button size="default" type="primary" to="/admin" className="h-11">
               Return Home
             </Button>
           </NavLink>

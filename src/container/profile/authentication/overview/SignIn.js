@@ -22,22 +22,8 @@ function SignIn() {
   const isLoading = useSelector((state) => state.auth.loading);
   const [form] = Form.useForm();
   const error = useSelector((state) => state.auth.error);
-  // =============================================================================
-  // PREVIOUS CODE (Commented out):
-  // Only checked location.state?.redirectTo; did not support deep link preservation
-  // from location.state?.from.
-  //
-  // const redirectTo = location.state?.redirectTo;
-  // =============================================================================
-
-  // =============================================================================
-  // NEW CODE:
-  // Preserves deep link path (e.g. /admin/pages/billing) via location.state?.from
-  // so users return to their requested page immediately after login.
-  // =============================================================================
-  const redirectTo =
-    location.state?.redirectTo ||
-    (location.state?.from ? location.state.from.pathname + (location.state.from.search || '') : null);
+  // Check if there's a redirect destination (e.g., from pricing page)
+  const redirectTo = location.state?.redirectTo;
   const planFromState = location.state?.plan;
 
   // const [state, setState] = useState({
