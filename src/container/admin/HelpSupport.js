@@ -137,12 +137,12 @@ function HelpSupport() {
             status === 'open'
               ? 'green'
               : status === 'in_progress'
-              ? 'orange'
-              : status === 'resolved'
-              ? 'blue'
-              : status === 'closed'
-              ? 'red'
-              : 'default'
+                ? 'orange'
+                : status === 'resolved'
+                  ? 'blue'
+                  : status === 'closed'
+                    ? 'red'
+                    : 'default'
           }
           className="cursor-pointer px-3 py-1 rounded-l"
           onClick={() => handleOpenStatusModal(record)}
