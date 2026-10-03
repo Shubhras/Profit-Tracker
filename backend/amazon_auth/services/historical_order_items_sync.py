@@ -11,6 +11,7 @@ from amazon_auth.models import (
 )
 from amazon_auth.spapi_manager import SPAPIManager
 from amazon_auth.utils import safe_catalog_call
+from amazon_auth.rate_limiter import spapi_rate_limiter
 
 # =========================================================
 # CONFIGURATION
@@ -123,7 +124,24 @@ def sync_historical_order_items(
             "items_updated": 0,
             "items_skipped": 0,
             "failed": 0,
+            "estimated_duration": "0 seconds",
+            "estimated_seconds": 0,
         }
+
+    # =====================================================
+    # SYNC ESTIMATE (Based on Token-Bucket Rate Limits)
+    # =====================================================
+
+    account_key = str(account.id)
+    estimate = spapi_rate_limiter.calculate_sync_estimate(
+        total_orders=total_orders,
+        sync_items=True,
+        account_key=account_key,
+    )
+    print("\n" + "=" * 80)
+    print(f"ESTIMATED SYNC DURATION : {estimate['estimated_duration_formatted']} ({estimate['estimated_seconds']}s)")
+    print(f"TOTAL API CALL BUDGET   : {estimate['total_api_calls']} calls (Rate: {estimate['items_rate_limit_rps']} req/s)")
+    print("=" * 80 + "\n")
 
     # =====================================================
     # SP-API MANAGER
@@ -686,11 +704,23 @@ def sync_historical_order_items(
 
                 continue
 
-        # =====================================================
-        # RATE LIMIT SAFETY
-        # =====================================================
+        # Log periodic progress with estimated remaining time
+        if index % 50 == 0 or index == total_orders:
+            remaining = total_orders - index
+            rem_estimate = spapi_rate_limiter.calculate_sync_estimate(
+                total_orders=remaining,
+                sync_items=True,
+                account_key=account_key,
+            )
+            pct = (index / total_orders) * 100
+            print(
+                f"\n>>> PROGRESS: {index}/{total_orders} orders processed ({pct:.1f}%). "
+                f"Est. remaining: {rem_estimate['estimated_duration_formatted']} <<<\n"
+            )
 
-        time.sleep(REQUEST_DELAY)
+        # Proactive pacing in SPAPIManager handles rate limiting automatically
+        # time.sleep(REQUEST_DELAY) is kept minimal as a baseline floor
+        time.sleep(0.1)
 
     # =========================================================
     # FINAL SUMMARY
@@ -720,4 +750,6 @@ def sync_historical_order_items(
         "items_updated": items_updated,
         "items_skipped": items_skipped,
         "failed": failed,
+        "estimated_duration": estimate["estimated_duration_formatted"],
+        "estimated_seconds": estimate["estimated_seconds"],
     }

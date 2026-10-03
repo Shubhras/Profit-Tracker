@@ -63,8 +63,21 @@ class Command(BaseCommand):
         
         for account in accounts:
             try:
+                # Token-bucket rate limits are shared per (Application + Account).
+                # Skip accounts that require initial sync or have not completed initial sync yet
+                # to prevent concurrent token exhaustion and 429 QuotaExceeded errors.
+                if account.initial_sync_required or not account.initial_sync_completed:
+                    self.stdout.write(
+                        self.style.WARNING(
+                            f"Skipping account {account.seller_central_id} (User: {account.user.email}): "
+                            f"Initial sync required or in progress "
+                            f"(initial_sync_required={account.initial_sync_required}, "
+                            f"initial_sync_completed={account.initial_sync_completed})."
+                        )
+                    )
+                    continue
+
                 self.stdout.write(f"Syncing account: {account.seller_central_id} (User: {account.user.email})")
-                
 
                 request = factory.get('/fake-path/?sync_items=true')
                 force_authenticate(request, user=account.user)

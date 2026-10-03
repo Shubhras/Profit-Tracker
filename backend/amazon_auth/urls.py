@@ -53,6 +53,7 @@ urlpatterns = [
     path("callback/advertise",AmazonAdsCallbackView.as_view()),
 
     path('sync-orders/', views.sync_orders, name='sync_orders'),
+    path('sync-estimate/', views.get_order_sync_estimate, name='get_order_sync_estimate'),
     path('list-db-orders/', views.list_db_orders, name='list_db_orders'),
     
     # # orders

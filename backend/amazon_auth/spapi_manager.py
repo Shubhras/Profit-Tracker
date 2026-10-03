@@ -9,6 +9,7 @@ from urllib.parse import urlparse, quote
 from django.core.cache import cache
 from .models import AmazonAccount
 from django.contrib.auth.models import User
+from .rate_limiter import spapi_rate_limiter
 
 
 class SPAPIManager:
@@ -77,6 +78,9 @@ class SPAPIManager:
             self.aws_region = "eu-west-1"
         elif self.region_env == "fe":
             self.aws_region = "us-west-2"
+
+        # Unique account key for tracking token limits per (Application + Account)
+        self.account_key = str(self.account.id) if self.account else (self.client_id or 'default')
 
     def get_access_token(self):
         url = "https://api.amazon.com/auth/o2/token"
@@ -152,15 +156,31 @@ class SPAPIManager:
         headers['Authorization'] = authorization_header
 
         start_time = time.time()
-        max_retries = 4
-        backoff_delays = [3, 6, 10, 15]
+        max_retries = 5
         response = None
+        account_key = self.account_key
+
         for attempt in range(max_retries + 1):
-            response = requests.request(method, url, params=params, headers=headers, data=data)
+            # Proactively pace request based on token bucket limits
+            spapi_rate_limiter.wait_before_request(account_key, path)
+
+            try:
+                response = requests.request(method, url, params=params, headers=headers, data=data)
+            except requests.RequestException as req_err:
+                if attempt < max_retries:
+                    delay = spapi_rate_limiter.get_backoff_delay(account_key, path, None, attempt)
+                    print(f"  [SP-API Network Error] on {path}: {req_err}. Waiting {delay:.2f}s (retry {attempt + 1}/{max_retries})...")
+                    time.sleep(delay)
+                    continue
+                raise
+
+            # Read dynamic x-amzn-RateLimit-Limit header from response
+            spapi_rate_limiter.update_from_response(account_key, path, response)
+
             # Automatic retry on rate limit (429 QuotaExceeded)
             if response.status_code == 429 and attempt < max_retries:
-                delay = backoff_delays[attempt]
-                print(f"  [SP-API Rate Limit] 429 QuotaExceeded on {path}. Waiting {delay}s (retry {attempt + 1}/{max_retries})...")
+                delay = spapi_rate_limiter.get_backoff_delay(account_key, path, response, attempt)
+                print(f"  [SP-API Rate Limit] 429 QuotaExceeded on {path}. Backing off {delay:.2f}s (retry {attempt + 1}/{max_retries})...")
                 time.sleep(delay)
                 continue
             break
@@ -179,13 +199,32 @@ class SPAPIManager:
                 account_name=acc_name,
                 api_endpoint=path,
                 call_count=1,
-                status='SUCCESS' if response.status_code == 200 else f'HTTP_{response.status_code}',
+                status='SUCCESS' if (response and response.status_code == 200) else f'HTTP_{getattr(response, "status_code", "ERR")}',
                 response_time_ms=elapsed_ms
             )
         except Exception:
             pass
 
-        return response.json()
+        try:
+            return response.json()
+        except Exception:
+            return {
+                "errors": [{
+                    "code": f"HTTP_{getattr(response, 'status_code', 500)}",
+                    "message": getattr(response, 'text', 'No response text'),
+                }],
+                "status_code": getattr(response, 'status_code', 500),
+            }
+
+    def get_sync_estimate(self, total_orders: int, sync_items: bool = True) -> dict:
+        """
+        Calculates estimated sync duration based on token-bucket rate limits.
+        """
+        return spapi_rate_limiter.calculate_sync_estimate(
+            total_orders=total_orders,
+            sync_items=sync_items,
+            account_key=self.account_key
+        )
 
     def get_marketplace_participations(self):
 

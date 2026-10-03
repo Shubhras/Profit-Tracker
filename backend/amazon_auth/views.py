@@ -187,7 +187,9 @@ def amazon_callback(request):
         seller_central_id=seller_id,
         defaults={
             'marketplace_id': "A21TJRUUN4KGV",
-            'region': "EU"
+            'region': "EU",
+            'initial_sync_required': True,
+            'initial_sync_completed': False,
         }
     )
 
@@ -195,6 +197,9 @@ def amazon_callback(request):
     account.app_client_secret = AMAZON_CLIENT_SECRET
     account.set_refresh_token(refresh_token)
     account.amazon_refresh_token = refresh_token
+    if created:
+        account.initial_sync_required = True
+        account.initial_sync_completed = False
     account.save()
 
     if created:
@@ -1659,7 +1664,7 @@ def sync_orders(request):
                 if sync_items and should_sync_items:
                     logger.info(f"Order Items fetch start")
                     try:
-                        time.sleep(0.5)
+                        # Proactive pacing per x-amzn-RateLimit-Limit is handled inside manager.request
                         items_response = manager.get_order_items(amazon_order_id)
                         
                         payload_items = items_response.get("payload", {})
@@ -1868,6 +1873,61 @@ def sync_orders(request):
         "details": sync_details
     })
 
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_order_sync_estimate(request):
+    """
+    Returns estimated sync duration for an Amazon account based on active token-bucket rate limits
+    and dynamic x-amzn-RateLimit-Limit headers.
+    """
+    user = request.user
+    if getattr(user, 'is_anonymous', True):
+        from django.contrib.auth.models import User
+        user = User.objects.first()
+
+    account_id = request.GET.get('account_id')
+    seller_id = request.GET.get('seller_id')
+
+    if account_id:
+        account = AmazonAccount.objects.filter(id=account_id).first()
+    elif seller_id:
+        account = AmazonAccount.objects.filter(seller_central_id=seller_id).first()
+    else:
+        account = AmazonAccount.objects.filter(user=user).first()
+
+    if not account:
+        return JsonResponse({"status": "error", "message": "Amazon account not found."}, status=404)
+
+    total_orders_param = request.GET.get('total_orders')
+    sync_items = request.GET.get('sync_items', 'true').lower() in ['true', '1', 'yes']
+
+    if total_orders_param:
+        try:
+            total_orders = int(total_orders_param)
+        except ValueError:
+            total_orders = 0
+    else:
+        days = int(request.GET.get('days', 30))
+        since_date = timezone.now() - timedelta(days=days)
+        total_orders = Order.objects.filter(
+            amazon_account=account,
+            purchase_date__gte=since_date
+        ).count()
+        if total_orders == 0:
+            total_orders = 2500
+
+    manager = SPAPIManager(user=user, account=account)
+    estimate = manager.get_sync_estimate(total_orders=total_orders, sync_items=sync_items)
+
+    return JsonResponse({
+        "status": "success",
+        "account_id": account.id,
+        "seller_central_id": account.seller_central_id,
+        "initial_sync_required": account.initial_sync_required,
+        "initial_sync_completed": account.initial_sync_completed,
+        "estimate": estimate
+    })
 
 
 @login_required

@@ -1,6 +1,6 @@
 import { Spin } from 'antd';
 import React, { lazy, Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import AmazonAdsCallback from '../container/profit/AmazonAdsCallback';
 
 const Home = lazy(() => import('../container/profile/home/Index'));
@@ -37,6 +37,19 @@ function PublicRoutes() {
         <Route path="/testimonials" element={<Testimonials />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsConditions />} />
+
+        {/* ========================================================================= */}
+        {/* PREVIOUS CODE:                                                           */}
+        {/* Previously there was no catch-all route here. Unmatched URLs rendered    */}
+        {/* null, causing a completely blank white screen.                           */}
+        {/* ========================================================================= */}
+
+        {/* ========================================================================= */}
+        {/* NEW CODE:                                                                 */}
+        {/* Catch-all fallback route so unknown public paths redirect cleanly to "/"  */}
+        {/* instead of freezing on a blank white screen.                             */}
+        {/* ========================================================================= */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
   );

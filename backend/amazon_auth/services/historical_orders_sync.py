@@ -8,6 +8,7 @@ from django.utils.dateparse import parse_datetime
 
 from amazon_auth.models import AmazonAccount, Order
 from amazon_auth.spapi_manager import SPAPIManager
+from amazon_auth.rate_limiter import spapi_rate_limiter
 
 
 def sync_historical_orders(days, accounts=None):
@@ -60,6 +61,10 @@ def sync_historical_orders(days, accounts=None):
             user=account.user,
             account=account,
         )
+
+        account_key = str(account.id)
+        current_rate = spapi_rate_limiter.get_rate_limit(account_key, "/orders/v0/orders")
+        print(f"RATE LIMIT (ORDERS): {current_rate} req/s (min interval: {1.0/max(current_rate, 0.01):.2f}s)")
 
         # -----------------------------------------------------
         # LOAD EXISTING ORDERS ONCE
