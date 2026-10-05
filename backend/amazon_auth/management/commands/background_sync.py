@@ -64,15 +64,13 @@ class Command(BaseCommand):
         for account in accounts:
             try:
                 # Token-bucket rate limits are shared per (Application + Account).
-                # Skip accounts that require initial sync or have not completed initial sync yet
+                # Skip accounts that explicitly require initial sync
                 # to prevent concurrent token exhaustion and 429 QuotaExceeded errors.
-                if account.initial_sync_required or not account.initial_sync_completed:
+                if account.initial_sync_required:
                     self.stdout.write(
                         self.style.WARNING(
                             f"Skipping account {account.seller_central_id} (User: {account.user.email}): "
-                            f"Initial sync required or in progress "
-                            f"(initial_sync_required={account.initial_sync_required}, "
-                            f"initial_sync_completed={account.initial_sync_completed})."
+                            f"Initial sync required or in progress."
                         )
                     )
                     continue
@@ -107,6 +105,10 @@ class Command(BaseCommand):
                 #     self.stdout.write("  - Ads: Imported successfully")
                 # except Exception as e:
                 #     self.stdout.write(self.style.ERROR(f"  - Ads failed: {str(e)}"))
+
+                if not account.initial_sync_completed:
+                    account.initial_sync_completed = True
+                    account.save(update_fields=['initial_sync_completed'])
 
                 self.stdout.write(self.style.SUCCESS(f"Successfully synced {account.seller_central_id}"))
                 time.sleep(2)
