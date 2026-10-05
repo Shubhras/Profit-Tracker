@@ -36,11 +36,12 @@ function ProviderConfig() {
           <Routes>
             {/* 1️⃣ AUTH ROUTES - Must come before catch-all */}
             {!isLoggedIn && <Route path="/auth/*" element={<Auth />} />}
-            {/* 2️⃣ ADMIN ROUTES - Protected */}
-            {isLoggedIn && <Route path="/admin/*" element={<ProtectedRoute Component={Admin} />} />}
 
-            {/* //this is new route */}
-            {isLoggedIn && <Route path="/super-admin/*" element={<ProtectedRoute Component={SuperAdmin} />} />}
+            {/* 2️⃣ ADMIN ROUTES - Protected (ProtectedRoute handles redirect to /auth/login if not logged in) */}
+            <Route path="/admin/*" element={<ProtectedRoute Component={Admin} />} />
+
+            {/* Super Admin Route - Protected */}
+            <Route path="/super-admin/*" element={<ProtectedRoute Component={SuperAdmin} />} />
 
             {/* 3️⃣ PUBLIC ROUTES (includes home, pricing, checkout, etc.) */}
             <Route path="/*" element={<PublicRoutes />} />
