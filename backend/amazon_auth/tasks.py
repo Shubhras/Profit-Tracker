@@ -6,7 +6,13 @@ from amazon_auth.services.initial_amazon_sync import run_initial_amazon_sync
 logger = logging.getLogger(__name__)
 
 
-@shared_task(bind=True, max_retries=3, default_retry_delay=300)
+@shared_task(
+    bind=True,
+    max_retries=3,
+    default_retry_delay=300,
+    time_limit=18000,       # 5 hours hard limit for large order volumes
+    soft_time_limit=17500   # Soft limit before hard SIGKILL
+)
 def task_run_initial_amazon_sync(self, account_id, days=60):
     """
     Celery task to run initial Amazon SP-API data sync asynchronously.

@@ -171,6 +171,12 @@ def sync_historical_order_items(
     ):
         amazon_order_id = order.amazon_order_id
 
+        # Resumable sync optimization: skip orders that already have items saved in DB
+        if order.items.exists():
+            items_skipped += order.items.count()
+            orders_processed += 1
+            continue
+
         print("\n" + "-" * 70)
 
         print(f"ORDER {index}/{total_orders}: {amazon_order_id}")
