@@ -41,15 +41,6 @@ class Command(BaseCommand):
             .distinct()
         )
         print("active_user_ids", active_user_ids)
-        # active_user_ids = (
-        #     UserSubscription.objects.filter(
-        #         status="active",
-        #         is_paid=True,
-        #     )
-        #     .filter(Q(end_date__gt=now) | Q(end_date__isnull=True))
-        #     .values_list("user_id", flat=True)
-        #     .distinct()
-        # )
         accounts = AmazonAccount.objects.filter(
             user_id__in=active_user_ids
         ).select_related("user")
@@ -97,14 +88,6 @@ class Command(BaseCommand):
 
                 sync_new_business_reports()
                 self.stdout.write("  - Reports: synced")
-
-                # 4. Sync Ads (Excel or API)   /home/lenovo/Desktop/profit /Profit-Tracker/backend/amazon_auth/services/ads_report.xlsx
-                # try:
-                #     file_path = "/home/lenovo/Desktop/profit /Profit-Tracker/backend/amazon_auth/services/ads_report.xlsx"   #  change this
-                #     import_ads_from_excel(file_path)
-                #     self.stdout.write("  - Ads: Imported successfully")
-                # except Exception as e:
-                #     self.stdout.write(self.style.ERROR(f"  - Ads failed: {str(e)}"))
 
                 if not account.initial_sync_completed:
                     account.initial_sync_completed = True

@@ -259,6 +259,15 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
             "profile_picture",
             "accepted_terms"
         ]
+        extra_kwargs = {
+            "name": {"required": False, "allow_blank": True},
+            "business_name": {"required": False, "allow_blank": True},
+            "mobile_number": {"required": False, "allow_blank": True},
+            "address": {"required": False, "allow_blank": True},
+            "city": {"required": False, "allow_blank": True},
+            "state": {"required": False, "allow_blank": True},
+            "pin_code": {"required": False, "allow_blank": True},
+        }
         
 
 class UserProfileSerializer(serializers.ModelSerializer):

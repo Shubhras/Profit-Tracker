@@ -15,10 +15,18 @@ class UserUpdateProfileAPI(APIView):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def patch(self, request):
-        try:
-            profile = UserProfile.objects.get(user=request.user)
-        except UserProfile.DoesNotExist:
-            return error_response("User profile not found", 404)
+        profile = UserProfile.objects.filter(user=request.user).first()
+        if not profile:
+            profile = UserProfile.objects.create(
+                user=request.user,
+                name=request.data.get("name") or request.user.first_name or request.user.username or "",
+                business_name=request.data.get("business_name") or "",
+                mobile_number=request.data.get("mobile_number") or "",
+                address=request.data.get("address") or "",
+                city=request.data.get("city") or "",
+                state=request.data.get("state") or "",
+                pin_code=request.data.get("pin_code") or ""
+            )
 
         serializer = UserProfileUpdateSerializer(profile, data=request.data, partial=True)
 
@@ -26,9 +34,14 @@ class UserUpdateProfileAPI(APIView):
             errors = serializer.errors
             first_key = list(errors.keys())[0]
             msg = errors[first_key][0]
-            return error_response(str(msg), 400)
+            return error_response(f"{first_key}: {msg}" if first_key != "non_field_errors" else str(msg), 400)
 
         serializer.save()
+
+        name = request.data.get("name")
+        if name and name != request.user.first_name:
+            request.user.first_name = name
+            request.user.save(update_fields=['first_name'])
 
         # Return full updated user profile data
         full_serializer = UserProfileSerializer(request.user, context={'request': request})

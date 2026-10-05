@@ -1836,9 +1836,10 @@ def _combine_dashboard_stats(amazon_data, myntra_data):
     combined_promo_amount = parse_currency_to_decimal(am_promo_val) + myntra_data.get("promo_discount", Decimal(0))
     
     header_metrics = {
-        "sales": round(float(combined_sales), 2),
+        "sales": format_currency(combined_sales),
         "total_final_net_sales": round(float(combined_final_net_sales), 2),
-        "profit": round(float(combined_profit), 2),
+        # "profit": round(float(combined_profit), 2),
+        "profit": format_currency(combined_profit),
         "margin": f"{round(combined_margin)}%",
         "roi": roi_str,
         "ad_spend": format_currency(combined_ads),
