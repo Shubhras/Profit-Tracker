@@ -395,17 +395,6 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
 
     finances_qs = FinancialEvent.objects.filter(user=user)
 
-    raw_map = (
-        FinancialEvent.objects
-        .filter(user=user)
-        .exclude(raw_data=None)
-        .values('amazon_order_id', 'raw_data')
-    )
-
-    raw_data_map = {}
-    for r in raw_map:
-        raw_data_map.setdefault(r['amazon_order_id'], []).append(r['raw_data'])
-
     if from_date:
         finances_qs = finances_qs.filter(posted_date__gte=from_date)
     if to_date:
@@ -428,6 +417,17 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
 
     finance_map = {f['amazon_order_id']: f for f in finance_data}
 
+    # raw_map = (
+    #     FinancialEvent.objects
+    #     .filter(user=user)
+    #     .exclude(raw_data=None)
+    #     .values('amazon_order_id', 'raw_data')
+    # )
+
+    # raw_data_map = {}
+    # for r in raw_map:
+    #     raw_data_map.setdefault(r['amazon_order_id'], []).append(r['raw_data'])
+
     asin_orders = (
         OrderItem.objects
         .filter(order_filter)
@@ -444,6 +444,20 @@ def _payment_reconcile_details_transactions_shipping_logic(request, by_sku=False
         asin_map.setdefault(p_asin, []).append(row)
 
     matching_order_ids = [row['order__amazon_order_id'] for row in asin_orders]
+    unique_matching_order_ids = list({oid for oid in matching_order_ids if oid})
+
+    raw_data_map = {}
+    if unique_matching_order_ids:
+        for i in range(0, len(unique_matching_order_ids), 1000):
+            chunk = unique_matching_order_ids[i:i + 1000]
+            raw_map = (
+                FinancialEvent.objects
+                .filter(user=user, amazon_order_id__in=chunk)
+                .exclude(raw_data=None)
+                .values('amazon_order_id', 'raw_data')
+            )
+            for r in raw_map:
+                raw_data_map.setdefault(r['amazon_order_id'], []).append(r['raw_data'])
 
     estimated_fee_qs = AmazonEstimatedFee.objects.filter(
         order_item__order__user=user
