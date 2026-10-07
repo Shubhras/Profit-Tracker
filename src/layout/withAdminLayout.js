@@ -133,7 +133,8 @@ const ThemeLayout = (WrappedComponent) => {
           position: 'absolute',
           width: '6px',
           transition: 'opacity 200ms ease 0s',
-          opacity: 0,
+          // opacity: 0,
+          opacity: 1,
           [rtl ? 'left' : 'right']: '0px',
           bottom: '2px',
           top: '2px',
@@ -280,9 +281,10 @@ const ThemeLayout = (WrappedComponent) => {
                   >
                     <Scrollbars
                       className="custom-scrollbar"
-                      autoHide
-                      autoHideTimeout={500}
-                      autoHideDuration={200}
+                      // autoHide
+                      // autoHideTimeout={500}
+                      // autoHideDuration={200}
+                      autoHide={false}
                       // renderThumbHorizontal={renderThumbHorizontal}
                       renderThumbVertical={renderThumb}
                       renderView={renderView}

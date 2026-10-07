@@ -10,6 +10,7 @@ import {
   ReloadOutlined,
   CarOutlined,
   BarChartOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -62,13 +63,6 @@ const formatCirclePercent = (val) => {
 export default function Summary() {
   // const path = '/admin';
   const navigate = useNavigate();
-  // const [viewType, setViewType] = useState('percentage');
-  // const [viewTypes, setViewTypes] = useState({
-  //   'Quantity Sold': 'percentage',
-  //   Return: 'percentage',
-  //   Shipping: 'percentage',
-  //   Profit: 'percentage',
-  // });
   const { dashboardData, dateRange, channel: globalChannel, search, loading } = useSelector((state) => state.dashboard);
   // const [amazonParams, setAmazonParams] = useState({
   //   callbackUri: '',
@@ -77,16 +71,6 @@ export default function Summary() {
   // });
   const location = useLocation();
   const dispatch = useDispatch();
-  // const [showFilters, setShowFilters] = useState(false);
-  // const gstLabel = appliedFilters.withGST ? 'GST Included' : 'GST Excluded';
-  // const buildMetric = (filtersData) => {
-  //   return {
-  //     ads: filtersData.withAds ? 'withAds' : 'withoutAds',
-  //     gst: filtersData.withGST ? 'withGst' : 'withoutGst',
-  //     expense: filtersData.withExpenses ? 'withExpense' : 'withoutExpense',
-  //     estimate: filtersData.withEstimate ? 'withEstimate' : 'withoutEstimate',
-  //   };
-  // };
 
   const payload = {
     filters: {
@@ -147,34 +131,6 @@ export default function Summary() {
     }
   }, [location, loginAmazon]);
 
-  // const PageRoutes = [
-  //   { path: 'index', breadcrumbName: 'Profit' },
-  //   { path: '', breadcrumbName: 'Summary' },
-  // ];
-  // const handleViewTypeChange = (title, value) => {
-  //   setViewTypes((prev) => ({
-  //     ...prev,
-  //     [title]: value,
-  //   }));
-  // };
-
-  /* ---------- RIGHT STACKED CHART ---------- */
-  // const stackedData = [
-  //   { date: '01/01', cancelled: 0, rto: 0, returned: 0 },
-  //   { date: '02/01', cancelled: 0, rto: 0, returned: 0 },
-  //   { date: '03/01', cancelled: 0, rto: 0, returned: 0 },
-  //   { date: '04/01', cancelled: 0, rto: 0, returned: 0 },
-  //   { date: '05/01', cancelled: 0, rto: 0, returned: 0 },
-  //   { date: '06/01', cancelled: 0, rto: 0, returned: 0 },
-  //   { date: '07/01', cancelled: 0, rto: 0, returned: 0 },
-  // ];
-
-  // const bottomChartData = [
-  //   { name: 'North', value: 0 },
-  //   { name: 'South', value: 0 },
-  //   { name: 'East', value: 0 },
-  //   { name: 'West', value: 0 },
-  // ];
   const stackedData =
     dashboardData?.trends?.map((item) => ({
       date: item.date,
@@ -183,26 +139,8 @@ export default function Summary() {
       profit: item.estimated_profit || 0,
     })) || [];
 
-  // const bottomChartData = dashboardData?.geography?.length
-  //   ? dashboardData.geography
-  //       .map((item) => ({
-  //         name: item.id || 'Unknown',
-  //         value: Number(item.revenue) || 0,
-  //         qty: Number(item.grossqty) || 0,
-  //       }))
-  //       .sort((a, b) => b.value - a.value)
-  //       .slice(0, 4)
-  //   : [];
   return (
     <>
-      {/* <PageHeader
-        routes={PageRoutes}
-        title={
-        
-        }
-        className="flex justify-between items-center px-8 xl:px-[15px] pt-2 pb-2 sm:pb-[30px] bg-transparent sm:flex-col"
-      /> */}
-
       <main className="min-h-[715px] lg:min-h-[580px] flex-1 h-auto px-4 xl:px-[15px] pb-[10px] bg-transparent py-3">
         <div className="flex items-start gap-3 mt-2 mb-3">
           <div
@@ -222,455 +160,6 @@ export default function Summary() {
             </p>
           </div>
         </div>
-        {/* ================= FILTER BAR ================= */}
-        {/* <Card className="mb-4">
-          <Row gutter={16} align="middle">
-            <Col>
-              <Checkbox
-                checked={filters.withAds}
-                onChange={(e) => setFilters({ ...filters, withAds: e.target.checked })}
-              >
-                With Ads
-              </Checkbox>{' '}
-            </Col>
-            <Col>
-              <Checkbox
-                checked={filters.withGST}
-                onChange={(e) => setFilters({ ...filters, withGST: e.target.checked })}
-              >
-                With GST
-              </Checkbox>{' '}
-            </Col>
-            <Col>
-              <Checkbox
-                checked={filters.withEstimate}
-                onChange={(e) => setFilters({ ...filters, withEstimate: e.target.checked })}
-              >
-                With Estimate
-              </Checkbox>{' '}
-            </Col>
-            <Col>
-              <Checkbox
-                checked={filters.withExpenses}
-                onChange={(e) => setFilters({ ...filters, withExpenses: e.target.checked })}
-              >
-                With Expenses
-              </Checkbox>{' '}
-            </Col> */}
-        {/* <Col>
-              <Button type="primary" onClick={connectAmazon}>
-                Connect Amazon
-              </Button>
-            </Col> */}
-        {/* <Col>
-              <Button type="primary" onClick={getAuthCodAmazon}>
-                Login Amazon
-              </Button>
-            </Col> */}
-
-        {/* <Card className="mb-4 border rounded-xl px-0 py-0 bg-[#f9fafb]">
-          <button
-            type="button"
-            className="flex items-center justify-between gap-4 mb-0 text-sm w-full"
-          >
-            <span className="text-gray-500">{selectedFilters.length} Filter Selected</span>
-
-            {selectedFilters.map((item, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${item.color === 'green' ? 'bg-green-500' : 'bg-red-500'}`} />
-                <span>{item.label}</span>
-              </div>
-            ))}
-            <div className="ml-auto flex items-center gap-4">
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleClear();
-                }}
-                className="flex items-center gap-1"
-              >
-                <span>Clear</span>
-                <CloseOutlined className="text-gray-500" />
-              </Button>
-
-              <Button
-                type="primary"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleApply();
-                }}
-                className="flex items-center gap-1"
-              >
-                <span>Apply</span>
-                <CheckOutlined />
-              </Button>
-              <Button
-                type="text"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowFilters((prev) => !prev);
-                }}
-                className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition"
-              >
-                {showFilters ? (
-                  <CaretUpOutlined className="text-[#0B3A6E] text-xs leading-none" />
-                ) : (
-                  <CaretDownOutlined className="text-[#0B3A6E] text-xs leading-none" />
-                )}
-              </Button>
-            </div>
-          </button>
-
-          {showFilters && (
-            <>
-              <div className="flex items-end gap-3 mb-3 flex-nowrap mt-3">
-                {[
-                  { label: 'SKU', key: 'sku', placeholder: 'Sku' },
-                  { label: 'ProductId', key: 'productId', placeholder: 'ProductId' },
-                  { label: 'ParentId', key: 'parentId', placeholder: 'ParentId' },
-                ].map((item) => (
-                  <div key={item.key} className="flex flex-col w-[160px]">
-                    <span className="text-s text-gray-500 mb-1">{item.label}:</span>
-                    <Input
-                      size="small"
-                      placeholder={item.placeholder}
-                      value={filters[item.key]}
-                      onChange={(e) => setFilters({ ...filters, [item.key]: e.target.value })}
-                    />
-                  </div>
-                ))}
-
-                <div className="flex flex-col w-[160px]">
-                  <span className="text-s text-gray-500 mb-1">MKT category:</span>
-                  <Select
-                    size="small"
-                    placeholder="MktCategory"
-                    value={filters.mktCategory}
-                    onChange={(val) => setFilters({ ...filters, mktCategory: val })}
-                  >
-                    <Option value="cat1">Category 1</Option>
-                  </Select>
-                </div>
-
-                <div className="flex flex-col w-[160px]">
-                  <span className="text-s text-gray-500 mb-1">Inv MasterSku:</span>
-                  <Input
-                    size="small"
-                    placeholder="Inv mastersku"
-                    value={filters.invMasterSku}
-                    onChange={(e) => setFilters({ ...filters, invMasterSku: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between text-[11px] leading-none">
-                {' '}
-                <div className="flex gap-1 items-center text-xs">
-                  <Checkbox
-                    checked={filters.withAds}
-                    onChange={() => setFilters({ ...filters, withAds: true, withoutAds: false })}
-                  >
-                    With Ads
-                  </Checkbox>
-
-                  <Checkbox
-                    checked={filters.withoutAds}
-                    onChange={() => setFilters({ ...filters, withAds: false, withoutAds: true })}
-                  >
-                    Without Ads
-                  </Checkbox>
-                </div>
-                <div className="flex gap-[2px] items-center text-[11px]">
-                  {' '}
-                  <Checkbox
-                    checked={filters.withGST}
-                    onChange={() => setFilters({ ...filters, withGST: true, withoutGST: false })}
-                  >
-                    With Gst
-                  </Checkbox>
-                  <Checkbox
-                    checked={filters.withoutGST}
-                    onChange={() => setFilters({ ...filters, withGST: false, withoutGST: true })}
-                  >
-                    Without Gst
-                  </Checkbox>
-                </div>
-                <div className="flex gap-[2px] items-center text-[11px]">
-                  {' '}
-                  <Checkbox
-                    checked={filters.withEstimate}
-                    onChange={() =>
-                      setFilters({
-                        ...filters,
-                        withEstimate: true,
-                        withoutEstimate: false,
-                      })
-                    }
-                  >
-                    With Estimate
-                  </Checkbox>
-                  <Checkbox
-                    checked={filters.withoutEstimate}
-                    onChange={() =>
-                      setFilters({
-                        ...filters,
-                        withEstimate: false,
-                        withoutEstimate: true,
-                      })
-                    }
-                  >
-                    Without Estimate
-                  </Checkbox>
-                </div>
-                <div className="flex gap-[2px] items-center text-[11px]">
-                  {' '}
-                  <Checkbox
-                    checked={filters.withExpenses}
-                    onChange={() =>
-                      setFilters({
-                        ...filters,
-                        withExpenses: true,
-                        withoutExpenses: false,
-                      })
-                    }
-                  >
-                    With Expenses
-                  </Checkbox>
-                  <Checkbox
-                    checked={filters.withoutExpenses}
-                    onChange={() =>
-                      setFilters({
-                        ...filters,
-                        withExpenses: false,
-                        withoutExpenses: true,
-                      })
-                    }
-                  >
-                    Without Expenses
-                  </Checkbox>
-                </div>
-              </div>
-            </>
-          )}
-        </Card> */}
-
-        {/* <Spin spinning={loading} size="large">
-          <Row gutter={[16, 16]}>
-            <Col xs={24} lg={9}>
-              <Card
-                onClick={() =>
-                  navigate('/admin/profit/profitTableView/details', {
-                    state: { channels: globalChannel, type: 'all' },
-                  })
-                }
-                hoverable
-                style={{ cursor: 'pointer' }}
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-medium">Sales</span>
-
-                  <Tag color={appliedFilters.withGST ? 'green' : 'red'}>{gstLabel}</Tag>
-                </div>
-                <Statistic value={dashboardData?.header_metrics?.sales || 0} prefix="₹" />{' '}
-                <Tag color="blue" className="mt-2">
-                  Units: {dashboardData?.breakdown_table?.net?.qty || 0}
-                </Tag>
-                <Divider />
-                <Row className="font-semibold mb-1">
-                  <Col span={10} />
-                  <Col span={7} className="text-center">
-                    Qty
-                  </Col>
-                  <Col span={7} className="text-right">
-                    Sales
-                  </Col>
-                </Row>
-                <Row>
-                  <Col span={10}>Gross</Col>
-                  <Col span={7} className="text-center">
-                    {dashboardData?.breakdown_table?.gross?.qty || 0}
-                  </Col>
-                  <Col span={7} className="text-right">
-                    {dashboardData?.breakdown_table?.gross?.amount || 0}
-                  </Col>
-                </Row>
-                <Row>
-                  <Col span={10}>Cancelled</Col>
-                  <Col span={7} className="text-center">
-                    {dashboardData?.breakdown_table?.cancelled?.qty || 0}
-                  </Col>
-                  <Col span={7} className="text-right">
-                    {dashboardData?.breakdown_table?.cancelled?.amount || 0}
-                  </Col>
-                </Row>
-                <Row>
-                  <Col span={10}>Returned(RTO)</Col>
-                  <Col span={7} className="text-center">
-                    {dashboardData?.breakdown_table?.returned?.qty || 0}
-                  </Col>
-                  <Col span={7} className="text-right">
-                    {dashboardData?.breakdown_table?.returned?.amount || 0}
-                  </Col>
-                </Row>
-                <Row>
-                  <Col span={10}>Cancelled(RTO)</Col>
-                  <Col span={7} className="text-center">
-                    {dashboardData?.breakdown_table?.cancelledrtosummaryqty?.qty || 0}
-                  </Col>
-                  <Col span={7} className="text-right">
-                    {dashboardData?.breakdown_table?.cancelledrtosummarysales?.amount || 0}
-                  </Col>
-                </Row>
-                <Row>
-                  <Col span={10}>Returned(CReF)</Col>
-                  <Col span={7} className="text-center">
-                    {dashboardData?.breakdown_table?.creturnsummaryqty?.qty || 0}
-                  </Col>
-                  <Col span={7} className="text-right">
-                    {dashboardData?.breakdown_table?.returnedcref?.amount || 0}
-                  </Col>
-                </Row>
-                <Row>
-                  <Col span={10}>Claimed</Col>
-                  <Col span={7} className="text-center">
-                    {dashboardData?.breakdown_table?.claim?.qty || 0}
-                  </Col>
-                  <Col span={7} className="text-right">
-                    {dashboardData?.breakdown_table?.claim?.amount || 0}
-                  </Col>
-                </Row>
-                <Row>
-                  <Col span={10}>Standard Cost</Col>
-                  <Col span={7} className="text-center">
-                    {dashboardData?.breakdown_table?.claimqty?.qty || 0}
-                  </Col>
-                  <Col span={7} className="text-right">
-                    {dashboardData?.breakdown_table?.claimsales?.amount || 0}
-                  </Col>
-                </Row>
-                <Divider className="mt-2" />
-                <Row>
-                  <Col span={10}>
-                    <strong>Net</strong>
-                  </Col>
-                  <Col span={7} className="text-center">
-                    <strong>{dashboardData?.breakdown_table?.net?.qty || 0}</strong>
-                  </Col>
-                  <Col span={7} className="text-right">
-                    <strong>{dashboardData?.breakdown_table?.net?.amount || 0}</strong>
-                  </Col>
-                </Row>
-              </Card>
-            </Col>
-
-            <Col xs={24} lg={6}>
-              <Card
-        
-              >
-                <Statistic title="Profit" value={dashboardData?.header_metrics?.profit || 0} prefix="₹" />
-                <Tag color="gold">Margin: {dashboardData?.header_metrics?.margin || '0%'}</Tag>
-                <Tag color="green">ROI: {dashboardData?.header_metrics?.roi || '0%'}</Tag>
-              </Card>
-
-              <Row gutter={8} className="mt-1">
-                <Col
-                  span={12}
-                  onClick={() =>
-                    navigate('/admin/profit/profitTableView/details', {
-                      state: { channels: globalChannel, type: 'all', profitType: 'profitable' },
-                    })
-                  }
-                  hoverable
-                  style={{ cursor: 'pointer' }}
-                >
-                  <Card size="small" className="bg-green-50">
-                    <p className="text-green-700">Profit IDs</p>
-                    <strong>#{dashboardData?.top_orders?.profitable?.total_count || 0}</strong>
-
-                    <p>{dashboardData?.top_orders?.profitable?.total_amount || 0}</p>
-                  </Card>
-                </Col>
-                <Col
-                  span={12}
-                  onClick={() =>
-                    navigate('/admin/profit/profitTableView/details', {
-                      state: { channels: globalChannel, type: 'all', profitType: 'losing' },
-                    })
-                  }
-                  hoverable
-                  style={{ cursor: 'pointer' }}
-                >
-                  <Card size="small" className="bg-red-50">
-                    <p className="text-red-600">Loss IDs</p>
-                    <strong>#{dashboardData?.top_orders?.losing?.total_count || 0}</strong>
-
-                    <p>{dashboardData?.top_orders?.losing?.total_amount || 0}</p>
-                  </Card>
-                </Col>
-              </Row>
-              <Card size="small" className="mt-1 py-0">
-                <div>
-                  <Statistic
-                    title="Ad Spend"
-                    value={dashboardData?.header_metrics?.ad_spend || 0}
-                    prefix="₹"
-                  />
-                </div>
-
-                <Tag color="magenta" className="mt-1 w-fit">
-                  TACOS: {dashboardData?.header_metrics?.tacos || '0%'}
-                </Tag>
-              </Card>
-            </Col>
-
-
-            <Col xs={24} lg={9}>
-              <Card>
-                <ResponsiveContainer width="100%" height={260}>
-                  <BarChart data={stackedData}>
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="sales" stackId="a" fill="#f28b82" />
-                    <Bar dataKey="qty" stackId="a" fill="#a7f3a0" />
-                    <Bar dataKey="profit" stackId="a" fill="#fbc687" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </Card>
-            </Col>
-          </Row>
-        </Spin> */}
-
-        {/* <Row gutter={[16, 16]} className="mt-6">
-          {['Quantity Sold', 'Return', 'Shipping', 'Profit'].map((title) => (
-            <Col xs={24} lg={6} key={title}>
-              <Card
-                title={title}
-                extra={
-                  <Select
-                    size="small"
-                    value={viewTypes[title]}
-                    onChange={(value) => handleViewTypeChange(title, value)}
-                    style={{ width: 120 }}
-                  >
-                    <Option value="percentage">Percentage</Option>
-                    <Option value="amount">Amount</Option>
-                  </Select>
-                }
-              >
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={bottomChartData}>
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="value" fill="#93c5fd" radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </Card>
-            </Col>
-          ))}
-        </Row> */}
 
         <Spin spinning={loading} size="large">
           <Row gutter={[18, 8]}>
@@ -700,11 +189,12 @@ export default function Summary() {
 
                         <h2 className="text-[19px] font-semibold leading-tight text-[#111827] mt-[2px]">
                           {' '}
-                          ₹ {dashboardData?.header_metrics?.sales || 0}
+                          {dashboardData?.header_metrics?.sales || 0}
                         </h2>
 
                         <div className="mt-2 inline-flex w-fit items-center px-2 py-[3px] rounded-lg bg-[#dcfce780] border border-[#bbf7d0] text-[#166534] text-[10px] font-semibold whitespace-nowrap">
-                          Units: {dashboardData?.breakdown_table?.net?.qty || 0}
+                          {/* Units: {dashboardData?.breakdown_table?.net?.qty || 0} */}
+                          Units: {dashboardData?.breakdown_table?.gross?.qty || 0}
                         </div>
                       </div>
                     </div>
@@ -726,7 +216,7 @@ export default function Summary() {
 
                         <h2 className="text-[19px] font-semibold leading-tight text-[#111827] mt-[2px]">
                           {' '}
-                          ₹ {dashboardData?.header_metrics?.profit || 0}
+                          {dashboardData?.header_metrics?.profit || 0}
                         </h2>
 
                         <div className="flex items-center gap-1 mt-2">
@@ -850,22 +340,7 @@ export default function Summary() {
                   {/* HEADER */}
                   <div className="flex items-center gap-2.5 mb-2">
                     <div className="w-8 h-8 rounded-lg bg-[#ede9fe] flex items-center justify-center text-[#7c3aed] shrink-0">
-                      <svg
-                        width="17"
-                        height="17"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#7c3aed"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                        <polyline points="14 2 14 8 20 8" />
-                        <line x1="16" y1="13" x2="8" y2="13" />
-                        <line x1="16" y1="17" x2="8" y2="17" />
-                        <polyline points="10 9 9 9 8 9" />
-                      </svg>
+                      <FileTextOutlined className="text-[17px] text-[#7c3aed]" />
                     </div>
 
                     <h3 className="text-[17px] font-bold text-[#111827] tracking-tight mb-0">Sales Overview</h3>
